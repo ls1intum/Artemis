@@ -1,11 +1,18 @@
 textarea {
-    width: 600px;
+    max-width: 600px;
+    width: 100%;
     height: 150px;
+    color: red;
     font-size: small;
     font-family:
         Bitstream Vera Sans Mono,
         Courier New,
         monospace;
+    border-color: var(--border-color) !important;
+}
+
+.small-text-area {
+    height: 30px;
 }
 
 table {

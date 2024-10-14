@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Observable, lastValueFrom, of, tap } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
@@ -13,6 +13,7 @@ import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/complaints/complaint.service';
+import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
@@ -30,7 +31,7 @@ export interface IAccountService {
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;
     getImageUrl: () => string | undefined;
-    addSshPublicKey: (sshPublicKey: string) => Observable<void>;
+    addNewSshPublicKey: (userSshPublicKey: UserSshPublicKey) => Observable<HttpResponse<UserSshPublicKey>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -327,23 +328,31 @@ export class AccountService implements IAccountService {
     /**
      * Sends the added SSH key to the server
      *
-     * @param sshPublicKey
+     * @param userSshPublicKey
      */
-    addSshPublicKey(sshPublicKey: string): Observable<void> {
-        if (this.userIdentity) {
-            this.userIdentity.sshPublicKey = sshPublicKey;
-        }
-        return this.http.put<void>('api/account/ssh-public-key', sshPublicKey);
+    addNewSshPublicKey(userSshPublicKey: UserSshPublicKey): Observable<HttpResponse<UserSshPublicKey>> {
+        return this.http.put<UserSshPublicKey>('api/account/ssh-public-key', userSshPublicKey, { observe: 'response' });
+    }
+
+    /**
+     * Retrieves all public SSH keys of a user
+     */
+    getAllSshPublicKeys(): Observable<UserSshPublicKey[]> {
+        return this.http.get<UserSshPublicKey[]>('api/account/ssh-public-keys');
     }
 
     /**
      * Sends a request to the server to delete the user's current SSH key
      */
-    deleteSshPublicKey(): Observable<void> {
-        if (this.userIdentity) {
-            this.userIdentity.sshPublicKey = undefined;
-        }
-        return this.http.delete<void>('api/account/ssh-public-key');
+    deleteSshPublicKey(sshPublicKeyHash: string): Observable<void> {
+        const params = new HttpParams().set('sshPublicKeyHash', sshPublicKeyHash);
+        return this.http.delete<void>('api/account/ssh-public-key', { params }).pipe(
+            tap(() => {
+                if (this.userIdentity) {
+                    this.userIdentity.sshPublicKey = undefined;
+                }
+            }),
+        );
     }
 
     /**

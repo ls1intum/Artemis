@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20241013150000" author="entholzer">
+        <!--
+            Change Set for creating a new table for storing public SSH keys of users
+        -->
+        <createTable tableName="user_public_ssh_key">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="label" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="public_key" type="varchar(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="key_hash" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expiry_date" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_user_public_ssh_key_user_id" tableName="user_public_ssh_key">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="idx_user_public_ssh_key_ssh_public_key_hash" tableName="user_public_ssh_key">
+            <column name="key_hash"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

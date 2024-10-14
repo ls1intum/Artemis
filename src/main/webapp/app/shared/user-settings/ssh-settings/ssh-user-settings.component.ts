@@ -1,5 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { User } from 'app/core/user/user.model';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -9,32 +8,44 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { getOS } from 'app/shared/util/os-detector.util';
+import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings.component.html',
     styleUrls: ['../user-settings.scss', './ssh-user-settings.component.scss'],
 })
-export class SshUserSettingsComponent implements OnInit {
+export class SshUserSettingsComponent implements OnInit, OnDestroy {
     readonly documentationType: DocumentationType = 'SshSetup';
-    currentUser?: User;
+
+    sshPublicKeys: UserSshPublicKey[] = [];
     localVCEnabled = false;
-    sshKey = '';
-    sshKeyHash = '';
-    storedSshKey = '';
-    showSshKey = false;
+
+    // state change variables
+    showKeyDetailsView = false;
+    inCreateMode = false; // true when editing existing key, false when creating new key
+
     keyCount = 0;
-    isKeyReadonly = true;
+    isLoading = true;
     copyInstructions = '';
+
+    // Key details from input fields
+    displayedKeyId?: number = undefined; // undefined when creating a new key
+    displayedKeyLabel = '';
+    displayedSshKey = '';
+    displayedKeyHash = '';
+    displayedExpiryDate?: dayjs.Dayjs;
 
     readonly faEdit = faEdit;
     readonly faSave = faSave;
     readonly faTrash = faTrash;
     readonly faEllipsis = faEllipsis;
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 
-    private authStateSubscription: Subscription;
+    private accountServiceSubscription: Subscription;
     private dialogErrorSource = new Subject<string>();
-
     dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
@@ -48,31 +59,39 @@ export class SshUserSettingsComponent implements OnInit {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
         this.setMessageBasedOnOS(getOS());
-        this.authStateSubscription = this.accountService
-            .getAuthenticationState()
+        this.accountServiceSubscription = this.accountService
+            .getAllSshPublicKeys()
             .pipe(
-                tap((user: User) => {
-                    this.storedSshKey = user.sshPublicKey || '';
-                    this.sshKey = this.storedSshKey;
-                    this.sshKeyHash = user.sshKeyHash || '';
-                    this.currentUser = user;
-                    // currently only 0 or 1 key are supported
-                    this.keyCount = this.sshKey ? 1 : 0;
-                    this.isKeyReadonly = !!this.sshKey;
-                    return this.currentUser;
+                tap((publicKeys: UserSshPublicKey[]) => {
+                    this.alertService.success('artemisApp.userSettings.sshSettingsPage.saveSuccess');
+                    this.sshPublicKeys = publicKeys;
+                    this.keyCount = publicKeys.length;
+                    this.isLoading = false;
                 }),
             )
             .subscribe();
     }
 
+    ngOnDestroy() {
+        this.accountServiceSubscription.unsubscribe();
+    }
+
     saveSshKey() {
-        this.accountService.addSshPublicKey(this.sshKey).subscribe({
-            next: () => {
-                this.alertService.success('artemisApp.userSettings.sshSettingsPage.saveSuccess');
-                this.showSshKey = false;
-                this.storedSshKey = this.sshKey;
+        const newUserSshKey = {
+            id: this.displayedKeyId,
+            label: this.displayedKeyLabel,
+            publicKey: this.displayedSshKey,
+            expiryDate: this.displayedExpiryDate,
+        } as UserSshPublicKey;
+
+        this.accountService.addNewSshPublicKey(newUserSshKey).subscribe({
+            next: (res) => {
+                const newlyCreatedKey = res.body!;
+                this.sshPublicKeys.push(newlyCreatedKey);
+                this.showKeyDetailsView = false;
                 this.keyCount = this.keyCount + 1;
-                this.isKeyReadonly = true;
+                this.inCreateMode = true;
+                this.alertService.success('artemisApp.userSettings.sshSettingsPage.saveSuccess');
             },
             error: () => {
                 this.alertService.error('artemisApp.userSettings.sshSettingsPage.saveFailure');
@@ -81,14 +100,12 @@ export class SshUserSettingsComponent implements OnInit {
     }
 
     deleteSshKey() {
-        this.showSshKey = false;
-        this.accountService.deleteSshPublicKey().subscribe({
+        this.showKeyDetailsView = false;
+        this.accountService.deleteSshPublicKey('ab').subscribe({
             next: () => {
                 this.alertService.success('artemisApp.userSettings.sshSettingsPage.deleteSuccess');
-                this.sshKey = '';
-                this.storedSshKey = '';
                 this.keyCount = this.keyCount - 1;
-                this.isKeyReadonly = false;
+                this.inCreateMode = false;
             },
             error: () => {
                 this.alertService.error('artemisApp.userSettings.sshSettingsPage.deleteFailure');
@@ -98,12 +115,24 @@ export class SshUserSettingsComponent implements OnInit {
     }
 
     cancelEditingSshKey() {
-        this.showSshKey = !this.showSshKey;
-        this.sshKey = this.storedSshKey;
+        this.showKeyDetailsView = false;
     }
 
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
+    editExistingSshKey(key: UserSshPublicKey) {
+        this.showKeyDetailsView = true;
+        this.inCreateMode = false;
+        this.displayedKeyId = key.id;
+        this.displayedSshKey = key.publicKey;
+        this.displayedKeyLabel = key.label;
+        this.displayedKeyHash = key.keyHash;
+        this.displayedExpiryDate = key.expiryDate;
+    }
+
+    createNewSshKey() {
+        this.showKeyDetailsView = true;
+        this.inCreateMode = false;
+        this.displayedKeyId = undefined;
+    }
 
     private setMessageBasedOnOS(os: string): void {
         switch (os) {

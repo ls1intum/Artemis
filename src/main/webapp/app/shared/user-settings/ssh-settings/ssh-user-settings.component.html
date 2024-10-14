@@ -1,10 +1,10 @@
 <h1 jhiTranslate="artemisApp.userSettings.sshSettings">
     <!--SSH Settings-->
 </h1>
-@if (currentUser) {
+@if (!isLoading) {
     <div class="list-group d-block">
         <!-- Initial state: There are no keys -->
-        @if (keyCount === 0 && !showSshKey) {
+        @if (keyCount === 0 && !showKeyDetailsView) {
             <div class="list-group-item px-4 py-4">
                 <div class="mt-4"></div>
                 <h4 class="text-center mb-4 mt-8" jhiTranslate="artemisApp.userSettings.sshSettingsPage.noKeysHaveBeenAdded"></h4>
@@ -21,17 +21,24 @@
                         [btnType]="ButtonType.PRIMARY"
                         [btnSize]="ButtonSize.MEDIUM"
                         [title]="'artemisApp.userSettings.sshSettingsPage.addNewSshKey'"
-                        (onClick)="showSshKey = !showSshKey"
+                        (onClick)="createNewSshKey()"
                     />
                 </div>
             </div>
         }
 
         <!-- Initial state: There are keys -->
-        @if (keyCount > 0 && !showSshKey) {
-            <div class="list-group-item px-4 py-4">
-                <h4 jhiTranslate="artemisApp.userSettings.sshSettingsPage.keysTablePageTitle"></h4>
-
+        @if (keyCount > 0 && !showKeyDetailsView) {
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 jhiTranslate="artemisApp.userSettings.sshSettingsPage.keysTablePageTitle"></h4>
+                    <jhi-button
+                        [btnType]="ButtonType.PRIMARY"
+                        [btnSize]="ButtonSize.SMALL"
+                        [title]="'artemisApp.userSettings.sshSettingsPage.addNewSshKey'"
+                        (onClick)="createNewSshKey()"
+                    />
+                </div>
                 <div class="d-flex flex-wrap mt-4">
                     <p>
                         <span class="mt-4 font-medium" jhiTranslate="artemisApp.userSettings.sshSettingsPage.whatToUseSSHForInfo"> </span>
@@ -48,50 +55,52 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td class="container">
-                                <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.keyName"></div>
-                                <div style="font-size: x-small">
-                                    {{ sshKeyHash }}
-                                </div>
-                            </td>
+                        @for (key of sshPublicKeys; track key; let i = $index) {
+                            <tr>
+                                <td class="container">
+                                    <div>{{ key.label }}</div>
+                                    <div style="font-size: x-small">
+                                        {{ key.keyHash }}
+                                    </div>
+                                </td>
 
-                            <td class="container">
-                                <div class="vertical-center">
-                                    <div class="dropdown" tabindex="1">
-                                        <i class="db2" tabindex="1"></i>
-                                        <a class="dropbtn">
-                                            <fa-icon [icon]="faEllipsis"></fa-icon>
-                                        </a>
-                                        <div class="dropdown-content">
-                                            <button class="btn dropdown-button" (click)="showSshKey = !showSshKey">
-                                                <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.viewExistingSshKey"></span>
-                                            </button>
-                                            <button
-                                                jhiDeleteButton
-                                                class="btn dropdown-button"
-                                                [buttonSize]="ButtonSize.SMALL"
-                                                [renderButtonText]="false"
-                                                (delete)="deleteSshKey()"
-                                                deleteQuestion="artemisApp.userSettings.sshSettingsPage.deleteSshKeyQuestion"
-                                                [dialogError]="dialogError$"
-                                            >
-                                                <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey" class="ms-2"></span>
-                                            </button>
+                                <td class="container">
+                                    <div class="vertical-center">
+                                        <div class="dropdown" tabindex="1">
+                                            <i class="db2" tabindex="1"></i>
+                                            <a class="dropbtn">
+                                                <fa-icon [icon]="faEllipsis"></fa-icon>
+                                            </a>
+                                            <div class="dropdown-content">
+                                                <button class="btn dropdown-button" (click)="editExistingSshKey(key)">
+                                                    <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.viewExistingSshKey"></span>
+                                                </button>
+                                                <button
+                                                    jhiDeleteButton
+                                                    class="btn dropdown-button"
+                                                    [buttonSize]="ButtonSize.SMALL"
+                                                    [renderButtonText]="false"
+                                                    (delete)="deleteSshKey()"
+                                                    deleteQuestion="artemisApp.userSettings.sshSettingsPage.deleteSshKeyQuestion"
+                                                    [dialogError]="dialogError$"
+                                                >
+                                                    <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey" class="ms-2"></span>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
         }
 
-        <!-- Editing existing key and creating new key -->
-        @if (showSshKey) {
+        <!-- Editing existing key and creating a new key -->
+        @if (showKeyDetailsView) {
             <div class="list-group-item">
-                @if (isKeyReadonly) {
+                @if (inCreateMode) {
                     <h4 jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshKeyDetails"></h4>
                 } @else {
                     <h4 jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></h4>
@@ -107,7 +116,7 @@
 
                 <dd>
                     <p style="font-size: smaller" jhiTranslate="artemisApp.userSettings.sshSettingsPage.key"></p>
-                    <textarea style="resize: none" class="form-control" rows="10" [readonly]="isKeyReadonly" [(ngModel)]="sshKey"></textarea>
+                    <textarea style="resize: none" class="form-control" rows="10" [readonly]="!inCreateMode" [(ngModel)]="displayedSshKey"></textarea>
                 </dd>
 
                 <div class="d-flex flex-wrap mb-4">
@@ -117,11 +126,25 @@
                     </p>
                 </div>
 
-                @if (!isKeyReadonly) {
+                <dd class="mb-4">
+                    <p style="font-size: smaller" jhiTranslate="artemisApp.userSettings.sshSettingsPage.label"></p>
+                    <textarea class="form-control small-text-area" rows="1" [(ngModel)]="displayedKeyLabel"></textarea>
+                </dd>
+
+                @if (!inCreateMode) {
+                    <dd class="mb-4">
+                        <p style="font-size: smaller" jhiTranslate="artemisApp.userSettings.sshSettingsPage.fingerPrint"></p>
+                        <div style="font-size: x-small">
+                            {{ displayedKeyHash }}
+                        </div>
+                    </dd>
+                }
+
+                @if (!inCreateMode) {
                     <div class="col col-auto text-right">
                         <div class="btn-group" role="group" aria-label="Actions">
                             <jhi-button
-                                [disabled]="!sshKey"
+                                [disabled]="!displayedSshKey"
                                 [btnType]="ButtonType.PRIMARY"
                                 [btnSize]="ButtonSize.SMALL"
                                 [icon]="faSave"
