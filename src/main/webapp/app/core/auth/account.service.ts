@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
@@ -35,18 +35,16 @@ export interface IAccountService {
 
 @Injectable({ providedIn: 'root' })
 export class AccountService implements IAccountService {
+    private translateService = inject(TranslateService);
+    private sessionStorage = inject(SessionStorageService);
+    private http = inject(HttpClient);
+    private websocketService = inject(JhiWebsocketService);
+    private featureToggleService = inject(FeatureToggleService);
+
     private userIdentityValue?: User;
     private authenticated = false;
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
     private prefilledUsernameValue?: string;
-
-    constructor(
-        private translateService: TranslateService,
-        private sessionStorage: SessionStorageService,
-        private http: HttpClient,
-        private websocketService: JhiWebsocketService,
-        private featureToggleService: FeatureToggleService,
-    ) {}
 
     get userIdentity() {
         return this.userIdentityValue;
@@ -224,6 +222,10 @@ export class AccountService implements IAccountService {
 
     isAdmin(): boolean {
         return this.hasAnyAuthorityDirect([Authority.ADMIN]);
+    }
+
+    isAtLeastTutor(): boolean {
+        return this.hasAnyAuthorityDirect([Authority.ADMIN, Authority.EDITOR, Authority.INSTRUCTOR, Authority.TA]);
     }
 
     isAuthenticated(): boolean {

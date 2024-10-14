@@ -124,13 +124,16 @@ public class ModelingSubmissionService extends SubmissionService {
             throw new AccessForbiddenException();
         }
 
-        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        modelingSubmission.setResults(new ArrayList<>());
-
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
         if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             modelingSubmission.setSubmitted(true);
+        }
+
+        // if athena results are present, then create a new submission on submit
+        // If results exist for this submission, create a new submission by setting the ID to null
+        if (modelingSubmission.getId() != null && resultRepository.existsBySubmissionId(modelingSubmission.getId())) {
+            modelingSubmission.setId(null);
         }
         modelingSubmission = save(modelingSubmission, exercise, user, participation);
         return modelingSubmission;

@@ -26,15 +26,6 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
             SELECT DISTINCT submission
             FROM ModelingSubmission submission
                 LEFT JOIN FETCH submission.results r
-                LEFT JOIN FETCH r.assessor
-            WHERE submission.id = :submissionId
-            """)
-    Optional<ModelingSubmission> findByIdWithEagerResult(@Param("submissionId") Long submissionId);
-
-    @Query("""
-            SELECT DISTINCT submission
-            FROM ModelingSubmission submission
-                LEFT JOIN FETCH submission.results r
                 LEFT JOIN FETCH r.feedbacks
                 LEFT JOIN FETCH r.assessor
             WHERE submission.id = :submissionId
@@ -50,9 +41,6 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
      */
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote", "participation", "participation.results" })
     Optional<ModelingSubmission> findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(Long submissionId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "results" })
-    Optional<ModelingSubmission> findWithEagerResultById(Long submissionId);
 
     @Query("""
             SELECT DISTINCT submission

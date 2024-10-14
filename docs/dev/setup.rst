@@ -29,7 +29,7 @@ following dependencies/tools on your machine:
    We use Java (JDK 21) to develop and run the Artemis application
    server, which is based on `Spring
    Boot <http://projects.spring.io/spring-boot>`__.
-2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__, or `PostgreSQL <https://www.postgresql.org/>`_:
+2. `MySQL Database Server 9 <https://dev.mysql.com/downloads/mysql>`__, or `PostgreSQL 17 <https://www.postgresql.org/>`_:
    Artemis uses Hibernate to store entities in an SQL database and Liquibase to
    automatically apply schema transformations when updating Artemis.
 3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=20.16.0 < 21) to compile
@@ -46,7 +46,8 @@ following dependencies/tools on your machine:
    There are multiple stacks available for the integration with Artemis:
 
    * :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`
-   * :ref:`GitLab and Jenkins <Jenkins and GitLab Setup>`
+   * :ref:`LocalVC and Jenkins <Jenkins and LocalVC Setup>`
+   * :ref:`GitLab and Jenkins <Jenkins and GitLab Setup>` (deprecated)
    * :ref:`GitLab and GitLab CI <GitLab CI and GitLab Setup>` (experimental, not yet production ready)
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -74,6 +75,7 @@ following dependencies/tools on your machine:
    setup/server
    setup/client
    setup/integrated-code-lifecycle
+   setup/jenkins-localvc
    setup/jenkins-gitlab
    setup/gitlabci-gitlab
    setup/aeolus

@@ -120,6 +120,15 @@ describe('LearningPathNavigationService', () => {
         expect(alertServiceErrorSpy).toHaveBeenCalled();
     });
 
+    it('should call alert service on relative learning path loading fail', async () => {
+        jest.spyOn(learningPathApiService, 'getRelativeLearningPathNavigation').mockRejectedValue(Error('Server error'));
+        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+
+        await learningPathNavigationService.loadRelativeLearningPathNavigation(learningPathId, learningPathNavigationDto.currentLearningObject!);
+
+        expect(alertServiceErrorSpy).toHaveBeenCalled();
+    });
+
     it('should set current learning object completion to true', () => {
         learningPathNavigationService.setCurrentLearningObjectCompletion(true);
         expect(learningPathNavigationService.isCurrentLearningObjectCompleted()).toBeTrue();

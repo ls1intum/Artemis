@@ -13,17 +13,19 @@ import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import dayjs from 'dayjs/esm';
 
 export enum ProgrammingLanguage {
-    JAVA = 'JAVA',
-    PYTHON = 'PYTHON',
+    EMPTY = 'EMPTY',
+    ASSEMBLER = 'ASSEMBLER',
     C = 'C',
     HASKELL = 'HASKELL',
+    JAVA = 'JAVA',
+    JAVASCRIPT = 'JAVASCRIPT',
     KOTLIN = 'KOTLIN',
-    VHDL = 'VHDL',
-    ASSEMBLER = 'ASSEMBLER',
-    SWIFT = 'SWIFT',
     OCAML = 'OCAML',
-    EMPTY = 'EMPTY',
+    PYTHON = 'PYTHON',
+    R = 'R',
     RUST = 'RUST',
+    SWIFT = 'SWIFT',
+    VHDL = 'VHDL',
 }
 
 export enum ProjectType {
@@ -112,7 +114,9 @@ export function resetProgrammingForImport(exercise: ProgrammingExercise) {
 export function copyBuildConfigFromExerciseJson(exerciseJson: ProgrammingExerciseBuildConfig): ProgrammingExerciseBuildConfig {
     const buildConfig = new ProgrammingExerciseBuildConfig();
     buildConfig.sequentialTestRuns = exerciseJson.sequentialTestRuns ?? false;
-    buildConfig.checkoutPath = exerciseJson.checkoutPath ?? '';
+    buildConfig.assignmentCheckoutPath = exerciseJson.assignmentCheckoutPath ?? '';
+    buildConfig.solutionCheckoutPath = exerciseJson.solutionCheckoutPath ?? '';
+    buildConfig.testCheckoutPath = exerciseJson.testCheckoutPath ?? '';
     buildConfig.buildPlanConfiguration = exerciseJson.buildPlanConfiguration ?? '';
     buildConfig.checkoutSolutionRepository = exerciseJson.checkoutSolutionRepository ?? false;
     buildConfig.timeoutSeconds = exerciseJson.timeoutSeconds ?? 0;

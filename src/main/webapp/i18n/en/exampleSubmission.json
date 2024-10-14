@@ -10,13 +10,13 @@
                 "title": "Legend",
                 "positiveScore": "Positive score",
                 "negativeScore": "Negative score",
-                "incorrectAssessment": "Incorrect assessment️",
+                "incorrectAssessment": "Incorrect assessment",
                 "feedbackWithoutScore": "Feedback without score"
             },
             "feedback": {
                 "CORRECT": "Correct assessment 👍",
                 "INCORRECT_SCORE": "Incorrect score",
-                "UNNECESSARY_FEEDBACK": "Unneccessary feedback",
+                "UNNECESSARY_FEEDBACK": "Unnecessary feedback",
                 "MISSING_GRADING_INSTRUCTION": "Missing assessment instruction",
                 "INCORRECT_GRADING_INSTRUCTION": "Incorrect assessment instruction",
                 "EMPTY_NEGATIVE_FEEDBACK": "Feedback is required for negative score"
@@ -40,7 +40,7 @@
             "editExampleSubmission": "Edit example submission",
             "modelElementHint": "Hint: Model elements which assessment you missed are highlighted in blue.",
             "textHint": "Hint: Text blocks that you need to assess are highlighted in blue.",
-            "editExampleSubmissionConfirmationQuestion": "Are you sure you want to edit the example submission? The current assessment will be permanently deleted and you have to assess the submission again.",
+            "editExampleSubmissionConfirmationQuestion": "Are you sure you want to edit the example submission? The current assessment will be permanently deleted, and you have to assess the submission again.",
             "updateExampleSubmission": "Update example submission",
             "problemStatement": "Problem Statement",
             "sampleSolution": "Example Solution",

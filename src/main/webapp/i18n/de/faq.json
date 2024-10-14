@@ -1,0 +1,28 @@
+{
+    "artemisApp": {
+        "faq": {
+            "home": {
+                "title": "FAQ",
+                "createLabel": "FAQ erstellen",
+                "filterLabel": "Filter",
+                "createOrEditLabel": "FAQ erstellen oder bearbeiten"
+            },
+            "created": "Das FAQ wurde erfolgreich erstellt",
+            "updated": "Das FAQ wurde erfolgreich aktualisiert",
+            "deleted": "Das FAQ wurde erfolgreich gelöscht",
+            "delete": {
+                "question": "Soll die FAQ <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Namen des FAQ zur Bestätigung ein."
+            },
+
+            "table": {
+                "questionTitle": "Fragentitel",
+                "questionAnswer": "Antwort auf die Frage",
+                "categories": "Kategorien"
+            },
+            "course": "Kurs",
+            "noExisting": "Momentan existiert für diesen Kurs noch kein FAQ.",
+            "noMatching": "Es gibt kein FAQ, das die Kombination aus Filter- und Suchkriterien erfüllt."
+        }
+    }
+}

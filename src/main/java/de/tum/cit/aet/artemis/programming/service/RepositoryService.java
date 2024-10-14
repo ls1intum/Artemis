@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.service.localvc.VcsAccessLogService;
 
 /**
  * Service that provides utilities for managing files in a git repository.
@@ -59,11 +60,14 @@ public class RepositoryService {
 
     private final ProfileService profileService;
 
+    private final Optional<VcsAccessLogService> vcsAccessLogService;
+
     private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, ProfileService profileService) {
+    public RepositoryService(GitService gitService, ProfileService profileService, Optional<VcsAccessLogService> vcsAccessLogService) {
         this.gitService = gitService;
         this.profileService = profileService;
+        this.vcsAccessLogService = vcsAccessLogService;
     }
 
     /**
@@ -244,27 +248,6 @@ public class RepositoryService {
         byte[] fileInBytes = org.apache.commons.io.IOUtils.toByteArray(inputStream);
         inputStream.close();
         return fileInBytes;
-    }
-
-    /**
-     * Get the mimetype of a single file from the repository
-     *
-     * @param repository in which the requested file is located.
-     * @param filename   of the file to be probed.
-     * @return The mimetype of the file if found or throw an exception.
-     * @throws IOException if the file can't be found, is corrupt, etc.
-     */
-    public String getFileType(Repository repository, String filename) throws IOException {
-        Optional<File> file = gitService.getFileByName(repository, filename);
-        if (file.isEmpty()) {
-            throw new FileNotFoundException();
-        }
-        String type = Files.probeContentType(file.get().toPath());
-        // fallback to text/plain in case content type can not be determined
-        if (type == null) {
-            return "text/plain";
-        }
-        return type;
     }
 
     /**
@@ -468,11 +451,15 @@ public class RepositoryService {
      *
      * @param repository for which to execute the commit.
      * @param user       the user who has committed the changes in the online editor
+     * @param domainId   the id of the domain Object (participation) owning the repository
      * @throws GitAPIException if the staging/committing process fails.
      */
-    public void commitChanges(Repository repository, User user) throws GitAPIException {
+    public void commitChanges(Repository repository, User user, Long domainId) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, "Changes by Online Editor", true, user);
+        if (vcsAccessLogService.isPresent()) {
+            vcsAccessLogService.get().storeCodeEditorAccessLog(repository, user, domainId);
+        }
     }
 
     /**
@@ -511,8 +498,6 @@ public class RepositoryService {
     public ResponseEntity<byte[]> getFileFromRepository(String filename, Repository repository) throws IOException {
         byte[] out = getFile(repository, filename);
         HttpHeaders responseHeaders = new HttpHeaders();
-        var contentType = getFileType(repository, filename);
-        responseHeaders.add("Content-Type", contentType);
         // Prevent the file from being interpreted as HTML by the browser when opened directly:
         responseHeaders.setContentDisposition(ContentDisposition.builder("attachment").filename(filename).build());
         return new ResponseEntity<>(out, responseHeaders, HttpStatus.OK);

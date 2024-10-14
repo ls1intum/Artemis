@@ -1,8 +1,9 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { metisAnswerPostToCreateUser1, metisResolvingAnswerPostUser1 } from '../../helpers/sample/metis-sample-data';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('AnswerPost Service', () => {
     let service: AnswerPostService;
@@ -10,7 +11,8 @@ describe('AnswerPost Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(AnswerPostService);
         httpMock = TestBed.inject(HttpTestingController);

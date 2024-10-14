@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.modeling.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -26,14 +27,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -53,8 +54,6 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
 
 /**
  * REST controller for managing ModelingSubmission.
@@ -71,8 +70,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private static final String GET_200_SUBMISSIONS_REASON = "";
-
     private final ModelingSubmissionService modelingSubmissionService;
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
@@ -85,7 +82,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final PlagiarismService plagiarismService;
 
-    public ModelingSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, ModelingSubmissionService modelingSubmissionService,
+    public ModelingSubmissionResource(SubmissionRepository submissionRepository, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository,
             ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService) {
@@ -129,7 +126,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @PutMapping("exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, @Valid @RequestBody ModelingSubmission modelingSubmission) {
-        log.debug("REST request to update modeling submission: {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() == null) {
             return createModelingSubmission(exerciseId, modelingSubmission);
         }
@@ -170,8 +166,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return a list of modeling submissions
      */
     @ResponseStatus(HttpStatus.OK)
-    @ApiResponses({ @ApiResponse(code = 200, message = GET_200_SUBMISSIONS_REASON, response = ModelingSubmission.class, responseContainer = "List"),
-            @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON), })
     @GetMapping("exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Submission>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
@@ -340,12 +334,25 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // make sure only the latest submission and latest result is sent to the client
         participation.setSubmissions(null);
-        participation.setResults(null);
+        if (ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
+            participation.setResults(null);
+        }
 
         // do not send the result to the client if the assessment is not finished
         if (modelingSubmission.getLatestResult() != null
                 && (modelingSubmission.getLatestResult().getCompletionDate() == null || modelingSubmission.getLatestResult().getAssessor() == null)) {
             modelingSubmission.setResults(new ArrayList<>());
+        }
+
+        if (!ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
+            // We want to have the preliminary feedback before the assessment due date too
+            Set<Result> participationResults = participation.getResults();
+            if (participationResults != null) {
+                List<Result> athenaResults = participationResults.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+                modelingSubmission.setResults(athenaResults);
+                Set<Result> athenaResultsSet = new HashSet<>(athenaResults);
+                participation.setResults(athenaResultsSet);
+            }
         }
 
         if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {

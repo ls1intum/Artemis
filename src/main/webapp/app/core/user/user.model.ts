@@ -16,6 +16,7 @@ export class User extends Account {
     public vcsAccessToken?: string;
     public vcsAccessTokenExpiryDate?: string;
     public sshPublicKey?: string;
+    public sshKeyHash?: string;
     public irisAccepted?: dayjs.Dayjs;
 
     constructor(
@@ -66,6 +67,7 @@ export class UserPublicInfoDTO {
     public firstName?: string;
     public lastName?: string;
     public email?: string;
+    public imageUrl?: string;
     public isInstructor?: boolean;
     public isEditor?: boolean;
     public isTeachingAssistant?: boolean;

@@ -32,8 +32,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.cit.aet.artemis.assessment.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
@@ -43,13 +41,13 @@ import de.tum.cit.aet.artemis.assessment.repository.BonusRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
-import de.tum.cit.aet.artemis.bonus.BonusFactory;
+import de.tum.cit.aet.artemis.assessment.util.BonusFactory;
+import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
-import de.tum.cit.aet.artemis.core.repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -58,36 +56,39 @@ import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseTestService;
-import de.tum.cit.aet.artemis.exercise.quiz.QuizExerciseFactory;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
-import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
-import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
-import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
-import de.tum.cit.aet.artemis.team.TeamUtilService;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.util.ExamPrepareExercisesTestUtil;
-import de.tum.cit.aet.artemis.util.LocalRepository;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -96,10 +97,10 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
     private static final Logger log = LoggerFactory.getLogger(ExamParticipationIntegrationTest.class);
 
     @Autowired
-    private QuizExerciseRepository quizExerciseRepository;
+    private QuizExerciseTestRepository quizExerciseRepository;
 
     @Autowired
-    private QuizSubmissionRepository quizSubmissionRepository;
+    private QuizSubmissionTestRepository quizSubmissionRepository;
 
     @Autowired
     private QuizSubmissionService quizSubmissionService;
@@ -117,13 +118,13 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
     private StudentExamService studentExamService;
 
     @Autowired
-    private StudentExamRepository studentExamRepository;
+    private StudentExamTestRepository studentExamRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
     private ParticipationTestRepository participationTestRepository;
@@ -184,7 +185,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         gitlabRequestMockProvider.enableMockingOfRequests();
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
-        participantScoreScheduleService.activate();
     }
 
     @AfterEach
@@ -459,8 +459,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         log.debug("testGetStatsForExamAssessmentDashboard: step 1 done");
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
-        User examTutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
-        User examTutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+        User examTutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User examTutor2 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
 
         var examVisibleDate = ZonedDateTime.now().minusMinutes(5);
         var examStartDate = ZonedDateTime.now().plusMinutes(5);
@@ -498,7 +498,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
             return;
         }
 
-        var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).isEmpty();
 
         log.debug("testGetStatsForExamAssessmentDashboard: step 3 done");
@@ -624,7 +624,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         log.debug("testGetStatsForExamAssessmentDashboard: step 10 done");
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).hasSize(studentExams.size() * 5);
 
         log.debug("testGetStatsForExamAssessmentDashboard: step 11 done");
@@ -655,7 +655,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
         log.debug("testGetStatsForExamAssessmentDashboard: step 13 done");
 
-        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).isEmpty();
         if (numberOfCorrectionRounds == 2) {
             lockAndAssessForSecondCorrection(exam, course, studentExams, exercisesInExam, numberOfCorrectionRounds);
@@ -667,8 +667,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
     private void lockAndAssessForSecondCorrection(Exam exam, Course course, List<StudentExam> studentExams, List<Exercise> exercisesInExam, int numberOfCorrectionRounds)
             throws Exception {
         // Lock all submissions
-        User examInstructor = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
-        User examTutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+        User examInstructor = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        User examTutor2 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
 
         for (var exercise : exercisesInExam) {
             for (var participation : exercise.getStudentParticipations()) {
@@ -721,7 +721,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         });
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).hasSize(studentExams.size() * 5);
 
         // Finish assessment of all submissions
@@ -746,7 +746,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         assertThat(stats.getNumberOfComplaints()).isZero();
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
 
-        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/locked-submissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).isEmpty();
     }
 
@@ -966,7 +966,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         // Compare StudentResult with the generated results
         for (var studentResult : examScores.studentResults()) {
             // Find the original user using the id in StudentResult
-            User originalUser = userRepository.findByIdElseThrow(studentResult.userId());
+            User originalUser = userTestRepository.findByIdElseThrow(studentResult.userId());
             StudentExam studentExamOfUser = studentExams.stream().filter(studentExam -> studentExam.getUser().equals(originalUser)).findFirst().orElseThrow();
 
             assertThat(studentResult.name()).isEqualTo(originalUser.getName());
@@ -1108,12 +1108,12 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
 
         Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
-        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User tutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         Long teamTextExerciseId = teamExercise.getId();
         Long team1Id = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
-        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
-        User student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
-        User tutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
+        User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User student3 = userTestRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
+        User tutor2 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
         Long team2Id = teamUtilService.createTeam(Set.of(student2, student3), tutor2, teamExercise, TEST_PREFIX + "team2").getId();
 
         participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student1, 10.0, 10.0, 50, true);

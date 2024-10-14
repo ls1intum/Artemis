@@ -77,6 +77,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -88,6 +89,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
@@ -112,7 +114,6 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -513,7 +514,7 @@ public class ExamResource {
      */
     @GetMapping("exams/active")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Exam>> getAllActiveExams(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<Exam>> getAllActiveExams(Pageable pageable) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         Page<Exam> page = examService.getAllActiveExams(pageable, user);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
@@ -1171,13 +1172,13 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/:courseId/exams/:examId/lockedSubmissions Get locked submissions for exam for user
+     * GET /courses/:courseId/exams/:examId/locked-submissions Get locked submissions for exam for user
      *
      * @param courseId - the id of the course
      * @param examId   - the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("courses/{courseId}/exams/{examId}/lockedSubmissions")
+    @GetMapping("courses/{courseId}/exams/{examId}/locked-submissions")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Submission>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
@@ -1320,5 +1321,20 @@ public class ExamResource {
                 analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses, analyzeSessionsForTheSameStudentExamWithDifferentBrowserFingerprints,
                 analyzeSessionsIpOutsideOfRange);
         return ResponseEntity.ok(examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId, options, Optional.ofNullable(ipSubnet)));
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/deletion-summary : Get a summary of the deletion of an exam.
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body a summary of the deletion of the exam
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/deletion-summary")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<ExamDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get deletion summary for exam : {}", examId);
+        return ResponseEntity.ok(examDeletionService.getExamDeletionSummary(examId));
     }
 }

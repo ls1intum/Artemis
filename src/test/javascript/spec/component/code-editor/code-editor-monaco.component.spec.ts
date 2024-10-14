@@ -4,7 +4,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { Annotation, CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MockComponent } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -48,13 +47,8 @@ describe('CodeEditorMonacoComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorModule],
-            declarations: [
-                CodeEditorMonacoComponent,
-                MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
-                MockComponent(CodeEditorHeaderComponent),
-                MonacoEditorComponent,
-            ],
+            imports: [ArtemisTestModule, MonacoEditorComponent],
+            declarations: [CodeEditorMonacoComponent, MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockComponent(CodeEditorHeaderComponent)],
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },

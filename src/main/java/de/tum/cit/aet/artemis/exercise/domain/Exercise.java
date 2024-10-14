@@ -562,8 +562,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             boolean ratedOrPractice = Boolean.TRUE.equals(result.isRated()) || participation.isPracticeMode();
             boolean noProgrammingAndAssessmentOver = !isProgrammingExercise && isAssessmentOver;
             // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
-            boolean programmingAfterAssessmentOrAutomatic = isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.isAutomatic());
-            if (ratedOrPractice && (noProgrammingAndAssessmentOver || programmingAfterAssessmentOrAutomatic)) {
+            boolean programmingAfterAssessmentOrAutomaticOrAthena = isProgrammingExercise
+                    && ((result.isManual() && isAssessmentOver) || result.isAutomatic() || result.isAthenaBased());
+            if (ratedOrPractice && (noProgrammingAndAssessmentOver || programmingAfterAssessmentOrAutomaticOrAthena)) {
                 // take the first found result that fulfills the above requirements
                 // or
                 // take newer results and thus disregard older ones
@@ -613,7 +614,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
         if (!isAssessmentOver) {
             // This allows the showing of preliminary feedback in case the assessment due date is set before its over.
-            if (this instanceof TextExercise) {
+            if (this instanceof TextExercise || this instanceof ModelingExercise) {
                 return participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).collect(Collectors.toSet());
             }
             return Set.of();

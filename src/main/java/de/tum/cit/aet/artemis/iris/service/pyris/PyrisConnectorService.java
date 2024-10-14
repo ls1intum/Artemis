@@ -19,12 +19,13 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisModelDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
-import de.tum.cit.aet.artemis.iris.web.PublicPyrisStatusUpdateResource;
+import de.tum.cit.aet.artemis.iris.web.open.PublicPyrisStatusUpdateResource;
 
 /**
  * This service connects to the Python implementation of Iris (called Pyris).
@@ -50,13 +51,14 @@ public class PyrisConnectorService {
     }
 
     /**
-     * Requests all available models from Pyris
+     * Requests all available variants from Pyris for a feature
      *
-     * @return A list of available Models as IrisModelDTO
+     * @param feature The feature to get the variants for
+     * @return A list of available Models as IrisVariantDTO
      */
-    public List<PyrisModelDTO> getOfferedModels() throws PyrisConnectorException {
+    public List<PyrisVariantDTO> getOfferedVariants(IrisSubSettingsType feature) throws PyrisConnectorException {
         try {
-            var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/models", PyrisModelDTO[].class);
+            var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/pipelines/" + feature.name() + "/variants", PyrisVariantDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
                 throw new PyrisConnectorException("Could not fetch offered models");
             }

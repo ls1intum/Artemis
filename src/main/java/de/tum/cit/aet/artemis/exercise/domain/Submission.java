@@ -162,7 +162,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @NotNull
     private List<Result> filterNonAutomaticResults() {
-        return results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaAutomatic())).toList();
+        return results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaBased())).toList();
     }
 
     /**
@@ -188,8 +188,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @JsonIgnore
     public void removeAutomaticResults() {
-        this.results = this.results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaAutomatic()))
-                .collect(Collectors.toCollection(ArrayList::new));
+        this.results = this.results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
@@ -214,17 +213,17 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     @JsonIgnore
     public List<Result> getManualResults() {
-        return results.stream().filter(result -> result != null && !result.isAutomatic() && !result.isAthenaAutomatic()).collect(Collectors.toCollection(ArrayList::new));
+        return results.stream().filter(result -> result != null && !result.isAutomatic() && !result.isAthenaBased()).collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
      * This method is necessary to ignore Athena results in the assessment view
      *
-     * @return non athena automatic results including null results
+     * @return non athena automatic results excluding null results
      */
     @JsonIgnore
     public List<Result> getNonAthenaResults() {
-        return results.stream().filter(result -> result == null || !result.isAthenaAutomatic()).collect(Collectors.toCollection(ArrayList::new));
+        return results.stream().filter(result -> result != null && !result.isAthenaBased()).collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**

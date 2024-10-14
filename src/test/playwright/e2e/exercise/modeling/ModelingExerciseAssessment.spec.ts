@@ -45,6 +45,9 @@ test.describe('Modeling Exercise Assessment', () => {
 
         test('Tutor can assess a submission', async ({ login, courseManagement, courseAssessment, exerciseAssessment, modelingExerciseAssessment }) => {
             await login(tutor, '/course-management');
+            await courseManagement.openSubmissionsForExerciseAndCourse(course.id!, modelingExercise.id!);
+            await courseManagement.checkIfStudentSubmissionExists(studentOne.username);
+            await login(tutor, '/course-management');
             await courseManagement.openAssessmentDashboardOfCourse(course.id!);
             await courseAssessment.clickExerciseDashboardButton();
             await exerciseAssessment.clickHaveReadInstructionsButton();

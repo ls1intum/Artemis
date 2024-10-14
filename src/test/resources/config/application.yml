@@ -68,6 +68,10 @@ artemis:
                     default: "~~invalid~~"
                 rust:
                     default: "~~invalid~~"
+                javascript:
+                    default: "~~invalid~~"
+                r:
+                    default: "~~invalid~~"
 
 spring:
     application:
@@ -177,7 +181,7 @@ zonky:
             type: H2  # Alternatives: H2 / MYSQL / POSTGRES
             postgres:
                 docker:
-                    image: "postgres:16.4-alpine"
+                    image: "postgres:17.0-alpine"
                     tmpfs:
                         enabled: true
                 server:

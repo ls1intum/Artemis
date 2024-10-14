@@ -172,10 +172,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "ssh_public_key_hash")
     private final String sshPublicKeyHash = null;
 
-    /**
-     * Word "GROUPS" is being added as a restricted word starting in MySQL 8.0.2
-     * Workaround: Annotation @Column(name = "`groups`") escapes this word using backticks.
-     */
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "user_groups", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "user_groups")
@@ -564,5 +560,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Nullable
     public String getSshPublicKey() {
         return sshPublicKey;
+    }
+
+    @Nullable
+    public @Size(max = 100) String getSshPublicKeyHash() {
+        return sshPublicKeyHash;
     }
 }

@@ -25,22 +25,6 @@ public interface PostRepository extends ArtemisJpaRepository<Post, Long>, JpaSpe
 
     List<Post> findPostsByAuthorId(long authorId);
 
-    /**
-     * find all posts of a user in a course
-     * currently only used for testing
-     *
-     * @param authorId id of the user
-     * @param courseId id of the course
-     * @return a list of posts
-     */
-    @Query("""
-            SELECT p
-            FROM Post p
-            WHERE p.author.id =:authorId
-                AND p.conversation.course.id = :courseId
-            """)
-    List<Post> findPostsByAuthorIdAndCourseId(@Param("authorId") long authorId, @Param("courseId") long courseId);
-
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByConversationId(Long conversationId);
@@ -61,4 +45,8 @@ public interface PostRepository extends ArtemisJpaRepository<Post, Long>, JpaSpe
     default Post findPostOrMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {
         return getValueElseThrow(findById(postId), postId);
     }
+
+    List<Post> findAllByConversationId(Long conversationId);
+
+    List<Post> findAllByCourseId(Long courseId);
 }

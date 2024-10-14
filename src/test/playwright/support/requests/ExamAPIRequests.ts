@@ -148,12 +148,12 @@ export class ExamAPIRequests {
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
         exerciseGroup.isMandatory = mandatory;
-        const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exerciseGroups`, { data: exerciseGroup });
+        const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exercise-groups`, { data: exerciseGroup });
         return response.json();
     }
 
     async deleteExerciseGroupForExam(exam: Exam, exerciseGroup: ExerciseGroup) {
-        await this.page.request.delete(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exerciseGroups/${exerciseGroup.id}`);
+        await this.page.request.delete(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exercise-groups/${exerciseGroup.id}`);
     }
 
     /**
@@ -162,6 +162,15 @@ export class ExamAPIRequests {
      */
     async generateMissingIndividualExams(exam: Exam) {
         const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/generate-missing-student-exams`);
+        return await response.json();
+    }
+
+    /**
+     * Get all student-exams of an exam
+     * @param exam the exam for which the student-exams are fetched
+     */
+    async getAllStudentExams(exam: Exam) {
+        const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams`);
         return await response.json();
     }
 

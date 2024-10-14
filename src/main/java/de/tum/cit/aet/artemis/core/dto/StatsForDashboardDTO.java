@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+// TODO: convert to record
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StatsForDashboardDTO {
 

@@ -92,7 +92,7 @@
             "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein. Du kannst aber erst nach dem Startdatum an der Aufgabe teilnehmen.",
             "noReleaseAndStartDateWarning": "Du hast kein Veröffentlichungs- und Startdatum definiert, daher wird die Aufgabe sofort veröffentlicht und Studierende können direkt an der Aufgabe teilnehmen.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
-            "unsavedChangesProjectTypeChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll der Projekt Typ wirklich geändert werden?",
+            "unsavedChangesProjectTypeChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll der Projekttyp wirklich geändert werden?",
             "templateRepositoryUri": "Vorlagen-Repository-Url",
             "testRepositoryUri": "Test-Repository-Url",
             "solutionRepositoryUri": "Lösungs-Repository-Url",
@@ -106,7 +106,7 @@
             "buildplan": "Build-Plan",
             "buildConfiguration": "Build Konfiguration",
             "buildPlanEditor": "Build-Plan-Editor",
-            "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
+            "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen, der hier bearbeitet werden kann.",
             "customizeBuildPlan": "Build Skript anpassen",
             "customizeBuildPlanWithAeolus": "Build Skript anpassen",
             "revertToTemplateBuildPlan": "Artemis führt das folgende Build-Skript für jede Einreichung in einem Docker-Container aus. Du kannst das Build Skript anpassen und auf seinen Standardwert zurücksetzen, indem du die Schaltfläche Zurücksetzen oben verwendest.",
@@ -115,6 +115,23 @@
             "customizeDockerImage": "Du kannst das Docker-Image anpassen. Stelle sicher, dass du es in amd64 und arm64 bereitstellst und alle Build Abhängigkeiten enthalten sind, um eine kurze Build Dauer zu gewährleisten.",
             "parameters": "Parameter",
             "dockerImage": "Docker Image",
+            "checkoutPath": {
+                "title": "Checkout-Pfad",
+                "customize": "Sie können den Checkout-Pfad anpassen, in dem die Repositories im Docker-Container geklont werden. Stellen Sie sicher, dass Sie einen gültigen absoluten UNIX-Pfad angeben. Der Standardpfad ist /var/tmp.",
+                "alert": "Checkout-Pfade dürfen nur Wörter, '_', '-', und '/' enthalten, dürfen jedoch nicht mit einem '/' beginnen oder enden. Die Pfade müssen für jedes Repository unterschiedlich sein.",
+                "edit": "Checkout-Pfad der Repositories bearbeiten",
+                "assignment": "Checkout-Pfad für das Aufgaben-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
+                "solution": "Checkout-Pfad für das Lösungs-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
+                "tests": "Checkout-Pfad für das Tests-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
+                "invalid": "Ungültige Checkout-Pfade",
+                "warning": "Das Ändern der Checkout-Pfade kann zu Build-Fehlern führen. Einige Programmiersprachen verlassen sich auf Docker-Images, die bestimmte Verzeichnisstrukturen für den Code voraussetzen.",
+                "warningBuildScript": "Stellen Sie sicher, dass Sie das Build-Skript und die Repositories entsprechend anpassen."
+            },
+            "timeout": {
+                "title": "Maximale Build-Dauer in Sekunden ",
+                "customize": "Setze den Wert auf 0, um den Standardwert zu verwenden. Stelle sicher, dass du einen gültigen ganzzahligen Wert angibst. Die Einheit ist Sekunden. Beachte, dass dieser Wert durch das von den Administratoren festgelegte maximale Limit (Standard ist 240s) überschrieben werden kann.",
+                "alert": "Das Timeout muss ein gültiger ganzzahliger Wert sein."
+            },
             "workdir": "Verzeichnis",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
@@ -134,7 +151,7 @@
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "onlineIde": "Online IDE",
-            "showTestNamesToStudents": "Zeige die Test Namen den Studierenden",
+            "showTestNamesToStudents": "Zeige die Testnamen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",
             "noVersionControlAndContinuousIntegrationAvailable": "Setup ohne Verbindung zur VCS und CI",
@@ -152,7 +169,7 @@
             },
             "maxStaticCodeAnalysisPenalty": {
                 "title": "Max Strafe bei statischer Code-Analyse",
-                "description": "Wähle einen Wert zwischen 0 und 100 Prozent oder fülle das Feld nicht aus. Wenn für eine zehn-Punkte-Aufgabe die maximale Strafe 20% beträgt, werden maximal zwei Punkte durch Probleme, die von der statischen Analyse gefunden wurden, abgezogen. Wenn kein Wert angegeben wird existiert kein Limit für den Punkteabzug."
+                "description": "Wähle einen Wert zwischen 0 und 100 Prozent oder fülle das Feld nicht aus. Wenn für eine zehn-Punkte-Aufgabe die maximale Strafe 20 % beträgt, werden maximal zwei Punkte durch Probleme, die von der statischen Analyse gefunden wurden, abgezogen. Wenn kein Wert angegeben wird existiert kein Limit für den Punkteabzug."
             },
             "recreateBuildPlans": {
                 "title": "Build-Pläne neu erstellen",
@@ -166,11 +183,11 @@
             },
             "importFromFile": {
                 "title": "Programmieraufgabe aus Datei importieren",
-                "description": "Die Datei muss ein Zip-Archiv sein, das die Aufgabenkonfiguration im JSON Format auf der obersten Ebene enthält und für jedes Repository (template, solution, tests) ein Zip Archiv enthält. Eine solche Datei kann mit dem Aufgabenexport erstellt werden.",
+                "description": "Die Datei muss ein Zip-Archiv sein, das die Aufgabenkonfiguration im JSON-Format auf der obersten Ebene enthält und für jedes Repository (template, solution, tests) ein Zip-Archiv enthält. Eine solche Datei kann mit dem Aufgabenexport erstellt werden.",
                 "uploadForImport": "Programmieraufgabe für den Import hochladen",
                 "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
                 "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Bitte wähle eine Datei mit der Endung .zip.",
-                "noExerciseDetailsJsonAtRootLevel": "Es konnte keine .json-Datei im Wurzelverzeichnis des Zip-Archivs gefunden werden, die die Aufgabendetails enthält.",
+                "noExerciseDetailsJsonAtRootLevel": "Es konnte keine JSON-Datei im Wurzelverzeichnis des Zip-Archivs gefunden werden, die die Aufgabendetails enthält.",
                 "notSupportedProgrammingLanguage": "Die Programmiersprache {{ programmingLanguage }} wird noch nicht für den Import aus einer Datei unterstützt.",
                 "GccNotSupportedForC": "Der Projekttyp GCC wird noch nicht für den Import aus einer Datei unterstützt."
             },
@@ -197,18 +214,18 @@
             "extractTasksFromProblemStatementWarning": "Nur zu Testzwecken: Extrahiere alle Aufgaben und Tests aus der Aufgabenstellung.",
             "extractTasksFromProblemStatementSuccess": "{{numberTasks}} extrahierte Aufgaben mit {{numberTestCases}} Tests geladen:\n{{detailedResult}}",
             "extractTasksFromProblemStatementTitle": "Lade extrahierte Aufgaben",
-            "deleteTasksAndSolutionEntriesSuccess": "Alle Aufgaben und Lösungs Codeschnipsel wurden gelöscht.",
-            "deleteTasksAndSolutionEntriesWarning": "Nur zu Testzwecken: Lösche alle Aufgaben und Lösungs Codeschnipsel.",
+            "deleteTasksAndSolutionEntriesSuccess": "Alle Aufgaben und Lösungs-Codeschnipsel wurden gelöscht.",
+            "deleteTasksAndSolutionEntriesWarning": "Nur zu Testzwecken: Lösche alle Aufgaben und Lösungs-Codeschnipsel.",
             "deleteTasksAndSolutionEntriesTitle": "Lösche Aufgaben",
-            "generateCodeHintsTooltip": "Generiert Code Hinweise für alle Tasks dieser Aufgabe unter Verwendung der bereits erstellten Lösungs Codeschnipsel",
+            "generateCodeHintsTooltip": "Generiert Code Hinweise für alle Tasks dieser Aufgabe unter Verwendung der bereits erstellten Lösungs-Codeschnipsel",
             "generateCodeHintsTitle": "Generiere Code Hinweise",
             "generateCodeHintsSuccess": "Code Hinweise wurden erfolgreich generiert",
-            "createStructuralSolutionEntriesTooltip": "Erstellt Lösungs Codeschnipsel für alle strukturellen Tests dieser Aufgabe.",
-            "createStructuralSolutionEntriesTitle": "Erstelle strukturelle Lösungs Codeschnipsel",
-            "createStructuralSolutionEntriesSuccess": "Strukturelle Lösungs Codeschnipsel wurden erfolgreich erstellt",
-            "createBehavioralSolutionEntriesTooltip": "Erstellt Lösungs Codeschnipsel für alle Verhaltenstests dieser Aufgabe.",
-            "createBehavioralSolutionEntriesTitle": "Erstelle verhaltensweise Lösungs Codeschnipsel",
-            "createBehavioralSolutionEntriesSuccess": "Verhaltensweise Lösungs Codeschnipsel wurden erfolgreich erstellt",
+            "createStructuralSolutionEntriesTooltip": "Erstellt Lösungs-Codeschnipsel für alle strukturellen Tests dieser Aufgabe.",
+            "createStructuralSolutionEntriesTitle": "Erstelle strukturelle Lösungs-Codeschnipsel",
+            "createStructuralSolutionEntriesSuccess": "Strukturelle Lösungs-Codeschnipsel wurden erfolgreich erstellt",
+            "createBehavioralSolutionEntriesTooltip": "Erstellt Lösungs-Codeschnipsel für alle Verhaltenstests dieser Aufgabe.",
+            "createBehavioralSolutionEntriesTitle": "Erstelle verhaltensweise Lösungs-Codeschnipsel",
+            "createBehavioralSolutionEntriesSuccess": "Verhaltensweise Lösungs-Codeschnipsel wurden erfolgreich erstellt",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
@@ -228,7 +245,7 @@
                 "templateFulfillsTest": "Das Template-Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem mit dem Template-Repository oder den Testfällen hinweisen."
             },
             "testCaseAnalysis": {
-                "invalidTestCases": "{{number}} Testfälle sind Teil des Aufgabenstellung aber können nicht im Test-Repository gefunden werden:",
+                "invalidTestCases": "{{number}} Testfälle sind Teil der Aufgabenstellung aber können nicht im Test-Repository gefunden werden:",
                 "missingTestCases": "{{number}} Testfälle wurde im Test-Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
                 "issues": "Testfallprobleme.",
                 "ok": "Testfälle ok.",
@@ -301,7 +318,7 @@
                     },
                     "testCasePoints": {
                         "title": "Punkte-Verteilung",
-                        "description": "Der prozentuale Anteil von verteilten Punkten für ein bestimmten Testfall. 100% in dem Diagramm steht für volle Punktzahl (100%) bei <b>allen</b> Studierenden. Das Diagramm zeigt nur die positiven Punkte erzielt durch erfüllte Testfälle, ungeachtet möglicher Punktabzüge durch statische Code-Analyse.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen.",
+                        "description": "Der prozentuale Anteil von verteilten Punkten für einen bestimmten Testfall. 100 % in dem Diagramm steht für volle Punktzahl (100 %) bei <b>allen</b> Studierenden. Das Diagramm zeigt nur die positiven Punkte erzielt durch erfüllte Testfälle, ungeachtet möglicher Punktabzüge durch statische Code-Analyse.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen.",
                         "points": "Punkte",
                         "pointsTooltip": "Punkte: {{ percentage }}% aller Punkte."
                     },
@@ -329,7 +346,7 @@
                     "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
                     "totalItems": "Insgesamt {{count}} Elemente",
-                    "error": "Beim Laden des Feedback ist ein Fehler aufgetreten."
+                    "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten."
                 },
                 "help": {
                     "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",
@@ -338,8 +355,8 @@
                     "maxPenalty": "Der maximale Punktabzug über alle Issues einer/s Studierenden in dieser Kategorie.",
                     "detectedIssues": "Zeigt die Anzahl an Studierenden je Höhe der erkannten Issues in einer Kategorie, beginnend bei einem Issue. Die Balken werden rot, sobald der durch maxPenalty definierte Grenzwert der Kategorie überschritten wird.",
                     "weight": "Gewichtung: Die Gewichtung eines Testfalls bestimmt die Punkte, die Studierende für das Bestehen des Testfalls erhält. Die verteilten Punkte eines Testfalls sind proportional zu dessen Gewichtung und werden als ein Anteil der vollen Punktzahl der Aufgabe berechnet.",
-                    "bonusMultiplier": "Bonusmultiplikator: Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100% führen.",
-                    "bonusPoints": "Bonuspunkte: Zusätzliche Punkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100% führen.",
+                    "bonusMultiplier": "Bonusmultiplikator: Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100 % führen.",
+                    "bonusPoints": "Bonuspunkte: Zusätzliche Punkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100 % führen.",
                     "visibility": "Feedback und Punkte für Testfälle, die mit „Nach Einreichungsfrist“ markiert sind, werden erst danach für Studierende angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
                     "visibilityExam": "Feedback und Punkte für Testfälle, die mit „Nach Veröffentlichung der Ergebnisse“ markiert sind, werden erst nach der Veröffentlichung der Klausurergebnisse angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
                     "points": "Die Menge an Punkten, die die Studierenden für das Bestehen dieses Tests bekommen. Dieser Wert wird wie in den Kurseinstellungen festgelegt gerundet.",
@@ -657,6 +674,19 @@
                 "template": "Vorlage",
                 "history": "Commit-Historie",
                 "result": "Ergebnis"
+            },
+            "otherLanguageHints": {
+                "title": "Führe folgende Schritte aus, um eine andere Sprache zu benutzen. Siehe die <a href=\"{{documentationLink}}\">Dokumentation</a> für Details.",
+                "setImage": "Lege ein angepasstes Docker Image mit benötigten Abhängigkeiten fest (erstelle möglicherweise ein eigenes und lade es in die <a href=\"{{ghcrLink}}\">GitHub Container Registry</a> oder auf den <a href=\"{{dockerhubLink}}\">Docker Hub</a> hoch).",
+                "buildScript": {
+                    "title": "Passe das Build Skript an:",
+                    "dependencies": "Optional: Installiere aufgabenspezifische Abhängigkeiten.",
+                    "runTests": "Führe alle Tests aus. Sie sollten JUnit XML Dateien generieren.",
+                    "moveResults": "Bewege die XML Dateien in das <code>{{resultsDirectory}}</code> Verzeichnis."
+                },
+                "pushExercise": "Lade den Aufgaben-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt.",
+                "pushSolution": "Lade den Lösungs-Code in das entsprechende Repository. Es wird nicht ausgecheckt.",
+                "pushTest": "Lade den Test-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt."
             }
         },
         "error": {

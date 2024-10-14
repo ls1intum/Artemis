@@ -135,30 +135,8 @@
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
                             </a>
                         }
-                        @if (exercise.allowFeedbackRequests) {
-                            @if (athenaEnabled) {
-                                <a
-                                    class="btn btn-primary"
-                                    (click)="requestFeedback()"
-                                    [class.btn-sm]="smallButtons"
-                                    [id]="'request-feedback-' + exercise.id"
-                                    [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
-                                >
-                                    <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback">Send automatic feedback request</span>
-                                </a>
-                            } @else {
-                                <a
-                                    class="btn btn-primary"
-                                    (click)="requestFeedback()"
-                                    [class.btn-sm]="smallButtons"
-                                    [id]="'request-feedback-' + exercise.id"
-                                    [ngbTooltip]="'artemisApp.exerciseActions.requestManualFeedbackTooltip' | artemisTranslate"
-                                >
-                                    <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestManualFeedback">Send manual feedback request</span>
-                                </a>
-                            }
+                        @if (exercise.allowFeedbackRequests && gradedParticipation && exercise.type === ExerciseType.PROGRAMMING) {
+                            <jhi-request-feedback-button [exercise]="exercise" [smallButtons]="smallButtons"></jhi-request-feedback-button>
                         }
                     </ng-container>
                 }
@@ -251,7 +229,7 @@
                         [hideLabelMobile]="false"
                         [routerLink]="['/courses', courseId, 'exercises', exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                     ></button>
-                    @if (exercise.allowFeedbackRequests && athenaEnabled && exercise.type === ExerciseType.TEXT) {
+                    @if (exercise.allowFeedbackRequests && athenaEnabled && (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING)) {
                         <button
                             class="btn btn-primary"
                             (click)="requestFeedback()"

@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { cloneDeep } from 'lodash-es';
 import { Submission } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -126,6 +126,46 @@ describe('ResultComponent', () => {
         expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
     });
 
+    it('should set (automatic athena) results for modeling exercise', () => {
+        const submission1: Submission = { id: 1 };
+        const result1: Result = { id: 1, submission: submission1, score: 0.8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
+        const result2: Result = { id: 2 };
+        const participation1 = cloneDeep(modelingParticipation);
+        participation1.results = [result1, result2];
+        component.participation = participation1;
+        component.showUngradedResults = true;
+
+        fixture.detectChanges();
+
+        expect(component.result).toEqual(result1);
+        expect(component.result!.participation).toEqual(participation1);
+        expect(component.submission).toEqual(submission1);
+        expect(component.textColorClass).toBe('text-secondary');
+        expect(component.resultIconClass).toEqual(faCheckCircle);
+        expect(component.resultString).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
+        expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
+    });
+
+    it('should set (automatic athena) results for programming exercise', () => {
+        const submission1: Submission = { id: 1 };
+        const result1: Result = { id: 1, submission: submission1, score: 0.8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
+        const result2: Result = { id: 2 };
+        const participation1 = cloneDeep(programmingParticipation);
+        participation1.results = [result1, result2];
+        component.participation = participation1;
+        component.showUngradedResults = true;
+
+        fixture.detectChanges();
+
+        expect(component.result).toEqual(result1);
+        expect(component.result!.participation).toEqual(participation1);
+        expect(component.submission).toEqual(submission1);
+        expect(component.textColorClass).toBe('text-secondary');
+        expect(component.resultIconClass).toEqual(faCheckCircle);
+        expect(component.resultString).toBe('artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)');
+        expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
+    });
+
     it('should set (automatic athena) results for text exercise', () => {
         const submission1: Submission = { id: 1 };
         const result1: Result = { id: 1, submission: submission1, score: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
@@ -141,7 +181,7 @@ describe('ResultComponent', () => {
         expect(component.result!.participation).toEqual(participation1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-secondary');
-        expect(component.resultIconClass).toEqual(faQuestionCircle);
+        expect(component.resultIconClass).toEqual(faCheckCircle);
         expect(component.resultString).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
     });
 

@@ -136,6 +136,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+            });
         } else if (this.exercise.type === ExerciseType.TEXT) {
             this.editorLabel = 'openTextEditor';
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -255,6 +258,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
     }
 
+    // TODO remove this method once support of the button component is implemented for text and modeling exercises
     requestFeedback() {
         if (!this.assureConditionsSatisfied()) return;
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -339,6 +343,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * 3. There is no already pending feedback request.
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
+    // TODO remove this method once support of the button component is implemented for text and modeling exercises
     assureConditionsSatisfied(): boolean {
         this.updateParticipations();
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -376,7 +381,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             }
         }
 
-        if (this.hasAthenaResultForlatestSubmission()) {
+        if (this.hasAthenaResultForLatestSubmission()) {
             const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
             this.alertService.warning(submitFirstWarning);
             return false;
@@ -384,9 +389,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         return true;
     }
 
-    hasAthenaResultForlatestSubmission(): boolean {
+    hasAthenaResultForLatestSubmission(): boolean {
         if (this.gradedParticipation?.submissions && this.gradedParticipation?.results) {
-            // submissions.results is always undefined so this is neccessary
+            // submissions.results is always undefined so this is necessary
             return (
                 this.gradedParticipation.submissions.last()?.id ===
                 this.gradedParticipation?.results.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA).first()?.submission?.id
