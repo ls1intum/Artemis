@@ -125,7 +125,7 @@
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Offline-IDE erlauben",
-                "description": "Aktiviere diese Option, um es zu erlauben, die Übung herunterzuladen und lokal mit der bevorzugten IDE daran zu arbeiten.",
+                "description": "Erlaubt Studenten die Übung mit Git herunterzuladen und diese lokal mit der bevorzugten IDE zu bearbeiten.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
