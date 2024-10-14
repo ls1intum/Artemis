@@ -53,8 +53,6 @@ export class CourseCompetencyRelationFormComponent {
         return this.courseCompetencies();
     });
 
-    private readonly currentAdjacencyMap = computed(() => this.getAdjacencyMap(this.relations()));
-
     constructor() {
         effect(
             () => {
@@ -162,128 +160,128 @@ export class CourseCompetencyRelationFormComponent {
         return this.courseCompetencies()
             .filter(({ id }) => id !== headCompetencyId) // Exclude the head itself
             .filter(({ id }) => {
-                // check if indirect relation already exists
-                return !this.currentAdjacencyMap().get(headCompetencyId)?.includes(id!);
-            })
-            .filter(({ id }) => {
-                return !this.relations().some(
-                    (relation) =>
-                        (relation.headCompetencyId == headCompetencyId && relation.tailCompetencyId == id) ||
-                        (relation.headCompetencyId == id && relation.tailCompetencyId == headCompetencyId),
-                );
-            })
-            .filter(({ id }) => {
                 const potentialRelation: CompetencyRelationDTO = {
                     headCompetencyId: headCompetencyId,
                     tailCompetencyId: id,
                     relationType: relationType,
                 };
-                // check if cycle would be created in potential adjacency map
-                const potentialAdjacencyMap = this.getAdjacencyMap(this.relations().concat(potentialRelation));
-                return !this.hasCycle(potentialAdjacencyMap);
+                return !this.detectCycleInCompetencyRelations(this.relations().concat(potentialRelation), this.courseCompetencies().length);
             });
     }
 
-    /**
-     * Function to create an adjacency map from the given relations
-     * @param relations The relations to create the adjacency map from
-     * @private
-     *
-     * @returns The adjacency map
-     */
-    private getAdjacencyMap(relations: CompetencyRelationDTO[]): Map<number, number[]> {
-        const adjacencyMap: Map<number, number[]> = new Map();
-        const matchesRelations: CompetencyRelationDTO[] = [];
+    private detectCycleInCompetencyRelations(relations: CompetencyRelationDTO[], numOfCompetencies: number): boolean {
+        // Step 1: Create a map to store the unique IDs and map them to incremental indices
+        const idToIndexMap = new Map<number, number>();
+        let currentIndex = 0;
+
         relations.forEach((relation) => {
-            if (!adjacencyMap.has(relation.headCompetencyId!)) {
-                adjacencyMap.set(relation.headCompetencyId!, []);
+            const tail = relation.tailCompetencyId!;
+            const head = relation.headCompetencyId!;
+
+            if (!idToIndexMap.has(tail)) {
+                idToIndexMap.set(tail, currentIndex++);
             }
-            if (relation.relationType == CompetencyRelationType.MATCHES) {
-                // store matches relations to merge them later
-                matchesRelations.push(relation);
-            } else {
-                // '+' used in push() is necessary to require the value to be a number
-                adjacencyMap.get(relation.headCompetencyId!)!.push(+relation.tailCompetencyId!);
+            if (!idToIndexMap.has(head)) {
+                idToIndexMap.set(head, currentIndex++);
             }
         });
-        // merge matches relations into the adjacency map
-        matchesRelations.forEach((relation) => adjacencyMap.set(relation.headCompetencyId!, this.getMatchesRelationNeighbours(adjacencyMap, relation)));
-        return adjacencyMap;
-    }
 
-    private getMatchesRelationNeighbours(adjacencyMap: Map<number, number[]>, relation: CompetencyRelationDTO, matchRelationIds: number[] = []): number[] {
-        const existingNeighbours = adjacencyMap.get(relation.headCompetencyId!)!;
-        if (relation.relationType == CompetencyRelationType.MATCHES) {
-            // if current relation is a MATCHES relation, add the head competency id for next recursion steps
-            matchRelationIds.push(relation.headCompetencyId!);
-            matchRelationIds.push(relation.tailCompetencyId!);
-            // find all relations that have the current tail competency as head competency
-            const tailRelations = this.relations().filter(({ headCompetencyId }) => headCompetencyId == relation.tailCompetencyId);
-            tailRelations.forEach((tailRelation) => {
-                // push all neighbours of the next recursion steps to the existing neighbours of the current relation
-                existingNeighbours.push(...this.getMatchesRelationNeighbours(adjacencyMap, tailRelation, matchRelationIds));
-            });
-            adjacencyMap.set(relation.tailCompetencyId!, existingNeighbours);
-        }
-        const headRelations = this.relations().filter(
-            ({ tailCompetencyId, relationType }) => tailCompetencyId == relation.headCompetencyId && relationType != CompetencyRelationType.MATCHES,
-        );
-        // add the MATCHES relations of the previous recursion steps as neighbours of the found head relations
-        headRelations.forEach((headRelation) => adjacencyMap.get(headRelation.headCompetencyId!)!.push(...matchRelationIds));
-        // return the existing neighbours to be added to the neighbours of previous recursion steps
-        return existingNeighbours;
-    }
+        const numCompetencies = currentIndex; // Total unique competencies
+        const unionFind = new UnionFind(numCompetencies);
 
-    /**
-     * Function to check if the given adjacency map has a cycle
-     * @param adjacencyMap The adjacency map to check for cycles
-     * @private
-     *
-     * @returns True if the adjacency map has a cycle, false otherwise
-     */
-    private hasCycle(adjacencyMap: Map<number, number[]>): boolean {
-        const visited = new Set<number>();
-        const recursionStack = new Set<number>();
+        // Step 2: Apply Union-Find based on the MATCHES relations
+        relations.forEach((relation) => {
+            if (relation.relationType === CompetencyRelationType.MATCHES) {
+                const tailIndex = idToIndexMap.get(relation.tailCompetencyId!);
+                const headIndex = idToIndexMap.get(relation.headCompetencyId!);
 
-        for (const [node] of adjacencyMap) {
-            if (this.hasCycleUtil(adjacencyMap, node, visited, recursionStack)) {
-                return true;
+                if (tailIndex !== undefined && headIndex !== undefined) {
+                    // Perform union operation to group competencies
+                    unionFind.union(tailIndex, headIndex);
+                }
             }
-        }
-        return false;
+        });
+
+        // Step 2: Build the reduced graph for EXTENDS and ASSUMES relations
+        const reducedGraph: number[][] = Array.from({ length: numCompetencies }, () => []);
+
+        relations.forEach((relation) => {
+            const tail = unionFind.find(idToIndexMap.get(relation.tailCompetencyId!)!);
+            const head = unionFind.find(idToIndexMap.get(relation.headCompetencyId!)!);
+
+            if (relation.relationType === CompetencyRelationType.EXTENDS || relation.relationType === CompetencyRelationType.ASSUMES) {
+                reducedGraph[tail].push(head);
+            }
+        });
+
+        // Step 3: Detect cycles in the reduced graph
+        return this.hasCycle(reducedGraph, numOfCompetencies);
     }
 
-    /**
-     * Utility function to check if the given node has a cycle
-     * @param adjacencyMap The adjacency map to check for cycles
-     * @param node The node to check for cycles
-     * @param visited The set of visited nodes
-     * @param recursionStack The set of nodes in the recursion stack
-     * @private
-     *
-     * @returns True if the node has a cycle, false otherwise
-     */
-    private hasCycleUtil(adjacencyMap: Map<number, number[]>, node: number, visited: Set<number>, recursionStack: Set<number>): boolean {
-        if (recursionStack.has(node)) {
-            // Cycle detected
-            return true;
-        }
-        if (visited.has(node)) {
-            // Already visited
+    private hasCycle(graph: number[][], n: number): boolean {
+        const visited: boolean[] = Array(n).fill(false);
+        const recursionStack: boolean[] = Array(n).fill(false);
+
+        // Depth-first search to detect cycles
+        const depthFirstSearch = (v: number): boolean => {
+            visited[v] = true;
+            recursionStack[v] = true;
+
+            for (const neighbor of graph[v] || []) {
+                if (!visited[neighbor]) {
+                    if (depthFirstSearch(neighbor)) return true;
+                } else if (recursionStack[neighbor]) {
+                    return true;
+                }
+            }
+
+            recursionStack[v] = false;
             return false;
-        }
-        //mark node as visited and add to recursion stack
-        visited.add(node);
-        recursionStack.add(node);
+        };
 
-        // recur for all adjacent nodes
-        const neighbors = adjacencyMap.get(node) || [];
-        for (const neighbor of neighbors) {
-            if (this.hasCycleUtil(adjacencyMap, neighbor, visited, recursionStack)) {
-                return true;
+        for (let node = 0; node < n; node++) {
+            if (!visited[node]) {
+                if (depthFirstSearch(node)) {
+                    return true;
+                }
             }
         }
-        recursionStack.delete(node);
         return false;
+    }
+}
+
+// Union-Find (Disjoint Set) class
+class UnionFind {
+    parent: number[];
+    rank: number[];
+
+    constructor(size: number) {
+        this.parent = Array.from({ length: size }, (_, index) => index);
+        this.rank = Array(size).fill(1);
+    }
+
+    // Find the representative of the set that contains `u`
+    find(competencyId: number): number {
+        if (this.parent[competencyId] !== competencyId) {
+            this.parent[competencyId] = this.find(this.parent[competencyId]); // Path compression
+        }
+        return this.parent[competencyId];
+    }
+
+    // Union the sets containing `tailCompetencyId` and `headCompetencyId`
+    union(tailCompetencyId: number, headCompetencyId: number) {
+        const rootU = this.find(tailCompetencyId);
+        const rootV = this.find(headCompetencyId);
+        if (rootU !== rootV) {
+            // Union by rank
+            if (this.rank[rootU] > this.rank[rootV]) {
+                this.parent[rootV] = rootU;
+            } else if (this.rank[rootU] < this.rank[rootV]) {
+                this.parent[rootU] = rootV;
+            } else {
+                this.parent[rootV] = rootU;
+                this.rank[rootU] += 1;
+            }
+        }
     }
 }
