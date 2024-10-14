@@ -89,4 +89,19 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
         return getValueElseThrow(findByBuildJobId(buildJobId));
     }
 
+    /**
+     * Get the number of build jobs for a list of exercise ids.
+     *
+     * @param exerciseIds the list of exercise ids
+     * @return the number of build jobs
+     */
+    @Query("""
+            SELECT COUNT(b)
+            FROM BuildJob b
+                LEFT JOIN Result r ON b.result.id = r.id
+                LEFT JOIN Participation p ON r.participation.id = p.id
+                LEFT JOIN Exercise e ON p.exercise.id = e.id
+            WHERE e.id IN :exerciseIds
+            """)
+    long countBuildJobsByExerciseIds(@Param("exerciseIds") List<Long> exerciseIds);
 }

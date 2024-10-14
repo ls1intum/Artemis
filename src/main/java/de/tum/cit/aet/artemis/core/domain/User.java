@@ -561,4 +561,9 @@ public class User extends AbstractAuditingEntity implements Participant {
     public String getSshPublicKey() {
         return sshPublicKey;
     }
+
+    @Nullable
+    public @Size(max = 100) String getSshPublicKeyHash() {
+        return sshPublicKeyHash;
+    }
 }

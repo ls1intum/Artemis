@@ -51,8 +51,6 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     @BeforeEach
     void setupTestScenario() {
         super.setupTestScenario(TEST_PREFIX, course -> competencyUtilService.createCompetency(course, "penguin"));
-
-        participantScoreScheduleService.activate();
     }
 
     private Result createExerciseParticipationSubmissionAndResult(Exercise exercise, StudentParticipation studentParticipation, double pointsOfExercise,
