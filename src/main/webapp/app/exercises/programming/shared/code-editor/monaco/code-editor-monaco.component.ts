@@ -11,6 +11,7 @@ import {
     input,
     output,
     signal,
+    untracked,
     viewChild,
     viewChildren,
 } from '@angular/core';
@@ -100,7 +101,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.isTutorAssessment() ||
             this.commitState() === CommitState.CONFLICT ||
             !this.selectedFile() ||
-            !!this.fileSession[this.selectedFile()!]?.loadingError,
+            !!this.fileSession[this.selectedFile()!]?.loadingError, // TODO: convert fileSession to a signal
     );
 
     readonly feedbackInternal = signal<Feedback[]>([]);
@@ -125,7 +126,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
         );
 
         effect(() => {
-            this.setBuildAnnotations(this.buildAnnotations());
+            const annotations = this.buildAnnotations();
+            untracked(() => this.setBuildAnnotations(annotations));
         });
     }
 

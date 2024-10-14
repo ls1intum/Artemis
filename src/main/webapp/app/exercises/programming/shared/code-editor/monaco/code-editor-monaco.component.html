@@ -49,7 +49,7 @@
             [readOnly]="editorLocked()"
             [textChangedEmitDelay]="200"
             #editor
-            [id]="'monaco-editor-' + sessionId"
+            [id]="'monaco-editor-' + sessionId()"
         />
 
         @if (!selectedFile() && !loadingCount()) {
