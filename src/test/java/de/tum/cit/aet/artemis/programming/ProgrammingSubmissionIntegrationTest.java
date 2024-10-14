@@ -254,8 +254,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         String login2 = TEST_PREFIX + "student2";
         String login3 = TEST_PREFIX + "student3";
         final var firstParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login1);
-        final var secondParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login2);
-        final var thirdParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login3);
+        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login2);
+        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login3);
 
         // Set test cases changed to true; after the build run it should be false;
         exercise.setTestCasesChanged(true);
