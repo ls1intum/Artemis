@@ -261,9 +261,8 @@ describe('GenerateCompetenciesComponent', () => {
 
     it('should send a warning when trying to reload', () => {
         generateCompetenciesComponent.isLoading = true;
-        const event = { returnValue: undefined };
-        generateCompetenciesComponent.unloadNotification(event);
-        expect(event.returnValue).toBe(generateCompetenciesComponent.canDeactivateWarning);
+        const canDeactivate = generateCompetenciesComponent.canDeactivate();
+        expect(canDeactivate).toBeFalse();
     });
 
     function createCompetencyFormGroup(title?: string, description?: string, taxonomy?: CompetencyTaxonomy, viewed = false): FormGroup<CompetencyFormControlsWithViewed> {
