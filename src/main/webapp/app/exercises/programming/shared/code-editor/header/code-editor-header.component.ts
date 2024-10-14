@@ -9,7 +9,7 @@ import { MAX_TAB_SIZE } from 'app/shared/monaco-editor/monaco-editor.component';
 })
 export class CodeEditorHeaderComponent {
     @Input()
-    filename: string;
+    filename: string | undefined;
 
     @Input()
     isLoading: boolean;
