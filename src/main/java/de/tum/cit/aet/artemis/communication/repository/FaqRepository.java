@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
 
-    Set<Faq> findAllByCourseId(@Param("courseId") Long courseId);
+    Set<Faq> findAllByCourseId(Long courseId);
 
     @Query("""
             SELECT DISTINCT faq.categories
@@ -31,7 +31,7 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
             """)
     Set<String> findAllCategoriesByCourseId(@Param("courseId") Long courseId);
 
-    Set<Faq> findAllByCourseIdAndFaqState(@Param("courseId") Long courseId, @Param("faqState") FaqState faqState);
+    Set<Faq> findAllByCourseIdAndFaqState(Long courseId, FaqState faqState);
 
     @Transactional
     @Modifying
