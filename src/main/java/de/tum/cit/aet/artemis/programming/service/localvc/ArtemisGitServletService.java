@@ -32,6 +32,13 @@ public class ArtemisGitServletService extends GitServlet {
 
     /**
      * Initialize the ArtemisGitServlet by setting the repository resolver and adding filters for fetch and push requests.
+     * Sets the pre/post receive/upload hooks.
+     * <p>
+     * For general information on the different hooks and git packs see the git documentation:
+     * <p>
+     * <a href="https://git-scm.com/docs/git-receive-pack">https://git-scm.com/docs/git-receive-pack</a>
+     * <p>
+     * <a href="https://git-scm.com/docs/git-upload-pack">https://git-scm.com/docs/git-upload-pack</a>
      */
     @PostConstruct
     @Override
@@ -60,7 +67,7 @@ public class ArtemisGitServletService extends GitServlet {
         this.setUploadPackFactory((request, repository) -> {
             UploadPack uploadPack = new UploadPack(repository);
 
-            // Add the custom pre-upload hook
+            // Add the custom pre-upload hook, to distinguish between clone and pull operations
             uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(localVCServletService, request));
             return uploadPack;
         });
