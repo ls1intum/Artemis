@@ -572,3 +572,61 @@ The course repository call takes care of throwing a ``404 Not Found`` exception 
 ==========================================
 
 Always use ObjectMapper (Jackson) and do not use other libraries. If you find code that relies on gson, please consider to migrate it to use ObjectMapper!
+
+23. Use of Optionals in (non-)REST contexts
+===========================================
+
+We want to use Optional for method parameters in REST Controllers when it makes sense (in particular for non required request params).
+We do not want to use it for method parameters anywhere else, in particular not for Services.
+
+``Optional`` is not meant to be used in these contexts, as it won't buy us anything:
+
+    - in the domain model layer (not serializable)
+    - in DTOs (same reason)
+    - in input parameters of methods
+    - in constructor parameters
+
+There are two exceptions to this rule:
+
+    - Optional services (e.g. due to specific profiles being or not being active, e.g. Optional<VersionControlService> versionControlService in ProgrammingSubmissionService)
+    - Input parameters of methods for RestControllers, e.g. @RequestParam(required = false) Optional<Long> lectureId in LectureResource
+
+Example:
+
+This is ok:
+
+.. code-block:: java
+
+    class ProgrammingExerciseRepositoryService {
+
+        // ...
+
+        Optional<VersionControlService> versionControlService;
+
+        // ...
+    }
+
+The use of Optional for the type of a field (and parameter in methods) is allowed here, since the ``VersionControlService`` is either fully enabled or disabled.
+
+
+Do **not** write:
+
+.. code-block:: java
+
+    @GetMapping(value = "complaints", params = { "courseId", "complaintType" })
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType, @RequestParam(required = "false") Long tutorId, @RequestParam(defaultValue = "false") boolean allComplaintsForTutor) {
+             // ...
+    }
+
+Do write:
+
+.. code-block:: java
+
+    @GetMapping(value = "complaints", params = { "courseId", "complaintType" })
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<Complaint>> getComplaintsByCourseId(@RequestParam Long courseId, @RequestParam ComplaintType complaintType, @RequestParam Optional<Long> tutorId, @RequestParam(defaultValue = "false") boolean allComplaintsForTutor) {
+             // ...
+    }
+
+Note that not setting ``required`` will result in it being set to true automatically. Setting ``required`` to false is allowed only if you either make the type ``Optional<T>`` or you provide a default value.
