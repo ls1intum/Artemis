@@ -18,7 +18,6 @@ import java.util.UUID;
 
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -28,18 +27,13 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class LtiIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class LtiIntegrationTest extends AbstractLtiIntegrationTest {
 
     private static final String TEST_PREFIX = "ltiintegrationtest";
-
-    @Autowired
-    ObjectMapper objectMapper;
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

@@ -45,8 +45,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.localvcci.LocalVCLocalCITestService;
-import de.tum.cit.aet.artemis.programming.localvcci.util.TestBuildAgentConfiguration;
+import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.programming.icl.TestBuildAgentConfiguration;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -74,7 +74,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
         "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
         "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
         "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500", "artemis.version-control.ssh-private-key-folder-path=${java.io.tmpdir}",
-        "artemis.version-control.build-agent-use-ssh=true", "info.contact=test@localhost", "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:7921/" })
+        "artemis.version-control.build-agent-use-ssh=true", "info.contact=test@localhost", "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:7921/",
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localcilocalvc" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -19,7 +19,7 @@ import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ExamParticipationService', () => {
     let service: ExamParticipationService;
@@ -31,8 +31,10 @@ describe('ExamParticipationService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, ArtemisTestModule],
+            imports: [ArtemisTestModule],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },

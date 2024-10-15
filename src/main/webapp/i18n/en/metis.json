@@ -90,7 +90,9 @@
                 "TECH_SUPPORT": "Tech Support",
                 "ORGANIZATION": "Organization",
                 "RANDOM": "Random",
-                "ANNOUNCEMENT": "Announcement"
+                "ANNOUNCEMENT": "Announcement",
+                "allPublicMessages": "All Public Messages",
+                "searchResults": "Search Results for '{{ search }}'"
             },
             "post": {
                 "context": "Context",
@@ -110,7 +112,7 @@
                 "similarPosts": "Similar Posts",
                 "similarPostsTooltip": "The automatic post comparison has found the following posts that might be similar to your request - please check if your question has already been asked and/or answered. Click on the title or the exercise/lecture name before the title to navigate to a post or the exercise/lecture, respectively.",
                 "content": "Content",
-                "contentTooltip": "Describe your issue or request as precise as possible. Use markdown formatting where it improves readability.",
+                "contentTooltip": "Describe your issue or request as precise as possible. Use Markdown formatting where it improves readability.",
                 "created": "New post successfully created",
                 "updated": "Post successfully updated",
                 "deleted": "Post successfully deleted",

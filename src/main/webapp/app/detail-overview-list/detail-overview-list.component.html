@@ -124,6 +124,16 @@
                             />
                         </dd>
                     }
+                    @case (DetailType.Image) {
+                        <dd id="detail-value-{{ detail.title }}">
+                            <img [alt]="detail.data.altText" class="details-image rounded-3" [src]="detail.data.imageUrl" />
+                        </dd>
+                    }
+                    @case (DetailType.DefaultProfilePicture) {
+                        <dd id="detail-value-{{ detail.title }}">
+                            <strong class="details-default-profile-picture rounded-3" [ngStyle]="{ 'background-color': detail.data.color }">{{ detail.data.initials }}</strong>
+                        </dd>
+                    }
                     @default {
                         <dd id="detail-value-{{ detail.title }}">
                             <div jhiExerciseDetail [detail]="detail"></div>

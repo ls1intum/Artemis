@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -91,7 +91,7 @@ public class ParticipationUtilService {
     private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
+    private ExerciseTestRepository exerciseRepository;
 
     @Autowired
     private SubmissionTestRepository submissionRepository;
@@ -177,14 +177,14 @@ public class ParticipationUtilService {
      * @return The created Result
      */
     public Result createParticipationSubmissionAndResult(long exerciseId, Participant participant, Double points, Double bonusPoints, long scoreAwarded, boolean rated) {
-        Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow();
+        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow();
         if (!exercise.getMaxPoints().equals(points)) {
             exercise.setMaxPoints(points);
         }
         if (!exercise.getBonusPoints().equals(bonusPoints)) {
             exercise.setBonusPoints(bonusPoints);
         }
-        exercise = exerciseRepo.saveAndFlush(exercise);
+        exercise = exerciseRepository.saveAndFlush(exercise);
         StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
         return createSubmissionAndResult(studentParticipation, scoreAwarded, rated);
     }

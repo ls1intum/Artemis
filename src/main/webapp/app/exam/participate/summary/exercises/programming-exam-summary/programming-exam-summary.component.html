@@ -48,7 +48,7 @@
             <div class="col-md-8">
                 <h5 jhiTranslate="artemisApp.exam.examSummary.problemStatement"></h5>
                 @if (exercise.problemStatement) {
-                    <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="participation" />
+                    <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="participation" [personalParticipation]="!instructorView" />
                 }
             </div>
         </div>

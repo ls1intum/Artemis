@@ -3,6 +3,11 @@
 .monaco-editor-container {
     width: 100%;
     height: 100%;
+
+    .monaco-editor {
+        // Disables the focus border around the editor.
+        outline: none;
+    }
 }
 
 /*

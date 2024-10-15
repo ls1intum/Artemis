@@ -75,7 +75,6 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         examUtilService.addStudentExamForTestExam(testExam1, student1);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
-        participantScoreScheduleService.activate();
     }
 
     @Test

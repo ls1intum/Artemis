@@ -106,7 +106,7 @@
                 "buttonLabel": "Import teams",
                 "dialogTitle": "Import teams into:",
                 "introTextExercise": "This dialog can be used to import teams from another exercise of this course into this exercise.",
-                "introTextFile": "This dialog can be used to import teams from a .json or .csv file into this exercise.",
+                "introTextFile": "This dialog can be used to import teams from a JSON or CSV file into this exercise.",
                 "error": "Could not import teams. Please try again.",
                 "fromAnExercise": "From an exercise",
                 "fromAFile": "From a file"
@@ -163,7 +163,7 @@
                     "purgeExisting": {
                         "label": "Purge existing",
                         "badge": "dangerous",
-                        "explanation": "Before importing all of the teams from the source exercise above, all existing teams and their participation in this exercise will be deleted."
+                        "explanation": "Before importing all the teams from the source exercise above, all existing teams and their participation in this exercise will be deleted."
                     },
                     "createOnly": {
                         "label": "Create only",
