@@ -99,7 +99,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Loads all data for the competency management: Prerequisites, competencies (with average course progress)
+     * Loads all data for the competency management: Prerequisites and competencies (with average course progress)
      */
     async loadData() {
         try {

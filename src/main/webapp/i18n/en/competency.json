@@ -258,7 +258,7 @@
                     "deleteRelationButtonLabel": "Delete Relation",
                     "updateRelationButtonLabel": "Update Relation",
                     "createRelationButtonLabel": "Create Relation",
-                    "cyclicDependencyError": "The selected relation can not be created as it would create a circular dependency"
+                    "cyclicDependencyError": "You cannot create a cyclic dependency between course competencies."
                 },
                 "graph": {
                     "nodeTypes": {
