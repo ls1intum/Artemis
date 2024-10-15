@@ -22,6 +22,7 @@ plugins {
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
     id "org.owasp.dependencycheck" version "10.0.4"
     id "com.adarshr.test-logger" version "4.0.0"
+    id "org.gradle.test-retry" version "1.6.0"
 }
 
 group = "de.tum.cit.aet.artemis"
