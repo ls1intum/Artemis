@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
@@ -971,7 +972,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Nested
-    class BuildJobPriorityTest {
+    class DisabledBuildAgentTest {
 
         @BeforeEach
         void setUp() {
@@ -1057,6 +1058,29 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
             assertThat(buildJobQueueItem).isNotNull();
             assertThat(buildJobQueueItem.priority()).isEqualTo(expectedPriority);
             log.info("Assertions done");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testDockerFlagsParsing() {
+            String dockerFlags = "[[\"network\",\"none\"],[\"env\",\"key=value,key1=value1\"]]";
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            buildConfig.setDockerFlags(dockerFlags);
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
+
+            assertThat(buildJobQueueItem).isNotNull();
+            assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().isNetworkDisabled()).isTrue();
+            assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().getEnv()).containsExactlyInAnyOrder("key=value", "key1=value1");
         }
     }
 }

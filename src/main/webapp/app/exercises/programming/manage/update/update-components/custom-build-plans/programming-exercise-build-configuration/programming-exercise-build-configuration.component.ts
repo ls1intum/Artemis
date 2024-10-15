@@ -53,10 +53,12 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     onDisableNetworkAccessChange(event: any) {
+        this.isNetworkDisabled = event.target.checked;
         this.updateDockerFlags(this.NETWORK_KEY, event.target.checked ? 'none' : '');
     }
 
     onEnvVarsChange(event: any) {
+        this.envVars = event;
         this.updateDockerFlags(this.ENV_KEY, event);
     }
 
