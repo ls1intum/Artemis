@@ -696,7 +696,7 @@
                 },
                 "envVars": {
                     "title": "Environment Variables",
-                    "description": "Add environment variables to the Docker container. Please follow the following format KEY_1=\"value_1\",KEY_2=\"value_2\""
+                    "description": "Add environment variables to the Docker container. Please follow the following format KEY_1=\"value_1\",KEY_2=\"value_2\". (Max 128 chars)"
                 }
             }
         },

@@ -43,7 +43,7 @@
                 class="form-control"
                 name="envVars"
                 id="field_envVars"
-                maxlength="192"
+                maxlength="128"
                 [ngModel]="envVars"
                 (ngModelChange)="onEnvVarsChange($event)"
                 [pattern]="ENV_VAR_REGEX"
