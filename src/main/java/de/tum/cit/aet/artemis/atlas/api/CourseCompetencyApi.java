@@ -49,7 +49,12 @@ public class CourseCompetencyApi extends AbstractAtlasApi {
         optionalCompetencyRepository.ifPresent(service -> service.deleteAll(course.getCompetencies()));
     }
 
-    // ToDo: Move to service
+    /**
+     * ToDo: Consider moving to service
+     * Deletes the competencies associated with the given lecture unit.
+     *
+     * @param lectureUnit the lecture unit
+     */
     public void deleteCompetencyOfLectureUnit(@NotNull LectureUnit lectureUnit) {
         if (optionalCourseCompetencyRepository.isEmpty()) {
             return;

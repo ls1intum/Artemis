@@ -51,6 +51,11 @@ public class CompetencyProgressApi extends AbstractAtlasApi {
         competencyProgressService.ifPresent(service -> service.updateProgressByLearningObjectSync(learningObject, users));
     }
 
+    /**
+     * Updates the progress for all competencies of the given courses.
+     *
+     * @param activeCourses the active courses
+     */
     public void updateProgressForCourses(List<Course> activeCourses) {
         CompetencyProgressService competencyProgressService = getOrThrow(this.competencyProgressService);
         CompetencyRepository competencyRepository = getOrThrow(this.competencyRepository);
