@@ -29,12 +29,12 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
     }
 
     @Test
-    void testApiInheritsAbstractApi() {
+    void apiClassesShouldInheritFromAbstractApi() {
         classes().that().resideInAPackage(getModuleApiSubpackage()).should().beAssignableTo(AbstractApi.class).check(productionClasses);
     }
 
     @Test
-    void testApiIsController() {
+    void apiClassesShouldBeAbstractOrAnnotatedWithController() {
         classes().that().resideInAPackage(getModuleApiSubpackage()).should(beAbstractOrAnnotatedWithController()).check(productionClasses);
     }
 
