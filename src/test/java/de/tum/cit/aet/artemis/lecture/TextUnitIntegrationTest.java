@@ -89,7 +89,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var persistedTextUnit = request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CREATED);
         assertThat(persistedTextUnit.getId()).isNotNull();
         assertThat(persistedTextUnit.getName()).isEqualTo("LoremIpsum");
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(persistedTextUnit));
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(persistedTextUnit));
     }
 
     @Test
@@ -112,7 +112,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         textUnitFromRequest.setContent("Changed");
         TextUnit updatedTextUnit = request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.OK);
         assertThat(updatedTextUnit.getContent()).isEqualTo("Changed");
-        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.of(textUnit)));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.of(textUnit)));
     }
 
     @Test
@@ -161,7 +161,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(this.textUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.NOT_FOUND, TextUnit.class);
-        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.empty()));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.empty()));
     }
 
     private void persistTextUnitWithLecture() {

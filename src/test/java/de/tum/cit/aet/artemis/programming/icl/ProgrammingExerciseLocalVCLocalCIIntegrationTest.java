@@ -198,7 +198,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         localVCLocalCITestService.testLatestSubmission(createdExercise.getTemplateParticipation().getId(), null, 0, false);
         localVCLocalCITestService.testLatestSubmission(createdExercise.getSolutionParticipation().getId(), null, 13, false);
 
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(createdExercise));
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(createdExercise));
     }
 
     @Test
@@ -223,7 +223,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(updatedExercise.getReleaseDate()).isEqualTo(programmingExercise.getReleaseDate());
-        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
     }
 
     @Test
@@ -256,7 +256,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         assertThat(solutionRepositoryUri.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
         LocalVCRepositoryUri testsRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
         assertThat(testsRepositoryUri.getLocalRepositoryPath(localVCBasePath)).doesNotExist();
-        verify(competencyProgressService).updateProgressByCompetencyAsync(eq(competency));
+        verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
     }
 
     @Test
@@ -306,7 +306,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
                 .orElseThrow();
         localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
         localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(importedExercise));
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
     }
 
     @Nested

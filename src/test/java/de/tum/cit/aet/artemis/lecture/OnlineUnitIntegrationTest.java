@@ -112,7 +112,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         var persistedOnlineUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.CREATED);
         assertThat(persistedOnlineUnit.getId()).isNotNull();
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(persistedOnlineUnit));
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(persistedOnlineUnit));
     }
 
     @Test
@@ -147,7 +147,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         this.onlineUnit.setDescription("Changed");
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.OK);
         assertThat(this.onlineUnit.getDescription()).isEqualTo("Changed");
-        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(onlineUnit), eq(Optional.of(onlineUnit)));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(onlineUnit), eq(Optional.of(onlineUnit)));
     }
 
     @Test
@@ -264,7 +264,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
         assertThat(this.onlineUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.onlineUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.NOT_FOUND, OnlineUnit.class);
-        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(onlineUnit), eq(Optional.empty()));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(onlineUnit), eq(Optional.empty()));
     }
 
 }
