@@ -34,6 +34,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
 
     readonly DEFAULT_SLIDE_WIDTH = 250;
+    readonly DEFAULT_SLIDE_HEIGHT = 800;
     course?: Course;
     attachment?: Attachment;
     attachmentUnit?: AttachmentUnit;
@@ -145,7 +146,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             for (let i = 1; i <= this.totalPages; i++) {
                 const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 1 });
+                const viewport = page.getViewport({ scale: 2 });
                 const canvas = this.createCanvas(viewport, i);
                 const context = canvas.getContext('2d');
                 await page.render({ canvasContext: context!, viewport }).promise;
@@ -278,12 +279,29 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     };
 
     /**
+     * Adjusts the size of the PDF container based on whether the enlarged view is active or not.
+     * If the enlarged view is active, the container's size is reduced to focus on the enlarged content.
+     * If the enlarged view is closed, the container returns to its original size.
+     *
+     * @param enlarge A boolean flag indicating whether to enlarge or reset the container size.
+     */
+    adjustPdfContainerSize(enlarge: boolean): void {
+        const pdfContainer = this.pdfContainer.nativeElement;
+        if (enlarge) {
+            pdfContainer.style.height = '80vh'; // Larger for enlarged view
+        } else {
+            pdfContainer.style.height = '60vh';
+        }
+    }
+
+    /**
      * Displays the selected PDF page in an enlarged view for detailed examination.
      * @param originalCanvas - The original canvas element of the PDF page to be enlarged.
      * */
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         this.isEnlargedView = true;
         this.currentPage = Number(originalCanvas.id);
+        this.adjustPdfContainerSize(true);
         this.updateEnlargedCanvas(originalCanvas);
         this.toggleBodyScroll(true);
     }
@@ -316,8 +334,20 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     calculateScaleFactor(originalCanvas: HTMLCanvasElement): number {
         const containerWidth = this.pdfContainer.nativeElement.clientWidth;
         const containerHeight = this.pdfContainer.nativeElement.clientHeight;
-        const scaleX = containerWidth / originalCanvas.width;
-        const scaleY = containerHeight / originalCanvas.height;
+
+        let scaleX, scaleY;
+
+        if (originalCanvas.height > originalCanvas.width) {
+            // Vertical slide
+            const fixedHeight = this.DEFAULT_SLIDE_HEIGHT;
+            scaleY = fixedHeight / originalCanvas.height;
+            scaleX = containerWidth / originalCanvas.width;
+        } else {
+            // Horizontal slide
+            scaleX = containerWidth / originalCanvas.width;
+            scaleY = containerHeight / originalCanvas.height;
+        }
+
         return Math.min(scaleX, scaleY);
     }
 
@@ -369,6 +399,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     closeEnlargedView(event: MouseEvent) {
         this.isEnlargedView = false;
+        this.adjustPdfContainerSize(false);
         this.toggleBodyScroll(false);
         event.stopPropagation();
     }

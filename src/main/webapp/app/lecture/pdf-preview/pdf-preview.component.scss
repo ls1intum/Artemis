@@ -3,7 +3,6 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
     gap: 10px;
-    max-height: 60vh;
     height: 60vh;
     overflow-y: auto;
     border: 1px solid var(--border-color);

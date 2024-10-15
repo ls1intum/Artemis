@@ -368,15 +368,32 @@ describe('PdfPreviewComponent', () => {
         expect(closeSpy).not.toHaveBeenCalled();
     });
 
-    it('should calculate the correct scale factor based on container and canvas dimensions', () => {
+    it('should calculate the correct scale factor for horizontal slides', () => {
+        // Mock container dimensions
         Object.defineProperty(component.pdfContainer.nativeElement, 'clientWidth', { value: 1000, configurable: true });
         Object.defineProperty(component.pdfContainer.nativeElement, 'clientHeight', { value: 800, configurable: true });
 
+        // Mock a horizontal canvas (width > height)
         mockCanvasElement.width = 500;
         mockCanvasElement.height = 400;
-
         const scaleFactor = component.calculateScaleFactor(mockCanvasElement);
-        expect(scaleFactor).toBe(2);
+
+        // Expect scale factor to be based on width (scaleX) and height (scaleY), whichever is smaller
+        expect(scaleFactor).toBe(2); // Min of 1000/500 (scaleX = 2) and 800/400 (scaleY = 2)
+    });
+
+    it('should calculate the correct scale factor for vertical slides', () => {
+        Object.defineProperty(component.pdfContainer.nativeElement, 'clientWidth', { value: 1000, configurable: true });
+        Object.defineProperty(component.pdfContainer.nativeElement, 'clientHeight', { value: 800, configurable: true });
+
+        // Mock a vertical canvas (height > width)
+        mockCanvasElement.width = 400;
+        mockCanvasElement.height = 500;
+        const scaleFactor = component.calculateScaleFactor(mockCanvasElement);
+
+        // For vertical slides, scaleY is based on DEFAULT_SLIDE_HEIGHT, and scaleX is based on containerWidth
+        // Expect scaleY to be 800/500 = 1.6 and scaleX to be 1000/400 = 2.5
+        expect(scaleFactor).toBe(1.6); // Min of 1.6 (scaleY) and 2.5 (scaleX)
     });
 
     it('should resize the canvas based on the given scale factor', () => {
