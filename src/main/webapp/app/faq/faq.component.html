@@ -41,7 +41,7 @@
                     }
                 </div>
                 <div class="d-flex-end justify-content-end">
-                    @if (isAtleastInstrucor) {
+                    @if (isAtLeastInstructor) {
                         <a id="create-faq" class="btn btn-primary mb-1" [routerLink]="['new']">
                             <fa-icon [icon]="faPlus" />
                             <span jhiTranslate="artemisApp.faq.home.createLabel"></span>
@@ -109,7 +109,7 @@
                         </td>
                         <td class="text-end">
                             <div class="btn-group flex-btn-group-container">
-                                @if (faq.faqState == FaqState.PROPOSED && isAtleastInstrucor) {
+                                @if (faq.faqState == FaqState.PROPOSED && isAtLeastInstructor) {
                                     <div class="btn-group-vertical me-1 mb-1">
                                         <button class="btn btn-success btn-sm" (click)="acceptProposedFaq(courseId, faq)">
                                             <fa-icon [icon]="faCheck" />
@@ -126,7 +126,7 @@
                                         <fa-icon [icon]="faPencilAlt" />
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                     </a>
-                                    @if (isAtleastInstrucor) {
+                                    @if (isAtLeastInstructor) {
                                         <button
                                             class="mt-1"
                                             jhiDeleteButton

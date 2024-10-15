@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Faq, FaqState } from 'app/entities/faq.model';
 import { faCancel, faCheck, faEdit, faFilter, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute } from '@angular/router';
@@ -35,10 +35,11 @@ export class FaqComponent implements OnInit, OnDestroy {
     existingCategories: FaqCategory[];
     courseId: number;
     hasCategories: boolean = false;
-    isAtleastInstrucor: boolean = false;
+    isAtLeastInstructor: boolean = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    private routeDataSubscription: Subscription;
 
     activeFilters = new Set<string>();
     searchInput = new BehaviorSubject<string>('');
@@ -74,11 +75,11 @@ export class FaqComponent implements OnInit, OnDestroy {
         this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
             this.refreshFaqList(searchTerm);
         });
-        this.route.data.subscribe((data) => {
+        this.routeDataSubscription = this.route.data.subscribe((data) => {
             const course = data['course'];
             if (course) {
                 this.course = course;
-                this.isAtleastInstrucor = this.accountService.isAtLeastInstructorInCourse(course);
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
         });
     }
@@ -86,6 +87,9 @@ export class FaqComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.dialogErrorSource.complete();
         this.searchInput.complete();
+        if (this.routeDataSubscription) {
+            this.routeDataSubscription.unsubscribe();
+        }
     }
 
     deleteFaq(courseId: number, faqId: number) {
@@ -160,12 +164,12 @@ export class FaqComponent implements OnInit, OnDestroy {
         this.applySearch(searchTerm);
     }
 
-    rejectFaq(courseId: number, faq: Faq) {
+    updateFaqState(courseId: number, faq: Faq, newState: FaqState, successMessageKey: string) {
         const previousState = faq.faqState;
-        faq.faqState = FaqState.REJECTED;
+        faq.faqState = newState;
         faq.course = this.course;
         this.faqService.update(courseId, faq).subscribe({
-            next: () => this.alertService.success(this.translateService.instant('artemisApp.faq.rejected', { id: faq.id })),
+            next: () => this.alertService.success(this.translateService.instant(successMessageKey, { id: faq.id })),
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);
                 faq.faqState = previousState;
@@ -173,16 +177,11 @@ export class FaqComponent implements OnInit, OnDestroy {
         });
     }
 
+    rejectFaq(courseId: number, faq: Faq) {
+        this.updateFaqState(courseId, faq, FaqState.REJECTED, 'artemisApp.faq.rejected');
+    }
+
     acceptProposedFaq(courseId: number, faq: Faq) {
-        const previousState = faq.faqState;
-        faq.faqState = FaqState.ACCEPTED;
-        faq.course = this.course;
-        this.faqService.update(courseId, faq).subscribe({
-            next: () => this.alertService.success(this.translateService.instant('artemisApp.faq.accepted', { id: faq.id })),
-            error: (error: HttpErrorResponse) => {
-                this.dialogErrorSource.next(error.message);
-                faq.faqState = previousState;
-            },
-        });
+        this.updateFaqState(courseId, faq, FaqState.ACCEPTED, 'artemisApp.faq.accepted');
     }
 }

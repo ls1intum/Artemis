@@ -111,23 +111,26 @@ export class FaqUpdateComponent implements OnInit {
                     if (faqBody) {
                         this.faq = faqBody;
                     }
-                    if (this.isAtLeastInstructor) {
-                        this.alertService.success(this.translateService.instant('artemisApp.faq.created', { id: faq.id }));
-                    } else {
-                        this.alertService.success(this.translateService.instant('artemisApp.faq.proposed', { id: faq.id }));
-                    }
+                    this.showSuccessAlert(faq);
+
                     this.router.navigate(['course-management', this.courseId, 'faqs']);
                 },
             });
         } else {
-            this.isSaving = false;
-            if (this.isAtLeastInstructor) {
-                this.alertService.success(this.translateService.instant('artemisApp.faq.updated', { id: faq.id }));
-            } else {
-                this.alertService.success(this.translateService.instant('artemisApp.faq.proposedChange', { id: faq.id }));
-            }
+            this.showSuccessAlert(faq);
             this.router.navigate(['course-management', this.courseId, 'faqs']);
         }
+    }
+
+    private showSuccessAlert(faq: Faq): void {
+        let messageKey: string;
+
+        if (this.isAtLeastInstructor) {
+            messageKey = this.faq.id ? 'artemisApp.faq.updated' : 'artemisApp.faq.created';
+        } else {
+            messageKey = this.faq.id ? 'artemisApp.faq.proposedChange' : 'artemisApp.faq.proposed';
+        }
+        this.alertService.success(this.translateService.instant(messageKey, { id: faq.id }));
     }
 
     /**

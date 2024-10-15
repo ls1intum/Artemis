@@ -108,7 +108,7 @@ public class FaqResource {
             throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
         }
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
@@ -188,10 +188,9 @@ public class FaqResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Set<FaqDTO>> getAllFaqForCourseByStatus(@PathVariable Long courseId, @PathVariable String faqState) {
         log.debug("REST request to get all Faqs for the course with id : {}", courseId);
-        FaqState retrivedState = defineState(faqState);
+        FaqState retrievedState = defineState(faqState);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(courseId, retrivedState);
+        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(courseId, retrievedState);
         Set<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).collect(Collectors.toSet());
         return ResponseEntity.ok().body(faqDTOS);
     }
