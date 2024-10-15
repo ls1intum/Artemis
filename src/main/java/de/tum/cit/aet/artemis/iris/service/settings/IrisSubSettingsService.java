@@ -332,7 +332,7 @@ public class IrisSubSettingsService {
      * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
      * @return Combined allowedVariants field.
      */
-    private Set<String> getCombinedAllowedVariants(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
+    private SortedSet<String> getCombinedAllowedVariants(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
         return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisSubSettings::getAllowedVariants).filter(Objects::nonNull)
                 .filter(models -> !models.isEmpty()).reduce((first, second) -> second).orElse(new TreeSet<>());
     }
@@ -350,7 +350,7 @@ public class IrisSubSettingsService {
                 .filter(model -> model != null && !model.isBlank()).reduce((first, second) -> second).orElse(null);
     }
 
-    private Set<String> getCombinedEnabledForCategories(List<IrisSettings> settingsList, Function<IrisSettings, IrisChatSubSettings> subSettingsFunction) {
+    private SortedSet<String> getCombinedEnabledForCategories(List<IrisSettings> settingsList, Function<IrisSettings, IrisChatSubSettings> subSettingsFunction) {
         return settingsList.stream().filter(Objects::nonNull).filter(settings -> settings instanceof IrisCourseSettings).map(subSettingsFunction).filter(Objects::nonNull)
                 .map(IrisChatSubSettings::getEnabledForCategories).filter(Objects::nonNull).filter(models -> !models.isEmpty()).reduce((first, second) -> second)
                 .orElse(new TreeSet<>());

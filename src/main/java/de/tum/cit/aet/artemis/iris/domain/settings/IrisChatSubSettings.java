@@ -28,7 +28,6 @@ public class IrisChatSubSettings extends IrisSubSettings {
     @Column(name = "rate_limit_timeframe_hours")
     private Integer rateLimitTimeframeHours;
 
-    @Nullable
     @Column(name = "enabled_for_categories")
     @Convert(converter = IrisListConverter.class)
     private SortedSet<String> enabledForCategories = new TreeSet<>();

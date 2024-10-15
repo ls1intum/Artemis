@@ -109,7 +109,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencies", "buildConfig", "categories" })
-    Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesCompetenciesAndBuildConfigById(long exerciseId);
+    Optional<ProgrammingExercise> findForUpdateById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(long exerciseId);
@@ -599,8 +599,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @return The programming exercise related to the given id
      */
     @NotNull
-    default ProgrammingExercise findByIdWithAuxiliaryRepositoriesCompetenciesAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithAuxiliaryRepositoriesCompetenciesAndBuildConfigById(programmingExerciseId), programmingExerciseId);
+    default ProgrammingExercise findForUpdateByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findForUpdateById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
