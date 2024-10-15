@@ -691,8 +691,8 @@
             },
             "dockerFlags": {
                 "disableNetworkAccess": {
-                    "title": "Disable Network Access",
-                    "description": "Activate this option to disable network access for containers. This is done by providing the '--network none' option to the Docker container."
+                    "title": "Disable network access when executing the student submission",
+                    "description": "Activate this option to disable network access for containers. The network will be disabled when executing the student submission. The dependencies will still be downloaded and cached in the container before that."
                 },
                 "envVars": {
                     "title": "Environment Variables",
