@@ -365,10 +365,8 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
         List<String> envVars = new ArrayList<>();
         while (matcher.find()) {
-            // Determine which group matched for value
             String key = matcher.group(1) != null ? matcher.group(1) : matcher.group(2) != null ? matcher.group(2) : matcher.group(3);
 
-            // Determine which group matched for value
             String value = matcher.group(4) != null ? matcher.group(4) : matcher.group(5) != null ? matcher.group(5) : matcher.group(6);
 
             envVars.add(key + "=" + value);

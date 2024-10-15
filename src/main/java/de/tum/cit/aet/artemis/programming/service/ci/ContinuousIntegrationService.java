@@ -284,6 +284,15 @@ public interface ContinuousIntegrationService {
                         """;
             }
         },
+        KOTLIN {
+
+            @Override
+            public String getScript() {
+                return getBaseScript() + """
+                        mvn clean install -U
+                        """;
+            }
+        },
         RUST {
 
             @Override
@@ -321,7 +330,6 @@ public interface ContinuousIntegrationService {
                     """;
         }
 
-        // Abstract method to be implemented by each enum constant.
         public abstract String getScript();
     }
 

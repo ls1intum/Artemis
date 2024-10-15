@@ -815,6 +815,17 @@ public class ProgrammingExercise extends Exercise {
         }
     }
 
+    /**
+     * Validates the network access feature for the given programming language.
+     * Currently, SWIFT and HASKELL do not support disabling the network access feature.
+     *
+     */
+    public void validateBuildPlanNetworkAccessForProgrammingLanguage() {
+        if (List.of(ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL).contains(getProgrammingLanguage())) {
+            throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");
+        }
+    }
+
     public Set<ExerciseHint> getExerciseHints() {
         return exerciseHints;
     }

@@ -199,6 +199,7 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
         newExercise.validateSettingsForFeedbackRequest();
+        newExercise.validateBuildPlanNetworkAccessForProgrammingLanguage();
         validateStaticCodeAnalysisSettings(newExercise);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
