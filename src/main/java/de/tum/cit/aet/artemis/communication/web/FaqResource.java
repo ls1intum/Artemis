@@ -26,14 +26,10 @@ import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
 /**
@@ -51,16 +47,9 @@ public class FaqResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final CourseRepository courseRepository;
-
-    private final AuthorizationCheckService authCheckService;
-
     private final FaqRepository faqRepository;
 
-    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository) {
-
-        this.courseRepository = courseRepository;
-        this.authCheckService = authCheckService;
+    public FaqResource(FaqRepository faqRepository) {
         this.faqRepository = faqRepository;
     }
 
@@ -84,8 +73,6 @@ public class FaqResource {
         if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
         }
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, faq.getCourse(), null);
-
         Faq savedFaq = faqRepository.save(faq);
         FaqDTO dto = new FaqDTO(savedFaq);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
@@ -107,8 +94,6 @@ public class FaqResource {
         if (faqId == null || !faqId.equals(faq.getId())) {
             throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
         }
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
@@ -133,7 +118,6 @@ public class FaqResource {
         if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
         }
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, faq.getCourse(), null);
         FaqDTO dto = new FaqDTO(faq);
         return ResponseEntity.ok(dto);
     }
@@ -151,7 +135,6 @@ public class FaqResource {
 
         log.debug("REST request to delete faq {}", faqId);
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingFaq.getCourse(), null);
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
@@ -169,9 +152,6 @@ public class FaqResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Set<FaqDTO>> getFaqForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faqs for the course with id : {}", courseId);
-
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         Set<Faq> faqs = faqRepository.findAllByCourseId(courseId);
         Set<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).collect(Collectors.toSet());
         return ResponseEntity.ok().body(faqDTOS);
@@ -187,9 +167,8 @@ public class FaqResource {
     @GetMapping("courses/{courseId}/faq-state/{faqState}")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<FaqDTO>> getAllFaqForCourseByStatus(@PathVariable Long courseId, @PathVariable String faqState) {
-        log.debug("REST request to get all Faqs for the course with id : {}", courseId);
+        log.debug("REST request to get all Faqs for the course with id : " + courseId + "and status " + faqState, courseId);
         FaqState retrievedState = defineState(faqState);
-        Course course = courseRepository.findByIdElseThrow(courseId);
         Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(courseId, retrievedState);
         Set<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).collect(Collectors.toSet());
         return ResponseEntity.ok().body(faqDTOS);
@@ -214,9 +193,6 @@ public class FaqResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Set<String>> getFaqCategoriesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faq Categories for the course with id : {}", courseId);
-
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         Set<String> faqs = faqRepository.findAllCategoriesByCourseId(courseId);
 
         return ResponseEntity.ok().body(faqs);

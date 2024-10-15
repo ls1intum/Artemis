@@ -126,9 +126,9 @@ export class FaqUpdateComponent implements OnInit {
         let messageKey: string;
 
         if (this.isAtLeastInstructor) {
-            messageKey = this.faq.id ? 'artemisApp.faq.updated' : 'artemisApp.faq.created';
+            messageKey = faq.id ? 'artemisApp.faq.updated' : 'artemisApp.faq.created';
         } else {
-            messageKey = this.faq.id ? 'artemisApp.faq.proposedChange' : 'artemisApp.faq.proposed';
+            messageKey = faq.id ? 'artemisApp.faq.proposedChange' : 'artemisApp.faq.proposed';
         }
         this.alertService.success(this.translateService.instant(messageKey, { id: faq.id }));
     }

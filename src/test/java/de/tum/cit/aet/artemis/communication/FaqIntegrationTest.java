@@ -32,8 +32,6 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private Faq faq;
 
-    private FaqDTO faqDTO;
-
     @BeforeEach
     void initTestCase() throws Exception {
         int numberOfTutors = 2;
@@ -41,7 +39,6 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         this.faq = FaqFactory.generateFaq(course1, FaqState.PROPOSED, "answer", "title");
-        this.faqDTO = new FaqDTO(faq);
         faqRepository.save(this.faq);
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
