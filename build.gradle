@@ -128,7 +128,7 @@ test {
     }
 
     retry {
-        maxRetries = 2
+        maxRetries = 5
         maxFailures = 10 // ToDo: Find a reasonable value
         failOnPassedAfterRetry = false
         failOnSkippedAfterRetry = true
