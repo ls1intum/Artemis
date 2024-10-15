@@ -84,6 +84,7 @@ export enum HttpMethod {
     Post = 'POST',
     Get = 'GET',
     Delete = 'DELETE',
+    Patch = 'PATCH',
 }
 
 export interface ProcessMetrics {

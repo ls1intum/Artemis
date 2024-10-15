@@ -100,7 +100,7 @@
                 "sourcePlaceHolder": "Enter an URL to an external online resource",
                 "sourceRequiredValidationError": "Link is required",
                 "sourceURLValidationError": "Not a valid URL",
-                "urlHelperPlaceholder": "Name and description will be loaded from the meta data of the link"
+                "urlHelperPlaceholder": "Name and description will be loaded from the metadata of the link"
             },
             "editOnlineUnit": {
                 "title": "Edit Online Unit"

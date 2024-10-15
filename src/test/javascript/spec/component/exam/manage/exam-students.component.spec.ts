@@ -1,7 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { User } from 'app/core/user/user.model';
@@ -61,7 +60,7 @@ describe('ExamStudentsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, RouterTestingModule],
+            imports: [ArtemisTestModule, NgxDatatableModule],
             declarations: [
                 ExamStudentsComponent,
                 MockComponent(UsersImportButtonComponent),
@@ -71,10 +70,7 @@ describe('ExamStudentsComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ActivatedRoute, useValue: route },
-            ],
+            providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }, { provide: ActivatedRoute, useValue: route }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamStudentsComponent);

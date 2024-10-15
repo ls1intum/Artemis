@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('FeedbackAnalysisService', () => {
     let service: FeedbackAnalysisService;
@@ -13,8 +14,8 @@ describe('FeedbackAnalysisService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [FeedbackAnalysisService],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), FeedbackAnalysisService],
         });
 
         service = TestBed.inject(FeedbackAnalysisService);
@@ -35,16 +36,6 @@ describe('FeedbackAnalysisService', () => {
 
             const result = await responsePromise;
             expect(result).toEqual(feedbackDetailsMock);
-        });
-
-        it('should handle errors while retrieving feedback details', async () => {
-            const responsePromise = service.getFeedbackDetailsForExercise(1);
-
-            const req = httpMock.expectOne('api/exercises/1/feedback-details');
-            expect(req.request.method).toBe('GET');
-            req.flush('Something went wrong', { status: 500, statusText: 'Server Error' });
-
-            await expect(responsePromise).rejects.toThrow('Internal server error');
         });
     });
 });

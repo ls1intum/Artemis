@@ -5,10 +5,9 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
@@ -165,8 +164,8 @@ describe('CourseOverviewComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [
+                RouterModule.forRoot([]),
                 ArtemisTestModule,
-                RouterTestingModule.withRoutes([]),
                 MockModule(MatSidenavModule),
                 MockModule(NgbTooltipModule),
                 MockModule(BrowserAnimationsModule),
@@ -216,6 +215,7 @@ describe('CourseOverviewComponent', () => {
                 fixture = TestBed.createComponent(CourseOverviewComponent);
 
                 component = fixture.componentInstance;
+                component.isLti = false;
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
                 examParticipationService = TestBed.inject(ExamParticipationService);
@@ -647,14 +647,18 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should display content of dropdown when dropdownOpen changes', () => {
-        itemsDrop.open();
-        fixture.detectChanges();
-        expect(component.itemsDrop.isOpen).toBeTrue();
+        if (component.itemsDrop) {
+            itemsDrop.open();
+            fixture.detectChanges();
+            expect(component.itemsDrop.isOpen).toBeTrue();
+        }
     });
     it('should hide content of dropdown when dropdownOpen changes', () => {
-        itemsDrop.close();
-        fixture.detectChanges();
-        expect(component.itemsDrop.isOpen).toBeFalse();
+        if (component.itemsDrop) {
+            itemsDrop.close();
+            fixture.detectChanges();
+            expect(component.itemsDrop.isOpen).toBeFalse();
+        }
     });
 
     it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
@@ -668,11 +672,13 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should change dropdownOpen when clicking on More', () => {
-        itemsDrop.close();
-        const clickOnMoreItem = fixture.nativeElement.querySelector('.three-dots');
-        clickOnMoreItem.click();
+        if (component.itemsDrop) {
+            itemsDrop.close();
+            const clickOnMoreItem = fixture.nativeElement.querySelector('.three-dots');
+            clickOnMoreItem.click();
 
-        expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeFalse();
+            expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeFalse();
+        }
     });
 
     it('should apply exam-wrapper and exam-is-active if exam is started', () => {

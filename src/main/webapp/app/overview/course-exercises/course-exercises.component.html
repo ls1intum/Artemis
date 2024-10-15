@@ -1,11 +1,11 @@
-<div class="d-flex justify-content-between gap-3 horizontal-scroll">
+<div class="d-flex justify-content-between horizontal-scroll">
     @if (course) {
-        <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+        <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }" *ngIf="!isLti">
             <jhi-sidebar [itemSelected]="exerciseSelected" [courseId]="courseId" [sidebarData]="sidebarData" [collapseState]="DEFAULT_COLLAPSE_STATE" [showFilter]="true" />
         </div>
 
         @if (exerciseSelected) {
-            <div class="vw-100 module-bg rounded-3">
+            <div class="vw-100 module-bg rounded-3" [ngStyle]="isLti ? { height: '90vh', position: 'relative' } : {}">
                 <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {

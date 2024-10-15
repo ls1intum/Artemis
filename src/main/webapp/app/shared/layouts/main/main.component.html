@@ -2,19 +2,19 @@
 <div
     id="page-wrapper"
     class="page-wrapper"
-    [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }"
+    [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer, 'no-padding': isLti }"
     [ngStyle]="{ 'overflow-y': !isTestRunExam && isExamStarted ? 'hidden' : 'auto' }"
     cdkScrollable
 >
     <jhi-page-ribbon />
-    @if (showSkeleton) {
+    @if (showSkeleton && !isLti) {
         <div class="sticky-top">
             <router-outlet name="navbar" />
         </div>
     }
     @if (showSkeleton) {
         <div class="card" style="border-style: none">
-            <div class="card-body">
+            <div class="card-body" [ngClass]="{ 'course-overview pt-0': isCourseOverview }">
                 <router-outlet />
             </div>
         </div>
@@ -23,7 +23,7 @@
         <router-outlet />
     }
     <jhi-notification-popup />
-    @if (showSkeleton) {
+    @if (showSkeleton && !isLti) {
         <div>
             @if (isTestRunExam || !isExamStarted) {
                 <jhi-footer [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }" />

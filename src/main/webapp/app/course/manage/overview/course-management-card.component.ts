@@ -19,6 +19,7 @@ import {
     faListAlt,
     faNetworkWired,
     faPersonChalkboard,
+    faQuestion,
     faSpinner,
     faTable,
     faUserCheck,
@@ -77,6 +78,7 @@ export class CourseManagementCardComponent implements OnChanges {
     faAngleUp = faAngleUp;
     faPersonChalkboard = faPersonChalkboard;
     faSpinner = faSpinner;
+    faQuestion = faQuestion;
 
     courseColor: string;
 

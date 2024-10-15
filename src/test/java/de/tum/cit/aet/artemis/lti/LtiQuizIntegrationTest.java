@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,49 +25,19 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
-import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
-import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
-import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @Isolated
-class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
 
     private static final String TEST_PREFIX = "ltiquizsubmissiontest";
-
-    @Autowired
-    private QuizExerciseService quizExerciseService;
-
-    @Autowired
-    private QuizExerciseTestRepository quizExerciseTestRepository;
-
-    @Autowired
-    private SubmissionTestRepository submissionRepository;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    protected RequestUtilService request;
-
-    @Autowired
-    private QuizSubmissionService quizSubmissionService;
 
     @BeforeEach
     void init() {
