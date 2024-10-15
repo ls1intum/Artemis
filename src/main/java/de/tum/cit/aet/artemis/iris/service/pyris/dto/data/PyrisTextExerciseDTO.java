@@ -22,7 +22,7 @@ public record PyrisTextExerciseDTO(long id, String title, PyrisCourseDTO course,
        return new PyrisTextExerciseDTO(
                 exercise.getId(),
                 exercise.getTitle(),
-                new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember()),
+                PyrisCourseDTO.of(exercise.getCourseViaExerciseGroupOrCourseMember()),
                 exercise.getProblemStatement(),
                 Optional.ofNullable(exercise.getStartDate()).map(ChronoZonedDateTime::toInstant).orElse(null),
                 Optional.ofNullable(exercise.getDueDate()).map(ChronoZonedDateTime::toInstant).orElse(null)

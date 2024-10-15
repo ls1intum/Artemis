@@ -6,7 +6,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
 
 /**
- * DTO to execute the Iris competency extraction pipeline on Pyris
+ * DTO to execute the Iris competency extraction pipeline on Pyris.
  *
  * @param execution           The pipeline execution details
  * @param courseDescription   The description of the course
@@ -15,6 +15,12 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
  * @param maxN                The maximum number of competencies to extract
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisCompetencyExtractionPipelineExecutionDTO(PyrisPipelineExecutionDTO execution, String courseDescription, PyrisCompetencyRecommendationDTO[] currentCompetencies,
-        CompetencyTaxonomy[] taxonomyOptions, int maxN) {
-}
+// @formatter:off
+public record PyrisCompetencyExtractionPipelineExecutionDTO(
+        PyrisPipelineExecutionDTO execution,
+        String courseDescription,
+        PyrisCompetencyRecommendationDTO[] currentCompetencies,
+        CompetencyTaxonomy[] taxonomyOptions,
+        int maxN
+) {}
+// @formatter:on

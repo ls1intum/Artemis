@@ -25,7 +25,12 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisProgrammingExerciseDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -62,11 +67,13 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final PyrisProgrammingExerciseDTOService pyrisProgrammingExerciseDTOService;
+
     public IrisExerciseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper, PyrisProgrammingExerciseDTOService pyrisProgrammingExerciseDTOService) {
         super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -78,6 +85,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         this.rateLimitService = rateLimitService;
         this.pyrisPipelineService = pyrisPipelineService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.pyrisProgrammingExerciseDTOService = pyrisProgrammingExerciseDTOService;
     }
 
     /**
@@ -134,19 +142,41 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * Sends all messages of the session to an LLM and handles the response by saving the message
      * and sending it to the student via the Websocket.
      *
-     * @param session The chat session to send to the LLM
+     * @param _irisSession The chat session to send to the LLM. The full session is loaded from the database by ID.
      */
     @Override
-    public void requestAndHandleResponse(IrisExerciseChatSession session) {
-        var chatSession = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        if (chatSession.getExercise().isExamExercise()) {
+    public void requestAndHandleResponse(IrisExerciseChatSession _irisSession) {
+        var session = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(_irisSession.getId());
+        if (session.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(chatSession.getExercise().getId());
-        var latestSubmission = getLatestSubmissionIfExists(exercise, chatSession.getUser());
 
-        var variant = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false).irisChatSettings().selectedVariant();
-        pyrisPipelineService.executeExerciseChatPipeline(variant, latestSubmission, exercise, chatSession);
+        String variant = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false).irisChatSettings().selectedVariant();
+        var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getExercise().getId());
+        var latestSubmissionDTO = getLatestSubmissionIfExists(exercise, session.getUser()).map(pyrisProgrammingExerciseDTOService::convert).orElse(null);
+        var exerciseDTO = pyrisProgrammingExerciseDTOService.convert(exercise);
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var courseDTO = PyrisCourseDTO.of(course);
+        var conversationDTO = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
+        var userDTO = PyrisUserDTO.of(session.getUser());
+
+        // @formatter:off
+        pyrisPipelineService.executePipeline(
+                "tutor-chat", // TODO: Rename this to 'programming-exercise-chat'
+                variant,
+                token -> new ExerciseChatJob(token, course.getId(), exercise.getId(), session.getId()),
+                executionDto -> new PyrisExerciseChatPipelineExecutionDTO(
+                        latestSubmissionDTO,
+                        exerciseDTO,
+                        courseDTO,
+                        conversationDTO,
+                        userDTO,
+                        executionDto.settings(),
+                        executionDto.initialStages()
+                ),
+                stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
+        );
+        // @formatter:on
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

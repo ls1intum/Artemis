@@ -19,8 +19,6 @@ import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
@@ -69,23 +67,9 @@ public class PyrisJobService {
      * @param tokenToJobFunction the function to run with the token
      * @return the generated token
      */
-    public String createTokenForJob(Function<String, PyrisJob> tokenToJobFunction) {
+    public String registerJob(Function<String, PyrisJob> tokenToJobFunction) {
         var token = generateJobIdToken();
         var job = tokenToJobFunction.apply(token);
-        jobMap.put(token, job);
-        return token;
-    }
-
-    public String addExerciseChatJob(Long courseId, Long exerciseId, Long sessionId) {
-        var token = generateJobIdToken();
-        var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId);
-        jobMap.put(token, job);
-        return token;
-    }
-
-    public String addCourseChatJob(Long courseId, Long sessionId) {
-        var token = generateJobIdToken();
-        var job = new CourseChatJob(token, courseId, sessionId);
         jobMap.put(token, job);
         return token;
     }
@@ -129,7 +113,7 @@ public class PyrisJobService {
      * 2. Retrieves the PyrisJob object associated with the provided token.
      * 3. Throws an AccessForbiddenException if the token is invalid or not provided.
      * <p>
-     * The token was previously generated via {@link #createTokenForJob(Function)}
+     * The token was previously generated via {@link #registerJob(Function)}
      *
      * @param request  the HttpServletRequest object representing the incoming request
      * @param jobClass the class of the PyrisJob object to cast the retrieved job to

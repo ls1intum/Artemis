@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
@@ -50,16 +49,13 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
 
     private final PyrisPipelineService pyrisPipelineService;
 
-    private final PyrisJobService pyrisJobService;
-
     private final IrisChatWebsocketService irisChatWebsocketService;
 
     private final AuthorizationCheckService authCheckService;
 
     public IrisTextExerciseChatSessionService(IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
             IrisMessageService irisMessageService, TextExerciseRepository textExerciseRepository, StudentParticipationRepository studentParticipationRepository,
-            PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, IrisChatWebsocketService irisChatWebsocketService,
-            AuthorizationCheckService authCheckService) {
+            PyrisPipelineService pyrisPipelineService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService) {
         this.irisSettingsService = irisSettingsService;
         this.irisSessionRepository = irisSessionRepository;
         this.rateLimitService = rateLimitService;
@@ -67,7 +63,6 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         this.textExerciseRepository = textExerciseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.pyrisPipelineService = pyrisPipelineService;
-        this.pyrisJobService = pyrisJobService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
     }
@@ -88,6 +83,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var exerciseDTO = PyrisTextExerciseDTO.of(exercise);
         // TODO: Once we can receive client form data through the IrisMessageResource, we should use that instead of fetching the latest submission to get the text
         var participation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), session.getUser().getLogin());
         var latestSubmission = participation.flatMap(p -> p.getSubmissions().stream().max(Comparator.comparingLong(Submission::getId))).orElse(null);
@@ -103,8 +99,13 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         pyrisPipelineService.executePipeline(
                 "text-exercise-chat",
                 "default",
-                pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),
-                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(dto, PyrisTextExerciseDTO.of(exercise), conversation, latestSubmissionText),
+                token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId()),
+                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(
+                        dto,
+                        exerciseDTO,
+                        conversation,
+                        latestSubmissionText
+                ),
                 stages -> irisChatWebsocketService.sendMessage(session, null, stages)
         );
         // @formatter:on

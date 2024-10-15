@@ -6,5 +6,10 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisResultDTO(Instant completionDate, boolean successful, List<PyrisFeedbackDTO> feedbacks) {
-}
+// @formatter:off
+public record PyrisResultDTO(
+        Instant completionDate,
+        boolean successful,
+        List<PyrisFeedbackDTO> feedbacks
+) {}
+// @formatter:on

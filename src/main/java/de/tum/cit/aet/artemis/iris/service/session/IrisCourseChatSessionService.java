@@ -4,7 +4,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.context.annotation.Profile;
@@ -14,11 +20,16 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.LearningMetricsService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
@@ -30,6 +41,10 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExtendedCourseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -57,9 +72,16 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private final PyrisPipelineService pyrisPipelineService;
 
+    private final CourseRepository courseRepository;
+
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final LearningMetricsService learningMetricsService;
+
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper) {
+            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper,
+            CourseRepository courseRepository, StudentParticipationRepository studentParticipationRepository, LearningMetricsService learningMetricsService) {
         super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -69,6 +91,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         this.rateLimitService = rateLimitService;
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.pyrisPipelineService = pyrisPipelineService;
+        this.courseRepository = courseRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.learningMetricsService = learningMetricsService;
     }
 
     /**
@@ -120,10 +145,62 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         requestAndHandleResponse(session, variant, null);
     }
 
-    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, CompetencyJol competencyJol) {
-        var chatSession = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+    private void requestAndHandleResponse(IrisCourseChatSession _session, String variant, CompetencyJol competencyJol) {
+        var session = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(_session.getId());
 
-        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, competencyJol);
+        var courseId = session.getCourse().getId();
+        var userId = session.getUser().getId();
+
+        var courseDTO = PyrisExtendedCourseDTO.of(loadCourseWithParticipationOfStudent(courseId, userId));
+        var metricsDTO = learningMetricsService.getStudentCourseMetrics(userId, courseId);
+        var competencyJolDTO = Optional.ofNullable(competencyJol).map(CompetencyJolDTO::of).orElse(null);
+        var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
+        var userDTO = PyrisUserDTO.of(session.getUser());
+
+        // @formatter:off
+        pyrisPipelineService.executePipeline(
+                "course-chat",
+                variant,
+                token -> new CourseChatJob(token, courseId, session.getId()),
+                executionDto -> new PyrisCourseChatPipelineExecutionDTO(
+                        courseDTO,
+                        metricsDTO,
+                        competencyJolDTO,
+                        conversation,
+                        userDTO,
+                        executionDto.settings(),
+                        executionDto.initialStages()
+                ),
+                stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
+        );
+        // @formatter:on
+    }
+
+    /**
+     * Load the course with the participation of the student and set the participations on the exercises.
+     * <p>
+     * Spring Boot 3 does not support conditional left joins, so we have to load the participations separately.
+     *
+     * @param courseId  the id of the course
+     * @param studentId the id of the student
+     */
+    private Course loadCourseWithParticipationOfStudent(long courseId, long studentId) {
+        Course course = courseRepository.findWithEagerExercisesAndLecturesAndAttachmentsAndLectureUnitsAndCompetenciesAndExamsById(courseId).orElseThrow();
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId,
+                course.getExercises());
+
+        Map<Long, Set<StudentParticipation>> participationMap = new HashMap<>();
+        for (StudentParticipation participation : participations) {
+            Long exerciseId = participation.getExercise().getId();
+            participationMap.computeIfAbsent(exerciseId, k -> new HashSet<>()).add(participation);
+        }
+
+        course.getExercises().forEach(exercise -> {
+            Set<StudentParticipation> exerciseParticipations = participationMap.getOrDefault(exercise.getId(), Set.of());
+            exercise.setStudentParticipations(exerciseParticipations);
+        });
+
+        return course;
     }
 
     /**

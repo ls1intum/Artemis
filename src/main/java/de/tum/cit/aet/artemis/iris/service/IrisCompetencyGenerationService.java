@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyRecommendationDTO;
@@ -27,12 +26,9 @@ public class IrisCompetencyGenerationService {
 
     private final IrisWebsocketService websocketService;
 
-    private final PyrisJobService pyrisJobService;
-
-    public IrisCompetencyGenerationService(PyrisPipelineService pyrisPipelineService, IrisWebsocketService websocketService, PyrisJobService pyrisJobService) {
+    public IrisCompetencyGenerationService(PyrisPipelineService pyrisPipelineService, IrisWebsocketService websocketService) {
         this.pyrisPipelineService = pyrisPipelineService;
         this.websocketService = websocketService;
-        this.pyrisJobService = pyrisJobService;
     }
 
     /**
@@ -48,7 +44,7 @@ public class IrisCompetencyGenerationService {
         pyrisPipelineService.executePipeline(
                 "competency-extraction",
                 "default",
-                pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getLogin())),
+                jobId -> new CompetencyExtractionJob(jobId, course.getId(), user.getLogin()),
                 executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, CompetencyTaxonomy.values(), 5),
                 stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId()), new PyrisCompetencyStatusUpdateDTO(stages, null))
         );

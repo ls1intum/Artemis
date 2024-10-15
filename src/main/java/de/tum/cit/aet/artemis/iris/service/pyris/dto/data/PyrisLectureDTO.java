@@ -6,5 +6,13 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisLectureDTO(long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate, List<PyrisLectureUnitDTO> units) {
-}
+// @formatter:off
+public record PyrisLectureDTO(
+        long id,
+        String title,
+        String description,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        List<PyrisLectureUnitDTO> units
+) {}
+// @formatter:on

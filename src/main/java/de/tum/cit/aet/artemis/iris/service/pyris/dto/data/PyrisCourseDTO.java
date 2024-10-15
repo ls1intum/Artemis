@@ -7,7 +7,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisCourseDTO(long id, String name, String description) {
 
-    public PyrisCourseDTO(Course course) {
-        this(course.getId(), course.getTitle(), course.getDescription());
+    public static PyrisCourseDTO of(Course course) {
+        return new PyrisCourseDTO(course.getId(), course.getTitle(), course.getDescription());
     }
 }

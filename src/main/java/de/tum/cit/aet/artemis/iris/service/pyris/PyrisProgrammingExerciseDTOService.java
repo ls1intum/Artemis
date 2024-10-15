@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -17,10 +16,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisFeedbackDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
@@ -31,11 +28,15 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
+/**
+ * This service provides conversion methods for domain objects related to programming exercises into their DTO types.
+ * These conversions require special handling too complex for constructors in the DTOs themselves.
+ */
 @Service
 @Profile(PROFILE_IRIS)
-public class PyrisDTOService {
+public class PyrisProgrammingExerciseDTOService {
 
-    private static final Logger log = LoggerFactory.getLogger(PyrisDTOService.class);
+    private static final Logger log = LoggerFactory.getLogger(PyrisProgrammingExerciseDTOService.class);
 
     private final GitService gitService;
 
@@ -43,7 +44,7 @@ public class PyrisDTOService {
 
     private final ProfileService profileService;
 
-    public PyrisDTOService(GitService gitService, RepositoryService repositoryService, ProfileService profileService) {
+    public PyrisProgrammingExerciseDTOService(GitService gitService, RepositoryService repositoryService, ProfileService profileService) {
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.profileService = profileService;
@@ -56,7 +57,7 @@ public class PyrisDTOService {
      * @param exercise the programming exercise to convert
      * @return the converted PyrisProgrammingExerciseDTO
      */
-    public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseDTO(ProgrammingExercise exercise) {
+    public PyrisProgrammingExerciseDTO convert(ProgrammingExercise exercise) {
         var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation());
         var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation());
         Optional<Repository> testRepo = Optional.empty();
@@ -68,8 +69,19 @@ public class PyrisDTOService {
         }
         var testsRepositoryContents = testRepo.map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
 
-        return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
-                testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
+        // @formatter:off
+        return new PyrisProgrammingExerciseDTO(
+                exercise.getId(),
+                exercise.getTitle(),
+                exercise.getProgrammingLanguage(),
+                templateRepositoryContents,
+                solutionRepositoryContents,
+                testsRepositoryContents,
+                exercise.getProblemStatement(),
+                toInstant(exercise.getReleaseDate()),
+                toInstant(exercise.getDueDate())
+        );
+        // @formatter:on
     }
 
     /**
@@ -79,23 +91,26 @@ public class PyrisDTOService {
      * @param submission the students submission
      * @return the converted PyrisSubmissionDTO
      */
-    public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission) {
-        var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
+    public PyrisSubmissionDTO convert(ProgrammingSubmission submission) {
+        // @formatter:off
+        var buildLogEntries = submission.getBuildLogEntries()
+                .stream()
+                .map(buildLogEntry -> new PyrisBuildLogEntryDTO(
+                        toInstant(buildLogEntry.getTime()),
+                        buildLogEntry.getLog()
+                ))
                 .toList();
         var studentRepositoryContents = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
-        return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), studentRepositoryContents, submission.getParticipation().isPracticeMode(),
-                submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
-    }
-
-    /**
-     * Helper method to convert a list of IrisMessages to a list of PyrisMessageDTOs.
-     * This needs separate handling for the different types of message content.
-     *
-     * @param messages the messages with contents to convert
-     * @return the converted list of PyrisMessageDTOs
-     */
-    public List<PyrisMessageDTO> toPyrisMessageDTOList(List<IrisMessage> messages) {
-        return messages.stream().map(PyrisMessageDTO::of).toList();
+        return new PyrisSubmissionDTO(
+                submission.getId(),
+                toInstant(submission.getSubmissionDate()),
+                studentRepositoryContents,
+                submission.getParticipation().isPracticeMode(),
+                submission.isBuildFailed(),
+                buildLogEntries,
+                getLatestResult(submission)
+        );
+        // @formatter:on
     }
 
     /**
