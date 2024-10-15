@@ -332,7 +332,6 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
         gracePeriod: 10,
     };
     exam = await examAPIRequests.createExam(examConfig);
-    await examAPIRequests.registerStudentForExam(exam, studentOne);
     let additionalData = {};
     switch (exerciseType) {
         case ExerciseType.PROGRAMMING:
@@ -347,6 +346,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     }
 
     const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, exerciseType, additionalData);
+    await examAPIRequests.registerStudentForExam(exam, studentOne);
     await examAPIRequests.generateMissingIndividualExams(exam);
     await examAPIRequests.prepareExerciseStartForExam(exam);
     exercise.additionalData = additionalData;
