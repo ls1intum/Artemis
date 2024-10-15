@@ -27,6 +27,7 @@ public class AtlasConfig extends AbstractModuleConfig {
         super(environment, requiredProfiles);
     }
 
+    @Profile(PROFILE_CORE)
     @Configuration
     @EnableJpaRepositories(basePackages = { "de.tum.cit.aet.artemis.atlas.repository" }, repositoryBaseClass = RepositoryImpl.class)
     static class AtlasDatabaseConfig extends DatabaseConfiguration {
