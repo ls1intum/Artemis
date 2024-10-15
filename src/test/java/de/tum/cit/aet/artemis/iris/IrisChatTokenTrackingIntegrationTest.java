@@ -3,9 +3,6 @@ package de.tum.cit.aet.artemis.iris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -17,9 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -29,9 +24,8 @@ import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsage;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
@@ -61,8 +55,11 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     @Autowired
     private IrisMessageRepository irisMessageRepository;
 
-    @SpyBean
+    @Autowired
     private LLMTokenUsageService llmTokenUsageService;
+
+    @Autowired
+    private LLMTokenUsageRepository irisLLMTokenUsageRepository;
 
     @Autowired
     private IrisRequestMockProvider irisRequestMockProvider;
@@ -122,6 +119,8 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         activateIrisGlobally();
         activateIrisFor(course);
         activateIrisFor(exercise);
+        // Clean up the database
+        irisLLMTokenUsageRepository.deleteAll();
         pipelineDone = new AtomicBoolean(false);
     }
 
@@ -148,21 +147,18 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().until(pipelineDone::get);
 
-        // Capture the saved token usages
-        ArgumentCaptor<List<PyrisLLMCostDTO>> captor = ArgumentCaptor.forClass(List.class);
-        verify(llmTokenUsageService).saveIrisTokenUsage(any(PyrisJob.class), any(IrisMessage.class), any(Exercise.class), any(User.class), any(Course.class), captor.capture());
-
-        // Verify that the tokens are saved correctly
-        List<PyrisLLMCostDTO> savedTokenUsages = captor.getValue();
+        List<LLMTokenUsage> savedTokenUsages = irisLLMTokenUsageRepository.findAll();
         assertThat(savedTokenUsages).hasSize(5);
         for (int i = 0; i < savedTokenUsages.size(); i++) {
-            PyrisLLMCostDTO usage = savedTokenUsages.get(i);
+            LLMTokenUsage usage = savedTokenUsages.get(i);
             PyrisLLMCostDTO expectedCost = tokens.get(i);
 
-            assertThat(usage.numInputTokens()).isEqualTo(expectedCost.numInputTokens());
-            assertThat(usage.costPerInputToken()).isEqualTo(expectedCost.costPerInputToken());
-            assertThat(usage.numOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
-            assertThat(usage.costPerOutputToken()).isEqualTo(expectedCost.costPerOutputToken());
+            assertThat(usage.getModel()).isEqualTo(expectedCost.modelInfo());
+            assertThat(usage.getNumInputTokens()).isEqualTo(expectedCost.numInputTokens());
+            assertThat(usage.getNumOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
+            assertThat(usage.getCostPerMillionInputTokens()).isEqualTo(expectedCost.costPerInputToken());
+            assertThat(usage.getCostPerMillionOutputTokens()).isEqualTo(expectedCost.costPerOutputToken());
+            assertThat(usage.getServiceType()).isEqualTo(expectedCost.pipeline());
         }
     }
 
@@ -218,21 +214,18 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().until(pipelineDone::get);
 
-        // Capture the saved token usages
-        ArgumentCaptor<List<PyrisLLMCostDTO>> captor = ArgumentCaptor.forClass(List.class);
-        verify(llmTokenUsageService).saveIrisTokenUsage(any(PyrisJob.class), isNull(), any(Exercise.class), any(User.class), any(Course.class), captor.capture());
-
-        // Verify that the tokens are saved correctly
-        List<PyrisLLMCostDTO> savedTokenUsages = captor.getValue();
+        List<LLMTokenUsage> savedTokenUsages = irisLLMTokenUsageRepository.findAll();
         assertThat(savedTokenUsages).hasSize(5);
         for (int i = 0; i < savedTokenUsages.size(); i++) {
-            PyrisLLMCostDTO usage = savedTokenUsages.get(i);
+            LLMTokenUsage usage = savedTokenUsages.get(i);
             PyrisLLMCostDTO expectedCost = tokens.get(i);
 
-            assertThat(usage.numInputTokens()).isEqualTo(expectedCost.numInputTokens());
-            assertThat(usage.costPerInputToken()).isEqualTo(expectedCost.costPerInputToken());
-            assertThat(usage.numOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
-            assertThat(usage.costPerOutputToken()).isEqualTo(expectedCost.costPerOutputToken());
+            assertThat(usage.getModel()).isEqualTo(expectedCost.modelInfo());
+            assertThat(usage.getNumInputTokens()).isEqualTo(expectedCost.numInputTokens());
+            assertThat(usage.getNumOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
+            assertThat(usage.getCostPerMillionInputTokens()).isEqualTo(expectedCost.costPerInputToken());
+            assertThat(usage.getCostPerMillionOutputTokens()).isEqualTo(expectedCost.costPerOutputToken());
+            assertThat(usage.getServiceType()).isEqualTo(expectedCost.pipeline());
         }
     }
 
