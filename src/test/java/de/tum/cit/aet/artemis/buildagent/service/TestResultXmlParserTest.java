@@ -208,4 +208,38 @@ class TestResultXmlParserTest {
         assertThat(test.getName()).isEqualTo("mwe-name");
         assertThat(test.getTestMessages()).hasSize(1).contains("");
     }
+
+    @Test
+    void testNestedTestsuite() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+                <testsuites errors="0" failures="0" tests="12" time="0.013">
+                    <testsuite name="Tests" tests="12">
+                        <testsuite name="Properties" tests="9">
+                            <testsuite name="Checked by SmallCheck" tests="6">
+                                <testcase classname="Tests.Properties.Checked by SmallCheck" name="Testing filtering in A" time="0.004"/>
+                                <testcase classname="Tests.Properties.Checked by SmallCheck" name="Testing mapping in A" time="0.000"/>
+                                <testcase classname="Tests.Properties.Checked by SmallCheck" name="Testing filtering in B" time="0.003"/>
+                                <testcase classname="Tests.Properties.Checked by SmallCheck" name="Testing mapping in B" time="0.000"/>
+                                <testcase classname="Tests.Properties.Checked by SmallCheck" name="Testing filtering in C" time="0.001"/>
+                                <testcase classname="Tests.Properties.Checked by SmallCheck" name="Testing mapping in C" time="0.000"/>
+                            </testsuite>
+                            <testsuite name="Checked by QuickCheck" tests="3">
+                                <testcase classname="Tests.Properties.Checked by QuickCheck" name="Testing A against sample solution" time="0.001"/>
+                                <testcase classname="Tests.Properties.Checked by QuickCheck" name="Testing B against sample solution" time="0.001"/>
+                                <testcase classname="Tests.Properties.Checked by QuickCheck" name="Testing C against sample solution" time="0.001"/>
+                            </testsuite>
+                        </testsuite>
+                        <testsuite name="Unit Tests" tests="3">
+                            <testcase classname="Tests.Unit Tests" name="Testing selectAndReflectA (0,0) []" time="0.000"/>
+                            <testcase classname="Tests.Unit Tests" name="Testing selectAndReflectB (0,1) [(0,0)]" time="0.000"/>
+                            <testcase classname="Tests.Unit Tests" name="Testing selectAndReflectC (0,1) [(-1,-1)]" time="0.000"/>
+                        </testsuite>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+        assertThat(successfulTests).hasSize(12);
+    }
 }
