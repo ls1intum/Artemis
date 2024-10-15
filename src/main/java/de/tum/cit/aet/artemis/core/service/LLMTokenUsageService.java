@@ -48,7 +48,7 @@ public class LLMTokenUsageService {
         for (PyrisLLMCostDTO cost : tokens) {
             LLMTokenUsage llmTokenUsage = new LLMTokenUsage();
             if (message != null) {
-                llmTokenUsage.setIrisMessage(message);
+                llmTokenUsage.setIrisMessageId(message.getId());
                 llmTokenUsage.setTime(message.getSentAt());
             }
             if (user != null) {
@@ -58,8 +58,12 @@ public class LLMTokenUsageService {
                 llmTokenUsage.setTraceId(job.jobId());
             }
             llmTokenUsage.setServiceType(cost.pipeline());
-            llmTokenUsage.setExercise(exercise);
-            llmTokenUsage.setCourse(course);
+            if (exercise != null) {
+                llmTokenUsage.setExerciseId(exercise.getId());
+            }
+            if (course != null) {
+                llmTokenUsage.setCourseId(course.getId());
+            }
             llmTokenUsage.setNumInputTokens(cost.numInputTokens());
             llmTokenUsage.setCostPerMillionInputTokens(cost.costPerInputToken());
             llmTokenUsage.setNumOutputTokens(cost.numOutputTokens());
@@ -96,17 +100,5 @@ public class LLMTokenUsageService {
      */
     public List<LLMTokenUsage> saveIrisTokenUsage(PyrisJob job, IrisMessage message, User user, Course course, List<PyrisLLMCostDTO> tokens) {
         return saveIrisTokenUsage(job, message, null, user, course, tokens);
-    }
-
-    /**
-     * Overloaded method to save token usage without message, exercise and user.
-     *
-     * @param job    used to create a unique traceId to group multiple LLM calls
-     * @param course to map the token to a course
-     * @param tokens token cost list of type PyrisLLMCostDTO
-     * @return list of the saved data
-     */
-    public List<LLMTokenUsage> saveIrisTokenUsage(PyrisJob job, Course course, List<PyrisLLMCostDTO> tokens) {
-        return saveIrisTokenUsage(job, null, null, null, course, tokens);
     }
 }

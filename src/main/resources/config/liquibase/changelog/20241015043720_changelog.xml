@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd"
         objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
-    <changeSet id="20241014035241" author="alex.joham">
+    <changeSet id="20241015043720" author="alex.joham">
         <createTable tableName="llm_token_usage">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_llm_token_usage"/>
@@ -23,15 +23,6 @@
             <column name="trace_id" type="VARCHAR(255)"/>
             <column name="iris_message_id" type="BIGINT"/>
         </createTable>
-        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="llm_token_usage"
-                                 constraintName="FK_LLM_TOKEN_USAGE_ON_COURSE" referencedColumnNames="id"
-                                 referencedTableName="course"/>
-        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="llm_token_usage"
-                                 constraintName="FK_LLM_TOKEN_USAGE_ON_EXERCISE" referencedColumnNames="id"
-                                 referencedTableName="exercise"/>
-        <addForeignKeyConstraint baseColumnNames="iris_message_id" baseTableName="llm_token_usage"
-                                 constraintName="FK_LLM_TOKEN_USAGE_ON_IRIS_MESSAGE" referencedColumnNames="id"
-                                 referencedTableName="iris_message"/>
     </changeSet>
 
 </databaseChangeLog>

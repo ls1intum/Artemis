@@ -5,18 +5,12 @@ import java.time.ZonedDateTime;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 
 @Entity
 @Table(name = "llm_token_usage")
@@ -43,16 +37,12 @@ public class LLMTokenUsage extends DomainObject {
     private float costPerMillionOutputTokens;
 
     @Nullable
-    @ManyToOne
-    @JsonIgnore
-    @JoinColumn(name = "course_id")
-    private Course course;
+    @Column(name = "course_id")
+    private Long courseId;
 
     @Nullable
-    @ManyToOne
-    @JsonIgnore
-    @JoinColumn(name = "exercise_id")
-    private Exercise exercise;
+    @Column(name = "exercise_id")
+    private Long exerciseId;
 
     @Column(name = "user_id")
     private long userId;
@@ -64,10 +54,8 @@ public class LLMTokenUsage extends DomainObject {
     private String traceId;
 
     @Nullable
-    @ManyToOne
-    @JsonIgnore
-    @JoinColumn(name = "iris_message_id")
-    private IrisMessage irisMessage;
+    @Column(name = "iris_message_id")
+    private Long irisMessageId;
 
     public String getServiceType() {
         return serviceType;
@@ -117,20 +105,20 @@ public class LLMTokenUsage extends DomainObject {
         this.numOutputTokens = numOutputTokens;
     }
 
-    public Course getCourse() {
-        return course;
+    public Long getCourseId() {
+        return courseId;
     }
 
-    public void setCourse(Course course) {
-        this.course = course;
+    public void setCourseId(Long courseId) {
+        this.courseId = courseId;
     }
 
-    public Exercise getExercise() {
-        return exercise;
+    public Long getExercisIde() {
+        return exerciseId;
     }
 
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
+    public void setExerciseId(Long exerciseId) {
+        this.exerciseId = exerciseId;
     }
 
     public long getUserId() {
@@ -157,18 +145,18 @@ public class LLMTokenUsage extends DomainObject {
         this.traceId = traceId;
     }
 
-    public IrisMessage getIrisMessage() {
-        return irisMessage;
+    public Long getIrisMessageId() {
+        return irisMessageId;
     }
 
-    public void setIrisMessage(IrisMessage message) {
-        this.irisMessage = message;
+    public void setIrisMessageId(Long messageId) {
+        this.irisMessageId = messageId;
     }
 
     @Override
     public String toString() {
         return "LLMTokenUsage{" + "serviceType=" + serviceType + ", model=" + model + ", numInputTokens=" + numInputTokens + ", costPerMillionInputTokens="
-                + costPerMillionInputTokens + ", numOutputTokens=" + numOutputTokens + ", costPerMillionOutputTokens=" + costPerMillionOutputTokens + ", course=" + course
-                + ", exercise=" + exercise + ", userId=" + userId + ", timestamp=" + time + ", traceId=" + traceId + ", irisMessage=" + irisMessage + '}';
+                + costPerMillionInputTokens + ", numOutputTokens=" + numOutputTokens + ", costPerMillionOutputTokens=" + costPerMillionOutputTokens + ", course=" + courseId
+                + ", exercise=" + exerciseId + ", userId=" + userId + ", timestamp=" + time + ", traceId=" + traceId + ", irisMessage=" + irisMessageId + '}';
     }
 }

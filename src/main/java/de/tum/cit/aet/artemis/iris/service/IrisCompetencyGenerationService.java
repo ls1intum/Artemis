@@ -57,7 +57,7 @@ public class IrisCompetencyGenerationService {
         pyrisPipelineService.executePipeline(
                 "competency-extraction",
                 "default",
-                pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getLogin())),
+                pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user)),
                 executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, CompetencyTaxonomy.values(), 5),
                 stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId()), new PyrisCompetencyStatusUpdateDTO(stages, null, null))
         );
@@ -73,9 +73,9 @@ public class IrisCompetencyGenerationService {
     public void handleStatusUpdate(CompetencyExtractionJob job, PyrisCompetencyStatusUpdateDTO statusUpdate) {
         Course course = courseRepository.findByIdForUpdateElseThrow(job.courseId());
         if (statusUpdate.tokens() != null) {
-            llmTokenUsageService.saveIrisTokenUsage(job, course, statusUpdate.tokens());
+            llmTokenUsageService.saveIrisTokenUsage(job, job.user(), course, statusUpdate.tokens());
         }
-        websocketService.send(job.userLogin(), websocketTopic(job.courseId()), statusUpdate);
+        websocketService.send(job.user().getLogin(), websocketTopic(job.courseId()), statusUpdate);
     }
 
     private static String websocketTopic(long courseId) {

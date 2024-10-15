@@ -68,7 +68,8 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
 
         // In the real system, this would be triggered by Pyris via a REST call to the Artemis server
         String jobId = "testJobId";
-        CompetencyExtractionJob job = new CompetencyExtractionJob(jobId, course.getId(), TEST_PREFIX + "editor1");
+        String userLogin = TEST_PREFIX + "editor1";
+        CompetencyExtractionJob job = new CompetencyExtractionJob(jobId, course.getId(), userUtilService.getUserByLogin(userLogin));
         irisCompetencyGenerationService.handleStatusUpdate(job, new PyrisCompetencyStatusUpdateDTO(stages, recommendations, null));
 
         ArgumentCaptor<PyrisCompetencyStatusUpdateDTO> argumentCaptor = ArgumentCaptor.forClass(PyrisCompetencyStatusUpdateDTO.class);
