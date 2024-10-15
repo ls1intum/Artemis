@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
 import { facSaveSuccess } from '../../../../../content/icons/icons';
@@ -12,12 +12,12 @@ import { Submission } from 'app/entities/submission.model';
     imports: [FaIconComponent],
 })
 export class ExerciseSaveButtonComponent {
-    @Input() submission?: Submission;
-    @Output() save = new EventEmitter<void>();
+    submission = input<Submission>();
+    save = output<void>();
 
     //Icons
-    readonly faFloppyDisk = faFloppyDisk;
-    readonly facSaveSuccess = facSaveSuccess;
+    protected readonly faFloppyDisk = faFloppyDisk;
+    protected readonly facSaveSuccess = facSaveSuccess;
 
     onSave() {
         this.save.emit();

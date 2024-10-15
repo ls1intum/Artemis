@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild, output } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -34,7 +34,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     exercise: ModelingExercise;
     umlModel: UMLModel; // input model for Apollon+
 
-    @Output() saveCurrentExercise = new EventEmitter<void>();
+    saveCurrentExercise = output<void>();
 
     explanationText: string; // current explanation text
 
@@ -158,7 +158,6 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     }
 
     notifyTriggerSave() {
-        this.studentSubmission.isSynced = true;
         this.saveCurrentExercise.emit();
     }
 }

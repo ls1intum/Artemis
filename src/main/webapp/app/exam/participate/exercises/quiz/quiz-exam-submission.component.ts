@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChildren, output } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AbstractQuizSubmission } from 'app/entities/quiz/abstract-quiz-exam-submission.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -53,7 +53,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     @Input() examTimeline = false;
     @Input() quizConfiguration: QuizConfiguration;
 
-    @Output() saveCurrentExercise = new EventEmitter<void>();
+    saveCurrentExercise = output<void>();
 
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();

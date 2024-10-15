@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, output } from '@angular/core';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { Subject } from 'rxjs';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
@@ -27,7 +27,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     @Input()
     exercise: Exercise;
 
-    @Output() saveCurrentExercise = new EventEmitter<void>();
+    saveCurrentExercise = output<void>();
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
