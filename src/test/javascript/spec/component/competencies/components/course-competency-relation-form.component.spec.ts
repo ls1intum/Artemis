@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseCompetencyRelationFormComponent } from 'app/course/competencies/components/course-competency-relation-form/course-competency-relation-form.component';
+import { CourseCompetencyRelationFormComponent, UnionFind } from 'app/course/competencies/components/course-competency-relation-form/course-competency-relation-form.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
@@ -214,6 +214,42 @@ describe('CourseCompetencyRelationFormComponent', () => {
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     });
 
+    it('should select head course competency', () => {
+        component['selectHeadCourseCompetency']('2');
+
+        expect(component.headCompetencyId()).toBe(2);
+        expect(component.tailCompetencyId()).toBeUndefined();
+        expect(component.selectedRelationId()).toBeUndefined();
+    });
+
+    it('should set tailCompetencyId and selectedRelationId when an existing relation is found', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const tailId = '1';
+        component.headCompetencyId.set(2);
+        component.relationType.set(CompetencyRelationType.EXTENDS);
+
+        component['selectTailCourseCompetency'](tailId);
+
+        expect(component.tailCompetencyId()).toBe(1);
+        expect(component.selectedRelationId()).toBe(1);
+    });
+
+    it('should set tailCompetencyId and clear selectedRelationId when no existing relation is found', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const tailId = '2';
+        component.headCompetencyId.set(3);
+        component.relationType.set(CompetencyRelationType.EXTENDS);
+
+        component['selectTailCourseCompetency'](tailId);
+
+        expect(component.tailCompetencyId()).toBe(2);
+        expect(component.selectedRelationId()).toBeUndefined();
+    });
+
     it('should delete relation', async () => {
         fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
 
@@ -247,5 +283,50 @@ describe('CourseCompetencyRelationFormComponent', () => {
         await component['deleteRelation']();
 
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+    });
+});
+
+describe('UnionFind', () => {
+    let unionFind: UnionFind;
+
+    beforeEach(() => {
+        unionFind = new UnionFind(5);
+    });
+
+    it('should initialize parent and rank arrays correctly', () => {
+        expect(unionFind.parent).toEqual([0, 1, 2, 3, 4]);
+        expect(unionFind.rank).toEqual([1, 1, 1, 1, 1]);
+    });
+
+    it('should find the representative of a set', () => {
+        expect(unionFind.find(0)).toBe(0);
+        expect(unionFind.find(1)).toBe(1);
+    });
+
+    it('should perform union by rank correctly', () => {
+        unionFind.union(0, 1);
+        expect(unionFind.find(0)).toBe(unionFind.find(1));
+    });
+
+    it('should perform path compression correctly', () => {
+        unionFind.union(0, 1);
+        unionFind.union(1, 2);
+        expect(unionFind.find(2)).toBe(0);
+        expect(unionFind.parent[2]).toBe(0);
+    });
+
+    it('should handle union of already connected components', () => {
+        unionFind.union(0, 1);
+        unionFind.union(1, 2);
+        unionFind.union(0, 2);
+        expect(unionFind.find(2)).toBe(0);
+    });
+
+    it('should handle union of components with equal rank', () => {
+        unionFind.union(0, 1);
+        unionFind.union(2, 3);
+        unionFind.union(1, 2);
+        expect(unionFind.find(3)).toBe(0);
+        expect(unionFind.rank[0]).toBe(3); // Corrected expected rank value
     });
 });

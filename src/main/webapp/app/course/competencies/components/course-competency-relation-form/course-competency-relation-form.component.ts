@@ -61,15 +61,24 @@ export class CourseCompetencyRelationFormComponent {
     }
 
     public selectCourseCompetency(courseCompetencyId: number): void {
-        if (!this.headCompetencyId() || this.tailCompetencyId()) {
-            this.headCompetencyId.set(courseCompetencyId);
-            this.tailCompetencyId.set(undefined);
-            this.relationType.set(undefined);
+        if (!this.headCompetencyId()) {
+            this.selectHeadCourseCompetency(courseCompetencyId.toString());
+            return;
+        } else if (!this.tailCompetencyId()) {
+            this.selectTailCourseCompetency(courseCompetencyId.toString());
+            return;
         } else {
-            if (this.selectableTailCourseCompetencyIds().find((id) => id === courseCompetencyId)) {
-                this.tailCompetencyId.set(courseCompetencyId);
-            }
+            this.selectHeadCourseCompetency(courseCompetencyId.toString());
         }
+        // if (!this.headCompetencyId() || this.tailCompetencyId()) {
+        //     this.headCompetencyId.set(courseCompetencyId);
+        //     this.tailCompetencyId.set(undefined);
+        //     this.relationType.set(undefined);
+        // } else {
+        //     if (this.selectableTailCourseCompetencyIds().find((id) => id === courseCompetencyId)) {
+        //         this.tailCompetencyId.set(courseCompetencyId);
+        //     }
+        // }
     }
 
     protected selectHeadCourseCompetency(headId: string) {
@@ -80,7 +89,7 @@ export class CourseCompetencyRelationFormComponent {
 
     protected selectTailCourseCompetency(tailId: string) {
         this.tailCompetencyId.set(Number(tailId));
-        const existingRelation = this.getExactRelation(this.headCompetencyId(), this.tailCompetencyId(), this.relationType());
+        const existingRelation = this.getRelation(this.headCompetencyId(), this.tailCompetencyId());
         if (existingRelation) {
             this.selectedRelationId.set(existingRelation.id);
         } else {
@@ -272,7 +281,7 @@ export class CourseCompetencyRelationFormComponent {
 }
 
 // Union-Find (Disjoint Set) class (https://en.wikipedia.org/wiki/Disjoint-set_data_structure -> union by rank)
-class UnionFind {
+export class UnionFind {
     parent: number[];
     rank: number[];
 
