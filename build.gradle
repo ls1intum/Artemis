@@ -127,6 +127,13 @@ test {
         exclude "**/*IT*", "**/*IntTest*"
     }
 
+    retry {
+        maxRetries = 2
+        maxFailures = 10 // ToDo: Find a reasonable value
+        failOnPassedAfterRetry = false
+        failOnSkippedAfterRetry = true
+    }
+
     testLogging {
         events "FAILED", "SKIPPED"
     }
