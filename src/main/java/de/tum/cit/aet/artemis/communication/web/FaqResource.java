@@ -26,10 +26,14 @@ import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
 /**
@@ -47,10 +51,16 @@ public class FaqResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final CourseRepository courseRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
     private final FaqRepository faqRepository;
 
-    public FaqResource(FaqRepository faqRepository) {
+    public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository) {
         this.faqRepository = faqRepository;
+        this.courseRepository = courseRepository;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -63,13 +73,13 @@ public class FaqResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/faqs")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<FaqDTO> createFaq(@RequestBody Faq faq, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to save Faq : {}", faq);
         if (faq.getId() != null) {
             throw new BadRequestAlertException("A new faq cannot already have an ID", ENTITY_NAME, "idExists");
         }
-
+        isAtLeastInstructor(faq, courseId);
         if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
         }
@@ -88,12 +98,18 @@ public class FaqResource {
      *         if the faq is not valid or if the faq course id does not match with the path variable
      */
     @PutMapping("courses/{courseId}/faqs/{faqId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastTutorInCourse
     public ResponseEntity<FaqDTO> updateFaq(@RequestBody Faq faq, @PathVariable Long faqId, @PathVariable Long courseId) {
         log.debug("REST request to update Faq : {}", faq);
         if (faqId == null || !faqId.equals(faq.getId())) {
             throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
         }
+        isAtLeastInstructor(faq, courseId);
+        if (faq.getFaqState() == FaqState.ACCEPTED) {
+            Course course = courseRepository.findByIdElseThrow(courseId);
+            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        }
+
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
@@ -101,6 +117,18 @@ public class FaqResource {
         Faq updatedFaq = faqRepository.save(faq);
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);
+    }
+
+    /**
+     * @param faq      the faq to be checked *
+     * @param courseId the id of the course the faq belongs to
+     *                     This method throws an expecption if a non-instructor in the course tries to set the state of an FAQ to ACCEPTED
+     */
+    private void isAtLeastInstructor(Faq faq, Long courseId) {
+        if (faq.getFaqState() == FaqState.ACCEPTED) {
+            Course course = courseRepository.findByIdElseThrow(courseId);
+            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        }
     }
 
     /**
@@ -130,7 +158,7 @@ public class FaqResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/faqs/{faqId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> deleteFaq(@PathVariable Long faqId, @PathVariable Long courseId) {
 
         log.debug("REST request to delete faq {}", faqId);

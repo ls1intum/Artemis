@@ -122,10 +122,12 @@
                                     </div>
                                 }
                                 <div class="btn-group-vertical me-1 mb-1">
-                                    <a [routerLink]="[faq.id, 'edit']" class="btn btn-primary btn-sm">
-                                        <fa-icon [icon]="faPencilAlt" />
-                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
-                                    </a>
+                                    @if (isAtLeastInstructor || faq.faqState !== FaqState.ACCEPTED) {
+                                        <a [routerLink]="[faq.id, 'edit']" class="btn btn-primary btn-sm">
+                                            <fa-icon [icon]="faPencilAlt" />
+                                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                        </a>
+                                    }
                                     @if (isAtLeastInstructor) {
                                         <button
                                             class="mt-1"
