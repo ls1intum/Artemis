@@ -1,8 +1,11 @@
-import { Component, OnInit, input, output, viewChild } from '@angular/core';
+import { Component, OnInit, effect, input, output, viewChild } from '@angular/core';
 import { NgModel } from '@angular/forms';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 
 const ALLOWED_DOCKER_FLAG_OPTIONS = ['network', 'env'];
+
+const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL, ProgrammingLanguage.EMPTY];
+
 @Component({
     selector: 'jhi-programming-exercise-build-configuration',
     templateUrl: './programming-exercise-build-configuration.component.html',
@@ -24,8 +27,17 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     dockerImageField = viewChild<NgModel>('dockerImageField');
     timeoutField = viewChild<NgModel>('timeoutField');
 
+    isLanguageSupported: boolean = false;
+
     readonly NETWORK_KEY: string = 'network';
     readonly ENV_KEY: string = 'env';
+    readonly ENV_VAR_REGEX = /(?:'([^']+)'|"([^"]+)"|(\w+))=(?:'([^']*)'|"([^"]*)"|([^,]+))/;
+
+    constructor() {
+        effect(() => {
+            this.setIsLanguageSupported();
+        });
+    }
 
     ngOnInit() {
         if (this.programmingExercise()?.buildConfig?.dockerFlags) {
@@ -58,5 +70,9 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
             existingFlags.push([key, value]);
         }
         this.programmingExercise()!.buildConfig!.dockerFlags = JSON.stringify(existingFlags);
+    }
+
+    setIsLanguageSupported() {
+        this.isLanguageSupported = !NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES.includes(this.programmingExercise()?.programmingLanguage || ProgrammingLanguage.EMPTY);
     }
 }
