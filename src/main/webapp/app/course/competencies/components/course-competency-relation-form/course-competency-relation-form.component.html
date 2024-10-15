@@ -11,7 +11,7 @@
         >
             <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.headCourseCompetencyDefaultOption"></option>
             @for (courseCompetency of courseCompetencies(); track courseCompetency.id) {
-                <option [value]="courseCompetency.id">{{ courseCompetency.title }}</option>
+                <option [ngValue]="courseCompetency.id">{{ courseCompetency.title }}</option>
             }
         </select>
     </div>
@@ -36,7 +36,7 @@
         >
             <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.tailCourseCompetencyDefaultOption"></option>
             @for (courseCompetency of courseCompetencies(); track courseCompetency.id) {
-                <option [disabled]="!isCourseCompetencySelectable(courseCompetency.id!)" [value]="courseCompetency.id">{{ courseCompetency.title }}</option>
+                <option [disabled]="!isCourseCompetencySelectable(courseCompetency.id!)" [ngValue]="courseCompetency.id">{{ courseCompetency.title }}</option>
             }
         </select>
     </div>

@@ -238,7 +238,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
     });
 
     it('should select head course competency', () => {
-        component['selectHeadCourseCompetency']('2');
+        component['selectHeadCourseCompetency'](2);
 
         expect(component.headCompetencyId()).toBe(2);
         expect(component.tailCompetencyId()).toBeUndefined();
@@ -249,7 +249,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const tailId = '1';
+        const tailId = 1;
         component.headCompetencyId.set(2);
         component.relationType.set(CompetencyRelationType.EXTENDS);
 
@@ -263,7 +263,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        const tailId = '2';
+        const tailId = 2;
         component.headCompetencyId.set(3);
         component.relationType.set(CompetencyRelationType.EXTENDS);
 

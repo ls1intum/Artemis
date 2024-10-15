@@ -62,22 +62,22 @@ export class CourseCompetencyRelationFormComponent {
 
     public selectCourseCompetency(courseCompetencyId: number): void {
         if (!this.headCompetencyId()) {
-            this.selectHeadCourseCompetency(courseCompetencyId.toString());
+            this.selectHeadCourseCompetency(courseCompetencyId);
         } else if (!this.tailCompetencyId()) {
-            this.selectTailCourseCompetency(courseCompetencyId.toString());
+            this.selectTailCourseCompetency(courseCompetencyId);
         } else {
-            this.selectHeadCourseCompetency(courseCompetencyId.toString());
+            this.selectHeadCourseCompetency(courseCompetencyId);
         }
     }
 
-    protected selectHeadCourseCompetency(headId: string) {
-        this.headCompetencyId.set(Number(headId));
+    protected selectHeadCourseCompetency(headId: number) {
+        this.headCompetencyId.set(headId);
         this.tailCompetencyId.set(undefined);
         this.selectedRelationId.set(undefined);
     }
 
-    protected selectTailCourseCompetency(tailId: string) {
-        this.tailCompetencyId.set(Number(tailId));
+    protected selectTailCourseCompetency(tailId: number) {
+        this.tailCompetencyId.set(tailId);
         const existingRelation = this.getRelation(this.headCompetencyId(), this.tailCompetencyId());
         if (existingRelation) {
             this.selectedRelationId.set(existingRelation.id);
