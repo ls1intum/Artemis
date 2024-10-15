@@ -19,7 +19,7 @@ import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 
 describe('ExamParticipationService', () => {
     let service: ExamParticipationService;
