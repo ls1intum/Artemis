@@ -20,5 +20,5 @@ public enum AuthenticationMechanism {
     /**
      * The user used the artemis client code editor to authenticate to the LocalVC
      */
-    CODE_EDITOR
+    CODE_EDITOR,
 }

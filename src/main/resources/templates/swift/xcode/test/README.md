@@ -1,7 +1,7 @@
 This is the combined repo that will be produced on the build agent by cloning two repos
 
-1) exercise --> everything in the assignment folder
-2) tests --> everything except the assignment folder
+1) exercise --> everything in the ${studentParentWorkingDirectoryName} folder
+2) tests --> everything except the ${studentParentWorkingDirectoryName} folder
 
 The tests can be executed as follows
 

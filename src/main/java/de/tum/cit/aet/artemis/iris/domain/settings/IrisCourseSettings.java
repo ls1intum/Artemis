@@ -29,25 +29,20 @@ public class IrisCourseSettings extends IrisSettings {
     private IrisChatSubSettings irisChatSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_lecture_ingestion_settings_id")
-    private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
+    @JoinColumn(name = "iris_text_exercise_chat_settings_id")
+    private IrisTextExerciseChatSubSettings irisTextExerciseChatSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_proactivity_settings_id")
     private IrisProactivitySubSettings irisProactivitySettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_hestia_settings_id")
-    private IrisHestiaSubSettings irisHestiaSettings;
+    @JoinColumn(name = "iris_lecture_ingestion_settings_id")
+    private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_competency_generation_settings_id")
     private IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings;
-
-    @Override
-    public boolean isValid() {
-        return course != null;
-    }
 
     public Course getCourse() {
         return course;
@@ -88,13 +83,13 @@ public class IrisCourseSettings extends IrisSettings {
     }
 
     @Override
-    public IrisHestiaSubSettings getIrisHestiaSettings() {
-        return irisHestiaSettings;
+    public IrisTextExerciseChatSubSettings getIrisTextExerciseChatSettings() {
+        return irisTextExerciseChatSettings;
     }
 
     @Override
-    public void setIrisHestiaSettings(IrisHestiaSubSettings irisHestiaSettings) {
-        this.irisHestiaSettings = irisHestiaSettings;
+    public void setIrisTextExerciseChatSettings(IrisTextExerciseChatSubSettings irisTextExerciseChatSettings) {
+        this.irisTextExerciseChatSettings = irisTextExerciseChatSettings;
     }
 
     @Override

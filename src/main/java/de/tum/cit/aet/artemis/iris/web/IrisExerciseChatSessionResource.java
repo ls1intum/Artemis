@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 @Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/iris/exercise-chat/")
+// TODO: Rename to IrisProgrammingExerciseChatSessionResource
 public class IrisExerciseChatSessionResource {
 
     protected final UserRepository userRepository;
@@ -47,6 +48,7 @@ public class IrisExerciseChatSessionResource {
 
     protected final IrisRateLimitService irisRateLimitService;
 
+    // TODO: This could be a ProgrammingExerciseRepository
     protected final ExerciseRepository exerciseRepository;
 
     private final IrisExerciseChatSessionRepository irisExerciseChatSessionRepository;
@@ -130,6 +132,7 @@ public class IrisExerciseChatSessionResource {
 
     private static ProgrammingExercise validateExercise(Exercise exercise) {
         if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
+            // TODO: Remove this once we are only fetching ProgrammingExercises from the DB anyway
             throw new ConflictException("Iris is only supported for programming exercises", "Iris", "irisProgrammingExercise");
         }
         if (exercise.isExamExercise()) {

@@ -28,10 +28,12 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisModelDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 
@@ -53,8 +55,8 @@ public class IrisRequestMockProvider {
     @Value("${artemis.iris.url}/api/v1/webhooks")
     private URL webhooksApiURL;
 
-    @Value("${artemis.iris.url}/api/v1/models")
-    private URL modelsApiURL;
+    @Value("${artemis.iris.url}/api/v1/pipelines/")
+    private String variantsApiBaseURL;
 
     @Value("${artemis.iris.url}/api/v1/health/")
     private URL healthApiURL;
@@ -85,7 +87,7 @@ public class IrisRequestMockProvider {
         }
     }
 
-    public void mockRunResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
+    public void mockProgrammingExerciseChatResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
         // @formatter:off
         mockServer
             .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-chat/default/run"))
@@ -93,6 +95,20 @@ public class IrisRequestMockProvider {
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
                 var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
+                responseConsumer.accept(dto);
+                return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+            });
+        // @formatter:on
+    }
+
+    public void mockTextExerciseChatResponse(Consumer<PyrisTextExerciseChatPipelineExecutionDTO> responseConsumer) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/text-exercise-chat/default/run"))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(request -> {
+                var mockRequest = (MockClientHttpRequest) request;
+                var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisTextExerciseChatPipelineExecutionDTO.class);
                 responseConsumer.accept(dto);
                 return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
             });
@@ -167,11 +183,11 @@ public class IrisRequestMockProvider {
         // @formatter:on
     }
 
-    public void mockModelsResponse() throws JsonProcessingException {
-        var irisModelDTO = new PyrisModelDTO("TEST_MODEL", "Test model", "Test description");
-        var irisModelDTOArray = new PyrisModelDTO[] { irisModelDTO };
+    public void mockVariantsResponse(IrisSubSettingsType feature) throws JsonProcessingException {
+        var irisModelDTO = new PyrisVariantDTO("TEST_MODEL", "Test model", "Test description");
+        var irisModelDTOArray = new PyrisVariantDTO[] { irisModelDTO };
         // @formatter:off
-        mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString()))
+        mockServer.expect(ExpectedCount.once(), requestTo(variantsApiBaseURL + feature.name() + "/variants"))
             .andExpect(method(HttpMethod.GET))
             .andRespond(withSuccess(mapper.writeValueAsString(irisModelDTOArray), MediaType.APPLICATION_JSON));
         // @formatter:on
@@ -197,9 +213,9 @@ public class IrisRequestMockProvider {
     /**
      * Mocks a get model error from the Pyris models endpoint
      */
-    public void mockModelsError() {
+    public void mockVariantsError(IrisSubSettingsType feature) {
         // @formatter:off
-        mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString()))
+        mockServer.expect(ExpectedCount.once(), requestTo(variantsApiBaseURL + feature.name() + "/variants"))
             .andExpect(method(HttpMethod.GET))
             .andRespond(withRawStatus(418));
         // @formatter:on

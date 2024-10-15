@@ -182,6 +182,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         }
         var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(chatSession.getExercise().getId());
         var latestSubmission = getLatestSubmissionIfExists(exercise, chatSession.getUser());
+
+        var variant = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false).irisChatSettings().selectedVariant();
         pyrisPipelineService.executeExerciseChatPipeline(variant, latestSubmission, exercise, chatSession);
     }
 

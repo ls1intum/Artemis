@@ -23,6 +23,7 @@ import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code
 import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-badge.component';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @NgModule({
@@ -35,6 +36,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
         ArtemisProgrammingManualAssessmentModule,
         MonacoEditorComponent,
         ArtemisSharedComponentModule,
+        RequestFeedbackButtonComponent,
     ],
     declarations: [
         CodeEditorGridComponent,

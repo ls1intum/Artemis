@@ -11,18 +11,21 @@
 </div>
 @if (irisSettings) {
     <div>
-        @if (settingsType === GLOBAL) {
-            <div>
-                <h3 jhiTranslate="artemisApp.iris.settings.autoUpdate.title"></h3>
-                <jhi-iris-global-autoupdate-settings-update [irisSettings]="irisSettings" (onChanges)="isDirty = true" />
-            </div>
-        }
         <h3 jhiTranslate="artemisApp.iris.settings.subSettings.chatSettings"></h3>
         <div>
             <jhi-iris-common-sub-settings-update
                 [subSettings]="irisSettings?.irisChatSettings"
                 [parentSubSettings]="parentIrisSettings?.irisChatSettings"
-                [allIrisModels]="allIrisModels ?? []"
+                [settingsType]="settingsType"
+                (onChanges)="isDirty = true"
+            />
+        </div>
+        <hr class="hr" />
+        <h3 jhiTranslate="artemisApp.iris.settings.subSettings.textExerciseChatSettings"></h3>
+        <div>
+            <jhi-iris-common-sub-settings-update
+                [subSettings]="irisSettings?.irisTextExerciseChatSettings"
+                [parentSubSettings]="parentIrisSettings?.irisTextExerciseChatSettings"
                 [settingsType]="settingsType"
                 (onChanges)="isDirty = true"
             />
@@ -34,33 +37,21 @@
                 <jhi-iris-common-sub-settings-update
                     [subSettings]="irisSettings?.irisLectureIngestionSettings!"
                     [parentSubSettings]="parentIrisSettings?.irisLectureIngestionSettings"
-                    [allIrisModels]="allIrisModels ?? []"
                     [settingsType]="settingsType"
                     (onChanges)="isDirty = true"
                 />
-            </div>
-        }
-        @if (settingsType === COURSE) {
-            <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="autoLectureIngestion" [disabled]="!isAdmin" [(ngModel)]="autoLectureIngestion" />
-                <label
-                    class="form-check-label"
-                    for="autoLectureIngestion"
-                    jhiTranslate="artemisApp.iris.settings.subSettings.lectureIngestionSettings.autoIngestOnAttachmentUpload"
-                ></label>
-            </div>
-        }
-        @if (settingsType !== EXERCISE) {
-            <div>
-                <hr class="hr" />
-                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.hestiaSettings"></h3>
-                <jhi-iris-common-sub-settings-update
-                    [subSettings]="irisSettings?.irisHestiaSettings!"
-                    [parentSubSettings]="parentIrisSettings?.irisHestiaSettings"
-                    [allIrisModels]="allIrisModels ?? []"
-                    [settingsType]="settingsType"
-                    (onChanges)="isDirty = true"
-                />
+                <br />
+
+                @if (settingsType === COURSE) {
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="autoLectureIngestion" [disabled]="!isAdmin" [(ngModel)]="autoLectureIngestion" />
+                        <label
+                            class="form-check-label"
+                            for="autoLectureIngestion"
+                            jhiTranslate="artemisApp.iris.settings.subSettings.lectureIngestionSettings.autoIngestOnAttachmentUpload"
+                        ></label>
+                    </div>
+                }
             </div>
         }
         @if (settingsType !== EXERCISE) {
@@ -70,7 +61,6 @@
                 <jhi-iris-common-sub-settings-update
                     [subSettings]="irisSettings?.irisCompetencyGenerationSettings!"
                     [parentSubSettings]="parentIrisSettings?.irisCompetencyGenerationSettings"
-                    [allIrisModels]="allIrisModels ?? []"
                     [settingsType]="settingsType"
                     (onChanges)="isDirty = true"
                 />
