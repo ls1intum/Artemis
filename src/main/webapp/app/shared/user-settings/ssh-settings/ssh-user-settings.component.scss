@@ -34,6 +34,15 @@ td {
     border-radius: 0;
 }
 
+.rounded-btn {
+    border-radius: 2px;
+    border-top-width: 0;
+}
+
+.bottom-border {
+    border-bottom-width: 2px;
+}
+
 .container {
     position: relative;
 }
@@ -61,14 +70,21 @@ td {
     transform: translateY(-50%);
 }
 
+.abbreviate-hash {
+    font-size: x-small;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 tbody tr:hover {
-    background-color: var(--ssh-key-table-hover-background);
+    background-color: var(--ssh-key-settings-table-hover-background);
 }
 
 /* dd container */
 .dropdown {
     display: inline-block;
-    position: relative;
+    position: absolute;
     outline: none;
     margin: 0;
 }
@@ -84,7 +100,7 @@ tbody tr:hover {
 /* dd content */
 .dropdown .dropdown-content {
     position: absolute;
-    top: 50%;
+    top: -25%;
     min-width: 120%;
     box-shadow: 0 8px 16px var(--ssh-key-settings-shadow);
     z-index: 100000; // makes sure the drop down menu is always shown at the highest view plane
@@ -96,6 +112,7 @@ tbody tr:hover {
 
 /* show dd content */
 .dropdown:focus .dropdown-content {
+    z-index: 100000;
     outline: none;
     transform: translateY(20px);
     visibility: visible;
@@ -128,14 +145,17 @@ tbody tr:hover {
 }
 
 .dropdown-button {
-    margin: auto;
     color: var(--ssh-key-settings-text-color);
     background-color: var(--dropdown-bg);
     border-color: var(--dropdown-bg);
-    width: 80px;
+    max-width: 80px;
+    width: 100%;
+    text-align: left;
+    font-size: smaller;
 }
 
 .dropdown-button:hover {
     background-color: var(--ssh-key-settings-dropdown-buttons-hover);
     border-color: var(--ssh-key-settings-dropdown-buttons-hover);
+    display: block;
 }

@@ -1,0 +1,70 @@
+<h1 jhiTranslate="artemisApp.userSettings.sshSettings">
+    <!--SSH Settings-->
+</h1>
+@if (!isLoading) {
+    <div class="list-group d-block">
+        <!-- Editing existing key and creating a new key -->
+        <div class="list-group-item">
+            @if (!inCreateMode) {
+                <h4 jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshKeyDetails"></h4>
+            } @else {
+                <h4 jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></h4>
+            }
+
+            <div class="d-flex flex-wrap">
+                <p>
+                    <span style="font-size: medium" jhiTranslate="artemisApp.userSettings.sshSettingsPage.whatToUseSSHForInfo"> </span>
+                    <jhi-documentation-link [documentationType]="documentationType" [displayString]="'artemisApp.userSettings.sshSettingsPage.learnMore'"> </jhi-documentation-link>
+                </p>
+            </div>
+
+            <dd>
+                <p style="font-size: smaller" jhiTranslate="artemisApp.userSettings.sshSettingsPage.key"></p>
+                <textarea style="resize: none" class="form-control" rows="10" [readonly]="!inCreateMode" [(ngModel)]="displayedSshKey"></textarea>
+            </dd>
+
+            <div class="d-flex flex-wrap mb-4">
+                <p>
+                    <span style="font-size: small" jhiTranslate="artemisApp.userSettings.sshSettingsPage.alreadyHaveKey"> </span>
+                    <code> {{ copyInstructions }} </code>
+                </p>
+            </div>
+
+            <dd class="mb-4">
+                <p style="font-size: smaller" jhiTranslate="artemisApp.userSettings.sshSettingsPage.label"></p>
+                <textarea class="form-control small-text-area" rows="1" [readonly]="!inCreateMode" [(ngModel)]="displayedKeyLabel"></textarea>
+            </dd>
+
+            @if (!inCreateMode) {
+                <dd class="mb-4">
+                    <p style="font-size: smaller" jhiTranslate="artemisApp.userSettings.sshSettingsPage.fingerPrint"></p>
+                    <div style="font-size: x-small">
+                        {{ displayedKeyHash }}
+                    </div>
+                </dd>
+            }
+            <div class="col col-auto text-right">
+                @if (inCreateMode) {
+                    <div class="btn-group" role="group" aria-label="Actions">
+                        <jhi-button
+                            [disabled]="!displayedSshKey"
+                            [btnType]="ButtonType.PRIMARY"
+                            [btnSize]="ButtonSize.SMALL"
+                            [icon]="faSave"
+                            [title]="'artemisApp.userSettings.sshSettingsPage.saveSshKey'"
+                            (onClick)="saveSshKey()"
+                        />
+                    </div>
+                }
+                <div class="btn-group" role="group" aria-label="Actions">
+                    <jhi-button
+                        [btnType]="ButtonType.PRIMARY"
+                        [btnSize]="ButtonSize.SMALL"
+                        [title]="inCreateMode ? 'artemisApp.userSettings.sshSettingsPage.cancelSavingSshKey' : 'artemisApp.userSettings.sshSettingsPage.back'"
+                        (onClick)="goBack()"
+                    />
+                </div>
+            </div>
+        </div>
+    </div>
+}

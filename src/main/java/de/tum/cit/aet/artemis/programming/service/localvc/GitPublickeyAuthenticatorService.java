@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.programming.repository.UserPublicSshKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
@@ -32,19 +33,27 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
 
     private final Optional<SharedQueueManagementService> localCIBuildJobQueueService;
 
-    public GitPublickeyAuthenticatorService(UserRepository userRepository, Optional<SharedQueueManagementService> localCIBuildJobQueueService) {
+    private final UserPublicSshKeyRepository userPublicSshKeyRepository;
+
+    public GitPublickeyAuthenticatorService(UserRepository userRepository, Optional<SharedQueueManagementService> localCIBuildJobQueueService,
+            UserPublicSshKeyRepository userPublicSshKeyRepository) {
         this.userRepository = userRepository;
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
+        this.userPublicSshKeyRepository = userPublicSshKeyRepository;
     }
 
     @Override
     public boolean authenticate(String username, PublicKey publicKey, ServerSession session) {
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
-        var user = userRepository.findBySshPublicKeyHash(keyHash);
+        var userSshPublicKey = userPublicSshKeyRepository.findByKeyHash(keyHash);
+        if (userSshPublicKey.isEmpty()) {
+            return false;
+        }
+        var user = userRepository.findById(userSshPublicKey.get().getUserId());
         if (user.isPresent()) {
             try {
                 // Retrieve the stored public key string
-                String storedPublicKeyString = user.get().getSshPublicKey();
+                String storedPublicKeyString = userSshPublicKey.get().getPublicKey();
 
                 // Parse the stored public key string
                 AuthorizedKeyEntry keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(storedPublicKeyString);

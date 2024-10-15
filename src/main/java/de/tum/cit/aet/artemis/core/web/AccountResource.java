@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
-import de.tum.cit.aet.artemis.programming.domain.UserPublicSshKey;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.service.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService;
 
@@ -143,11 +143,23 @@ public class AccountResource {
      */
     @GetMapping("account/ssh-public-keys")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<UserPublicSshKey>> getSshPublicKey() {
+    public ResponseEntity<List<UserSshPublicKey>> getSshPublicKey() {
         User user = userRepository.getUser();
-        log.debug("REST request to add SSH key to user {}", user.getLogin());
-        List<UserPublicSshKey> keys = userSshPublicKeyService.getAllSshKeysForUser(user);
+        List<UserSshPublicKey> keys = userSshPublicKeyService.getAllSshKeysForUser(user);
         return ResponseEntity.ok(keys);
+    }
+
+    /**
+     * GET account/ssh-public-key : sets the ssh public key
+     *
+     * @return the ResponseEntity containing the requested public SSH key of a user with status 200 (OK), or with status 400 (Bad Request)
+     */
+    @GetMapping("account/ssh-public-key")
+    @EnforceAtLeastStudent
+    public ResponseEntity<UserSshPublicKey> getSshPublicKey(@RequestParam("keyId") Long keyId) {
+        User user = userRepository.getUser();
+        UserSshPublicKey key = userSshPublicKeyService.getSshKeyForUser(user, keyId);
+        return ResponseEntity.ok(key);
     }
 
     /**
@@ -159,20 +171,20 @@ public class AccountResource {
      */
     @PutMapping("account/ssh-public-key")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> addSshPublicKey(@RequestBody String sshPublicKey) throws GeneralSecurityException, IOException {
+    public ResponseEntity<Void> addSshPublicKey(@RequestBody UserSshPublicKey sshPublicKey) throws GeneralSecurityException, IOException {
 
         User user = userRepository.getUser();
         log.debug("REST request to add SSH key to user {}", user.getLogin());
         // Parse the public key string
         AuthorizedKeyEntry keyEntry;
         try {
-            keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey);
+            keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey.getPublicKey());
         }
         catch (IllegalArgumentException e) {
             throw new BadRequestAlertException("Invalid SSH key format", "SSH key", "invalidKeyFormat", true);
         }
         // Extract the PublicKey object
-        userSshPublicKeyService.addSshKeyForUser(user, keyEntry, sshPublicKey);
+        userSshPublicKeyService.createSshKeyForUser(user, keyEntry, sshPublicKey);
         // userRepository.updateUserSshPublicKeyHash(user.getId(), keyHash, sshPublicKey);
         return ResponseEntity.ok().build();
     }
@@ -184,12 +196,12 @@ public class AccountResource {
      */
     @DeleteMapping("account/ssh-public-key")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteSshPublicKey() {
+    public ResponseEntity<Void> deleteSshPublicKey(@RequestParam("keyId") Long keyId) {
         User user = userRepository.getUser();
         log.debug("REST request to remove SSH key of user {}", user.getLogin());
-        userRepository.updateUserSshPublicKeyHash(user.getId(), null, null);
+        userSshPublicKeyService.deleteUserSshPublicKey(user.getId(), keyId);
 
-        log.debug("Successfully deleted SSH key of user {}", user.getLogin());
+        log.debug("Successfully deleted SSH key with id {} of user {}", keyId, user.getLogin());
         return ResponseEntity.ok().build();
     }
 

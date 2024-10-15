@@ -13,8 +13,6 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsTokenRenewalService;
 
 /**
  * A public SSH key of a user.
@@ -22,7 +20,7 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VcsTokenRenewalService;
 @Entity
 @Table(name = "user_public_ssh_key")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class UserPublicSshKey extends DomainObject {
+public class UserSshPublicKey extends DomainObject {
 
     /**
      * The user who is owner of the public key
@@ -53,11 +51,20 @@ public class UserPublicSshKey extends DomainObject {
     private String keyHash;
 
     /**
-     * The expiry date of the VCS access token.
-     * This is used for checking if a access token needs to be renewed.
-     *
-     * @see VcsTokenRenewalService
-     * @see UserRepository#getUsersWithAccessTokenExpirationDateBefore
+     * The expiry date of the public SSH key
+     */
+    @Column(name = "creation_date")
+    private ZonedDateTime creationDate = null;
+
+    /**
+     * The expiry date of the public SSH key
+     */
+    @Nullable
+    @Column(name = "last_used_date")
+    private ZonedDateTime lastUsedDate = null;
+
+    /**
+     * The expiry date of the public SSH key
      */
     @Nullable
     @Column(name = "expiry_date")
@@ -94,6 +101,23 @@ public class UserPublicSshKey extends DomainObject {
 
     public void setKeyHash(@Nullable @Size(max = 100) String keyHash) {
         this.keyHash = keyHash;
+    }
+
+    public ZonedDateTime getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(ZonedDateTime creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    @Nullable
+    public ZonedDateTime getLastUsedDate() {
+        return lastUsedDate;
+    }
+
+    public void setLastUsedDate(@Nullable ZonedDateTime lastUsedDate) {
+        this.lastUsedDate = lastUsedDate;
     }
 
     @Nullable

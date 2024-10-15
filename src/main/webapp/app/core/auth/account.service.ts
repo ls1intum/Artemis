@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, lastValueFrom, of, tap } from 'rxjs';
+import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
@@ -342,17 +342,19 @@ export class AccountService implements IAccountService {
     }
 
     /**
+     * Retrieves a specific public SSH keys of a user
+     */
+    getSshPublicKey(keyId: number): Observable<UserSshPublicKey> {
+        const params = new HttpParams().set('keyId', keyId);
+        return this.http.get<UserSshPublicKey>('api/account/ssh-public-key', { params });
+    }
+
+    /**
      * Sends a request to the server to delete the user's current SSH key
      */
-    deleteSshPublicKey(sshPublicKeyHash: string): Observable<void> {
-        const params = new HttpParams().set('sshPublicKeyHash', sshPublicKeyHash);
-        return this.http.delete<void>('api/account/ssh-public-key', { params }).pipe(
-            tap(() => {
-                if (this.userIdentity) {
-                    this.userIdentity.sshPublicKey = undefined;
-                }
-            }),
-        );
+    deleteSshPublicKey(keyId: number): Observable<void> {
+        const params = new HttpParams().set('keyId', keyId);
+        return this.http.delete<void>('api/account/ssh-public-key', { params });
     }
 
     /**

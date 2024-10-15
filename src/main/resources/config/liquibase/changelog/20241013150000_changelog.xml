@@ -22,6 +22,12 @@
             <column name="key_hash" type="VARCHAR(100)">
                 <constraints nullable="false"/>
             </column>
+            <column name="creation_date" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_used_date" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
             <column name="expiry_date" type="TIMESTAMP">
                 <constraints nullable="true"/>
             </column>
