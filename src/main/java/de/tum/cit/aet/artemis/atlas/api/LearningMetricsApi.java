@@ -17,7 +17,7 @@ public class LearningMetricsApi extends AbstractAtlasApi {
 
     private final Optional<LearningMetricsService> learningMetricsService;
 
-    protected LearningMetricsApi(Environment environment, Optional<LearningMetricsService> learningMetricsService) {
+    public LearningMetricsApi(Environment environment, Optional<LearningMetricsService> learningMetricsService) {
         super(environment);
         this.learningMetricsService = learningMetricsService;
     }

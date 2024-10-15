@@ -18,7 +18,7 @@ public class ScienceEventApi extends AbstractAtlasApi {
 
     private final Optional<ScienceEventRepository> scienceEventRepository;
 
-    protected ScienceEventApi(Environment environment, Optional<ScienceEventRepository> scienceEventRepository) {
+    public ScienceEventApi(Environment environment, Optional<ScienceEventRepository> scienceEventRepository) {
         super(environment);
         this.scienceEventRepository = scienceEventRepository;
     }
