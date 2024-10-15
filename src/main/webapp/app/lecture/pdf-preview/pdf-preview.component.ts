@@ -283,14 +283,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * If the enlarged view is active, the container's size is reduced to focus on the enlarged content.
      * If the enlarged view is closed, the container returns to its original size.
      *
-     * @param enlarge A boolean flag indicating whether to enlarge or reset the container size.
+     * @param isVertical A boolean flag indicating whether to enlarge or reset the container size.
      */
-    adjustPdfContainerSize(enlarge: boolean): void {
+    adjustPdfContainerSize(isVertical: boolean): void {
         const pdfContainer = this.pdfContainer.nativeElement;
-        if (enlarge) {
-            pdfContainer.style.height = '80vh'; // Larger for enlarged view
+        if (isVertical) {
+            pdfContainer.style.height = '80vh'; // Larger for vertical slides
         } else {
-            pdfContainer.style.height = '60vh';
+            pdfContainer.style.height = '60vh'; // Smaller for horizontal slides
         }
     }
 
@@ -301,10 +301,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         this.isEnlargedView = true;
         this.currentPage = Number(originalCanvas.id);
-        this.adjustPdfContainerSize(true);
-        this.updateEnlargedCanvas(originalCanvas);
+        this.updateEnlargedCanvas(originalCanvas); // Adjusts the size as part of the update
         this.toggleBodyScroll(true);
     }
+
     /**
      * Updates the enlarged canvas dimensions to optimize PDF page display within the current viewport.
      * This method dynamically adjusts the size, position, and scale of the canvas to maintain the aspect ratio,
@@ -316,6 +316,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     updateEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         requestAnimationFrame(() => {
             if (!this.isEnlargedView) return;
+
+            const isVertical = originalCanvas.height > originalCanvas.width; // Check if the slide is vertical
+            this.adjustPdfContainerSize(isVertical); // Adjust the container size based on orientation
 
             const scaleFactor = this.calculateScaleFactor(originalCanvas);
             this.resizeCanvas(originalCanvas, scaleFactor);
