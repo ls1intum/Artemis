@@ -28,10 +28,9 @@ public class IrisExerciseSettings extends IrisSettings {
     @JoinColumn(name = "iris_chat_settings_id")
     private IrisChatSubSettings irisChatSettings;
 
-    @Override
-    public boolean isValid() {
-        return exercise != null;
-    }
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "iris_text_exercise_chat_settings_id")
+    private IrisTextExerciseChatSubSettings irisTextExerciseChatSettings;
 
     public Exercise getExercise() {
         return exercise;
@@ -61,13 +60,13 @@ public class IrisExerciseSettings extends IrisSettings {
     }
 
     @Override
-    public IrisHestiaSubSettings getIrisHestiaSettings() {
-        return null;
+    public IrisTextExerciseChatSubSettings getIrisTextExerciseChatSettings() {
+        return irisTextExerciseChatSettings;
     }
 
     @Override
-    public void setIrisHestiaSettings(IrisHestiaSubSettings irisHestiaSettings) {
-
+    public void setIrisTextExerciseChatSettings(IrisTextExerciseChatSubSettings irisTextExerciseChatSettings) {
+        this.irisTextExerciseChatSettings = irisTextExerciseChatSettings;
     }
 
     @Override

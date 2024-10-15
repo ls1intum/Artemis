@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -18,6 +19,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -39,14 +42,17 @@ public class BuildScriptProviderService {
 
     private final Map<String, String> scriptCache = new ConcurrentHashMap<>();
 
+    private final ProfileService profileService;
+
     /**
      * Constructor for BuildScriptProvider, which loads all scripts into the cache to speed up retrieval
      * during the runtime of the application
      *
      * @param resourceLoaderService resourceLoaderService
      */
-    public BuildScriptProviderService(ResourceLoaderService resourceLoaderService) {
+    public BuildScriptProviderService(ResourceLoaderService resourceLoaderService, ProfileService profileService) {
         this.resourceLoaderService = resourceLoaderService;
+        this.profileService = profileService;
     }
 
     /**
@@ -69,6 +75,9 @@ public class BuildScriptProviderService {
                 String uniqueKey = directory + "_" + filename;
                 byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
                 String script = new String(fileContent, StandardCharsets.UTF_8);
+                if (!profileService.isLocalCiActive()) {
+                    script = replacePlaceholders(script, null, null, null);
+                }
                 scriptCache.put(uniqueKey, script);
             }
             catch (IOException e) {
@@ -112,6 +121,9 @@ public class BuildScriptProviderService {
         }
         byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
         String script = new String(fileContent, StandardCharsets.UTF_8);
+        if (!profileService.isLocalCiActive()) {
+            script = replacePlaceholders(script, null, null, null);
+        }
         scriptCache.put(uniqueKey, script);
         log.debug("Caching script for {}", uniqueKey);
         return script;
@@ -165,5 +177,43 @@ public class BuildScriptProviderService {
             fileNameComponents.add("coverage");
         }
         return String.join("_", fileNameComponents) + "." + fileExtension;
+    }
+
+    /**
+     * Replaces placeholders in the given result paths with the actual paths.
+     *
+     * @param resultPaths the result paths to replace the placeholders in
+     * @param buildConfig the build configuration containing the actual paths
+     * @return the result paths with the placeholders replaced
+     */
+    public List<String> replaceResultPathsPlaceholders(List<String> resultPaths, ProgrammingExerciseBuildConfig buildConfig) {
+        List<String> replacedResultPaths = new ArrayList<>();
+        for (String resultPath : resultPaths) {
+            String replacedResultPath = replacePlaceholders(resultPath, buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(),
+                    buildConfig.getTestCheckoutPath());
+            replacedResultPaths.add(replacedResultPath);
+        }
+        return replacedResultPaths;
+    }
+
+    /**
+     * Replaces placeholders in the given original string with the actual paths.
+     *
+     * @param originalString the original string to replace the placeholders in
+     * @param assignmentRepo the assignment repository name
+     * @param solutionRepo   the solution repository name
+     * @param testRepo       the test repository name
+     * @return the original string with the placeholders replaced
+     */
+    public String replacePlaceholders(String originalString, String assignmentRepo, String solutionRepo, String testRepo) {
+        assignmentRepo = !StringUtils.isBlank(assignmentRepo) ? assignmentRepo : Constants.ASSIGNMENT_REPO_NAME;
+        solutionRepo = solutionRepo != null && !solutionRepo.isBlank() ? solutionRepo : Constants.SOLUTION_REPO_NAME;
+        testRepo = testRepo != null && !testRepo.isBlank() ? testRepo : Constants.TEST_REPO_NAME;
+
+        String replacedResultPath = originalString.replace(Constants.ASSIGNMENT_REPO_PARENT_PLACEHOLDER, assignmentRepo);
+        replacedResultPath = replacedResultPath.replace(Constants.ASSIGNMENT_REPO_PLACEHOLDER, "/" + assignmentRepo + "/src");
+        replacedResultPath = replacedResultPath.replace(Constants.SOLUTION_REPO_PLACEHOLDER, solutionRepo);
+        replacedResultPath = replacedResultPath.replace(Constants.TEST_REPO_PLACEHOLDER, testRepo);
+        return replacedResultPath;
     }
 }

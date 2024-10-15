@@ -55,7 +55,10 @@
                 "averageAttendanceDetail": "Durchschnittliche Anwesenheit",
                 "averageAttendanceHelpDetail": "Durchschnittliche Anwesenheit in den letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
                 "profilePicture": "Tutor:in Profilbild",
-                "profilePictureAlt": "Profilbild von {{ user }}"
+                "profilePictureAlt": "Profilbild von {{ user }}",
+                "name": "Name",
+                "information": "Information",
+                "isNotOnline": "Nicht Online"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Wochentag",

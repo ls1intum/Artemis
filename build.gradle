@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.6.0"
+version = "7.6.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -246,14 +246,15 @@ dependencies {
     implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.5"
 
     implementation "de.jplag:jplag:${jplag_version}"
-    implementation "de.jplag:java:${jplag_version}"
-    implementation "de.jplag:kotlin:${jplag_version}"
+
     implementation "de.jplag:c:${jplag_version}"
-    implementation "de.jplag:swift:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
-    implementation "de.jplag:python-3:${jplag_version}"
-    implementation "de.jplag:rust:${jplag_version}"
     implementation "de.jplag:javascript:${jplag_version}"
+    implementation "de.jplag:kotlin:${jplag_version}"
+    implementation "de.jplag:python-3:${jplag_version}"
+    implementation "de.jplag:rlang:${jplag_version}"
+    implementation "de.jplag:rust:${jplag_version}"
+    implementation "de.jplag:swift:${jplag_version}"
     implementation "de.jplag:text:${jplag_version}"
 
     // those are transitive dependencies of JPlag Text --> Stanford NLP
@@ -533,7 +534,7 @@ dependencies {
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:8.10.2"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.0"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.1"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
         exclude group: "org.testcontainers", module: "mariadb"
