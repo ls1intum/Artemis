@@ -27,22 +27,19 @@ describe('MonacoDiffEditorComponent', () => {
 
     it('should dispose its listeners and subscriptions when destroyed', () => {
         fixture.detectChanges();
-        const resizeObserverDisconnectSpy = jest.spyOn(comp.resizeObserver!, 'disconnect');
         const listenerDisposeSpies = comp.listeners.map((listener) => jest.spyOn(listener, 'dispose'));
         comp.ngOnDestroy();
-        for (const spy of [resizeObserverDisconnectSpy, ...listenerDisposeSpies]) {
+        for (const spy of listenerDisposeSpies) {
             expect(spy).toHaveBeenCalledOnce();
         }
     });
 
-    it('should update the size of its container and layout the editor', () => {
-        const layoutSpy = jest.spyOn(comp, 'layout');
+    it('should update the size of its container', () => {
         fixture.detectChanges();
         const element = document.createElement('div');
         comp.monacoDiffEditorContainerElement = element;
-        comp.adjustHeightAndLayout(100);
+        comp.adjustContainerHeight(100);
         expect(element.style.height).toBe('100px');
-        expect(layoutSpy).toHaveBeenCalledOnce();
     });
 
     it('should set the text of the editor', () => {

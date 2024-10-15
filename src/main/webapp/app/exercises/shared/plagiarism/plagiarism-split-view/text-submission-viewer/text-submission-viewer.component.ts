@@ -11,6 +11,7 @@ import { CodeEditorRepositoryFileService } from 'app/exercises/programming/share
 import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { escape } from 'lodash-es';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 type FilesWithType = { [p: string]: FileType };
 
@@ -174,26 +175,24 @@ export class TextSubmissionViewerComponent implements OnChanges {
         this.currentFile = file;
         this.loading = true;
 
-        const domain: DomainChange = [DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }];
+        const fileExtension = file.split('.').last()!;
+        if (TEXT_FILE_EXTENSIONS.includes(fileExtension)) {
+            this.binaryFile = false;
 
-        this.repositoryService.getFileHeaders(file, domain).subscribe((response) => {
-            const contentType = response.headers.get('content-type');
-            if (contentType && !contentType.startsWith('text')) {
-                this.binaryFile = true;
-                this.loading = false;
-            } else {
-                this.binaryFile = false;
-                this.repositoryService.getFileForPlagiarismView(file, domain).subscribe({
-                    next: ({ fileContent }) => {
-                        this.loading = false;
-                        this.fileContent = this.insertMatchTokens(fileContent);
-                    },
-                    error: () => {
-                        this.loading = false;
-                    },
-                });
-            }
-        });
+            const domain: DomainChange = [DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }];
+            this.repositoryService.getFileForPlagiarismView(file, domain).subscribe({
+                next: ({ fileContent }) => {
+                    this.loading = false;
+                    this.fileContent = this.insertMatchTokens(fileContent);
+                },
+                error: () => {
+                    this.loading = false;
+                },
+            });
+        } else {
+            this.binaryFile = true;
+            this.loading = false;
+        }
     }
 
     /**

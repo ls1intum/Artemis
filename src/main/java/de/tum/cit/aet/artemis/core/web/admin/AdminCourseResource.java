@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
  * REST controller for managing Course.
  */
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminCourseResource {
@@ -90,7 +92,6 @@ public class AdminCourseResource {
      * @return the list of groups (the user has access to)
      */
     @GetMapping("courses/groups")
-    @EnforceAdmin
     public ResponseEntity<Set<String>> getAllGroupsForAllCourses() {
         log.debug("REST request to get all Groups for all Courses");
         List<Course> courses = courseRepository.findAll();
@@ -113,7 +114,6 @@ public class AdminCourseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "courses", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAdmin
     public ResponseEntity<Course> createCourse(@RequestPart Course course, @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
         log.debug("REST request to save Course : {}", course);
         if (course.getId() != null) {
@@ -167,7 +167,6 @@ public class AdminCourseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}")
-    @EnforceAdmin
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
         Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(courseId);
@@ -181,6 +180,20 @@ public class AdminCourseResource {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())), 0);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
+    }
+
+    /**
+     * GET /courses/:courseId/deletion-summary : get the deletion summary for the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and the deletion summary in the body
+     */
+    @GetMapping("courses/{courseId}/deletion-summary")
+    public ResponseEntity<CourseDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId) {
+        log.debug("REST request to get deletion summary course: {}", courseId);
+        final Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
+
+        return ResponseEntity.ok().body(courseService.getDeletionSummary(course));
     }
 
     /**
