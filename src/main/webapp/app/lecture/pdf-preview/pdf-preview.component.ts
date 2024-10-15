@@ -145,7 +145,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             for (let i = 1; i <= this.totalPages; i++) {
                 const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 2 });
+                const viewport = page.getViewport({ scale: 1 });
                 const canvas = this.createCanvas(viewport, i);
                 const context = canvas.getContext('2d');
                 await page.render({ canvasContext: context!, viewport }).promise;

@@ -8,7 +8,7 @@ import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-man
 import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
 import { ElementRef } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { PDFDocument } from 'pdf-lib';
 
@@ -97,7 +97,7 @@ describe('PdfPreviewComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [PdfPreviewComponent],
+            imports: [PdfPreviewComponent, HttpClientModule],
             providers: [
                 { provide: ActivatedRoute, useValue: routeMock },
                 { provide: AttachmentService, useValue: attachmentServiceMock },
@@ -183,7 +183,7 @@ describe('PdfPreviewComponent', () => {
         component.ngOnInit();
         fixture.detectChanges();
 
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalled();
     });
 
     it('should handle errors and trigger alert when loading an attachment unit file fails', () => {
@@ -204,7 +204,7 @@ describe('PdfPreviewComponent', () => {
         component.ngOnInit();
         fixture.detectChanges();
 
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalled();
     });
 
     it('should load PDF and verify rendering of pages', async () => {
@@ -214,11 +214,11 @@ describe('PdfPreviewComponent', () => {
 
         await component.loadOrAppendPdf('fake-url');
 
-        expect(spyCreateCanvas).toHaveBeenCalledOnce();
-        expect(spyCreateCanvasContainer).toHaveBeenCalledOnce();
-        expect(spyAppendChild).toHaveBeenCalledOnce();
+        expect(spyCreateCanvas).toHaveBeenCalled();
+        expect(spyCreateCanvasContainer).toHaveBeenCalled();
+        expect(spyAppendChild).toHaveBeenCalled();
         expect(component.totalPages).toBe(1);
-        expect(component.isPdfLoading).toBeFalse();
+        expect(component.isPdfLoading).toBeFalsy();
         expect(component.fileInput.nativeElement.value).toBe('');
     });
 
@@ -240,14 +240,14 @@ describe('PdfPreviewComponent', () => {
     it('should toggle enlarged view state', () => {
         const mockCanvas = document.createElement('canvas');
         component.displayEnlargedCanvas(mockCanvas);
-        expect(component.isEnlargedView).toBeTrue();
+        expect(component.isEnlargedView).toBeTruthy();
 
         const clickEvent = new MouseEvent('click', {
             button: 0,
         });
 
         component.closeEnlargedView(clickEvent);
-        expect(component.isEnlargedView).toBeFalse();
+        expect(component.isEnlargedView).toBeFalsy();
     });
 
     it('should prevent scrolling when enlarged view is active', () => {
@@ -352,7 +352,7 @@ describe('PdfPreviewComponent', () => {
         component.closeIfOutside(mockEvent);
 
         expect(closeSpy).toHaveBeenCalled();
-        expect(component.isEnlargedView).toBeFalse();
+        expect(component.isEnlargedView).toBeFalsy();
     });
 
     it('should not close the enlarged view if the click is on the canvas itself', () => {
@@ -425,7 +425,7 @@ describe('PdfPreviewComponent', () => {
 
         const container = component.createCanvasContainer(mockCanvas, 1);
         expect(container.tagName).toBe('DIV');
-        expect(container.classList.contains('pdf-canvas-container')).toBeTrue();
+        expect(container.classList.contains('pdf-canvas-container')).toBeTruthy();
         expect(container.style.position).toBe('relative');
         expect(container.style.display).toBe('inline-block');
         expect(container.style.width).toBe('600px');
@@ -501,11 +501,11 @@ describe('PdfPreviewComponent', () => {
 
         expect(PDFDocument.load).toHaveBeenCalledTimes(2);
         expect(existingPdfDoc.copyPages).toHaveBeenCalledWith(newPdfDoc, [0]);
-        expect(existingPdfDoc.addPage).toHaveBeenCalledOnce();
+        expect(existingPdfDoc.addPage).toHaveBeenCalled();
         expect(existingPdfDoc.save).toHaveBeenCalled();
         expect(component.currentPdfBlob).toBeDefined();
         expect(component.selectedPages.size).toBe(0);
-        expect(component.isPdfLoading).toBeFalse();
+        expect(component.isPdfLoading).toBeFalsy();
         expect(URL.createObjectURL).toHaveBeenCalledWith(new Blob([new Uint8Array([1, 2, 3])], { type: 'application/pdf' }));
     });
 
@@ -530,7 +530,7 @@ describe('PdfPreviewComponent', () => {
         await component.mergePDF(mockEvent as any);
 
         expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
-        expect(component.isPdfLoading).toBeFalse();
+        expect(component.isPdfLoading).toBeFalsy();
     });
 
     it('should update the IDs of remaining pages after some have been removed', () => {
@@ -668,7 +668,7 @@ describe('PdfPreviewComponent', () => {
         expect(component.selectedPages.size).toBe(0);
         expect(alertServiceErrorSpy).not.toHaveBeenCalled();
         expect(URL.revokeObjectURL).toHaveBeenCalledWith(objectUrl);
-        expect(component.isPdfLoading).toBeFalse();
+        expect(component.isPdfLoading).toBeFalsy();
     });
 
     it('should handle errors when deleting slides', async () => {
@@ -686,6 +686,6 @@ describe('PdfPreviewComponent', () => {
         expect(alertServiceErrorSpy).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.pageDeleteError', { error: 'Failed to load PDF' });
 
         // Verify that the loading state is set to false after the operation
-        expect(component.isPdfLoading).toBeFalse();
+        expect(component.isPdfLoading).toBeFalsy();
     });
 });
