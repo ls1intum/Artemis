@@ -1,9 +1,12 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 
@@ -11,6 +14,7 @@ import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 
+@Profile(PROFILE_CORE)
 @Controller
 public class LearningPathApi extends AbstractAtlasApi {
 
