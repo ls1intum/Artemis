@@ -240,6 +240,10 @@ class TestResultXmlParserTest {
                 """;
 
         TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
-        assertThat(successfulTests).hasSize(12);
+        assertThat(successfulTests).hasSize(12).extracting(BuildResult.LocalCITestJobDTO::getName).containsExactlyInAnyOrder("Testing filtering in A", "Testing mapping in A",
+                "Testing filtering in B", "Testing mapping in B", "Testing filtering in C", "Testing mapping in C", "Testing A against sample solution",
+                "Testing B against sample solution", "Testing C against sample solution", "Testing selectAndReflectA (0,0) []", "Testing selectAndReflectB (0,1) [(0,0)]",
+                "Testing selectAndReflectC (0,1) [(-1,-1)]");
+        assertThat(failedTests).isEmpty();
     }
 }
