@@ -315,7 +315,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
      *
      * @return a {@link DockerRunConfig} object initialized with the parsed flags, or {@code null} if an error occurs
      */
-    public DockerRunConfig getDockerRunConfigFromString() {
+    public DockerRunConfig getDockerRunConfig() {
         if (StringUtils.isBlank(dockerFlags)) {
             return null;
         }

@@ -308,7 +308,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
         }
 
-        DockerRunConfig dockerRunConfig = buildConfig.getDockerRunConfigFromString();
+        DockerRunConfig dockerRunConfig = buildConfig.getDockerRunConfig();
 
         List<String> resultPaths = getTestResultPaths(windfile);
         resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
