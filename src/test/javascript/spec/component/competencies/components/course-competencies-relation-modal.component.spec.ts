@@ -113,7 +113,7 @@ describe('CourseCompetenciesRelationModalComponent', () => {
 
         component['closeModal']();
 
-        expect(closeSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalledOnce();
     });
 
     it('should call selectCourseCompetency on courseCompetencyRelationFormComponent with valid courseCompetencyId', () => {
@@ -124,6 +124,6 @@ describe('CourseCompetenciesRelationModalComponent', () => {
 
         component['selectCourseCompetency'](courseCompetencyId);
 
-        expect(selectSpy).toHaveBeenCalledWith(courseCompetencyId);
+        expect(selectSpy).toHaveBeenCalledExactlyOnceWith(courseCompetencyId);
     });
 });

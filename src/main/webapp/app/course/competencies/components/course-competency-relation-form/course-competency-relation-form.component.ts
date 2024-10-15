@@ -63,22 +63,11 @@ export class CourseCompetencyRelationFormComponent {
     public selectCourseCompetency(courseCompetencyId: number): void {
         if (!this.headCompetencyId()) {
             this.selectHeadCourseCompetency(courseCompetencyId.toString());
-            return;
         } else if (!this.tailCompetencyId()) {
             this.selectTailCourseCompetency(courseCompetencyId.toString());
-            return;
         } else {
             this.selectHeadCourseCompetency(courseCompetencyId.toString());
         }
-        // if (!this.headCompetencyId() || this.tailCompetencyId()) {
-        //     this.headCompetencyId.set(courseCompetencyId);
-        //     this.tailCompetencyId.set(undefined);
-        //     this.relationType.set(undefined);
-        // } else {
-        //     if (this.selectableTailCourseCompetencyIds().find((id) => id === courseCompetencyId)) {
-        //         this.tailCompetencyId.set(courseCompetencyId);
-        //     }
-        // }
     }
 
     protected selectHeadCourseCompetency(headId: string) {

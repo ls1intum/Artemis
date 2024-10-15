@@ -71,7 +71,7 @@ describe('ImportAllCourseCompetenciesModalComponent', () => {
         const course = <Course>{ id: 2, title: 'Course 02', shortName: 'C2' };
         component.selectCourse(course);
 
-        expect(closeModalSpy).toHaveBeenCalledWith({
+        expect(closeModalSpy).toHaveBeenCalledExactlyOnceWith({
             course: course,
             courseCompetencyImportOptions: {
                 sourceCourseId: course.id,

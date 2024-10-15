@@ -113,10 +113,33 @@ describe('CourseCompetencyRelationFormComponent', () => {
         expect(component.relationType()).toBe(CompetencyRelationType.EXTENDS);
     });
 
-    it('should set head competency on selection if undefined', () => {
+    it('should set headCompetencyId if it is undefined', () => {
+        component.headCompetencyId.set(undefined);
+        component.tailCompetencyId.set(2);
+
         component.selectCourseCompetency(1);
 
         expect(component.headCompetencyId()).toBe(1);
+        expect(component.tailCompetencyId()).toBeUndefined();
+    });
+
+    it('should set tailCompetencyId if headCompetencyId is defined and tailCompetencyId is undefined', () => {
+        component.headCompetencyId.set(1);
+        component.tailCompetencyId.set(undefined);
+
+        component.selectCourseCompetency(2);
+
+        expect(component.tailCompetencyId()).toBe(2);
+    });
+
+    it('should reset headCompetencyId if both headCompetencyId and tailCompetencyId are defined', () => {
+        component.headCompetencyId.set(1);
+        component.tailCompetencyId.set(2);
+
+        component.selectCourseCompetency(3);
+
+        expect(component.headCompetencyId()).toBe(3);
+        expect(component.tailCompetencyId()).toBeUndefined();
     });
 
     it('should create relation', async () => {
@@ -248,6 +271,15 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
         expect(component.tailCompetencyId()).toBe(2);
         expect(component.selectedRelationId()).toBeUndefined();
+    });
+
+    it('should not allow to create circular dependencies', () => {
+        component.headCompetencyId.set(1);
+        component.tailCompetencyId.set(1);
+        component.relationType.set(CompetencyRelationType.EXTENDS);
+
+        expect(component['selectableTailCourseCompetencyIds']).not.toContain(1);
+        expect(component.showCircularDependencyError()).toBeTrue();
     });
 
     it('should delete relation', async () => {
