@@ -69,9 +69,9 @@ public class CourseCompetencyApi extends AbstractAtlasApi {
             // update associated competencies
             Set<CourseCompetency> competencies = lectureUnit.getCompetencies();
             repository.saveAll(competencies.stream().map(competency -> {
-                competency = repository.findByIdWithLectureUnitsElseThrow(competency.getId());
-                competency.getLectureUnits().remove(lectureUnit);
-                return competency;
+                CourseCompetency updatedCompetency = repository.findByIdWithLectureUnitsElseThrow(competency.getId());
+                updatedCompetency.getLectureUnits().remove(lectureUnit);
+                return updatedCompetency;
             }).toList());
         }
     }
