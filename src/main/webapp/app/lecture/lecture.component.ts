@@ -16,6 +16,7 @@ import { Subject, Subscription } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -44,6 +45,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     readonly filterType = LectureDateFilter;
     readonly documentationType: DocumentationType = 'Lecture';
+    readonly ingestionState: IngestionState;
 
     // Icons
     faPlus = faPlus;
@@ -56,6 +58,8 @@ export class LectureComponent implements OnInit, OnDestroy {
     faFilter = faFilter;
     faSort = faSort;
     lectureIngestionEnabled = false;
+
+    protected readonly IngestionState = IngestionState;
 
     private profileInfoSubscription: Subscription;
 
@@ -75,7 +79,6 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.loadAll();
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
             this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
             if (this.irisEnabled) {
@@ -84,6 +87,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                 });
             }
         });
+        this.loadAll();
     }
 
     ngOnDestroy(): void {
@@ -150,14 +154,19 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     private loadAll() {
         this.lectureService
-            .findAllByCourseId(this.courseId)
+            .findAllByCourseIdWithSlides(this.courseId)
             .pipe(
                 filter((res: HttpResponse<Lecture[]>) => res.ok),
                 map((res: HttpResponse<Lecture[]>) => res.body),
             )
             .subscribe({
                 next: (res: Lecture[]) => {
-                    this.lectures = res;
+                    this.lectures = res.map((lectureData) => {
+                        const lecture = new Lecture();
+                        Object.assign(lecture, lectureData);
+                        return lecture;
+                    });
+                    this.updateIngestionStates();
                     this.applyFilters();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -211,5 +220,27 @@ export class LectureComponent implements OnInit, OnDestroy {
                 error: (error) => console.error('Failed to send Ingestion request', error),
             });
         }
+    }
+
+    /**
+     * Fetches the ingestion state for all lecture asynchronously and updates all the lectures ingestion state.
+     */
+    updateIngestionStates() {
+        this.lectureService.getIngestionState(this.courseId).subscribe({
+            next: (res: HttpResponse<Record<number, IngestionState>>) => {
+                if (res.body) {
+                    const ingestionStatesMap = res.body;
+                    this.lectures.forEach((lecture) => {
+                        if (lecture.id) {
+                            const ingestionState = ingestionStatesMap[lecture.id];
+                            if (ingestionState !== undefined) {
+                                lecture.ingested = ingestionState;
+                            }
+                        }
+                    });
+                }
+            },
+            error: (err: HttpErrorResponse) => console.error(`Error fetching ingestion state for lecture in course ${this.courseId}`, err),
+        });
     }
 }

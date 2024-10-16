@@ -268,7 +268,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
     @PostMapping("courses/{courseId}/ingest")
-    public ResponseEntity<Boolean> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
+    public ResponseEntity<Void> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
         log.debug("REST request to ingest lectures of course : {}", courseId);
         Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
         if (lectureId.isPresent()) {
@@ -276,13 +276,15 @@ public class LectureResource {
             if (lectureToIngest.isPresent()) {
                 Set<Lecture> lecturesToIngest = new HashSet<>();
                 lecturesToIngest.add(lectureToIngest.get());
-                return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(lecturesToIngest));
+                lectureService.ingestLecturesInPyris(lecturesToIngest);
+                return ResponseEntity.ok().build();
             }
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "Could not send lecture to Iris, no lecture found with the provided id.", "idExists")).body(null);
 
         }
-        return ResponseEntity.ok().body(lectureService.ingestLecturesInPyris(course.getLectures()));
+        lectureService.ingestLecturesInPyris(course.getLectures());
+        return ResponseEntity.ok().build();
     }
 
     /**

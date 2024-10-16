@@ -93,11 +93,14 @@ public class PyrisJobService {
     /**
      * Adds a new ingestion webhook job to the job map with a timeout.
      *
+     * @param courseId      the ID of the course associated with the webhook job
+     * @param lectureId     the ID of the lecture associated with the webhook job
+     * @param lectureUnitId the ID of the lecture unit associated with the webhook job
      * @return a unique token identifying the created webhook job
      */
-    public String addIngestionWebhookJob() {
+    public String addIngestionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
         var token = generateJobIdToken();
-        var job = new IngestionWebhookJob(token);
+        var job = new IngestionWebhookJob(token, courseId, lectureId, lectureUnitId);
         long timeoutWebhookJob = 60;
         TimeUnit unitWebhookJob = TimeUnit.MINUTES;
         jobMap.put(token, job, timeoutWebhookJob, unitWebhookJob);
@@ -111,6 +114,19 @@ public class PyrisJobService {
      */
     public void removeJob(String token) {
         jobMap.remove(token);
+    }
+
+    /**
+     * Checks if a job with the specified course, lecture, and lecture unit IDs exists in the job map.
+     *
+     * @param courseId      The ID of the course to check.
+     * @param lectureId     The ID of the lecture to check.
+     * @param lectureUnitId The ID of the lecture unit to check.
+     * @return true if a matching IngestionWebhookJob exists; false otherwise.
+     */
+    public boolean jobExists(long courseId, long lectureId, long lectureUnitId) {
+        return jobMap.values().stream().filter(job -> job instanceof IngestionWebhookJob).map(job -> (IngestionWebhookJob) job)
+                .anyMatch(ingestionJob -> ingestionJob.courseId() == courseId && ingestionJob.lectureId() == lectureId && ingestionJob.lectureUnitId() == lectureUnitId);
     }
 
     /**

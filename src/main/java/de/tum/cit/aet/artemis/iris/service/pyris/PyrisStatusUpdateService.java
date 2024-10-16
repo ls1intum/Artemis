@@ -91,7 +91,7 @@ public class PyrisStatusUpdateService {
 
     /**
      * Handles the status update of a competency extraction job and forwards it to
-     * {@link IrisCompetencyGenerationService#handleStatusUpdate(String, long, PyrisCompetencyStatusUpdateDTO)}
+     * {@link de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService#handleStatusUpdate(String, long, PyrisCompetencyStatusUpdateDTO)}
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
@@ -120,14 +120,12 @@ public class PyrisStatusUpdateService {
     }
 
     /**
-     * Handles the status update of a lecture ingestion job and logs the results for now => will change later
-     * TODO: Update this method to handle changes beyond logging
+     * Handles the status update of a lecture ingestion job.
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(IngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
-        statusUpdate.stages().forEach(stage -> log.info(stage.name() + ":" + stage.message()));
         removeJobIfTerminated(statusUpdate.stages(), job.jobId());
     }
 }
