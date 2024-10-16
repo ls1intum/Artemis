@@ -109,6 +109,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     readonly feedbackSuggestionsInternal = signal<Feedback[]>([]);
 
     readonly lineNumberToFocus = signal<number | undefined>(undefined);
+    readonly hasSwitchedFile = signal<boolean>(false);
 
     annotationsArray: Array<Annotation> = [];
 
@@ -132,11 +133,19 @@ export class CodeEditorMonacoComponent implements OnChanges {
             untracked(() => this.setBuildAnnotations(annotations));
         });
 
-        effect(() => {
-            this.inlineFeedbackSuggestionComponents();
-            this.inlineFeedbackComponents();
-            this.renderFeedbackWidgets(this.lineNumberToFocus());
-        });
+        effect(
+            () => {
+                this.inlineFeedbackSuggestionComponents();
+                this.inlineFeedbackComponents();
+                this.renderFeedbackWidgets(this.lineNumberToFocus());
+                if (untracked(this.hasSwitchedFile)) {
+                    this.editor().restoreViewStateForCurrentModel();
+                    this.editor().focus();
+                    this.hasSwitchedFile.set(false);
+                }
+            },
+            { allowSignalWrites: true },
+        );
 
         effect(() => {
             // Upon initialization, the editor is not yet available. We need to wait for it to be initialized before we can render feedback widgets.
@@ -206,6 +215,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.editor().setPosition(this.fileSession()[fileName].cursor);
         }
         this.loadingCount.set(this.loadingCount() - 1);
+        this.hasSwitchedFile.set(true);
     }
 
     onFileTextChanged(text: string): void {
