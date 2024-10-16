@@ -99,14 +99,13 @@ describe('CodeEditorContainerIntegration', () => {
 
     const result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorComponent, MockDirective(NgbDropdown), MockModule(NgbTooltipModule)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, CodeEditorMonacoComponent, MockDirective(NgbDropdown), MockModule(NgbTooltipModule)],
             declarations: [
                 CodeEditorContainerComponent,
                 MockComponent(CodeEditorGridComponent),
                 MockComponent(CodeEditorInstructionsComponent),
-                MockComponent(CodeEditorHeaderComponent),
                 KeysPipe,
                 MockDirective(FeatureToggleDirective),
                 MockDirective(FeatureToggleLinkDirective),
@@ -115,7 +114,6 @@ describe('CodeEditorContainerIntegration', () => {
                 CodeEditorActionsComponent,
                 CodeEditorFileBrowserComponent,
                 CodeEditorBuildOutputComponent,
-                CodeEditorMonacoComponent,
                 MockComponent(CodeEditorFileBrowserCreateNodeComponent),
                 MockComponent(CodeEditorFileBrowserFolderComponent),
                 MockComponent(CodeEditorFileBrowserFileComponent),
@@ -143,44 +141,45 @@ describe('CodeEditorContainerIntegration', () => {
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
             ],
         })
-            .compileComponents()
-            .then(() => {
-                containerFixture = TestBed.createComponent(CodeEditorContainerComponent);
-                container = containerFixture.componentInstance;
-                containerDebugElement = containerFixture.debugElement;
-                guidedTourService = TestBed.inject(GuidedTourService);
+            .overrideComponent(CodeEditorMonacoComponent, { set: { imports: [MonacoEditorComponent, CodeEditorHeaderComponent] } })
+            .overrideComponent(CodeEditorHeaderComponent, { set: { imports: [], template: '' } })
+            .compileComponents();
 
-                const codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
-                const codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
-                const participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
-                const resultService = containerDebugElement.injector.get(ResultService);
-                const buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
-                const programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
-                conflictService = containerDebugElement.injector.get(CodeEditorConflictStateService);
-                domainService = containerDebugElement.injector.get(DomainService);
-                const submissionService = containerDebugElement.injector.get(ProgrammingSubmissionService);
+        containerFixture = TestBed.createComponent(CodeEditorContainerComponent);
+        container = containerFixture.componentInstance;
+        containerDebugElement = containerFixture.debugElement;
+        guidedTourService = TestBed.inject(GuidedTourService);
 
-                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
+        const codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
+        const codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
+        const participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
+        const resultService = containerDebugElement.injector.get(ResultService);
+        const buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
+        const programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
+        conflictService = containerDebugElement.injector.get(CodeEditorConflictStateService);
+        domainService = containerDebugElement.injector.get(DomainService);
+        const submissionService = containerDebugElement.injector.get(ProgrammingSubmissionService);
 
-                getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
 
-                checkIfRepositoryIsCleanStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
-                getRepositoryContentStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
-                subscribeForLatestResultOfParticipationStub = jest
-                    .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
-                    .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
-                getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
-                getBuildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');
-                getFileStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
-                saveFilesStub = jest.spyOn(codeEditorRepositoryFileService, 'updateFiles');
-                commitStub = jest.spyOn(codeEditorRepositoryService, 'commit');
-                getStudentParticipationWithLatestResultStub = jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
-                getLatestPendingSubmissionStub = jest.spyOn(submissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(getLatestPendingSubmissionSubject);
-                // Mock the ResizeObserver, which is not available in the test environment
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-            });
+        getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
+
+        checkIfRepositoryIsCleanStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
+        getRepositoryContentStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
+        subscribeForLatestResultOfParticipationStub = jest
+            .spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation')
+            .mockReturnValue(subscribeForLatestResultOfParticipationSubject);
+        getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
+        getBuildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');
+        getFileStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
+        saveFilesStub = jest.spyOn(codeEditorRepositoryFileService, 'updateFiles');
+        commitStub = jest.spyOn(codeEditorRepositoryService, 'commit');
+        getStudentParticipationWithLatestResultStub = jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
+        getLatestPendingSubmissionStub = jest.spyOn(submissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(getLatestPendingSubmissionSubject);
+        // Mock the ResizeObserver, which is not available in the test environment
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
     });
 
     afterEach(() => {
@@ -232,8 +231,8 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // monaco editor
-        expect(container.monacoEditor.loadingCount).toBe(0);
-        expect(container.monacoEditor.commitState).toBe(CommitState.CLEAN);
+        expect(container.monacoEditor.loadingCount()).toBe(0);
+        expect(container.monacoEditor.commitState()).toBe(CommitState.CLEAN);
 
         // actions
         expect(container.actions.commitState).toBe(CommitState.CLEAN);
@@ -307,9 +306,9 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // monaco editor
-        expect(container.monacoEditor.loadingCount).toBe(0);
+        expect(container.monacoEditor.loadingCount()).toBe(0);
         expect(container.monacoEditor.annotationsArray?.map((a) => omit(a, 'hash'))).toEqual(extractedBuildLogErrors);
-        expect(container.monacoEditor.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
+        expect(container.monacoEditor.commitState()).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
 
         // actions
         expect(container.actions.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
@@ -345,8 +344,8 @@ describe('CodeEditorContainerIntegration', () => {
 
         containerFixture.detectChanges();
         expect(container.selectedFile).toBe(selectedFile);
-        expect(container.monacoEditor.selectedFile).toBe(selectedFile);
-        expect(container.monacoEditor.loadingCount).toBe(0);
+        expect(container.monacoEditor.selectedFile()).toBe(selectedFile);
+        expect(container.monacoEditor.loadingCount()).toBe(0);
         expect(container.monacoEditor.fileSession).toContainKey(selectedFile);
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
