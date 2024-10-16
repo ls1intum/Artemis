@@ -47,7 +47,13 @@
                 [ngModel]="envVars"
                 (ngModelChange)="onEnvVarsChange($event)"
                 [pattern]="ENV_VAR_REGEX"
+                #envVarsInput="ngModel"
             />
+            @if (envVarsInput.invalid && (envVarsInput.dirty || envVarsInput.touched)) {
+                <div class="warning alert-warning mt-2" role="alert">
+                    <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.invalid"></span>
+                </div>
+            }
         </div>
         <div class="d-flex align-items-center justify-content-start gap-4 mb-2">
             <div>

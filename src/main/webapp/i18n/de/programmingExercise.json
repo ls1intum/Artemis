@@ -695,7 +695,8 @@
                 },
                 "envVars": {
                     "title": "Umgebungsvariablen",
-                    "description": "Fügen Sie Umgebungsvariablen zum Docker-Container hinzu. Bitte folgen Sie diesem Format: KEY_1=\"value_1\",KEY_2=\"value_2\". (Max 128 chars)"
+                    "description": "Fügen Sie Umgebungsvariablen zum Docker-Container hinzu. Bitte folgen Sie diesem Format: KEY_1=\"value_1\",KEY_2=\"value_2\". (Max 128 chars)",
+                    "invalid": "Ungültiges Format der Umgebungsvariablen. Bitte folgen Sie dem Format KEY_1=\"value_1\",KEY_2=\"value_2\". Schlüssel und Werte können in einfache oder doppelte Anführungszeichen gesetzt werden."
                 }
             }
         },
