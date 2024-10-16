@@ -44,6 +44,13 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 
+/**
+ * This adds upon the {@link AbstractProgrammingIntegrationLocalCILocalVCTest} by providing additional
+ * <ul>
+ * <li>test data on test startup</li>
+ * <li>services and repositories that are needed for the tests.</li>
+ * </ul>
+ */
 public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     // Config
