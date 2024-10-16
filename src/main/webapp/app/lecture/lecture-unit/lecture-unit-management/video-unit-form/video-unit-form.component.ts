@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -58,6 +58,8 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     templateUrl: './video-unit-form.component.html',
 })
 export class VideoUnitFormComponent implements OnInit, OnChanges {
+    private fb = inject(FormBuilder);
+
     @Input()
     formData: VideoUnitFormData;
     @Input()
@@ -79,8 +81,6 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
 
     // Icons
     faArrowLeft = faArrowLeft;
-
-    constructor(private fb: FormBuilder) {}
 
     get nameControl() {
         return this.form.get('name');

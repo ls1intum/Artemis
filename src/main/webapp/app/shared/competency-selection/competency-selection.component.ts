@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef, inject } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Competency, CourseCompetency, getIcon } from 'app/entities/competency.model';
@@ -20,6 +20,11 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
     ],
 })
 export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
+    private route = inject(ActivatedRoute);
+    private courseStorageService = inject(CourseStorageService);
+    private courseCompetencyService = inject(CourseCompetencyService);
+    private changeDetector = inject(ChangeDetectorRef);
+
     @Input() labelName: string;
     @Input() labelTooltip: string;
 
@@ -39,13 +44,6 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (value: any) => {};
-
-    constructor(
-        private route: ActivatedRoute,
-        private courseStorageService: CourseStorageService,
-        private courseCompetencyService: CourseCompetencyService,
-        private changeDetector: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));

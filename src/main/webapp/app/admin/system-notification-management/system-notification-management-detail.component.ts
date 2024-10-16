@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SystemNotification } from 'app/entities/system-notification.model';
@@ -9,15 +9,13 @@ import { SystemNotificationService } from 'app/shared/notification/system-notifi
     templateUrl: './system-notification-management-detail.component.html',
 })
 export class SystemNotificationManagementDetailComponent implements OnInit {
+    private systemNotificationService = inject(SystemNotificationService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+
     notification: SystemNotification;
     // Icons
     faWrench = faWrench;
-
-    constructor(
-        private systemNotificationService: SystemNotificationService,
-        private route: ActivatedRoute,
-        private router: Router,
-    ) {}
 
     /**
      * Assigns the subscription to system notification service

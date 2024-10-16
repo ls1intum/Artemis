@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, ViewChild, inject } from '@angular/core';
 import { Submission } from 'app/entities/submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -34,18 +34,17 @@ import { SubmissionVersion } from 'app/entities/submission-version.model';
     styleUrls: ['./programming-exam-submission.component.scss'],
 })
 export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent implements OnChanges, OnInit {
+    private domainService = inject(DomainService);
+
     exerciseType = ExerciseType.PROGRAMMING;
 
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     @ViewChild(ProgrammingExerciseInstructionComponent, { static: false }) instructions: ProgrammingExerciseInstructionComponent;
 
     // IMPORTANT: this reference must be activeExercise.studentParticipation[0] otherwise the parent component will not be able to react to change
-    @Input()
-    studentParticipation: ProgrammingExerciseStudentParticipation;
-    @Input()
-    exercise: ProgrammingExercise;
-    @Input()
-    courseId: number;
+    @Input() studentParticipation: ProgrammingExerciseStudentParticipation;
+    @Input() exercise: ProgrammingExercise;
+    @Input() courseId: number;
 
     showEditorInstructions = true;
     hasSubmittedOnce = false;
@@ -74,13 +73,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     isSaving: boolean;
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
-
-    constructor(
-        private domainService: DomainService,
-        changeDetectorReference: ChangeDetectorRef,
-    ) {
-        super(changeDetectorReference);
-    }
 
     /**
      * On init set up the route param subscription.

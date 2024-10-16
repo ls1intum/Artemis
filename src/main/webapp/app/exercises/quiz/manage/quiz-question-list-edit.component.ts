@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, QueryList, ViewChildren, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, QueryList, ViewChildren, ViewEncapsulation, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -20,6 +20,8 @@ import { ApollonDiagramImportDialogComponent } from 'app/exercises/quiz/manage/a
     encapsulation: ViewEncapsulation.None,
 })
 export class QuizQuestionListEditComponent {
+    private modalService = inject(NgbModal);
+
     @Input() courseId: number;
     @Input() quizQuestions: QuizQuestion[] = [];
     @Input() disabled = false;
@@ -46,8 +48,6 @@ export class QuizQuestionListEditComponent {
     showExistingQuestions = false;
 
     fileMap = new Map<string, { path?: string; file: File }>();
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Emit onQuestionUpdated if there is an update of the question.

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, Input, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AbstractQuizSubmission } from 'app/entities/quiz/abstract-quiz-exam-submission.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -28,6 +28,8 @@ import * as smoothscroll from 'smoothscroll-polyfill';
     styleUrls: ['./quiz-exam-submission.component.scss'],
 })
 export class QuizExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    private quizService = inject(ArtemisQuizService);
+
     exerciseType = ExerciseType.QUIZ;
 
     // make constants available to html for comparison
@@ -57,11 +59,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-    constructor(
-        private quizService: ArtemisQuizService,
-        changeDetectorReference: ChangeDetectorRef,
-    ) {
-        super(changeDetectorReference);
+    constructor() {
+        super();
         smoothscroll.polyfill();
     }
 

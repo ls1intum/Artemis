@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -54,15 +54,13 @@ export interface ExerciseServicable<T extends Exercise> {
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseService {
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
+    private entityTitleService = inject(EntityTitleService);
+
     public resourceUrl = 'api/exercises';
     public adminResourceUrl = 'api/admin/exercises';
-
-    constructor(
-        private http: HttpClient,
-        private accountService: AccountService,
-        private translateService: TranslateService,
-        private entityTitleService: EntityTitleService,
-    ) {}
 
     /**
      * Persist a new exercise

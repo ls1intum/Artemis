@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -29,6 +29,14 @@ export type CourseExamArchiveState = {
     styles: [':host {display: contents}'],
 })
 export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
+    private courseService = inject(CourseManagementService);
+    private examService = inject(ExamManagementService);
+    private alertService = inject(AlertService);
+    private websocketService = inject(JhiWebsocketService);
+    private translateService = inject(TranslateService);
+    private modalService = inject(NgbModal);
+    private accountService = inject(AccountService);
+
     ButtonSize = ButtonSize;
     ActionType = ActionType;
     readonly FeatureToggle = FeatureToggle;
@@ -61,16 +69,6 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     faCircleNotch = faCircleNotch;
     faEraser = faEraser;
     faArchive = faArchive;
-
-    constructor(
-        private courseService: CourseManagementService,
-        private examService: ExamManagementService,
-        private alertService: AlertService,
-        private websocketService: JhiWebsocketService,
-        private translateService: TranslateService,
-        private modalService: NgbModal,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit() {
         if (!this.course && !this.exam) {

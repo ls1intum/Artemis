@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
@@ -10,11 +10,8 @@ import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ExternalSubmissionService {
-    // TODO: It would be good to refactor the convertDate methods into a separate service, so that we don't have to import the result service here.
-    constructor(
-        private http: HttpClient,
-        private resultService: ResultService,
-    ) {}
+    private http = inject(HttpClient);
+    private resultService = inject(ResultService);
 
     /**
      * Persist a new result for the provided exercise and student (a participation and an empty submission will also be created if they do not exist yet)

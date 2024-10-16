@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -38,6 +38,19 @@ import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.ac
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    private alertService = inject(AlertService);
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private modalService = inject(NgbModal);
+    private popupService = inject(ExerciseUpdateWarningService);
+    private courseService = inject(CourseManagementService);
+    private exerciseService = inject(ExerciseService);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    private eventManager = inject(EventManager);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelNameComponent: ExerciseTitleChannelNameComponent;
     @ViewChild(ExerciseUpdatePlagiarismComponent) exerciseUpdatePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent?: TeamConfigFormGroupComponent;
@@ -80,21 +93,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     bonusPointsSubscription?: Subscription;
     plagiarismSubscription?: Subscription;
     teamSubscription?: Subscription;
-
-    constructor(
-        private alertService: AlertService,
-        private modelingExerciseService: ModelingExerciseService,
-        private modalService: NgbModal,
-        private popupService: ExerciseUpdateWarningService,
-        private courseService: CourseManagementService,
-        private exerciseService: ExerciseService,
-        private exerciseGroupService: ExerciseGroupService,
-        private eventManager: EventManager,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private changeDetectorRef: ChangeDetectorRef,
-    ) {}
 
     get editType(): EditType {
         if (this.isImport) {

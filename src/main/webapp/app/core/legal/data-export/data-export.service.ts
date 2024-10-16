@@ -1,11 +1,11 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { DataExport } from 'app/entities/data-export.model';
 
 @Injectable({ providedIn: 'root' })
 export class DataExportService {
-    constructor(private http: HttpClient) {}
+    private http = inject(HttpClient);
 
     requestDataExport(): Observable<DataExport> {
         return this.http.post<DataExport>(`api/data-exports`, {});
@@ -23,6 +23,7 @@ export class DataExportService {
     canDownloadAnyDataExport(): Observable<DataExport> {
         return this.http.get<DataExport>(`api/data-exports/can-download`);
     }
+
     canDownloadSpecificDataExport(dataExportId: number): Observable<boolean> {
         return this.http.get<boolean>(`api/data-exports/${dataExportId}/can-download`);
     }

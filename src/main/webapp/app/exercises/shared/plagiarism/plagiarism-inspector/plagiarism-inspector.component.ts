@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
@@ -37,6 +37,18 @@ export type PlagiarismCheckState = {
     templateUrl: './plagiarism-inspector.component.html',
 })
 export class PlagiarismInspectorComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private textExerciseService = inject(TextExerciseService);
+    private websocketService = inject(JhiWebsocketService);
+    private translateService = inject(TranslateService);
+    private inspectorService = inject(PlagiarismInspectorService);
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private modalService = inject(NgbModal);
+    private alertService = inject(AlertService);
+
     /**
      * The modeling exercise for which plagiarism is to be detected.
      */
@@ -125,20 +137,6 @@ export class PlagiarismInspectorComponent implements OnInit {
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
     faChevronRight = faChevronRight;
-
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private modelingExerciseService: ModelingExerciseService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private textExerciseService: TextExerciseService,
-        private websocketService: JhiWebsocketService,
-        private translateService: TranslateService,
-        private inspectorService: PlagiarismInspectorService,
-        private plagiarismCasesService: PlagiarismCasesService,
-        private modalService: NgbModal,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.route.data.subscribe(({ exercise }) => {

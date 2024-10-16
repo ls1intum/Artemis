@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, ViewContainerRef, inject } from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -13,6 +13,9 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['./post-footer.component.scss'],
 })
 export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnDestroy, AfterContentChecked {
+    private metisService = inject(MetisService);
+    protected changeDetector = inject(ChangeDetectorRef);
+
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() readOnlyMode = false;
     @Input() previewMode: boolean;
@@ -38,13 +41,6 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     // ng-container to render createEditAnswerPostComponent
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
-
-    constructor(
-        private metisService: MetisService,
-        protected changeDetector: ChangeDetectorRef,
-    ) {
-        super();
-    }
 
     /**
      * on initialization: updates the post tags and the context information

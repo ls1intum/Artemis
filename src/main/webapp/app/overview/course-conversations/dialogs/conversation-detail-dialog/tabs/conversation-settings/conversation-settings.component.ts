@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
@@ -22,6 +22,11 @@ import { catchError } from 'rxjs/operators';
     styleUrls: ['./conversation-settings.component.scss'],
 })
 export class ConversationSettingsComponent implements OnInit, OnDestroy {
+    private modalService = inject(NgbModal);
+    private channelService = inject(ChannelService);
+    private groupChatService = inject(GroupChatService);
+    private alertService = inject(AlertService);
+
     private ngUnsubscribe = new Subject<void>();
 
     @Input()
@@ -48,13 +53,6 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     canLeaveConversation: boolean;
     canChangeChannelArchivalState: boolean;
     canDeleteChannel: boolean;
-
-    constructor(
-        private modalService: NgbModal,
-        private channelService: ChannelService,
-        private groupChatService: GroupChatService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.canLeaveConversation = canLeaveConversation(this.activeConversation);

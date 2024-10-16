@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
@@ -24,6 +24,12 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
     styleUrls: ['./exam-navigation-bar.component.scss'],
 })
 export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
+    private layoutService = inject(LayoutService);
+    private examParticipationService = inject(ExamParticipationService);
+    private examExerciseUpdateService = inject(ExamExerciseUpdateService);
+    private repositoryService = inject(CodeEditorRepositoryService);
+    private conflictService = inject(CodeEditorConflictStateService);
+
     @Input() exercises: Exercise[] = [];
     @Input() exerciseIndex = 0;
     @Input() endDate: dayjs.Dayjs;
@@ -50,14 +56,6 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
 
     // Icons
     faBars = faBars;
-
-    constructor(
-        private layoutService: LayoutService,
-        private examParticipationService: ExamParticipationService,
-        private examExerciseUpdateService: ExamExerciseUpdateService,
-        private repositoryService: CodeEditorRepositoryService,
-        private conflictService: CodeEditorConflictStateService,
-    ) {}
 
     ngOnInit(): void {
         if (!this.examTimeLineView) {

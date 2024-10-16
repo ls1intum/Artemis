@@ -1,13 +1,13 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 
 @Injectable({ providedIn: 'root' })
 export class StaticContentService {
-    private readonly STATIC_CONTENT_URL = 'public/content/';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private readonly STATIC_CONTENT_URL = 'public/content/';
 
     /**
      * Gets the content of the file as a safe html text.

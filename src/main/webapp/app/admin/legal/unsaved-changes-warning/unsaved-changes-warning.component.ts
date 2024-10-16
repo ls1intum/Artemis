@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -6,10 +6,10 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './unsaved-changes-warning.component.html',
 })
 export class UnsavedChangesWarningComponent {
+    private activeModal = inject(NgbActiveModal);
+
     @Input()
     textMessage: string;
-
-    constructor(private activeModal: NgbActiveModal) {}
 
     /**
      * Closes the modal in which the warning is shown and discards the changes

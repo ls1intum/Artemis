@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
@@ -10,12 +10,10 @@ export type EntityResponseType = HttpResponse<ApollonDiagram>;
 
 @Injectable({ providedIn: 'root' })
 export class ApollonDiagramService {
-    private resourceUrl = 'api';
+    private http = inject(HttpClient);
+    private entityTitleService = inject(EntityTitleService);
 
-    constructor(
-        private http: HttpClient,
-        private entityTitleService: EntityTitleService,
-    ) {}
+    private resourceUrl = 'api';
 
     /**
      * Creates diagram.

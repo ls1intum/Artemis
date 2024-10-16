@@ -11,6 +11,7 @@ import {
     ViewChild,
     ViewEncapsulation,
     forwardRef,
+    inject,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -45,6 +46,12 @@ import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
+    private cdref = inject(ChangeDetectorRef);
+    private metisService = inject(MetisService);
+    private courseManagementService = inject(CourseManagementService);
+    private lectureService = inject(LectureService);
+    private channelService = inject(ChannelService);
+
     @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditor: MarkdownEditorMonacoComponent;
 
     @Input() maxContentLength: number;
@@ -58,14 +65,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     previewMode = false;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-
-    constructor(
-        private cdref: ChangeDetectorRef,
-        private metisService: MetisService,
-        private courseManagementService: CourseManagementService,
-        private lectureService: LectureService,
-        private channelService: ChannelService,
-    ) {}
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings

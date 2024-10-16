@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise } from 'app/entities/exercise.model';
@@ -10,18 +10,16 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
     templateUrl: './example-solution.component.html',
 })
 export class ExampleSolutionComponent implements OnInit {
+    private exerciseService = inject(ExerciseService);
+    private route = inject(ActivatedRoute);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+
     private displayedExerciseId: number;
     public exercise?: Exercise;
     public exampleSolutionInfo?: ExampleSolutionInfo;
 
     @Input() exerciseId?: number;
     @Input() displayHeader?: boolean = true;
-
-    constructor(
-        private exerciseService: ExerciseService,
-        private route: ActivatedRoute,
-        private artemisMarkdown: ArtemisMarkdownService,
-    ) {}
 
     ngOnInit() {
         this.route.params.subscribe((params) => {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
@@ -10,18 +10,16 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 
 @Component({ template: '' })
 export abstract class CreateCourseCompetencyComponent implements OnInit {
+    protected activatedRoute = inject(ActivatedRoute);
+    protected router = inject(Router);
+    protected alertService = inject(AlertService);
+    protected lectureService = inject(LectureService);
+
     readonly documentationType: DocumentationType = 'Competencies';
 
     isLoading: boolean;
     courseId: number;
     lecturesWithLectureUnits: Lecture[] = [];
-
-    constructor(
-        protected activatedRoute: ActivatedRoute,
-        protected router: Router,
-        protected alertService: AlertService,
-        protected lectureService: LectureService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

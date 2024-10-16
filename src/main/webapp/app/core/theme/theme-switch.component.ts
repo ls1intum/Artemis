@@ -1,8 +1,12 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { fromEvent } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgClass } from '@angular/common';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 /**
  * Displays a sun or a moon in the navbar, depending on the current theme.
@@ -13,8 +17,12 @@ import { faSync } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-theme-switch',
     templateUrl: './theme-switch.component.html',
     styleUrls: ['theme-switch.component.scss'],
+    standalone: true,
+    imports: [TranslateDirective, FaIconComponent, NgbPopover, NgClass, ArtemisSharedCommonModule],
 })
 export class ThemeSwitchComponent implements OnInit {
+    private themeService = inject(ThemeService);
+
     @ViewChild('popover') popover: NgbPopover;
 
     @Input() popoverPlacement: string;
@@ -27,8 +35,6 @@ export class ThemeSwitchComponent implements OnInit {
 
     // Icons
     faSync = faSync;
-
-    constructor(private themeService: ThemeService) {}
 
     ngOnInit() {
         // Listen to theme changes to change our own state accordingly

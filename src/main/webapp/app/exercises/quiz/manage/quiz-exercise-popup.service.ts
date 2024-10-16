@@ -1,4 +1,4 @@
-import { Component, Injectable } from '@angular/core';
+import { Component, Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { QuizExerciseService } from './quiz-exercise.service';
@@ -6,13 +6,13 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class QuizExercisePopupService {
+    private modalService = inject(NgbModal);
+    private router = inject(Router);
+    private quizExerciseService = inject(QuizExerciseService);
+
     private ngbModalRef: NgbModalRef | null;
 
-    constructor(
-        private modalService: NgbModal,
-        private router: Router,
-        private quizExerciseService: QuizExerciseService,
-    ) {
+    constructor() {
         this.ngbModalRef = null;
     }
 

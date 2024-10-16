@@ -1,14 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
 import { CreateCourseCompetencyComponent } from 'app/course/competencies/create/create-course-competency.component';
-import { LectureService } from 'app/lecture/lecture.service';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
@@ -20,17 +17,9 @@ import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-c
     imports: [ArtemisSharedModule, PrerequisiteFormComponent, ArtemisSharedComponentModule],
 })
 export class CreatePrerequisiteComponent extends CreateCourseCompetencyComponent {
-    prerequisiteToCreate: Prerequisite = new Prerequisite();
+    private prerequisiteService = inject(PrerequisiteService);
 
-    constructor(
-        activatedRoute: ActivatedRoute,
-        router: Router,
-        alertService: AlertService,
-        lectureService: LectureService,
-        private prerequisiteService: PrerequisiteService,
-    ) {
-        super(activatedRoute, router, alertService, lectureService);
-    }
+    prerequisiteToCreate: Prerequisite = new Prerequisite();
 
     createPrerequisite(formData: CourseCompetencyFormData) {
         if (!formData?.title) {

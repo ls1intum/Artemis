@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import * as PDFJS from 'pdfjs-dist';
@@ -23,6 +23,11 @@ type NavigationDirection = 'next' | 'prev';
     imports: [ArtemisSharedModule],
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {
+    route = inject(ActivatedRoute);
+    private attachmentService = inject(AttachmentService);
+    private attachmentUnitService = inject(AttachmentUnitService);
+    private alertService = inject(AlertService);
+
     @ViewChild('pdfContainer', { static: true }) pdfContainer: ElementRef<HTMLDivElement>;
     @ViewChild('enlargedCanvas') enlargedCanvas: ElementRef<HTMLCanvasElement>;
 
@@ -35,13 +40,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     totalPages = 0;
     attachmentSub: Subscription;
     attachmentUnitSub: Subscription;
-
-    constructor(
-        public route: ActivatedRoute,
-        private attachmentService: AttachmentService,
-        private attachmentUnitService: AttachmentUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.route.data.subscribe((data) => {

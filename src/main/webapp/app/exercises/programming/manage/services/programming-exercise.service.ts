@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -50,13 +50,11 @@ export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
-    public resourceUrl = 'api/programming-exercises';
+    private http = inject(HttpClient);
+    private exerciseService = inject(ExerciseService);
+    private sortService = inject(SortService);
 
-    constructor(
-        private http: HttpClient,
-        private exerciseService: ExerciseService,
-        private sortService: SortService,
-    ) {}
+    public resourceUrl = 'api/programming-exercises';
 
     /**
      * Sets a new programming exercise up

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/entities/exam/exam-session.model';
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
@@ -14,6 +14,13 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     templateUrl: './suspicious-behavior.component.html',
 })
 export class SuspiciousBehaviorComponent implements OnInit {
+    private suspiciousSessionsService = inject(SuspiciousSessionsService);
+    private activatedRoute = inject(ActivatedRoute);
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private examService = inject(ExamManagementService);
+    private plagiarismResultsService = inject(PlagiarismResultsService);
+    private router = inject(Router);
+
     @ViewChild('analysis', { static: false }) analysisForm: NgForm;
 
     exercises: Exercise[] = [];
@@ -39,15 +46,6 @@ export class SuspiciousBehaviorComponent implements OnInit {
     );
 
     readonly documentationType: DocumentationType = 'SuspiciousBehavior';
-
-    constructor(
-        private suspiciousSessionsService: SuspiciousSessionsService,
-        private activatedRoute: ActivatedRoute,
-        private plagiarismCasesService: PlagiarismCasesService,
-        private examService: ExamManagementService,
-        private plagiarismResultsService: PlagiarismResultsService,
-        private router: Router,
-    ) {}
 
     ngOnInit(): void {
         this.examId = Number(this.activatedRoute.snapshot.paramMap.get('examId'));

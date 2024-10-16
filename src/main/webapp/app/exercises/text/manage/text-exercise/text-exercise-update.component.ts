@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
@@ -37,6 +37,18 @@ import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.ac
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
+    private alertService = inject(AlertService);
+    private textExerciseService = inject(TextExerciseService);
+    private modalService = inject(NgbModal);
+    private popupService = inject(ExerciseUpdateWarningService);
+    private exerciseService = inject(ExerciseService);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    private courseService = inject(CourseManagementService);
+    private eventManager = inject(EventManager);
+    private activatedRoute = inject(ActivatedRoute);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private athenaService = inject(AthenaService);
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'Text';
 
@@ -77,20 +89,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     bonusPointsSubscription?: Subscription;
     plagiarismSubscription?: Subscription;
     teamSubscription?: Subscription;
-
-    constructor(
-        private alertService: AlertService,
-        private textExerciseService: TextExerciseService,
-        private modalService: NgbModal,
-        private popupService: ExerciseUpdateWarningService,
-        private exerciseService: ExerciseService,
-        private exerciseGroupService: ExerciseGroupService,
-        private courseService: CourseManagementService,
-        private eventManager: EventManager,
-        private activatedRoute: ActivatedRoute,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private athenaService: AthenaService,
-    ) {}
 
     get editType(): EditType {
         if (this.isImport) {

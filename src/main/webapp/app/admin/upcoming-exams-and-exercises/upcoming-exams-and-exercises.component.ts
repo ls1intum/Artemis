@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { EntityArrayResponseType as ExerciseEntityArrayResponseType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -12,17 +12,15 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
     styles: ['.table {table-layout: fixed}'],
 })
 export class UpcomingExamsAndExercisesComponent implements OnInit {
+    private exerciseService = inject(ExerciseService);
+    private examManagementService = inject(ExamManagementService);
+    private sortService = inject(SortService);
+
     upcomingExercises: Exercise[] = [];
     upcomingExams: Exam[] = [];
 
     predicate: string;
     reverse: boolean;
-
-    constructor(
-        private exerciseService: ExerciseService,
-        private examManagementService: ExamManagementService,
-        private sortService: SortService,
-    ) {}
 
     ngOnInit(): void {
         this.exerciseService.getUpcomingExercises().subscribe((res: ExerciseEntityArrayResponseType) => {

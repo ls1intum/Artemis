@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { Level, Log, LoggersResponse } from 'app/admin/logs/log.model';
 import { LogsService } from 'app/admin/logs/logs.service';
@@ -9,6 +9,8 @@ import { LogsService } from 'app/admin/logs/logs.service';
     styleUrls: ['./logs.component.scss'],
 })
 export class LogsComponent implements OnInit {
+    private logsService = inject(LogsService);
+
     loggers?: Log[];
     filteredAndOrderedLoggers?: Log[];
     filter = '';
@@ -17,8 +19,6 @@ export class LogsComponent implements OnInit {
 
     // Icons
     faSort = faSort;
-
-    constructor(private logsService: LogsService) {}
 
     /**
      * Subscribe to the logsService to retrieve all logs

@@ -1,4 +1,4 @@
-import { Component, ContentChild, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, ContentChild, ElementRef, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { faCircle, faExclamation, faTowerBroadcast } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -9,6 +9,8 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
     styleUrls: ['./connection-status.component.scss'],
 })
 export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
+    private websocketService = inject(JhiWebsocketService);
+
     @ContentChild('innerContent', { static: false }) innerContent: ElementRef;
     @Input() isExamMode = false;
     disconnected = true;
@@ -18,8 +20,6 @@ export class JhiConnectionStatusComponent implements OnInit, OnDestroy {
     readonly faCircle = faCircle;
     readonly faTowerBroadcast = faTowerBroadcast;
     readonly faExclamation = faExclamation;
-
-    constructor(private websocketService: JhiWebsocketService) {}
 
     ngOnInit() {
         // listen to connect / disconnect events

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/programming/build-job.model';
 import { faAngleDown, faAngleRight, faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -106,6 +106,13 @@ export enum FinishedBuildJobFilterStorageKey {
     styleUrl: './build-queue.component.scss',
 })
 export class BuildQueueComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private websocketService = inject(JhiWebsocketService);
+    private buildQueueService = inject(BuildQueueService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private localStorage = inject(LocalStorageService);
+
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
 
     queuedBuildJobs: BuildJob[] = [];
@@ -158,15 +165,6 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     search = new Subject<void>();
     searchSubscription: Subscription;
     searchTerm?: string = undefined;
-
-    constructor(
-        private route: ActivatedRoute,
-        private websocketService: JhiWebsocketService,
-        private buildQueueService: BuildQueueService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private localStorage: LocalStorageService,
-    ) {}
 
     ngOnInit() {
         this.buildStatusFilterValues = Object.values(BuildJobStatusFilter);

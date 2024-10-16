@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { Subject, Subscription, combineLatest, of } from 'rxjs';
@@ -33,6 +33,19 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './participation-submission.component.html',
 })
 export class ParticipationSubmissionComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private submissionService = inject(SubmissionService);
+    private translateService = inject(TranslateService);
+    private participationService = inject(ParticipationService);
+    private exerciseService = inject(ExerciseService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private fileUploadAssessmentService = inject(FileUploadAssessmentService);
+    private modelingAssessmentsService = inject(ModelingAssessmentService);
+    private textAssessmentService = inject(TextAssessmentService);
+    private programmingAssessmentService = inject(ProgrammingAssessmentManualResultService);
+    private eventManager = inject(EventManager);
+    private profileService = inject(ProfileService);
+
     readonly ParticipationType = ParticipationType;
     readonly buttonSizeSmall = ButtonSize.SMALL;
     readonly actionTypeEmpty = ActionType.NoButtonTextDelete;
@@ -57,21 +70,6 @@ export class ParticipationSubmissionComponent implements OnInit {
 
     // Icons
     faTrash = faTrash;
-
-    constructor(
-        private route: ActivatedRoute,
-        private submissionService: SubmissionService,
-        private translateService: TranslateService,
-        private participationService: ParticipationService,
-        private exerciseService: ExerciseService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private fileUploadAssessmentService: FileUploadAssessmentService,
-        private modelingAssessmentsService: ModelingAssessmentService,
-        private textAssessmentService: TextAssessmentService,
-        private programmingAssessmentService: ProgrammingAssessmentManualResultService,
-        private eventManager: EventManager,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * Initialize component by setting up page and subscribe to eventManager

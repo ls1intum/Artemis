@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
@@ -15,17 +15,15 @@ import { combineLatest } from 'rxjs';
     styles: [],
 })
 export class CreateOnlineUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private onlineUnitService = inject(OnlineUnitService);
+    private alertService = inject(AlertService);
+
     onlineUnitToCreate: OnlineUnit = new OnlineUnit();
     isLoading: boolean;
     lectureId: number;
     courseId: number;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private onlineUnitService: OnlineUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;

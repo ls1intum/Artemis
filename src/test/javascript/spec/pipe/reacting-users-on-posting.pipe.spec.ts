@@ -19,7 +19,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
             .compileComponents()
             .then(() => {
                 translateService = TestBed.inject(TranslateService);
-                reactingUsersPipe = new ReactingUsersOnPostingPipe(translateService);
+                reactingUsersPipe = new ReactingUsersOnPostingPipe();
                 updateReactingUsersStringSpy = jest.spyOn(reactingUsersPipe as any, 'updateReactingUsersString');
             });
     });

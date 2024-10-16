@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -23,6 +23,15 @@ export enum FilterProp {
     templateUrl: './teams.component.html',
 })
 export class TeamsComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private participationService = inject(ParticipationService);
+    private alertService = inject(AlertService);
+    private eventManager = inject(EventManager);
+    private exerciseService = inject(ExerciseService);
+    private teamService = inject(TeamService);
+    private accountService = inject(AccountService);
+
     readonly FilterProp = FilterProp;
     readonly ButtonSize = ButtonSize;
 
@@ -39,16 +48,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     currentUser: User;
     isAdmin = false;
 
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private participationService: ParticipationService,
-        private alertService: AlertService,
-        private eventManager: EventManager,
-        private exerciseService: ExerciseService,
-        private teamService: TeamService,
-        private accountService: AccountService,
-    ) {
+    constructor() {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
             this.isAdmin = this.accountService.isAdmin();

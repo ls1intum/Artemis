@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
@@ -13,6 +13,10 @@ import { SolutionEntryComponent } from 'app/exercises/shared/exercise-hint/share
     templateUrl: './manual-solution-entry-creation-modal.component.html',
 })
 export class ManualSolutionEntryCreationModalComponent implements OnInit, OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private exerciseService = inject(ProgrammingExerciseService);
+    private solutionEntryService = inject(ProgrammingExerciseSolutionEntryService);
+
     @ViewChild('solutionEntryComponent', { static: false }) solutionEntryComponent: SolutionEntryComponent;
 
     solutionEntry = new ProgrammingExerciseSolutionEntry();
@@ -27,11 +31,7 @@ export class ManualSolutionEntryCreationModalComponent implements OnInit, OnDest
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private exerciseService: ProgrammingExerciseService,
-        private solutionEntryService: ProgrammingExerciseSolutionEntryService,
-    ) {
+    constructor() {
         this.solutionEntry.code = '';
         this.solutionEntry.line = 1;
     }

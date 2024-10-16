@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { Observable, of } from 'rxjs';
@@ -23,7 +23,7 @@ import { CourseManagementResolve } from 'app/course/manage/course-management-res
 
 @Injectable({ providedIn: 'root' })
 export class AttachmentUnitResolve implements Resolve<AttachmentUnit> {
-    constructor(private attachmentUnitService: AttachmentUnitService) {}
+    private attachmentUnitService = inject(AttachmentUnitService);
 
     resolve(route: ActivatedRouteSnapshot): Observable<AttachmentUnit> {
         const lectureId = route.params['lectureId'];

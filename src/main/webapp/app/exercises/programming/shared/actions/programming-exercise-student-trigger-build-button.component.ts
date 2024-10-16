@@ -1,8 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { AlertService } from 'app/core/util/alert.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SubmissionType } from 'app/entities/submission.model';
@@ -18,8 +15,8 @@ export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends Progr
     // Icons
     faRedo = faRedo;
 
-    constructor(submissionService: ProgrammingSubmissionService, alertService: AlertService, participationWebsocketService: ParticipationWebsocketService) {
-        super(submissionService, participationWebsocketService, alertService);
+    constructor() {
+        super();
         this.personalParticipation = true;
     }
 

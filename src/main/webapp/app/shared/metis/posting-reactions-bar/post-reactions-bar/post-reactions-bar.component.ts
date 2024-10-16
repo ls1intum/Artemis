@@ -1,9 +1,8 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -20,6 +19,8 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
     styleUrls: ['../posting-reactions-bar.component.scss'],
 })
 export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges {
+    private accountService = inject(AccountService);
+
     pinTooltip: string;
     displayPriority: DisplayPriority;
     canPin = false;
@@ -39,13 +40,6 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     @Output() showAnswersChange = new EventEmitter<boolean>();
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     @Output() openThread = new EventEmitter<void>();
-
-    constructor(
-        metisService: MetisService,
-        private accountService: AccountService,
-    ) {
-        super(metisService);
-    }
 
     /**
      * on initialization: call resetTooltipsAndPriority

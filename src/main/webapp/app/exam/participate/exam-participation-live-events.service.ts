@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ConnectionState, JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import dayjs from 'dayjs/esm';
@@ -54,6 +54,11 @@ export type ProblemStatementUpdateEvent = ExamLiveEvent & {
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationLiveEventsService {
+    private websocketService = inject(JhiWebsocketService);
+    private examParticipationService = inject(ExamParticipationService);
+    private localStorageService = inject(LocalStorageService);
+    private httpClient = inject(HttpClient);
+
     private courseId?: number;
     private examId?: number;
     private studentExamId?: number;
@@ -74,12 +79,7 @@ export class ExamParticipationLiveEventsService {
     // Subject that emits all events when the array of events changes
     private allEventsSubject = new BehaviorSubject<ExamLiveEvent[]>([]);
 
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private examParticipationService: ExamParticipationService,
-        private localStorageService: LocalStorageService,
-        private httpClient: HttpClient,
-    ) {
+    constructor() {
         this.clearOldAcknowledgement();
 
         // Listen to updates of the connection state; if we reconnect, we should fetch the list of events

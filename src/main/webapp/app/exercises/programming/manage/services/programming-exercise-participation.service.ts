@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -18,14 +18,12 @@ export interface IProgrammingExerciseParticipationService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseParticipationService implements IProgrammingExerciseParticipationService {
+    private http = inject(HttpClient);
+    private entityTitleService = inject(EntityTitleService);
+    private accountService = inject(AccountService);
+
     public resourceUrlParticipations = 'api/programming-exercise-participations/';
     public resourceUrl = 'api/programming-exercise/';
-
-    constructor(
-        private http: HttpClient,
-        private entityTitleService: EntityTitleService,
-        private accountService: AccountService,
-    ) {}
 
     getLatestResultWithFeedback(participationId: number, withSubmission = false): Observable<Result | undefined> {
         const options = createRequestOption({ withSubmission });

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 
@@ -7,9 +7,9 @@ import { StudentExam } from 'app/entities/student-exam.model';
     template: '<jhi-exam-participation-summary [studentExam]="studentExam" [instructorView]="true" />',
 })
 export class StudentExamSummaryComponent implements OnInit {
-    studentExam: StudentExam;
+    private route = inject(ActivatedRoute);
 
-    constructor(private route: ActivatedRoute) {}
+    studentExam: StudentExam;
 
     /**
      * Initialize the studentExam

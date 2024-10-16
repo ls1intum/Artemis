@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,26 +12,17 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
     templateUrl: './iris-common-sub-settings-update.component.html',
 })
 export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
-    @Input()
-    subSettings?: IrisSubSettings;
+    private irisSettingsService = inject(IrisSettingsService);
 
-    @Input()
-    parentSubSettings?: IrisSubSettings;
-
-    @Input()
-    settingsType: IrisSettingsType;
-
-    @Output()
-    onChanges = new EventEmitter<IrisSubSettings>();
+    @Input() subSettings?: IrisSubSettings;
+    @Input() parentSubSettings?: IrisSubSettings;
+    @Input() settingsType: IrisSettingsType;
+    @Output() onChanges = new EventEmitter<IrisSubSettings>();
 
     isAdmin: boolean;
-
     inheritAllowedVariants: boolean;
-
     availableVariants: IrisVariant[] = [];
-
     allowedVariants: IrisVariant[] = [];
-
     enabled: boolean;
 
     // Settings types
@@ -42,10 +33,8 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     // Icons
     faTrash = faTrash;
 
-    constructor(
-        accountService: AccountService,
-        private irisSettingsService: IrisSettingsService,
-    ) {
+    constructor() {
+        const accountService = inject(AccountService);
         this.isAdmin = accountService.isAdmin();
     }
 

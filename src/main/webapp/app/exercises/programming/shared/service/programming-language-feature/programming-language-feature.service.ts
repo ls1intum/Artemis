@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
@@ -20,9 +20,11 @@ export type ProgrammingLanguageFeature = {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingLanguageFeatureService {
+    private profileService = inject(ProfileService);
+
     private programmingLanguageFeatures: Map<ProgrammingLanguage, ProgrammingLanguageFeature> = new Map<ProgrammingLanguage, ProgrammingLanguageFeature>();
 
-    constructor(private profileService: ProfileService) {
+    constructor() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             profileInfo.programmingLanguageFeatures.forEach((programmingLanguageFeature) => {
                 this.programmingLanguageFeatures.set(programmingLanguageFeature.programmingLanguage, programmingLanguageFeature);

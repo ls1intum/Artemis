@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { map } from 'rxjs/operators';
@@ -13,12 +13,10 @@ type EntityArrayResponseType = HttpResponse<ExerciseUnit[]>;
     providedIn: 'root',
 })
 export class ExerciseUnitService {
-    private resourceURL = 'api';
+    private httpClient = inject(HttpClient);
+    private lectureUnitService = inject(LectureUnitService);
 
-    constructor(
-        private httpClient: HttpClient,
-        private lectureUnitService: LectureUnitService,
-    ) {}
+    private resourceURL = 'api';
 
     create(exerciseUnit: ExerciseUnit, lectureId: number): Observable<EntityResponseType> {
         if (exerciseUnit.exercise) {

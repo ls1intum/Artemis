@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -12,9 +12,9 @@ type EntityArrayResponseType = HttpResponse<Attachment[]>;
 
 @Injectable({ providedIn: 'root' })
 export class AttachmentService {
-    public resourceUrl = 'api/attachments';
+    protected http = inject(HttpClient);
 
-    constructor(protected http: HttpClient) {}
+    public resourceUrl = 'api/attachments';
 
     /**
      * Create a new attachment

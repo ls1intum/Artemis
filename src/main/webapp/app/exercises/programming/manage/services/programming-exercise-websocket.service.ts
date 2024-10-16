@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -20,11 +20,11 @@ export interface IProgrammingExerciseWebsocketService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgrammingExerciseWebsocketService {
+    private websocketService = inject(JhiWebsocketService);
+
     private connections: string[] = [];
     // Uses undefined for initial value.
     private subjects: { [programmingExerciseId: number]: BehaviorSubject<boolean | undefined> } = {};
-
-    constructor(private websocketService: JhiWebsocketService) {}
 
     /**
      * On destroy unsubscribe all connections.

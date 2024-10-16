@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faBackward } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -17,6 +17,10 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['./reset-repo-button.component.scss'],
 })
 export class ResetRepoButtonComponent implements OnInit {
+    private participationService = inject(ParticipationService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private alertService = inject(AlertService);
+
     readonly FeatureToggle = FeatureToggle;
     readonly INITIALIZED = InitializationState.INITIALIZED;
 
@@ -30,12 +34,6 @@ export class ResetRepoButtonComponent implements OnInit {
     beforeIndividualDueDate: boolean;
 
     readonly faBackward = faBackward;
-
-    constructor(
-        private participationService: ParticipationService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(this.participations, false);

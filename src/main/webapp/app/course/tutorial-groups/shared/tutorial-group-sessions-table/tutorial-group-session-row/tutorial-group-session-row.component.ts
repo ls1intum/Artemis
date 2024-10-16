@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, HostBinding, Input, OnChanges, Output, TemplateRef, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, HostBinding, Input, OnChanges, Output, TemplateRef, ViewEncapsulation, inject } from '@angular/core';
 import { faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -18,6 +18,10 @@ import { map } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupSessionRowComponent implements OnChanges {
+    private changeDetectorRef = inject(ChangeDetectorRef);
+    private tutorialGroupSessionService = inject(TutorialGroupSessionService);
+    private alertService = inject(AlertService);
+
     @HostBinding('class') class = 'tutorial-group-session-row';
 
     @Input()
@@ -47,12 +51,6 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
     faUmbrellaBeach = faUmbrellaBeach;
 
     hasSchedule = false;
-
-    constructor(
-        private changeDetectorRef: ChangeDetectorRef,
-        private tutorialGroupSessionService: TutorialGroupSessionService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnChanges() {
         if (this.session) {

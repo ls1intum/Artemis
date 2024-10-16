@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -17,6 +17,12 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseCompetenciesComponent implements OnInit, OnDestroy {
+    private featureToggleService = inject(FeatureToggleService);
+    private activatedRoute = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private courseStorageService = inject(CourseStorageService);
+    private courseCompetencyService = inject(CourseCompetencyService);
+
     @Input()
     courseId: number;
 
@@ -34,14 +40,6 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
 
     private dashboardFeatureToggleActiveSubscription: Subscription;
     dashboardFeatureActive = false;
-
-    constructor(
-        private featureToggleService: FeatureToggleService,
-        private activatedRoute: ActivatedRoute,
-        private alertService: AlertService,
-        private courseStorageService: CourseStorageService,
-        private courseCompetencyService: CourseCompetencyService,
-    ) {}
 
     ngOnInit(): void {
         const courseIdParams$ = this.activatedRoute.parent?.parent?.parent?.params;

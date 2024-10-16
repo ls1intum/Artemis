@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -35,6 +35,18 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './file-upload-submission.component.html',
 })
 export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeactivate {
+    private route = inject(ActivatedRoute);
+    private fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private fileUploaderService = inject(FileUploaderService);
+    private resultService = inject(ResultService);
+    private alertService = inject(AlertService);
+    private location = inject(Location);
+    private translateService = inject(TranslateService);
+    private fileService = inject(FileService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private fileUploadAssessmentService = inject(FileUploadAssessmentService);
+    private accountService = inject(AccountService);
+
     readonly addParticipationToResult = addParticipationToResult;
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
 
@@ -74,19 +86,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     // Icons
     farListAlt = faListAlt;
 
-    constructor(
-        private route: ActivatedRoute,
-        private fileUploadSubmissionService: FileUploadSubmissionService,
-        private fileUploaderService: FileUploaderService,
-        private resultService: ResultService,
-        private alertService: AlertService,
-        private location: Location,
-        private translateService: TranslateService,
-        private fileService: FileService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private fileUploadAssessmentService: FileUploadAssessmentService,
-        private accountService: AccountService,
-    ) {
+    constructor() {
+        const translateService = this.translateService;
+
         translateService.get('artemisApp.fileUploadSubmission.confirmSubmission').subscribe((text) => (this.submissionConfirmationText = text));
     }
 

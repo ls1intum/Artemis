@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren, inject } from '@angular/core';
 import * as Split from 'split.js';
 import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -13,7 +13,7 @@ import dayjs from 'dayjs/esm';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
-    constructor(public elementRef: ElementRef) {}
+    elementRef = inject(ElementRef);
 }
 
 @Component({
@@ -22,6 +22,8 @@ export class SplitPaneDirective {
     templateUrl: './plagiarism-split-view.component.html',
 })
 export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit {
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
@@ -41,8 +43,6 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     public matchesB: Map<string, FromToElement[]>;
 
     readonly dayjs = dayjs;
-
-    constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 
     /**
      * Initialize third party libs inside this lifecycle hook.

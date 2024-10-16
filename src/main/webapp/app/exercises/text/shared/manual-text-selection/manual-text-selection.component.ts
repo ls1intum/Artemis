@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text/text-block.model';
@@ -21,6 +21,9 @@ const SPACE = ' ';
     styleUrls: ['./manual-text-selection.component.scss'],
 })
 export class ManualTextSelectionComponent {
+    textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+    protected route = inject(ActivatedRoute);
+
     @Input() public textBlockRefGroup: TextBlockRefGroup;
     @Input() submission: TextSubmission;
     @Output() public didSelectWord = new EventEmitter<wordSelection[]>();
@@ -33,10 +36,10 @@ export class ManualTextSelectionComponent {
     public selectedWords = new Array<wordSelection>();
     public ready = false;
 
-    constructor(
-        public textAssessmentAnalytics: TextAssessmentAnalytics,
-        protected route: ActivatedRoute,
-    ) {
+    constructor() {
+        const textAssessmentAnalytics = this.textAssessmentAnalytics;
+        const route = this.route;
+
         textAssessmentAnalytics.setComponentRoute(route);
     }
 

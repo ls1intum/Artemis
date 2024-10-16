@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { Location } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -28,6 +28,15 @@ import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
     // change deactivation must be triggered manually
 })
 export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private fileUploaderService = inject(FileUploaderService);
+    private resultService = inject(ResultService);
+    private alertService = inject(AlertService);
+    private location = inject(Location);
+    private translateService = inject(TranslateService);
+    private fileService = inject(FileService);
+
     exerciseType = ExerciseType.FILE_UPLOAD;
 
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
@@ -51,20 +60,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     // Icons
     farListAlt = faListAlt;
-
-    constructor(
-        private route: ActivatedRoute,
-        private fileUploadSubmissionService: FileUploadSubmissionService,
-        private fileUploaderService: FileUploaderService,
-        private resultService: ResultService,
-        private alertService: AlertService,
-        private location: Location,
-        private translateService: TranslateService,
-        private fileService: FileService,
-        changeDetectorReference: ChangeDetectorRef,
-    ) {
-        super(changeDetectorReference);
-    }
 
     /**
      * Initializes data for file upload editor

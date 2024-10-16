@@ -3,7 +3,6 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
-import { MetisService } from 'app/shared/metis/metis.service';
 
 @Component({
     selector: 'jhi-answer-post-reactions-bar',
@@ -17,10 +16,6 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
     @Input() isLastAnswer = false;
     // Icons
     farSmile = faSmile;
-
-    constructor(metisService: MetisService) {
-        super(metisService);
-    }
 
     /**
      * builds and returns a Reaction model out of an emojiId and thereby sets the answerPost property properly

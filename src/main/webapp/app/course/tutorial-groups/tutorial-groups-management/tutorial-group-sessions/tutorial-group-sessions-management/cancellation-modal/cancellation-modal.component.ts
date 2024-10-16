@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -16,6 +16,11 @@ import { takeUntil } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CancellationModalComponent implements OnInit, OnDestroy {
+    activeModal = inject(NgbActiveModal);
+    private tutorialGroupSessionService = inject(TutorialGroupSessionService);
+    private alertService = inject(AlertService);
+    private fb = inject(FormBuilder);
+
     ngUnsubscribe = new Subject<void>();
 
     tutorialGroupSessionStatus = TutorialGroupSessionStatus;
@@ -29,13 +34,6 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
 
     @Input()
     tutorialGroupSession: TutorialGroupSession;
-
-    constructor(
-        public activeModal: NgbActiveModal,
-        private tutorialGroupSessionService: TutorialGroupSessionService,
-        private alertService: AlertService,
-        private fb: FormBuilder,
-    ) {}
 
     ngOnInit(): void {
         this.initializeForm();

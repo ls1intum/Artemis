@@ -1,7 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 
 @Component({
@@ -9,16 +8,12 @@ import { AbstractDialogComponent } from 'app/overview/course-conversations/dialo
     templateUrl: './one-to-one-chat-create-dialog.component.html',
 })
 export class OneToOneChatCreateDialogComponent extends AbstractDialogComponent {
-    @Input()
-    course: Course;
+    @Input() course: Course;
 
     isInitialized = false;
     selectedUsers: UserPublicInfoDTO[] = [];
     userToChatWith?: UserPublicInfoDTO;
 
-    constructor(activeModal: NgbActiveModal) {
-        super(activeModal);
-    }
     initialize() {
         super.initialize(['course']);
     }

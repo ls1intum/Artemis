@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
@@ -10,17 +10,15 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
     templateUrl: './lecture-unit-node-details.component.html',
 })
 export class LectureUnitNodeDetailsComponent implements OnInit {
+    private lectureUnitService = inject(LectureUnitService);
+    private alertService = inject(AlertService);
+
     @Input() lectureUnitId: number;
 
     @Input() lectureUnit?: LectureUnit;
     @Output() lectureUnitChange = new EventEmitter<LectureUnit>();
 
     isLoading = false;
-
-    constructor(
-        private lectureUnitService: LectureUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         if (!this.lectureUnit) {

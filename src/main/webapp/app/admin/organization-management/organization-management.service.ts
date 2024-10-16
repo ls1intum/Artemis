@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
@@ -8,13 +8,11 @@ import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationManagementService {
+    private http = inject(HttpClient);
+    private entityTitleService = inject(EntityTitleService);
+
     public resourceUrl = 'api/organizations';
     public adminResourceUrl = 'api/admin/organizations';
-
-    constructor(
-        private http: HttpClient,
-        private entityTitleService: EntityTitleService,
-    ) {}
 
     /**
      * Send GET request to retrieve all organizations

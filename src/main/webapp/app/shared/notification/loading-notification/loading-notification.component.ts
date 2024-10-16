@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Subscription } from 'rxjs';
 import { LoadingNotificationService } from 'app/shared/notification/loading-notification/loading-notification.service';
 import { debounceTime } from 'rxjs/operators';
@@ -10,12 +11,14 @@ import { debounceTime } from 'rxjs/operators';
             <div class="spinner-border" role="status" style="width: 18px; height: 18px; color: white"></div>
         }
     `,
+    imports: [ArtemisSharedModule],
+    standalone: true,
 })
 export class LoadingNotificationComponent implements OnInit, OnDestroy {
+    private loadingNotificationService = inject(LoadingNotificationService);
+
     isLoading = false;
     loadingSubscription: Subscription;
-
-    constructor(private loadingNotificationService: LoadingNotificationService) {}
 
     ngOnInit() {
         /**

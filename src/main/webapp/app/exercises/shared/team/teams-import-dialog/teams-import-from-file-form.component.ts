@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Output, inject } from '@angular/core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
@@ -35,6 +35,9 @@ type CsvEntry = { [column: string]: string };
     styleUrls: ['./teams-import-from-file-form.component.scss'],
 })
 export class TeamsImportFromFileFormComponent {
+    private changeDetector = inject(ChangeDetectorRef);
+    private translateService = inject(TranslateService);
+
     @Output() teamsChanged = new EventEmitter<Team[]>();
     sourceTeams?: Team[];
     importedTeams: StudentWithTeam[] = [];
@@ -44,11 +47,6 @@ export class TeamsImportFromFileFormComponent {
 
     // Icons
     faSpinner = faSpinner;
-
-    constructor(
-        private changeDetector: ChangeDetectorRef,
-        private translateService: TranslateService,
-    ) {}
 
     /**
      * Move file reader creation to separate function to be able to mock

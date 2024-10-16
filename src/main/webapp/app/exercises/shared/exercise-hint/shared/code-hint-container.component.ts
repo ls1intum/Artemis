@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 
@@ -16,6 +16,9 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './code-hint-container.component.html',
 })
 export class CodeHintContainerComponent implements OnInit, OnDestroy {
+    protected route = inject(ActivatedRoute);
+    private codeHintService = inject(CodeHintService);
+
     @Input()
     codeHint: CodeHint;
 
@@ -28,11 +31,6 @@ export class CodeHintContainerComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     faTimes = faTimes;
-
-    constructor(
-        protected route: ActivatedRoute,
-        private codeHintService: CodeHintService,
-    ) {}
 
     ngOnInit() {
         this.setSortedSolutionEntriesForCodeHint();

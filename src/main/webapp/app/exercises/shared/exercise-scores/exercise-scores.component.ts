@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -48,6 +48,14 @@ export enum FilterProp {
     encapsulation: ViewEncapsulation.None,
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private exerciseService = inject(ExerciseService);
+    private resultService = inject(ResultService);
+    private profileService = inject(ProfileService);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private participationService = inject(ParticipationService);
+
     // make constants available to html for comparison
     readonly FilterProp = FilterProp;
     readonly ExerciseType = ExerciseType;
@@ -98,16 +106,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     farFileCode = faFileCode;
     faFilter = faFilter;
     faComment = faComment;
-
-    constructor(
-        private route: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private exerciseService: ExerciseService,
-        private resultService: ResultService,
-        private profileService: ProfileService,
-        private programmingSubmissionService: ProgrammingSubmissionService,
-        private participationService: ParticipationService,
-    ) {}
 
     /**
      * Fetches the course and exercise from the server

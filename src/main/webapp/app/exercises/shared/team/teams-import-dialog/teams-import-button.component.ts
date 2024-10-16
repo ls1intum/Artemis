@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Team } from 'app/entities/team.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -19,6 +19,8 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
     `,
 })
 export class TeamsImportButtonComponent {
+    private modalService = inject(NgbModal);
+
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
@@ -30,8 +32,6 @@ export class TeamsImportButtonComponent {
 
     // Icons
     faPlus = faPlus;
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Open up import dialog for teams

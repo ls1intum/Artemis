@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisAssistantMessage, IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
@@ -13,9 +13,9 @@ export type Response<T> = Observable<HttpResponse<T>>;
  */
 @Injectable({ providedIn: 'root' })
 export class IrisChatHttpService {
-    protected apiPrefix: string = 'api/iris';
+    protected httpClient = inject(HttpClient);
 
-    constructor(protected httpClient: HttpClient) {}
+    protected apiPrefix: string = 'api/iris';
 
     protected randomInt(): number {
         const maxIntJava = 2147483647;

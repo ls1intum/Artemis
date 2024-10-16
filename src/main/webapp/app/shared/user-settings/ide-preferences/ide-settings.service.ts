@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
@@ -7,10 +7,10 @@ import { ProgrammingLanguage } from 'app/entities/programming/programming-exerci
 
 @Injectable({ providedIn: 'root' })
 export class IdeSettingsService {
+    private http = inject(HttpClient);
+
     public ideSettingsUrl = 'api/ide-settings';
     error?: string;
-
-    constructor(private http: HttpClient) {}
 
     /**
      * GET call to the server to receive the stored ide preferences of the current user

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { faCircleNotch, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
@@ -16,6 +16,11 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
     encapsulation: ViewEncapsulation.None,
 })
 export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
+    private buildPlanService = inject(BuildPlanService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private alertService = inject(AlertService);
+    private activatedRoute = inject(ActivatedRoute);
+
     // Icons
     readonly faCircleNotch = faCircleNotch;
     readonly farPlayCircle = faPlayCircle;
@@ -28,13 +33,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     exerciseId: number;
     programmingExercise: ProgrammingExercise;
     buildPlan: BuildPlan | undefined;
-
-    constructor(
-        private buildPlanService: BuildPlanService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private alertService: AlertService,
-        private activatedRoute: ActivatedRoute,
-    ) {}
 
     /**
      * @function ngOnInit

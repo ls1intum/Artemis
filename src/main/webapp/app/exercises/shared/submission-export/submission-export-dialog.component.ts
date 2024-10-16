@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { catchError, tap } from 'rxjs/operators';
@@ -16,6 +16,11 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
     styles: ['textarea { width: 100%; }'],
 })
 export class SubmissionExportDialogComponent implements OnInit {
+    private exerciseService = inject(ExerciseService);
+    private submissionExportService = inject(SubmissionExportService);
+    activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+
     @Input() exerciseId: number;
     @Input() exerciseType: ExerciseType;
 
@@ -26,13 +31,6 @@ export class SubmissionExportDialogComponent implements OnInit {
 
     // Icons
     faCircleNotch = faCircleNotch;
-
-    constructor(
-        private exerciseService: ExerciseService,
-        private submissionExportService: SubmissionExportService,
-        public activeModal: NgbActiveModal,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.isLoading = true;

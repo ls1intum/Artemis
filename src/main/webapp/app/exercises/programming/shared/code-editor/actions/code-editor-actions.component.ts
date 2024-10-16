@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, input } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, input } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
@@ -21,6 +21,12 @@ import { Participation } from 'app/entities/participation/participation.model';
     templateUrl: './code-editor-actions.component.html',
 })
 export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges {
+    private repositoryService = inject(CodeEditorRepositoryService);
+    private repositoryFileService = inject(CodeEditorRepositoryFileService);
+    private conflictService = inject(CodeEditorConflictStateService);
+    private modalService = inject(NgbModal);
+    private submissionService = inject(CodeEditorSubmissionService);
+
     CommitState = CommitState;
     EditorState = EditorState;
     FeatureToggle = FeatureToggle;
@@ -71,14 +77,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
         this.editorStateValue = editorState;
         this.editorStateChange.emit(editorState);
     }
-
-    constructor(
-        private repositoryService: CodeEditorRepositoryService,
-        private repositoryFileService: CodeEditorRepositoryFileService,
-        private conflictService: CodeEditorConflictStateService,
-        private modalService: NgbModal,
-        private submissionService: CodeEditorSubmissionService,
-    ) {}
 
     ngOnInit(): void {
         this.conflictStateSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
@@ -171,7 +169,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     /**
-     * @function saveFiles
+     * @function saveChangedFiles
      * @desc Saves all files that have unsaved changes in the editor.
      */
     saveChangedFiles(andCommit = false): Observable<any> {

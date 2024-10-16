@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation, inject } from '@angular/core';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -33,6 +33,12 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
     providers: [RepositoryFileService],
 })
 export class CodeEditorMonacoComponent implements OnChanges {
+    private repositoryFileService = inject(CodeEditorRepositoryFileService);
+    private fileService = inject(CodeEditorFileService);
+    protected localStorageService = inject(LocalStorageService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+    private fileTypeService = inject(FileTypeService);
+
     @ViewChild('editor', { static: true })
     editor: MonacoEditorComponent;
     @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
@@ -100,14 +106,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
     // Expose to template
     protected readonly Feedback = Feedback;
     protected readonly CommitState = CommitState;
-
-    constructor(
-        private repositoryFileService: CodeEditorRepositoryFileService,
-        private fileService: CodeEditorFileService,
-        protected localStorageService: LocalStorageService,
-        private changeDetectorRef: ChangeDetectorRef,
-        private fileTypeService: FileTypeService,
-    ) {}
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
         const editorWasRefreshed = changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN;

@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -54,6 +54,24 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
     styleUrls: ['./exam-participation.scss'],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    private websocketService = inject(JhiWebsocketService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private examParticipationService = inject(ExamParticipationService);
+    private modelingSubmissionService = inject(ModelingSubmissionService);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private textSubmissionService = inject(TextSubmissionService);
+    private serverDateService = inject(ArtemisServerDateService);
+    private translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private liveEventsService = inject(ExamParticipationLiveEventsService);
+    private courseService = inject(CourseManagementService);
+    private courseStorageService = inject(CourseStorageService);
+    private examExerciseUpdateService = inject(ExamExerciseUpdateService);
+    private examManagementService = inject(ExamManagementService);
+    private profileService = inject(ProfileService);
+
     @ViewChildren(ExamSubmissionComponent)
     currentPageComponents: QueryList<ExamSubmissionComponent>;
 
@@ -145,25 +163,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // Icons
     faGraduationCap = faGraduationCap;
 
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private examParticipationService: ExamParticipationService,
-        private modelingSubmissionService: ModelingSubmissionService,
-        private programmingSubmissionService: ProgrammingSubmissionService,
-        private textSubmissionService: TextSubmissionService,
-        private serverDateService: ArtemisServerDateService,
-        private translateService: TranslateService,
-        private alertService: AlertService,
-        private courseExerciseService: CourseExerciseService,
-        private liveEventsService: ExamParticipationLiveEventsService,
-        private courseService: CourseManagementService,
-        private courseStorageService: CourseStorageService,
-        private examExerciseUpdateService: ExamExerciseUpdateService,
-        private examManagementService: ExamManagementService,
-        private profileService: ProfileService,
-    ) {
+    constructor() {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
             this.alertService.error('artemisApp.examParticipation.saveSubmissionError');

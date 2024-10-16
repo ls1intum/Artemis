@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -47,16 +47,14 @@ export interface IProgrammingExerciseGradingService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseGradingService implements IProgrammingExerciseGradingService, OnDestroy {
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private http = inject(HttpClient);
+
     public resourceUrl = 'api/programming-exercises';
 
     private connections: { [exerciseId: string]: string } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | undefined> } = {};
     private testCases: Map<number, ProgrammingExerciseTestCase[]> = new Map();
-
-    constructor(
-        private jhiWebsocketService: JhiWebsocketService,
-        private http: HttpClient,
-    ) {}
 
     /**
      * On destroy unsubscribe all connections.

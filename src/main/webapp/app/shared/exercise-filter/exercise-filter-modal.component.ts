@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { faBackward, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -41,6 +41,8 @@ import { isRangeFilterApplied } from 'app/shared/sidebar/sidebar.helper';
     ],
 })
 export class ExerciseFilterModalComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+
     readonly faFilter = faFilter;
     readonly faBackward = faBackward;
 
@@ -69,8 +71,6 @@ export class ExerciseFilterModalComponent implements OnInit {
     achievedScore?: RangeFilter;
 
     exerciseFilters?: ExerciseFilterOptions;
-
-    constructor(private activeModal: NgbActiveModal) {}
 
     ngOnInit() {
         this.categoryFilter = this.exerciseFilters?.categoryFilter;

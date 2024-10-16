@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
@@ -42,13 +42,11 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
     styleUrls: ['./feature-overview.scss'],
 })
 export class FeatureOverviewComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+
     features: Feature[];
     targetAudience = TargetAudience.INSTRUCTORS;
-
-    constructor(
-        private route: ActivatedRoute,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * Initialises the feature overview page either for students or for instructors, depending on the url.

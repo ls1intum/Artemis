@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
@@ -12,6 +12,9 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
     styleUrls: ['./code-hint-generation-overview.component.scss'],
 })
 export class CodeHintGenerationOverviewComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+
     exercise?: ProgrammingExercise;
 
     currentStep: CodeHintGenerationStep;
@@ -21,11 +24,6 @@ export class CodeHintGenerationOverviewComponent implements OnInit {
     allowBehavioralEntryGeneration = false;
 
     readonly GenerationStep = CodeHintGenerationStep;
-
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-    ) {}
 
     ngOnInit() {
         this.route.data.subscribe(({ exercise }) => {
