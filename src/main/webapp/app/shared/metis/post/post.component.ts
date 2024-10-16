@@ -16,7 +16,7 @@ import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
+import { faBullhorn, faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
@@ -60,8 +60,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly DisplayPriority = DisplayPriority;
 
     // Icons
-    faBullhorn = faBullhorn;
-    faCheckSquare = faCheckSquare;
+    readonly faBullhorn = faBullhorn;
+    readonly faPencilAlt = faPencilAlt;
+    readonly faTrash = faTrash;
+    @Input() isConsecutive: boolean = false;
 
     constructor(
         private metisService: MetisService,

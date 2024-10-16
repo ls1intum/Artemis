@@ -1,8 +1,14 @@
 @import 'src/main/webapp/app/shared/metis/metis.component';
 
+.emoji-container {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
 .reaction-button {
-    display: inline-flex;
     background: var(--reaction-button-default-color);
+    color: var(--metis-gray);
     border: none;
     border-radius: 1rem;
     align-items: center;
