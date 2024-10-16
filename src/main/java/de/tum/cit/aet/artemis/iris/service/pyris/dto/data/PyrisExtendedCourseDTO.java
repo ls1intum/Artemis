@@ -32,8 +32,8 @@ public record PyrisExtendedCourseDTO(
         List<PyrisExerciseWithStudentSubmissionsDTO> exercises,
         List<PyrisExamDTO> exams,
         List<PyrisCompetencyDTO> competencies
+// @formatter:on
 ) {
-    // @formatter:on
 
     /**
      * Convert a course to a PyrisExtendedCourseDTO.
@@ -41,7 +41,7 @@ public record PyrisExtendedCourseDTO(
      * @param course The course to convert.
      * @return The converted course.
      */
-    public static PyrisExtendedCourseDTO of(Course course) {
+    public static PyrisExtendedCourseDTO from(Course course) {
         List<PyrisExerciseWithStudentSubmissionsDTO> exercises = course.getExercises().stream().map(PyrisExerciseWithStudentSubmissionsDTO::from).toList();
         List<PyrisExamDTO> exams = course.getExams().stream().map(PyrisExamDTO::from).toList();
         List<PyrisCompetencyDTO> competencies = course.getCompetencies().stream().map(PyrisCompetencyDTO::from).toList();

@@ -52,7 +52,7 @@ public class PyrisPipelineService {
      *
      * @param name          the name of the pipeline to be executed
      * @param variant       the variant of the pipeline
-     * @param jobFunction   a function from job ID to job. Creates a new {@code PyrisJob} which will be registered in Hazelcast
+     * @param jobFunction   a function from job token to job. Creates a new {@code PyrisJob} which will be registered in Hazelcast
      * @param dtoMapper     a function to create the concrete DTO type for this pipeline from the base execution DTO
      * @param statusUpdater a consumer of stages to send status updates while the pipeline is being prepared
      */

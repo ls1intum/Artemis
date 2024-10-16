@@ -61,8 +61,9 @@ public class PyrisJobService {
     }
 
     /**
-     * Creates a token for an arbitrary job, runs the provided function with the token as an argument,
-     * and stores the job in the job map.
+     * Creates a new job token, runs the provided function with the token as an argument,
+     * and registers the resulting job in Hazelcast.
+     * The job token is then returned for later reference.
      *
      * @param tokenToJobFunction the function to run with the token
      * @return the generated token

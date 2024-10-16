@@ -142,11 +142,11 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * Sends all messages of the session to an LLM and handles the response by saving the message
      * and sending it to the student via the Websocket.
      *
-     * @param _irisSession The chat session to send to the LLM. The full session is loaded from the database by ID.
+     * @param irisSession The chat session to send to the LLM. The full session is loaded from the database by ID.
      */
     @Override
-    public void requestAndHandleResponse(IrisExerciseChatSession _irisSession) {
-        var session = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(_irisSession.getId());
+    public void requestAndHandleResponse(IrisExerciseChatSession irisSession) {
+        var session = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
         if (session.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
@@ -158,7 +158,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var courseDTO = PyrisCourseDTO.from(course);
         var conversationDTO = session.getMessages().stream().map(PyrisMessageDTO::from).toList();
-        var userDTO = PyrisUserDTO.of(session.getUser());
+        var userDTO = PyrisUserDTO.from(session.getUser());
 
         // @formatter:off
         pyrisPipelineService.executePipeline(

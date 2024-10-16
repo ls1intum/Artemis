@@ -145,17 +145,17 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         requestAndHandleResponse(session, variant, null);
     }
 
-    private void requestAndHandleResponse(IrisCourseChatSession _session, String variant, CompetencyJol competencyJol) {
-        var session = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(_session.getId());
+    private void requestAndHandleResponse(IrisCourseChatSession irisSession, String variant, CompetencyJol competencyJol) {
+        var session = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
 
         var courseId = session.getCourse().getId();
         var userId = session.getUser().getId();
 
-        var courseDTO = PyrisExtendedCourseDTO.of(loadCourseWithParticipationOfStudent(courseId, userId));
+        var courseDTO = PyrisExtendedCourseDTO.from(loadCourseWithParticipationOfStudent(courseId, userId));
         var metricsDTO = learningMetricsService.getStudentCourseMetrics(userId, courseId);
         var competencyJolDTO = Optional.ofNullable(competencyJol).map(CompetencyJolDTO::from).orElse(null);
         var conversation = session.getMessages().stream().map(PyrisMessageDTO::from).toList();
-        var userDTO = PyrisUserDTO.of(session.getUser());
+        var userDTO = PyrisUserDTO.from(session.getUser());
 
         // @formatter:off
         pyrisPipelineService.executePipeline(
