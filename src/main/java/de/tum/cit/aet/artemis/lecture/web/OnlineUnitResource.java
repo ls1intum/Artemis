@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.common.net.InternetDomainName;
 
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.dto.OnlineResourceDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -56,16 +56,16 @@ public class OnlineUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
     public OnlineUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, OnlineUnitRepository onlineUnitRepository,
-            CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService) {
+            CompetencyProgressApi competencyProgressApi, LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.onlineUnitRepository = onlineUnitRepository;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
     }
 
@@ -110,7 +110,7 @@ public class OnlineUnitResource {
 
         OnlineUnit result = onlineUnitRepository.save(onlineUnit);
 
-        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingOnlineUnit, Optional.of(onlineUnit));
+        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(existingOnlineUnit, Optional.of(onlineUnit));
 
         return ResponseEntity.ok(result);
     }
@@ -147,7 +147,7 @@ public class OnlineUnitResource {
         lecture.addLectureUnit(persistedOnlineUnit);
         lectureRepository.save(lecture);
 
-        competencyProgressService.updateProgressByLearningObjectAsync(persistedOnlineUnit);
+        competencyProgressApi.updateProgressByLearningObjectAsync(persistedOnlineUnit);
 
         return ResponseEntity.created(new URI("/api/online-units/" + persistedOnlineUnit.getId())).body(persistedOnlineUnit);
     }

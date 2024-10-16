@@ -199,7 +199,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
 
-        verify(competencyProgressService).updateProgressByCompetencyAsync(eq(competency));
+        verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
     }
 
     @Test
@@ -429,7 +429,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(updatedTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any(), any());
         verify(groupNotificationScheduleService, times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
-        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textExercise), eq(Optional.of(textExercise)));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textExercise), eq(Optional.of(textExercise)));
     }
 
     @Test
@@ -592,7 +592,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
         assertThat(channel).isNotNull();
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(newTextExercise));
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(newTextExercise));
     }
 
     @Test

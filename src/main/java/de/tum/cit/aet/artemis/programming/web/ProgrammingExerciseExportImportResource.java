@@ -42,7 +42,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
@@ -95,7 +95,7 @@ public class ProgrammingExerciseExportImportResource {
 
     private static final String ENTITY_NAME = "programmingExercise";
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -136,7 +136,7 @@ public class ProgrammingExerciseExportImportResource {
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService, CourseRepository courseRepository,
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService,
-            Optional<AthenaModuleService> athenaModuleService, CompetencyProgressService competencyProgressService) {
+            Optional<AthenaModuleService> athenaModuleService, CompetencyProgressApi competencyProgressApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -152,7 +152,7 @@ public class ProgrammingExerciseExportImportResource {
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
         this.consistencyCheckService = consistencyCheckService;
         this.athenaModuleService = athenaModuleService;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     /**
@@ -259,7 +259,7 @@ public class ProgrammingExerciseExportImportResource {
             importedProgrammingExercise.setExerciseHints(null);
             importedProgrammingExercise.setTasks(null);
 
-            competencyProgressService.updateProgressByLearningObjectAsync(importedProgrammingExercise);
+            competencyProgressApi.updateProgressByLearningObjectAsync(importedProgrammingExercise);
 
             return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
                     .body(importedProgrammingExercise);
