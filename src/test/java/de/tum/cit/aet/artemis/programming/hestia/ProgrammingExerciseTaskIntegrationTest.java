@@ -35,7 +35,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractProgrammingIntegrat
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        this.testCases = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId());
+        this.testCases = testCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId());
         for (ProgrammingExerciseTestCase testCase : testCases) {
             var solutionEntry = new ProgrammingExerciseSolutionEntry();
             solutionEntry.setTestCase(testCase);

@@ -161,7 +161,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
                 .orElseThrow();
-        programmingExerciseTestCaseRepository.deleteAll(programmingExercise.getTestCases());
+        testCaseRepository.deleteAll(programmingExercise.getTestCases());
 
         String[] testCaseNames = { "testClass[BubbleSort]", "testParametrized(Parameter1, 2)[1]" };
         for (var name : testCaseNames) {
@@ -169,14 +169,14 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
             testCase.setExercise(programmingExercise);
             testCase.setTestName(name);
             testCase.setActive(true);
-            programmingExerciseTestCaseRepository.save(testCase);
+            testCaseRepository.save(testCase);
         }
 
         var testCase = new ProgrammingExerciseTestCase();
         testCase.setExercise(programmingExercise);
         testCase.setTestName("testWithBraces()");
         testCase.setActive(false);
-        programmingExerciseTestCaseRepository.save(testCase);
+        testCaseRepository.save(testCase);
 
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
@@ -199,7 +199,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
                 .orElseThrow();
-        programmingExerciseTestCaseRepository.deleteAll(programmingExercise.getTestCases());
+        testCaseRepository.deleteAll(programmingExercise.getTestCases());
 
         String[] testCaseNames = new String[] { "testClass[BubbleSort]", "testWithBraces()", "testParametrized(Parameter1, 2)[1]" };
         for (var name : testCaseNames) {
@@ -207,7 +207,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
             testCase.setExercise(programmingExercise);
             testCase.setTestName(name);
             testCase.setActive(true);
-            programmingExerciseTestCaseRepository.save(testCase);
+            testCaseRepository.save(testCase);
         }
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
@@ -229,8 +229,8 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testExtractTasksFromTestIds() {
-        var test1 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
-        var test2 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testMethods[Context]").orElseThrow();
+        var test1 = testCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
+        var test2 = testCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testMethods[Context]").orElseThrow();
 
         updateProblemStatement("[task][Task 1](<testid>%s</testid>,<testid>%s</testid>)".formatted(test1.getId(), test2.getId()));
 
@@ -250,7 +250,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
 
     @Test
     void testNameReplacement() {
-        Map<String, Long> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
+        Map<String, Long> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getId));
 
         programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
@@ -267,9 +267,9 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
     void testNameReplacementKeepsInactiveTests() {
         // Task 1 is inactive, task 2 does not exist
         updateProblemStatement("[task][Task 1](testClass[BubbleSort])\n[task][Task 2](nonExistingTask)");
-        var testCase = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
+        var testCase = testCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
         testCase.setActive(false);
-        programmingExerciseTestCaseRepository.save(testCase);
+        testCaseRepository.save(testCase);
 
         programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
         String problemStatement = programmingExercise.getProblemStatement();
@@ -280,7 +280,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
 
     @Test
     void testNameReplacementSpecialNames() {
-        var bubbleSort = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
+        var bubbleSort = testCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
         var braces = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testWithBraces()");
         var parameterized = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testParametrized(Parameter1, 2)[1]");
         updateProblemStatement("""
@@ -381,10 +381,10 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
 
     @Test
     void testIdReplacementWithNames() {
-        var bubbleSort = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
+        var bubbleSort = testCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
         var inactiveTest = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testName");
         inactiveTest.setActive(false);
-        programmingExerciseTestCaseRepository.save(inactiveTest);
+        testCaseRepository.save(inactiveTest);
 
         updateProblemStatement("[task][Taskname](<testid>%s</testid>,<testid>%s</testid>)".formatted(bubbleSort.getId(), inactiveTest.getId()));
 

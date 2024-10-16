@@ -73,7 +73,7 @@ class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
     void addTestCasesWithSolutionEntriesToProgrammingExercise() {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId);
+        var testCases = testCaseRepository.findByExerciseId(programmingExerciseId);
         assertThat(testCases).isNotEmpty();
         for (ProgrammingExerciseTestCase testCase : testCases) {
             var solutionEntries = addSolutionEntriesToTestCase(2, testCase);
@@ -85,7 +85,7 @@ class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
     void deleteProgrammingExerciseWithTestCasesAndSolutionEntries() {
         addTestCasesWithSolutionEntriesToProgrammingExercise();
         programmingExerciseRepository.deleteById(programmingExerciseId);
-        assertThat(programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId)).isEmpty();
+        assertThat(testCaseRepository.findByExerciseId(programmingExerciseId)).isEmpty();
         assertThat(programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExerciseId)).isEmpty();
     }
 
@@ -93,20 +93,20 @@ class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
     void deleteTaskWithTestCases() {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId);
+        var testCases = testCaseRepository.findByExerciseId(programmingExerciseId);
         assertThat(testCases).isNotEmpty();
         var task = addTaskToProgrammingExercise("Task 1");
         task.setTestCases(testCases);
         task = programmingExerciseTaskRepository.save(task);
         programmingExerciseTaskRepository.delete(task);
-        assertThat(programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId)).isEqualTo(testCases);
+        assertThat(testCaseRepository.findByExerciseId(programmingExerciseId)).isEqualTo(testCases);
     }
 
     @Test
     void addCodeHintToProgrammingExercise() {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId);
+        var testCases = testCaseRepository.findByExerciseId(programmingExerciseId);
         assertThat(testCases).isNotEmpty();
         var task = addTaskToProgrammingExercise("Task 1");
         task.setTestCases(testCases);
@@ -150,7 +150,7 @@ class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
         assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExerciseId)).isEmpty();
         assertThat(programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExerciseId)).isEmpty();
         assertThat(codeHintRepository.findByExerciseId(programmingExerciseId)).isEmpty();
-        assertThat(programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId)).isEmpty();
+        assertThat(testCaseRepository.findByExerciseId(programmingExerciseId)).isEmpty();
     }
 
     @Test
@@ -159,7 +159,7 @@ class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
         var task = programmingExerciseTaskRepository.findByExerciseId(programmingExerciseId).stream().findAny().orElseThrow();
         programmingExerciseTaskRepository.delete(task);
         assertThat(codeHintRepository.findByExerciseId(programmingExerciseId)).isEmpty();
-        assertThat(programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId)).hasSize(3);
+        assertThat(testCaseRepository.findByExerciseId(programmingExerciseId)).hasSize(3);
         assertThat(programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExerciseId)).hasSize(6);
     }
 }

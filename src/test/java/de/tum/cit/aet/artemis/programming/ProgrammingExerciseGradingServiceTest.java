@@ -186,15 +186,14 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     private Map<String, ProgrammingExerciseTestCase> getTestCases(ProgrammingExercise programmingExercise) {
-        return programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
-                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
+        return testCaseRepository.findByExerciseId(programmingExercise.getId()).stream().collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldNotUpdateResultIfNoTestCasesExist() {
         // We do not want to use the test cases generated in the setup
-        programmingExerciseTestCaseRepository.deleteAll(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         Double scoreBeforeUpdate = result.getScore();
         gradingService.calculateScoreForResult(result, programmingExercise, true);
@@ -210,7 +209,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS);
         testCases.get("test3").active(true).visibility(Visibility.ALWAYS);
-        programmingExerciseTestCaseRepository.saveAll(testCases.values());
+        testCaseRepository.saveAll(testCases.values());
         testCases = getTestCases(programmingExercise);
 
         // Create feedback with duplicate content for test1 and test3
@@ -294,12 +293,12 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSetScoreCorrectlyIfWeightSumIsReallyBigOrReallySmall() {
-        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(0.);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(0.00000000000000001);
         testCases.get("test3").active(false).weight(0.);
-        programmingExerciseTestCaseRepository.saveAll(testCases.values());
+        testCaseRepository.saveAll(testCases.values());
 
         Result result = new Result();
         result.addFeedback(new Feedback().result(result).testCase(testCases.get("test1")).positive(false).type(FeedbackType.AUTOMATIC));
@@ -308,7 +307,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         result = gradingService.calculateScoreForResult(result, programmingExercise, false);
         assertThat(result.getScore()).isZero();
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(0.8000000000);
-        programmingExerciseTestCaseRepository.saveAll(testCases.values());
+        testCaseRepository.saveAll(testCases.values());
 
         result = gradingService.calculateScoreForResult(result, programmingExercise, false);
         assertThat(result.getScore()).isPositive();
@@ -318,13 +317,13 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRecalculateScoreWithTestCaseBonusButNoExerciseBonus() {
         // Set up test cases with bonus
-        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(5.).bonusMultiplier(1D).setBonusPoints(7D);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(2.).bonusMultiplier(2D).setBonusPoints(0D);
         testCases.get("test3").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(1D).setBonusPoints(10.5D);
 
-        programmingExerciseTestCaseRepository.saveAll(testCases.values());
+        testCaseRepository.saveAll(testCases.values());
 
         Participation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
@@ -410,12 +409,12 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRecalculateScoreWithTestCaseBonusAndExerciseBonus() {
         // Set up test cases with bonus
-        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(4.).bonusMultiplier(1D).setBonusPoints(0D);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(3D).setBonusPoints(21D);
         testCases.get("test3").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(2D).setBonusPoints(14D);
-        programmingExerciseTestCaseRepository.saveAll(testCases.values());
+        testCaseRepository.saveAll(testCases.values());
 
         // Score should be capped at 200%
         programmingExercise.setBonusPoints(programmingExercise.getMaxPoints());
@@ -606,7 +605,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         }
 
         var invisibleTestCase = new ProgrammingExerciseTestCase().testName("test4").exercise(programmingExercise);
-        programmingExerciseTestCaseRepository.save(invisibleTestCase);
+        testCaseRepository.save(invisibleTestCase);
 
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -716,7 +715,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             testCase.setWeight(0D);
         }
         testCases.get("test1").setBonusMultiplier(1.4D);
-        programmingExerciseTestCaseRepository.saveAll(testCases.values());
+        testCaseRepository.saveAll(testCases.values());
 
         final var updatedResults = programmingExerciseGradingService.updateAllResults(programmingExercise);
         assertThat(updatedResults).hasSize(7);
@@ -785,7 +784,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     private Map<String, ProgrammingExerciseTestCase> createTestCases(boolean withAdditionalInvisibleTestCase) {
-        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
@@ -793,7 +792,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         if (withAdditionalInvisibleTestCase) {
             testCases.get("test4").active(true).visibility(Visibility.NEVER).setWeight(1.);
         }
-        programmingExerciseTestCaseRepository.saveAll(testCases.values());
+        testCaseRepository.saveAll(testCases.values());
 
         return testCases;
     }
@@ -803,7 +802,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         testCases.get("test1").setWeight(0.);
         testCases.get("test2").setWeight(1.);
         testCases.get("test3").setWeight(3.);
-        programmingExerciseTestCaseRepository.saveAll(testCases.values());
+        testCaseRepository.saveAll(testCases.values());
     }
 
     private void verifyStudentScoreCalculations(final Participation[] testParticipations) {
@@ -1268,13 +1267,13 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     }
 
     private void activateAllTestCases(boolean withBonus) {
-        var testCases = new ArrayList<>(programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseSCAEnabled.getId()));
+        var testCases = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExerciseSCAEnabled.getId()));
         var bonusMultiplier = withBonus ? 2D : null;
         var bonusPoints = withBonus ? 4D : null;
         testCases.getFirst().active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
         testCases.get(1).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
         testCases.get(2).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
-        programmingExerciseTestCaseRepository.saveAll(testCases);
+        testCaseRepository.saveAll(testCases);
     }
 
     private List<Participation> createTestParticipationsWithResults() {
@@ -1409,9 +1408,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
     private void updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes, int issuesCategory1, int issuesCategory2,
             ZonedDateTime completionDate) {
-        var test1 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test1").orElseThrow();
-        var test2 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test2").orElseThrow();
-        var test3 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test3").orElseThrow();
+        var test1 = testCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test1").orElseThrow();
+        var test2 = testCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test2").orElseThrow();
+        var test3 = testCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test3").orElseThrow();
 
         result.addFeedback(new Feedback().result(result).testCase(test1).positive(test1Passes).positive(test1Passes).type(FeedbackType.AUTOMATIC));
         result.addFeedback(new Feedback().result(result).testCase(test2).positive(test2Passes).positive(test2Passes).type(FeedbackType.AUTOMATIC));

@@ -45,8 +45,8 @@ class TestwiseCoverageIntegrationTest extends AbstractProgrammingIntegrationInde
         unsavedLatestSubmission.setSubmissionDate(ZonedDateTime.of(2022, 4, 5, 13, 0, 0, 0, ZoneId.of("Europe/Berlin")));
         latestSolutionSubmission = programmingSubmissionRepository.save(unsavedLatestSubmission);
 
-        var testCase1 = programmingExerciseTestCaseRepository.save(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1()"));
-        var testCase2 = programmingExerciseTestCaseRepository.save(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test2()"));
+        var testCase1 = testCaseRepository.save(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test1()"));
+        var testCase2 = testCaseRepository.save(new ProgrammingExerciseTestCase().exercise(programmingExercise).testName("test2()"));
         generateAndSaveSimpleReport(0.3, "src/de/tum/in/ase/BubbleSort.java", 15, 5, 1, 5, testCase1, previousSolutionSubmission);
         latestReport = generateAndSaveSimpleReport(0.4, "src/de/tum/in/ase/BubbleSort.java", 20, 8, 1, 8, testCase2, latestSolutionSubmission);
     }

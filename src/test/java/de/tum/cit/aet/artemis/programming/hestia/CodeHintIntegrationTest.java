@@ -109,7 +109,7 @@ class CodeHintIntegrationTest extends AbstractProgrammingIntegrationIndependentT
         addCodeHints();
         var solutionEntries = codeHint.getSolutionEntries().stream().toList();
 
-        Map<String, ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId()).stream()
+        Map<String, ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, test -> test));
 
         var changedEntry = solutionEntries.getFirst();

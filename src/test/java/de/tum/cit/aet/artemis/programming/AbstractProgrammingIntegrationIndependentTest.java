@@ -82,7 +82,7 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
     protected ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
     @Autowired
-    protected ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
+    protected ProgrammingExerciseTestCaseTestRepository testCaseRepository;
 
     @Autowired
     protected ProgrammingExerciseTestRepository programmingExerciseRepository;

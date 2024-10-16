@@ -128,7 +128,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * 1) Jenkins + Gitlab
  */
 @Service
-public class ProgrammingExerciseIntegrationTestService {
+class ProgrammingExerciseIntegrationTestService {
 
     private static final String NON_EXISTING_ID = Integer.toString(Integer.MAX_VALUE);
 

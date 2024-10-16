@@ -47,7 +47,7 @@ class CodeHintServiceTest extends AbstractProgrammingIntegrationIndependentTest 
         testCase.setActive(true);
         testCase.setWeight(1D);
         testCase.setType(ProgrammingExerciseTestCaseType.BEHAVIORAL);
-        return programmingExerciseTestCaseRepository.save(testCase);
+        return testCaseRepository.save(testCase);
     }
 
     private ProgrammingExerciseSolutionEntry addSolutionEntryToTestCase(ProgrammingExerciseTestCase testCase) {
@@ -66,7 +66,7 @@ class CodeHintServiceTest extends AbstractProgrammingIntegrationIndependentTest 
         for (int i = 0; i < testCases.size(); i++) {
             ProgrammingExerciseTestCase testCase = testCases.get(i);
             testCase.getTasks().add(task);
-            testCases.set(i, programmingExerciseTestCaseRepository.save(testCase));
+            testCases.set(i, testCaseRepository.save(testCase));
         }
         task.setTestCases(new HashSet<>(testCases));
         return task;

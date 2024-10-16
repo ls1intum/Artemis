@@ -54,8 +54,8 @@ class ExerciseHintServiceTest extends AbstractProgrammingIntegrationIndependentT
         student = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
         userUtilService.changeUser(TEST_PREFIX + "student1");
 
-        var activatedTestCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream().peek(testCase -> testCase.setActive(true)).toList();
-        programmingExerciseTestCaseRepository.saveAll(activatedTestCases);
+        var activatedTestCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream().peek(testCase -> testCase.setActive(true)).toList();
+        testCaseRepository.saveAll(activatedTestCases);
         exercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
         exercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(exercise);
         programmingExerciseUtilService.addHintsToExercise(exercise);
