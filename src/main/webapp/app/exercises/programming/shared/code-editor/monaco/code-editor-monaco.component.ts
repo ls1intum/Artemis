@@ -82,7 +82,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     readonly disableActions = input<boolean>(false);
     readonly selectedFile = input<string>();
     readonly sessionId = input.required<number | string>();
-    readonly buildAnnotations = input<Annotation[]>([]); // TODO: effect
+    readonly buildAnnotations = input<Annotation[]>([]);
 
     readonly onError = output<string>();
     readonly onFileContentChange = output<{ file: string; fileContent: string }>();
