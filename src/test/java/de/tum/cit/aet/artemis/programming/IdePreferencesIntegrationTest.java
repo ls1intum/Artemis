@@ -7,7 +7,6 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -19,19 +18,10 @@ import de.tum.cit.aet.artemis.programming.domain.ide.Ide;
 import de.tum.cit.aet.artemis.programming.domain.ide.UserIdeMapping;
 import de.tum.cit.aet.artemis.programming.dto.IdeDTO;
 import de.tum.cit.aet.artemis.programming.dto.IdeMappingDTO;
-import de.tum.cit.aet.artemis.programming.repository.settings.IdeRepository;
-import de.tum.cit.aet.artemis.programming.repository.settings.UserIdeMappingRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class IdePreferencesIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "idepreferencesintegration";
-
-    @Autowired
-    private UserIdeMappingRepository userIdeMappingRepository;
-
-    @Autowired
-    private IdeRepository ideRepository;
 
     private Ide VsCode;
 

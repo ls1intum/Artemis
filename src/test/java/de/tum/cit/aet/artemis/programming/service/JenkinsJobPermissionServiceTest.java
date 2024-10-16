@@ -12,22 +12,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermission;
-import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsUtils;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
-class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class JenkinsJobPermissionServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "jenkinsjobpermservice";
-
-    @Autowired
-    private JenkinsJobPermissionsService jenkinsJobPermissionsService;
 
     private static MockedStatic<JenkinsJobPermissionsUtils> mockedJenkinsJobPermissionsUtils;
 

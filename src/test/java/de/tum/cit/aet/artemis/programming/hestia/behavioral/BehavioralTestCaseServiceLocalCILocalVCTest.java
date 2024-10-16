@@ -8,13 +8,11 @@ import java.util.HashSet;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -25,56 +23,13 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDi
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
-import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
-import de.tum.cit.aet.artemis.programming.icl.AbstractLocalCILocalVCIntegrationTest;
-import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageFileReportRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageReportEntryRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralTestCaseService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
-class BehavioralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTest {
+class BehavioralTestCaseServiceLocalCILocalVCTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "behavioraltestcastservice";
 
     private final LocalRepository solutionRepo = new LocalRepository("main");
-
-    @Autowired
-    private BehavioralTestCaseService behavioralTestCaseService;
-
-    @Autowired
-    private HestiaUtilTestService hestiaUtilTestService;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
-
-    @Autowired
-    private ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
-
-    @Autowired
-    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
-
-    @Autowired
-    private CoverageReportRepository coverageReportRepository;
-
-    @Autowired
-    private CoverageFileReportRepository coverageFileReportRepository;
-
-    @Autowired
-    private TestwiseCoverageReportEntryRepository testwiseCoverageReportEntryRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     private ProgrammingExercise exercise;
 
@@ -113,7 +68,7 @@ class BehavioralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
         gitDiffReport.setProgrammingExercise(exercise);
         gitDiffReport.setSolutionRepositoryCommitHash("123a");
         gitDiffReport.setTemplateRepositoryCommitHash("123b");
-        gitDiffReport = programmingExerciseGitDiffReportRepository.save(gitDiffReport);
+        gitDiffReport = reportRepository.save(gitDiffReport);
         return gitDiffReport;
     }
 
@@ -124,7 +79,7 @@ class BehavioralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
         gitDiffEntry.setLineCount(lineCount);
         gitDiffEntry.setGitDiffReport(gitDiffReport);
         gitDiffReport.getEntries().add(gitDiffEntry);
-        return programmingExerciseGitDiffReportRepository.save(gitDiffReport);
+        return reportRepository.save(gitDiffReport);
     }
 
     private CoverageReport newCoverageReport() {

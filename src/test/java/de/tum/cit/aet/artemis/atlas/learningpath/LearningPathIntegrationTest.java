@@ -376,7 +376,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
      * This only tests if the end point successfully retrieves the health status. The correctness of the health status is tested in LearningPathServiceTest.
      *
      * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.service.LearningPathServiceTest
+     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
      */
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
@@ -465,7 +465,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
      * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
      *
      * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.service.LearningPathServiceTest
+     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
@@ -481,7 +481,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
      * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
      *
      * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.service.LearningPathServiceTest
+     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
@@ -497,7 +497,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
      * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
      *
      * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.service.LearningPathServiceTest
+     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
@@ -513,7 +513,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
      * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
      *
      * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.service.LearningPathServiceTest
+     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)

@@ -9,52 +9,19 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndependentTest {
+class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "progextaskservice";
-
-    @Autowired
-    private ProgrammingExerciseTaskService programmingExerciseTaskService;
-
-    @Autowired
-    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
-
-    @Autowired
-    private CodeHintRepository codeHintRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -78,24 +45,23 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
 
     @Test
     void testNewExercise() {
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
-        var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
+        var tasks = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
         assertThat(tasks).hasSize(2).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1", "testClass[BubbleSort]"))
                 .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"));
     }
 
     @Test
     void testAddTask() {
-        var previousTaskIds = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId)
-                .collect(Collectors.toSet());
+        var previousTaskIds = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId).collect(Collectors.toSet());
 
         updateProblemStatement("""
                 [task][Task 1](testClass[BubbleSort])
                 [task][Task 2](testMethods[Context])
                 [task][Task 3](testMethods[Policy])
                 """);
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(3);
-        var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).hasSize(3);
+        var tasks = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
         assertThat(tasks).hasSize(3).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1", "testClass[BubbleSort]"))
                 .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"))
                 .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 3", "testMethods[Policy]"));
@@ -108,14 +74,14 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
     @Test
     void testRemoveAllTasks() {
         updateProblemStatement("Empty");
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }
 
     @Test
     void testReduceToOneTask() {
         updateProblemStatement("[task][Task 1](testClass[BubbleSort],testMethods[Context], testMethods[Policy])");
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(1);
-        var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).hasSize(1);
+        var tasks = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
         assertThat(tasks).hasSize(1);
         var task = tasks.stream().findFirst().orElseThrow();
         assertThat(task.getTaskName()).isEqualTo("Task 1");
@@ -130,21 +96,20 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
      */
     @Test
     void testRenameTask() {
-        var previousTaskIds = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId)
-                .collect(Collectors.toSet());
+        var previousTaskIds = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId).collect(Collectors.toSet());
 
         updateProblemStatement("""
                 [task][Task 1a](testClass[BubbleSort])
                 [task][Task 2](testMethods[Context])
                 """);
 
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
-        var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
+        var tasks = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
 
         var newTaskIds = tasks.stream().map(ProgrammingExerciseTask::getId).collect(Collectors.toSet());
         assertThat(previousTaskIds).isEqualTo(newTaskIds);
 
-        assertThat(programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId())).isEqualTo(tasks);
+        assertThat(taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId())).isEqualTo(tasks);
 
         assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1a", "testClass[BubbleSort]"))
                 .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"));
@@ -155,8 +120,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
      */
     @Test
     void testNoChanges() {
-        var previousTaskIds = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId)
-                .collect(Collectors.toSet());
+        var previousTaskIds = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId).collect(Collectors.toSet());
 
         updateProblemStatement("""
                 Test
@@ -164,17 +128,15 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
                 [task][Task 2](testMethods[Context])
                 """);
 
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
 
-        var newTaskIds = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId)
-                .collect(Collectors.toSet());
+        var newTaskIds = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId).collect(Collectors.toSet());
         assertThat(previousTaskIds).isEqualTo(newTaskIds);
     }
 
     @Test
     void testDeleteWithCodeHints() {
-        var task = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId()).stream().filter(task1 -> "Task 1".equals(task1.getTaskName())).findFirst()
-                .orElse(null);
+        var task = taskRepository.findByExerciseId(programmingExercise.getId()).stream().filter(task1 -> "Task 1".equals(task1.getTaskName())).findFirst().orElse(null);
         assertThat(task).isNotNull();
 
         var codeHint = new CodeHint();
@@ -183,8 +145,8 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
         codeHintRepository.save(codeHint);
 
         programmingExerciseTaskService.delete(task);
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(1);
-        assertThat(programmingExerciseTaskRepository.findById(task.getId())).isEmpty();
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).hasSize(1);
+        assertThat(taskRepository.findById(task.getId())).isEmpty();
         assertThat(codeHintRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }
 
@@ -194,7 +156,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
                 .orElseThrow();
-        programmingExerciseTestCaseRepository.deleteAll(programmingExercise.getTestCases());
+        testCaseRepository.deleteAll(programmingExercise.getTestCases());
 
         String[] testCaseNames = { "testClass[BubbleSort]", "testParametrized(Parameter1, 2)[1]" };
         for (var name : testCaseNames) {
@@ -202,14 +164,14 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
             testCase.setExercise(programmingExercise);
             testCase.setTestName(name);
             testCase.setActive(true);
-            programmingExerciseTestCaseRepository.save(testCase);
+            testCaseRepository.save(testCase);
         }
 
         var testCase = new ProgrammingExerciseTestCase();
         testCase.setExercise(programmingExercise);
         testCase.setTestName("testWithBraces()");
         testCase.setActive(false);
-        programmingExerciseTestCaseRepository.save(testCase);
+        testCaseRepository.save(testCase);
 
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
@@ -232,7 +194,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
                 .orElseThrow();
-        programmingExerciseTestCaseRepository.deleteAll(programmingExercise.getTestCases());
+        testCaseRepository.deleteAll(programmingExercise.getTestCases());
 
         String[] testCaseNames = new String[] { "testClass[BubbleSort]", "testWithBraces()", "testParametrized(Parameter1, 2)[1]" };
         for (var name : testCaseNames) {
@@ -240,7 +202,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
             testCase.setExercise(programmingExercise);
             testCase.setTestName(name);
             testCase.setActive(true);
-            programmingExerciseTestCaseRepository.save(testCase);
+            testCaseRepository.save(testCase);
         }
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
@@ -250,10 +212,10 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
                 [task][Task 1](testClass[BubbleSort],testWithBraces(),testParametrized(Parameter1, 2)[1])
                 """);
 
-        var actualTasks = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId());
+        var actualTasks = taskRepository.findByExerciseId(programmingExercise.getId());
         assertThat(actualTasks).hasSize(1);
         final var actualTask = actualTasks.iterator().next().getId();
-        var actualTaskWithTestCases = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask);
+        var actualTaskWithTestCases = taskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask);
         assertThat(actualTaskWithTestCases.getTaskName()).isEqualTo("Task 1");
         var actualTestCaseNames = actualTaskWithTestCases.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
         assertThat(actualTestCaseNames).containsExactlyInAnyOrder(testCaseNames);
@@ -262,15 +224,15 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testExtractTasksFromTestIds() {
-        var test1 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
-        var test2 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testMethods[Context]").orElseThrow();
+        var test1 = testCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
+        var test2 = testCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testMethods[Context]").orElseThrow();
 
         updateProblemStatement("[task][Task 1](<testid>%s</testid>,<testid>%s</testid>)".formatted(test1.getId(), test2.getId()));
 
-        var actualTasks = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId());
+        var actualTasks = taskRepository.findByExerciseId(programmingExercise.getId());
         assertThat(actualTasks).hasSize(1);
         final var actualTask = actualTasks.iterator().next().getId();
-        var actualTaskWithTestCases = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask);
+        var actualTaskWithTestCases = taskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask);
         assertThat(actualTaskWithTestCases.getTaskName()).isEqualTo("Task 1");
         var actualTestCaseNames = actualTaskWithTestCases.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
         assertThat(actualTestCaseNames).containsExactlyInAnyOrder("testClass[BubbleSort]", "testMethods[Context]");
@@ -283,7 +245,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
 
     @Test
     void testNameReplacement() {
-        Map<String, Long> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
+        Map<String, Long> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getId));
 
         programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
@@ -300,9 +262,9 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
     void testNameReplacementKeepsInactiveTests() {
         // Task 1 is inactive, task 2 does not exist
         updateProblemStatement("[task][Task 1](testClass[BubbleSort])\n[task][Task 2](nonExistingTask)");
-        var testCase = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
+        var testCase = testCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
         testCase.setActive(false);
-        programmingExerciseTestCaseRepository.save(testCase);
+        testCaseRepository.save(testCase);
 
         programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
         String problemStatement = programmingExercise.getProblemStatement();
@@ -313,7 +275,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
 
     @Test
     void testNameReplacementSpecialNames() {
-        var bubbleSort = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
+        var bubbleSort = testCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
         var braces = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testWithBraces()");
         var parameterized = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testParametrized(Parameter1, 2)[1]");
         updateProblemStatement("""
@@ -414,10 +376,10 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
 
     @Test
     void testIdReplacementWithNames() {
-        var bubbleSort = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
+        var bubbleSort = testCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "testClass[BubbleSort]").orElseThrow();
         var inactiveTest = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testName");
         inactiveTest.setActive(false);
-        programmingExerciseTestCaseRepository.save(inactiveTest);
+        testCaseRepository.save(inactiveTest);
 
         updateProblemStatement("[task][Taskname](<testid>%s</testid>,<testid>%s</testid>)".formatted(bubbleSort.getId(), inactiveTest.getId()));
 

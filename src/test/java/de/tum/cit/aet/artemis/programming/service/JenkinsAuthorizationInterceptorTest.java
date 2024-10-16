@@ -8,13 +8,10 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 import java.net.URISyntaxException;
-import java.net.URL;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRequest;
@@ -24,27 +21,16 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsGitlabTest;
 
-class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "jenkinsauthintercept";
-
-    @Value("${artemis.continuous-integration.url}")
-    private URL jenkinsServerUrl;
-
-    @Autowired
-    JenkinsAuthorizationInterceptor jenkinsAuthorizationInterceptor;
-
-    @Autowired
-    private RestTemplate restTemplate;
 
     private MockRestServiceServer mockRestServiceServer;
 

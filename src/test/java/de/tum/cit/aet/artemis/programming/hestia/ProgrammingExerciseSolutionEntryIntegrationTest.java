@@ -8,40 +8,19 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "progexsolutionentry";
-
-    @Autowired
-    private ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
-
-    @Autowired
-    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
-
-    @Autowired
-    private CodeHintRepository codeHintRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -53,7 +32,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 1, 2);
 
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId());
 
         codeHint = new CodeHint();
         codeHint.setExercise(programmingExercise);
@@ -76,7 +55,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
         task.setExercise(programmingExercise);
         task.setTaskName("Task");
         task.setTestCases(new HashSet<>(testCases));
-        task = programmingExerciseTaskRepository.save(task);
+        task = taskRepository.save(task);
         codeHint.setProgrammingExerciseTask(task);
         codeHintRepository.save(codeHint);
     }
@@ -119,8 +98,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetSolutionEntriesByTestCaseId() throws Exception {
-        ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
-                .orElseThrow();
+        ProgrammingExerciseTestCase testCase = testCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst().orElseThrow();
         final var solutionEntries = new HashSet<>(
                 request.getList("/api/programming-exercises/" + programmingExercise.getId() + "/test-cases/" + testCase.getId() + "/solution-entries", HttpStatus.OK,
                         ProgrammingExerciseSolutionEntry.class));
@@ -139,8 +117,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testDeleteSolutionEntry() throws Exception {
-        ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
-                .orElseThrow();
+        ProgrammingExerciseTestCase testCase = testCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst().orElseThrow();
         Long entryId = testCase.getSolutionEntries().stream().findFirst().orElseThrow().getId();
         request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/test-cases/" + testCase.getId() + "/solution-entries/" + entryId, HttpStatus.NO_CONTENT);
         assertThat(programmingExerciseSolutionEntryRepository.findById(entryId)).isEmpty();
@@ -149,8 +126,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testDeleteSolutionEntryAsStudent() throws Exception {
-        ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
-                .orElseThrow();
+        ProgrammingExerciseTestCase testCase = testCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst().orElseThrow();
         Long entryId = testCase.getSolutionEntries().stream().findFirst().orElseThrow().getId();
         request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/test-cases/" + testCase.getId() + "/solution-entries/" + entryId, HttpStatus.FORBIDDEN);
     }
@@ -158,8 +134,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteSolutionEntryAsTutor() throws Exception {
-        ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
-                .orElseThrow();
+        ProgrammingExerciseTestCase testCase = testCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst().orElseThrow();
         Long entryId = testCase.getSolutionEntries().stream().findFirst().orElseThrow().getId();
         request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/test-cases/" + testCase.getId() + "/solution-entries/" + entryId, HttpStatus.FORBIDDEN);
     }
@@ -174,8 +149,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateSolutionEntry() throws Exception {
-        ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
-                .orElseThrow();
+        ProgrammingExerciseTestCase testCase = testCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst().orElseThrow();
         ProgrammingExerciseSolutionEntry entry = testCase.getSolutionEntries().stream().findFirst().orElseThrow();
         Long entryId = entry.getId();
         String updatedFilePath = "NewPath.java";
@@ -190,8 +164,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateSolutionEntryWithInvalidId() throws Exception {
-        ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
-                .orElseThrow();
+        ProgrammingExerciseTestCase testCase = testCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst().orElseThrow();
         ProgrammingExerciseSolutionEntry entry = testCase.getSolutionEntries().stream().findFirst().orElseThrow();
         Long entryId = entry.getId();
         String updatedFilePath = "NewPath.java";
@@ -206,8 +179,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testUpdateSolutionEntryAsStudent() throws Exception {
-        ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
-                .orElseThrow();
+        ProgrammingExerciseTestCase testCase = testCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst().orElseThrow();
         ProgrammingExerciseSolutionEntry entry = testCase.getSolutionEntries().stream().findFirst().orElseThrow();
         Long entryId = entry.getId();
 
@@ -217,8 +189,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateSolutionEntryAsTutor() throws Exception {
-        ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
-                .orElseThrow();
+        ProgrammingExerciseTestCase testCase = testCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst().orElseThrow();
         ProgrammingExerciseSolutionEntry entry = testCase.getSolutionEntries().stream().findFirst().orElseThrow();
         Long entryId = entry.getId();
 
@@ -259,7 +230,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
         manualEntry.setLine(1);
         manualEntry.setFilePath("src/de/tum/in/ase/BubbleSort.java");
 
-        var testCase = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream().findFirst().orElseThrow();
+        var testCase = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream().findFirst().orElseThrow();
         manualEntry.setTestCase(testCase);
 
         request.postWithoutLocation("/api/programming-exercises/" + programmingExercise.getId() + "/test-cases/" + testCase.getId() + "/solution-entries", manualEntry,

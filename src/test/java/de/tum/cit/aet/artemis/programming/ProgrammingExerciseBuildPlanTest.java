@@ -4,23 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 
-class ProgrammingExerciseBuildPlanTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
+class ProgrammingExerciseBuildPlanTest extends AbstractProgrammingIntegrationGitlabCIGitlabSamlTest {
 
     private static final String BUILD_PLAN = """
             image: ubuntu:20.04
@@ -31,9 +20,6 @@ class ProgrammingExerciseBuildPlanTest extends AbstractSpringIntegrationGitlabCI
                 script:
                     - echo "Test"
             """;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     private Long programmingExerciseId;
 
