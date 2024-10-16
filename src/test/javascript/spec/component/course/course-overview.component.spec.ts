@@ -653,6 +653,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should display content of dropdown when dropdownOpen changes', () => {
+        fixture.detectChanges();
         if (component.itemsDrop) {
             itemsDrop.open();
             fixture.detectChanges();
@@ -660,6 +661,7 @@ describe('CourseOverviewComponent', () => {
         }
     });
     it('should hide content of dropdown when dropdownOpen changes', () => {
+        fixture.detectChanges();
         if (component.itemsDrop) {
             itemsDrop.close();
             fixture.detectChanges();
