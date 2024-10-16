@@ -15,6 +15,10 @@ export class ProgrammingExerciseCreationPage {
         await this.page.locator('#field_title').fill(title);
     }
 
+    async changeEditMode() {
+        await this.page.locator('#switch-edit-mode-button').click();
+    }
+
     async setShortName(shortName: string) {
         const shortNameField = this.page.locator('#field_shortName');
         await shortNameField.clear();
