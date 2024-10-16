@@ -43,6 +43,7 @@ import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; loadingError: boolean } };
+type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 @Component({
     selector: 'jhi-code-editor-monaco',
@@ -107,6 +108,17 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     readonly feedbackInternal = signal<Feedback[]>([]);
     readonly feedbackSuggestionsInternal = signal<Feedback[]>([]);
+
+    readonly feedbackForSelectedFile = computed<FeedbackWithLineAndReference[]>(() => {
+        return this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((f) => this.attachLineToFeedback(f));
+    });
+    readonly feedbackSuggestionsForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
+        this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal()).map((f) => this.attachLineToFeedback(f)),
+    );
+
+    private attachLineToFeedback(feedback: Feedback): FeedbackWithLineAndReference {
+        return { ...feedback, line: Feedback.getReferenceLine(feedback) ?? -1, reference: feedback.reference ?? 'unreferenced' };
+    }
 
     annotationsArray: Array<Annotation> = [];
 

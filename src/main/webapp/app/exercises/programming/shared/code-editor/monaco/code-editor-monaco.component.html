@@ -2,12 +2,12 @@
     <jhi-code-editor-header [showTabSizeSelector]="false" [fileName]="selectedFile()" [isLoading]="loadingCount() > 0" />
     <div class="card-body card-body-monaco">
         @if (selectedFile()) {
-            @for (feedback of filterFeedbackForSelectedFile(feedbackInternal()); track feedback.id) {
+            @for (feedback of feedbackForSelectedFile(); track feedback.id + feedback.reference) {
                 <!-- actual, stored feedback -->
                 <jhi-code-editor-tutor-assessment-inline-feedback
                     class="monaco-hidden-element"
                     [selectedFile]="selectedFile()!"
-                    [codeLine]="Feedback.getReferenceLine(feedback)!"
+                    [codeLine]="feedback.line"
                     [feedback]="feedback"
                     [readOnly]="readOnlyManualFeedback()"
                     [highlightDifferences]="highlightDifferences()"
@@ -33,9 +33,9 @@
                 />
             }
             <!-- feedback suggestions -->
-            @for (suggestion of filterFeedbackForSelectedFile(feedbackSuggestionsInternal()); track suggestion.id) {
+            @for (suggestion of feedbackSuggestionsForSelectedFile(); track suggestion.id + suggestion.reference) {
                 <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
-                    [codeLine]="Feedback.getReferenceLine(suggestion)!"
+                    [codeLine]="suggestion.line"
                     [feedback]="suggestion"
                     [course]="course()"
                     (onAcceptSuggestion)="acceptSuggestion($event)"
