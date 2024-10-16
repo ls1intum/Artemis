@@ -27,19 +27,22 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -280,16 +283,61 @@ public class ResultResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/feedback-details : Retrieves all aggregated feedback details for a given exercise.
-     * The feedback details include counts and relative counts of feedback occurrences, along with associated test case names and task numbers.
+     * GET /exercises/{exerciseId}/feedback-details-paged : Retrieves paginated and filtered aggregated feedback details for a given exercise.
+     * The feedback details include counts and relative counts of feedback occurrences, test case names, and task numbers.
+     * The method allows filtering by a search term and sorting by various fields.
+     * <br>
+     * Pagination is applied based on the provided query parameters, including page number, page size, sorting order, and search term.
+     * Sorting is applied by the specified sorted column and sorting order. If the provided sorted column is not valid for sorting (e.g., "taskNumber" or "errorCategory"),
+     * the sorting defaults to "count".
+     * <br>
+     * The response contains both the paginated feedback details and the total count of distinct results for the exercise.
      *
-     * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
-     * @return A ResponseEntity containing a list of {@link FeedbackDetailDTO}s
+     * @param exerciseId       The ID of the exercise for which feedback details should be retrieved.
+     * @param page             The page number of the results to retrieve (0-indexed).
+     * @param pageSize         The number of feedback details per page.
+     * @param searchTerm       The search term used for filtering the results (optional).
+     * @param sortingOrder     The sorting order for the results (ASCENDING or DESCENDING).
+     * @param sortedColumn     The column by which the results should be sorted. If an invalid column (e.g., "taskNumber", "errorCategory") is provided, sorting defaults to
+     *                             "count".
+     * @param filterTasks      A list of task numbers to filter feedback details by the associated tasks (optional).
+     * @param filterTestCases  A list of test case names to filter feedback details by the associated test cases (optional).
+     * @param filterOccurrence An array of two values representing the minimum and maximum occurrence of feedback items to include (optional).
+     * @return A {@link ResponseEntity} containing a {@link FeedbackAnalysisResponseDTO}, which includes:
+     *         - {@link SearchResultPageDTO < FeedbackDetailDTO >} feedbackDetails: Paginated feedback details for the exercise.
+     *         - long totalItems: The total number of feedback items (used for pagination).
+     *         - int totalAmountOfTasks: The total number of tasks associated with the feedback.
+     *         - List<String> testCaseNames: A list of test case names included in the feedback.
      */
-    @GetMapping("exercises/{exerciseId}/feedback-details")
-    @EnforceAtLeastEditorInExercise
-    public ResponseEntity<List<FeedbackDetailDTO>> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
-        log.debug("REST request to get all Feedback details for Exercise {}", exerciseId);
-        return ResponseEntity.ok(resultService.findAggregatedFeedbackByExerciseId(exerciseId));
+    @GetMapping("exercises/{exerciseId}/feedback-details-paged")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestParam int page, @RequestParam int pageSize,
+            @RequestParam String searchTerm, @RequestParam SortingOrder sortingOrder, @RequestParam String sortedColumn, @RequestParam List<String> filterTasks,
+            @RequestParam List<String> filterTestCases, @RequestParam String[] filterOccurrence) {
+
+        SearchTermPageableSearchDTO<String> search = new SearchTermPageableSearchDTO<>();
+        search.setPage(page);
+        search.setPageSize(pageSize);
+        search.setSearchTerm(searchTerm);
+        search.setSortingOrder(sortingOrder);
+        search.setSortedColumn(sortedColumn);
+
+        FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, search, filterTasks, filterTestCases, filterOccurrence);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * GET /exercises/{exerciseId}/feedback-details-max-count : Retrieves the maximum number of feedback occurrences for a given exercise.
+     * This method is useful for determining the highest count of feedback occurrences across all feedback items for the exercise,
+     * which can then be used to filter or adjust feedback analysis results.
+     *
+     * @param exerciseId The ID of the exercise for which the maximum feedback count should be retrieved.
+     * @return A {@link ResponseEntity} containing the maximum count of feedback occurrences (long).
+     */
+    @GetMapping("exercises/{exerciseId}/feedback-details-max-count")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<Long> getMaxCount(@PathVariable long exerciseId) {
+        long maxCount = resultService.getMaxCountForExercise(exerciseId);
+        return ResponseEntity.ok(maxCount);
     }
 }
