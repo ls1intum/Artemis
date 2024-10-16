@@ -186,11 +186,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.subscribeToIsCodeOfConductAccepted();
                 this.subscribeToIsCodeOfConductPresented();
                 this.subscribeToConversationsOfUser();
-                this.subscribeToLoading();
                 this.updateQueryParameters();
                 this.prepareSidebarData();
                 this.metisConversationService.checkIsCodeOfConductAccepted(this.course!);
                 this.isServiceSetUp = true;
+                this.isLoading = false;
             }
         });
 
@@ -261,12 +261,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private subscribeToConversationsOfUser() {
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
             this.conversationsOfUser = conversations ?? [];
-        });
-    }
-
-    private subscribeToLoading() {
-        this.metisConversationService.isLoading$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isLoading: boolean) => {
-            this.isLoading = isLoading;
         });
     }
 
