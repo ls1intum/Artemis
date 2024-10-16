@@ -126,7 +126,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
@@ -175,7 +175,7 @@ public class CourseTestService {
     private CourseTestRepository courseRepo;
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
+    private ExerciseTestRepository exerciseRepo;
 
     @Autowired
     private LectureRepository lectureRepo;
@@ -3303,8 +3303,7 @@ public class CourseTestService {
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(course.getCourseIcon()).as("Course icon got stored").isNotNull();
-        var imgResult = request.performMvcRequest(get(course.getCourseIcon())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
-                .andReturn();
+        var imgResult = request.performMvcRequest(get(course.getCourseIcon())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.IMAGE_PNG)).andReturn();
         assertThat(imgResult.getResponse().getContentAsByteArray()).isNotEmpty();
 
         var createdCourse = courseRepo.findByIdElseThrow(course.getId());

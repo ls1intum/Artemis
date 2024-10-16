@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -83,9 +82,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
     @Autowired
     private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;

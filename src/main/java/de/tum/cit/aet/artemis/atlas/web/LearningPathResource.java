@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 
 @Profile(PROFILE_CORE)
+@FeatureToggle(Feature.LearningPaths)
 @RestController
 @RequestMapping("api/")
 public class LearningPathResource {
@@ -108,7 +109,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("courses/{courseId}/learning-paths/enable")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to enable learning paths for course with id: {}", courseId);
@@ -129,7 +129,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("courses/{courseId}/learning-paths/generate-missing")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> generateMissingLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to generate missing learning paths for course with id: {}", courseId);
@@ -147,7 +146,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the desired page, sorted and matching the given query
      */
     @GetMapping("courses/{courseId}/learning-paths")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<SearchResultPageDTO<LearningPathInformationDTO>> getLearningPathsOnPage(@PathVariable long courseId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
@@ -162,7 +160,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the health status
      */
     @GetMapping("courses/{courseId}/learning-path-health")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<LearningPathHealthDTO> getHealthStatusForCourse(@PathVariable long courseId) {
         log.debug("REST request to get health status of learning paths in course with id: {}", courseId);
@@ -177,7 +174,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the learning path
      */
     @GetMapping("learning-path/{learningPathId}")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathInformationDTO> getLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get learning path with id: {}", learningPathId);
@@ -196,7 +192,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the graph
      */
     @GetMapping("learning-path/{learningPathId}/competency-graph")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathCompetencyGraphDTO> getLearningPathCompetencyGraph(@PathVariable long learningPathId) {
         log.debug("REST request to get competency graph for learning path with id: {}", learningPathId);
@@ -215,7 +210,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
      */
     @GetMapping("learning-path/{learningPathId}/graph")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxGraph(@PathVariable long learningPathId) {
         log.debug("REST request to get ngx graph representation of learning path with id: {}", learningPathId);
@@ -229,7 +223,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
      */
     @GetMapping("learning-path/{learningPathId}/path")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxPath(@PathVariable long learningPathId) {
         log.debug("REST request to get ngx path representation of learning path with id: {}", learningPathId);
@@ -246,7 +239,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the navigation information
      */
     @GetMapping("learning-path/{learningPathId}/relative-navigation")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathNavigationDTO> getRelativeLearningPathNavigation(@PathVariable @Valid long learningPathId, @RequestParam long learningObjectId,
             @RequestParam LearningObjectType learningObjectType, @RequestParam long competencyId) {
@@ -265,7 +257,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the navigation information
      */
     @GetMapping("learning-path/{learningPathId}/navigation")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathNavigationDTO> getLearningPathNavigation(@PathVariable long learningPathId) {
         log.debug("REST request to get navigation for learning path with id: {}", learningPathId);
@@ -281,7 +272,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the navigation overview
      */
     @GetMapping("learning-path/{learningPathId}/navigation-overview")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathNavigationOverviewDTO> getLearningPathNavigationOverview(@PathVariable @Valid long learningPathId) {
         log.debug("REST request to get navigation overview for learning path with id: {}", learningPathId);
