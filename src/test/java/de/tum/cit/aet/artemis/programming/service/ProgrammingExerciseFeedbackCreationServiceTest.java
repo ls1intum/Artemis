@@ -44,7 +44,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
     }
 
     private String createFeedbackFromTestCase(String testName, List<String> testMessages, boolean successful) {
-        var activeTestCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
+        var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
         return feedbackCreationService.createFeedbackFromTestCase(testName, testMessages, successful, programmingExercise, activeTestCases).getDetailText();
     }
 
@@ -229,7 +229,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         var result = generateResult(Collections.emptyList(), Collections.emptyList());
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(3).noneMatch(ProgrammingExerciseTestCase::isActive);
     }
 
@@ -238,7 +238,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         var result = generateResult(List.of("test1", "test2"), List.of("test4", "test5"));
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(5).allMatch(testCase -> {
             if ("test3".equals(testCase.getTestName())) {
                 return !testCase.isActive();
@@ -252,12 +252,12 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
     @Test
     void shouldGenerateNewTestCases() {
         // We do not want to use the test cases generated in the setup
-        programmingExerciseTestCaseRepository.deleteAll(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         var result = generateResult(List.of("test1", "test2"), Collections.emptyList());
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(2);
 
         assertThat(testCases.stream().allMatch(ProgrammingExerciseTestCase::isActive)).isTrue();
@@ -281,12 +281,12 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
 
     private void testGenerateNewTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) {
         // We do not want to use the test cases generated in the setup
-        programmingExerciseTestCaseRepository.deleteAll(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         var result = generateResult(List.of("test1", "test2"), Collections.emptyList());
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(2);
 
         for (ProgrammingExerciseTestCase testCase : testCases) {
@@ -297,12 +297,12 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
     @Test
     void shouldFilterOutDuplicateTestCases() {
         // We do not want to use the test cases generated in the setup
-        programmingExerciseTestCaseRepository.deleteAll(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         var result = generateResult(List.of("test1"), List.of("generateTestsForAllClasses", "generateTestsForAllClasses", "generateTestsForAllClasses"));
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(2);
     }
 
