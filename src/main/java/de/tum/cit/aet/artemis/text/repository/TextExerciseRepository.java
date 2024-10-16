@@ -35,8 +35,8 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
             """)
     List<TextExercise> findByCourseIdWithCategories(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencies" })
-    Optional<TextExercise> findWithEagerCompetenciesById(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "competencies", "categories" })
+    Optional<TextExercise> findWithEagerCompetenciesAndCategoriesById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(long exerciseId);
@@ -110,8 +110,8 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     }
 
     @NotNull
-    default TextExercise findWithEagerCompetenciesByIdElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
+    default TextExercise findWithEagerCompetenciesAndCategoriesByIdElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithEagerCompetenciesAndCategoriesById(exerciseId), exerciseId);
     }
 
     @NotNull
@@ -128,4 +128,7 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     default TextExercise findByIdWithStudentParticipationsAndSubmissionsElseThrow(long exerciseId) {
         return getValueElseThrow(findWithStudentParticipationsAndSubmissionsById(exerciseId), exerciseId);
     }
+
+    @EntityGraph(type = LOAD, attributePaths = { "categories" })
+    List<TextExercise> findAllWithCategoriesByCourseId(Long courseId);
 }
