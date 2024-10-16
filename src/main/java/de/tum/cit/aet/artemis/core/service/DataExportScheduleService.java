@@ -72,25 +72,26 @@ public class DataExportScheduleService {
         log.info("Creating data exports and deleting old ones");
         Set<DataExport> successfulDataExports = Collections.synchronizedSet(new HashSet<>());
         var dataExportsToBeCreated = dataExportRepository.findAllToBeCreated();
-        ExecutorService executor = Executors.newFixedThreadPool(10);
-        dataExportsToBeCreated.forEach(dataExport -> executor.execute(() -> createDataExport(dataExport, successfulDataExports)));
-        executor.shutdown();
-        ZonedDateTime thresholdDate = ZonedDateTime.now().minusDays(7);
-        var dataExportsToBeDeleted = dataExportRepository.findAllToBeDeleted(thresholdDate);
-        dataExportsToBeDeleted.forEach(this::deleteDataExport);
-        Optional<User> admin = userService.findInternalAdminUser();
-        if (admin.isEmpty()) {
-            log.warn("No internal admin user found. Cannot send email to admin about successful creation of data exports.");
-            return;
-        }
-        // This job runs at 4 am by default and the next scheduled job runs at 5 am, so we should allow 60 minutes for the creation.
-        // If the creation doesn't finish within 60 minutes, all pending exports will be picked up when the job runs the next time.
-        if (!executor.awaitTermination(60, java.util.concurrent.TimeUnit.MINUTES)) {
-            log.info("Not all pending data exports could be created within 60 minutes.");
-            executor.shutdownNow();
-        }
-        if (!successfulDataExports.isEmpty()) {
-            mailService.sendSuccessfulDataExportsEmailToAdmin(admin.get(), successfulDataExports);
+        try (ExecutorService executor = Executors.newFixedThreadPool(10)) {
+            dataExportsToBeCreated.forEach(dataExport -> executor.execute(() -> createDataExport(dataExport, successfulDataExports)));
+            executor.shutdown();
+            ZonedDateTime thresholdDate = ZonedDateTime.now().minusDays(7);
+            var dataExportsToBeDeleted = dataExportRepository.findAllToBeDeleted(thresholdDate);
+            dataExportsToBeDeleted.forEach(this::deleteDataExport);
+            Optional<User> admin = userService.findInternalAdminUser();
+            if (admin.isEmpty()) {
+                log.warn("No internal admin user found. Cannot send email to admin about successful creation of data exports.");
+                return;
+            }
+            // This job runs at 4 am by default and the next scheduled job runs at 5 am, so we should allow 60 minutes for the creation.
+            // If the creation doesn't finish within 60 minutes, all pending exports will be picked up when the job runs the next time.
+            if (!executor.awaitTermination(60, java.util.concurrent.TimeUnit.MINUTES)) {
+                log.info("Not all pending data exports could be created within 60 minutes.");
+                executor.shutdownNow();
+            }
+            if (!successfulDataExports.isEmpty()) {
+                mailService.sendSuccessfulDataExportsEmailToAdmin(admin.get(), successfulDataExports);
+            }
         }
     }
 
