@@ -349,7 +349,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckAndGetCourseAndExamAccessForConduction_notRegisteredUser() {
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam2.getId())).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course2.getId(), exam2.getId())).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
