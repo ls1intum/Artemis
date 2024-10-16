@@ -45,24 +45,23 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
 
     @Test
     void testNewExercise() {
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
-        var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
+        var tasks = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
         assertThat(tasks).hasSize(2).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1", "testClass[BubbleSort]"))
                 .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"));
     }
 
     @Test
     void testAddTask() {
-        var previousTaskIds = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId)
-                .collect(Collectors.toSet());
+        var previousTaskIds = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId).collect(Collectors.toSet());
 
         updateProblemStatement("""
                 [task][Task 1](testClass[BubbleSort])
                 [task][Task 2](testMethods[Context])
                 [task][Task 3](testMethods[Policy])
                 """);
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(3);
-        var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).hasSize(3);
+        var tasks = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
         assertThat(tasks).hasSize(3).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1", "testClass[BubbleSort]"))
                 .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"))
                 .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 3", "testMethods[Policy]"));
@@ -75,14 +74,14 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
     @Test
     void testRemoveAllTasks() {
         updateProblemStatement("Empty");
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }
 
     @Test
     void testReduceToOneTask() {
         updateProblemStatement("[task][Task 1](testClass[BubbleSort],testMethods[Context], testMethods[Policy])");
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(1);
-        var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).hasSize(1);
+        var tasks = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
         assertThat(tasks).hasSize(1);
         var task = tasks.stream().findFirst().orElseThrow();
         assertThat(task.getTaskName()).isEqualTo("Task 1");
@@ -97,21 +96,20 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
      */
     @Test
     void testRenameTask() {
-        var previousTaskIds = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId)
-                .collect(Collectors.toSet());
+        var previousTaskIds = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId).collect(Collectors.toSet());
 
         updateProblemStatement("""
                 [task][Task 1a](testClass[BubbleSort])
                 [task][Task 2](testMethods[Context])
                 """);
 
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
-        var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
+        var tasks = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
 
         var newTaskIds = tasks.stream().map(ProgrammingExerciseTask::getId).collect(Collectors.toSet());
         assertThat(previousTaskIds).isEqualTo(newTaskIds);
 
-        assertThat(programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId())).isEqualTo(tasks);
+        assertThat(taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId())).isEqualTo(tasks);
 
         assertThat(tasks).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1a", "testClass[BubbleSort]"))
                 .anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 2", "testMethods[Context]"));
@@ -122,8 +120,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
      */
     @Test
     void testNoChanges() {
-        var previousTaskIds = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId)
-                .collect(Collectors.toSet());
+        var previousTaskIds = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId).collect(Collectors.toSet());
 
         updateProblemStatement("""
                 Test
@@ -131,17 +128,15 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
                 [task][Task 2](testMethods[Context])
                 """);
 
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
 
-        var newTaskIds = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId)
-                .collect(Collectors.toSet());
+        var newTaskIds = taskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId).collect(Collectors.toSet());
         assertThat(previousTaskIds).isEqualTo(newTaskIds);
     }
 
     @Test
     void testDeleteWithCodeHints() {
-        var task = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId()).stream().filter(task1 -> "Task 1".equals(task1.getTaskName())).findFirst()
-                .orElse(null);
+        var task = taskRepository.findByExerciseId(programmingExercise.getId()).stream().filter(task1 -> "Task 1".equals(task1.getTaskName())).findFirst().orElse(null);
         assertThat(task).isNotNull();
 
         var codeHint = new CodeHint();
@@ -150,8 +145,8 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
         codeHintRepository.save(codeHint);
 
         programmingExerciseTaskService.delete(task);
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(1);
-        assertThat(programmingExerciseTaskRepository.findById(task.getId())).isEmpty();
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).hasSize(1);
+        assertThat(taskRepository.findById(task.getId())).isEmpty();
         assertThat(codeHintRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }
 
@@ -217,10 +212,10 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
                 [task][Task 1](testClass[BubbleSort],testWithBraces(),testParametrized(Parameter1, 2)[1])
                 """);
 
-        var actualTasks = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId());
+        var actualTasks = taskRepository.findByExerciseId(programmingExercise.getId());
         assertThat(actualTasks).hasSize(1);
         final var actualTask = actualTasks.iterator().next().getId();
-        var actualTaskWithTestCases = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask);
+        var actualTaskWithTestCases = taskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask);
         assertThat(actualTaskWithTestCases.getTaskName()).isEqualTo("Task 1");
         var actualTestCaseNames = actualTaskWithTestCases.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
         assertThat(actualTestCaseNames).containsExactlyInAnyOrder(testCaseNames);
@@ -234,10 +229,10 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
 
         updateProblemStatement("[task][Task 1](<testid>%s</testid>,<testid>%s</testid>)".formatted(test1.getId(), test2.getId()));
 
-        var actualTasks = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId());
+        var actualTasks = taskRepository.findByExerciseId(programmingExercise.getId());
         assertThat(actualTasks).hasSize(1);
         final var actualTask = actualTasks.iterator().next().getId();
-        var actualTaskWithTestCases = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask);
+        var actualTaskWithTestCases = taskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask);
         assertThat(actualTaskWithTestCases.getTaskName()).isEqualTo("Task 1");
         var actualTestCaseNames = actualTaskWithTestCases.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
         assertThat(actualTestCaseNames).containsExactlyInAnyOrder("testClass[BubbleSort]", "testMethods[Context]");

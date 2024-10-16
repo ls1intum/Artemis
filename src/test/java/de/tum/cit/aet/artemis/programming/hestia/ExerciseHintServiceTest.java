@@ -80,7 +80,7 @@ class ExerciseHintServiceTest extends AbstractProgrammingIntegrationIndependentT
         addResultWithFailedTestCases(exercise.getTestCases());
         for (ProgrammingExerciseTask sortedTask : sortedTasks) {
             sortedTask.getTestCases().clear();
-            programmingExerciseTaskRepository.save(sortedTask);
+            taskRepository.save(sortedTask);
         }
         exercise.setProblemStatement(exercise.getProblemStatement().replaceAll("\\([^()]+\\)", "()"));
         programmingExerciseRepository.save(exercise);

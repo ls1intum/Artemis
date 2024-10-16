@@ -39,7 +39,7 @@ class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
         var task = new ProgrammingExerciseTask();
         task.setTaskName(taskName);
         task.setExercise(programmingExerciseRepository.getReferenceById(programmingExerciseId));
-        task = programmingExerciseTaskRepository.save(task);
+        task = taskRepository.save(task);
         return task;
     }
 
@@ -59,14 +59,14 @@ class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
     @Test
     void addOneTaskToProgrammingExercise() {
         var task = addTaskToProgrammingExercise("Task 1");
-        assertThat(programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExerciseId)).containsExactly(task);
+        assertThat(taskRepository.findByExerciseIdWithTestCases(programmingExerciseId)).containsExactly(task);
     }
 
     @Test
     void deleteProgrammingExerciseWithTask() {
         addOneTaskToProgrammingExercise();
         programmingExerciseRepository.deleteById(programmingExerciseId);
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExerciseId)).isEmpty();
+        assertThat(taskRepository.findByExerciseId(programmingExerciseId)).isEmpty();
     }
 
     @Test
@@ -97,8 +97,8 @@ class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
         assertThat(testCases).isNotEmpty();
         var task = addTaskToProgrammingExercise("Task 1");
         task.setTestCases(testCases);
-        task = programmingExerciseTaskRepository.save(task);
-        programmingExerciseTaskRepository.delete(task);
+        task = taskRepository.save(task);
+        taskRepository.delete(task);
         assertThat(testCaseRepository.findByExerciseId(programmingExerciseId)).isEqualTo(testCases);
     }
 
@@ -110,7 +110,7 @@ class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
         assertThat(testCases).isNotEmpty();
         var task = addTaskToProgrammingExercise("Task 1");
         task.setTestCases(testCases);
-        task = programmingExerciseTaskRepository.save(task);
+        task = taskRepository.save(task);
         Set<ProgrammingExerciseSolutionEntry> allSolutionEntries = new HashSet<>();
         for (ProgrammingExerciseTestCase testCase : testCases) {
             var solutionEntries = addSolutionEntriesToTestCase(2, testCase);
@@ -129,7 +129,7 @@ class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
         codeHint.setSolutionEntries(allSolutionEntries);
         codeHint = codeHintRepository.save(codeHint);
         task.setExerciseHints(Set.of(codeHint));
-        programmingExerciseTaskRepository.save(task);
+        taskRepository.save(task);
         assertThat(programmingExerciseSolutionEntryRepository.findByCodeHintId(codeHint.getId())).isEqualTo(allSolutionEntries);
         assertThat(codeHintRepository.findByExerciseId(programmingExerciseId)).containsExactly(codeHint);
     }
@@ -139,7 +139,7 @@ class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
         addCodeHintToProgrammingExercise();
         var codeHint = codeHintRepository.findByExerciseId(programmingExerciseId).stream().findAny().orElseThrow();
         codeHintRepository.delete(codeHint);
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExerciseId)).hasSize(1);
+        assertThat(taskRepository.findByExerciseId(programmingExerciseId)).hasSize(1);
         assertThat(programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExerciseId)).hasSize(6);
     }
 
@@ -147,7 +147,7 @@ class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
     void deleteProgrammingExerciseWithCodeHint() {
         addCodeHintToProgrammingExercise();
         programmingExerciseRepository.deleteById(programmingExerciseId);
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExerciseId)).isEmpty();
+        assertThat(taskRepository.findByExerciseId(programmingExerciseId)).isEmpty();
         assertThat(programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExerciseId)).isEmpty();
         assertThat(codeHintRepository.findByExerciseId(programmingExerciseId)).isEmpty();
         assertThat(testCaseRepository.findByExerciseId(programmingExerciseId)).isEmpty();
@@ -156,8 +156,8 @@ class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
     @Test
     void deleteTaskWithCodeHint() {
         addCodeHintToProgrammingExercise();
-        var task = programmingExerciseTaskRepository.findByExerciseId(programmingExerciseId).stream().findAny().orElseThrow();
-        programmingExerciseTaskRepository.delete(task);
+        var task = taskRepository.findByExerciseId(programmingExerciseId).stream().findAny().orElseThrow();
+        taskRepository.delete(task);
         assertThat(codeHintRepository.findByExerciseId(programmingExerciseId)).isEmpty();
         assertThat(testCaseRepository.findByExerciseId(programmingExerciseId)).hasSize(3);
         assertThat(programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExerciseId)).hasSize(6);

@@ -62,7 +62,7 @@ class CodeHintServiceTest extends AbstractProgrammingIntegrationIndependentTest 
         var task = new ProgrammingExerciseTask();
         task.setExercise(exercise);
         task.setTaskName(name);
-        task = programmingExerciseTaskRepository.save(task);
+        task = taskRepository.save(task);
         for (int i = 0; i < testCases.size(); i++) {
             ProgrammingExerciseTestCase testCase = testCases.get(i);
             testCase.getTasks().add(task);

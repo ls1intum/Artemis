@@ -35,7 +35,7 @@ class TestwiseCoverageIntegrationTest extends AbstractProgrammingIntegrationInde
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 0);
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        var solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        var solutionParticipation = solutionEntryRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         var unsavedPreviousSubmission = new ProgrammingSubmission();
         unsavedPreviousSubmission.setParticipation(solutionParticipation);
         unsavedPreviousSubmission.setSubmissionDate(ZonedDateTime.of(2022, 4, 5, 12, 0, 0, 0, ZoneId.of("Europe/Berlin")));

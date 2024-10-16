@@ -77,10 +77,10 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractProgrammingIntegrat
         task.setExercise(programmingExercise);
         task.setTaskName("Task");
         task.setTestCases(new HashSet<>(testCases));
-        programmingExerciseTaskRepository.save(task);
+        taskRepository.save(task);
 
         request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.NO_CONTENT);
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
         assertThat(programmingExerciseSolutionEntryRepository.findAllById(solutionEntryIdsBeforeDeleting)).isEmpty();
     }
 
@@ -114,7 +114,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractProgrammingIntegrat
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.OK, Set.class);
-        Set<ProgrammingExerciseTask> extractedTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(programmingExercise.getId());
+        Set<ProgrammingExerciseTask> extractedTasks = taskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(programmingExercise.getId());
         Optional<ProgrammingExerciseTask> task1Optional = extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName1)).findFirst();
         Optional<ProgrammingExerciseTask> task2Optional = extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName2)).findFirst();
         assertThat(task1Optional).isPresent();
@@ -139,7 +139,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractProgrammingIntegrat
 
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.OK, Set.class);
 
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }
 
     @Test

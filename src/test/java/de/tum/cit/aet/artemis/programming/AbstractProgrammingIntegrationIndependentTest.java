@@ -79,7 +79,7 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
     protected ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
-    protected ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+    protected ProgrammingExerciseTaskRepository taskRepository;
 
     @Autowired
     protected ProgrammingExerciseTestCaseTestRepository testCaseRepository;
@@ -91,7 +91,7 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
     protected ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
-    protected SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
+    protected SolutionProgrammingExerciseParticipationRepository solutionEntryRepository;
 
     @Autowired
     protected StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;

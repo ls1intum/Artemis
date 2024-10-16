@@ -55,7 +55,7 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractProgrammin
         task.setExercise(programmingExercise);
         task.setTaskName("Task");
         task.setTestCases(new HashSet<>(testCases));
-        task = programmingExerciseTaskRepository.save(task);
+        task = taskRepository.save(task);
         codeHint.setProgrammingExerciseTask(task);
         codeHintRepository.save(codeHint);
     }
