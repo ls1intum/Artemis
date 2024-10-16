@@ -38,24 +38,19 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.hazelcast.collection.IQueue;
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -63,8 +58,6 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
-import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 /**
@@ -83,33 +76,11 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 // concurrently. For example, it prevents overloading the LocalCI's result processing system with too many build job results at the same time, which could lead to flaky tests
 // or timeouts. By keeping everything in the same thread, we maintain more predictable and stable test behavior, while not increasing the test execution time significantly.
 @Execution(ExecutionMode.SAME_THREAD)
-class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
+class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCIIntegrationTest.class);
 
     private static final String TEST_PREFIX = "localvcciint";
-
-    @Autowired
-    private ExamUtilService examUtilService;
-
-    @Autowired
-    private BuildJobTestRepository buildJobRepository;
-
-    @Autowired
-    protected LocalCITriggerService localCITriggerService;
-
-    @Autowired
-    private SharedQueueProcessingService sharedQueueProcessingService;
-
-    @Autowired
-    @Qualifier("hazelcastInstance")
-    private HazelcastInstance hazelcastInstance;
-
-    @Value("${artemis.user-management.internal-admin.username}")
-    private String localVCUsername;
-
-    @Value("${artemis.user-management.internal-admin.password}")
-    private String localVCPassword;
 
     // ---- Repository handles ----
     private LocalRepository templateRepository;

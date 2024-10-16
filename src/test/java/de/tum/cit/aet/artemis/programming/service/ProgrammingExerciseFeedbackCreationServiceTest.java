@@ -10,14 +10,13 @@ import jakarta.validation.constraints.NotNull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -27,32 +26,9 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestC
 import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringIntegrationIndependentTest {
-
-    @Autowired
-    private ProgrammingExerciseFeedbackCreationService feedbackCreationService;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExamUtilService examUtilService;
+class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private ProgrammingExercise programmingExercise;
 
@@ -68,7 +44,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     }
 
     private String createFeedbackFromTestCase(String testName, List<String> testMessages, boolean successful) {
-        var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
+        var activeTestCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
         return feedbackCreationService.createFeedbackFromTestCase(testName, testMessages, successful, programmingExercise, activeTestCases).getDetailText();
     }
 
@@ -253,7 +229,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         var result = generateResult(Collections.emptyList(), Collections.emptyList());
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(3).noneMatch(ProgrammingExerciseTestCase::isActive);
     }
 
@@ -262,7 +238,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         var result = generateResult(List.of("test1", "test2"), List.of("test4", "test5"));
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(5).allMatch(testCase -> {
             if ("test3".equals(testCase.getTestName())) {
                 return !testCase.isActive();
@@ -276,12 +252,12 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     @Test
     void shouldGenerateNewTestCases() {
         // We do not want to use the test cases generated in the setup
-        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        programmingExerciseTestCaseRepository.deleteAll(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         var result = generateResult(List.of("test1", "test2"), Collections.emptyList());
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(2);
 
         assertThat(testCases.stream().allMatch(ProgrammingExerciseTestCase::isActive)).isTrue();
@@ -305,12 +281,12 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
 
     private void testGenerateNewTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) {
         // We do not want to use the test cases generated in the setup
-        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        programmingExerciseTestCaseRepository.deleteAll(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         var result = generateResult(List.of("test1", "test2"), Collections.emptyList());
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(2);
 
         for (ProgrammingExerciseTestCase testCase : testCases) {
@@ -321,12 +297,12 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     @Test
     void shouldFilterOutDuplicateTestCases() {
         // We do not want to use the test cases generated in the setup
-        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        programmingExerciseTestCaseRepository.deleteAll(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         var result = generateResult(List.of("test1"), List.of("generateTestsForAllClasses", "generateTestsForAllClasses", "generateTestsForAllClasses"));
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(2);
     }
 

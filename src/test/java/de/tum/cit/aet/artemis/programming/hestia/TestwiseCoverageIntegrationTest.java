@@ -7,11 +7,11 @@ import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -19,39 +19,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageFileReport;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageReport;
 import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
-import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageFileReportRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageReportEntryRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class TestwiseCoverageIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "testwisecoverageint";
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
-
-    @Autowired
-    private CoverageReportRepository coverageReportRepository;
-
-    @Autowired
-    private CoverageFileReportRepository coverageFileReportRepository;
-
-    @Autowired
-    private TestwiseCoverageReportEntryRepository testwiseCoverageReportEntryRepository;
-
-    @Autowired
-    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
-
-    @Autowired
-    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     private ProgrammingExercise programmingExercise;
 

@@ -12,56 +12,23 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestCaseType;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.CodeHintService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
-class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {
+class CodeHintServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "codehintservice";
-
-    @Autowired
-    private CodeHintService codeHintService;
-
-    @Autowired
-    private CodeHintRepository codeHintRepository;
-
-    @Autowired
-    private ProgrammingExerciseTaskRepository taskRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
-
-    @Autowired
-    private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     private ProgrammingExercise exercise;
 
@@ -80,7 +47,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         testCase.setActive(true);
         testCase.setWeight(1D);
         testCase.setType(ProgrammingExerciseTestCaseType.BEHAVIORAL);
-        return testCaseRepository.save(testCase);
+        return programmingExerciseTestCaseRepository.save(testCase);
     }
 
     private ProgrammingExerciseSolutionEntry addSolutionEntryToTestCase(ProgrammingExerciseTestCase testCase) {
@@ -88,18 +55,18 @@ class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         solutionEntry.setTestCase(testCase);
         solutionEntry.setLine(1);
         solutionEntry.setCode("code");
-        return solutionEntryRepository.save(solutionEntry);
+        return programmingExerciseSolutionEntryRepository.save(solutionEntry);
     }
 
     private ProgrammingExerciseTask addTaskToExercise(String name, List<ProgrammingExerciseTestCase> testCases) {
         var task = new ProgrammingExerciseTask();
         task.setExercise(exercise);
         task.setTaskName(name);
-        task = taskRepository.save(task);
+        task = programmingExerciseTaskRepository.save(task);
         for (int i = 0; i < testCases.size(); i++) {
             ProgrammingExerciseTestCase testCase = testCases.get(i);
             testCase.getTasks().add(task);
-            testCases.set(i, testCaseRepository.save(testCase));
+            testCases.set(i, programmingExerciseTestCaseRepository.save(testCase));
         }
         task.setTestCases(new HashSet<>(testCases));
         return task;
@@ -114,7 +81,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         solutionEntries.forEach(entry -> entry.setCodeHint(codeHint));
         var createdHint = codeHintRepository.save(codeHint);
-        solutionEntryRepository.saveAll(solutionEntries);
+        programmingExerciseSolutionEntryRepository.saveAll(solutionEntries);
         return createdHint;
     }
 
@@ -195,7 +162,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         entryToUpdate.setTestCase(testCase2);
         codeHintService.updateSolutionEntriesForCodeHint(codeHint);
 
-        var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
+        var allEntries = programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
         assertThat(allEntries).hasSize(1);
         assertThat(allEntries.stream().findAny().orElseThrow().getTestCase().getId()).isEqualTo(testCase2.getId());
     }
@@ -216,7 +183,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         entry.setFilePath("Updated file path");
         codeHintService.updateSolutionEntriesForCodeHint(codeHint);
 
-        var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
+        var allEntries = programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
         assertThat(allEntries).hasSize(1);
         assertThat(allEntries.stream().findAny().orElseThrow()).isEqualTo(entryToUpdate);
     }
@@ -233,7 +200,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         codeHint.setSolutionEntries(new HashSet<>(Set.of(manuallyCreatedEntry)));
         codeHintService.updateSolutionEntriesForCodeHint(codeHint);
 
-        var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
+        var allEntries = programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
         assertThat(allEntries).containsExactly(manuallyCreatedEntry);
     }
 
@@ -249,10 +216,10 @@ class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         codeHint.setSolutionEntries(new HashSet<>(Collections.emptySet()));
         codeHintService.updateSolutionEntriesForCodeHint(codeHint);
 
-        var entriesForHint = solutionEntryRepository.findByCodeHintId(codeHint.getId());
+        var entriesForHint = programmingExerciseSolutionEntryRepository.findByCodeHintId(codeHint.getId());
         assertThat(entriesForHint).isEmpty();
 
-        var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
+        var allEntries = programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
         assertThat(allEntries).containsExactly(entryToRemove);
     }
 
@@ -273,10 +240,10 @@ class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {
         codeHint.setSolutionEntries(new HashSet<>(Set.of(invalidSolutionEntry)));
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> codeHintService.updateSolutionEntriesForCodeHint(codeHint));
 
-        var entriesForHint = solutionEntryRepository.findByCodeHintId(codeHint.getId());
+        var entriesForHint = programmingExerciseSolutionEntryRepository.findByCodeHintId(codeHint.getId());
         assertThat(entriesForHint).isEmpty();
 
-        var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
+        var allEntries = programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
         assertThat(allEntries).isEmpty();
     }
 }

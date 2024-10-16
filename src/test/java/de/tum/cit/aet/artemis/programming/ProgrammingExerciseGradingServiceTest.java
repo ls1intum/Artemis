@@ -23,7 +23,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
@@ -36,19 +35,12 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -56,14 +48,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
  * Tests the {@link ProgrammingExerciseGradingService}.
@@ -76,48 +62,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * <li>{@link ExamProgrammingExerciseGradingServiceTest} - for exercises in an exam setting.</li>
  * </ul>
  */
-abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringIntegrationIndependentTest {
+abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "progexgradingservice";
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
-
-    @Autowired
-    private StudentParticipationTestRepository studentParticipationRepository;
-
-    @Autowired
-    private StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
-
-    @Autowired
-    private ExamRepository examRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
-    @Autowired
-    private ProgrammingExerciseGradingService gradingService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
-    private ExamUtilService examUtilService;
 
     private ProgrammingExercise programmingExerciseSCAEnabled;
 
@@ -239,14 +186,15 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     private Map<String, ProgrammingExerciseTestCase> getTestCases(ProgrammingExercise programmingExercise) {
-        return testCaseRepository.findByExerciseId(programmingExercise.getId()).stream().collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
+        return programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldNotUpdateResultIfNoTestCasesExist() {
         // We do not want to use the test cases generated in the setup
-        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        programmingExerciseTestCaseRepository.deleteAll(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         Double scoreBeforeUpdate = result.getScore();
         gradingService.calculateScoreForResult(result, programmingExercise, true);
@@ -262,7 +210,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS);
         testCases.get("test3").active(true).visibility(Visibility.ALWAYS);
-        testCaseRepository.saveAll(testCases.values());
+        programmingExerciseTestCaseRepository.saveAll(testCases.values());
         testCases = getTestCases(programmingExercise);
 
         // Create feedback with duplicate content for test1 and test3
@@ -346,12 +294,12 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSetScoreCorrectlyIfWeightSumIsReallyBigOrReallySmall() {
-        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(0.);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(0.00000000000000001);
         testCases.get("test3").active(false).weight(0.);
-        testCaseRepository.saveAll(testCases.values());
+        programmingExerciseTestCaseRepository.saveAll(testCases.values());
 
         Result result = new Result();
         result.addFeedback(new Feedback().result(result).testCase(testCases.get("test1")).positive(false).type(FeedbackType.AUTOMATIC));
@@ -360,7 +308,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         result = gradingService.calculateScoreForResult(result, programmingExercise, false);
         assertThat(result.getScore()).isZero();
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(0.8000000000);
-        testCaseRepository.saveAll(testCases.values());
+        programmingExerciseTestCaseRepository.saveAll(testCases.values());
 
         result = gradingService.calculateScoreForResult(result, programmingExercise, false);
         assertThat(result.getScore()).isPositive();
@@ -370,13 +318,13 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRecalculateScoreWithTestCaseBonusButNoExerciseBonus() {
         // Set up test cases with bonus
-        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(5.).bonusMultiplier(1D).setBonusPoints(7D);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(2.).bonusMultiplier(2D).setBonusPoints(0D);
         testCases.get("test3").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(1D).setBonusPoints(10.5D);
 
-        testCaseRepository.saveAll(testCases.values());
+        programmingExerciseTestCaseRepository.saveAll(testCases.values());
 
         Participation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
@@ -462,12 +410,12 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRecalculateScoreWithTestCaseBonusAndExerciseBonus() {
         // Set up test cases with bonus
-        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).weight(4.).bonusMultiplier(1D).setBonusPoints(0D);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(3D).setBonusPoints(21D);
         testCases.get("test3").active(true).visibility(Visibility.ALWAYS).weight(3.).bonusMultiplier(2D).setBonusPoints(14D);
-        testCaseRepository.saveAll(testCases.values());
+        programmingExerciseTestCaseRepository.saveAll(testCases.values());
 
         // Score should be capped at 200%
         programmingExercise.setBonusPoints(programmingExercise.getMaxPoints());
@@ -658,7 +606,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         }
 
         var invisibleTestCase = new ProgrammingExerciseTestCase().testName("test4").exercise(programmingExercise);
-        testCaseRepository.save(invisibleTestCase);
+        programmingExerciseTestCaseRepository.save(invisibleTestCase);
 
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -768,7 +716,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             testCase.setWeight(0D);
         }
         testCases.get("test1").setBonusMultiplier(1.4D);
-        testCaseRepository.saveAll(testCases.values());
+        programmingExerciseTestCaseRepository.saveAll(testCases.values());
 
         final var updatedResults = programmingExerciseGradingService.updateAllResults(programmingExercise);
         assertThat(updatedResults).hasSize(7);
@@ -837,7 +785,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     private Map<String, ProgrammingExerciseTestCase> createTestCases(boolean withAdditionalInvisibleTestCase) {
-        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity()));
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
         testCases.get("test2").active(true).visibility(Visibility.ALWAYS).setWeight(1.);
@@ -845,7 +793,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         if (withAdditionalInvisibleTestCase) {
             testCases.get("test4").active(true).visibility(Visibility.NEVER).setWeight(1.);
         }
-        testCaseRepository.saveAll(testCases.values());
+        programmingExerciseTestCaseRepository.saveAll(testCases.values());
 
         return testCases;
     }
@@ -855,7 +803,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         testCases.get("test1").setWeight(0.);
         testCases.get("test2").setWeight(1.);
         testCases.get("test3").setWeight(3.);
-        testCaseRepository.saveAll(testCases.values());
+        programmingExerciseTestCaseRepository.saveAll(testCases.values());
     }
 
     private void verifyStudentScoreCalculations(final Participation[] testParticipations) {
@@ -1320,13 +1268,13 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     }
 
     private void activateAllTestCases(boolean withBonus) {
-        var testCases = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExerciseSCAEnabled.getId()));
+        var testCases = new ArrayList<>(programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseSCAEnabled.getId()));
         var bonusMultiplier = withBonus ? 2D : null;
         var bonusPoints = withBonus ? 4D : null;
         testCases.getFirst().active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
         testCases.get(1).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
         testCases.get(2).active(true).visibility(Visibility.ALWAYS).bonusMultiplier(bonusMultiplier).bonusPoints(bonusPoints);
-        testCaseRepository.saveAll(testCases);
+        programmingExerciseTestCaseRepository.saveAll(testCases);
     }
 
     private List<Participation> createTestParticipationsWithResults() {
@@ -1461,9 +1409,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
     private void updateAndSaveAutomaticResult(Result result, boolean test1Passes, boolean test2Passes, boolean test3Passes, int issuesCategory1, int issuesCategory2,
             ZonedDateTime completionDate) {
-        var test1 = testCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test1").orElseThrow();
-        var test2 = testCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test2").orElseThrow();
-        var test3 = testCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test3").orElseThrow();
+        var test1 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test1").orElseThrow();
+        var test2 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test2").orElseThrow();
+        var test3 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExerciseSCAEnabled.getId(), "test3").orElseThrow();
 
         result.addFeedback(new Feedback().result(result).testCase(test1).positive(test1Passes).positive(test1Passes).type(FeedbackType.AUTOMATIC));
         result.addFeedback(new Feedback().result(result).testCase(test2).positive(test2Passes).positive(test2Passes).type(FeedbackType.AUTOMATIC));

@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -19,69 +18,17 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHintActivation;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintActivationRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.ExerciseHintService;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
+class ExerciseHintServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "exercisehintservice";
-
-    @Autowired
-    private UserTestRepository userRepository;
-
-    @Autowired
-    private ExerciseHintService exerciseHintService;
-
-    @Autowired
-    private ExerciseHintRepository exerciseHintRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository exerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseTaskService programmingExerciseTaskService;
-
-    @Autowired
-    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
-
-    @Autowired
-    private ExerciseHintActivationRepository exerciseHintActivationRepository;
-
-    @Autowired
-    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
 
     private ProgrammingExercise exercise;
 
@@ -109,7 +56,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         var activatedTestCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream().peek(testCase -> testCase.setActive(true)).toList();
         programmingExerciseTestCaseRepository.saveAll(activatedTestCases);
-        exercise = exerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        exercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
         exercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(exercise);
         programmingExerciseUtilService.addHintsToExercise(exercise);
         programmingExerciseUtilService.addTasksToProgrammingExercise(exercise);
@@ -136,7 +83,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
             programmingExerciseTaskRepository.save(sortedTask);
         }
         exercise.setProblemStatement(exercise.getProblemStatement().replaceAll("\\([^()]+\\)", "()"));
-        exerciseRepository.save(exercise);
+        programmingExerciseRepository.save(exercise);
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
         assertThat(availableExerciseHints).isEmpty();
     }

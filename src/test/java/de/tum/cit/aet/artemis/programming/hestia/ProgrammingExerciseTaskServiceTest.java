@@ -9,52 +9,19 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndependentTest {
+class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "progextaskservice";
-
-    @Autowired
-    private ProgrammingExerciseTaskService programmingExerciseTaskService;
-
-    @Autowired
-    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
-
-    @Autowired
-    private CodeHintRepository codeHintRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     private ProgrammingExercise programmingExercise;
 

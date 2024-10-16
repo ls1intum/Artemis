@@ -16,14 +16,11 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestCaseType;
-import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
-import de.tum.cit.aet.artemis.programming.icl.AbstractLocalCILocalVCIntegrationTest;
 import de.tum.cit.aet.artemis.programming.service.hestia.structural.StructuralSolutionEntryGenerationException;
-import de.tum.cit.aet.artemis.programming.service.hestia.structural.StructuralTestCaseService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
@@ -31,7 +28,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
  * Tests for the StructuralTestCaseService
  * Test if solution entries are generated as expected for structural tests
  */
-class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTest {
+class StructuralTestCaseServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "structuraltestcaseservice";
 
@@ -44,15 +41,6 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
     private final LocalRepository solutionRepo = new LocalRepository("main");
 
     private final LocalRepository testRepo = new LocalRepository("main");
-
-    @Autowired
-    private HestiaUtilTestService hestiaUtilTestService;
-
-    @Autowired
-    private StructuralTestCaseService structuralTestCaseService;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
 
     private ProgrammingExercise exercise;
 

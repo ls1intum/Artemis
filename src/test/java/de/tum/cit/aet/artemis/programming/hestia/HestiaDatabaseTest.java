@@ -8,56 +8,23 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
  * This class tests the database relations of the Hestia domain models.
  * This currently includes ProgrammingExerciseTask, ProgrammingExerciseSolutionEntry and CodeHint.
  * It tests if the addition and deletion of these models works as expected.
  */
-class HestiaDatabaseTest extends AbstractSpringIntegrationIndependentTest {
+class HestiaDatabaseTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "hestiadatabase";
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
-
-    @Autowired
-    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
-
-    @Autowired
-    private ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository;
-
-    @Autowired
-    private CodeHintRepository codeHintRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     private Long programmingExerciseId;
 

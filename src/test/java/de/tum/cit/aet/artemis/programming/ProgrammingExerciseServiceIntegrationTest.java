@@ -12,13 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
@@ -27,36 +24,22 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasicService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "progexserviceintegration";
 
     private static final String BASE_RESOURCE = "/api/programming-exercises";
 
-    @Autowired
-    ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
-
-    @Autowired
-    ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ExerciseIntegrationTestService exerciseIntegrationTestService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private PageableSearchUtilService pageableSearchUtilService;
-
     private Course additionalEmptyCourse;
 
     private ProgrammingExercise programmingExercise;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
 
     @BeforeEach
     void setUp() {
