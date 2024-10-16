@@ -40,15 +40,11 @@
     }
 
     .posting-infinite-scroll-container {
-        max-height: calc(75vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
+        max-height: calc(74vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
         overflow-y: auto;
 
         &.content-height-dev {
-            max-height: calc(75vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
-        }
-
-        @media (max-width: 768px) {
-            max-height: calc(75vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height)) !important;
+            max-height: calc(74vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
         }
     }
 

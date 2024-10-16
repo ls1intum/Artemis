@@ -1,5 +1,9 @@
-<div class="mt-2 ms-2">
-    <div class="d-flex justify-content-between">
+<div class="course-wide-search-mobile-disclaimer" [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig.searchTerm }">
+    <span class="mb-2" jhiTranslate="artemisApp.metis.overview.mobileDisclaimer"></span>
+    <button class="btn btn-outline-secondary" jhiTranslate="artemisApp.metis.overview.mobileDisclaimerCallToAction" (click)="openSidebar()"></button>
+</div>
+<div [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig.searchTerm }">
+    <div class="mt-2 mx-2">
         <div>
             <h4 class="d-inline-block rounded p-1 info">
                 @if (!courseWideSearchConfig.searchTerm) {
@@ -13,7 +17,7 @@
             <div class="mb-1">
                 <form [formGroup]="formGroup">
                     <!-- filter and sort controls -->
-                    <div class="ms-3 me-5 d-flex justify-content-between">
+                    <div class="ms-3 me-1 d-flex justify-content-between">
                         <!-- attribute filter -->
                         <div class="row">
                             <div class="col-auto p-0">
@@ -48,7 +52,7 @@
                         </div>
                         <!-- sort dropdown -->
                         <div class="d-flex">
-                            <div class="col-auto p-0" jhiTranslate="artemisApp.metis.overview.sortedByDate"></div>
+                            <div class="col-auto p-0 me-1" jhiTranslate="artemisApp.metis.overview.sortedByDate"></div>
                             <div class="col-auto p-0 clickable" role="button" (click)="onChangeSortDir()">
                                 <fa-icon
                                     [icon]="sortingOrder === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
@@ -64,50 +68,50 @@
                 </form>
             </div>
         }
-    </div>
-    <hr />
-    <div class="row px-3 justify-content-center coursewide-search">
-        <div class="justify-content-center">
-            <div class="row">
-                <!-- loading messages -->
-                @if (isFetchingPosts) {
-                    <div class="envelope">
-                        <fa-icon size="3x" [icon]="faCircleNotch" animation="spin" />
-                    </div>
-                }
-                <!-- no message exist -->
-                @if (!isFetchingPosts && posts.length === 0) {
-                    <div class="envelope">
-                        <fa-icon size="5x" [icon]="faEnvelope" />
-                    </div>
-                }
-                <!-- list of messages -->
-                <div
-                    id="scrollableDiv"
-                    #container
-                    [ngClass]="{ 'posting-infinite-scroll-container': posts.length !== 0 }"
-                    infinite-scroll
-                    [scrollWindow]="false"
-                    (scrolledUp)="fetchNextPage()"
-                >
-                    <!-- list of all top level posts -->
-                    <!-- answers are opened in the thread sidebar -->
-                    @for (post of posts; track postsTrackByFn($index, post)) {
-                        <div class="pt-2">
-                            <jhi-posting-thread
-                                #postingThread
-                                [lastReadDate]="post.conversation?.lastMessageDate"
-                                [hasChannelModerationRights]="!!getAsChannel(post.conversation)?.hasChannelModerationRights"
-                                [id]="'item-' + post.id"
-                                [post]="post"
-                                [showAnswers]="false"
-                                [readOnlyMode]="!!getAsChannel(post.conversation)?.isArchived"
-                                [isCommunicationPage]="true"
-                                [showChannelReference]="true"
-                                (openThread)="setPostForThread($event)"
-                            />
+        <hr />
+        <div class="row px-3 justify-content-center coursewide-search">
+            <div class="justify-content-center">
+                <div class="row">
+                    <!-- loading messages -->
+                    @if (isFetchingPosts) {
+                        <div class="envelope">
+                            <fa-icon size="3x" [icon]="faCircleNotch" animation="spin" />
                         </div>
                     }
+                    <!-- no message exist -->
+                    @if (!isFetchingPosts && posts.length === 0) {
+                        <div class="envelope">
+                            <fa-icon size="5x" [icon]="faEnvelope" />
+                        </div>
+                    }
+                    <!-- list of messages -->
+                    <div
+                        id="scrollableDiv"
+                        #container
+                        [ngClass]="{ 'posting-infinite-scroll-container': posts.length !== 0 }"
+                        infinite-scroll
+                        [scrollWindow]="false"
+                        (scrolledUp)="fetchNextPage()"
+                    >
+                        <!-- list of all top level posts -->
+                        <!-- answers are opened in the thread sidebar -->
+                        @for (post of posts; track postsTrackByFn($index, post)) {
+                            <div class="pt-2">
+                                <jhi-posting-thread
+                                    #postingThread
+                                    [lastReadDate]="post.conversation?.lastMessageDate"
+                                    [hasChannelModerationRights]="!!getAsChannel(post.conversation)?.hasChannelModerationRights"
+                                    [id]="'item-' + post.id"
+                                    [post]="post"
+                                    [showAnswers]="false"
+                                    [readOnlyMode]="!!getAsChannel(post.conversation)?.isArchived"
+                                    [isCommunicationPage]="true"
+                                    [showChannelReference]="true"
+                                    (openThread)="setPostForThread($event)"
+                                />
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>

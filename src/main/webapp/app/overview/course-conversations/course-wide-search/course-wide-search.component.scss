@@ -62,4 +62,8 @@
         opacity: 1;
         pointer-events: all;
     }
+
+    .coursewide-search .posting-infinite-scroll-container {
+        max-height: calc(73vh - var(--header-height) - var(--search-channel-header-height));
+    }
 }
