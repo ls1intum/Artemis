@@ -14,7 +14,6 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -34,9 +33,7 @@ import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportReposi
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageReportEntryRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;
 import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralTestCaseService;
@@ -96,16 +93,10 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     // Services
     @Autowired
-    protected AeolusTemplateService aeolusTemplateService;
-
-    @Autowired
     protected BehavioralTestCaseService behavioralTestCaseService;
 
     @Autowired
     protected BuildLogEntryService buildLogEntryService;
-
-    @Autowired
-    protected BuildScriptProviderService buildScriptProviderService;
 
     @Autowired
     protected HestiaUtilTestService hestiaUtilTestService;
@@ -124,9 +115,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     @Autowired
     protected ProgrammingExerciseGitDiffReportService reportService;
-
-    @Autowired
-    protected SharedQueueProcessingService sharedQueueProcessingService;
 
     @Autowired
     protected StructuralTestCaseService structuralTestCaseService;

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -14,10 +15,12 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
+import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasicService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
+import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -53,6 +56,12 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
     protected AeolusRequestMockProvider aeolusRequestMockProvider;
 
     @Autowired
+    protected AeolusTemplateService aeolusTemplateService;
+
+    @Autowired
+    protected BuildScriptProviderService buildScriptProviderService;
+
+    @Autowired
     protected ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
     @Autowired
@@ -63,6 +72,9 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
 
     @Autowired
     protected SharedQueueManagementService sharedQueueManagementService;
+
+    @Autowired
+    protected SharedQueueProcessingService sharedQueueProcessingService;
 
     @Autowired
     protected StaticCodeAnalysisService staticCodeAnalysisService;
