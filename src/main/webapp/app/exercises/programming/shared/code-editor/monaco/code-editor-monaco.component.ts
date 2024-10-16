@@ -109,6 +109,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
     readonly feedbackInternal = signal<Feedback[]>([]);
     readonly feedbackSuggestionsInternal = signal<Feedback[]>([]);
     readonly lineToFocus = signal<number | undefined>(undefined);
+    readonly showingViewStateOfFile = signal<string | undefined>(undefined);
+    readonly viewStateReady = computed<boolean>(() => this.showingViewStateOfFile() === this.selectedFile());
 
     readonly feedbackForSelectedFile = computed<FeedbackWithLineAndReference[]>(() => {
         return this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((f) => this.attachLineToFeedback(f));
@@ -145,6 +147,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
         effect(
             () => {
+                this.selectedFile();
                 const feedbackComponentsAndSuggestions = [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()];
                 this.changeDetectorRef.detectChanges();
                 // Wait for change detection to run on the new feedback widgets before passing them to the editor.
@@ -158,6 +161,11 @@ export class CodeEditorMonacoComponent implements OnChanges {
                                 ?.elementRef.nativeElement.querySelector('#feedback-textarea')
                                 ?.focus();
                             this.lineToFocus.set(undefined);
+                        }
+
+                        if (!this.viewStateReady()) {
+                            this.editor().restoreViewStateForCurrentModel();
+                            this.showingViewStateOfFile.set(this.selectedFile());
                         }
                     });
                 }, 0);
@@ -182,6 +190,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.editor().reset();
         }
         if ((changes.selectedFile && this.selectedFile()) || editorWasRefreshed) {
+            this.editor().saveViewStateForCurrentModel();
             await this.selectFileInEditor(this.selectedFile());
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines.set([]);

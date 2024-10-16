@@ -45,7 +45,7 @@
         }
         <jhi-monaco-editor
             (textChanged)="onFileTextChanged($event)"
-            [hidden]="!selectedFile() || loadingCount() > 0 || binaryFileSelected()"
+            [hidden]="!selectedFile() || loadingCount() > 0 || binaryFileSelected() || !viewStateReady()"
             [readOnly]="editorLocked()"
             [textChangedEmitDelay]="200"
             #editor
