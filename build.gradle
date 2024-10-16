@@ -448,8 +448,7 @@ dependencies {
     implementation "com.ibm.icu:icu4j-charset:75.1"
     implementation "com.github.seancfoley:ipaddress:5.5.1"
     implementation "org.apache.maven:maven-model:3.9.9"
-    // NOTE: 3.0.2 is broken for splitting lecture specific PDFs
-    implementation "org.apache.pdfbox:pdfbox:3.0.1"
+    implementation "org.apache.pdfbox:pdfbox:3.0.3"
     implementation "org.apache.commons:commons-csv:1.12.0"
     implementation "org.commonmark:commonmark:0.23.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
