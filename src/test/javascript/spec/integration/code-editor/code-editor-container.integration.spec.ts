@@ -345,7 +345,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.selectedFile).toBe(selectedFile);
         expect(container.monacoEditor.selectedFile()).toBe(selectedFile);
         expect(container.monacoEditor.loadingCount()).toBe(0);
-        expect(container.monacoEditor.fileSession).toContainKey(selectedFile);
+        expect(container.monacoEditor.fileSession()).toContainKey(selectedFile);
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
 
