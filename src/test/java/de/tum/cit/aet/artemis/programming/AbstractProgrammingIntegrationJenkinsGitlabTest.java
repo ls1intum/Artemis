@@ -53,7 +53,6 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     // Config
-
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
     protected String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
 
@@ -76,7 +75,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends Ab
     protected ObjectMapper objectMapper;
 
     // Repositories
-
     @Autowired
     protected BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
@@ -99,7 +97,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends Ab
     protected ProgrammingSubmissionTestRepository submissionRepository;
 
     // External Repositories
-
     @Autowired
     protected ChannelRepository channelRepository;
 
@@ -125,7 +122,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends Ab
     protected UserTestRepository userRepository;
 
     // Services
-
     @Autowired
     protected BuildLogEntryService buildLogEntryService;
 
@@ -174,7 +170,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends Ab
     // External Services
 
     // Util Services
-
     @Autowired
     protected ContinuousIntegrationTestService continuousIntegrationTestService;
 
@@ -188,7 +183,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends Ab
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     // External Util Services
-
     @Autowired
     protected CourseTestService courseTestService;
 

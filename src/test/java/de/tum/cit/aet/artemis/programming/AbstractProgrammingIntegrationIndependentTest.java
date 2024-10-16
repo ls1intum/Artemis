@@ -48,7 +48,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 public abstract class AbstractProgrammingIntegrationIndependentTest extends AbstractSpringIntegrationIndependentTest {
 
     // Repositories
-
     @Autowired
     protected AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
@@ -104,7 +103,6 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
     protected UserIdeMappingRepository userIdeMappingRepository;
 
     // External Repositories
-
     @Autowired
     protected ComplaintRepository complaintRepo;
 
@@ -127,7 +125,6 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
     protected UserTestRepository userRepository;
 
     // Services
-
     @Autowired
     protected AuxiliaryRepositoryService auxiliaryRepositoryService;
 
@@ -158,12 +155,10 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
     // External Services
 
     // Util Services
-
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     // External Util Services
-
     @Autowired
     protected ComplaintUtilService complaintUtilService;
 

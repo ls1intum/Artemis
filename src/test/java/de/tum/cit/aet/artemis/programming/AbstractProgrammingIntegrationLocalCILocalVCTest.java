@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     // Config
-
     @Autowired
     @Qualifier("hazelcastInstance")
     protected HazelcastInstance hazelcastInstance;
@@ -35,7 +34,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
     protected String localVCPassword;
 
     // Repositories
-
     @Autowired
     protected ProgrammingExerciseTestCaseTestRepository testCaseRepository;
 
@@ -48,7 +46,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
     // External Repositories
 
     // Services
-
     @Autowired
     protected AeolusRequestMockProvider aeolusRequestMockProvider;
 
@@ -67,12 +64,10 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
     // External Services
 
     // Util Services
-
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     // External Util Services
-
     @Autowired
     protected CompetencyUtilService competencyUtilService;
 

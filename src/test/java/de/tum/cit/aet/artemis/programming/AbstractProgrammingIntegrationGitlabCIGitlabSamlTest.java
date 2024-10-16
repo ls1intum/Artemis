@@ -25,12 +25,10 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationGitlabCIGitla
 public abstract class AbstractProgrammingIntegrationGitlabCIGitlabSamlTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
     // Config
-
     @Value("${artemis.version-control.url}")
     protected URL gitlabServerUrl;
 
     // Repositories
-
     @Autowired
     protected BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
@@ -50,7 +48,6 @@ public abstract class AbstractProgrammingIntegrationGitlabCIGitlabSamlTest exten
     protected ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     // External Repositories
-
     @Autowired
     protected ExamRepository examRepository;
 
@@ -58,22 +55,18 @@ public abstract class AbstractProgrammingIntegrationGitlabCIGitlabSamlTest exten
     protected StudentExamTestRepository studentExamRepository;
 
     // Services
-
     @Autowired
     protected GitLabCIResultService gitLabCIResultService;
 
     // External Services
-
     @Autowired
     protected InstanceMessageReceiveService instanceMessageReceiveService;
 
     // Util Services
-
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     // External Util Services
-
     @Autowired
     protected ExamUtilService examUtilService;
 

@@ -53,7 +53,6 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
 public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     // Config
-
     @Value("${artemis.version-control.user}")
     protected String localVCBaseUsername;
 
@@ -64,7 +63,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
     protected SshServer sshServer;
 
     // Repositories
-
     @Autowired
     protected AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
@@ -90,7 +88,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
     protected TestwiseCoverageReportEntryRepository testwiseCoverageReportEntryRepository;
 
     // External Repositories
-
     @Autowired
     protected ExamRepository examRepository;
 
@@ -101,7 +98,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
     protected TeamRepository teamRepository;
 
     // Services
-
     @Autowired
     protected AeolusTemplateService aeolusTemplateService;
 
@@ -149,7 +145,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
     // Util Services
 
     // External Util services
-
     @Autowired
     protected ExerciseIntegrationTestService exerciseIntegrationTestService;
 
