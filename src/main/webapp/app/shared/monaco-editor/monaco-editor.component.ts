@@ -38,7 +38,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * Elements, models, and actions of the editor.
      */
     models: MonacoEditorTextModel[] = [];
-    modelViewStates: { [modelId: string]: monaco.editor.ICodeEditorViewState | undefined } = {};
     lineWidgets: MonacoEditorLineWidget[] = [];
     buildAnnotations: MonacoEditorBuildAnnotation[] = [];
     lineHighlights: MonacoEditorLineHighlight[] = [];
@@ -203,8 +202,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param languageId The language ID to use for syntax highlighting (will be inferred from the file extension if left out).
      */
     changeModel(fileName: string, newFileContent?: string, languageId?: string) {
-        this.saveViewStateForCurrentModel();
-
         const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
         const model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(newFileContent ?? '', undefined, uri);
 
@@ -221,24 +218,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         monaco.editor.setModelLanguage(model, languageId !== undefined ? languageId : model.getLanguageId());
         model.setEOL(monaco.editor.EndOfLineSequence.LF);
         this._editor.setModel(model);
-    }
-
-    saveViewStateForCurrentModel(): void {
-        const model = this._editor.getModel();
-        if (model) {
-            // The API may return null, which we map to undefined.
-            this.modelViewStates[model.id] = this._editor.saveViewState() ?? undefined;
-        }
-    }
-
-    restoreViewStateForCurrentModel(): void {
-        const model = this._editor.getModel();
-        if (model) {
-            const viewState = this.modelViewStates[model.id];
-            if (viewState) {
-                this._editor.restoreViewState(viewState);
-            }
-        }
     }
 
     /**
