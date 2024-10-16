@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnChanges, OnInit, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -353,16 +353,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
      */
     canDeactivate(): boolean {
         return !this.pendingChangesCache;
-    }
-
-    /**
-     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
-     */
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification(event: any) {
-        if (!this.canDeactivate()) {
-            event.returnValue = this.translateService.instant('pendingChanges');
-        }
     }
 
     /**
