@@ -9,7 +9,7 @@
     (click)="emitStoreAndRefresh(sidebarItem.id)"
     [routerLinkActive]="'bg-selected border-selected'"
 >
-    <div class="w-75">
+    <div class="w-75 align-self-center">
         <jhi-sidebar-card-item [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
     </div>
     @if (sidebarItem.conversation) {

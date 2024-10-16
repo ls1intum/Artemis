@@ -1,6 +1,6 @@
 <!-- TODO: Refactor Special Case 'Exercise' -->
 @if (sidebarItem) {
-    <div class="mx-1 mb-1">
+    <div class="mx-1">
         @if (sidebarType === 'exam') {
             <div class="d-flex justify-content-between align-items-baseline">
                 <span id="test-sidebar-card-title" class="me-2 mb-2" [title]="sidebarItem.title">
@@ -46,7 +46,7 @@
                 </small>
             </div>
         } @else {
-            <div class="d-flex justify-content-between mb-1 align-items-baseline">
+            <div class="d-flex justify-content-between align-items-baseline">
                 <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2" [title]="sidebarItem.title" [class.muted]="sidebarItem.conversation?.isMuted">
                     @if (sidebarItem.icon) {
                         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
@@ -59,7 +59,7 @@
                     }
                 </span>
             </div>
-            <div class="d-flex justify-content-between align-items-baseline small">
+            <div class="d-flex justify-content-between align-items-baseline small" [ngClass]="{ 'mt-1': sidebarItem.subtitleLeft }">
                 <small class="me-2 text-truncate">
                     {{ sidebarItem.subtitleLeft }}
                 </small>
