@@ -73,6 +73,7 @@ import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code
 import dayjs from 'dayjs/esm';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -214,7 +215,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockProvider(ProfileService, { getProfileInfo: () => of({ activeProfiles: [] }) }, 'useValue'),
             ],
         })
-            .overrideComponent(CodeEditorMonacoComponent, { set: { imports: [MonacoEditorComponent] } })
+            .overrideComponent(CodeEditorMonacoComponent, { set: { imports: [MonacoEditorComponent, MockComponent(CodeEditorHeaderComponent)] } })
             .compileComponents()
             .then(() => {
                 // Ignore console errors

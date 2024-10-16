@@ -141,8 +141,7 @@ describe('CodeEditorContainerIntegration', () => {
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
             ],
         })
-            .overrideComponent(CodeEditorMonacoComponent, { set: { imports: [MonacoEditorComponent, CodeEditorHeaderComponent] } })
-            .overrideComponent(CodeEditorHeaderComponent, { set: { imports: [], template: '' } })
+            .overrideComponent(CodeEditorMonacoComponent, { set: { imports: [MonacoEditorComponent, MockComponent(CodeEditorHeaderComponent)] } })
             .compileComponents();
 
         containerFixture = TestBed.createComponent(CodeEditorContainerComponent);
