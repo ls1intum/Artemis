@@ -105,10 +105,6 @@ public class FaqResource {
             throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
         }
         isAtLeastInstructor(faq, courseId);
-        if (faq.getFaqState() == FaqState.ACCEPTED) {
-            Course course = courseRepository.findByIdElseThrow(courseId);
-            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        }
 
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
@@ -122,7 +118,7 @@ public class FaqResource {
     /**
      * @param faq      the faq to be checked *
      * @param courseId the id of the course the faq belongs to
-     *                     This method throws an expecption if a non-instructor in the course tries to set the state of an FAQ to ACCEPTED
+     *                     This method throws an exce ption if a non-instructor in the course tries to set the state of an FAQ to ACCEPTED
      */
     private void isAtLeastInstructor(Faq faq, Long courseId) {
         if (faq.getFaqState() == FaqState.ACCEPTED) {
