@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
-import { BASE_API } from '../../constants';
 import { expect } from '@playwright/test';
+import { BASE_API } from '../../constants';
 import { Commands } from '../../commands';
 
 /**
