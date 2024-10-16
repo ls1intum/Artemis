@@ -45,7 +45,9 @@ import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.DependencyDownloadScript;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 
 /**
@@ -85,12 +87,13 @@ public class BuildJobContainerService {
     /**
      * Configure a container with the Docker image, the container name, optional proxy config variables, and set the command that runs when the container starts.
      *
-     * @param containerName the name of the container to be created
-     * @param image         the Docker image to use for the container
-     * @param buildScript   the build script to be executed in the container
+     * @param containerName   the name of the container to be created
+     * @param image           the Docker image to use for the container
+     * @param buildScript     the build script to be executed in the container
+     * @param exerciseEnvVars the environment variables provided by the instructor
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript) {
+    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, List<String> exerciseEnvVars) {
         List<String> envVars = new ArrayList<>();
         if (useSystemProxy) {
             envVars.add("HTTP_PROXY=" + httpProxy);
@@ -98,6 +101,9 @@ public class BuildJobContainerService {
             envVars.add("NO_PROXY=" + noProxy);
         }
         envVars.add("SCRIPT=" + buildScript);
+        if (exerciseEnvVars != null && !exerciseEnvVars.isEmpty()) {
+            envVars.addAll(exerciseEnvVars);
+        }
         return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig).withEnv(envVars)
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
@@ -121,11 +127,23 @@ public class BuildJobContainerService {
     /**
      * Run the script in the container and wait for it to finish before returning.
      *
-     * @param containerId the id of the container in which the script should be run
-     * @param buildJobId  the id of the build job that is currently being executed
+     * @param containerId       the id of the container in which the script should be run
+     * @param buildJobId        the id of the build job that is currently being executed
+     * @param isNetworkDisabled whether the network should be disabled for the container
      */
+    public void runScriptInContainer(String containerId, String buildJobId, boolean isNetworkDisabled) {
+        if (isNetworkDisabled) {
+            // The "sh preScript.sh" execution command specified here is need to install dependencies and prepare the environment for the build script.
+            log.info("Started running the pre-script for build job in container with id {}", containerId);
+            executeDockerCommand(containerId, buildJobId, true, true, false, "bash", LOCALCI_WORKING_DIRECTORY + "/preScript.sh");
+            try {
+                dockerClient.disconnectFromNetworkCmd().withContainerId(containerId).withNetworkId("bridge").exec();
+            }
+            catch (Exception e) {
+                log.error("Failed to disconnect container with id {} from network: {}", containerId, e.getMessage());
+            }
+        }
 
-    public void runScriptInContainer(String containerId, String buildJobId) {
         log.info("Started running the build script for build job in container with id {}", containerId);
         // The "sh script.sh" execution command specified here is run inside the container as an additional process. This command runs in the background, independent of the
         // container's
@@ -282,10 +300,12 @@ public class BuildJobContainerService {
      *                                                   would be used.
      * @param solutionCheckoutPath                   The directory within the container where the solution repository should be checked out; can be null if not applicable, default
      *                                                   would be used.
+     * @param projectType                            The type of project being built, which influences the dependency download script.
+     * @param isNetworkDisabled                      Whether the network should be disabled for the container.
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
             Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage, String assignmentCheckoutPath,
-            String testCheckoutPath, String solutionCheckoutPath) {
+            String testCheckoutPath, String solutionCheckoutPath, ProjectType projectType, boolean isNetworkDisabled) {
 
         assignmentCheckoutPath = (!StringUtils.isBlank(assignmentCheckoutPath)) ? assignmentCheckoutPath
                 : RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
@@ -312,10 +332,17 @@ public class BuildJobContainerService {
             addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
         }
 
-        createScriptFile(buildJobContainerId);
+        createScriptFile(buildJobContainerId, isNetworkDisabled, programmingLanguage, projectType);
     }
 
-    private void createScriptFile(String buildJobContainerId) {
+    private void createScriptFile(String buildJobContainerId, boolean isNetworkDisabled, ProgrammingLanguage programmingLanguage, ProjectType projectType) {
+        if (isNetworkDisabled) {
+            String preScript = getDependencyDownloadScript(programmingLanguage, projectType);
+
+            executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "echo '" + preScript + "' > " + LOCALCI_WORKING_DIRECTORY + "/preScript.sh");
+            executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "chmod +x " + LOCALCI_WORKING_DIRECTORY + "/preScript.sh");
+        }
+
         executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "echo \"$SCRIPT\" > " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
         executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "chmod +x " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
     }
@@ -446,5 +473,18 @@ public class BuildJobContainerService {
     private String getParentFolderPath(String path) {
         Path parentPath = Paths.get(path).normalize().getParent();
         return parentPath != null ? parentPath.toString() : "";
+    }
+
+    private String getDependencyDownloadScript(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
+        return switch (programmingLanguage) {
+            case JAVA -> switch (projectType) {
+                case PLAIN_MAVEN, MAVEN_BLACKBOX, MAVEN_MAVEN -> DependencyDownloadScript.MAVEN.getScript();
+                case PLAIN_GRADLE, GRADLE_GRADLE -> DependencyDownloadScript.GRADLE.getScript();
+                default -> DependencyDownloadScript.OTHER.getScript();
+            };
+            case RUST -> DependencyDownloadScript.RUST.getScript();
+            case JAVASCRIPT -> DependencyDownloadScript.JAVASCRIPT.getScript();
+            default -> DependencyDownloadScript.OTHER.getScript();
+        };
     }
 }
