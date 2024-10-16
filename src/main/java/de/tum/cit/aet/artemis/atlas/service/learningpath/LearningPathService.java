@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -89,10 +90,13 @@ public class LearningPathService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
             LearningPathNavigationService learningPathNavigationService, CourseRepository courseRepository, CompetencyRepository competencyRepository,
             CompetencyRelationRepository competencyRelationRepository, LearningPathNgxService learningPathNgxService,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository, StudentParticipationRepository studentParticipationRepository) {
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, StudentParticipationRepository studentParticipationRepository,
+            CourseCompetencyRepository courseCompetencyRepository) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
         this.competencyProgressRepository = competencyProgressRepository;
@@ -103,6 +107,7 @@ public class LearningPathService {
         this.learningPathNgxService = learningPathNgxService;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
     /**
@@ -298,19 +303,10 @@ public class LearningPathService {
      * @return dto containing the health status and additional information (missing learning paths) if needed
      */
     public LearningPathHealthDTO getHealthStatusForCourse(@NotNull Course course) {
-        if (!course.getLearningPathsEnabled()) {
-            return new LearningPathHealthDTO(Set.of(LearningPathHealthDTO.HealthStatus.DISABLED));
-        }
-
         Set<LearningPathHealthDTO.HealthStatus> status = new HashSet<>();
         Long numberOfMissingLearningPaths = checkMissingLearningPaths(course, status);
         checkNoCompetencies(course, status);
         checkNoRelations(course, status);
-
-        // if no issues where found, add OK status
-        if (status.isEmpty()) {
-            status.add(LearningPathHealthDTO.HealthStatus.OK);
-        }
 
         return new LearningPathHealthDTO(status, numberOfMissingLearningPaths);
     }
@@ -363,6 +359,25 @@ public class LearningPathService {
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(learningPath.getCourse().getId());
         Set<CompetencyGraphEdgeDTO> relationDTOs = relations.stream().map(CompetencyGraphEdgeDTO::of).collect(Collectors.toSet());
+        return new LearningPathCompetencyGraphDTO(progressDTOs, relationDTOs);
+    }
+
+    /**
+     * Generates the graph of competencies with the student's progress for the given learning path.
+     *
+     * @param courseId the id of the course for which the graph should be generated
+     * @return dto containing the competencies and relations of the learning path
+     */
+    public LearningPathCompetencyGraphDTO generateLearningPathCompetencyInstructorGraph(long courseId) {
+        List<CourseCompetency> competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
+        Set<CompetencyGraphNodeDTO> progressDTOs = competencies.stream().map(competency -> {
+            double averageMasteryProgress = competencyProgressRepository.findAverageOfAllNonZeroStudentProgressByCompetencyId(competency.getId());
+            return CompetencyGraphNodeDTO.of(competency, averageMasteryProgress, CompetencyGraphNodeDTO.CompetencyNodeValueType.AVERAGE_MASTERY_PROGRESS);
+        }).collect(Collectors.toSet());
+
+        Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(courseId);
+        Set<CompetencyGraphEdgeDTO> relationDTOs = relations.stream().map(CompetencyGraphEdgeDTO::of).collect(Collectors.toSet());
+
         return new LearningPathCompetencyGraphDTO(progressDTOs, relationDTOs);
     }
 

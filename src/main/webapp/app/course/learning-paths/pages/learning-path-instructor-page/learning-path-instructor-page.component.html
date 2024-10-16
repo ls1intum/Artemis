@@ -1,0 +1,39 @@
+@if (isLoading()) {
+    <div class="row justify-content-center p-2">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only" jhiTranslate="loading"></span>
+        </div>
+    </div>
+} @else if (learningPathsEnabled()) {
+    <div class="col">
+        <div class="row w-100 p-0 m-0 gap-3">
+            <!-- TODO: The following section has been commented out as the functional implementation has not been decided yet. -->
+            <!-- <div class="col p-2 learning-paths-container">-->
+            <!--     <jhi-learning-paths-configuration [courseId]="courseId()" />-->
+            <!-- </div>-->
+            <div class="col p-2 learning-paths-container">
+                <jhi-learning-paths-state [courseId]="courseId()" />
+            </div>
+            <div class="col-6 p-2 learning-paths-container">
+                <jhi-learning-paths-table [courseId]="courseId()" />
+            </div>
+        </div>
+        <div class="row w-100 p-0 m-0 g-3 learning-paths-container">
+            <jhi-learning-paths-analytics [courseId]="courseId()" />
+        </div>
+    </div>
+} @else {
+    <div class="row align-items-center justify-content-center h-100 p-3">
+        <div class="enable-learning-paths-container">
+            <h3 class="mb-3" jhiTranslate="artemisApp.learningPathManagement.learningPathsDisabled.title"></h3>
+            <span jhiTranslate="artemisApp.learningPathManagement.learningPathsDisabled.description"></span>
+            <button
+                (click)="enableLearningPaths()"
+                type="button"
+                class="mt-4 btn btn-primary"
+                id="enable-learning-paths-button"
+                jhiTranslate="artemisApp.learningPathManagement.learningPathsDisabled.buttonLabel"
+            ></button>
+        </div>
+    </div>
+}

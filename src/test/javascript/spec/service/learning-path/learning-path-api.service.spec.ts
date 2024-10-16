@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LearningObjectType } from 'app/entities/competency/learning-path.model';
 import { provideHttpClient } from '@angular/common/http';
+import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 
 describe('LearningPathApiService', () => {
     let httpClient: HttpTestingController;
@@ -83,6 +84,13 @@ describe('LearningPathApiService', () => {
         await methodCall;
     });
 
+    it('should get learning path instructor competency graph', async () => {
+        const methodCall = learningPathApiService.getLearningPathInstructorCompetencyGraph(courseId);
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/courses/${courseId}/learning-path/competency-instructor-graph` });
+        response.flush({});
+        await methodCall;
+    });
+
     it('should get learning path competencies', async () => {
         const methodCall = learningPathApiService.getLearningPathCompetencies(learningPathId);
         const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/competencies` });
@@ -98,6 +106,51 @@ describe('LearningPathApiService', () => {
             url: `${baseUrl}/learning-path/${learningPathId}/competencies/${competencyId}/learning-objects`,
         });
         response.flush([]);
+        await methodCall;
+    });
+
+    it('should get learning paths configuration', async () => {
+        const methodCall = learningPathApiService.getLearningPathsConfiguration(courseId);
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/courses/${courseId}/learning-paths/configuration` });
+        response.flush({});
+        await methodCall;
+    });
+
+    it('should get learning path health status', async () => {
+        const methodCall = learningPathApiService.getLearningPathHealthStatus(courseId);
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/courses/${courseId}/learning-path-health` });
+        response.flush({});
+        await methodCall;
+    });
+
+    it('should put enable learning paths', async () => {
+        const methodCall = learningPathApiService.enableLearningPaths(courseId);
+        const response = httpClient.expectOne({ method: 'PUT', url: `${baseUrl}/courses/${courseId}/learning-paths/enable` });
+        response.flush({});
+        await methodCall;
+    });
+
+    it('should generate missing learning paths', async () => {
+        const methodCall = learningPathApiService.generateMissingLearningPaths(courseId);
+        const response = httpClient.expectOne({ method: 'PUT', url: `${baseUrl}/courses/${courseId}/learning-paths/generate-missing` });
+        response.flush({});
+        await methodCall;
+    });
+
+    it('should get learning path information', async () => {
+        const pageable = <SearchTermPageableSearch>{
+            pageSize: 10,
+            page: 1,
+            searchTerm: 'search',
+            sortingOrder: SortingOrder.DESCENDING,
+            sortedColumn: 'column',
+        };
+        const methodCall = learningPathApiService.getLearningPathInformation(courseId, pageable);
+        const response = httpClient.expectOne({
+            method: 'GET',
+            url: `${baseUrl}/courses/${courseId}/learning-paths?pageSize=${pageable.pageSize}&page=${pageable.page}&sortingOrder=${pageable.sortingOrder}&searchTerm=${pageable.searchTerm}&sortedColumn=${pageable.sortedColumn}`,
+        });
+        response.flush({});
         await methodCall;
     });
 });

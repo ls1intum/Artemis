@@ -322,6 +322,14 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     List<Course> findAllNotEndedCoursesByManagementGroupNames(@Param("now") ZonedDateTime now, @Param("userGroups") List<String> userGroups);
 
+    @Query("""
+            SELECT COUNT(DISTINCT ug.userId)
+            FROM Course c
+                JOIN UserGroup ug ON c.studentGroupName = ug.group
+            WHERE c.id = :courseId
+            """)
+    int countCourseStudents(@Param("courseId") long courseId);
+
     /**
      * Counts the number of members of a course, i.e. users that are a member of the course's student, tutor, editor or instructor group.
      * Users that are part of multiple groups are NOT counted multiple times.
