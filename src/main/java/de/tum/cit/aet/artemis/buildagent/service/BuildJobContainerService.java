@@ -127,10 +127,10 @@ public class BuildJobContainerService {
     /**
      * Run the script in the container and wait for it to finish before returning.
      *
-     * @param containerId the id of the container in which the script should be run
-     * @param buildJobId  the id of the build job that is currently being executed
+     * @param containerId       the id of the container in which the script should be run
+     * @param buildJobId        the id of the build job that is currently being executed
+     * @param isNetworkDisabled whether the network should be disabled for the container
      */
-
     public void runScriptInContainer(String containerId, String buildJobId, boolean isNetworkDisabled) {
         if (isNetworkDisabled) {
             // The "sh preScript.sh" execution command specified here is need to install dependencies and prepare the environment for the build script.
@@ -300,6 +300,8 @@ public class BuildJobContainerService {
      *                                                   would be used.
      * @param solutionCheckoutPath                   The directory within the container where the solution repository should be checked out; can be null if not applicable, default
      *                                                   would be used.
+     * @param projectType                            The type of project being built, which influences the dependency download script.
+     * @param isNetworkDisabled                      Whether the network should be disabled for the container.
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
             Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage, String assignmentCheckoutPath,
