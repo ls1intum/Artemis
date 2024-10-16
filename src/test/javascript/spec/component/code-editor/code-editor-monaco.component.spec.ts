@@ -117,12 +117,12 @@ describe('CodeEditorMonacoComponent', () => {
         [() => fixture.componentRef.setInput('disableActions', true), true],
         [() => fixture.componentRef.setInput('commitState', CommitState.CONFLICT), true],
         [() => fixture.componentRef.setInput('selectedFile', undefined), true],
-        [() => (comp.fileSession['file'].loadingError = true), true], // TODO: convert to signal
+        [() => comp.fileSession.set({ ['file']: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: true } }), true], // TODO: convert to signal
     ])('should correctly lock the editor on changes', (setup: () => void, shouldLock: boolean) => {
         fixture.componentRef.setInput('selectedFile', 'file');
-        comp.fileSession = {
+        comp.fileSession.set({
             [comp.selectedFile()!]: { code: 'some code', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
-        };
+        });
         fixture.detectChanges();
         setup();
         expect(comp.editorLocked()).toBe(shouldLock);
@@ -131,17 +131,17 @@ describe('CodeEditorMonacoComponent', () => {
     it('should update the file session and notify when the file content changes', () => {
         const selectedFile = 'file';
         const fileSession = {
-            [selectedFile]: { code: 'some unchanged code', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
+            [selectedFile]: { code: 'some unchanged code', cursor: { lineNumber: 1, column: 1 }, loadingError: false },
         };
         const newCode = 'some new code';
         const valueCallbackStub = jest.fn();
         comp.onFileContentChange.subscribe(valueCallbackStub);
         fixture.detectChanges();
-        comp.fileSession = fileSession;
+        comp.fileSession.set(fileSession);
         fixture.componentRef.setInput('selectedFile', selectedFile);
         comp.onFileTextChanged(newCode);
         expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith({ file: selectedFile, fileContent: newCode });
-        expect(comp.fileSession).toEqual({
+        expect(comp.fileSession()).toEqual({
             [selectedFile]: { ...fileSession[selectedFile], code: newCode },
         });
     });
@@ -157,13 +157,13 @@ describe('CodeEditorMonacoComponent', () => {
             [presentFileName]: { code: 'code\ncode', cursor: { lineNumber: 1, column: 2 }, loadingError: false },
         };
         fixture.detectChanges();
-        comp.fileSession = presentFileSession;
+        comp.fileSession.set(presentFileSession);
         fixture.componentRef.setInput('selectedFile', fileToLoad.fileName);
         await comp.selectFileInEditor(fileToLoad.fileName);
         fixture.componentRef.setInput('selectedFile', presentFileName);
         await comp.selectFileInEditor(presentFileName);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledExactlyOnceWith(fileToLoad.fileName);
-        expect(comp.fileSession).toEqual({
+        expect(comp.fileSession()).toEqual({
             ...presentFileSession,
             [fileToLoad.fileName]: { code: fileToLoad.fileContent, cursor: { column: 0, lineNumber: 0 }, loadingError: false },
         });
@@ -177,20 +177,20 @@ describe('CodeEditorMonacoComponent', () => {
         const fileSession = { [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 } } };
         const loadedFileSubject = new BehaviorSubject(fileToLoad);
         loadFileFromRepositoryStub.mockReturnValue(loadedFileSubject);
-        comp.fileSession = fileSession;
+        comp.fileSession.set(fileSession);
         fixture.componentRef.setInput('selectedFile', fileToLoad.fileName);
         fixture.detectChanges();
         await new Promise(process.nextTick);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
-        expect(comp.fileSession).toEqual({ [fileToLoad.fileName]: { code: fileToLoad.fileContent, loadingError: false, cursor: { lineNumber: 0, column: 0 } } });
+        expect(comp.fileSession()).toEqual({ [fileToLoad.fileName]: { code: fileToLoad.fileContent, loadingError: false, cursor: { lineNumber: 0, column: 0 } } });
     });
 
     it('should not load binaries into the editor', async () => {
         const changeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
         const fileName = 'file-to-load';
-        comp.fileSession = {
+        comp.fileSession.set({
             [fileName]: { code: '\0\0\0\0 (binary content)', loadingError: false, cursor: { lineNumber: 0, column: 0 } },
-        };
+        });
         fixture.detectChanges();
         fixture.componentRef.setInput('selectedFile', fileName);
         await comp.selectFileInEditor(fileName);
@@ -207,14 +207,14 @@ describe('CodeEditorMonacoComponent', () => {
         const loadFileSubject = new BehaviorSubject(fileToLoad);
         loadFileFromRepositoryStub.mockReturnValue(loadFileSubject);
         loadFileSubject.error(error);
-        comp.fileSession = {};
+        comp.fileSession.set({});
         fixture.componentRef.setInput('selectedFile', fileToLoad.fileName);
         comp.onError.subscribe(errorCallbackStub);
         fixture.detectChanges();
         await new Promise(process.nextTick);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
         expect(errorCallbackStub).toHaveBeenCalledExactlyOnceWith(errorCode);
-        expect(comp.fileSession).toEqual({ [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 } } });
+        expect(comp.fileSession()).toEqual({ [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 } } });
     });
 
     it('should discard local changes when the editor is refreshed', async () => {
@@ -223,13 +223,13 @@ describe('CodeEditorMonacoComponent', () => {
         const reloadedFileSubject = new BehaviorSubject(fileToReload);
         loadFileFromRepositoryStub.mockReturnValue(reloadedFileSubject);
         fixture.componentRef.setInput('selectedFile', fileToReload.fileName);
-        comp.fileSession = {
+        comp.fileSession.set({
             [fileToReload.fileName]: { code: 'some local undiscarded changes', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
-        };
+        });
         fixture.componentRef.setInput('editorState', EditorState.CLEAN);
         // Simulate a refresh of the editor.
         await comp.ngOnChanges({ editorState: new SimpleChange(EditorState.REFRESHING, EditorState.CLEAN, false) });
-        expect(comp.fileSession).toEqual({
+        expect(comp.fileSession()).toEqual({
             [fileToReload.fileName]: { code: fileToReload.fileContent, cursor: { lineNumber: 0, column: 0 }, loadingError: false },
         });
         expect(editorResetStub).toHaveBeenCalledOnce();
@@ -238,7 +238,7 @@ describe('CodeEditorMonacoComponent', () => {
     it('should only load the currently selected file', async () => {
         const changeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
         // Occurs when the first file load takes a while, but the user has already selected another file.
-        comp.fileSession = { ['file2']: { code: 'code2', cursor: { lineNumber: 0, column: 0 }, loadingError: false } };
+        comp.fileSession.set({ ['file2']: { code: 'code2', cursor: { lineNumber: 0, column: 0 }, loadingError: false } });
         fixture.detectChanges();
         fixture.componentRef.setInput('selectedFile', 'file1');
         const longLoadingFileSubject = new Subject();
@@ -260,7 +260,7 @@ describe('CodeEditorMonacoComponent', () => {
         const fileSession = {
             [selectedFile]: { code: 'code\ncode', cursor: { lineNumber: 1, column: 2 }, loadingError: false },
         };
-        comp.fileSession = fileSession;
+        comp.fileSession.set(fileSession);
         fixture.componentRef.setInput('selectedFile', selectedFile);
         await comp.selectFileInEditor(selectedFile);
         expect(setPositionStub).toHaveBeenCalledExactlyOnceWith(fileSession[selectedFile].cursor);
@@ -430,10 +430,10 @@ describe('CodeEditorMonacoComponent', () => {
             [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
         };
         fixture.detectChanges();
-        comp.fileSession = { ...fileSession };
+        comp.fileSession.set({ ...fileSession });
         const renameFileChange = new RenameFileChange(FileType.FILE, oldFileName, newFileName);
         await comp.onFileChange(renameFileChange);
-        expect(comp.fileSession).toEqual({
+        expect(comp.fileSession()).toEqual({
             [newFileName]: fileSession[oldFileName],
             [otherFileName]: fileSession[otherFileName],
         });
@@ -447,10 +447,10 @@ describe('CodeEditorMonacoComponent', () => {
             [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
         };
         fixture.detectChanges();
-        comp.fileSession = { ...fileSession };
+        comp.fileSession.set({ ...fileSession });
         const deleteFileChange = new DeleteFileChange(FileType.FILE, fileToDeleteName);
         await comp.onFileChange(deleteFileChange);
-        expect(comp.fileSession).toEqual({
+        expect(comp.fileSession()).toEqual({
             [otherFileName]: fileSession[otherFileName],
         });
     });
@@ -462,10 +462,10 @@ describe('CodeEditorMonacoComponent', () => {
             [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
         };
         fixture.detectChanges();
-        comp.fileSession = { ...fileSession };
+        comp.fileSession.set({ ...fileSession });
         const createFileChange = new CreateFileChange(FileType.FILE, fileToCreateName);
         await comp.onFileChange(createFileChange);
-        expect(comp.fileSession).toEqual({
+        expect(comp.fileSession()).toEqual({
             [otherFileName]: fileSession[otherFileName],
             [fileToCreateName]: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
         });

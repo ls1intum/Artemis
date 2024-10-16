@@ -95,19 +95,19 @@ export class CodeEditorMonacoComponent implements OnChanges {
     readonly loadingCount = signal<number>(0);
     readonly newFeedbackLines = signal<number[]>([]);
     readonly binaryFileSelected = signal<boolean>(false);
+    readonly fileSession = signal<FileSession>({});
     readonly editorLocked = computed<boolean>(
         () =>
             this.disableActions() ||
             this.isTutorAssessment() ||
             this.commitState() === CommitState.CONFLICT ||
             !this.selectedFile() ||
-            !!this.fileSession[this.selectedFile()!]?.loadingError, // TODO: convert fileSession to a signal
+            !!this.fileSession()[this.selectedFile()!]?.loadingError,
     );
 
     readonly feedbackInternal = signal<Feedback[]>([]);
     readonly feedbackSuggestionsInternal = signal<Feedback[]>([]);
 
-    fileSession: FileSession = {};
     annotationsArray: Array<Annotation> = [];
 
     constructor() {
@@ -136,7 +136,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         const editorWasReset = changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState() === CommitState.UNDEFINED;
         // Refreshing the editor resets any local files.
         if (editorWasRefreshed || editorWasReset) {
-            this.fileSession = {};
+            this.fileSession.set({});
             this.editor().reset();
         }
         if ((changes.selectedFile && this.selectedFile()) || editorWasRefreshed) {
@@ -164,7 +164,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
             return;
         }
         this.loadingCount.set(this.loadingCount() + 1);
-        if (!this.fileSession[fileName] || this.fileSession[fileName].loadingError) {
+        if (!this.fileSession()[fileName] || this.fileSession()[fileName].loadingError) {
             let fileContent = '';
             let loadingError = false;
             try {
@@ -179,25 +179,25 @@ export class CodeEditorMonacoComponent implements OnChanges {
                     this.onError.emit('loadingFailed');
                 }
             }
-            this.fileSession[fileName] = { code: fileContent, loadingError, cursor: { column: 0, lineNumber: 0 } };
+            this.fileSession.set({ ...this.fileSession(), [fileName]: { code: fileContent, loadingError, cursor: { column: 0, lineNumber: 0 } } });
         }
 
-        const code = this.fileSession[fileName].code;
+        const code = this.fileSession()[fileName].code;
         this.binaryFileSelected.set(this.fileTypeService.isBinaryContent(code));
 
         // Since fetching the file may take some time, we need to check if the file is still selected.
         if (!this.binaryFileSelected() && this.selectedFile() === fileName) {
             this.editor().changeModel(fileName, code);
-            this.editor().setPosition(this.fileSession[fileName].cursor);
+            this.editor().setPosition(this.fileSession()[fileName].cursor);
         }
         this.loadingCount.set(this.loadingCount() - 1);
     }
 
     onFileTextChanged(text: string): void {
-        if (this.selectedFile() && this.fileSession[this.selectedFile()!]) {
-            const previousText = this.fileSession[this.selectedFile()!].code;
+        if (this.selectedFile() && this.fileSession()[this.selectedFile()!]) {
+            const previousText = this.fileSession()[this.selectedFile()!].code;
             if (previousText !== text) {
-                this.fileSession[this.selectedFile()!] = { code: text, loadingError: false, cursor: this.editor().getPosition() };
+                this.fileSession.set({ ...this.fileSession(), [this.selectedFile()!]: { code: text, loadingError: false, cursor: this.editor().getPosition() } });
                 this.onFileContentChange.emit({ file: this.selectedFile()!, fileContent: text });
             }
         }
@@ -374,7 +374,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
      */
     async onFileChange(fileChange: FileChange) {
         if (fileChange instanceof RenameFileChange) {
-            this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
+            this.fileSession.set(this.fileService.updateFileReferences(this.fileSession(), fileChange));
             for (const annotation of this.annotationsArray) {
                 if (annotation.fileName === fileChange.oldFileName) {
                     annotation.fileName = fileChange.newFileName;
@@ -382,10 +382,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
             }
             this.storeAnnotations([fileChange.newFileName]);
         } else if (fileChange instanceof DeleteFileChange) {
-            this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
+            this.fileSession.set(this.fileService.updateFileReferences(this.fileSession(), fileChange));
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && fileChange.fileType === FileType.FILE) {
-            this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: false } };
+            this.fileSession.set({ ...this.fileSession(), [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: false } });
         }
         this.setBuildAnnotations(this.annotationsArray);
     }
