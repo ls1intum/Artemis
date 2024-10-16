@@ -64,6 +64,7 @@
                 "deleteFolderTitle": "Verzeichnis löschen",
                 "deleteFileConfirm": "Bist Du sicher, dass Du die Datei <strong>{{filename}}</strong> löschen willst?",
                 "deleteFolderConfirm": "Bist Du sicher, dass Du das Verzeichnis <strong>{{filename}}</strong> und alle enthaltenen Dateien löschen willst?",
+                "delete": "Löschen bestätigen",
                 "unsavedChanges": "Datei enthält ungespeicherte Änderungen",
                 "createFolderRoot": "Verzeichnis auf Root Level erstellen",
                 "createFileRoot": "Datei auf Root Level erstellen",

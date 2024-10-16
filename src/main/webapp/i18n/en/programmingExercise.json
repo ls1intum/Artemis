@@ -147,18 +147,21 @@
             },
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
+                "description": "An online text editor featuring a file explorer, coding window, and code highlighting features but without the ability to compile or run code.",
                 "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Allow Offline IDE",
+                "description": "Check this option to allow students to download the exercise and work on it locally using their preferred IDE.",
                 "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "offlineIde": "IDE",
             "allowOnlineIde": {
                 "title": "Allow Online IDE",
+                "description": "An online coding environment based on Visual Studio Code featuring code highlighting and formatting features. Pre-configured to your exercise's language and with the ability to compile or run code online.",
                 "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected.",
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
@@ -465,6 +468,8 @@
                 "allowFeedbackRequestsTooltip": "Students can request feedback before the due date. The requests will be processed by Athena, or, if Athena cannot be reached, students can send manual feedback requests.",
                 "manualFeedbackRequests": "Manual feedback requests",
                 "manualFeedbackRequestsTooltip": "Students can request manual feedback before the due date to receive feedback.",
+                "feedbackRequestsEnabled": "Feedback requests are enabled.",
+                "feedbackRequestsDisabled": "Feedback requests are disabled.",
                 "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
                 "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",

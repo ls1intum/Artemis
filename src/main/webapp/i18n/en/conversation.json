@@ -164,6 +164,7 @@
                     "maxError": "You can only add {{ max }} users",
                     "addUserLabel": "Search for users in the course",
                     "maxUsersNote": "Note: You can add {{ max }} users to this conversation",
+                    "maxU": "Note: You can only add {{ max }} users to this conversation",
                     "addIndividualUsers": "Add individual users",
                     "addWholeGroups": "Add whole groups",
                     "addAllStudents": "Add all students",

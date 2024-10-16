@@ -273,12 +273,6 @@
             "explanationAnswered": "You have answered this question",
             "explanationNotAnswered": "You have not answered this question",
             "submissionWarning": "Are you sure you want to submit? You have not answered all questions and you still have some time left!",
-            "quizLiveModal": {
-                "title": "Go-Live of a new Quiz Exercise",
-                "body": "The Quiz {{quizName}} for Course {{courseName}} is now live! Click on the 'Go to Quiz' button in order to access the quiz.",
-                "cancelButton": "Cancel",
-                "goToButton": "Go to quiz"
-            },
             "placeholder": {
                 "title": "Short Quiz Title",
                 "questionTitle": "Question Title",

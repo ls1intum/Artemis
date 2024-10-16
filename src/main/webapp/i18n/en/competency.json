@@ -207,6 +207,7 @@
             "create": {
                 "titleUniqueValidationError": "There already exists a competency/prerequisite with this title in the course",
                 "suggestedTaxonomy": "Suggested",
+                "averageMastery": "Average competency mastery of students",
                 "averageStudentScore": "Average student mastery",
                 "selectLecture": "Select a Lecture",
                 "noLectures": "This course has no lectures",
