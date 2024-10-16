@@ -228,7 +228,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
         const lineNumberZeroBased = lineNumber - 1;
         if (!this.getInlineFeedbackNode(lineNumberZeroBased)) {
-            this.newFeedbackLines().push(lineNumberZeroBased);
+            this.newFeedbackLines.set([...this.newFeedbackLines(), lineNumberZeroBased]);
             this.renderFeedbackWidgets(lineNumberZeroBased);
         }
     }
@@ -242,10 +242,12 @@ export class CodeEditorMonacoComponent implements OnChanges {
         const existingFeedbackIndex = this.feedbackInternal().findIndex((f) => f.reference === feedback.reference);
         if (existingFeedbackIndex !== -1) {
             // Existing feedback -> update only
-            this.feedbackInternal()[existingFeedbackIndex] = feedback;
+            const feedbackArray = [...this.feedbackInternal()];
+            feedbackArray[existingFeedbackIndex] = feedback;
+            this.feedbackInternal.set(feedbackArray);
         } else {
             // New feedback -> save as actual feedback.
-            this.feedbackInternal().push(feedback);
+            this.feedbackInternal.set([...this.feedbackInternal(), feedback]);
             this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
         }
         this.renderFeedbackWidgets();
