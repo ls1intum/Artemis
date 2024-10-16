@@ -118,7 +118,7 @@ public class FaqResource {
     /**
      * @param faq      the faq to be checked *
      * @param courseId the id of the course the faq belongs to
-     *                     This method throws an exce ption if a non-instructor in the course tries to set the state of an FAQ to ACCEPTED
+     *                     This method throws an exception if a non-instructor in the course tries to set the state of an FAQ to ACCEPTED
      */
     private void isAtLeastInstructor(Faq faq, Long courseId) {
         if (faq.getFaqState() == FaqState.ACCEPTED) {
