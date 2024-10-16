@@ -8,6 +8,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param courseDescription   the course description (might have been edited in the client)
  * @param currentCompetencies the current competencies (might be unsaved in the client)
  */
+// @formatter:off
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisCompetencyExtractionInputDTO(String courseDescription, PyrisCompetencyRecommendationDTO[] currentCompetencies) {
-}
+public record PyrisCompetencyExtractionInputDTO(
+        String courseDescription,
+        PyrisCompetencyRecommendationDTO[] currentCompetencies
+) {}
+// @formatter:on

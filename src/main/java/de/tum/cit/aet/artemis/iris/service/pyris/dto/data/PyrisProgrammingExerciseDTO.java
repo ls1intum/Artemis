@@ -7,8 +7,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 // @formatter:off
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisProgrammingExerciseDTO(
         long id,
         String name,

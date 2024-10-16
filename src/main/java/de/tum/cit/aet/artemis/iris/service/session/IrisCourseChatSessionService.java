@@ -153,8 +153,8 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
         var courseDTO = PyrisExtendedCourseDTO.of(loadCourseWithParticipationOfStudent(courseId, userId));
         var metricsDTO = learningMetricsService.getStudentCourseMetrics(userId, courseId);
-        var competencyJolDTO = Optional.ofNullable(competencyJol).map(CompetencyJolDTO::of).orElse(null);
-        var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
+        var competencyJolDTO = Optional.ofNullable(competencyJol).map(CompetencyJolDTO::from).orElse(null);
+        var conversation = session.getMessages().stream().map(PyrisMessageDTO::from).toList();
         var userDTO = PyrisUserDTO.of(session.getUser());
 
         // @formatter:off

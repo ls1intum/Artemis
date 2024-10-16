@@ -133,7 +133,7 @@ public class CompetencyJolService {
             return new CompetencyJolPairDTO(null, null);
         }
         final var priorJol = competencyJolRepository.findLatestByCompetencyIdAndUserIdExceptJolId(competencyId, userId, currentJol.get().getId());
-        return CompetencyJolPairDTO.of(currentJol.get(), priorJol.orElse(null));
+        return CompetencyJolPairDTO.from(currentJol.get(), priorJol.orElse(null));
     }
 
     /**

@@ -14,8 +14,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
  * @param taxonomyOptions     The taxonomy options to use
  * @param maxN                The maximum number of competencies to extract
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 // @formatter:off
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisCompetencyExtractionPipelineExecutionDTO(
         PyrisPipelineExecutionDTO execution,
         String courseDescription,

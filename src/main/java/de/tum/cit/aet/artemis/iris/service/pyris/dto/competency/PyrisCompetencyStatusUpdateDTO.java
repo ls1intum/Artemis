@@ -14,6 +14,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * @param stages List of stages of the generation process
  * @param result List of competencies recommendations that have been generated so far
  */
+// @formatter:off
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisCompetencyStatusUpdateDTO(List<PyrisStageDTO> stages, List<PyrisCompetencyRecommendationDTO> result) {
-}
+public record PyrisCompetencyStatusUpdateDTO(
+        List<PyrisStageDTO> stages,
+        List<PyrisCompetencyRecommendationDTO> result
+) {}
+// @formatter:on

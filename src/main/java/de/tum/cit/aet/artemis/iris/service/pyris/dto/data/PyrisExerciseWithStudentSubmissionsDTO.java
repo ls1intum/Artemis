@@ -16,8 +16,11 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+/**
+ * Pyris DTO mapping for an {@code Exercise} together with all its student submissions.
+ */
 // @formatter:off
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisExerciseWithStudentSubmissionsDTO(
         long id,
         String title,
@@ -40,18 +43,8 @@ public record PyrisExerciseWithStudentSubmissionsDTO(
      * @param exercise The exercise to convert.
      * @return The converted exercise.
      */
-    public static PyrisExerciseWithStudentSubmissionsDTO of(Exercise exercise) {
+    public static PyrisExerciseWithStudentSubmissionsDTO from(Exercise exercise) {
         // @formatter:off
-        var submissionDTOSet = exercise.getStudentParticipations()
-                .stream()
-                .filter(participation -> !participation.isTestRun())
-                .flatMap(participation -> participation.getSubmissions().stream())
-                .map(submission -> new PyrisStudentSubmissionDTO(
-                        toInstant(submission.getSubmissionDate()),
-                        Optional.ofNullable(submission.getLatestResult()).map(Result::getScore).orElse(0D)
-                ))
-                .collect(Collectors.toSet());
-
         return new PyrisExerciseWithStudentSubmissionsDTO(
                 exercise.getId(),
                 exercise.getTitle(),
@@ -64,8 +57,15 @@ public record PyrisExerciseWithStudentSubmissionsDTO(
                 toInstant(exercise.getDueDate()),
                 exercise.getIncludedInOverallScore(),
                 Boolean.TRUE.equals(exercise.getPresentationScoreEnabled()),
-                submissionDTOSet
+                createSubmissionDTOSet(exercise)
         );
         // @formatter:on
+    }
+
+    private static Set<PyrisStudentSubmissionDTO> createSubmissionDTOSet(Exercise exercise) {
+        return exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun()).flatMap(participation -> participation.getSubmissions().stream())
+                .map(submission -> new PyrisStudentSubmissionDTO(toInstant(submission.getSubmissionDate()),
+                        Optional.ofNullable(submission.getLatestResult()).map(Result::getScore).orElse(0D)))
+                .collect(Collectors.toSet());
     }
 }

@@ -16,8 +16,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
  * @param conversation      the chat history
  * @param currentSubmission the user's current submission to the exercise
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 // @formatter:off
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisTextExerciseChatPipelineExecutionDTO(
         PyrisPipelineExecutionDTO execution,
         PyrisTextExerciseDTO exercise,

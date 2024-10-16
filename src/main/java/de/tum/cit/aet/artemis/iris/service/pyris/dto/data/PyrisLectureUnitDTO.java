@@ -4,8 +4,11 @@ import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+/**
+ * Pyris DTO mapping for a {@code LectureUnit}.
+ */
 // @formatter:off
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisLectureUnitDTO(
         long id,
         long lectureId,

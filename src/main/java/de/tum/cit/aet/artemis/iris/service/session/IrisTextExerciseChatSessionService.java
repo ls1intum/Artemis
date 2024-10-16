@@ -83,7 +83,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var exerciseDTO = PyrisTextExerciseDTO.of(exercise);
+        var exerciseDTO = PyrisTextExerciseDTO.from(exercise);
         // TODO: Once we can receive client form data through the IrisMessageResource, we should use that instead of fetching the latest submission to get the text
         var participation = studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), session.getUser().getLogin());
         var latestSubmission = participation.flatMap(p -> p.getSubmissions().stream().max(Comparator.comparingLong(Submission::getId))).orElse(null);
@@ -94,7 +94,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         else {
             latestSubmissionText = null;
         }
-        var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
+        var conversation = session.getMessages().stream().map(PyrisMessageDTO::from).toList();
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "text-exercise-chat",

@@ -14,8 +14,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * An extended course DTO for Pyris so it can better answer
  * questions regarding the course organization and content.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 // @formatter:off
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisExtendedCourseDTO(
         long id,
         String name,
@@ -42,10 +42,9 @@ public record PyrisExtendedCourseDTO(
      * @return The converted course.
      */
     public static PyrisExtendedCourseDTO of(Course course) {
-        List<PyrisExerciseWithStudentSubmissionsDTO> exercises = course.getExercises().stream().map(PyrisExerciseWithStudentSubmissionsDTO::of).toList();
-
-        List<PyrisExamDTO> exams = course.getExams().stream().map(PyrisExamDTO::of).toList();
-        List<PyrisCompetencyDTO> competencies = course.getCompetencies().stream().map(PyrisCompetencyDTO::of).toList();
+        List<PyrisExerciseWithStudentSubmissionsDTO> exercises = course.getExercises().stream().map(PyrisExerciseWithStudentSubmissionsDTO::from).toList();
+        List<PyrisExamDTO> exams = course.getExams().stream().map(PyrisExamDTO::from).toList();
+        List<PyrisCompetencyDTO> competencies = course.getCompetencies().stream().map(PyrisCompetencyDTO::from).toList();
 
         // @formatter:off
         return new PyrisExtendedCourseDTO(

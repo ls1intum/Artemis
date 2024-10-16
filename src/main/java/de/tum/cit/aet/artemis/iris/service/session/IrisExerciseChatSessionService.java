@@ -156,8 +156,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var latestSubmissionDTO = getLatestSubmissionIfExists(exercise, session.getUser()).map(pyrisProgrammingExerciseDTOService::convert).orElse(null);
         var exerciseDTO = pyrisProgrammingExerciseDTOService.convert(exercise);
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var courseDTO = PyrisCourseDTO.of(course);
-        var conversationDTO = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
+        var courseDTO = PyrisCourseDTO.from(course);
+        var conversationDTO = session.getMessages().stream().map(PyrisMessageDTO::from).toList();
         var userDTO = PyrisUserDTO.of(session.getUser());
 
         // @formatter:off
