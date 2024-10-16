@@ -5,7 +5,7 @@ import { DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgModel } from '@angular/forms';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { BehaviorSubject, Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject, firstValueFrom, of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -460,7 +460,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.errorFiles).toHaveLength(0);
     });
 
-    it('should first save unsaved files before triggering commit', fakeAsync(() => {
+    it('should first save unsaved files before triggering commit', async () => {
         cleanInitialize();
         const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
         const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
@@ -496,8 +496,10 @@ describe('CodeEditorContainerIntegration', () => {
             submission: {} as ProgrammingSubmission,
             participationId: successfulResult!.participation!.id!,
         });
+
+        // Commit state should change asynchronously
         containerFixture.detectChanges();
-        tick();
+        await firstValueFrom(container.actions.commitStateChange);
 
         // waiting for build result
         expect(container.commitState).toBe(CommitState.CLEAN);
@@ -515,8 +517,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.errorFiles).toHaveLength(0);
 
         containerFixture.destroy();
-        flush();
-    }));
+    });
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
         const guidedTourMapping = {} as GuidedTourMapping;
