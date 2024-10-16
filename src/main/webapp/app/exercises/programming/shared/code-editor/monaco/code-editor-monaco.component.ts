@@ -108,6 +108,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
     readonly feedbackInternal = signal<Feedback[]>([]);
     readonly feedbackSuggestionsInternal = signal<Feedback[]>([]);
+    readonly lineToFocus = signal<number | undefined>(undefined);
 
     readonly feedbackForSelectedFile = computed<FeedbackWithLineAndReference[]>(() => {
         return this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((f) => this.attachLineToFeedback(f));
@@ -141,6 +142,35 @@ export class CodeEditorMonacoComponent implements OnChanges {
             const annotations = this.buildAnnotations();
             untracked(() => this.setBuildAnnotations(annotations));
         });
+
+        effect(
+            () => {
+                const feedbackComponentsAndSuggestions = [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()];
+                this.changeDetectorRef.detectChanges();
+                // Wait for change detection to run on the new feedback widgets before passing them to the editor.
+                setTimeout(() => {
+                    untracked(() => {
+                        this.renderFeedbackInlineComponentsInEditor(feedbackComponentsAndSuggestions);
+                        // Focus the text area of the widget on the specified line if available so the user can start typing immediately.
+                        if (this.lineToFocus()) {
+                            feedbackComponentsAndSuggestions
+                                .find((c) => c.codeLine === this.lineToFocus())
+                                ?.elementRef.nativeElement.querySelector('#feedback-textarea')
+                                ?.focus();
+                            this.lineToFocus.set(undefined);
+                        }
+                    });
+                }, 0);
+            },
+            { allowSignalWrites: true },
+        );
+    }
+
+    private renderFeedbackInlineComponentsInEditor(components: (CodeEditorTutorAssessmentInlineFeedbackComponent | CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent)[]) {
+        this.editor().disposeWidgets();
+        for (const component of components) {
+            this.editor().addLineWidget(component.codeLine + 1, 'feedback-' + component.feedback.id + '-line-' + (component.codeLine + 1), component.elementRef.nativeElement);
+        }
     }
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
@@ -155,7 +185,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
             await this.selectFileInEditor(this.selectedFile());
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines.set([]);
-            this.renderFeedbackWidgets();
             if (this.isTutorAssessment() && !this.readOnlyManualFeedback()) {
                 this.setupAddFeedbackButton();
             }
@@ -164,7 +193,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
 
         if (changes.feedbacks) {
             this.newFeedbackLines.set([]);
-            this.renderFeedbackWidgets();
         }
 
         this.editor().layout();
@@ -241,7 +269,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         const lineNumberZeroBased = lineNumber - 1;
         if (!this.getInlineFeedbackNode(lineNumberZeroBased)) {
             this.newFeedbackLines.set([...this.newFeedbackLines(), lineNumberZeroBased]);
-            this.renderFeedbackWidgets(lineNumberZeroBased);
+            this.lineToFocus.set(lineNumberZeroBased);
         }
     }
 
@@ -262,7 +290,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.feedbackInternal.set([...this.feedbackInternal(), feedback]);
             this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
         }
-        this.renderFeedbackWidgets();
         this.onUpdateFeedback.emit(this.feedbackInternal());
     }
 
@@ -274,7 +301,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
         // We only have to remove new feedback.
         if (this.newFeedbackLines().includes(line)) {
             this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
-            this.renderFeedbackWidgets();
         }
     }
 
@@ -285,7 +311,6 @@ export class CodeEditorMonacoComponent implements OnChanges {
     deleteFeedback(feedback: Feedback) {
         this.feedbackInternal.set(this.feedbackInternal().filter((f) => !Feedback.areIdentical(f, feedback)));
         this.onUpdateFeedback.emit(this.feedbackInternal());
-        this.renderFeedbackWidgets();
     }
 
     /**
@@ -305,35 +330,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
      */
     discardSuggestion(feedback: Feedback): void {
         this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((f) => f !== feedback));
-        this.renderFeedbackWidgets();
         this.onDiscardSuggestion.emit(feedback);
-    }
-
-    /**
-     * Renders the current state of feedback in the editor.
-     * @param lineOfWidgetToFocus The line number of the widget whose text area should be focused.
-     * @protected
-     */
-    protected renderFeedbackWidgets(lineOfWidgetToFocus?: number) {
-        // Since the feedback widgets rely on the DOM nodes of each feedback item, Angular needs to re-render each node, hence the timeout.
-        this.changeDetectorRef.detectChanges();
-        setTimeout(() => {
-            this.editor().disposeWidgets();
-            for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
-                this.addLineWidgetWithFeedback(feedback);
-            }
-
-            // New, unsaved feedback has no associated object yet.
-            for (const line of this.newFeedbackLines()) {
-                const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
-                this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
-            }
-
-            // Focus the text area of the widget on the specified line if available.
-            if (lineOfWidgetToFocus !== undefined) {
-                this.getInlineFeedbackNode(lineOfWidgetToFocus)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
-            }
-        }, 0);
     }
 
     /**
