@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-public class AbstractProgrammingIntegrationIndependentTest extends AbstractSpringIntegrationIndependentTest {
+public abstract class AbstractProgrammingIntegrationIndependentTest extends AbstractSpringIntegrationIndependentTest {
 
     // Repositories
 

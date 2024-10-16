@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingSubmissionAndResultInt
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-public class AbstractProgrammingIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     // Config
 
