@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleTestArchitectureTest;
 
-public class ProgrammingTestArchitectureTest extends AbstractModuleTestArchitectureTest {
+class ProgrammingTestArchitectureTest extends AbstractModuleTestArchitectureTest {
 
     @Override
     public String getModulePackage() {
