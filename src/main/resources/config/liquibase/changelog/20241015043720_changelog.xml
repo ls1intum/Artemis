@@ -23,6 +23,34 @@
             <column name="trace_id" type="VARCHAR(255)"/>
             <column name="iris_message_id" type="BIGINT"/>
         </createTable>
-    </changeSet>
 
+        <!-- Add foreign key constraints with ON DELETE SET NULL -->
+        <addForeignKeyConstraint baseTableName="llm_token_usage"
+                                 baseColumnNames="course_id"
+                                 constraintName="fk_llm_token_usage_course_id"
+                                 referencedTableName="course"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+
+        <addForeignKeyConstraint baseTableName="llm_token_usage"
+                                 baseColumnNames="exercise_id"
+                                 constraintName="fk_llm_token_usage_exercise_id"
+                                 referencedTableName="exercise"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+
+        <addForeignKeyConstraint baseTableName="llm_token_usage"
+                                 baseColumnNames="user_id"
+                                 constraintName="fk_llm_token_usage_user_id"
+                                 referencedTableName="jhi_user"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+
+        <addForeignKeyConstraint baseTableName="llm_token_usage"
+                                 baseColumnNames="iris_message_id"
+                                 constraintName="fk_llm_token_usage_iris_message_id"
+                                 referencedTableName="iris_message"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+    </changeSet>
 </databaseChangeLog>
