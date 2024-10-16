@@ -691,12 +691,12 @@
             "dockerFlags": {
                 "disableNetworkAccess": {
                     "title": "Netzwerkzugriff beim Ausführen der Studierendeneinreichung deaktivieren",
-                    "description": "Aktivieren Sie diese Option, um den Netzwerkzugriff für Container zu deaktivieren. Das Netzwerk wird beim Ausführen der Studierendeneinreichung deaktiviert. Die Abhängigkeiten werden jedoch zuvor im Container heruntergeladen und zwischengespeichert."
+                    "description": "Aktiviere diese Option, um den Netzwerkzugriff für Container zu deaktivieren. Das Netzwerk wird beim Ausführen der Studierendeneinreichung deaktiviert. Die Abhängigkeiten werden jedoch zuvor im Container heruntergeladen und zwischengespeichert."
                 },
                 "envVars": {
                     "title": "Umgebungsvariablen",
-                    "description": "Fügen Sie Umgebungsvariablen zum Docker-Container hinzu. Bitte folgen Sie diesem Format: KEY_1=\"value_1\",KEY_2=\"value_2\". (Max 128 chars)",
-                    "invalid": "Ungültiges Format der Umgebungsvariablen. Bitte folgen Sie dem Format KEY_1=\"value_1\",KEY_2=\"value_2\". Schlüssel und Werte können in einfache oder doppelte Anführungszeichen gesetzt werden."
+                    "description": "Füge Umgebungsvariablen zum Docker-Container hinzu. Bitte folge diesem Format: KEY_1=\"value_1\",KEY_2=\"value_2\". (Maximal 128 Zeichen)",
+                    "invalid": "Ungültiges Format der Umgebungsvariablen. Bitte folge dem Format KEY_1=\"value_1\",KEY_2=\"value_2\". Schlüssel und Werte können in einfache oder doppelte Anführungszeichen gesetzt werden."
                 }
             }
         },
