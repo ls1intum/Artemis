@@ -73,7 +73,7 @@ public class IrisCompetencyGenerationService {
     public void handleStatusUpdate(CompetencyExtractionJob job, PyrisCompetencyStatusUpdateDTO statusUpdate) {
         Course course = courseRepository.findByIdForUpdateElseThrow(job.courseId());
         if (statusUpdate.tokens() != null) {
-            llmTokenUsageService.saveIrisTokenUsage(job, job.user(), course, statusUpdate.tokens());
+            llmTokenUsageService.saveIrisTokenUsage(builder -> builder.withJob(job).withCourse(course).withUser(job.user()).withTokens(statusUpdate.tokens()));
         }
         websocketService.send(job.user().getLogin(), websocketTopic(job.courseId()), statusUpdate);
     }

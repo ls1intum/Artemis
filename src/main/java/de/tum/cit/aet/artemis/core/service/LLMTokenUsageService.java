@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -34,36 +36,35 @@ public class LLMTokenUsageService {
      * method saves the token usage to the database with a link to the IrisMessage
      * messages of the same job are grouped together by saving the job id as a trace id
      *
-     * @param job      used to create a unique traceId to group multiple LLM calls
-     * @param message  IrisMessage to map the usage to an IrisMessage
-     * @param exercise to map the token cost to an exercise
-     * @param user     to map the token cost to a user
-     * @param course   to map the token to a course
-     * @param tokens   token cost list of type PyrisLLMCostDTO
-     * @return list of the saved data
+     * @param builderFunction of type Function<IrisTokenUsageBuilder, IrisTokenUsageBuilder> using IrisTokenUsageBuilder
+     * @return saved LLMTokenUsage as a List
      */
-    public List<LLMTokenUsage> saveIrisTokenUsage(PyrisJob job, IrisMessage message, Exercise exercise, User user, Course course, List<PyrisLLMCostDTO> tokens) {
+    public List<LLMTokenUsage> saveIrisTokenUsage(Function<IrisTokenUsageBuilder, IrisTokenUsageBuilder> builderFunction) {
+        IrisTokenUsageBuilder builder = builderFunction.apply(new IrisTokenUsageBuilder());
         List<LLMTokenUsage> tokenUsages = new ArrayList<>();
-
+        List<PyrisLLMCostDTO> tokens = builder.getTokens();
         for (PyrisLLMCostDTO cost : tokens) {
             LLMTokenUsage llmTokenUsage = new LLMTokenUsage();
-            if (message != null) {
+
+            builder.getMessage().ifPresent(message -> {
                 llmTokenUsage.setIrisMessageId(message.getId());
                 llmTokenUsage.setTime(message.getSentAt());
-            }
-            if (user != null) {
+            });
+
+            builder.getUser().ifPresent(user -> {
                 llmTokenUsage.setUserId(user.getId());
-            }
-            if (job != null) {
-                llmTokenUsage.setTraceId(job.jobId());
-            }
-            llmTokenUsage.setServiceType(cost.pipeline());
-            if (exercise != null) {
+            });
+
+            builder.getExercise().ifPresent(exercise -> {
                 llmTokenUsage.setExerciseId(exercise.getId());
-            }
-            if (course != null) {
+            });
+
+            builder.getCourse().ifPresent(course -> {
                 llmTokenUsage.setCourseId(course.getId());
-            }
+            });
+
+            llmTokenUsage.setTraceId(builder.getJob().jobId());
+            llmTokenUsage.setServiceType(cost.pipeline());
             llmTokenUsage.setNumInputTokens(cost.numInputTokens());
             llmTokenUsage.setCostPerMillionInputTokens(cost.costPerInputToken());
             llmTokenUsage.setNumOutputTokens(cost.numOutputTokens());
@@ -76,29 +77,75 @@ public class LLMTokenUsageService {
     }
 
     /**
-     * Overloaded method to save token usage without message and exercise.
-     *
-     * @param job    used to create a unique traceId to group multiple LLM calls
-     * @param user   to map the token cost to a user
-     * @param course to map the token to a course
-     * @param tokens token cost list of type PyrisLLMCostDTO
-     * @return list of the saved data
+     * Class IrisTokenUsageBuilder to be used for saveIrisTokenUsage()
      */
-    public List<LLMTokenUsage> saveIrisTokenUsage(PyrisJob job, User user, Course course, List<PyrisLLMCostDTO> tokens) {
-        return saveIrisTokenUsage(job, null, null, user, course, tokens);
-    }
+    public static class IrisTokenUsageBuilder {
 
-    /**
-     * Overloaded method to save token usage without exercise.
-     *
-     * @param job     used to create a unique traceId to group multiple LLM calls
-     * @param message IrisMessage to map the usage to an IrisMessage
-     * @param user    to map the token cost to a user
-     * @param course  to map the token to a course
-     * @param tokens  token cost list of type PyrisLLMCostDTO
-     * @return list of the saved data
-     */
-    public List<LLMTokenUsage> saveIrisTokenUsage(PyrisJob job, IrisMessage message, User user, Course course, List<PyrisLLMCostDTO> tokens) {
-        return saveIrisTokenUsage(job, message, null, user, course, tokens);
+        private PyrisJob job;
+
+        private List<PyrisLLMCostDTO> tokens;
+
+        private Optional<Course> course = Optional.empty();
+
+        private Optional<IrisMessage> message = Optional.empty();
+
+        private Optional<Exercise> exercise = Optional.empty();
+
+        private Optional<User> user = Optional.empty();
+
+        public IrisTokenUsageBuilder withJob(PyrisJob job) {
+            this.job = job;
+            return this;
+        }
+
+        public IrisTokenUsageBuilder withCourse(Course course) {
+            this.course = Optional.ofNullable(course);
+            return this;
+        }
+
+        public IrisTokenUsageBuilder withTokens(List<PyrisLLMCostDTO> tokens) {
+            this.tokens = tokens;
+            return this;
+        }
+
+        public IrisTokenUsageBuilder withMessage(IrisMessage message) {
+            this.message = Optional.ofNullable(message);
+            return this;
+        }
+
+        public IrisTokenUsageBuilder withExercise(Exercise exercise) {
+            this.exercise = Optional.ofNullable(exercise);
+            return this;
+        }
+
+        public IrisTokenUsageBuilder withUser(User user) {
+            this.user = Optional.ofNullable(user);
+            return this;
+        }
+
+        // Getters
+        public PyrisJob getJob() {
+            return job;
+        }
+
+        public List<PyrisLLMCostDTO> getTokens() {
+            return tokens;
+        }
+
+        public Optional<Course> getCourse() {
+            return course;
+        }
+
+        public Optional<IrisMessage> getMessage() {
+            return message;
+        }
+
+        public Optional<Exercise> getExercise() {
+            return exercise;
+        }
+
+        public Optional<User> getUser() {
+            return user;
+        }
     }
 }

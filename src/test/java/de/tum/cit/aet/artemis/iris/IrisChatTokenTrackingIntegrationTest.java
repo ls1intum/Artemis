@@ -175,8 +175,8 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         var tokens = getMockLLMCosts();
 
         // Capture the saved token usages
-        List<LLMTokenUsage> returnedTokenUsages = llmTokenUsageService.saveIrisTokenUsage(job, irisMessage, exercise, irisSession.getUser(), course, tokens);
-
+        List<LLMTokenUsage> returnedTokenUsages = llmTokenUsageService.saveIrisTokenUsage(
+                builder -> builder.withJob(job).withMessage(irisMessage).withExercise(exercise).withUser(irisSession.getUser()).withCourse(course).withTokens(tokens));
         assertThat(returnedTokenUsages).hasSize(5);
         for (int i = 0; i < returnedTokenUsages.size(); i++) {
             LLMTokenUsage usage = returnedTokenUsages.get(i);

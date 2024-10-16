@@ -170,7 +170,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         var session = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
-        IrisMessage savedMessage = null;
+        IrisMessage savedMessage;
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
@@ -178,12 +178,13 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
         }
         else {
+            savedMessage = null;
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
         }
 
         if (statusUpdate.tokens() != null) {
-            llmTokenUsageService.saveIrisTokenUsage(job, savedMessage, session.getExercise(), session.getUser(), session.getExercise().getCourseViaExerciseGroupOrCourseMember(),
-                    statusUpdate.tokens());
+            llmTokenUsageService.saveIrisTokenUsage(builder -> builder.withJob(job).withMessage(savedMessage).withExercise(session.getExercise()).withUser(session.getUser())
+                    .withCourse(session.getExercise().getCourseViaExerciseGroupOrCourseMember()).withTokens(statusUpdate.tokens()));
         }
 
         updateLatestSuggestions(session, statusUpdate.suggestions());
