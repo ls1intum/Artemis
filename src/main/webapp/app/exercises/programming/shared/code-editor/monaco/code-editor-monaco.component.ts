@@ -347,10 +347,11 @@ export class CodeEditorMonacoComponent implements OnChanges {
         if (line === undefined) {
             throw new Error('No line found for feedback ' + feedback.id);
         }
-        // In the future, there may be more than one feedback node per line.
+        // TODO: In the future, there may be more than one feedback node per line. The ID should be unique.
         const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
         // Feedback is stored with 0-based lines, but the lines of the Monaco editor used in Artemis are 1-based. We add 1 to correct this
-        this.editor().addLineWidget(line + 1, 'feedback-' + feedback.id, feedbackNode);
+        const oneBasedLine = line + 1;
+        this.editor().addLineWidget(oneBasedLine, 'feedback-' + feedback.id + '-line-' + oneBasedLine, feedbackNode);
     }
 
     /**
