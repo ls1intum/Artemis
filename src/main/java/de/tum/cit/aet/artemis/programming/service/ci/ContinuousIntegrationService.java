@@ -327,6 +327,7 @@ public interface ContinuousIntegrationService {
                     cd /var/tmp/testing-dir
                     #!/usr/bin/env bash
                     set -e
+                    echo "Starting dependency download script"
                     """;
         }
 

@@ -330,12 +330,12 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
             for (List<String> entry : list) {
                 if (entry.size() != 2 || entry.get(0) == null || entry.get(1) == null || entry.get(0).isBlank() || entry.get(1).isBlank()
                         || !DockerRunConfig.AllowedDockerFlags.isAllowed(entry.get(0))) {
-                    log.error("Invalid Docker flag entry: {}. Skipping.", entry);
+                    log.warn("Invalid Docker flag entry: {}. Skipping.", entry);
                     continue;
                 }
                 switch (entry.get(0)) {
                     case "network":
-                        dockerRunConfig.setNetworkDisabled(entry.get(1).equals("none"));
+                        dockerRunConfig.setNetworkDisabled(entry.get(1).equalsIgnoreCase("none"));
                         break;
                     case "env":
                         dockerRunConfig.setEnv(parseEnvVariableString(entry.get(1)));

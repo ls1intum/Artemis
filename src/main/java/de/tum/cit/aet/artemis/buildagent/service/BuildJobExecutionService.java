@@ -192,7 +192,7 @@ public class BuildJobExecutionService {
             index++;
         }
 
-        List<String> envVars = new ArrayList<>();
+        List<String> envVars = null;
         boolean isNetworkDisabled = false;
         if (buildJob.buildConfig().dockerRunConfig() != null) {
             envVars = buildJob.buildConfig().dockerRunConfig().getEnv();

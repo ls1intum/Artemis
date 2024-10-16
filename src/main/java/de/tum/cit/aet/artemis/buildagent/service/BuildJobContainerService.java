@@ -33,7 +33,6 @@ import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
@@ -102,21 +101,18 @@ public class BuildJobContainerService {
             envVars.add("NO_PROXY=" + noProxy);
         }
         envVars.add("SCRIPT=" + buildScript);
-        CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig).withEnv(envVars)
+        if (exerciseEnvVars != null && !exerciseEnvVars.isEmpty()) {
+            envVars.addAll(exerciseEnvVars);
+        }
+        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig).withEnv(envVars)
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
                 // by the creation of a file "stop_container.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f " + LOCALCI_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done");
-        // .withCmd("tail", "-f", "/dev/null"); // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
-        // "docker exec -it <container-id> /bin/bash".
-
-        if (exerciseEnvVars != null && !exerciseEnvVars.isEmpty()) {
-            envVars.addAll(exerciseEnvVars);
-            createContainerCmd.withEnv(envVars);
-        }
-
-        return createContainerCmd.exec();
+                .withCmd("sh", "-c", "while [ ! -f " + LOCALCI_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
+                // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
+                // "docker exec -it <container-id> /bin/bash".
+                .exec();
     }
 
     /**
@@ -140,7 +136,12 @@ public class BuildJobContainerService {
             // The "sh preScript.sh" execution command specified here is need to install dependencies and prepare the environment for the build script.
             log.info("Started running the pre-script for build job in container with id {}", containerId);
             executeDockerCommand(containerId, buildJobId, true, true, false, "bash", LOCALCI_WORKING_DIRECTORY + "/preScript.sh");
-            dockerClient.disconnectFromNetworkCmd().withContainerId(containerId).withNetworkId("bridge").exec();
+            try {
+                dockerClient.disconnectFromNetworkCmd().withContainerId(containerId).withNetworkId("bridge").exec();
+            }
+            catch (Exception e) {
+                log.error("Failed to disconnect container with id {} from network: {}", containerId, e.getMessage());
+            }
         }
 
         log.info("Started running the build script for build job in container with id {}", containerId);

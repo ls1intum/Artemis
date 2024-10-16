@@ -41,7 +41,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     ngOnInit() {
         if (this.programmingExercise()?.buildConfig?.dockerFlags) {
-            const dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags || '{}') as [string, string][];
+            const dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags || '[]') as [string, string][];
             dockerFlags.forEach(([key, value]) => {
                 if (key === this.NETWORK_KEY) {
                     this.isNetworkDisabled = value === 'none';
@@ -64,9 +64,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     updateDockerFlags(key: string, value: string) {
         let existingFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags || '[]') as [string, string][];
-        if (!existingFlags || existingFlags.length === 0) {
-            existingFlags = [] as [string, string][];
-        }
         existingFlags = existingFlags.filter(([flag]) => ALLOWED_DOCKER_FLAG_OPTIONS.includes(flag) && flag !== key) || [];
         if (ALLOWED_DOCKER_FLAG_OPTIONS.includes(key) && value.trim() !== '') {
             existingFlags.push([key, value]);

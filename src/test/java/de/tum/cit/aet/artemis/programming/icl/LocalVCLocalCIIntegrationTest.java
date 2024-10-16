@@ -972,7 +972,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Nested
-    class DisabledBuildAgentTest {
+    class BuildJobConfigurationTest {
 
         @BeforeEach
         void setUp() {
