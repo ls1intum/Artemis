@@ -18,11 +18,9 @@ import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -38,7 +36,6 @@ import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageRepo
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasicService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;
@@ -126,9 +123,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
     protected ParticipationVcsAccessTokenService participationVcsAccessTokenService;
 
     @Autowired
-    protected ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
-
-    @Autowired
     protected ProgrammingExerciseGitDiffReportService reportService;
 
     @Autowired
@@ -146,13 +140,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     // External Util services
     @Autowired
-    protected ExerciseIntegrationTestService exerciseIntegrationTestService;
-
-    @Autowired
     protected ExerciseUtilService exerciseUtilService;
-
-    @Autowired
-    protected PageableSearchUtilService pageableSearchUtilService;
 
     @Autowired
     protected UserUtilService userUtilService;

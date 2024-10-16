@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPena
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
-class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
+class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "progexserviceintegration";
 
@@ -35,11 +35,6 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     private Course additionalEmptyCourse;
 
     private ProgrammingExercise programmingExercise;
-
-    @Override
-    protected String getTestPrefix() {
-        return TEST_PREFIX;
-    }
 
     @BeforeEach
     void setUp() {

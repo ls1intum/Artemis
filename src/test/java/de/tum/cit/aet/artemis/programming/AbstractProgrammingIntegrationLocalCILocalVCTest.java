@@ -8,11 +8,14 @@ import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
+import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasicService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
@@ -53,6 +56,9 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
     protected ProgrammingExerciseFeedbackCreationService feedbackCreationService;
 
     @Autowired
+    protected ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
+
+    @Autowired
     protected ProgrammingExerciseTestCaseService testCaseService;
 
     @Autowired
@@ -73,6 +79,12 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
 
     @Autowired
     protected ExamUtilService examUtilService;
+
+    @Autowired
+    protected ExerciseIntegrationTestService exerciseIntegrationTestService;
+
+    @Autowired
+    protected PageableSearchUtilService pageableSearchUtilService;
 
     @Autowired
     protected ParticipationUtilService participationUtilService;
