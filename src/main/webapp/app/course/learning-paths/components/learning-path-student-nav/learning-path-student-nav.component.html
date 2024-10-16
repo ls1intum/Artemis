@@ -4,7 +4,15 @@
             <div class="row justify-content-start align-items-center">
                 @if (predecessorLearningObject(); as predecessorLearningObject) {
                     <div class="col-md-auto">
-                        <button id="previous-button" (click)="selectLearningObject(predecessorLearningObject)" type="button" class="btn btn-secondary">
+                        <button id="previous-button" (click)="selectLearningObject(predecessorLearningObject, false)"
+                                type="button" class="btn btn-secondary d-flex justify-content-center">
+                            <div class="me-1 loading-icon-container">
+                                @if (isLoadingPredecessor()) {
+                                    <fa-icon [icon]="faSpinner" animation="spin" />
+                                } @else {
+                                    <fa-icon [icon]="faChevronLeft" />
+                                }
+                            </div>
                             <span jhiTranslate="artemisApp.learningPath.navigation.previousButton"></span>
                         </button>
                     </div>
@@ -13,36 +21,48 @@
             </div>
         </div>
         <div ngbDropdown class="col-4 dropdown" (openChange)="setIsDropdownOpen($event)" #navOverview="ngbDropdown">
-            @if (!isLoading()) {
-                <div type="button" class="row justify-content-center align-items-center h-100" id="navigation-overview" ngbDropdownToggle>
-                    @if (currentLearningObject()) {
-                        <span class="col-md-auto fw-bold">
+            <div type="button"
+                 class="row justify-content-center align-items-center h-100" id="navigation-overview" ngbDropdownToggle>
+                @if (currentLearningObject()) {
+                    <span class="col-md-auto fw-bold">
                             {{ currentLearningObject()?.name }}
                         </span>
-                    } @else {
-                        <span class="col-md-auto fw-bold" jhiTranslate="artemisApp.learningPath.navigation.recapLabel"></span>
-                    }
-                    <fa-icon [icon]="faChevronDown" class="col-md-auto ps-0" />
-                </div>
-            }
+                } @else {
+                    <span class="col-md-auto fw-bold"
+                          jhiTranslate="artemisApp.learningPath.navigation.recapLabel"></span>
+                }
+                <fa-icon [icon]="faChevronDown" class="col-md-auto ps-0" />
+            </div>
             <div ngbDropdownMenu class="mt-3 col p-0" aria-labelledby="navigation-overview">
                 @if (isDropdownOpen()) {
-                    <jhi-learning-path-nav-overview (onLearningObjectSelected)="navOverview.close()" [learningPathId]="learningPathId()" />
+                    <jhi-learning-path-nav-overview (onLearningObjectSelected)="navOverview.close()"
+                                                    [learningPathId]="learningPathId()" />
                 }
             </div>
         </div>
         <div class="col-4">
             <div class="row justify-content-end align-items-center">
                 @if (successorLearningObject(); as successorLearningObject) {
-                    <span class="col text-end pe-3 text-truncate text-secondary">{{ successorLearningObject.name }}</span>
+                    <span
+                        class="col text-end pe-3 text-truncate text-secondary">{{ successorLearningObject.name }}</span>
                     <div class="col-md-auto">
-                        <button id="next-button" (click)="selectLearningObject(successorLearningObject)" type="button" class="btn btn-primary">
+                        <button id="next-button" (click)="selectLearningObject(successorLearningObject, true)"
+                                type="button"
+                                class="btn btn-primary d-flex justify-content-center">
                             <span jhiTranslate="artemisApp.learningPath.navigation.nextButton"></span>
+                            <div class="ms-1 loading-icon-container">
+                                @if (isLoadingSuccessor()) {
+                                    <fa-icon [icon]="faSpinner" animation="spin" />
+                                } @else {
+                                    <fa-icon [icon]="faChevronRight" />
+                                }
+                            </div>
                         </button>
                     </div>
                 } @else if (currentLearningObject() && !successorLearningObject()) {
                     <div class="col-md-auto">
-                        <button id="complete-button" (click)="completeLearningPath()" type="button" class="btn btn-primary">
+                        <button id="complete-button" (click)="completeLearningPath()" type="button"
+                                class="btn btn-primary">
                             <fa-icon [icon]="faFlag" />
                             <span jhiTranslate="artemisApp.learningPath.navigation.completeButton"></span>
                         </button>
