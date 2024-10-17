@@ -301,12 +301,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         const isVertical = originalCanvas.height > originalCanvas.width;
         this.adjustPdfContainerSize(isVertical);
+        this.isEnlargedView = true;
+        this.currentPage = Number(originalCanvas.id);
+        this.toggleBodyScroll(true);
         setTimeout(() => {
-            this.isEnlargedView = true;
-            this.currentPage = Number(originalCanvas.id);
             this.updateEnlargedCanvas(originalCanvas);
-            this.toggleBodyScroll(true);
-        }, 100);
+        }, 50);
     }
 
     /**
