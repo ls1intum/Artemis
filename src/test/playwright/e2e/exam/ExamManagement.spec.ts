@@ -80,6 +80,7 @@ test.describe('Exam management', () => {
                 const uid = generateUUID();
                 const programmingExerciseTitle = 'Programming ' + uid;
                 const programmingExerciseShortName = 'programming' + uid;
+                await programmingExerciseCreation.changeEditMode();
                 await programmingExerciseCreation.setTitle(programmingExerciseTitle);
                 await programmingExerciseCreation.setShortName(programmingExerciseShortName);
                 await programmingExerciseCreation.setPackageName('de.test');
