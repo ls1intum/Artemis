@@ -73,11 +73,11 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         effect(
             function defineShortNameOnEditModeChangeIfNotDefinedInAdvancedMode() {
                 if (this.isSimpleMode()) {
-                    if (!this.isShortNameFieldValid()) {
-                        this.getIsShortNameFieldValid();
-                    }
+                    this.updateIsShortNameValid();
+                    this.calculateFormValid();
                 }
             }.bind(this),
+            { allowSignalWrites: true },
         );
 
         effect(
