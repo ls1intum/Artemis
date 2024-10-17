@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20241013150001" author="entholzer">
+        <!--
+            Change Set for creating a new table for storing public SSH keys of users
+        -->
+        <insert tableName="user_public_ssh_key">
+            <column name="user_id" valueComputed="(SELECT id FROM jhi_user WHERE ssh_key IS NOT NULL)"/>
+            <column name="public_key" valueComputed="(SELECT ssh_key FROM jhi_user WHERE ssh_key IS NOT NULL)"/>
+            <column name="key_hash" valueComputed="(SELECT ssh_key_hash FROM jhi_user WHERE ssh_key_hash IS NOT NULL)"/>
+            <column name="creation_date" valueDate="CURRENT_TIMESTAMP"/>
+        </insert>
+
+
+        <createTable tableName="user_public_ssh_key">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="label" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="public_key" type="varchar(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="key_hash" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creation_date" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_used_date" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+            <column name="expiry_date" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_user_public_ssh_key_user_id" tableName="user_public_ssh_key">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="idx_user_public_ssh_key_ssh_public_key_hash" tableName="user_public_ssh_key">
+            <column name="key_hash"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
+
+
+        <?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+<changeSet id="20241013150000" author="entholzer">
+
+<!-- Step 1: Create the new SSHPublicKey table -->
+<changeSet id="1" author="yourname">
+    <createTable tableName="SSHPublicKey">
+        <column name="id" type="BIGINT" autoIncrement="true">
+            <constraints primaryKey="true" nullable="false"/>
+        </column>
+        <column name="user_id" type="BIGINT">
+            <constraints nullable="false"/>
+        </column>
+        <column name="ssh_key" type="VARCHAR(1000)">
+            <constraints nullable="false"/>
+        </column>
+        <column name="ssh_key_hash" type="VARCHAR(255)">
+            <constraints nullable="false"/>
+        </column>
+        <column name="created_at" type="TIMESTAMP" defaultValueDate="CURRENT_TIMESTAMP">
+            <constraints nullable="false"/>
+        </column>
+        <column name="last_used_at" type="TIMESTAMP"/>
+        <column name="expiry_date" type="TIMESTAMP"/>
+    </createTable>
+
+    <!-- Add a foreign key constraint to link SSHPublicKey to User table -->
+    <addForeignKeyConstraint
+            baseTableName="SSHPublicKey"
+            baseColumnNames="user_id"
+            referencedTableName="User"
+            referencedColumnNames="id"
+            constraintName="fk_sshpublickey_user"/>
+</changeSet>
+
+<!-- Step 2: Migrate existing SSH keys and hashes from User table to SSHPublicKey table -->
+<changeSet id="2" author="yourname">
+    <insert tableName="SSHPublicKey">
+        <column name="user_id" valueComputed="(SELECT id FROM User WHERE ssh_key IS NOT NULL)"/>
+        <column name="ssh_key" valueComputed="(SELECT ssh_key FROM User WHERE ssh_key IS NOT NULL)"/>
+        <column name="ssh_key_hash" valueComputed="(SELECT ssh_key_hash FROM User WHERE ssh_key_hash IS NOT NULL)"/>
+        <column name="created_at" valueDate="CURRENT_TIMESTAMP"/>
+    </insert>
+</changeSet>
+
+<!-- Step 3: Optionally drop the old ssh_key and ssh_key_hash columns from User table -->
+<changeSet id="3" author="yourname" runOnChange="true">
+    <dropColumn tableName="User" columnName="ssh_key"/>
+    <dropColumn tableName="User" columnName="ssh_key_hash"/>
+</changeSet>
+
+</databaseChangeLog>

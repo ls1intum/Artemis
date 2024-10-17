@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -8,6 +8,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-account-information',
@@ -33,6 +34,8 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
     private accountServiceSubscription: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    @ViewChild('itemsDrop', { static: true }) itemsDrop: NgbDropdown;
 
     constructor(
         private accountService: AccountService,
@@ -70,7 +73,8 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
                     this.sshPublicKeys.splice(index, 1);
                 }
             },
-            error: () => {
+            error: (error) => {
+                console.log(error);
                 this.alertService.error('artemisApp.userSettings.sshSettingsPage.deleteFailure');
             },
         });

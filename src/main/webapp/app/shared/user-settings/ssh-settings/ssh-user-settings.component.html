@@ -61,30 +61,99 @@
                                 </td>
 
                                 <td class="container">
-                                    <div class="vertical-center">
-                                        <div class="dropdown" tabindex="1">
-                                            <i class="db2" tabindex="1"></i>
-                                            <a class="dropbtn">
-                                                <fa-icon [icon]="faEllipsis"></fa-icon>
+                                    <ul
+                                        ngbDropdown
+                                        container="body"
+                                        placement="bottom auto"
+                                        style="opacity: 1"
+                                        class="navbar-nav justify-content-end flex-grow-1 text-decoration-none pointer"
+                                    >
+                                        <li ngbDropdownToggle class="nav-item">
+                                            <div class="nav-link px-3">
+                                                <fa-icon style="opacity: 1" [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
+                                            </div>
+                                        </li>
+                                        <div ngbDropdownMenu>
+                                            <a ngbDropdownItem class="d-flex align-items-center py-1 px-2" style="text-decoration: none" [routerLink]="['view', key.id]">
+                                                <div
+                                                    jhiTranslate="artemisApp.userSettings.sshSettingsPage.viewExistingSshKey"
+                                                    class="h6 fw-normal mb-0 course-title text-wrap"
+                                                ></div>
                                             </a>
-                                            <div class="dropdown-content">
-                                                <a class="btn dropdown-button" [routerLink]="['view', key.id]">
-                                                    <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.viewExistingSshKey"></span>
-                                                </a>
-                                                <button
-                                                    jhiDeleteButton
-                                                    class="btn dropdown-button dropdown-delete-btn me-2 bottom-border"
-                                                    [buttonSize]="ButtonSize.SMALL"
+
+                                            <button
+                                                jhiDeleteButton
+                                                ngbDropdownItem
+                                                [renderButtonText]="false"
+                                                (delete)="deleteSshKey(key)"
+                                                deleteQuestion="artemisApp.userSettings.sshSettingsPage.deleteSshKeyQuestion"
+                                                [dialogError]="dialogError$"
+                                                class="d-flex align-items-center py-1 px-2"
+                                            >
+                                                <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey" class="h6 fw-normal mb-0 course-title text-wrap"></div>
+                                            </button>
+                                        </div>
+                                    </ul>
+
+                                    <!--
+
+                                <div class="vertical-center">
+                                    <div ngbDropdown container="body" class="d-flex">
+
+                                        <fa-icon ngbDropdown [icon]="faEllipsis"></fa-icon>
+
+                                        <div ngbDropdownMenu class="dropdown-menu py-1 ms-n2">
+                                            <button ngbDropdownItem (click)="foobar()"
+                                                    class="d-flex align-items-center py-1 px-2">
+                                                <div
+                                                    class="h6 fw-normal mb-0 course-title text-wrap">{{ "View" }}
+                                                </div>
+                                            </button>
+
+                                            <a ngbDropdownItem class="d-flex align-items-center py-1 px-2"  style="text-decoration: none;" [routerLink]="['view', key.id]">
+                                                <div
+                                                    jhiTranslate="artemisApp.userSettings.sshSettingsPage.viewExistingSshKey"
+                                                    class="h6 fw-normal mb-0 course-title text-wrap">
+                                                </div>
+                                            </a>
+
+                                            <button jhiDeleteButton
+                                                    ngbDropdownItem
                                                     [renderButtonText]="false"
                                                     (delete)="deleteSshKey(key)"
                                                     deleteQuestion="artemisApp.userSettings.sshSettingsPage.deleteSshKeyQuestion"
                                                     [dialogError]="dialogError$"
-                                                >
-                                                    <span class="ms-1" jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey"></span>
-                                                </button>
-                                            </div>
+                                                    class="d-flex align-items-center py-1 px-2">
+                                                <div
+                                                    jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey"
+                                                    class="h6 fw-normal mb-0 course-title text-wrap">
+                                                </div>
+                                            </button>
                                         </div>
                                     </div>
+                                    <div class="dropdown" tabindex="1">
+                                        <i class="db2" tabindex="1"></i>
+                                        <a class="dropbtn">
+                                            <fa-icon [icon]="faEllipsis"></fa-icon>
+                                        </a>
+                                        <div class="dropdown-content">
+                                            <a class="btn dropdown-button" [routerLink]="['view', key.id]">
+                                                <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.viewExistingSshKey"></span>
+                                            </a>
+                                            <button
+                                                jhiDeleteButton
+                                                class="btn dropdown-button dropdown-delete-btn me-2 bottom-border"
+                                                [buttonSize]="ButtonSize.SMALL"
+                                                [renderButtonText]="false"
+                                                (delete)="deleteSshKey(key)"
+                                                deleteQuestion="artemisApp.userSettings.sshSettingsPage.deleteSshKeyQuestion"
+                                                [dialogError]="dialogError$"
+                                            >
+                                                <span class="ms-1" jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey"></span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    -->
                                 </td>
                             </tr>
                         }

@@ -81,81 +81,19 @@ tbody tr:hover {
     background-color: var(--ssh-key-settings-table-hover-background);
 }
 
-/* dd container */
-.dropdown {
-    display: inline-block;
+a:link:hover {
+    text-decoration: none !important;
+}
+
+.dropdown-content {
+    overflow-y: auto;
     position: absolute;
-    outline: none;
-    margin: 0;
-}
-
-/* button */
-.dropbtn {
-    padding: 0;
-    color: grey;
-    cursor: pointer;
-    transition: 0.35s ease-out;
-}
-
-/* dd content */
-.dropdown .dropdown-content {
-    position: absolute;
-    top: -25%;
-    min-width: 120%;
-    box-shadow: 0 8px 16px var(--ssh-key-settings-shadow);
-    z-index: 100000; // makes sure the drop down menu is always shown at the highest view plane
-    visibility: hidden;
-    opacity: 1;
-    transition: 0.35s ease-out;
-    width: 80px;
-}
-
-/* show dd content */
-.dropdown:focus .dropdown-content {
-    z-index: 100000;
-    outline: none;
-    transform: translateY(20px);
-    visibility: visible;
-    opacity: 1;
-    background-color: var(--light);
-}
-
-/* mask to close menu by clicking on the button */
-.dropdown .db2 {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    opacity: 0;
-    cursor: pointer;
-    z-index: 10;
-    display: none;
-}
-
-.dropdown:focus .db2 {
-    display: inline-block;
-}
-
-.dropdown .db2:focus .dropdown-content {
-    outline: none;
-    visibility: hidden;
-    margin-right: 15px;
-    opacity: 0;
-}
-
-.dropdown-button {
-    color: var(--ssh-key-settings-text-color);
     background-color: var(--dropdown-bg);
-    border-color: var(--dropdown-bg);
-    max-width: 80px;
-    width: 100%;
-    text-align: left;
-    font-size: smaller;
+    border: 1px solid var(--border-color);
+    z-index: 3000;
+    border-radius: 4px;
 }
 
-.dropdown-button:hover {
-    background-color: var(--ssh-key-settings-dropdown-buttons-hover);
-    border-color: var(--ssh-key-settings-dropdown-buttons-hover);
-    display: block;
+.dropdown-toggle::after {
+    display: none;
 }

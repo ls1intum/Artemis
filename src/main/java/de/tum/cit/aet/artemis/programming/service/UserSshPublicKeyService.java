@@ -65,9 +65,9 @@ public class UserSshPublicKeyService {
     }
 
     public void deleteUserSshPublicKey(Long userId, Long keyId) {
-        var key = userPublicSshKeyRepository.findById(userId);
-        if (key.isPresent() && key.get().getUserId().equals(userId)) {
-            userPublicSshKeyRepository.deleteById(userId);
+        var keys = userPublicSshKeyRepository.findAllByUserId(userId);
+        if (!keys.isEmpty() && keys.stream().map(UserSshPublicKey::getId).toList().contains(keyId)) {
+            userPublicSshKeyRepository.deleteById(keyId);
         }
         else {
             throw new AccessForbiddenException("SSH key", keyId);
