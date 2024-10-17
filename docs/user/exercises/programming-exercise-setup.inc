@@ -362,8 +362,7 @@ You can activate the option `Customize Build Script` in the programming exercise
 All changes in the configuration will be considered for all builds (template, solution, student submissions).
 
 There are predefined build scripts in bash for all programming languages, project types and configurations (e.g. with or without static code analysis).
-Notice that the checkout paths for the test and the assignment (template, solution or student) repo cannot be customized at the moment and are determined
-by the chosen programming language. Most programming languages clone the test repos into the root folder and the assignment repo into the `assignment` folder.
+Most programming languages clone the test repos into the root folder and the assignment repo into the `assignment` folder.
 This means that build files in the test repo (e.g. Gradle, Maven) typically refer to the `assignment` folder.
 
 You can also use a custom docker image for the build. Make sure to publish the docker image in a publicly available repository (e.g. DockerHub). Ideally build it
@@ -385,6 +384,7 @@ The checkout paths depend on the chosen programming language and project type. T
 .. figure:: programming/checkout-paths-preview.png
           :align: center
 
+By checkout paths, we mean the paths where the repositories are cloned during the build process. For example, in Java exercises, the assignment repository is cloned into the `assignment` folder, the test repository is cloned into the root folder. All paths are relative to the working directory of the build plan.
 If you want to change the checkout paths, you can do so by clicking on the `edit repositories checkout path` button. The following dialog will open:
 
 .. figure:: programming/checkout-paths-edit.png
