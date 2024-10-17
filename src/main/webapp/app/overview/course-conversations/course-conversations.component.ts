@@ -238,8 +238,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
+            const previousConversation = this.activeConversation;
             this.activeConversation = conversation;
-            if (this.isMobile && conversation) {
+            if (this.isMobile && conversation && previousConversation?.id !== conversation.id) {
                 this.courseSidebarService.closeSidebar();
             }
             this.updateQueryParameters();
@@ -299,6 +300,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             }
         }
         this.metisConversationService.setActiveConversation(undefined);
+        this.activeConversation = undefined;
         this.updateQueryParameters();
         this.courseWideSearchConfig.searchTerm = this.courseWideSearchTerm;
         this.courseWideSearch?.onSearch();
