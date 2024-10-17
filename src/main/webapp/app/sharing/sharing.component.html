@@ -50,8 +50,8 @@
                         <div>
                             <table class="table table-striped course-table">
                                 <thead>
-                                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="loadPage.bind(this)">
-                                        <!--[callback]="sortRows.bind(this)"-->
+                                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows.bind(this)">
+                                        <!---->
                                         <th class="d-none d-md-table-cell"></th>
                                         <th class="d-none d-md-table-cell"></th>
                                         <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id"></span><fa-icon [icon]="faSort"></fa-icon></th>
