@@ -2,10 +2,9 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Change Set for creating a new table for storing multiple public SSH keys of users -->
     <changeSet id="20241013150000" author="entholzer">
-        <!--
-            Change Set for creating a new table for storing multiple public SSH keys of users
-        -->
         <createTable tableName="user_public_ssh_key">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
@@ -38,9 +37,25 @@
         <createIndex indexName="idx_user_public_ssh_key_ssh_public_key_hash" tableName="user_public_ssh_key">
             <column name="key_hash"/>
         </createIndex>
+    </changeSet>
 
+    <!-- Modify the id column for MySQL -->
+    <changeSet id="20241013150000_1" author="entholzer">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
         <modifyDataType tableName="user_public_ssh_key" columnName="id" newDataType="BIGINT AUTO_INCREMENT"/>
+    </changeSet>
 
+    <!-- Modify the id column for PostgreSQL -->
+    <changeSet id="20241013150000_2" author="entholzer">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+        <modifyDataType tableName="user_public_ssh_key" columnName="id" newDataType="BIGSERIAL"/>
+    </changeSet>
+
+    <changeSet id="20241013150000_3" author="entholzer">
         <sql>
             INSERT INTO user_public_ssh_key (user_id, label, public_key, key_hash, creation_date, last_used_date, expiry_date)
             SELECT id, 'Key 1', ssh_public_key, ssh_public_key_hash, CURRENT_TIMESTAMP, NULL, NULL
