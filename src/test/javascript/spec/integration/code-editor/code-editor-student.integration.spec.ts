@@ -4,7 +4,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
-import { DebugElement } from '@angular/core';
+import { DebugElement, signal } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -36,7 +36,7 @@ import { MockResultService } from '../../helpers/mocks/service/mock-result.servi
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockInstance, MockModule, MockPipe } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -78,6 +78,14 @@ describe('CodeEditorStudentIntegration', () => {
     let routeSubject: Subject<Params>;
 
     const result: Result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
+
+    // TODO: make reusable
+    MockInstance.scope('case');
+    MockInstance(CodeEditorMonacoComponent, () => ({
+        editor: signal<any>({}),
+        inlineFeedbackComponents: signal<any[]>([]),
+        inlineFeedbackSuggestionComponents: signal<any[]>([]),
+    }));
 
     beforeEach(() => {
         return TestBed.configureTestingModule({

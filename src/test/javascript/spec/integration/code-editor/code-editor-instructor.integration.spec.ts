@@ -3,7 +3,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
-import { ChangeDetectorRef, DebugElement } from '@angular/core';
+import { ChangeDetectorRef, DebugElement, signal } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -41,7 +41,7 @@ import { MockParticipationService } from '../../helpers/mocks/service/mock-parti
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockInstance, MockModule, MockPipe } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
@@ -86,6 +86,14 @@ describe('CodeEditorInstructorIntegration', () => {
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
     let findWithParticipationsSubject: Subject<{ body: ProgrammingExercise }>;
     let routeSubject: Subject<Params>;
+
+    // TODO: make reusable
+    MockInstance.scope('case');
+    MockInstance(CodeEditorMonacoComponent, () => ({
+        editor: signal<any>({}),
+        inlineFeedbackComponents: signal<any[]>([]),
+        inlineFeedbackSuggestionComponents: signal<any[]>([]),
+    }));
 
     beforeEach(() => {
         return TestBed.configureTestingModule({

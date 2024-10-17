@@ -1,4 +1,20 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewEncapsulation } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    OnChanges,
+    SimpleChanges,
+    ViewEncapsulation,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    untracked,
+    viewChild,
+    viewChildren,
+} from '@angular/core';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -22,121 +38,173 @@ import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
 import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
+import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; loadingError: boolean } };
+type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 @Component({
     selector: 'jhi-code-editor-monaco',
     templateUrl: './code-editor-monaco.component.html',
     styleUrls: ['./code-editor-monaco.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    imports: [ArtemisSharedModule, ArtemisProgrammingManualAssessmentModule, MonacoEditorComponent, CodeEditorHeaderComponent],
     providers: [RepositoryFileService],
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeEditorMonacoComponent implements OnChanges {
-    @ViewChild('editor', { static: true })
-    editor: MonacoEditorComponent;
-    @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent)
-    inlineFeedbackComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackComponent>;
-    @ViewChildren(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent)
-    inlineFeedbackSuggestionComponents: QueryList<CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent>;
-    @Input()
-    commitState: CommitState;
-    @Input()
-    editorState: EditorState;
-    @Input()
-    course?: Course;
-    @Input()
-    feedbacks: Feedback[] = [];
-    @Input()
-    feedbackSuggestions: Feedback[] = [];
-    @Input()
-    readOnlyManualFeedback: boolean;
-    @Input()
-    highlightDifferences: boolean;
-    @Input()
-    isTutorAssessment = false;
-    @Input()
-    disableActions = false;
-    @Input()
-    selectedFile?: string;
-    @Input()
-    sessionId: number | string;
-    @Input()
-    set buildAnnotations(buildAnnotations: Array<Annotation>) {
-        this.setBuildAnnotations(buildAnnotations);
-    }
-
-    annotationsArray: Array<Annotation> = [];
-
-    @Output()
-    onError: EventEmitter<string> = new EventEmitter();
-    @Output()
-    onFileContentChange: EventEmitter<{ file: string; fileContent: string }> = new EventEmitter<{ file: string; fileContent: string }>();
-    @Output()
-    onUpdateFeedback = new EventEmitter<Feedback[]>();
-    @Output()
-    onFileLoad = new EventEmitter<string>();
-    @Output()
-    onAcceptSuggestion = new EventEmitter<Feedback>();
-    @Output()
-    onDiscardSuggestion = new EventEmitter<Feedback>();
-    @Output()
-    onHighlightLines = new EventEmitter<MonacoEditorLineHighlight[]>();
-
-    editorLocked = false;
-    /**
-     * The number of currently loading files. If this number is greater than 0, the editor is in a loading state and hides its content.
-     */
-    loadingCount = 0;
-
-    fileSession: FileSession = {};
-    newFeedbackLines: number[] = [];
-    binaryFileSelected = false;
-
     static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';
     static readonly CLASS_FEEDBACK_HOVER_BUTTON = 'monaco-add-feedback-button';
     static readonly FILE_TIMEOUT = 10000;
 
-    // Expose to template
     protected readonly Feedback = Feedback;
     protected readonly CommitState = CommitState;
 
-    constructor(
-        private repositoryFileService: CodeEditorRepositoryFileService,
-        private fileService: CodeEditorFileService,
-        protected localStorageService: LocalStorageService,
-        private changeDetectorRef: ChangeDetectorRef,
-        private fileTypeService: FileTypeService,
-    ) {}
+    private readonly repositoryFileService = inject(CodeEditorRepositoryFileService);
+    private readonly fileService = inject(CodeEditorFileService);
+    private readonly localStorageService = inject(LocalStorageService);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
+    private readonly fileTypeService = inject(FileTypeService);
+
+    readonly editor = viewChild.required<MonacoEditorComponent>('editor');
+    readonly inlineFeedbackComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent);
+    readonly inlineFeedbackSuggestionComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent);
+    readonly commitState = input.required<CommitState>();
+    readonly editorState = input.required<EditorState>();
+    readonly course = input<Course>();
+    readonly feedbacks = input<Feedback[]>([]);
+    readonly feedbackSuggestions = input<Feedback[]>([]);
+    readonly readOnlyManualFeedback = input<boolean>(false);
+    readonly highlightDifferences = input<boolean>(false);
+    readonly isTutorAssessment = input<boolean>(false);
+    readonly disableActions = input<boolean>(false);
+    readonly selectedFile = input<string>();
+    readonly sessionId = input.required<number | string>();
+    readonly buildAnnotations = input<Annotation[]>([]);
+
+    readonly onError = output<string>();
+    readonly onFileContentChange = output<{ file: string; fileContent: string }>();
+    readonly onUpdateFeedback = output<Feedback[]>();
+    readonly onFileLoad = output<string>();
+    readonly onAcceptSuggestion = output<Feedback>();
+    readonly onDiscardSuggestion = output<Feedback>();
+    readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
+
+    readonly loadingCount = signal<number>(0);
+    readonly newFeedbackLines = signal<number[]>([]);
+    readonly binaryFileSelected = signal<boolean>(false);
+    readonly fileSession = signal<FileSession>({});
+    readonly editorLocked = computed<boolean>(
+        () =>
+            this.disableActions() ||
+            this.isTutorAssessment() ||
+            this.commitState() === CommitState.CONFLICT ||
+            !this.selectedFile() ||
+            !!this.fileSession()[this.selectedFile()!]?.loadingError,
+    );
+
+    readonly feedbackInternal = signal<Feedback[]>([]);
+    readonly feedbackSuggestionsInternal = signal<Feedback[]>([]);
+    readonly lineToFocus = signal<number | undefined>(undefined);
+    readonly showingViewStateOfFile = signal<string | undefined>(undefined);
+    readonly viewStateReady = computed<boolean>(() => this.showingViewStateOfFile() === this.selectedFile());
+
+    readonly feedbackForSelectedFile = computed<FeedbackWithLineAndReference[]>(() => {
+        return this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((f) => this.attachLineToFeedback(f));
+    });
+    readonly feedbackSuggestionsForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
+        this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal()).map((f) => this.attachLineToFeedback(f)),
+    );
+
+    private attachLineToFeedback(feedback: Feedback): FeedbackWithLineAndReference {
+        return { ...feedback, line: Feedback.getReferenceLine(feedback) ?? -1, reference: feedback.reference ?? 'unreferenced' };
+    }
+
+    annotationsArray: Array<Annotation> = [];
+
+    constructor() {
+        effect(
+            () => {
+                this.feedbackInternal.set(this.feedbacks());
+            },
+            { allowSignalWrites: true },
+        );
+
+        effect(
+            () => {
+                this.feedbackSuggestionsInternal.set(this.feedbackSuggestions());
+            },
+            { allowSignalWrites: true },
+        );
+
+        effect(() => {
+            const annotations = this.buildAnnotations();
+            untracked(() => this.setBuildAnnotations(annotations));
+        });
+
+        effect(
+            () => {
+                this.selectedFile();
+                const feedbackComponentsAndSuggestions = [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()];
+                this.changeDetectorRef.detectChanges();
+                // Wait for change detection to run on the new feedback widgets before passing them to the editor.
+                setTimeout(() => {
+                    untracked(() => {
+                        this.renderFeedbackInlineComponentsInEditor(feedbackComponentsAndSuggestions);
+                        // Focus the text area of the widget on the specified line if available so the user can start typing immediately.
+                        if (this.lineToFocus()) {
+                            feedbackComponentsAndSuggestions
+                                .find((c) => c.codeLine === this.lineToFocus())
+                                ?.elementRef.nativeElement.querySelector('#feedback-textarea')
+                                ?.focus();
+                            this.lineToFocus.set(undefined);
+                        }
+
+                        if (!this.viewStateReady()) {
+                            this.editor().restoreViewStateForCurrentModel();
+                            this.showingViewStateOfFile.set(this.selectedFile());
+                        }
+                    });
+                }, 0);
+            },
+            { allowSignalWrites: true },
+        );
+    }
+
+    private renderFeedbackInlineComponentsInEditor(components: (CodeEditorTutorAssessmentInlineFeedbackComponent | CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent)[]) {
+        this.editor().disposeWidgets();
+        for (const component of components) {
+            this.editor().addLineWidget(component.codeLine + 1, 'feedback-' + component.feedback.id + '-line-' + (component.codeLine + 1), component.elementRef.nativeElement);
+        }
+    }
 
     async ngOnChanges(changes: SimpleChanges): Promise<void> {
-        const editorWasRefreshed = changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN;
-        const editorWasReset = changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState === CommitState.UNDEFINED;
+        const editorWasRefreshed = changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState() === EditorState.CLEAN;
+        const editorWasReset = changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState() === CommitState.UNDEFINED;
         // Refreshing the editor resets any local files.
         if (editorWasRefreshed || editorWasReset) {
-            this.fileSession = {};
-            this.editor.reset();
+            this.fileSession.set({});
+            this.editor().reset();
         }
-        if ((changes.selectedFile && this.selectedFile) || editorWasRefreshed) {
-            await this.selectFileInEditor(this.selectedFile);
+        if ((changes.selectedFile && this.selectedFile()) || editorWasRefreshed) {
+            this.editor().saveViewStateForCurrentModel();
+            await this.selectFileInEditor(this.selectedFile());
             this.setBuildAnnotations(this.annotationsArray);
-            this.newFeedbackLines = [];
-            this.renderFeedbackWidgets();
-            if (this.isTutorAssessment && !this.readOnlyManualFeedback) {
+            this.newFeedbackLines.set([]);
+            if (this.isTutorAssessment() && !this.readOnlyManualFeedback()) {
                 this.setupAddFeedbackButton();
             }
-            this.onFileLoad.emit(this.selectedFile);
+            this.onFileLoad.emit(this.selectedFile()!);
         }
 
         if (changes.feedbacks) {
-            this.newFeedbackLines = [];
-            this.renderFeedbackWidgets();
+            this.newFeedbackLines.set([]);
         }
 
-        this.editorLocked =
-            this.disableActions || this.isTutorAssessment || this.commitState === CommitState.CONFLICT || !this.selectedFile || !!this.fileSession[this.selectedFile]?.loadingError;
-
-        this.editor.layout();
+        this.editor().layout();
     }
 
     async selectFileInEditor(fileName: string | undefined): Promise<void> {
@@ -144,8 +212,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
             // There is nothing to be done, as the editor will be hidden when there is no file.
             return;
         }
-        this.loadingCount++;
-        if (!this.fileSession[fileName] || this.fileSession[fileName].loadingError) {
+        this.loadingCount.set(this.loadingCount() + 1);
+        if (!this.fileSession()[fileName] || this.fileSession()[fileName].loadingError) {
             let fileContent = '';
             let loadingError = false;
             try {
@@ -160,45 +228,45 @@ export class CodeEditorMonacoComponent implements OnChanges {
                     this.onError.emit('loadingFailed');
                 }
             }
-            this.fileSession[fileName] = { code: fileContent, loadingError, cursor: { column: 0, lineNumber: 0 } };
+            this.fileSession.set({ ...this.fileSession(), [fileName]: { code: fileContent, loadingError, cursor: { column: 0, lineNumber: 0 } } });
         }
 
-        const code = this.fileSession[fileName].code;
-        this.binaryFileSelected = this.fileTypeService.isBinaryContent(code);
+        const code = this.fileSession()[fileName].code;
+        this.binaryFileSelected.set(this.fileTypeService.isBinaryContent(code));
 
         // Since fetching the file may take some time, we need to check if the file is still selected.
-        if (!this.binaryFileSelected && this.selectedFile === fileName) {
-            this.editor.changeModel(fileName, code);
-            this.editor.setPosition(this.fileSession[fileName].cursor);
+        if (!this.binaryFileSelected() && this.selectedFile() === fileName) {
+            this.editor().changeModel(fileName, code);
+            this.editor().setPosition(this.fileSession()[fileName].cursor);
         }
-        this.loadingCount--;
+        this.loadingCount.set(this.loadingCount() - 1);
     }
 
     onFileTextChanged(text: string): void {
-        if (this.selectedFile && this.fileSession[this.selectedFile]) {
-            const previousText = this.fileSession[this.selectedFile].code;
+        if (this.selectedFile() && this.fileSession()[this.selectedFile()!]) {
+            const previousText = this.fileSession()[this.selectedFile()!].code;
             if (previousText !== text) {
-                this.fileSession[this.selectedFile] = { code: text, loadingError: false, cursor: this.editor.getPosition() };
-                this.onFileContentChange.emit({ file: this.selectedFile, fileContent: text });
+                this.fileSession.set({ ...this.fileSession(), [this.selectedFile()!]: { code: text, loadingError: false, cursor: this.editor().getPosition() } });
+                this.onFileContentChange.emit({ file: this.selectedFile()!, fileContent: text });
             }
         }
     }
 
     getText(): string {
-        return this.editor.getText();
+        return this.editor().getText();
     }
 
     getNumberOfLines(): number {
-        return this.editor.getNumberOfLines();
+        return this.editor().getNumberOfLines();
     }
 
     highlightLines(startLine: number, endLine: number) {
-        this.editor.highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT);
+        this.editor().highlightLines(startLine, endLine, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT);
         this.onHighlightLines.emit(this.getLineHighlights());
     }
 
     setupAddFeedbackButton(): void {
-        this.editor.setLineDecorationsHoverButton(CodeEditorMonacoComponent.CLASS_FEEDBACK_HOVER_BUTTON, (lineNumber) => this.addNewFeedback(lineNumber));
+        this.editor().setLineDecorationsHoverButton(CodeEditorMonacoComponent.CLASS_FEEDBACK_HOVER_BUTTON, (lineNumber) => this.addNewFeedback(lineNumber));
     }
 
     /**
@@ -209,8 +277,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
         // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
         const lineNumberZeroBased = lineNumber - 1;
         if (!this.getInlineFeedbackNode(lineNumberZeroBased)) {
-            this.newFeedbackLines.push(lineNumberZeroBased);
-            this.renderFeedbackWidgets(lineNumberZeroBased);
+            this.newFeedbackLines.set([...this.newFeedbackLines(), lineNumberZeroBased]);
+            this.lineToFocus.set(lineNumberZeroBased);
         }
     }
 
@@ -220,17 +288,18 @@ export class CodeEditorMonacoComponent implements OnChanges {
      */
     updateFeedback(feedback: Feedback) {
         const line = Feedback.getReferenceLine(feedback);
-        const existingFeedbackIndex = this.feedbacks.findIndex((f) => f.reference === feedback.reference);
+        const existingFeedbackIndex = this.feedbackInternal().findIndex((f) => f.reference === feedback.reference);
         if (existingFeedbackIndex !== -1) {
             // Existing feedback -> update only
-            this.feedbacks[existingFeedbackIndex] = feedback;
+            const feedbackArray = [...this.feedbackInternal()];
+            feedbackArray[existingFeedbackIndex] = feedback;
+            this.feedbackInternal.set(feedbackArray);
         } else {
             // New feedback -> save as actual feedback.
-            this.feedbacks.push(feedback);
-            this.newFeedbackLines = this.newFeedbackLines.filter((l) => l !== line);
+            this.feedbackInternal.set([...this.feedbackInternal(), feedback]);
+            this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
         }
-        this.renderFeedbackWidgets();
-        this.onUpdateFeedback.emit(this.feedbacks);
+        this.onUpdateFeedback.emit(this.feedbackInternal());
     }
 
     /**
@@ -239,9 +308,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
      */
     cancelFeedback(line: number) {
         // We only have to remove new feedback.
-        if (this.newFeedbackLines.includes(line)) {
-            this.newFeedbackLines = this.newFeedbackLines.filter((l) => l !== line);
-            this.renderFeedbackWidgets();
+        if (this.newFeedbackLines().includes(line)) {
+            this.newFeedbackLines.set(this.newFeedbackLines().filter((l) => l !== line));
         }
     }
 
@@ -250,9 +318,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * @param feedback The feedback to remove.
      */
     deleteFeedback(feedback: Feedback) {
-        this.feedbacks = this.feedbacks.filter((f) => !Feedback.areIdentical(f, feedback));
-        this.onUpdateFeedback.emit(this.feedbacks);
-        this.renderFeedbackWidgets();
+        this.feedbackInternal.set(this.feedbackInternal().filter((f) => !Feedback.areIdentical(f, feedback)));
+        this.onUpdateFeedback.emit(this.feedbackInternal());
     }
 
     /**
@@ -260,7 +327,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * @param feedback The feedback item of the feedback suggestion.
      */
     acceptSuggestion(feedback: Feedback): void {
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback);
+        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((f) => f !== feedback));
         feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
         this.updateFeedback(feedback);
         this.onAcceptSuggestion.emit(feedback);
@@ -271,36 +338,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * @param feedback The feedback item of the feedback suggestion.
      */
     discardSuggestion(feedback: Feedback): void {
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback);
-        this.renderFeedbackWidgets();
+        this.feedbackSuggestionsInternal.set(this.feedbackSuggestionsInternal().filter((f) => f !== feedback));
         this.onDiscardSuggestion.emit(feedback);
-    }
-
-    /**
-     * Renders the current state of feedback in the editor.
-     * @param lineOfWidgetToFocus The line number of the widget whose text area should be focused.
-     * @protected
-     */
-    protected renderFeedbackWidgets(lineOfWidgetToFocus?: number) {
-        // Since the feedback widgets rely on the DOM nodes of each feedback item, Angular needs to re-render each node, hence the timeout.
-        this.changeDetectorRef.detectChanges();
-        setTimeout(() => {
-            this.editor.disposeWidgets();
-            for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbacks, ...this.feedbackSuggestions])) {
-                this.addLineWidgetWithFeedback(feedback);
-            }
-
-            // New, unsaved feedback has no associated object yet.
-            for (const line of this.newFeedbackLines) {
-                const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
-                this.editor.addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
-            }
-
-            // Focus the text area of the widget on the specified line if available.
-            if (lineOfWidgetToFocus !== undefined) {
-                this.getInlineFeedbackNode(lineOfWidgetToFocus)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
-            }
-        }, 0);
     }
 
     /**
@@ -320,7 +359,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * @param line The line (0-based) for which to retrieve the feedback node.
      */
     getInlineFeedbackNode(line: number): HTMLElement | undefined {
-        return [...this.inlineFeedbackComponents, ...this.inlineFeedbackSuggestionComponents].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
+        return [...this.inlineFeedbackComponents(), ...this.inlineFeedbackSuggestionComponents()].find((c) => c.codeLine === line)?.elementRef?.nativeElement;
     }
 
     private addLineWidgetWithFeedback(feedback: Feedback): void {
@@ -328,10 +367,11 @@ export class CodeEditorMonacoComponent implements OnChanges {
         if (line === undefined) {
             throw new Error('No line found for feedback ' + feedback.id);
         }
-        // In the future, there may be more than one feedback node per line.
+        // TODO: In the future, there may be more than one feedback node per line. The ID should be unique.
         const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
         // Feedback is stored with 0-based lines, but the lines of the Monaco editor used in Artemis are 1-based. We add 1 to correct this
-        this.editor.addLineWidget(line + 1, 'feedback-' + feedback.id, feedbackNode);
+        const oneBasedLine = line + 1;
+        this.editor().addLineWidget(oneBasedLine, 'feedback-' + feedback.id + '-line-' + oneBasedLine, feedbackNode);
     }
 
     /**
@@ -339,10 +379,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
      * @param feedbacks The feedbacks to filter.
      */
     filterFeedbackForSelectedFile(feedbacks: Feedback[]): Feedback[] {
-        if (!this.selectedFile) {
+        if (!this.selectedFile()) {
             return [];
         }
-        return feedbacks.filter((feedback) => feedback.reference && Feedback.getReferenceFilePath(feedback) === this.selectedFile);
+        return feedbacks.filter((feedback) => feedback.reference && Feedback.getReferenceFilePath(feedback) === this.selectedFile());
     }
 
     /**
@@ -355,7 +395,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
      */
     async onFileChange(fileChange: FileChange) {
         if (fileChange instanceof RenameFileChange) {
-            this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
+            this.fileSession.set(this.fileService.updateFileReferences(this.fileSession(), fileChange));
             for (const annotation of this.annotationsArray) {
                 if (annotation.fileName === fileChange.oldFileName) {
                     annotation.fileName = fileChange.newFileName;
@@ -363,10 +403,10 @@ export class CodeEditorMonacoComponent implements OnChanges {
             }
             this.storeAnnotations([fileChange.newFileName]);
         } else if (fileChange instanceof DeleteFileChange) {
-            this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
+            this.fileSession.set(this.fileService.updateFileReferences(this.fileSession(), fileChange));
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && fileChange.fileType === FileType.FILE) {
-            this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: false } };
+            this.fileSession.set({ ...this.fileSession(), [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: false } });
         }
         this.setBuildAnnotations(this.annotationsArray);
     }
@@ -396,7 +436,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     setBuildAnnotations(buildAnnotations: Annotation[]): void {
-        if (buildAnnotations.length > 0 && this.selectedFile) {
+        if (buildAnnotations.length > 0 && this.selectedFile()) {
             const sessionAnnotations = this.loadAnnotations();
             this.annotationsArray = buildAnnotations.map((a) => {
                 const hash = a.fileName + a.row + a.column + a.text;
@@ -409,13 +449,13 @@ export class CodeEditorMonacoComponent implements OnChanges {
         } else {
             this.annotationsArray = buildAnnotations;
         }
-        this.editor.setAnnotations(
-            buildAnnotations.filter((buildAnnotation) => buildAnnotation.fileName === this.selectedFile),
-            this.commitState === CommitState.UNCOMMITTED_CHANGES,
+        this.editor().setAnnotations(
+            buildAnnotations.filter((buildAnnotation) => buildAnnotation.fileName === this.selectedFile()),
+            this.commitState() === CommitState.UNCOMMITTED_CHANGES,
         );
     }
 
     getLineHighlights(): MonacoEditorLineHighlight[] {
-        return this.editor.getLineHighlights();
+        return this.editor().getLineHighlights();
     }
 }

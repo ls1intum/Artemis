@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import { BehaviorSubject, firstValueFrom, of, throwError } from 'rxjs';
+import { outputToObservable } from '@angular/core/rxjs-interop';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -69,9 +70,10 @@ import { AthenaService } from 'app/assessment/athena.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { EntityResponseType } from 'app/exercises/shared/result/result.service';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import dayjs from 'dayjs/esm';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -172,7 +174,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, CodeEditorMonacoComponent],
             declarations: [
                 CodeEditorTutorAssessmentContainerComponent,
                 MockComponent(ProgrammingAssessmentRepoExportButtonComponent),
@@ -192,8 +194,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockComponent(CodeEditorGridComponent),
                 MockComponent(CodeEditorActionsComponent),
                 MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
-                CodeEditorMonacoComponent,
-                MonacoEditorComponent,
                 MockComponent(CodeEditorInstructionsComponent),
                 MockComponent(ResultComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
@@ -215,6 +215,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 MockProvider(ProfileService, { getProfileInfo: () => of({ activeProfiles: [] }) }, 'useValue'),
             ],
         })
+            .overrideComponent(CodeEditorMonacoComponent, { set: { imports: [MonacoEditorComponent, MockComponent(CodeEditorHeaderComponent)] } })
             .compileComponents()
             .then(() => {
                 // Ignore console errors
@@ -303,8 +304,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(browserComponent.filesTreeViewItem).toHaveLength(1);
 
         const codeEditorMonacoComp: CodeEditorMonacoComponent = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance;
-        codeEditorMonacoComp.loadingCount = 0;
-        const highlightedLines: MonacoEditorLineHighlight[] = await firstValueFrom(codeEditorMonacoComp.onHighlightLines);
+        codeEditorMonacoComp.loadingCount.set(0);
+        const highlightedLines: MonacoEditorLineHighlight[] = await firstValueFrom(outputToObservable(codeEditorMonacoComp.onHighlightLines));
         expect(highlightedLines).toHaveLength(1);
 
         getFilesWithContentStub.mockRestore();
