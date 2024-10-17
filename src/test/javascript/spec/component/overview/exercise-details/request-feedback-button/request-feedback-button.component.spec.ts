@@ -56,7 +56,7 @@ describe('RequestFeedbackButtonComponent', () => {
             submissions: [{ id: 1, submitted: true }],
             testRun: false,
         } as StudentParticipation;
-        const exercise = { id: 1, type: ExerciseType.TEXT, course: undefined, studentParticipations: [participation] } as Exercise;
+        const exercise = { id: 1, type: ExerciseType.TEXT, course: undefined, studentParticipations: [participation], allowFeedbackRequests: true } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
         mockExerciseDetails(exercise);
 
@@ -75,7 +75,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
     it('should display the button when Athena is enabled and it is not an exam exercise', fakeAsync(() => {
         setAthenaEnabled(true);
-        const exercise = { id: 1, type: ExerciseType.TEXT, course: {} } as Exercise; // course undefined means exam exercise
+        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, allowFeedbackRequests: true } as Exercise; // course undefined means exam exercise
         fixture.componentRef.setInput('exercise', exercise);
         mockExerciseDetails(exercise);
 
@@ -104,7 +104,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
     it('should disable the button when participation is missing', fakeAsync(() => {
         setAthenaEnabled(true);
-        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, studentParticipations: undefined } as Exercise;
+        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, studentParticipations: undefined, allowFeedbackRequests: true } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
         mockExerciseDetails(exercise);
 
@@ -123,7 +123,7 @@ describe('RequestFeedbackButtonComponent', () => {
             id: 1,
             submissions: [{ id: 1, submitted: true }],
         } as StudentParticipation;
-        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, studentParticipations: [participation] } as Exercise;
+        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, studentParticipations: [participation], allowFeedbackRequests: true } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
         component.isExamExercise = false;
         mockExerciseDetails(exercise);
@@ -146,7 +146,7 @@ describe('RequestFeedbackButtonComponent', () => {
             submissions: [{ id: 1, submitted: false }],
             testRun: false,
         } as StudentParticipation;
-        const exercise = { id: 1, type: ExerciseType.PROGRAMMING, studentParticipations: [participation], course: {} } as Exercise;
+        const exercise = { id: 1, type: ExerciseType.PROGRAMMING, studentParticipations: [participation], course: {}, allowFeedbackRequests: true } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
 
         mockExerciseDetails(exercise);
@@ -173,7 +173,7 @@ describe('RequestFeedbackButtonComponent', () => {
     it('should show an alert when requestFeedback() is called and conditions are not satisfied', fakeAsync(() => {
         setAthenaEnabled(true);
 
-        const exercise = { id: 1, type: ExerciseType.TEXT, course: {} } as Exercise;
+        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, allowFeedbackRequests: true } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
 
         jest.spyOn(component, 'hasAthenaResultForLatestSubmission').mockReturnValue(true);
@@ -191,7 +191,7 @@ describe('RequestFeedbackButtonComponent', () => {
             submissions: [{ id: 1, submitted: false }],
             testRun: false,
         } as StudentParticipation;
-        const exercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [participation], course: {} } as Exercise;
+        const exercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [participation], course: {}, allowFeedbackRequests: true } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('isGeneratingFeedback', false);
         mockExerciseDetails(exercise);
@@ -212,7 +212,7 @@ describe('RequestFeedbackButtonComponent', () => {
             submissions: [{ id: 1, submitted: true }],
             testRun: false,
         } as StudentParticipation;
-        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, studentParticipations: [participation] } as Exercise;
+        const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, studentParticipations: [participation], allowFeedbackRequests: true } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('isGeneratingFeedback', false);
         mockExerciseDetails(exercise);

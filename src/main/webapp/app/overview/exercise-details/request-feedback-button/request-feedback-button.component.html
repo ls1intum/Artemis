@@ -1,4 +1,4 @@
-@if (!isExamExercise) {
+@if (!isExamExercise && requestFeedbackEnabled) {
     @if (athenaEnabled) {
         @if (exercise().type === ExerciseType.TEXT) {
             <button
