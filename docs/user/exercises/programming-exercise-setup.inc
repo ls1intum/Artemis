@@ -351,6 +351,8 @@ Update exercise code in repositories
 - In case of a |build_failed| result, some configuration is wrong, please check the build errors on the corresponding build plan.
 - **Hints:** Test cases should only reference code, that is available in the template repository. In case this is **not** possible, please try out the option **Sequential Test Runs**
 
+.. _adapt_build_script:
+
 Adapt the build script
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -371,6 +373,30 @@ The default Java Docker image can be found on https://github.com/ls1intum/artemi
 
 Hint: Try out the build of a custom programming exercise locally before you publish a custom docker image and before you upload the code to Artemis, because the
 development and debugging experience is much better.
+
+Edit Repositories Checkout Paths
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**This option is only available when using** :ref:`here<integrated code lifecycle>`
+
+This section is optional. In most cases, the preconfigured checkout paths do not need to be changed.
+The checkout paths depend on the chosen programming language and project type. The paths are shown in the preview:
+
+.. figure:: programming/checkout-paths-preview.png
+          :align: center
+
+If you want to change the checkout paths, you can do so by clicking on the |edit| button. The following dialog will open:
+
+.. figure:: programming/checkout-paths-edit.png
+          :align: center
+
+You must then change the paths in the build script if necessary. Please refer to the :ref:`adapt_build_script` section on how to do this.
+
+.. note::
+  - Changing the checkout paths can only be done in the exercise creation process. After the exercise has been created, the checkout paths cannot be changed.
+  - Depending on the programming language and project type, the checkout paths are predefined and cannot be changed. For example, for Java exercises, only the assignment repository path can be changed. For Ocaml exercises, the assignment, test, and solution repository paths can be changed.
+  - Changing the checkout paths can lead to build errors if the build script is not adapted accordingly.
+  - For C programming exercises, if used with the default docker image, changing the checkout paths will lead to build errors. The default docker image is configured to work with the default checkout paths.
 
 .. _configure_static_code_analysis_tools:
 
