@@ -377,7 +377,7 @@ development and debugging experience is much better.
 Edit Repositories Checkout Paths
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**This option is only available when using** :ref:`here<integrated code lifecycle>`
+**This option is only available when using** :ref:`integrated code lifecycle<integrated code lifecycle>`
 
 This section is optional. In most cases, the preconfigured checkout paths do not need to be changed.
 The checkout paths depend on the chosen programming language and project type. The paths are shown in the preview:
@@ -385,14 +385,14 @@ The checkout paths depend on the chosen programming language and project type. T
 .. figure:: programming/checkout-paths-preview.png
           :align: center
 
-If you want to change the checkout paths, you can do so by clicking on the |edit| button. The following dialog will open:
+If you want to change the checkout paths, you can do so by clicking on the `edit repositories checkout path` button. The following dialog will open:
 
 .. figure:: programming/checkout-paths-edit.png
           :align: center
 
 You must then change the paths in the build script if necessary. Please refer to the :ref:`adapt_build_script` section on how to do this.
 
-.. note::
+.. warning::
   - Changing the checkout paths can only be done in the exercise creation process. After the exercise has been created, the checkout paths cannot be changed.
   - Depending on the programming language and project type, the checkout paths are predefined and cannot be changed. For example, for Java exercises, only the assignment repository path can be changed. For Ocaml exercises, the assignment, test, and solution repository paths can be changed.
   - Changing the checkout paths can lead to build errors if the build script is not adapted accordingly.
