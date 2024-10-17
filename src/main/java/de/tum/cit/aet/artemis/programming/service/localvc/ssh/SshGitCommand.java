@@ -21,6 +21,7 @@ import org.eclipse.jgit.transport.UploadPack;
 import org.eclipse.jgit.util.FS;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCFetchPreUploadHookSSH;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPostPushHook;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPrePushHook;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
@@ -84,6 +85,7 @@ public class SshGitCommand extends GitPackCommand {
                     if (GenericUtils.isNotBlank(protocol)) {
                         uploadPack.setExtraParameters(Collections.singleton(protocol));
                     }
+                    uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHookSSH(localVCServletService, getServerSession(), rootDir));
                     uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());
                 }
                 else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(subCommand)) {

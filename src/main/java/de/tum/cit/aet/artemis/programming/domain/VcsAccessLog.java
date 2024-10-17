@@ -77,6 +77,10 @@ public class VcsAccessLog extends DomainObject {
         this.commitHash = commitHash;
     }
 
+    public void setRepositoryActionType(RepositoryActionType repositoryActionType) {
+        this.repositoryActionType = repositoryActionType;
+    }
+
     public User getUser() {
         return user;
     }
