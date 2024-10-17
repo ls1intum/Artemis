@@ -79,9 +79,10 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
 
     onHiddenClicked(event: MouseEvent) {
         event.stopPropagation();
-        if (!this.course.id || !this.conversation.id) return;
+        if (!this.course.id || !this.conversation.id) {
+            return;
+        }
 
-        // If the conversation is in favorites and is being hidden, it is also removed from favorites
         if (!this.conversation.isHidden && this.conversation.isFavorite) {
             this.conversationService.updateIsFavorite(this.course.id, this.conversation.id, false).subscribe({
                 next: () => {
@@ -95,9 +96,10 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
 
     onFavoriteClicked($event: MouseEvent) {
         $event.stopPropagation();
-        if (!this.course.id || !this.conversation.id) return;
+        if (!this.course.id || !this.conversation.id) {
+            return;
+        }
 
-        // If the conversation is hidden and is being favorited, it is also removed from the hidden list
         if (this.conversation.isHidden && !this.conversation.isFavorite) {
             this.conversationService.updateIsHidden(this.course.id, this.conversation.id, false).subscribe({
                 next: () => {
