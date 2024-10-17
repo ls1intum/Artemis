@@ -10,13 +10,13 @@
                 "filterLabel": "Filter",
                 "createOrEditLabel": "FAQ erstellen oder bearbeiten"
             },
-            "created": "Das FAQ mit der ID {{ id }} wurde erfolgreich erstellt",
-            "updated": "Das FAQ mit der ID {{ id }} wurde erfolgreich aktualisiert",
-            "proposed": "Das FAQ mit der ID {{ id }} wurde erfolgreich vorgeschlagen",
+            "created": "Die FAQ mit der ID {{ id }} wurde erfolgreich erstellt",
+            "updated": "Die FAQ mit der ID {{ id }} wurde erfolgreich aktualisiert",
+            "proposed": "Die FAQ mit der ID {{ id }} wurde erfolgreich vorgeschlagen",
             "proposedChange": "Die Änderungen am FAQ mit der ID {{ id }} wurden erfolgreich vorgeschlagen",
-            "deleted": "Das FAQ mit der ID {{ param }} wurde erfolgreich gelöscht",
-            "accepted": "Das FAQ mit der ID {{ id }} wurde erfolgreich akzeptiert",
-            "rejected": "Das FAQ mit der ID {{ id }} wurde erfolgreich abgelehnt",
+            "deleted": "Die FAQ mit der ID {{ param }} wurde erfolgreich gelöscht",
+            "accepted": "Die FAQ mit der ID {{ id }} wurde erfolgreich akzeptiert",
+            "rejected": "Die FAQ mit der ID {{ id }} wurde erfolgreich abgelehnt",
             "delete": {
                 "question": "Soll die FAQ <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen des FAQ zur Bestätigung ein."
