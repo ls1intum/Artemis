@@ -288,9 +288,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     adjustPdfContainerSize(isVertical: boolean): void {
         const pdfContainer = this.pdfContainer.nativeElement;
         if (isVertical) {
-            pdfContainer.style.height = '80vh'; // Larger for vertical slides
+            pdfContainer.style.height = `${this.DEFAULT_SLIDE_HEIGHT}px`;
         } else {
-            pdfContainer.style.height = '60vh'; // Smaller for horizontal slides
+            pdfContainer.style.height = '60vh';
         }
     }
 
@@ -299,10 +299,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param originalCanvas - The original canvas element of the PDF page to be enlarged.
      * */
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
-        this.isEnlargedView = true;
-        this.currentPage = Number(originalCanvas.id);
-        this.updateEnlargedCanvas(originalCanvas); // Adjusts the size as part of the update
-        this.toggleBodyScroll(true);
+        const isVertical = originalCanvas.height > originalCanvas.width;
+        this.adjustPdfContainerSize(isVertical);
+        setTimeout(() => {
+            this.isEnlargedView = true;
+            this.currentPage = Number(originalCanvas.id);
+            this.updateEnlargedCanvas(originalCanvas);
+            this.toggleBodyScroll(true);
+        }, 100);
     }
 
     /**
@@ -317,8 +321,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         requestAnimationFrame(() => {
             if (!this.isEnlargedView) return;
 
-            const isVertical = originalCanvas.height > originalCanvas.width; // Check if the slide is vertical
-            this.adjustPdfContainerSize(isVertical); // Adjust the container size based on orientation
+            const isVertical = originalCanvas.height > originalCanvas.width;
+            this.adjustPdfContainerSize(isVertical);
 
             const scaleFactor = this.calculateScaleFactor(originalCanvas);
             this.resizeCanvas(originalCanvas, scaleFactor);
