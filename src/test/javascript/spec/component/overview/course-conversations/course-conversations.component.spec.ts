@@ -43,6 +43,7 @@ import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -58,6 +59,7 @@ examples.forEach((activeConversation) => {
         let setActiveConversationSpy: jest.SpyInstance;
         let sidebarEventService: SidebarEventService;
         let metisConversationService: MetisConversationService;
+        let courseSidebarService: CourseSidebarService;
 
         beforeEach(waitForAsync(() => {
             queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
@@ -114,6 +116,7 @@ examples.forEach((activeConversation) => {
 
             sidebarEventService = TestBed.inject(SidebarEventService);
             metisConversationService = TestBed.inject(MetisConversationService);
+            courseSidebarService = TestBed.inject(CourseSidebarService);
 
             Object.defineProperty(metisConversationService, 'isServiceSetup$', { get: () => new BehaviorSubject(true).asObservable() });
             Object.defineProperty(metisConversationService, 'conversationsOfUser$', { get: () => new BehaviorSubject([new GroupChatDTO()]).asObservable() });
@@ -144,6 +147,7 @@ examples.forEach((activeConversation) => {
         }));
 
         afterEach(() => {
+            component.ngOnDestroy();
             jest.resetAllMocks();
         });
 
@@ -215,11 +219,24 @@ examples.forEach((activeConversation) => {
         });
 
         it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
+            fixture.detectChanges();
             component.toggleSidebar();
             expect(component.isCollapsed).toBeTrue();
 
             component.toggleSidebar();
             expect(component.isCollapsed).toBeFalse();
+        });
+
+        it('should toggle isCollapsed when service emits corresponding event', () => {
+            fixture.detectChanges();
+            courseSidebarService.openSidebar();
+            expect(component.isCollapsed).toBeTrue();
+
+            courseSidebarService.closeSidebar();
+            expect(component.isCollapsed).toBeFalse();
+
+            courseSidebarService.toggleSidebar();
+            expect(component.isCollapsed).toBeTrue();
         });
 
         it('should display sidebar when conversation is provided', () => {
@@ -240,12 +257,14 @@ examples.forEach((activeConversation) => {
         });
 
         it('onConversationSelected should change active conversation', () => {
+            fixture.detectChanges();
             const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation').mockImplementation();
             component.onConversationSelected(activeConversation?.id ?? 1);
             expect(setActiveConversationSpy).toHaveBeenCalled();
         });
 
         it('getChannelSubType method should return correct SubType', () => {
+            fixture.detectChanges();
             expect(component.getChannelSubType('exerciseChannels')).toEqual(ChannelSubType.EXERCISE);
             expect(component.getChannelSubType('examChannels')).toEqual(ChannelSubType.EXAM);
             expect(component.getChannelSubType('generalChannels')).toEqual(ChannelSubType.GENERAL);
@@ -253,18 +272,21 @@ examples.forEach((activeConversation) => {
         });
 
         it('onAccordionPlusButtonPressed method should call openCreateGroupChatDialog when groupKey is groupChats', () => {
+            fixture.detectChanges();
             const createGroupChatSpy = jest.spyOn(component, 'openCreateGroupChatDialog').mockImplementation();
             component.onAccordionPlusButtonPressed('groupChats');
             expect(createGroupChatSpy).toHaveBeenCalled();
         });
 
         it('onAccordionPlusButtonPressed method should call openCreateOneToOneChatDialog when groupKey is directMessages', () => {
+            fixture.detectChanges();
             const createDirectMessageSpy = jest.spyOn(component, 'openCreateOneToOneChatDialog').mockImplementation();
             component.onAccordionPlusButtonPressed('directMessages');
             expect(createDirectMessageSpy).toHaveBeenCalled();
         });
 
         it('onAccordionPlusButtonPressed method should call openChannelOverviewDialog when groupKey is any channelType', () => {
+            fixture.detectChanges();
             const openChannelOverviewDialogSpy = jest.spyOn(component, 'openChannelOverviewDialog').mockImplementation();
             component.onAccordionPlusButtonPressed('generalChannels');
             expect(openChannelOverviewDialogSpy).toHaveBeenCalledWith('generalChannels');
