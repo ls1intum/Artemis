@@ -159,7 +159,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     public useSshUrl() {
         this.useSsh = true;
         this.useToken = false;
-        this.copyEnabled = this.useSsh && (!!this.user.sshPublicKey || this.gitlabVCEnabled);
+        this.copyEnabled = true; // this.useSsh && (!!this.user.sshPublicKey || this.gitlabVCEnabled);
         this.storeToLocalStorage();
     }
 
