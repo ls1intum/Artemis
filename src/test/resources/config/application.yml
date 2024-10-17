@@ -72,6 +72,8 @@ artemis:
                     default: "~~invalid~~"
                 r:
                     default: "~~invalid~~"
+                typescript:
+                    default: "~~invalid~~"
 
 spring:
     application:
