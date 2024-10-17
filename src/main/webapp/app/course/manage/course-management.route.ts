@@ -347,7 +347,7 @@ export const courseManagementState: Routes = [
                                     course: CourseManagementResolve,
                                 },
                                 data: {
-                                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                                    authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.faq.home.title',
                                 },
                                 canActivate: [UserRouteAccessService],
@@ -378,7 +378,7 @@ export const courseManagementState: Routes = [
                                                 path: 'edit',
                                                 component: FaqUpdateComponent,
                                                 data: {
-                                                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                                                    authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                                                     pageTitle: 'global.generic.edit',
                                                 },
                                                 canActivate: [UserRouteAccessService],
