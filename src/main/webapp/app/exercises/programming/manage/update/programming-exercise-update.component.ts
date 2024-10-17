@@ -74,7 +74,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     @ViewChild(ProgrammingExerciseGradingComponent) exerciseGradingComponent?: ProgrammingExerciseGradingComponent;
     @ViewChild(ExerciseUpdatePlagiarismComponent) exercisePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
 
-    // (TODO remove) trigger pipeline
     packageNamePattern = '';
     isSimpleMode = signal<boolean>(true);
 

@@ -71,21 +71,27 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     constructor() {
         effect(
+            function defineShortNameOnEditModeChangeIfNotDefinedInAdvancedMode() {
+                if (this.isSimpleMode()) {
+                    if (!this.isShortNameFieldValid()) {
+                        this.getIsShortNameFieldValid();
+                    }
+                }
+            }.bind(this),
+        );
+
+        effect(
             function generateShortNameWhenInSimpleMode() {
                 const shouldNotGenerateShortName = !this.isSimpleMode() || this.programmingExerciseCreationConfig.isEdit;
                 if (shouldNotGenerateShortName) {
-                    this.isShortNameFromAdvancedMode.set(true);
+                    this.isShortNameFromAdvancedMode.set(this.isShortNameFieldValid());
                     return;
                 }
-                if (this.isShortNameFromAdvancedMode()) {
-                    this.isShortNameFieldValid.set(false);
-                    return;
-                }
-
-                let newShortName = this.exerciseTitle();
-                if (this.isImport()) {
+                let newShortName = this.exerciseTitle() ?? this.programmingExercise().title;
+                if (this.isImport() || this.isShortNameFromAdvancedMode()) {
                     newShortName = this.programmingExercise().shortName;
                 }
+
                 if (newShortName && newShortName.length > 3) {
                     const sanitizedShortName = removeSpecialCharacters(newShortName ?? '');
                     // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
