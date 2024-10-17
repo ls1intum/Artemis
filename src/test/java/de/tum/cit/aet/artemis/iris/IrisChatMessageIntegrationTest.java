@@ -127,7 +127,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend = createDefaultMockMessage(irisSession);
         messageToSend.setMessageDifferentiator(1453);
 
-        irisRequestMockProvider.mockRunResponse(dto -> {
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
             assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null));
@@ -150,7 +150,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend = createDefaultMockMessage(irisSession);
         messageToSend.setMessageDifferentiator(1454);
 
-        irisRequestMockProvider.mockRunResponse(dto -> {
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
             List<String> suggestions = List.of("suggestion1", "suggestion2", "suggestion3");
@@ -191,7 +191,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend1 = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockRunResponse(dto -> {
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
             assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 1", dto.initialStages(), null));
@@ -199,7 +199,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        irisRequestMockProvider.mockRunResponse(dto -> {
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
             assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 2", dto.initialStages(), null));
@@ -295,7 +295,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockRunResponse(dto -> {
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
             assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null));
@@ -318,7 +318,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend1 = createDefaultMockMessage(irisSession);
         var messageToSend2 = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockRunResponse(dto -> {
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
             assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null));

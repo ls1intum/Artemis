@@ -142,13 +142,11 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         if (chatSession.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        // TODO support more exercise types
         var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(chatSession.getExercise().getId());
         var latestSubmission = getLatestSubmissionIfExists(exercise, chatSession.getUser());
 
-        // TODO: Use settings to determine the variant
-        // var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(chatSession.getExercise(), false);
-        pyrisPipelineService.executeExerciseChatPipeline("default", latestSubmission, exercise, chatSession);
+        var variant = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false).irisChatSettings().selectedVariant();
+        pyrisPipelineService.executeExerciseChatPipeline(variant, latestSubmission, exercise, chatSession);
     }
 
     private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
