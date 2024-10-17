@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20241013150000" author="entholzer">
         <!--
-            Change Set for creating a new table for storing public SSH keys of users
+            Change Set for creating a new table for storing multiple public SSH keys of users
         -->
         <createTable tableName="user_public_ssh_key">
             <column autoIncrement="true" name="id" type="bigint">
@@ -38,5 +38,15 @@
         <createIndex indexName="idx_user_public_ssh_key_ssh_public_key_hash" tableName="user_public_ssh_key">
             <column name="key_hash"/>
         </createIndex>
+
+        <modifyDataType tableName="user_public_ssh_key" columnName="id" newDataType="BIGINT AUTO_INCREMENT"/>
+
+        <sql>
+            INSERT INTO user_public_ssh_key (user_id, label, public_key, key_hash, creation_date, last_used_date, expiry_date)
+            SELECT id, 'Key 1', ssh_public_key, ssh_public_key_hash, CURRENT_TIMESTAMP, NULL, NULL
+            FROM jhi_user
+            WHERE ssh_public_key IS NOT NULL;
+        </sql>
     </changeSet>
+
 </databaseChangeLog>
