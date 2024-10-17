@@ -119,6 +119,24 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateFaq_Tutor_cannotAcceptFaq() throws Exception {
+        Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
+        faq.setQuestionTitle("Updated");
+        faq.setFaqState(FaqState.ACCEPTED);
+        Faq updatedFaq = request.putWithResponseBody("/api/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), faq, Faq.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateFaq_Instructor_canAcceptFaq() throws Exception {
+        Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
+        faq.setQuestionTitle("Updated");
+        faq.setFaqState(FaqState.ACCEPTED);
+        Faq updatedFaq = request.putWithResponseBody("/api/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), faq, Faq.class, HttpStatus.OK);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFaqCategoriesByCourseId() throws Exception {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
@@ -162,7 +180,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetFaqByCourseId() throws Exception {
+    void getFaq_shouldGetFaqByCourseId() throws Exception {
         Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(this.course1.getId(), FaqState.PROPOSED);
         Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
@@ -170,7 +188,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetFaqByCourseIdAndState() throws Exception {
+    void getFaq_shouldGetFaqByCourseIdAndState() throws Exception {
         Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(this.course1.getId(), FaqState.PROPOSED);
         Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faq-state/" + "PROPOSED", HttpStatus.OK, Set.class);
         assertThat(returnedFaqs).hasSize(faqs.size());

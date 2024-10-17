@@ -41,17 +41,10 @@
                     }
                 </div>
                 <div class="d-flex-end justify-content-end">
-                    @if (isAtLeastInstructor) {
-                        <a id="create-faq" class="btn btn-primary mb-1" [routerLink]="['new']">
-                            <fa-icon [icon]="faPlus" />
-                            <span jhiTranslate="artemisApp.faq.home.createLabel"></span>
-                        </a>
-                    } @else {
-                        <a id="propose-faq" class="btn btn-primary mb-1" [routerLink]="['new']">
-                            <fa-icon [icon]="faPlus" />
-                            <span jhiTranslate="artemisApp.faq.home.proposeLabel"></span>
-                        </a>
-                    }
+                    <a id="{{ isAtLeastInstructor ? 'create-faq' : 'propose-faq' }}" class="btn btn-primary mb-1" [routerLink]="['new']">
+                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <span jhiTranslate="{{ isAtLeastInstructor ? 'artemisApp.faq.home.createLabel' : 'artemisApp.faq.home.proposeLabel' }}"></span>
+                    </a>
                 </div>
             </div>
         </div>

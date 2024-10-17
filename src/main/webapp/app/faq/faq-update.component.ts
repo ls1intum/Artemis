@@ -36,9 +36,9 @@ export class FaqUpdateComponent implements OnInit {
     domainActionsDescription = [new FormulaAction()];
 
     // Icons
-    faQuestionCircle = faQuestionCircle;
-    faSave = faSave;
-    faBan = faBan;
+    readonly faQuestionCircle = faQuestionCircle;
+    readonly faSave = faSave;
+    readonly faBan = faBan;
 
     private alertService = inject(AlertService);
     private faqService = inject(FaqService);

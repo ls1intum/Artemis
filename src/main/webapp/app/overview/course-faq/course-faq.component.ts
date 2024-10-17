@@ -45,7 +45,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     readonly ButtonType = ButtonType;
 
     // Icons
-    faFilter = faFilter;
+    readonly faFilter = faFilter;
 
     private route = inject(ActivatedRoute);
 

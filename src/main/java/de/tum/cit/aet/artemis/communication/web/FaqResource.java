@@ -27,11 +27,13 @@ import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -79,7 +81,7 @@ public class FaqResource {
         if (faq.getId() != null) {
             throw new BadRequestAlertException("A new faq cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        isAtLeastInstructor(faq, courseId);
+        checkPriviledgeForAcceptedElseThrow(faq, courseId);
         if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
         }
@@ -104,9 +106,9 @@ public class FaqResource {
         if (faqId == null || !faqId.equals(faq.getId())) {
             throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
         }
-        isAtLeastInstructor(faq, courseId);
-
+        checkPriviledgeForAcceptedElseThrow(faq, courseId);
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
+        checkPriviledgeForAcceptedElseThrow(existingFaq, courseId);
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
@@ -118,9 +120,10 @@ public class FaqResource {
     /**
      * @param faq      the faq to be checked *
      * @param courseId the id of the course the faq belongs to
-     *                     This method throws an exception if a non-instructor in the course tries to set the state of an FAQ to ACCEPTED
+     * @throws AccessForbiddenException if the user is not an instructor
+     *
      */
-    private void isAtLeastInstructor(Faq faq, Long courseId) {
+    private void checkPriviledgeForAcceptedElseThrow(Faq faq, Long courseId) {
         if (faq.getFaqState() == FaqState.ACCEPTED) {
             Course course = courseRepository.findByIdElseThrow(courseId);
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -135,7 +138,7 @@ public class FaqResource {
      * @return the ResponseEntity with status 200 (OK) and with body the faq, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/faqs/{faqId}")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<FaqDTO> getFaq(@PathVariable Long faqId, @PathVariable Long courseId) {
         log.debug("REST request to get faq {}", faqId);
         Faq faq = faqRepository.findByIdElseThrow(faqId);
@@ -190,21 +193,11 @@ public class FaqResource {
      */
     @GetMapping("courses/{courseId}/faq-state/{faqState}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<FaqDTO>> getAllFaqForCourseByStatus(@PathVariable Long courseId, @PathVariable String faqState) {
+    public ResponseEntity<Set<FaqDTO>> getAllFaqsForCourseByStatus(@PathVariable Long courseId, @PathVariable FaqState faqState) {
         log.debug("REST request to get all Faqs for the course with id : " + courseId + "and status " + faqState, courseId);
-        FaqState retrievedState = defineState(faqState);
-        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(courseId, retrievedState);
+        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(courseId, faqState);
         Set<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).collect(Collectors.toSet());
         return ResponseEntity.ok().body(faqDTOS);
-    }
-
-    private FaqState defineState(String faqState) {
-        return switch (faqState) {
-            case "ACCEPTED" -> FaqState.ACCEPTED;
-            case "REJECTED" -> FaqState.REJECTED;
-            case "PROPOSED" -> FaqState.PROPOSED;
-            default -> throw new IllegalArgumentException("Unknown state: " + faqState);
-        };
     }
 
     /**

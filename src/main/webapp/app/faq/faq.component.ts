@@ -47,14 +47,14 @@ export class FaqComponent implements OnInit, OnDestroy {
     ascending: boolean;
 
     // Icons
-    faEdit = faEdit;
-    faPlus = faPlus;
-    faTrash = faTrash;
-    faPencilAlt = faPencilAlt;
-    faFilter = faFilter;
-    faSort = faSort;
-    faCancel = faCancel;
-    faCheck = faCheck;
+    readonly faEdit = faEdit;
+    readonly faPlus = faPlus;
+    readonly faTrash = faTrash;
+    readonly faPencilAlt = faPencilAlt;
+    readonly faFilter = faFilter;
+    readonly faSort = faSort;
+    readonly faCancel = faCancel;
+    readonly faCheck = faCheck;
 
     private faqService = inject(FaqService);
     private route = inject(ActivatedRoute);
