@@ -1,13 +1,13 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { take } from 'rxjs/operators';
-import { RouterTestingModule } from '@angular/router/testing';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { cloneDeep } from 'lodash-es';
+import { provideRouter } from '@angular/router';
 
 describe('Grading System Service', () => {
     let service: GradingSystemService;
@@ -42,7 +42,8 @@ describe('Grading System Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, RouterTestingModule],
+            imports: [],
+            providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(GradingSystemService);
         httpMock = TestBed.inject(HttpTestingController);

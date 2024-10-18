@@ -3,7 +3,6 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -15,6 +14,7 @@ import { of } from 'rxjs';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { RouterModule } from '@angular/router';
 
 describe('CourseManagementStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseManagementStatisticsComponent>;
@@ -31,7 +31,7 @@ describe('CourseManagementStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, RouterModule.forRoot([])],
             declarations: [
                 CourseManagementStatisticsComponent,
                 MockComponent(StatisticsGraphComponent),

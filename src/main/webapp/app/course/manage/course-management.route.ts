@@ -22,7 +22,6 @@ import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
-import { LearningPathManagementComponent } from 'app/course/learning-paths/learning-path-management/learning-path-management.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 import { ImportCompetenciesComponent } from 'app/course/competencies/import/import-competencies.component';
@@ -33,6 +32,10 @@ import { ImportPrerequisitesComponent } from 'app/course/competencies/import/imp
 import { CreatePrerequisiteComponent } from 'app/course/competencies/create/create-prerequisite.component';
 import { EditPrerequisiteComponent } from 'app/course/competencies/edit/edit-prerequisite.component';
 import { CourseImportStandardizedPrerequisitesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-prerequisites.component';
+import { LearningPathInstructorPageComponent } from 'app/course/learning-paths/pages/learning-path-instructor-page/learning-path-instructor-page.component';
+import { FaqComponent } from 'app/faq/faq.component';
+import { FaqUpdateComponent } from 'app/faq/faq-update.component';
+import { FaqResolve } from 'app/faq/faq.routes';
 
 export const courseManagementState: Routes = [
     {
@@ -318,7 +321,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'learning-path-management',
-                        component: LearningPathManagementComponent,
+                        component: LearningPathInstructorPageComponent,
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.learningPath.manageLearningPaths.title',
@@ -333,6 +336,58 @@ export const courseManagementState: Routes = [
                             pageTitle: 'artemisApp.buildQueue.title',
                         },
                         canActivate: [UserRouteAccessService, LocalCIGuard],
+                    },
+                    {
+                        path: 'faqs',
+                        children: [
+                            {
+                                path: '',
+                                component: FaqComponent,
+                                resolve: {
+                                    course: CourseManagementResolve,
+                                },
+                                data: {
+                                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                                    pageTitle: 'artemisApp.faq.home.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                // Create a new path without a component defined to prevent the FAQ from being always rendered
+                                path: '',
+                                resolve: {
+                                    course: CourseManagementResolve,
+                                },
+                                children: [
+                                    {
+                                        path: 'new',
+                                        component: FaqUpdateComponent,
+                                        data: {
+                                            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                                            pageTitle: 'global.generic.create',
+                                        },
+                                        canActivate: [UserRouteAccessService],
+                                    },
+                                    {
+                                        path: ':faqId',
+                                        resolve: {
+                                            faq: FaqResolve,
+                                        },
+                                        children: [
+                                            {
+                                                path: 'edit',
+                                                component: FaqUpdateComponent,
+                                                data: {
+                                                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                                                    pageTitle: 'global.generic.edit',
+                                                },
+                                                canActivate: [UserRouteAccessService],
+                                            },
+                                        ],
+                                    },
+                                ],
+                            },
+                        ],
                     },
                 ],
             },

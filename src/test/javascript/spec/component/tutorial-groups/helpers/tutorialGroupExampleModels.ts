@@ -18,6 +18,8 @@ export const generateExampleTutorialGroup = ({
     numberOfRegisteredUsers = 5,
     course = { id: 1, title: 'Test Course' } as Course,
     teachingAssistantName = 'Example TA',
+    teachingAssistantId = 1,
+    teachingAssistantImageUrl = 'test image',
     courseTitle = 'Test Course',
     tutorialGroupSchedule = {
         id: 1,
@@ -44,6 +46,8 @@ export const generateExampleTutorialGroup = ({
     exampleTutorialGroup.numberOfRegisteredUsers = numberOfRegisteredUsers;
     exampleTutorialGroup.course = course;
     exampleTutorialGroup.teachingAssistantName = teachingAssistantName;
+    exampleTutorialGroup.teachingAssistantId = teachingAssistantId;
+    exampleTutorialGroup.teachingAssistantImageUrl = teachingAssistantImageUrl;
     exampleTutorialGroup.courseTitle = courseTitle;
     exampleTutorialGroup.tutorialGroupSchedule = tutorialGroupSchedule;
     return exampleTutorialGroup;

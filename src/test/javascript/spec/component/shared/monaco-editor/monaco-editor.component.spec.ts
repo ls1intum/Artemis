@@ -1,10 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
-import { BehaviorSubject } from 'rxjs';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import { MonacoEditorLineDecorationsHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-line-decorations-hover-button.model';
@@ -14,7 +11,6 @@ import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let comp: MonacoEditorComponent;
-    let mockThemeService: ThemeService;
 
     const singleLineText = 'public class Main { }';
     const multiLineText = ['public class Main {', 'static void main() {', 'foo();', '}', '}'].join('\n');
@@ -23,13 +19,10 @@ describe('MonacoEditorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorModule],
-            declarations: [MonacoEditorComponent],
-            providers: [],
+            imports: [ArtemisTestModule, MonacoEditorComponent],
         })
             .compileComponents()
             .then(() => {
-                mockThemeService = TestBed.inject(ThemeService);
                 fixture = TestBed.createComponent(MonacoEditorComponent);
                 comp = fixture.componentInstance;
                 global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
@@ -59,7 +52,7 @@ describe('MonacoEditorComponent', () => {
     it('should only send a notification once per delay interval', fakeAsync(() => {
         const delay = 1000;
         const valueCallbackStub = jest.fn();
-        comp.textChangedEmitDelay = delay;
+        fixture.componentRef.setInput('textChangedEmitDelay', delay);
         fixture.detectChanges();
         comp.textChanged.subscribe(valueCallbackStub);
         comp.setText('too early');
@@ -70,34 +63,12 @@ describe('MonacoEditorComponent', () => {
     }));
 
     it('should be set to readOnly depending on the input', () => {
-        comp.readOnly = true;
+        fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
         expect(comp.isReadOnly()).toBeTrue();
-        comp.readOnly = false;
+        fixture.componentRef.setInput('readOnly', false);
         fixture.detectChanges();
         expect(comp.isReadOnly()).toBeFalse();
-    });
-
-    it('should adjust its theme to the global theme', () => {
-        const themeSubject = new BehaviorSubject<Theme>(Theme.LIGHT);
-        const subscribeStub = jest.spyOn(mockThemeService, 'getCurrentThemeObservable').mockReturnValue(themeSubject.asObservable());
-        const changeThemeSpy = jest.spyOn(comp, 'changeTheme');
-        fixture.detectChanges();
-        themeSubject.next(Theme.DARK);
-        expect(subscribeStub).toHaveBeenCalledOnce();
-        expect(changeThemeSpy).toHaveBeenCalledTimes(2);
-        expect(changeThemeSpy).toHaveBeenNthCalledWith(1, Theme.LIGHT);
-        expect(changeThemeSpy).toHaveBeenNthCalledWith(2, Theme.DARK);
-    });
-
-    it('should unsubscribe from the global theme when destroyed', () => {
-        const themeSubject = new BehaviorSubject<Theme>(Theme.LIGHT);
-        const subscribeStub = jest.spyOn(mockThemeService, 'getCurrentThemeObservable').mockReturnValue(themeSubject.asObservable());
-        fixture.detectChanges();
-        const unsubscribeStub = jest.spyOn(comp.themeSubscription!, 'unsubscribe').mockImplementation();
-        comp.ngOnDestroy();
-        expect(subscribeStub).toHaveBeenCalledOnce();
-        expect(unsubscribeStub).toHaveBeenCalledOnce();
     });
 
     it('should display hidden line widgets', () => {
@@ -118,9 +89,9 @@ describe('MonacoEditorComponent', () => {
         comp.setAnnotations(buildAnnotationArray, false);
         comp.setText(multiLineText);
         const element = document.getElementById(buildAnnotationId);
-        expect(comp.editorBuildAnnotations).toHaveLength(1);
+        expect(comp.buildAnnotations).toHaveLength(1);
         expect(element).not.toBeNull();
-        expect(element).toEqual(comp.editorBuildAnnotations[0].getGlyphMarginDomNode());
+        expect(element).toEqual(comp.buildAnnotations[0].getGlyphMarginDomNode());
     });
 
     it('should not display build annotations that are out of bounds', () => {
@@ -130,28 +101,28 @@ describe('MonacoEditorComponent', () => {
         comp.setAnnotations(buildAnnotationArray, false);
         comp.setText(singleLineText);
         const element = document.getElementById(buildAnnotationId);
-        expect(comp.editorBuildAnnotations).toHaveLength(1);
+        expect(comp.buildAnnotations).toHaveLength(1);
         // Ensure that the element is actually there, but not displayed in the DOM.
         expect(element).toBeNull();
-        expect(comp.editorBuildAnnotations[0].getGlyphMarginDomNode().id).toBe(buildAnnotationId);
+        expect(comp.buildAnnotations[0].getGlyphMarginDomNode().id).toBe(buildAnnotationId);
     });
 
     it('should mark build annotations as outdated if specified', () => {
         fixture.detectChanges();
         comp.setText(multiLineText);
         comp.setAnnotations(buildAnnotationArray, true);
-        expect(comp.editorBuildAnnotations).toHaveLength(1);
-        expect(comp.editorBuildAnnotations[0].isOutdated()).toBeTrue();
+        expect(comp.buildAnnotations).toHaveLength(1);
+        expect(comp.buildAnnotations[0].isOutdated()).toBeTrue();
     });
 
     it('should mark build annotations as outdated when a keyboard input is made', () => {
         fixture.detectChanges();
         comp.setText(multiLineText);
         comp.setAnnotations(buildAnnotationArray, false);
-        expect(comp.editorBuildAnnotations).toHaveLength(1);
-        expect(comp.editorBuildAnnotations[0].isOutdated()).toBeFalse();
+        expect(comp.buildAnnotations).toHaveLength(1);
+        expect(comp.buildAnnotations[0].isOutdated()).toBeFalse();
         comp.triggerKeySequence('typing');
-        expect(comp.editorBuildAnnotations[0].isOutdated()).toBeTrue();
+        expect(comp.buildAnnotations[0].isOutdated()).toBeTrue();
     });
 
     it('should highlight line ranges with the specified classnames', () => {
@@ -205,7 +176,7 @@ describe('MonacoEditorComponent', () => {
     });
 
     it('should not allow editing in readonly mode', () => {
-        comp.readOnly = true;
+        fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
         comp.setText(singleLineText);
         comp.triggerKeySequence('some ignored input');
@@ -218,7 +189,7 @@ describe('MonacoEditorComponent', () => {
         comp.addLineWidget(1, 'widget', document.createElement('div'));
         comp.setLineDecorationsHoverButton('testClass', jest.fn());
         comp.highlightLines(1, 1);
-        const disposeAnnotationSpy = jest.spyOn(comp.editorBuildAnnotations[0], 'dispose');
+        const disposeAnnotationSpy = jest.spyOn(comp.buildAnnotations[0], 'dispose');
         const disposeWidgetSpy = jest.spyOn(comp.lineWidgets[0], 'dispose');
         const disposeHoverButtonSpy = jest.spyOn(comp.lineDecorationsHoverButton!, 'dispose');
         const disposeLineHighlightSpy = jest.spyOn(comp.lineHighlights[0], 'dispose');

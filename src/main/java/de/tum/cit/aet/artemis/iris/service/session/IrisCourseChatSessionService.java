@@ -116,7 +116,8 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     @Override
     public void requestAndHandleResponse(IrisCourseChatSession session) {
-        requestAndHandleResponse(session, "default", null);
+        var variant = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false).irisChatSettings().selectedVariant();
+        requestAndHandleResponse(session, variant, null);
     }
 
     private void requestAndHandleResponse(IrisCourseChatSession session, String variant, CompetencyJol competencyJol) {

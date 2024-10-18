@@ -13,7 +13,26 @@
             "delete": {
                 "question": "Are you sure you want to permanently delete the course <strong>{{ title }}</strong>? All associated elements will be deleted, including exams, exercises, repositories and build plans. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the course to confirm.",
-                "icon": "Remove Icon"
+                "icon": "Remove Icon",
+                "summary": {
+                    "title": "Course Summary",
+                    "numberExams": "Number of Exams",
+                    "numberLectures": "Number of Lectures",
+                    "numberStudents": "Number of Students",
+                    "numberTutors": "Number of Tutors",
+                    "numberEditors": "Number of Editors",
+                    "numberInstructors": "Number of Instructors",
+                    "numberProgrammingExercises": "Number of Programming Exercises",
+                    "numberModelingExercises": "Number of Modeling Exercises",
+                    "numberTextExercises": "Number of Text Exercises",
+                    "numberFileUploadExercises": "Number of File Upload Exercises",
+                    "numberQuizExercises": "Number of Quiz Exercises",
+                    "numberRepositories": "Number of Repositories",
+                    "numberBuilds": "Number of Builds",
+                    "numberCommunicationPosts": "Number of Communication Posts",
+                    "numberAnswerPosts": "Number of Answer Posts",
+                    "isTestCourse": "Test Course"
+                }
             },
             "showActive": "Show only active courses",
             "totalScore": "Total Score:",
@@ -104,8 +123,12 @@
                 },
                 "messagingEnabled": {
                     "label": "Direct Messages / Group Chats Enabled",
-                    "tooltip": "Enables messaging between course users in group chats or direct messages. Every user can start a direct message, private group chat and add other users. A group chat is limited to 10 members. The chats happens in the communication space of the course.",
+                    "tooltip": "Enables messaging between course users in group chats or direct messages. Every user can start a direct message, private group chat and add other users. A group chat is limited to 10 members. The chats happen in the communication space of the course.",
                     "codeOfConduct": "Messaging Code of Conduct"
+                },
+                "faqEnabled": {
+                    "label": "FAQ enabled",
+                    "tooltip": "Enables the creation of FAQ entries where instructors can compile frequently asked questions in an organized manner. Students can access this knowledge base to independently review topics and resolve their questions on their own."
                 }
             },
             "enrollmentEnabled": {

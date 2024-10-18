@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyNameDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyProgressForLearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationDTO;
@@ -57,6 +59,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 
 @Profile(PROFILE_CORE)
+@FeatureToggle(Feature.LearningPaths)
 @RestController
 @RequestMapping("api/")
 public class LearningPathResource {
@@ -106,7 +109,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("courses/{courseId}/learning-paths/enable")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to enable learning paths for course with id: {}", courseId);
@@ -127,7 +129,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("courses/{courseId}/learning-paths/generate-missing")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> generateMissingLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to generate missing learning paths for course with id: {}", courseId);
@@ -145,7 +146,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the desired page, sorted and matching the given query
      */
     @GetMapping("courses/{courseId}/learning-paths")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<SearchResultPageDTO<LearningPathInformationDTO>> getLearningPathsOnPage(@PathVariable long courseId, SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
@@ -160,7 +160,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the health status
      */
     @GetMapping("courses/{courseId}/learning-path-health")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<LearningPathHealthDTO> getHealthStatusForCourse(@PathVariable long courseId) {
         log.debug("REST request to get health status of learning paths in course with id: {}", courseId);
@@ -175,7 +174,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the learning path
      */
     @GetMapping("learning-path/{learningPathId}")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathInformationDTO> getLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get learning path with id: {}", learningPathId);
@@ -194,7 +192,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the graph
      */
     @GetMapping("learning-path/{learningPathId}/competency-graph")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathCompetencyGraphDTO> getLearningPathCompetencyGraph(@PathVariable long learningPathId) {
         log.debug("REST request to get competency graph for learning path with id: {}", learningPathId);
@@ -207,13 +204,27 @@ public class LearningPathResource {
     }
 
     /**
+     * GET courses/{courseId}/learning-path/competency-instructor-graph : Gets the competency instructor graph
+     *
+     * @param courseId the id of the course for which the graph should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the graph
+     */
+    @GetMapping("courses/{courseId}/learning-path/competency-instructor-graph")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<LearningPathCompetencyGraphDTO> getLearningPathCompetencyInstructorGraph(@PathVariable long courseId) {
+        log.debug("REST request to get competency instructor graph for learning path with id: {}", courseId);
+
+        return ResponseEntity.ok(learningPathService.generateLearningPathCompetencyInstructorGraph(courseId));
+    }
+
+    /**
      * GET learning-path/:learningPathId/graph : Gets the ngx representation of the learning path as a graph.
      *
      * @param learningPathId the id of the learning path that should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
      */
     @GetMapping("learning-path/{learningPathId}/graph")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxGraph(@PathVariable long learningPathId) {
         log.debug("REST request to get ngx graph representation of learning path with id: {}", learningPathId);
@@ -227,7 +238,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
      */
     @GetMapping("learning-path/{learningPathId}/path")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxPath(@PathVariable long learningPathId) {
         log.debug("REST request to get ngx path representation of learning path with id: {}", learningPathId);
@@ -244,7 +254,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the navigation information
      */
     @GetMapping("learning-path/{learningPathId}/relative-navigation")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathNavigationDTO> getRelativeLearningPathNavigation(@PathVariable @Valid long learningPathId, @RequestParam long learningObjectId,
             @RequestParam LearningObjectType learningObjectType, @RequestParam long competencyId) {
@@ -263,7 +272,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the navigation information
      */
     @GetMapping("learning-path/{learningPathId}/navigation")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathNavigationDTO> getLearningPathNavigation(@PathVariable long learningPathId) {
         log.debug("REST request to get navigation for learning path with id: {}", learningPathId);
@@ -279,7 +287,6 @@ public class LearningPathResource {
      * @return the ResponseEntity with status 200 (OK) and with body the navigation overview
      */
     @GetMapping("learning-path/{learningPathId}/navigation-overview")
-    @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathNavigationOverviewDTO> getLearningPathNavigationOverview(@PathVariable @Valid long learningPathId) {
         log.debug("REST request to get navigation overview for learning path with id: {}", learningPathId);
@@ -301,19 +308,31 @@ public class LearningPathResource {
     }
 
     /**
-     * GET courses/:courseId/learning-path-id : Gets the id of the learning path.
+     * GET courses/:courseId/learning-path/me : Gets the learning path of the current user in the course.
      *
-     * @param courseId the id of the course from which the learning path id should be fetched
-     * @return the ResponseEntity with status 200 (OK) and with body the id of the learning path
+     * @param courseId the id of the course for which the learning path should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the learning path
      */
-    @GetMapping("courses/{courseId}/learning-path-id")
+    @GetMapping("courses/{courseId}/learning-path/me")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Long> getLearningPathId(@PathVariable long courseId) {
-        log.debug("REST request to get learning path id for course with id: {}", courseId);
+    public ResponseEntity<LearningPathDTO> getLearningPathForCurrentUser(@PathVariable long courseId) {
+        log.debug("REST request to get learning path of current user for course with id: {}", courseId);
         courseService.checkLearningPathsEnabledElseThrow(courseId);
-        User user = userRepository.getUser();
-        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(courseId, user.getId());
-        return ResponseEntity.ok(learningPath.getId());
+        return ResponseEntity.ok(learningPathService.getLearningPathForCurrentUser(courseId));
+    }
+
+    /**
+     * PATCH learning-path/:learningPathId/start : Starts the learning path for the current user.
+     *
+     * @param learningPathId the id of the learning path to start
+     * @return the ResponseEntity with status 204 (NO_CONTENT)
+     */
+    @PatchMapping("learning-path/{learningPathId}/start")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> startLearningPathForCurrentUser(@PathVariable long learningPathId) {
+        log.debug("REST request to start learning path with id: {}", learningPathId);
+        learningPathService.startLearningPathForCurrentUser(learningPathId);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -324,20 +343,11 @@ public class LearningPathResource {
      */
     @PostMapping("courses/{courseId}/learning-path")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Long> generateLearningPath(@PathVariable long courseId) throws URISyntaxException {
-        log.debug("REST request to generate learning path for user in course with id: {}", courseId);
+    public ResponseEntity<LearningPathDTO> generateLearningPathForCurrentUser(@PathVariable long courseId) throws URISyntaxException {
+        log.debug("REST request to generate learning path for current user in course with id: {}", courseId);
         courseService.checkLearningPathsEnabledElseThrow(courseId);
-
-        User user = userRepository.getUser();
-        final var learningPathOptional = learningPathRepository.findByCourseIdAndUserId(courseId, user.getId());
-
-        if (learningPathOptional.isPresent()) {
-            throw new BadRequestException("Learning path already exists.");
-        }
-
-        final var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
-        final var learningPath = learningPathService.generateLearningPathForUser(course, user);
-        return ResponseEntity.created(new URI("api/learning-path/" + learningPath.getId())).body(learningPath.getId());
+        final var learningPathDTO = learningPathService.generateLearningPathForCurrentUser(courseId);
+        return ResponseEntity.created(new URI("api/learning-path/" + learningPathDTO.id())).body(learningPathDTO);
     }
 
     /**
