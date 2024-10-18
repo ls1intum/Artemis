@@ -62,7 +62,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private contentHeightListener?: Disposable;
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
-    private mouseDownListener?: Disposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
 
     /*
@@ -119,11 +118,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.mouseDownListener = this._editor.onMouseDown(() => {
-            this._editor.focus();
-        });
-
         this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
+            // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
+            // See https://github.com/microsoft/monaco-editor/issues/307
+            if (document.activeElement && 'blur' in document.activeElement && typeof document.activeElement['blur'] === 'function') {
+                document.activeElement.blur();
+            }
             this.onBlurEditor.emit();
         });
     }
@@ -134,7 +134,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
-        this.mouseDownListener?.dispose();
     }
 
     private emitTextChangeEvent() {
