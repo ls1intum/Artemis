@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -14,11 +14,11 @@ export class SwitchEditModeButtonComponent {
     protected readonly faHandShakeAngle = faHandshakeAngle;
     protected readonly ButtonType = ButtonType;
 
-    switchEditMode = input.required<() => void>();
+    switchEditMode = output<void>();
     isSimpleMode = input.required<boolean>();
     buttonSize = input<ButtonSize>(ButtonSize.MEDIUM);
 
     protected toggleEditMode(): void {
-        this.switchEditMode().call(this);
+        this.switchEditMode.emit();
     }
 }

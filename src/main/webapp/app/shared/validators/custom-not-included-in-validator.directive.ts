@@ -13,7 +13,7 @@ import { AbstractControl, NG_VALIDATORS, Validator } from '@angular/forms';
     standalone: true,
 })
 export class CustomNotIncludedInValidatorDirective implements Validator {
-    disallowedValues = input.required<any[]>();
+    disallowedValues = input.required<unknown[]>();
 
     validate(control: AbstractControl): { [key: string]: any } | null {
         if (control == undefined) {

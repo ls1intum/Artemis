@@ -71,56 +71,26 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     constructor() {
         effect(
-            function defineShortNameOnEditModeChangeIfNotDefinedInAdvancedMode() {
-                if (this.isSimpleMode()) {
-                    this.updateIsShortNameValid();
-                    this.calculateFormValid();
-                }
-            }.bind(this),
+            () => {
+                this.defineShortNameOnEditModeChangeIfNotDefinedInAdvancedMode();
+            },
             { allowSignalWrites: true },
         );
 
         effect(
-            function generateShortNameWhenInSimpleMode() {
-                const shouldNotGenerateShortName = !this.isSimpleMode() || this.programmingExerciseCreationConfig.isEdit;
-                if (shouldNotGenerateShortName) {
-                    this.isShortNameFromAdvancedMode.set(this.isShortNameFieldValid());
-                    return;
-                }
-                let newShortName = this.exerciseTitle() ?? this.programmingExercise().title;
-                if (this.isImport() || this.isShortNameFromAdvancedMode()) {
-                    newShortName = this.programmingExercise().shortName;
-                }
-
-                if (newShortName && newShortName.length > 3) {
-                    const sanitizedShortName = removeSpecialCharacters(newShortName ?? '');
-                    // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-                    const uniqueShortName = this.ensureShortNameIsUnique(sanitizedShortName);
-                    this.programmingExercise().shortName = uniqueShortName;
-                }
-
-                this.updateIsShortNameValid();
-            }.bind(this),
+            () => {
+                this.generateShortNameWhenInSimpleMode();
+            },
             { allowSignalWrites: true },
         );
 
         effect(() => {
-            if (this.shortNameField() || this.exerciseTitleChannelComponent()) {
-            } // triggers effect
-            this.registerInputFields();
+            this.registerInputFieldsWhenChildComponentsAreReady();
         });
 
-        effect(
-            function fetchAndInitializeTakenTitlesAndShortNames() {
-                const courseId = this.courseId() ?? this.programmingExercise().course?.id;
-                if (courseId) {
-                    this.exerciseService.getExistingExerciseDetailsInCourse(courseId, ExerciseType.PROGRAMMING).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
-                        this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? []);
-                        this.alreadyUsedShortNames.set(exerciseDetails.shortNames ?? []);
-                    });
-                }
-            }.bind(this),
-        );
+        effect(() => {
+            this.fetchAndInitializeTakenTitlesAndShortNames();
+        });
     }
 
     ngAfterViewInit() {
@@ -255,6 +225,49 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         this.programmingExercise().buildConfig!.solutionCheckoutPath = event;
         // We need to create a new object to trigger the change detection
         this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig };
+    }
+
+    private registerInputFieldsWhenChildComponentsAreReady() {
+        this.shortNameField(); // triggers effect
+        this.registerInputFields();
+    }
+
+    private fetchAndInitializeTakenTitlesAndShortNames() {
+        const courseId = this.courseId() ?? this.programmingExercise().course?.id;
+        if (courseId) {
+            this.exerciseService.getExistingExerciseDetailsInCourse(courseId, ExerciseType.PROGRAMMING).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
+                this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? []);
+                this.alreadyUsedShortNames.set(exerciseDetails.shortNames ?? []);
+            });
+        }
+    }
+
+    private generateShortNameWhenInSimpleMode() {
+        const shouldNotGenerateShortName = !this.isSimpleMode() || this.programmingExerciseCreationConfig.isEdit;
+        if (shouldNotGenerateShortName) {
+            this.isShortNameFromAdvancedMode.set(this.isShortNameFieldValid());
+            return;
+        }
+        let newShortName = this.exerciseTitle() ?? this.programmingExercise().title;
+        if (this.isImport() || this.isShortNameFromAdvancedMode()) {
+            newShortName = this.programmingExercise().shortName;
+        }
+
+        if (newShortName && newShortName.length > 3) {
+            const sanitizedShortName = removeSpecialCharacters(newShortName ?? '');
+            // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+            const uniqueShortName = this.ensureShortNameIsUnique(sanitizedShortName);
+            this.programmingExercise().shortName = uniqueShortName;
+        }
+
+        this.updateIsShortNameValid();
+    }
+
+    private defineShortNameOnEditModeChangeIfNotDefinedInAdvancedMode() {
+        if (this.isSimpleMode()) {
+            this.updateIsShortNameValid();
+            this.calculateFormValid();
+        }
     }
 
     private updateIsShortNameValid() {

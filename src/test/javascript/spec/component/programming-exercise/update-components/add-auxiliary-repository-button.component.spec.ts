@@ -40,6 +40,6 @@ describe('AddAuxiliaryRepositoryButtonComponent', () => {
         comp.addAuxiliaryRepositoryRow();
 
         expect(comp.programmingExercise.auxiliaryRepositories?.length).toBe(initialLength + 1);
-        expect(onRefreshSpy).toHaveBeenCalled();
+        expect(onRefreshSpy).toHaveBeenCalledOnce();
     });
 });

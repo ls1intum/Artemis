@@ -53,7 +53,7 @@ describe('ExerciseTitleChannelNameComponent', () => {
         const exerciseServiceSpy = jest.spyOn(exerciseService, 'getExistingExerciseDetailsInCourse');
         fixture.detectChanges();
 
-        expect(exerciseServiceSpy).toHaveBeenCalledWith(courseId, exerciseType);
+        expect(exerciseServiceSpy).toHaveBeenCalledExactlyOnceWith(courseId, exerciseType);
     });
 
     it('should hide channel name input if messaging and communication disabled', () => {

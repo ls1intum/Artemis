@@ -72,7 +72,7 @@ import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CourseExistingExerciseDetails;
+import de.tum.cit.aet.artemis.core.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
@@ -1463,11 +1463,11 @@ public class CourseResource {
      *
      * @param courseId     of the course for which all exercise names should be fetched
      * @param exerciseType for which the details should be fetched, as the name of an exercise only needs to be unique for each exercise type
-     * @return {@link CourseExistingExerciseDetails} with the exerciseNames (and already used shortNames if a {@link ExerciseType#PROGRAMMING} exercise is requested)
+     * @return {@link CourseExistingExerciseDetailsDTO} with the exerciseNames (and already used shortNames if a {@link ExerciseType#PROGRAMMING} exercise is requested)
      */
     @GetMapping("courses/{courseId}/existing-exercise-details")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<CourseExistingExerciseDetails> getExistingExerciseDetails(@PathVariable Long courseId, @RequestParam String exerciseType) {
+    public ResponseEntity<CourseExistingExerciseDetailsDTO> getExistingExerciseDetails(@PathVariable Long courseId, @RequestParam String exerciseType) {
         log.debug("REST request to get details of existing exercises in course : {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
 
@@ -1485,6 +1485,6 @@ public class CourseResource {
             }
         }));
 
-        return ResponseEntity.ok(new CourseExistingExerciseDetails(alreadyTakenExerciseNames.toArray(String[]::new), alreadyTakenShortNames.toArray(String[]::new)));
+        return ResponseEntity.ok(new CourseExistingExerciseDetailsDTO(alreadyTakenExerciseNames.toArray(String[]::new), alreadyTakenShortNames.toArray(String[]::new)));
     }
 }

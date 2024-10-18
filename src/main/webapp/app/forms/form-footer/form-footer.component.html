@@ -2,7 +2,7 @@
     <div class="text-start">
         @if (isSimpleMode() !== undefined && switchEditMode !== undefined && !isImport()) {
             <div class="d-flex align-items-center">
-                <jhi-switch-edit-mode-button class="me-1" [isSimpleMode]="isSimpleMode()!" [switchEditMode]="switchEditMode" [buttonSize]="ButtonSize.SMALL" />
+                <jhi-switch-edit-mode-button class="me-1" [isSimpleMode]="isSimpleMode()!" (switchEditMode)="switchEditMode()" [buttonSize]="ButtonSize.SMALL" />
                 <jhi-help-icon [text]="isSimpleMode() ? 'artemisApp.programmingExercise.home.advancedModeTooltip' : 'artemisApp.programmingExercise.home.simpleModeTooltip'" />
             </div>
         }

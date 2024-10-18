@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { SwitchEditModeButtonComponent } from '../../../../../../main/webapp/app/exercises/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
 import { ArtemisSharedCommonModule } from '../../../../../../main/webapp/app/shared/shared-common.module';
@@ -22,23 +22,21 @@ describe('SwitchEditModeButtonComponent', () => {
                 fixture = TestBed.createComponent(SwitchEditModeButtonComponent);
                 comp = fixture.componentInstance;
 
-                fixture.componentRef.setInput('switchEditMode', () => {});
                 fixture.componentRef.setInput('isSimpleMode', false);
             });
     });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
-    }));
+    });
 
-    it('should call passed method when button is clicked', () => {
-        const testMethod = jest.fn();
-        fixture.componentRef.setInput('switchEditMode', testMethod);
+    it('should emit to call passed method when button is clicked', () => {
+        const switchEditModeSpy = jest.spyOn(comp.switchEditMode, 'emit');
 
         const button = fixture.debugElement.query(By.css('jhi-button'));
         button.triggerEventHandler('onClick', null);
 
-        expect(testMethod).toHaveBeenCalled();
+        expect(switchEditModeSpy).toHaveBeenCalledOnce();
     });
 });
