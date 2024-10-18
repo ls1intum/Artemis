@@ -61,25 +61,4 @@
             <span jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></span>
         }
     </div>
-    <div class="gap-1 d-flex">
-        @if (mayEditOrDelete) {
-            <fa-icon
-                size="xs"
-                class="editIcon clickable icon"
-                [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
-                [icon]="faPencilAlt"
-                (click)="posting.title !== '' ? createEditModal.open() : isModalOpen.emit()"
-            />
-        }
-        <jhi-post-create-edit-modal #createEditModal [posting]="posting" [isCommunicationPage]="isCommunicationPage" (isModalOpen)="isModalOpen.emit()" />
-        @if (mayEditOrDelete) {
-            <jhi-confirm-icon
-                iconSize="xs"
-                (confirmEvent)="deletePosting()"
-                [ngClass]="'deleteIcon clickable icon'"
-                [initialTooltip]="'artemisApp.metis.deletePost' | artemisTranslate"
-                [confirmTooltip]="'artemisApp.metis.confirmDeletePost' | artemisTranslate"
-            />
-        }
-    </div>
 </div>
