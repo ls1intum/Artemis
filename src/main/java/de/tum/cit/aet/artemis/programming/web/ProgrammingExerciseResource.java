@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -532,6 +533,20 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExercise(exerciseId, withSubmissionResults, withGradingCriteria);
         return ResponseEntity.ok(programmingExercise);
+    }
+
+    /**
+     * GET /programming-exercises : Queries a programming exercise by its project key.
+     *
+     * @return the ProgrammingExercise of this project key in an ResponseEntity or 404 Not Found if no exercise exists
+     */
+    @GetMapping("programming-exercises/project-key/{projectKey}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ProgrammingExercise> getExerciseByProjectKey(@PathVariable String projectKey) {
+        final ProgrammingExercise exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
+        authCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.STUDENT, exercise.getId());
+
+        return ResponseEntity.ok(exercise);
     }
 
     /**
