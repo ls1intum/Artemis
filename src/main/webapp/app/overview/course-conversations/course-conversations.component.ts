@@ -54,12 +54,12 @@ const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
 };
 
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
-    generalChannels: false,
+    generalChannels: true,
     exerciseChannels: true,
     examChannels: true,
     groupChats: true,
     directMessages: true,
-    favoriteChannels: true,
+    favoriteChannels: false,
     lectureChannels: true,
     hiddenChannels: true,
 };
