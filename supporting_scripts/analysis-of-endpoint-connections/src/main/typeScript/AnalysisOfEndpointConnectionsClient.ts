@@ -1,9 +1,22 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { Preprocessor } from './Preprocessor';
 import { Postprocessor } from './Postprocessor';
-import { writeFileSync } from 'node:fs';
 import { parse, TSESTree } from '@typescript-eslint/typescript-estree';
+import { load } from 'js-yaml';
+
+interface Config {
+    excludedEndpointFiles: string[];
+    excludedEndpoints: string[];
+    excludedRestCallFiles: string[];
+    excludedRestCalls: string[];
+
+    endpointParsingResultPath: string;
+    restCallParsingResultPath: string;
+    endpointAnalysisResultPath: string;
+    restCallAnalysisResultPath: string;
+    clientDirPath: string;
+}
 
 /**
  * Recursively collects all TypeScript files in a directory.
@@ -16,12 +29,10 @@ function collectTypeScriptFiles(dir: string, files: string[] = []) : string[] {
     const entries = readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
         const fullPath = join(dir, entry.name);
-
-        const filePathFromSrcFolder = fullPath.substring(fullPath.indexOf('src/main/webapp/app'));
         if (entry.isDirectory()) {
             collectTypeScriptFiles(fullPath, files);
         } else if (entry.isFile() && entry.name.endsWith('.ts')) {
-            files.push(filePathFromSrcFolder);
+            files.push(fullPath);
         }
     }
     return files;
@@ -50,9 +61,25 @@ function parseTypeScriptFile(filePath: string): TSESTree.Program | null {
     }
 }
 
-const clientDirPath = resolve('src/main/webapp/app');
+function readConfigFile(filePath: string): Config | undefined {
+    try {
+        const fileContent = readFileSync(filePath, 'utf8');
+        return load(fileContent) as Config;
+    } catch (error) {
+        console.error('Failed to read config file:', error);
+        return undefined;
+    }
+}
 
-const tsFiles = collectTypeScriptFiles(clientDirPath);
+const configFilePath = 'supporting_scripts/analysis-of-endpoint-connections/analysisOfEndpointConnections.config.yml';
+
+const config = readConfigFile(configFilePath);
+if (!config) {
+    process.exit(1);
+}
+
+
+const tsFiles = collectTypeScriptFiles(config.clientDirPath);
 
 // create and store Syntax Tree for each file
 const astMap = new Map<string, TSESTree.Program>;
@@ -82,7 +109,8 @@ Array.from(astMap.keys()).forEach((filePath) => {
 });
 
 try {
-    writeFileSync('supporting_scripts/analysis-of-endpoint-connections/restCalls.json', JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
+
+    writeFileSync(`supporting_scripts/analysis-of-endpoint-connections/${config.restCallParsingResultPath}`, JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
 } catch (error) {
     console.error('Failed to write REST calls to file:', error);
 }
