@@ -22,7 +22,9 @@
                 "sshSettingsInfoText": "Hier kannst du einen öffentlichen SSH-Schlüssel festlegen, um Git-Repositories über SSH zu klonen. Weitere Einzelheiten findest du in der Dokumentation.",
                 "deleteSshKeyQuestion": "Möchtest du deinen öffentlichen SSH-Schlüssel wirklich löschen?",
                 "saveSshKey": "Speichern",
-                "saveFailure": "SSH-Schlüssel konnte nicht gespeichert werden. Stelle sicher, dass es ein gültiger und unterstützter Schlüssel im richtigen Format ist.",
+                "invalidKeyFormat": "SSH-Schlüssel konnte nicht gespeichert werden. Stelle sicher, dass es ein gültiger und unterstützter Schlüssel im richtigen Format ist.",
+                "keyAlreadyExists": "SSH-Schlüssel konnte nicht gespeichert werden. Du verwendest diesen Schlüssel schon.",
+                "saveFailure": "SSH-Schlüssel konnte nicht gespeichert werden.",
                 "saveSuccess": "SSH-Schlüssel erfolgreich gespeichert.",
                 "deleteFailure": "SSH-Schlüssel konnte nicht gelöscht werden.",
                 "deleteSuccess": "SSH-Schlüssel erfolgreich gelöscht.",
@@ -42,9 +44,17 @@
                 "keysTablePageTitle": "SSH-Schlüssel",
                 "keys": "Schlüssel",
                 "actions": "Aktionen",
-                "keyName": "Key 1 (Aktuell wird nur ein Schlüssel unterstützt)"
+                "keyName": "Key 1 (Aktuell wird nur ein Schlüssel unterstützt)",
+                "label": "Label",
+                "creationDate": "Erstellungsdatum",
+                "createdOn": "Erstellt am",
+                "lastUsed": "Letzte Verwendung",
+                "lastUsedOn": "Letzte Verwendung am",
+                "expiryDate": "Ablaufdatum",
+                "leaveEmpty": "Wenn du das Label leer lässt, wird der Kommentar aus dem SSH-Schlüssel verwendet.",
+                "fingerprint": "Fingerabdruck"
             },
-            "vcsAccessTokensSettingsPage": {
+            "vcsAccessTokensSettingsFingerabdruckPage": {
                 "addTokenTitle": "Neues Zugriffstoken erzeugen",
                 "infoText": "Du kannst ein persönliches Zugriffstoken generieren, um mit dem Artemis Local Version Control System zu interagieren. Verwende es um dich über HTTP bei Git zu authentifizieren.",
                 "deleteVcsAccessTokenQuestion": "Möchtest du dein Zugriffstoken für das Versionskontrollsystem wirklich löschen? Du kannst dich nicht mehr bei lokalen Repositories authentifizieren, die mit diesem Token geklont wurden.",
