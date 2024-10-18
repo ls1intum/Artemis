@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
@@ -41,7 +42,7 @@ public class IrisChatWebsocketService {
         var user = session.getUser();
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, null);
+        var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, null, null);
         websocketService.send(user.getLogin(), topic, payload);
     }
 
@@ -52,7 +53,7 @@ public class IrisChatWebsocketService {
      * @param stages  the stages to send
      */
     public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages) {
-        this.sendStatusUpdate(session, stages, null);
+        this.sendStatusUpdate(session, stages, null, null);
     }
 
     /**
@@ -61,12 +62,13 @@ public class IrisChatWebsocketService {
      * @param session     the session to send the status update to
      * @param stages      the stages to send
      * @param suggestions the suggestions to send
+     * @param tokens      token usage and cost send by Pyris
      */
-    public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, List<String> suggestions) {
+    public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, List<String> suggestions, List<LLMRequest> tokens) {
         var user = session.getUser();
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, suggestions);
+        var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, suggestions, tokens);
         websocketService.send(user.getLogin(), topic, payload);
     }
 }

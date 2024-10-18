@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 /**
@@ -13,7 +14,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  *
  * @param stages List of stages of the generation process
  * @param result List of competencies recommendations that have been generated so far
+ * @param tokens List of token usages send by Pyris for tracking the token usage and cost
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisCompetencyStatusUpdateDTO(List<PyrisStageDTO> stages, List<PyrisCompetencyRecommendationDTO> result) {
+public record PyrisCompetencyStatusUpdateDTO(List<PyrisStageDTO> stages, List<PyrisCompetencyRecommendationDTO> result, List<LLMRequest> tokens) {
 }
