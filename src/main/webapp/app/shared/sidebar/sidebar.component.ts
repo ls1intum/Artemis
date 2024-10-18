@@ -32,7 +32,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Input() showAddOption?: ChannelAccordionShowAdd;
     @Input() channelTypeIcon?: ChannelTypeIcons;
     @Input() collapseState: CollapseState;
-    sidebarItemShowAlways = input.required<SidebarItemShowAlways>();
+    sidebarItemAlwaysShow = input.required<SidebarItemShowAlways>();
     @Input() showFilter: boolean = false;
 
     searchValue = '';

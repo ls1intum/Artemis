@@ -32,7 +32,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     @Input() showAddOptions = false;
     @Input() showAddOption?: ChannelAccordionShowAdd;
     @Input() channelTypeIcon?: ChannelTypeIcons;
-    sidebarItemShowAlways = input.required<SidebarItemShowAlways>();
+    sidebarItemAlwaysShow = input.required<SidebarItemShowAlways>();
     @Input() collapseState: CollapseState;
     @Input() isFilterActive: boolean = false;
 
