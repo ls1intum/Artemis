@@ -309,7 +309,8 @@ public class BuildJobContainerService {
             addAndPrepareDirectory(buildJobContainerId, solutionRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
         }
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
-            addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
+            addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, auxiliaryRepositoriesPaths[i],
+                    LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
         }
 
         createScriptFile(buildJobContainerId);
@@ -324,6 +325,16 @@ public class BuildJobContainerService {
         copyToContainer(repositoryPath.toString(), containerId);
         addDirectory(containerId, getParentFolderPath(newDirectoryName), true);
         renameDirectoryOrFile(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
+    }
+
+    private void addAndPrepareDirectoryAndReplaceContent(String containerId, Path repositoryPath, String newDirectoryName) {
+        copyToContainer(repositoryPath.toString(), containerId);
+        addDirectory(containerId, newDirectoryName, true);
+        renameDirectoryOrFileAndReplace(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString() + "/*", newDirectoryName + "/");
+    }
+
+    private void renameDirectoryOrFileAndReplace(String containerId, String oldName, String newName) {
+        executeDockerCommand(containerId, null, false, false, true, "mv", "-f", oldName, newName);
     }
 
     private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
