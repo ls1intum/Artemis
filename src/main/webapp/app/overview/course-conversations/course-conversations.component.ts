@@ -13,7 +13,7 @@ import { PageType, SortDirection } from 'app/shared/metis/metis.util';
 import { faBan, faComment, faComments, faFile, faFilter, faGraduationCap, faHeart, faList, faMessage, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
-import { AccordionGroups, ChannelAccordionShowAdd, ChannelAlwaysShow, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
@@ -64,7 +64,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     hiddenChannels: true,
 };
 
-const ALWAYS_SHOW_CHANNEL: ChannelAlwaysShow = {
+const DEFAULT_ALWAYS_SHOW: SidebarItemShowAlways = {
     generalChannels: true,
     exerciseChannels: false,
     examChannels: false,
@@ -105,7 +105,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     readonly CHANNEL_TYPE_SHOW_ADD_OPTION = CHANNEL_TYPE_SHOW_ADD_OPTION;
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
-    readonly CHANNEL_VISIBILITY_EMPTY = ALWAYS_SHOW_CHANNEL;
+    readonly ALWAYS_SHOW = DEFAULT_ALWAYS_SHOW;
 
     // set undefined so nothing gets displayed until isCodeOfConductAccepted is loaded
     isCodeOfConductAccepted?: boolean;

@@ -3,11 +3,11 @@ import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
 import {
     AccordionGroups,
     ChannelAccordionShowAdd,
-    ChannelAlwaysShow,
     ChannelGroupCategory,
     ChannelTypeIcons,
     CollapseState,
     SidebarCardElement,
+    SidebarItemShowAlways,
     SidebarTypes,
 } from 'app/types/sidebar';
 import { Params } from '@angular/router';
@@ -32,7 +32,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     @Input() showAddOptions = false;
     @Input() showAddOption?: ChannelAccordionShowAdd;
     @Input() channelTypeIcon?: ChannelTypeIcons;
-    alwaysShowChannel = input<ChannelAlwaysShow>();
+    sidebarItemShowAlways = input.required<SidebarItemShowAlways>();
     @Input() collapseState: CollapseState;
     @Input() isFilterActive: boolean = false;
 

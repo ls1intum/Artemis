@@ -3,7 +3,7 @@ import { faFilter, faFilterCircleXmark } from '@fortawesome/free-solid-svg-icons
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
-import { ChannelAccordionShowAdd, ChannelAlwaysShow, ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarTypes } from 'app/types/sidebar';
+import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarItemShowAlways, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash-es';
@@ -32,7 +32,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Input() showAddOption?: ChannelAccordionShowAdd;
     @Input() channelTypeIcon?: ChannelTypeIcons;
     @Input() collapseState: CollapseState;
-    alwaysShowChannel = input<ChannelAlwaysShow>();
+    sidebarItemShowAlways = input.required<SidebarItemShowAlways>();
     @Input() showFilter: boolean = false;
 
     searchValue = '';

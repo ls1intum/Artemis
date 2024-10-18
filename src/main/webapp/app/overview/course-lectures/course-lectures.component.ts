@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
@@ -21,6 +21,14 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     dueSoon: true,
     past: true,
     noDate: true,
+};
+
+const DEFAULT_ALWAYS_SHOW: SidebarItemShowAlways = {
+    future: false,
+    current: false,
+    dueSoon: false,
+    past: false,
+    noDate: false,
 };
 
 @Component({
@@ -118,4 +126,6 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         this.courseUpdatesSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
     }
+
+    protected readonly DEFAULT_ALWAYS_SHOW = DEFAULT_ALWAYS_SHOW;
 }

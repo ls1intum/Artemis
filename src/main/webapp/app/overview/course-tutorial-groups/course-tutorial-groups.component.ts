@@ -12,7 +12,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, TutorialGroupCategory } from 'app/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 import { cloneDeep } from 'lodash-es';
 
@@ -26,6 +26,12 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     registered: false,
     all: true,
     further: true,
+};
+
+const DEFAULT_ALWAYS_SHOW: SidebarItemShowAlways = {
+    registered: false,
+    all: false,
+    further: false,
 };
 
 @Component({
@@ -49,6 +55,7 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     sortedTutorialGroups: TutorialGroup[] = [];
     accordionTutorialGroupsGroups: AccordionGroups = TUTORIAL_UNIT_GROUPS;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
+    readonly DEFAULT_ALWAYS_SHOW = DEFAULT_ALWAYS_SHOW;
     sidebarTutorialGroups: SidebarCardElement[] = [];
 
     constructor(

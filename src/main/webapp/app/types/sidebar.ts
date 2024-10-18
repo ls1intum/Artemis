@@ -25,9 +25,9 @@ export type CollapseState = {
 } & (Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<ExamGroupCategory, boolean> | Record<TutorialGroupCategory, boolean>);
 export type ChannelAccordionShowAdd = Record<ChannelGroupCategory, boolean>;
 export type ChannelTypeIcons = Record<ChannelGroupCategory, IconProp>;
-export type ChannelAlwaysShow = {
+export type SidebarItemShowAlways = {
     [key: string]: boolean;
-} & Record<ChannelGroupCategory, boolean>;
+} & (Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<ExamGroupCategory, boolean> | Record<TutorialGroupCategory, boolean>);
 
 export interface SidebarData {
     groupByCategory: boolean;

@@ -7,7 +7,7 @@ import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercis
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 import { LtiService } from 'app/shared/service/lti.service';
 
@@ -25,6 +25,14 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     dueSoon: false,
     past: true,
     noDate: true,
+};
+
+const DEFAULT_ALWAYS_SHOW: SidebarItemShowAlways = {
+    future: false,
+    current: false,
+    dueSoon: false,
+    past: false,
+    noDate: false,
 };
 
 @Component({
@@ -153,4 +161,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.parentParamSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
     }
+
+    protected readonly DEFAULT_ALWAYS_SHOW = DEFAULT_ALWAYS_SHOW;
 }
