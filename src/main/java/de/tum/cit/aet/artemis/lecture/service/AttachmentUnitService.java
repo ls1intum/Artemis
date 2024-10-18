@@ -15,8 +15,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -48,11 +48,11 @@ public class AttachmentUnitService {
 
     private final Optional<IrisSettingsRepository> irisSettingsRepository;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<PyrisWebhookService> pyrisWebhookService,
-            Optional<IrisSettingsRepository> irisSettingsRepository, CompetencyProgressService competencyProgressService) {
+            Optional<IrisSettingsRepository> irisSettingsRepository, CompetencyProgressApi competencyProgressApi) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -60,7 +60,7 @@ public class AttachmentUnitService {
         this.slideRepository = slideRepository;
         this.pyrisWebhookService = pyrisWebhookService;
         this.irisSettingsRepository = irisSettingsRepository;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     /**
@@ -148,7 +148,7 @@ public class AttachmentUnitService {
 
         // Set the original competencies back to the attachment unit so that the competencyProgressService can determine which competencies changed
         existingAttachmentUnit.setCompetencies(existingCompetencies);
-        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingAttachmentUnit, Optional.of(updateUnit));
+        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(existingAttachmentUnit, Optional.of(updateUnit));
 
         return savedAttachmentUnit;
     }

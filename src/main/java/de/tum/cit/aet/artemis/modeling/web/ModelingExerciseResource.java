@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -81,7 +81,7 @@ public class ModelingExerciseResource {
 
     private static final String ENTITY_NAME = "modelingExercise";
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -126,7 +126,7 @@ public class ModelingExerciseResource {
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
             PlagiarismDetectionService plagiarismDetectionService, ChannelService channelService, ChannelRepository channelRepository,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressApi competencyProgressApi) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -144,7 +144,7 @@ public class ModelingExerciseResource {
         this.plagiarismDetectionService = plagiarismDetectionService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -182,7 +182,7 @@ public class ModelingExerciseResource {
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
-        competencyProgressService.updateProgressByLearningObjectAsync(result);
+        competencyProgressApi.updateProgressByLearningObjectAsync(result);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
@@ -252,7 +252,7 @@ public class ModelingExerciseResource {
 
         exerciseService.notifyAboutExerciseChanges(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
 
-        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(modelingExercise));
+        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(modelingExercise));
 
         return ResponseEntity.ok(updatedModelingExercise);
     }
