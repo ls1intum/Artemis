@@ -1,6 +1,15 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, input } from '@angular/core';
 import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
-import { AccordionGroups, ChannelAccordionShowAdd, ChannelGroupCategory, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
+import {
+    AccordionGroups,
+    ChannelAccordionShowAdd,
+    ChannelGroupCategory,
+    ChannelTypeIcons,
+    CollapseState,
+    SidebarCardElement,
+    SidebarItemShowAlways,
+    SidebarTypes,
+} from 'app/types/sidebar';
 import { Params } from '@angular/router';
 
 @Component({
@@ -23,6 +32,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     @Input() showAddOptions = false;
     @Input() showAddOption?: ChannelAccordionShowAdd;
     @Input() channelTypeIcon?: ChannelTypeIcons;
+    sidebarItemAlwaysShow = input.required<SidebarItemShowAlways>();
     @Input() collapseState: CollapseState;
     @Input() isFilterActive: boolean = false;
 
@@ -43,7 +53,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     }
 
     setStoredCollapseState() {
-        const storedCollapseState: string | null = sessionStorage.getItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId);
+        const storedCollapseState: string | null = localStorage.getItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId);
         if (storedCollapseState) this.collapseState = JSON.parse(storedCollapseState);
     }
 
@@ -70,7 +80,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
 
     toggleGroupCategoryCollapse(groupCategoryKey: string) {
         this.collapseState[groupCategoryKey] = !this.collapseState[groupCategoryKey];
-        sessionStorage.setItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, JSON.stringify(this.collapseState));
+        localStorage.setItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, JSON.stringify(this.collapseState));
     }
 
     getGroupKey(groupKey: string): boolean {
