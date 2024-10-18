@@ -78,30 +78,27 @@ export class FeedbackFilterModalComponent {
         const checkbox = event.target as HTMLInputElement;
 
         if (controlName === 'occurrence') {
-            const values = this.filterForm.value[controlName] as number[];
+            const values: number[] = this.filterForm.value[controlName];
             const numericValue = Number(checkbox.value);
-            if (checkbox.checked) {
-                values.push(numericValue);
-            } else {
-                const index = values.indexOf(numericValue);
-                if (index >= 0) {
-                    values.splice(index, 1);
-                }
-            }
+            this.pushValue(checkbox, values, numericValue);
             this.filterForm.patchValue({ occurrence: values });
         } else {
-            const values = this.filterForm.value[controlName] as string[];
-            if (checkbox.checked) {
-                values.push(checkbox.value);
-            } else {
-                const index = values.indexOf(checkbox.value);
-                if (index >= 0) {
-                    values.splice(index, 1);
-                }
-            }
+            const values: string[] = this.filterForm.value[controlName];
+            this.pushValue(checkbox, values, checkbox.value);
             const patch: Partial<FilterData> = {};
             patch[controlName] = values;
             this.filterForm.patchValue(patch);
+        }
+    }
+
+    private pushValue<T>(checkbox: HTMLInputElement, values: T[], valueToAddOrRemove: T): void {
+        if (checkbox.checked) {
+            values.push(valueToAddOrRemove);
+        } else {
+            const index = values.indexOf(valueToAddOrRemove);
+            if (index >= 0) {
+                values.splice(index, 1);
+            }
         }
     }
 

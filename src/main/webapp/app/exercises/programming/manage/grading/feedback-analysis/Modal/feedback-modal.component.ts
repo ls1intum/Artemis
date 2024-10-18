@@ -6,7 +6,6 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 @Component({
     selector: 'jhi-feedback-modal',
     templateUrl: './feedback-modal.component.html',
-    styleUrls: ['./feedback-modal.component.scss'],
     imports: [ArtemisSharedCommonModule],
     standalone: true,
 })

@@ -1,28 +1,44 @@
-<div class="modal-header">
+<div class="d-flex justify-content-between align-items-center border-bottom-0 p-3">
     <h4 class="m-0" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackModal.header"></h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.close()"></button>
 </div>
 <hr class="my-0" />
-<div class="modal-body">
+<div class="p-3 mb-0">
     <div class="d-flex justify-content-between mb-3">
-        <div class="border">
-            <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.task"></span>
-            <p>{{ feedbackDetail().taskNumber }}</p>
-        </div>
-        <div class="border">
-            <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.occurrence"></span>
-            <p>{{ feedbackDetail().relativeCount | number: '1.0-0' }}% ({{ feedbackDetail().count }})</p>
-        </div>
-        <div class="border">
-            <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.testcase"></span>
-            <p>{{ feedbackDetail().testCaseName }}</p>
-        </div>
-        <div class="border">
-            <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.errorCategory"></span>
-            <p>Student Error</p>
-        </div>
+        <ng-container
+            *ngTemplateOutlet="detailTemplate; context: { label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.task', value: feedbackDetail().taskNumber }"
+        >
+        </ng-container>
+        <ng-container
+            *ngTemplateOutlet="
+                detailTemplate;
+                context: {
+                    label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.occurrence',
+                    value: feedbackDetail().relativeCount | number: '1.0-0' + ' (' + feedbackDetail().count + ')',
+                }
+            "
+        >
+        </ng-container>
+        <ng-container
+            *ngTemplateOutlet="
+                detailTemplate;
+                context: { label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.testcase', value: feedbackDetail().testCaseName }
+            "
+        >
+        </ng-container>
+        <ng-container
+            *ngTemplateOutlet="detailTemplate; context: { label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.errorCategory', value: 'Student Error' }"
+        >
+        </ng-container>
     </div>
 
     <h5 class="mb-3" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackModal.feedbackTitle"></h5>
     <p>{{ feedbackDetail().detailText }}</p>
 </div>
+
+<ng-template #detailTemplate let-label="label" let-value="value">
+    <div class="p-1 border rounded-3">
+        <span class="fw-bold" [jhiTranslate]="label"></span>
+        <p>{{ value }}</p>
+    </div>
+</ng-template>
