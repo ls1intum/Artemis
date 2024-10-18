@@ -136,6 +136,10 @@ public class SharedQueueProcessingService {
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
+        // Remove listener if already present
+        if (this.listenerId != null) {
+            this.queue.removeItemListener(this.listenerId);
+        }
         this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
 
         /*
@@ -495,7 +499,7 @@ public class SharedQueueProcessingService {
             log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
             isPaused.set(false);
             processResults.set(true);
-            // We remove the listener and scheduledTask first to avoid race conditions
+            // We remove the listener and scheduledTask first to avoid having multiple listeners and scheduled tasks running
             removeListenerAndCancelScheduledFuture();
             listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
             scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
