@@ -12,11 +12,9 @@ import { generateExampleChannelDTO } from '../../helpers/conversationExampleMode
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
-import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapseMocksModule } from '../../../../../helpers/mocks/directive/ngbCollapseMocks.module';
 
@@ -107,8 +105,7 @@ examples.forEach((exampleChannel) => {
             expect(component).toBeTruthy();
             expect(getChannelsOfCourseSpy).toHaveBeenCalledWith(course.id);
             expect(getChannelsOfCourseSpy).toHaveBeenCalledOnce();
-            expect(component.noOfChannels).toBe(3);
-            expect(component.otherChannels).toHaveLength(3);
+            expect(component.noOfChannels).toBe(6);
             expect(fixture.nativeElement.querySelectorAll('jhi-channel-item')).toHaveLength(6);
             expect(channelItems).toHaveLength(6);
             expect(channelItems[0].channel).toEqual(channelOne);
@@ -156,46 +153,5 @@ examples.forEach((exampleChannel) => {
                 expect(component.channelModificationPerformed).toBeTrue();
             }));
         }
-
-        it('should not show create channel button if user is missing the permission', fakeAsync(() => {
-            canCreateChannel.mockReturnValue(false);
-            fixture.detectChanges();
-            expect(fixture.debugElement.nativeElement.querySelector('#createChannel')).toBeFalsy();
-        }));
-
-        if (allowChannelCreation) {
-            it('should open create channel dialog when button is pressed', fakeAsync(() => {
-                const modalService = TestBed.inject(NgbModal);
-                const mockModalRef = {
-                    componentInstance: { course: undefined, initialize: () => {} },
-                    result: Promise.resolve(new ChannelDTO()),
-                };
-                const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-                fixture.detectChanges();
-
-                const createChannelButton = fixture.debugElement.nativeElement.querySelector('#createChannel');
-                createChannelButton.click();
-                tick(501);
-                fixture.whenStable().then(() => {
-                    expect(openDialogSpy).toHaveBeenCalledOnce();
-                    expect(openDialogSpy).toHaveBeenCalledWith(ChannelsCreateDialogComponent, defaultSecondLayerDialogOptions);
-                    expect(mockModalRef.componentInstance.course).toEqual(course);
-                });
-            }));
-        } else {
-            it('should hide create channel button if creation is not allowed', () => {
-                const createChannelButton = fixture.debugElement.nativeElement.querySelector('#createChannel');
-                expect(createChannelButton).toBeNull();
-            });
-        }
-
-        it('should toggle other channels on click', () => {
-            expect(component.otherChannelsAreCollapsed).toBeTrue();
-
-            const otherChannels = fixture.debugElement.nativeElement.querySelector('.other-channels');
-            otherChannels.click();
-
-            expect(component.otherChannelsAreCollapsed).toBeFalse();
-        });
     });
 });

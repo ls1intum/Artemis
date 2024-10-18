@@ -192,12 +192,7 @@
                 }
             },
             "channelOverview": {
-                "title": {
-                    "general": "All General Channels in course {{ courseTitle }}",
-                    "exercise": "All Exercise Channels in course {{ courseTitle }}",
-                    "lecture": "All Lecture Channels in course {{ courseTitle }}",
-                    "exam": "All Exam Channels in course {{ courseTitle }}"
-                },
+                "title": "All Channels in course {{ courseTitle }}",
                 "otherChannels": "Other Channels",
                 "createChannelButton": "Create a new channel",
                 "channelItem": {

@@ -1,19 +1,15 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { EMPTY, Observable, Subject, debounceTime, distinctUntilChanged, finalize, from, map, takeUntil } from 'rxjs';
+import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, map, takeUntil } from 'rxjs';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
-import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
-import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
-import { catchError } from 'rxjs/operators';
 
 export type ChannelActionType = 'register' | 'deregister' | 'view' | 'create';
 export type ChannelAction = {
@@ -44,12 +40,10 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     channelModificationPerformed = false;
     isLoading = false;
     channels: ChannelDTO[] = [];
-    otherChannels: ChannelDTO[] = [];
 
     isInitialized = false;
 
     faChevronRight = faChevronRight;
-    otherChannelsAreCollapsed = true;
 
     initialize() {
         super.initialize(['course', 'channelSubType']);
@@ -61,7 +55,6 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     constructor(
         private channelService: ChannelService,
         private alertService: AlertService,
-        private modalService: NgbModal,
 
         activeModal: NgbActiveModal,
     ) {
@@ -114,18 +107,6 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
             case 'view':
                 this.close([channelAction.channel, this.channelModificationPerformed]);
                 break;
-            case 'create':
-                if (this.createChannelFn) {
-                    this.createChannelFn(channelAction.channel)
-                        .pipe(takeUntil(this.ngUnsubscribe))
-                        .subscribe({
-                            complete: () => {
-                                this.loadChannelsOfCourse();
-                                this.channelModificationPerformed = true;
-                            },
-                        });
-                }
-                break;
         }
     }
 
@@ -142,28 +123,12 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
             )
             .subscribe({
                 next: (channels: ChannelDTO[]) => {
-                    this.channels = channels?.filter((channel) => channel.subType === this.channelSubType) ?? [];
-                    this.otherChannels = channels?.filter((channel) => channel.subType !== this.channelSubType) ?? [];
+                    this.channels = channels;
                     this.noOfChannels = this.channels.length;
                 },
                 error: (errorResponse: HttpErrorResponse) => {
                     onError(this.alertService, errorResponse);
                 },
-            });
-    }
-
-    openCreateChannelDialog(event: MouseEvent) {
-        event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.initialize();
-        from(modalRef.result)
-            .pipe(
-                catchError(() => EMPTY),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe((channel: ChannelDTO) => {
-                this.channelActions$.next({ action: 'create', channel });
             });
     }
 }
