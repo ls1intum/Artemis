@@ -7,7 +7,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
-import { Faq } from 'app/entities/faq.model';
+import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqService } from 'app/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -45,7 +45,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     readonly ButtonType = ButtonType;
 
     // Icons
-    faFilter = faFilter;
+    readonly faFilter = faFilter;
 
     private route = inject(ActivatedRoute);
 
@@ -72,7 +72,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
     private loadFaqs() {
         this.faqService
-            .findAllByCourseId(this.courseId)
+            .findAllByCourseIdAndState(this.courseId, FaqState.ACCEPTED)
             .pipe(map((res: HttpResponse<Faq[]>) => res.body))
             .subscribe({
                 next: (res: Faq[]) => {
