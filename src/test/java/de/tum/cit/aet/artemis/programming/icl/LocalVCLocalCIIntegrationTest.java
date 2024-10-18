@@ -985,16 +985,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testBuildPriorityBeforeDueDate() throws Exception {
-            queuedJobs.clear();
-            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
             testPriority(student1Login, PRIORITY_NORMAL);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testBuildPriorityAfterDueDate() throws Exception {
-            queuedJobs.clear();
-            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
             // Set dueDate before now
             programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
             programmingExerciseRepository.save(programmingExercise);
@@ -1005,8 +1001,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testPriorityRunningExam() throws Exception {
-            queuedJobs.clear();
-            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
             Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
             ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
@@ -1032,6 +1026,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         }
 
         private void testPriority(String login, int expectedPriority) throws Exception {
+            queuedJobs.clear();
+            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+
             log.info("Creating participation");
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
