@@ -1080,7 +1080,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
             assertThat(buildJobQueueItem).isNotNull();
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().isNetworkDisabled()).isTrue();
-            assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().getEnv()).containsExactlyInAnyOrder("key=value", "key1=value1");
+            assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
         }
     }
 }
