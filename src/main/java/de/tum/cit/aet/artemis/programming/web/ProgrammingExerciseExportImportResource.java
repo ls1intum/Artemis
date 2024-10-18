@@ -424,32 +424,37 @@ public class ProgrammingExerciseExportImportResource {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
-        if (repositoryExportOptions.isExportAllParticipants()) {
+        if (repositoryExportOptions.exportAllParticipants()) {
             // only instructors are allowed to download all repos
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         }
 
-        if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
-            repositoryExportOptions.setFilterLateSubmissionsIndividualDueDate(true);
-            repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
+        if (repositoryExportOptions.filterLateSubmissionsDate() == null) {
+            repositoryExportOptions = repositoryExportOptions.copyWith(true, programmingExercise.getDueDate());
         }
 
         Set<String> participantIdentifierList = new HashSet<>();
-        if (!repositoryExportOptions.isExportAllParticipants()) {
+        if (!repositoryExportOptions.exportAllParticipants()) {
             participantIdentifiers = participantIdentifiers.replaceAll("\\s+", "");
             participantIdentifierList.addAll(List.of(participantIdentifiers.split(",")));
         }
 
         // Select the participations that should be exported
+        final var exportedStudentParticipations = getExportedStudentParticipations(repositoryExportOptions, programmingExercise, participantIdentifierList);
+        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
+    }
+
+    private static List<ProgrammingExerciseStudentParticipation> getExportedStudentParticipations(RepositoryExportOptionsDTO repositoryExportOptions,
+            ProgrammingExercise programmingExercise, Set<String> participantIdentifierList) {
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = new ArrayList<>();
         for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
             ProgrammingExerciseStudentParticipation programmingStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            if (repositoryExportOptions.isExportAllParticipants() || (programmingStudentParticipation.getRepositoryUri() != null && studentParticipation.getParticipant() != null
+            if (repositoryExportOptions.exportAllParticipants() || (programmingStudentParticipation.getRepositoryUri() != null && studentParticipation.getParticipant() != null
                     && participantIdentifierList.contains(studentParticipation.getParticipantIdentifier()))) {
                 exportedStudentParticipations.add(programmingStudentParticipation);
             }
         }
-        return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
+        return exportedStudentParticipations;
     }
 
     /**
@@ -471,12 +476,11 @@ public class ProgrammingExerciseExportImportResource {
 
         // Only instructors or higher may override the anonymization setting
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise, null)) {
-            repositoryExportOptions.setAnonymizeRepository(true);
+            repositoryExportOptions = repositoryExportOptions.copyWithAnonymizeRepository(true);
         }
 
-        if (repositoryExportOptions.getFilterLateSubmissionsDate() == null) {
-            repositoryExportOptions.setFilterLateSubmissionsIndividualDueDate(true);
-            repositoryExportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
+        if (repositoryExportOptions.filterLateSubmissionsDate() == null) {
+            repositoryExportOptions = repositoryExportOptions.copyWith(true, programmingExercise.getDueDate());
         }
 
         var participationIdSet = new ArrayList<>(Arrays.asList(participationIds.split(","))).stream().map(String::trim).map(Long::parseLong).collect(Collectors.toSet());
