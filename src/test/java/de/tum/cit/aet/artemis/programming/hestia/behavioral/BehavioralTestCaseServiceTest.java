@@ -78,6 +78,11 @@ class BehavioralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
     private ProgrammingExercise exercise;
 
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);

@@ -19,7 +19,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -38,35 +37,14 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
-import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationTest {
 
     private static final String TEST_PREFIX = "fileuploadsubmission";
-
-    @Autowired
-    private FileUploadSubmissionRepository fileUploadSubmissionRepository;
-
-    @Autowired
-    private ParticipationTestRepository participationRepository;
-
-    @Autowired
-    private FileUploadExerciseUtilService fileUploadExerciseUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private ModelingExerciseUtilService modelingExerciseUtilService;
 
     private FileUploadExercise releasedFileUploadExercise;
 
