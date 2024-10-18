@@ -16,10 +16,26 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 
+/**
+ * Pyris DTO mapping for an {@code Exercise} together with all its student submissions.
+ */
+// @formatter:off
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisExerciseWithStudentSubmissionsDTO(long id, String title, ExerciseType type, ExerciseMode mode, double maxPoints, double bonusPoints,
-        DifficultyLevel difficultyLevel, Instant releaseDate, Instant dueDate, IncludedInOverallScore inclusionMode, boolean presentationScoreEnabled,
-        Set<PyrisStudentSubmissionDTO> submissions) {
+public record PyrisExerciseWithStudentSubmissionsDTO(
+        long id,
+        String title,
+        ExerciseType type,
+        ExerciseMode mode,
+        double maxPoints,
+        double bonusPoints,
+        DifficultyLevel difficultyLevel,
+        Instant releaseDate,
+        Instant dueDate,
+        IncludedInOverallScore inclusionMode,
+        boolean presentationScoreEnabled,
+        Set<PyrisStudentSubmissionDTO> submissions
+// @formatter:on
+) {
 
     /**
      * Convert an exercise to a PyrisExerciseWithStudentSubmissionsDTO.
@@ -27,14 +43,29 @@ public record PyrisExerciseWithStudentSubmissionsDTO(long id, String title, Exer
      * @param exercise The exercise to convert.
      * @return The converted exercise.
      */
-    public static PyrisExerciseWithStudentSubmissionsDTO of(Exercise exercise) {
-        var submissionDTOSet = exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun())
-                .flatMap(participation -> participation.getSubmissions().stream()).map(submission -> new PyrisStudentSubmissionDTO(toInstant(submission.getSubmissionDate()),
+    public static PyrisExerciseWithStudentSubmissionsDTO from(Exercise exercise) {
+        // @formatter:off
+        return new PyrisExerciseWithStudentSubmissionsDTO(
+                exercise.getId(),
+                exercise.getTitle(),
+                exercise.getExerciseType(),
+                exercise.getMode(),
+                exercise.getMaxPoints(),
+                exercise.getBonusPoints(),
+                exercise.getDifficulty(),
+                toInstant(exercise.getReleaseDate()),
+                toInstant(exercise.getDueDate()),
+                exercise.getIncludedInOverallScore(),
+                Boolean.TRUE.equals(exercise.getPresentationScoreEnabled()),
+                createSubmissionDTOSet(exercise)
+        );
+        // @formatter:on
+    }
+
+    private static Set<PyrisStudentSubmissionDTO> createSubmissionDTOSet(Exercise exercise) {
+        return exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun()).flatMap(participation -> participation.getSubmissions().stream())
+                .map(submission -> new PyrisStudentSubmissionDTO(toInstant(submission.getSubmissionDate()),
                         Optional.ofNullable(submission.getLatestResult()).map(Result::getScore).orElse(0D)))
                 .collect(Collectors.toSet());
-
-        return new PyrisExerciseWithStudentSubmissionsDTO(exercise.getId(), exercise.getTitle(), exercise.getExerciseType(), exercise.getMode(), exercise.getMaxPoints(),
-                exercise.getBonusPoints(), exercise.getDifficulty(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()), exercise.getIncludedInOverallScore(),
-                Boolean.TRUE.equals(exercise.getPresentationScoreEnabled()), submissionDTOSet);
     }
 }
