@@ -69,6 +69,7 @@
             "info": "Submitting a feedback request does not affect your number of allowed complaints, but your score will remain unchanged.",
             "review": "Review More Feedback Request",
             "alreadyHandled": "The request has been resolved",
+            "alreadySubmitted": "You already requested more feedback",
             "alreadySubmittedSubmissionAuthor": "You have already requested more feedback",
             "alreadySubmittedNotSubmissionAuthor": "The student has already requested more feedback",
             "acceptedLong": "Request was answered",
