@@ -1,19 +1,19 @@
 <div class="connection-status" [ngClass]="{ disconnected: disconnected }">
-    @if (!isExamMode) {
+    <!-- @if (!isExamMode) {
         <fa-icon [icon]="faCircle" size="sm" />
-    }
+    } -->
     @if (!disconnected) {
-        <div [ngClass]="{ 'badge bg-success connectedExam': isExamMode }">
-            @if (isExamMode) {
-                <fa-icon [fixedWidth]="true" [icon]="faTowerBroadcast" />
-            }
+        <div class="badge bg-success connectedExam">
+            <!-- @if (isExamMode) { -->
+            <fa-icon class="" [fixedWidth]="true" [icon]="faTowerBroadcast" />
+            <!-- } -->
             <span jhiTranslate="connectionStatus.connected"></span>
         </div>
     } @else {
-        <div [ngClass]="{ 'badge bg-danger connectedExam': isExamMode }">
-            @if (isExamMode) {
-                <fa-icon [fixedWidth]="true" [icon]="faExclamation" />
-            }
+        <div class="badge bg-success connectedExam">
+            <!-- @if (isExamMode) { -->
+            <fa-icon [fixedWidth]="true" [icon]="faExclamation" />
+            <!-- } -->
             <span jhiTranslate="connectionStatus.disconnected"></span>
         </div>
     }

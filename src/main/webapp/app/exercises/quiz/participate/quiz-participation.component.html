@@ -1,21 +1,36 @@
 <div [id]="'exercise-' + quizExercise?.id">
     @if (quizExercise) {
-        <div class="quiz-header ms-5">
-            <h2>
-                {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }}
-                - {{ quizExercise.title }}
-                @switch (mode) {
-                    @case ('practice') {
-                        <span class="in-parentheses" jhiTranslate="artemisApp.quizExercise.practiceMode"></span>
+        <div>
+            <div class="d-flex justify-content-between">
+                <h3>
+                    {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }}
+                    - {{ quizExercise.title }}
+                    @switch (mode) {
+                        @case ('practice') {
+                            <span class="in-parentheses" jhiTranslate="artemisApp.quizExercise.practiceMode"></span>
+                        }
+                        @case ('preview') {
+                            <span class="in-parentheses" jhiTranslate="artemisApp.quizExercise.previewMode"></span>
+                        }
+                        @case ('solution') {
+                            <span class="in-parentheses" jhiTranslate="artemisApp.quizExercise.solution"></span>
+                        }
                     }
-                    @case ('preview') {
-                        <span class="in-parentheses" jhiTranslate="artemisApp.quizExercise.previewMode"></span>
+                </h3>
+                <div>
+                    @if (!showingResult) {
+                        <jhi-button
+                            id="submit-quiz"
+                            (onClick)="onSubmit()"
+                            [btnSize]="ButtonSize.SMALL"
+                            [btnType]="ButtonType.PRIMARY"
+                            [title]="submission.submitted ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
+                            [disabled]="submission.submitted || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
+                        />
                     }
-                    @case ('solution') {
-                        <span class="in-parentheses" jhiTranslate="artemisApp.quizExercise.solution"></span>
-                    }
-                }
-            </h2>
+                </div>
+            </div>
+            <hr />
             @if (!waitingForQuizStart && !submission.submitted && !showingResult && remainingTimeSeconds >= 0) {
                 <p jhiTranslate="artemisApp.quizExercise.quizInstructions.live"></p>
             }
@@ -135,10 +150,7 @@
     @if (quizExercise) {
         <div class="quiz-footer mt-5">
             <div class="container">
-                <div class="quiz-footer-content">
-                    <div [class.invisible]="mode !== 'live' || showingResult" class="autosave-text">
-                        <span jhiTranslate="artemisApp.quizExercise.quizInstructions.autoSave"></span>
-                    </div>
+                <div class="quiz-footer-content d-flex fs-small">
                     @if (!showingResult) {
                         <div id="remaining-time" class="d-flex justfiy-content-between gap-5">
                             <div>
@@ -207,6 +219,10 @@
                                 }
                             </div>
                             @if (mode === 'live') {
+                                <div class="autosave-text">
+                                    <span jhiTranslate="artemisApp.quizExercise.quizInstructions.autoSave"></span>
+                                </div>
+
                                 <jhi-connection-status class="connection-status-quiz">
                                     <ng-container innerContent>
                                         @if (unsavedChanges) {
@@ -256,18 +272,6 @@
                             [icon]="faSync"
                         />
                     }
-                    <div class="submit-button">
-                        @if (!showingResult) {
-                            <jhi-button
-                                id="submit-quiz"
-                                (onClick)="onSubmit()"
-                                [btnSize]="isMobile ? ButtonSize.SMALL : ButtonSize.LARGE"
-                                [btnType]="ButtonType.SUCCESS"
-                                [title]="submission.submitted ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
-                                [disabled]="submission.submitted || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
-                            />
-                        }
-                    </div>
                 </div>
             </div>
         </div>
