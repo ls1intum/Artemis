@@ -1,24 +1,41 @@
-import showdown from 'showdown';
-import showdownKatex from 'showdown-katex';
-import showdownHighlight from 'showdown-highlight';
+import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
 import DOMPurify, { Config } from 'dompurify';
+import type { PluginSimple } from 'markdown-it';
+import markdownIt from 'markdown-it';
+import markdownItClass from 'markdown-it-class';
+import markdownItKatex from '@vscode/markdown-it-katex';
+import markdownItHighlightjs from 'markdown-it-highlightjs';
+import TurndownService from 'turndown';
 
 /**
- * showdown will add the classes to the converted html
- * see: https://github.com/showdownjs/showdown/wiki/Add-default-classes-for-each-HTML-element
+ * Add these classes to the converted html.
  */
 const classMap: { [key: string]: string } = {
     table: 'table',
 };
-/**
- * extension to add css classes to html tags
- * see: https://github.com/showdownjs/showdown/wiki/Add-default-classes-for-each-HTML-element
- */
-export const addCSSClass = Object.keys(classMap).map((key) => ({
-    type: 'output',
-    regex: new RegExp(`<${key}(.*)>`, 'g'),
-    replace: `<${key} class="${classMap[key]}" $1>`,
-}));
+
+// An inline math formula has some other characters before or after the formula and uses $$ as delimiters
+const inlineFormulaRegex = /(?:.+\$\$[^\$]+\$\$)|(?:\$\$[^\$]+\$\$.+)/g;
+
+class FormulaCompatibilityPlugin extends ArtemisTextReplacementPlugin {
+    replaceText(text: string): string {
+        return text
+            .split('\n')
+            .map((line) => {
+                if (line.match(inlineFormulaRegex)) {
+                    line = line.replace(/\$\$/g, '$');
+                }
+                if (line.includes('\\\\begin') || line.includes('\\\\end')) {
+                    line = line.replaceAll('\\\\begin', '\\begin').replaceAll('\\\\end', '\\end');
+                }
+                return line;
+            })
+            .join('\n');
+    }
+}
+const formulaCompatibilityPlugin = new FormulaCompatibilityPlugin();
+
+const turndownService = new TurndownService();
 
 /**
  * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
@@ -32,24 +49,37 @@ export const addCSSClass = Object.keys(classMap).map((key) => ({
  */
 export function htmlForMarkdown(
     markdownText?: string,
-    extensions: showdown.ShowdownExtension[] = [],
+    extensions: PluginSimple[] = [],
     allowedHtmlTags: string[] | undefined = undefined,
     allowedHtmlAttributes: string[] | undefined = undefined,
 ): string {
     if (!markdownText || markdownText === '') {
         return '';
     }
-    const converter = new showdown.Converter({
-        parseImgDimensions: true,
-        headerLevelStart: 3,
-        simplifiedAutoLink: true,
-        strikethrough: true,
-        tables: true,
-        openLinksInNewWindow: true,
-        backslashEscapesHTMLTags: true,
-        extensions: [...extensions, showdownKatex(), showdownHighlight({ pre: true }), ...addCSSClass],
+
+    const md = markdownIt({
+        html: true,
+        linkify: true,
+        breaks: false, // Avoid line breaks after tasks
     });
-    const html = converter.makeHtml(markdownText);
+    for (const extension of extensions) {
+        md.use(extension);
+    }
+
+    // Add default extensions (Code Highlight, Latex)
+    md.use(markdownItHighlightjs)
+        .use(formulaCompatibilityPlugin.getExtension())
+        .use(markdownItKatex, {
+            enableMathInlineInHtml: true,
+        })
+        .use(markdownItClass, classMap);
+    let markdownRender = md.render(markdownText);
+    if (markdownRender.endsWith('\n')) {
+        // Keep legacy behavior from showdown where the output does not end with \n.
+        // This is needed because e.g. for quiz questions, we render the markdown in multiple small parts and then concatenate them.
+        markdownRender = markdownRender.slice(0, -1);
+    }
+
     const purifyParameters = {} as Config;
     // Prevents sanitizer from deleting <testid>id</testid>
     purifyParameters['ADD_TAGS'] = ['testid'];
@@ -59,18 +89,9 @@ export function htmlForMarkdown(
     if (allowedHtmlAttributes) {
         purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
     }
-    return DOMPurify.sanitize(html, purifyParameters) as string;
+    return DOMPurify.sanitize(markdownRender, purifyParameters) as string;
 }
 
 export function markdownForHtml(htmlText: string): string {
-    const converter = new showdown.Converter({
-        parseImgDimensions: true,
-        headerLevelStart: 3,
-        simplifiedAutoLink: true,
-        strikethrough: true,
-        tables: true,
-        openLinksInNewWindow: true,
-        backslashEscapesHTMLTags: true,
-    });
-    return converter.makeMarkdown(htmlText);
+    return turndownService.turndown(htmlText);
 }
