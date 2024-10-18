@@ -1,4 +1,7 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
 
 $draggable-width: 15px;
 $thread-section-card-min-width: 420px;
@@ -83,6 +86,16 @@ $thread-section-card-min-width: 420px;
 
         .draggable-left {
             display: none;
+        }
+    }
+}
+
+@include media-breakpoint-down(sm) {
+    .expanded-thread {
+        width: 100%;
+
+        & .card {
+            min-width: 100%;
         }
     }
 }
