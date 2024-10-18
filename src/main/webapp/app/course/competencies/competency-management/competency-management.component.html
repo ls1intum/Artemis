@@ -2,7 +2,10 @@
     <div class="d-flex flex-wrap mt-4">
         <div class="d-flex justify-content-center align-items-center">
             <h2 class="m-0" jhiTranslate="artemisApp.competency.manage.title"></h2>
-            <fa-icon class="ms-2 clickable" [icon]="faCircleInfo" (click)="openCourseCompetencyExplanation()" />
+            <button class="ms-3 btn btn-sm btn-warning" (click)="openCourseCompetencyExplanation()">
+                <fa-icon [icon]="faCircleQuestion" />
+                <span>Help</span>
+            </button>
         </div>
         <div class="ms-auto justify-content-end">
             @if (irisCompetencyGenerationEnabled) {

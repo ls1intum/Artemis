@@ -13,7 +13,7 @@ import {
 } from 'app/entities/competency.model';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription } from 'rxjs';
-import { faCircleInfo, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCircleQuestion, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -54,7 +54,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     protected readonly faTrash = faTrash;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faRobot = faRobot;
-    protected readonly faCircleInfo = faCircleInfo;
+    protected readonly faCircleQuestion = faCircleQuestion;
 
     // other constants
     readonly getIcon = getIcon;
@@ -77,6 +77,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             await this.loadData();
             this.loadIrisEnabled();
         });
+        const lastVisit = sessionStorage.getItem('lastTimeVisitedCourseCompetencyExplanation');
+        if (!lastVisit) {
+            this.openCourseCompetencyExplanation();
+        }
+        sessionStorage.setItem('lastTimeVisitedCourseCompetencyExplanation', Date.now().toString());
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;
         });
