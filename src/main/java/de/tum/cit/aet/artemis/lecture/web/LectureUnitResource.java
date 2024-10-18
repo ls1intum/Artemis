@@ -156,7 +156,7 @@ public class LectureUnitResource {
      */
     @DeleteMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId) {
+    public ResponseEntity<Void> deleteLectureUnit(@PathVariable long lectureUnitId, @PathVariable Long lectureId) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findByIdWithCompetenciesBidirectionalElseThrow(lectureUnitId);
         if (lectureUnit.getLecture() == null || lectureUnit.getLecture().getCourse() == null) {
@@ -200,11 +200,26 @@ public class LectureUnitResource {
      */
     @GetMapping("lecture-units/{lectureUnitId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<LectureUnit> getLectureUnitById(@PathVariable @Valid Long lectureUnitId) {
+    public ResponseEntity<LectureUnit> getLectureUnitById(@PathVariable @Valid long lectureUnitId) {
         log.debug("REST request to get lecture unit with id: {}", lectureUnitId);
         var lectureUnit = lectureUnitRepository.findByIdWithCompletedUsersElseThrow(lectureUnitId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), null);
         lectureUnit.setCompleted(lectureUnit.isCompletedFor(userRepository.getUser()));
         return ResponseEntity.ok(lectureUnit);
+    }
+
+    /**
+     * POST lectures/{lectureId}/lecture-units/{lectureUnitId}/ingest
+     * This endpooint is for starting the ingestion of one lecture unit.
+     *
+     * @param lectureUnitId The Id of the Lecture Unit that is <going to be ingested
+     * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
+     */
+    @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/ingest")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> ingestLectureUnit(@PathVariable long lectureUnitId) {
+        LectureUnit lectureUnit = this.lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnitId);
+        lectureUnitService.ingestLectureUnitInPyris(lectureUnit);
+        return ResponseEntity.ok().build();
     }
 }
