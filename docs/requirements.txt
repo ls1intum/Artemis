@@ -1,7 +1,7 @@
-Sphinx
-sphinx-rtd-theme
-sphinx-autobuild
-sphinxcontrib-bibtex
+Sphinx==7.4.7
+sphinx-rtd-theme==2.0.0
+sphinx-autobuild==2024.9.19
+sphinxcontrib-bibtex==2.6.3
 requests==2.32.3
 zipp==3.20.2
 docutils==0.20.1
