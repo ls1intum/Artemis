@@ -256,6 +256,7 @@ dependencies {
     implementation "de.jplag:rust:${jplag_version}"
     implementation "de.jplag:swift:${jplag_version}"
     implementation "de.jplag:text:${jplag_version}"
+    implementation "de.jplag:typescript:${jplag_version}"
 
     // those are transitive dependencies of JPlag Text --> Stanford NLP
     // Note: ideally we would exclude them, but for some reason this does not work
