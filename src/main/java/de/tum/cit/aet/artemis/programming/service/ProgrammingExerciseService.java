@@ -1048,4 +1048,15 @@ public class ProgrammingExerciseService {
         programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
         return programmingExercise;
     }
+
+    /**
+     * Load a programming exercise, only with eager auxiliary repositories
+     *
+     * @param exerciseId the ID of the programming exercise to load
+     * @return the loaded programming exercise entity
+     */
+    public ProgrammingExercise loadProgrammingExerciseWithAuxiliaryRepositories(long exerciseId) {
+        final Set<ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions> fetchOptions = Set.of(AuxiliaryRepositories);
+        return programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
+    }
 }

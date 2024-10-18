@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -513,6 +514,22 @@ public class ProgrammingExerciseParticipationService {
         }
         catch (GitAPIException e) {
             log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
+            return List.of();
+        }
+    }
+
+    /**
+     * Get the commits information for the given auxiliary repository.
+     *
+     * @param auxiliaryRepository the auxiliary repository for which to get the commits.
+     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
+     */
+    public List<CommitInfoDTO> getAuxiliaryRepositoryCommitInfos(AuxiliaryRepository auxiliaryRepository) {
+        try {
+            return gitService.getCommitInfos(auxiliaryRepository.getVcsRepositoryUri());
+        }
+        catch (GitAPIException e) {
+            log.error("Could not get commit infos for auxiliaryRepository {} with repository uri {}", auxiliaryRepository.getId(), auxiliaryRepository.getVcsRepositoryUri());
             return List.of();
         }
     }
