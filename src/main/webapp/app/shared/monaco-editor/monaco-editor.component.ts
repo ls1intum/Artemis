@@ -121,7 +121,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
             // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
             // See https://github.com/microsoft/monaco-editor/issues/307
-            if (document.activeElement && 'blur' in document.activeElement && typeof document.activeElement['blur'] === 'function') {
+            if (document.activeElement && 'blur' in document.activeElement && typeof document.activeElement.blur === 'function') {
                 document.activeElement.blur();
             }
             this.onBlurEditor.emit();
