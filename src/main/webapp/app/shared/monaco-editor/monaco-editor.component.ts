@@ -62,6 +62,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private contentHeightListener?: Disposable;
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
+    private mouseDownListener?: Disposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
 
     /*
@@ -118,6 +119,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             }
         });
 
+        this.mouseDownListener = this._editor.onMouseDown(() => {
+            this._editor.focus();
+        });
+
         this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
             this.onBlurEditor.emit();
         });
@@ -129,6 +134,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
+        this.mouseDownListener?.dispose();
     }
 
     private emitTextChangeEvent() {
