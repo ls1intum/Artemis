@@ -133,7 +133,7 @@ public class BuildJobContainerService {
      */
     public void runScriptInContainer(String containerId, String buildJobId, boolean isNetworkDisabled) {
         if (isNetworkDisabled) {
-            // The "sh preScript.sh" execution command specified here is need to install dependencies and prepare the environment for the build script.
+            // The "sh preScript.sh" execution command specified here is needed to install dependencies and prepare the environment for the build script.
             log.info("Started running the pre-script for build job in container with id {}", containerId);
             executeDockerCommand(containerId, buildJobId, true, true, false, "bash", LOCALCI_WORKING_DIRECTORY + "/preScript.sh");
             try {
