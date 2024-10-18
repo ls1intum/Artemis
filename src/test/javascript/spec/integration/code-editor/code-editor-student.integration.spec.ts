@@ -4,7 +4,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
-import { DebugElement, signal } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -36,7 +36,7 @@ import { MockResultService } from '../../helpers/mocks/service/mock-result.servi
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
-import { MockComponent, MockInstance, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -58,6 +58,7 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { mockCodeEditorMonacoViewChildren } from '../../helpers/mocks/mock-instance.helper';
 
 describe('CodeEditorStudentIntegration', () => {
     let container: CodeEditorStudentContainerComponent;
@@ -79,13 +80,8 @@ describe('CodeEditorStudentIntegration', () => {
 
     const result: Result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
 
-    // TODO: make reusable
-    MockInstance.scope('case');
-    MockInstance(CodeEditorMonacoComponent, () => ({
-        editor: signal<any>({}),
-        inlineFeedbackComponents: signal<any[]>([]),
-        inlineFeedbackSuggestionComponents: signal<any[]>([]),
-    }));
+    // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
+    mockCodeEditorMonacoViewChildren();
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
