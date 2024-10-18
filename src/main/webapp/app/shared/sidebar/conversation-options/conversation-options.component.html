@@ -1,9 +1,9 @@
 <div class="option-buttons" (click)="$event.stopPropagation()">
-    <button class="favorite btn btn-outline-secondary sidebar-button px-0" (click)="onFavoriteClicked($event)" type="button">
+    <button class="favorite btn btn-outline-secondary sidebar-button p-0" (click)="onFavoriteClicked($event)" type="button">
         <fa-icon [icon]="conversation.isFavorite ? faHeartSolid : faHeartRegular" size="sm" />
     </button>
     <div ngbDropdown container="body" class="d-inline-block">
-        <button class="btn btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
+        <button class="btn btn-outline-secondary dropdown-toggle sidebar-button py-0" type="button" ngbDropdownToggle>
             <fa-icon [icon]="faEllipsisVertical" size="sm" />
         </button>
         <div ngbDropdownMenu>

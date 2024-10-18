@@ -42,6 +42,8 @@
                                 ngbTooltip="{{ 'artemisApp.programmingExercise.allowOfflineIde.alertNoTheia' | artemisTranslate }}"
                             />
                         }
+                    } @else {
+                        <jhi-help-icon text="artemisApp.programmingExercise.allowOfflineIde.description" />
                     }
                 </label>
             </div>
@@ -75,6 +77,8 @@
                                 ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia' | artemisTranslate }}"
                             />
                         }
+                    } @else {
+                        <jhi-help-icon text="artemisApp.programmingExercise.allowOnlineEditor.description" />
                     }
                 </label>
             </div>
@@ -100,6 +104,8 @@
                             [placement]="'top'"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineIde.alert' | artemisTranslate }}"
                         />
+                    } @else {
+                        <jhi-help-icon text="artemisApp.programmingExercise.allowOnlineIde.description" />
                     }
                 </label>
             </div>
