@@ -1,0 +1,28 @@
+<div class="modal-header">
+    <h4 class="m-0" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackModal.header"></h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.close()"></button>
+</div>
+<hr class="my-0" />
+<div class="modal-body">
+    <div class="d-flex justify-content-between mb-3">
+        <div class="border">
+            <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.task"></span>
+            <p>{{ feedbackDetail().taskNumber }}</p>
+        </div>
+        <div class="border">
+            <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.occurrence"></span>
+            <p>{{ feedbackDetail().relativeCount | number: '1.0-0' }}% ({{ feedbackDetail().count }})</p>
+        </div>
+        <div class="border">
+            <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.testcase"></span>
+            <p>{{ feedbackDetail().testCaseName }}</p>
+        </div>
+        <div class="border">
+            <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.errorCategory"></span>
+            <p>Student Error</p>
+        </div>
+    </div>
+
+    <h5 class="mb-3" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackModal.feedbackTitle"></h5>
+    <p>{{ feedbackDetail().detailText }}</p>
+</div>
