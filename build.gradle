@@ -248,6 +248,7 @@ dependencies {
     implementation "de.jplag:jplag:${jplag_version}"
 
     implementation "de.jplag:c:${jplag_version}"
+    implementation "de.jplag:cpp:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
     implementation "de.jplag:javascript:${jplag_version}"
     implementation "de.jplag:kotlin:${jplag_version}"
