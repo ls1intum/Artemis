@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lti.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -50,7 +51,7 @@ public class LtiDynamicRegistrationService {
      * @param openIdConfigurationUrl the url to get the configuration from
      * @param registrationToken      the token to be used to authenticate the POST request
      */
-    public void performDynamicRegistration(String openIdConfigurationUrl, String registrationToken) {
+    public void performDynamicRegistration(String openIdConfigurationUrl, Optional<String> registrationToken) {
         try {
             // Get platform's configuration
             Lti13PlatformConfiguration platformConfiguration = getLti13PlatformConfiguration(openIdConfigurationUrl);
@@ -93,12 +94,10 @@ public class LtiDynamicRegistrationService {
         return platformConfiguration;
     }
 
-    private Lti13ClientRegistration postClientRegistrationToPlatform(String registrationEndpoint, String clientRegistrationId, String registrationToken) {
+    private Lti13ClientRegistration postClientRegistrationToPlatform(String registrationEndpoint, String clientRegistrationId, Optional<String> registrationToken) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        if (registrationToken != null) {
-            headers.setBearerAuth(registrationToken);
-        }
+        registrationToken.ifPresent(headers::setBearerAuth);
 
         Lti13ClientRegistration lti13ClientRegistration = new Lti13ClientRegistration(artemisServerUrl, clientRegistrationId);
         Lti13ClientRegistration registrationResponse = null;
