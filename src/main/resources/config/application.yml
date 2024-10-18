@@ -71,7 +71,7 @@ artemis:
                 empty:
                     default: "ubuntu:24.04"
                 python:
-                    default: "ls1tum/artemis-python-docker:latest"
+                    default: "local/artemis-python-docker:latest"
                 c:
                     # possible overrides: gcc, fact
                     default: "ls1tum/artemis-c-docker:latest"

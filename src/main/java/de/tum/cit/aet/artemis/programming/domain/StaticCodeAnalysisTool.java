@@ -10,28 +10,17 @@ import java.util.Optional;
  */
 public enum StaticCodeAnalysisTool {
 
-    SPOTBUGS(ProgrammingLanguage.JAVA, "spotbugs:spotbugs", "spotbugsXml.xml"), CHECKSTYLE(ProgrammingLanguage.JAVA, "checkstyle:checkstyle", "checkstyle-result.xml"),
-    PMD(ProgrammingLanguage.JAVA, "pmd:pmd", "pmd.xml"), PMD_CPD(ProgrammingLanguage.JAVA, "pmd:cpd", "cpd.xml"), SWIFTLINT(ProgrammingLanguage.SWIFT, "", "swiftlint-result.xml"),
-    GCC(ProgrammingLanguage.C, "", "gcc.xml");
+    SPOTBUGS(ProgrammingLanguage.JAVA, "spotbugsXml.xml"), CHECKSTYLE(ProgrammingLanguage.JAVA, "checkstyle-result.xml"), PMD(ProgrammingLanguage.JAVA, "pmd.xml"),
+    PMD_CPD(ProgrammingLanguage.JAVA, "cpd.xml"), SWIFTLINT(ProgrammingLanguage.SWIFT, "swiftlint-result.xml"), GCC(ProgrammingLanguage.C, "gcc.xml"),
+    RUFF(ProgrammingLanguage.PYTHON, "ruff.sarif"),;
 
     private final ProgrammingLanguage language;
 
-    private final String command;
+    private final String fileName;
 
-    private final String filePattern;
-
-    StaticCodeAnalysisTool(ProgrammingLanguage language, String command, String filePattern) {
+    StaticCodeAnalysisTool(ProgrammingLanguage language, String fileName) {
         this.language = language;
-        this.command = command;
-        this.filePattern = filePattern;
-    }
-
-    public String getTask() {
-        return this.command;
-    }
-
-    public String getFilePattern() {
-        return this.filePattern;
+        this.fileName = fileName;
     }
 
     /**
@@ -58,7 +47,7 @@ public enum StaticCodeAnalysisTool {
      */
     public static Optional<StaticCodeAnalysisTool> getToolByFilePattern(String fileName) {
         for (StaticCodeAnalysisTool tool : StaticCodeAnalysisTool.values()) {
-            if (Objects.equals(fileName, tool.filePattern)) {
+            if (Objects.equals(fileName, tool.fileName)) {
                 return Optional.of(tool);
             }
         }
