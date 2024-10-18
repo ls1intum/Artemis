@@ -501,5 +501,19 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
+
+        buildConfig.setAssignmentCheckoutPath("");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDisableNetworkAccessAndEnvVars() {
+        var buildConfig = programmingExercise.getBuildConfig();
+        buildConfig.setDockerFlags("[[\"network\",\"none\"],[\"env\",\"key=value\"]]");
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
     }
 }
