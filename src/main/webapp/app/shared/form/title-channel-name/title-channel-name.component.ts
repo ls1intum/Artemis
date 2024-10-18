@@ -41,7 +41,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
 
     constructor() {
         effect(() => {
-            this.isEditFieldDisplayedRecord();
+            this.isEditFieldDisplayedRecord(); // triggers effect
             this.registerChangeListeners();
         });
     }
