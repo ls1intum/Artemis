@@ -17,6 +17,7 @@
                 [subSettings]="irisSettings?.irisChatSettings"
                 [parentSubSettings]="parentIrisSettings?.irisChatSettings"
                 [settingsType]="settingsType"
+                [courseId]="courseId"
                 (onChanges)="isDirty = true"
             />
         </div>
@@ -27,6 +28,7 @@
                 [subSettings]="irisSettings?.irisTextExerciseChatSettings"
                 [parentSubSettings]="parentIrisSettings?.irisTextExerciseChatSettings"
                 [settingsType]="settingsType"
+                [courseId]="courseId"
                 (onChanges)="isDirty = true"
             />
         </div>
@@ -38,6 +40,7 @@
                     [subSettings]="irisSettings?.irisLectureIngestionSettings!"
                     [parentSubSettings]="parentIrisSettings?.irisLectureIngestionSettings"
                     [settingsType]="settingsType"
+                    [courseId]="courseId"
                     (onChanges)="isDirty = true"
                 />
                 <br />
@@ -62,6 +65,7 @@
                     [subSettings]="irisSettings?.irisCompetencyGenerationSettings!"
                     [parentSubSettings]="parentIrisSettings?.irisCompetencyGenerationSettings"
                     [settingsType]="settingsType"
+                    [courseId]="courseId"
                     (onChanges)="isDirty = true"
                 />
             </div>
