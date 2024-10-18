@@ -1,5 +1,5 @@
 @for (groupKey of Object.keys(groupedData); track groupKey; let i = $index) {
-    @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length! > 0 || sidebarItemShowAlways()![groupKey]) {
+    @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)!.length > 0 || sidebarItemShowAlways()[groupKey]) {
         <div
             id="test-accordion-item-container-{{ i }}"
             class="pointer"

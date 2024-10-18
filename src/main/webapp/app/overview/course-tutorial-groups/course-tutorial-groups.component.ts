@@ -28,7 +28,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     further: true,
 };
 
-const DEFAULT_ALWAYS_SHOW: SidebarItemShowAlways = {
+const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     registered: false,
     all: false,
     further: false,
@@ -55,7 +55,7 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     sortedTutorialGroups: TutorialGroup[] = [];
     accordionTutorialGroupsGroups: AccordionGroups = TUTORIAL_UNIT_GROUPS;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
-    readonly DEFAULT_ALWAYS_SHOW = DEFAULT_ALWAYS_SHOW;
+    protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
     sidebarTutorialGroups: SidebarCardElement[] = [];
 
     constructor(

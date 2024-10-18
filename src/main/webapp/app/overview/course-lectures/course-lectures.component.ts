@@ -23,7 +23,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     noDate: true,
 };
 
-const DEFAULT_ALWAYS_SHOW: SidebarItemShowAlways = {
+const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     future: false,
     current: false,
     dueSoon: false,
@@ -49,6 +49,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     sidebarLectures: SidebarCardElement[] = [];
     isCollapsed: boolean = false;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
+    protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -126,6 +127,4 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         this.courseUpdatesSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
     }
-
-    protected readonly DEFAULT_ALWAYS_SHOW = DEFAULT_ALWAYS_SHOW;
 }

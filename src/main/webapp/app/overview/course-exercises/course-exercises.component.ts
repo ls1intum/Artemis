@@ -27,7 +27,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     noDate: true,
 };
 
-const DEFAULT_ALWAYS_SHOW: SidebarItemShowAlways = {
+const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     future: false,
     current: false,
     dueSoon: false,
@@ -55,8 +55,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     sidebarData: SidebarData;
     sidebarExercises: SidebarCardElement[] = [];
     isCollapsed: boolean = false;
-    readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     isLti: boolean = false;
+
+    protected readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
+    protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -161,6 +163,4 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.parentParamSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
     }
-
-    protected readonly DEFAULT_ALWAYS_SHOW = DEFAULT_ALWAYS_SHOW;
 }

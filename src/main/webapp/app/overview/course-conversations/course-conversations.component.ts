@@ -64,7 +64,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     hiddenChannels: true,
 };
 
-const DEFAULT_ALWAYS_SHOW: SidebarItemShowAlways = {
+const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     generalChannels: true,
     exerciseChannels: false,
     examChannels: false,
@@ -105,7 +105,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     readonly CHANNEL_TYPE_SHOW_ADD_OPTION = CHANNEL_TYPE_SHOW_ADD_OPTION;
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
-    readonly ALWAYS_SHOW = DEFAULT_ALWAYS_SHOW;
+    protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     // set undefined so nothing gets displayed until isCodeOfConductAccepted is loaded
     isCodeOfConductAccepted?: boolean;

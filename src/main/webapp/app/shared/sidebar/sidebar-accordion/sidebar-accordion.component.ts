@@ -89,6 +89,4 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         }
         return this.showAddOption[groupKey as ChannelGroupCategory];
     }
-
-    protected readonly console = console;
 }
