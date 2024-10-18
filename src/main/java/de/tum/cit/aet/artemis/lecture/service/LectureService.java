@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -47,14 +48,18 @@ public class LectureService {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
+
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
-            Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressService competencyProgressService) {
+            Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressService competencyProgressService,
+            CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.pyrisWebhookService = pyrisWebhookService;
         this.competencyProgressService = competencyProgressService;
+        this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
     }
 
     /**
@@ -162,6 +167,7 @@ public class LectureService {
 
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
         channelService.deleteChannel(lectureChannel);
+
         lectureRepository.deleteById(lecture.getId());
     }
 

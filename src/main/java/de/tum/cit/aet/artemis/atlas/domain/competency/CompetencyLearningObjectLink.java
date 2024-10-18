@@ -23,7 +23,7 @@ public abstract class CompetencyLearningObjectLink implements Serializable {
     @JsonIgnore
     protected CompetencyLearningObjectId id = new CompetencyLearningObjectId();
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @MapsId("competencyId")
     protected CourseCompetency competency;
 
@@ -112,6 +112,11 @@ public abstract class CompetencyLearningObjectLink implements Serializable {
         @Override
         public int hashCode() {
             return Objects.hash(learningObjectId, competencyId);
+        }
+
+        @Override
+        public String toString() {
+            return "CompetencyLearningObjectId{" + "learningObjectId=" + learningObjectId + ", competencyId=" + competencyId + '}';
         }
     }
 }

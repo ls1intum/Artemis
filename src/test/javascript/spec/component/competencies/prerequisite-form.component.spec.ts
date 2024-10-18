@@ -120,14 +120,14 @@ describe('PrerequisiteFormComponent', () => {
         };
         prerequisiteFormComponentFixture.detectChanges();
         prerequisiteFormComponent.formData = formData;
-        prerequisiteFormComponent['onLectureUnitSelectionChange']([textUnit]);
+        prerequisiteFormComponent['onLectureUnitSelectionChange']([new CompetencyLectureUnitLink(undefined, textUnit, 1)]);
         prerequisiteFormComponent.ngOnChanges();
 
         expect(prerequisiteFormComponent.titleControl?.value).toEqual(formData.title);
         expect(prerequisiteFormComponent.descriptionControl?.value).toEqual(formData.description);
         expect(prerequisiteFormComponent.softDueDateControl?.value).toEqual(formData.softDueDate);
         expect(prerequisiteFormComponent.optionalControl?.value).toEqual(formData.optional);
-        expect(prerequisiteFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
+        expect(prerequisiteFormComponent.selectedLectureUnitLinksInTable).toEqual(formData.lectureUnitLinks);
     });
 
     it('should suggest taxonomy when title changes', () => {

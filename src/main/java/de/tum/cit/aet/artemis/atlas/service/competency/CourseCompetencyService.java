@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -81,11 +82,13 @@ public class CourseCompetencyService {
 
     private final LearningObjectImportService learningObjectImportService;
 
+    private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
+
     public CourseCompetencyService(CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, LearningPathService learningPathService, AuthorizationCheckService authCheckService,
             StandardizedCompetencyRepository standardizedCompetencyRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            LearningObjectImportService learningObjectImportService) {
+            LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -97,6 +100,7 @@ public class CourseCompetencyService {
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.learningObjectImportService = learningObjectImportService;
+        this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
     }
 
     /**
@@ -287,10 +291,11 @@ public class CourseCompetencyService {
      */
     public <C extends CourseCompetency> C createCourseCompetency(C competencyToCreate, Course course) {
         competencyToCreate.setCourse(course);
-        competencyToCreate.getLectureUnitLinks().forEach(link -> link.setCompetency(competencyToCreate));
-
+        Set<CompetencyLectureUnitLink> lectureUnitLinks = competencyToCreate.getLectureUnitLinks();
+        competencyToCreate.setLectureUnitLinks(new HashSet<>());
         var persistedCompetency = courseCompetencyRepository.save(competencyToCreate);
 
+        persistedCompetency.setLectureUnitLinks(lectureUnitLinks);
         updateLectureUnits(competencyToCreate, persistedCompetency);
 
         if (course.getLearningPathsEnabled()) {

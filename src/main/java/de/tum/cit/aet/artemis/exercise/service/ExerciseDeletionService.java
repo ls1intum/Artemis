@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -78,11 +79,14 @@ public class ExerciseDeletionService {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
             LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
-            ChannelRepository channelRepository, ChannelService channelService, CompetencyProgressService competencyProgressService) {
+            ChannelRepository channelRepository, ChannelService channelService, CompetencyProgressService competencyProgressService,
+            CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -98,6 +102,7 @@ public class ExerciseDeletionService {
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.competencyProgressService = competencyProgressService;
+        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
     }
 
     /**
@@ -143,7 +148,7 @@ public class ExerciseDeletionService {
      */
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
-        Set<CompetencyExerciseLink> competenciyLinks = exercise.getCompetencyLinks();
+        Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         long start = System.nanoTime();
@@ -175,6 +180,9 @@ public class ExerciseDeletionService {
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         participationService.deleteAllByExercise(exercise, deleteStudentReposBuildPlans, deleteStudentReposBuildPlans, false);
 
+        // delete all competency links belonging to this exercise
+        competencyExerciseLinkRepository.deleteAll(exercise.getCompetencyLinks());
+
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
         exercise = exerciseRepository.findByIdWithEagerExampleSubmissionsElseThrow(exerciseId);
         exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmissionService.deleteById(exampleSubmission.getId()));
@@ -204,7 +212,7 @@ public class ExerciseDeletionService {
             exerciseRepository.delete(exercise);
         }
 
-        competenciyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(competencyProgressService::updateProgressByCompetencyAsync);
+        competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(competencyProgressService::updateProgressByCompetencyAsync);
     }
 
     /**

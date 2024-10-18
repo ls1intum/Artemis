@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 @Table(name = "competency_lecture_unit")
 public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @MapsId("learningObjectId")
     private LectureUnit lectureUnit;
 

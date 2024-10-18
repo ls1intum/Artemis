@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Table(name = "competency_exercise")
 public class CompetencyExerciseLink extends CompetencyLearningObjectLink {
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @MapsId("learningObjectId")
     private Exercise exercise;
 

@@ -14,6 +14,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
@@ -45,6 +46,9 @@ public class CompetencyUtilService {
     @Autowired
     private CompetencyJolRepository competencyJOLRepository;
 
+    @Autowired
+    private CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+
     /**
      * Creates and saves a Competency for the given Course.
      *
@@ -74,10 +78,11 @@ public class CompetencyUtilService {
         Competency competency = new Competency();
         competency.setTitle("ExampleCompetency");
         competency.setCourse(course);
-        var link = new CompetencyExerciseLink();
-        link.setExercise(exercise);
-        competency.getExerciseLinks().add(link);
-        return competencyRepo.save(competency);
+        competency = competencyRepo.save(competency);
+
+        var link = new CompetencyExerciseLink(competency, exercise, 1);
+        link = competencyExerciseLinkRepository.save(link);
+        return (Competency) link.getCompetency();
     }
 
     /**

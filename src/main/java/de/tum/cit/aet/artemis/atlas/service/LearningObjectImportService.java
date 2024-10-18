@@ -33,6 +33,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
@@ -107,6 +109,10 @@ public class LearningObjectImportService {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
+    private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+
+    private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
+
     public LearningObjectImportService(ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
             FileUploadExerciseImportService fileUploadExerciseImportService, ModelingExerciseRepository modelingExerciseRepository,
@@ -114,7 +120,8 @@ public class LearningObjectImportService {
             QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService, LectureRepository lectureRepository,
             LectureImportService lectureImportService, LectureUnitRepository lectureUnitRepository, LectureUnitImportService lectureUnitImportService,
             CourseCompetencyRepository courseCompetencyRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            GradingCriterionRepository gradingCriterionRepository) {
+            GradingCriterionRepository gradingCriterionRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository,
+            CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
@@ -133,6 +140,8 @@ public class LearningObjectImportService {
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
+        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
+        this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
     }
 
     /**
@@ -178,6 +187,7 @@ public class LearningObjectImportService {
 
                     CourseCompetency importedCompetency = idToImportedCompetency.get(sourceCourseCompetency.getId()).competency();
                     CompetencyExerciseLink link = new CompetencyExerciseLink(importedCompetency, importedExercise, sourceExerciseLink.getWeight());
+                    link = competencyExerciseLinkRepository.save(link);
                     importedExercise.getCompetencyLinks().add(link);
                     importedCompetency.getExerciseLinks().add(link);
                 }
@@ -341,6 +351,7 @@ public class LearningObjectImportService {
 
         CourseCompetency importedCompetency = idToImportedCompetency.get(sourceCourseCompetency.getId()).competency();
         CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(importedCompetency, importedLectureUnit, sourceLectureUnitLink.getWeight());
+        link = competencyLectureUnitLinkRepository.save(link);
         importedLectureUnit.getCompetencyLinks().add(link);
         importedCompetency.getLectureUnitLinks().add(link);
     }

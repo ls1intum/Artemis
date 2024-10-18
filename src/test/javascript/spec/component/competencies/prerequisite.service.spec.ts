@@ -389,7 +389,7 @@ describe('PrerequisiteService', () => {
         expect(convertDateSpy).not.toHaveBeenCalled();
         expect(convertLectureUnitSpy).not.toHaveBeenCalled();
         expect(setAccessRightsCourseSpy).not.toHaveBeenCalled();
-        expect(convertExercisesSpy).not.toHaveBeenCalled();
+        expect(convertExerciseSpy).not.toHaveBeenCalled();
         expect(parseCategoriesSpy).not.toHaveBeenCalled();
         expect(setAccessRightsExerciseSpy).not.toHaveBeenCalled();
 

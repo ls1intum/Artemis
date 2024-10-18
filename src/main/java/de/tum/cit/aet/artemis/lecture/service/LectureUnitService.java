@@ -184,6 +184,8 @@ public class LectureUnitService {
         lectureRepository.save(lecture);
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
+            // Delete the links to competencies
+            competencyLectureUnitLinkRepository.deleteAll(lectureUnitToDelete.getCompetencyLinks());
             // update associated competency progress objects
             competencyProgressService.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty());
         }
