@@ -172,6 +172,7 @@
             "softDueDate": "Empfohlen bis",
             "masteryThreshold": "Schwellwert zum Erreichen der Kompetenz",
             "manage": {
+                "helpButton": "Hilfe",
                 "importAllButton": "Alles eines Kurses importieren"
             },
             "importSettings": {
@@ -241,6 +242,7 @@
                     "participationRate": "Teilnahmerate"
                 }
             },
+            "helpButtonLabel": "Hilfe",
             "featureExplanation": {
                 "title": "Introduction to course competencies",
                 "adaptiveLearning": {

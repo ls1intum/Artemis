@@ -172,6 +172,7 @@
             "softDueDate": "Recommended until",
             "masteryThreshold": "Mastery threshold",
             "manage": {
+                "helpButton": "Help",
                 "importAllButton": "Import all of a course"
             },
             "importSettings": {
