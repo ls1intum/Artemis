@@ -11,7 +11,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -21,7 +20,7 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -29,42 +28,10 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHintActivation;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintActivationRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ExerciseHintIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "exercisehintintegration";
-
-    @Autowired
-    private ExerciseHintRepository exerciseHintRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository exerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseTaskService programmingExerciseTaskService;
-
-    @Autowired
-    private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
-
-    @Autowired
-    private ExerciseHintActivationRepository exerciseHintActivationRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
 
     private ProgrammingExercise exercise;
 
@@ -85,9 +52,8 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 1, 2);
 
-        programmingExerciseTestCaseRepository
-                .saveAll(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream().peek(testCase -> testCase.setActive(true)).toList());
-        exerciseLite = exerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        testCaseRepository.saveAll(testCaseRepository.findByExerciseId(programmingExercise.getId()).stream().peek(testCase -> testCase.setActive(true)).toList());
+        exerciseLite = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
         exercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(exerciseLite);
         programmingExerciseUtilService.addHintsToExercise(exercise);
         programmingExerciseUtilService.addTasksToProgrammingExercise(exercise);

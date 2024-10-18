@@ -47,7 +47,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -55,26 +54,17 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTemplateIntegrationTest.class);
 
     private static final String TEST_PREFIX = "progextemplate";
 
     private static File java17Home;
-
-    @Autowired
-    private ProgrammingExerciseTestService programmingExerciseTestService;
-
-    @Autowired
-    private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     private ProgrammingExercise exercise;
 
