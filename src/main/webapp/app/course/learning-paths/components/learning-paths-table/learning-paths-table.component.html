@@ -1,0 +1,66 @@
+<div class="col">
+    <div class="row m-0 align-items-center justify-content-between">
+        <h5 class="m-0 col-md-auto p-0" jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.title"></h5>
+        <div class="col-md-auto d-flex align-items-center input-group-sm">
+            @if (isLoading()) {
+                <fa-icon [icon]="faSpinner" animation="spin" />
+            }
+            <input
+                id="learning-path-search"
+                type="search"
+                class="ms-2 form-control rounded"
+                [placeholder]="'artemisApp.learningPathManagement.learningPathsTable.searchPlaceholder' | artemisTranslate"
+                [ngModel]="searchTerm()"
+                (ngModelChange)="search($event)"
+                aria-label="Search"
+            />
+        </div>
+    </div>
+    <hr class="my-2" />
+    <div class="learning-paths-management-container">
+        <div class="learning-paths-table-container">
+            <table class="table table-striped">
+                <thead class="thead-dark">
+                    <tr>
+                        <th class="col-1">#</th>
+                        <th class="col-4" jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.columnLabel.name"></th>
+                        <th class="col-4" jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.columnLabel.login"></th>
+                        <th class="col-2" jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.columnLabel.progress"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (learningPath of learningPaths(); track learningPath.id) {
+                        <tr class="align-middle">
+                            <td class="col-1">{{ learningPath.id }}</td>
+                            <td>
+                                <ngb-highlight [result]="learningPath.user.name" [term]="searchTerm()" />
+                            </td>
+                            <td>
+                                <ngb-highlight [result]="learningPath.user.login" [term]="searchTerm()" />
+                            </td>
+                            <td>
+                                <span [id]="'open-competency-graph-button-' + learningPath.id" class="clickable link-primary" (click)="openCompetencyGraph(learningPath.id)"
+                                    ><u>{{ learningPath.progress }} %</u></span
+                                >
+                            </td>
+                        </tr>
+                    } @empty {
+                        <tr>
+                            <td colspan="4" class="text-center">
+                                <span jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.noResults"></span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <ngb-pagination
+            [collectionSize]="collectionSize()"
+            [page]="page()"
+            (pageChange)="setPage($event)"
+            [pageSize]="pageSize()"
+            size="sm"
+            class="d-flex justify-content-end mt-2 pagination"
+        />
+    </div>
+</div>

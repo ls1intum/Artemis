@@ -9,9 +9,8 @@
     (click)="emitStoreAndRefresh(sidebarItem.id)"
     [routerLinkActive]="'bg-selected border-selected'"
 >
-    <div class="w-75">
+    <div class="w-75 align-self-center">
         <jhi-sidebar-card-item [groupKey]="groupKey" [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
-    </div>
     @if (sidebarItem.conversation) {
         <div>
             <jhi-conversation-options [conversation]="sidebarItem.conversation!" (onUpdateSidebar)="onUpdateSidebar.emit()" />
