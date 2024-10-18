@@ -130,7 +130,7 @@ export class FaqUpdateComponent implements OnInit {
         } else {
             messageKey = faq.id ? 'artemisApp.faq.proposedChange' : 'artemisApp.faq.proposed';
         }
-        this.alertService.success(messageKey, { id: faq.questionTitle });
+        this.alertService.success(messageKey, { title: faq.questionTitle });
     }
 
     /**
