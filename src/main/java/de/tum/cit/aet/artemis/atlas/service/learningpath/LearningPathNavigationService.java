@@ -82,7 +82,7 @@ public class LearningPathNavigationService {
     private CourseCompetency findCorrespondingCompetencyForLearningObject(RecommendationState recommendationState, LearningObject learningObject, boolean firstCompetency) {
         Stream<CourseCompetency> potentialCompetencies = recommendationState.recommendedOrderOfCompetencies().stream()
                 .map(competencyId -> recommendationState.competencyIdMap().get(competencyId))
-                .filter(competency -> competency.getLectureUnits().contains(learningObject) || competency.getExercises().contains(learningObject));
+                .filter(competency -> competency.getLectureUnitLinks().contains(learningObject) || competency.getExerciseLinks().contains(learningObject));
 
         // There will always be at least one competency that contains the learning object, otherwise the learning object would not be in the learning path
         Comparator<CourseCompetency> comparator = Comparator.comparingInt(competency -> recommendationState.recommendedOrderOfCompetencies().indexOf(competency.getId()));

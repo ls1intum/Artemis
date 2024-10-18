@@ -26,7 +26,7 @@ export class AttachmentService {
         // avoid potential issues when sending the attachment to the server
         if (copy.attachmentUnit) {
             copy.attachmentUnit.lecture = undefined;
-            copy.attachmentUnit.competencies = undefined;
+            copy.attachmentUnit.competencyLinks = undefined;
         }
         if (copy.lecture) {
             copy.lecture.lectureUnits = undefined;

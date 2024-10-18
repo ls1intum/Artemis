@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
@@ -21,14 +20,15 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -55,26 +55,26 @@ public class LectureUnitService {
 
     private final SlideRepository slideRepository;
 
-    private final ExerciseRepository exerciseRepository;
-
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
     private final CompetencyProgressService competencyProgressService;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
+    private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository, Optional<PyrisWebhookService> pyrisWebhookService,
-            CompetencyProgressService competencyProgressService, CourseCompetencyRepository courseCompetencyRepository) {
+            FileService fileService, SlideRepository slideRepository, Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressService competencyProgressService,
+            CourseCompetencyRepository courseCompetencyRepository, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.fileService = fileService;
         this.slideRepository = slideRepository;
-        this.exerciseRepository = exerciseRepository;
         this.pyrisWebhookService = pyrisWebhookService;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyProgressService = competencyProgressService;
+        this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
     }
 
     /**
@@ -158,10 +158,10 @@ public class LectureUnitService {
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competencies
-            Set<CourseCompetency> competencies = lectureUnitToDelete.getCompetencies();
+            Set<CourseCompetency> competencies = lectureUnitToDelete.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).collect(Collectors.toSet());
             courseCompetencyRepository.saveAll(competencies.stream().map(competency -> {
                 competency = courseCompetencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
-                competency.getLectureUnits().remove(lectureUnitToDelete);
+                competency.getLectureUnitLinks().remove(lectureUnitToDelete);
                 return competency;
             }).toList());
         }
@@ -192,40 +192,28 @@ public class LectureUnitService {
     /**
      * Link the competency to a set of lecture units (and exercises if it includes exercise units)
      *
-     * @param competency           The competency to be linked
-     * @param lectureUnitsToAdd    A set of lecture units to link to the specified competency
-     * @param lectureUnitsToRemove A set of lecture units to unlink from the specified competency
+     * @param competency               The competency to be linked
+     * @param lectureUnitLinksToAdd    A set of lecture unit links to add to the specified competency
+     * @param lectureUnitLinksToRemove A set of lecture unit link to remove from the specified competency
      */
-    public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<LectureUnit> lectureUnitsToAdd, Set<LectureUnit> lectureUnitsToRemove) {
-        final Predicate<LectureUnit> isExerciseUnit = lectureUnit -> lectureUnit instanceof ExerciseUnit;
+    public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<CompetencyLectureUnitLink> lectureUnitLinksToAdd,
+            Set<CompetencyLectureUnitLink> lectureUnitLinksToRemove) {
+        lectureUnitLinksToAdd.forEach(link -> link.setCompetency(competency));
+        List<CompetencyLectureUnitLink> persistedLinks = competencyLectureUnitLinkRepository.saveAll(lectureUnitLinksToAdd);
+        competencyLectureUnitLinkRepository.deleteAll(lectureUnitLinksToRemove);
 
-        // Remove the competency from the old lecture units
-        var lectureUnitsToRemoveFromDb = lectureUnitRepository.findAllByIdWithCompetenciesBidirectional(lectureUnitsToRemove.stream().map(LectureUnit::getId).toList());
-        lectureUnitRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(isExerciseUnit.negate()).peek(lectureUnit -> lectureUnit.getCompetencies().remove(competency))
-                .collect(Collectors.toSet()));
-        exerciseRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(isExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise())
-                .peek(exercise -> exercise.getCompetencies().remove(competency)).collect(Collectors.toSet()));
-
-        // Add the competency to the new lecture units
-        var lectureUnitsFromDb = lectureUnitRepository.findAllByIdWithCompetenciesBidirectional(lectureUnitsToAdd.stream().map(LectureUnit::getId).toList());
-        var lectureUnitsWithoutExercises = lectureUnitsFromDb.stream().filter(isExerciseUnit.negate()).collect(Collectors.toSet());
-        var exercises = lectureUnitsFromDb.stream().filter(isExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).collect(Collectors.toSet());
-        lectureUnitsWithoutExercises.stream().map(LectureUnit::getCompetencies).forEach(competencies -> competencies.add(competency));
-        exercises.stream().map(Exercise::getCompetencies).forEach(competencies -> competencies.add(competency));
-        lectureUnitRepository.saveAll(lectureUnitsWithoutExercises);
-        exerciseRepository.saveAll(exercises);
-        competency.setLectureUnits(lectureUnitsToAdd);
+        competency.getLectureUnitLinks().addAll(persistedLinks);
     }
 
     /**
      * Removes competency from all lecture units.
      *
-     * @param lectureUnits set of lecture units
-     * @param competency   competency to remove
+     * @param lectureUnitLinks set of lecture unit links
+     * @param competency       competency to remove
      */
-    public void removeCompetency(Set<LectureUnit> lectureUnits, CourseCompetency competency) {
-        lectureUnits.forEach(lectureUnit -> lectureUnit.getCompetencies().remove(competency));
-        lectureUnitRepository.saveAll(lectureUnits);
+    public void removeCompetency(Set<CompetencyLectureUnitLink> lectureUnitLinks, CourseCompetency competency) {
+        competencyLectureUnitLinkRepository.deleteAll(lectureUnitLinks);
+        competency.getLectureUnitLinks().removeAll(lectureUnitLinks);
     }
 
     /**

@@ -3,9 +3,8 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
 import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink, CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
@@ -48,7 +47,7 @@ export interface CourseCompetencyFormData {
     taxonomy?: CompetencyTaxonomy;
     optional?: boolean;
     masteryThreshold?: number;
-    connectedLectureUnits?: LectureUnit[];
+    lectureUnitLinks?: CompetencyLectureUnitLink[];
 }
 
 @Component({ template: '' })
@@ -76,7 +75,7 @@ export abstract class CourseCompetencyFormComponent {
     formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
 
     form: FormGroup;
-    selectedLectureUnitsInTable: LectureUnit[] = [];
+    selectedLectureUnitLinksInTable: CompetencyLectureUnitLink[] = [];
 
     // Icons
     protected readonly faTimes = faTimes;
@@ -137,7 +136,7 @@ export abstract class CourseCompetencyFormComponent {
             masteryThreshold: [DEFAULT_MASTERY_THRESHOLD, [Validators.min(0), Validators.max(100)]],
             optional: [false],
         });
-        this.selectedLectureUnitsInTable = [];
+        this.selectedLectureUnitLinksInTable = [];
     }
 
     cancelForm() {
@@ -148,7 +147,7 @@ export abstract class CourseCompetencyFormComponent {
         return !this.form.invalid;
     }
 
-    protected onLectureUnitSelectionChange(lectureUnits: LectureUnit[]) {
-        this.selectedLectureUnitsInTable = lectureUnits;
+    protected onLectureUnitSelectionChange(lectureUnitLinks: CompetencyLectureUnitLink[]) {
+        this.selectedLectureUnitLinksInTable = lectureUnitLinks;
     }
 }

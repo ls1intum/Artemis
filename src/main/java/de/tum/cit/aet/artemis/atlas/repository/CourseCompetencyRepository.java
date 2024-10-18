@@ -33,7 +33,8 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     @Query("""
             SELECT c
             FROM CourseCompetency c
-                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH c.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit lu
             WHERE c.id = :competencyId
             """)
     Optional<CourseCompetency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
@@ -48,8 +49,10 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     @Query("""
             SELECT c
             FROM CourseCompetency c
-                LEFT JOIN FETCH c.exercises ex
-                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH c.exerciseLinks el
+                LEFT JOIN FETCH el.exercise
+                LEFT JOIN FETCH c.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit lu
                 LEFT JOIN FETCH lu.lecture l
                 LEFT JOIN FETCH l.attachments
             WHERE c.course.id = :courseId
@@ -59,8 +62,10 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     @Query("""
             SELECT c
             FROM CourseCompetency c
-                LEFT JOIN FETCH c.exercises ex
-                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH c.exerciseLinks el
+                LEFT JOIN FETCH el.exercise
+                LEFT JOIN FETCH c.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit lu
                 LEFT JOIN FETCH lu.lecture l
                 LEFT JOIN FETCH l.lectureUnits
                 LEFT JOIN FETCH l.attachments
@@ -75,8 +80,10 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     @Query("""
             SELECT c
             FROM CourseCompetency c
-                LEFT JOIN FETCH c.exercises ex
-                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH c.exerciseLinks e
+                LEFT JOIN FETCH e.exercise
+                LEFT JOIN FETCH c.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit lu
                 LEFT JOIN FETCH lu.lecture l
                 LEFT JOIN FETCH l.attachments
             WHERE c.id IN :ids
@@ -93,31 +100,34 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalculationDTO(
-                ex.maxPoints,
-                ex.difficulty,
-                CASE WHEN TYPE(ex) = ProgrammingExercise THEN TRUE ELSE FALSE END,
+                e.maxPoints,
+                e.difficulty,
+                CASE WHEN TYPE(e) = ProgrammingExercise THEN TRUE ELSE FALSE END,
                 COALESCE(sS.lastScore, tS.lastScore),
                 COALESCE(sS.lastPoints, tS.lastPoints),
                 COALESCE(sS.lastModifiedDate, tS.lastModifiedDate),
                 COUNT(s)
             )
             FROM CourseCompetency c
-                LEFT JOIN c.exercises ex
-                LEFT JOIN ex.studentParticipations sp ON sp.student = :user OR :user MEMBER OF sp.team.students
+                LEFT JOIN c.exerciseLinks el
+                LEFT JOIN el.exercise e
+                LEFT JOIN e.studentParticipations sp ON sp.student = :user OR :user MEMBER OF sp.team.students
                 LEFT JOIN sp.submissions s
-                LEFT JOIN StudentScore sS ON sS.exercise = ex AND sS.user = :user
-                LEFT JOIN TeamScore tS ON tS.exercise = ex AND :user MEMBER OF tS.team.students
+                LEFT JOIN StudentScore sS ON sS.exercise = e AND sS.user = :user
+                LEFT JOIN TeamScore tS ON tS.exercise = e AND :user MEMBER OF tS.team.students
             WHERE c.id = :competencyId
-                AND ex IS NOT NULL
-            GROUP BY ex.maxPoints, ex.difficulty, TYPE(ex), sS.lastScore, tS.lastScore, sS.lastPoints, tS.lastPoints, sS.lastModifiedDate, tS.lastModifiedDate
+                AND e IS NOT NULL
+            GROUP BY e.maxPoints, e.difficulty, TYPE(e), sS.lastScore, tS.lastScore, sS.lastPoints, tS.lastPoints, sS.lastModifiedDate, tS.lastModifiedDate
             """)
     Set<CompetencyExerciseMasteryCalculationDTO> findAllExerciseInfoByCompetencyId(@Param("competencyId") long competencyId, @Param("user") User user);
 
     @Query("""
             SELECT c
             FROM CourseCompetency c
-                LEFT JOIN FETCH c.lectureUnits lu
-                LEFT JOIN FETCH c.exercises ex
+                LEFT JOIN FETCH c.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit
+                LEFT JOIN FETCH c.exerciseLinks e
+                LEFT JOIN FETCH e.exercise
             WHERE c.id = :competencyId
             """)
     Optional<CourseCompetency> findByIdWithExercisesAndLectureUnits(@Param("competencyId") long competencyId);
@@ -125,10 +135,14 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     @Query("""
             SELECT c
             FROM CourseCompetency c
-                LEFT JOIN FETCH c.exercises ex
-                LEFT JOIN FETCH ex.competencies
-                LEFT JOIN FETCH c.lectureUnits lu
-                LEFT JOIN FETCH lu.competencies
+                LEFT JOIN FETCH c.exerciseLinks el
+                LEFT JOIN FETCH el.exercise e
+                LEFT JOIN FETCH e.competencyLinks ecl
+                LEFT JOIN FETCH ecl.competency
+                LEFT JOIN FETCH c.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit lu
+                LEFT JOIN FETCH lu.competencyLinks lucl
+                LEFT JOIN FETCH lucl.competency
             WHERE c.id = :competencyId
             """)
     Optional<CourseCompetency> findByIdWithExercisesAndLectureUnitsBidirectional(@Param("competencyId") long competencyId);
@@ -136,15 +150,17 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     @Query("""
             SELECT c.id
             FROM CourseCompetency c
-                LEFT JOIN c.exercises ex
-            WHERE :exercise = ex
+                LEFT JOIN c.exerciseLinks el
+                LEFT JOIN el.exercise e
+            WHERE :exercise = e
             """)
     Set<Long> findAllIdsByExercise(@Param("exercise") Exercise exercise);
 
     @Query("""
             SELECT c.id
             FROM CourseCompetency c
-                LEFT JOIN c.lectureUnits lu
+                LEFT JOIN c.lectureUnitLinks lul
+                LEFT JOIN lul.lectureUnit lu
             WHERE :lectureUnit = lu
             """)
     Set<Long> findAllIdsByLectureUnit(@Param("lectureUnit") LectureUnit lectureUnit);
@@ -192,7 +208,8 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     @Query("""
             SELECT c
             FROM CourseCompetency c
-                LEFT JOIN FETCH c.exercises ex
+                LEFT JOIN FETCH c.exerciseLinks el
+                LEFT JOIN FETCH el.exercise
             WHERE c.id = :competencyId
             """)
     Optional<CourseCompetency> findByIdWithExercises(@Param("competencyId") long competencyId);
@@ -200,8 +217,10 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     @Query("""
             SELECT c
             FROM CourseCompetency c
-                LEFT JOIN FETCH c.lectureUnits lu
-                LEFT JOIN FETCH c.exercises
+                LEFT JOIN FETCH c.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit
+                LEFT JOIN FETCH c.exerciseLinks el
+                LEFT JOIN FETCH el.exercise
             WHERE c.id = :competencyId
             """)
     Optional<CourseCompetency> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);

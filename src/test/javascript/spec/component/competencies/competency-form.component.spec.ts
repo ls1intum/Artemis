@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { Competency, CompetencyLectureUnitLink, CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
@@ -113,20 +113,20 @@ describe('CompetencyFormComponent', () => {
             title: 'test',
             description: 'lorem ipsum',
             softDueDate: dayjs(),
-            connectedLectureUnits: [textUnit],
+            lectureUnitLinks: [new CompetencyLectureUnitLink(undefined, textUnit, 1)],
             taxonomy: CompetencyTaxonomy.ANALYZE,
             optional: true,
         };
         competencyFormComponentFixture.detectChanges();
         competencyFormComponent.formData = formData;
-        competencyFormComponent['onLectureUnitSelectionChange']([textUnit]);
+        competencyFormComponent['onLectureUnitSelectionChange']([new CompetencyLectureUnitLink(undefined, textUnit, 1)]);
         competencyFormComponent.ngOnChanges();
 
         expect(competencyFormComponent.titleControl?.value).toEqual(formData.title);
         expect(competencyFormComponent.descriptionControl?.value).toEqual(formData.description);
         expect(competencyFormComponent.softDueDateControl?.value).toEqual(formData.softDueDate);
         expect(competencyFormComponent.optionalControl?.value).toEqual(formData.optional);
-        expect(competencyFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
+        expect(competencyFormComponent.selectedLectureUnitLinksInTable).toEqual(formData.lectureUnitLinks);
     });
 
     it('should suggest taxonomy when title changes', () => {

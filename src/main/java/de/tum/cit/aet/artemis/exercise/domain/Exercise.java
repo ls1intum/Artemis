@@ -29,8 +29,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -55,7 +53,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -116,11 +114,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "grading_instructions")
     private String gradingInstructions;
 
-    @ManyToMany
-    @JoinTable(name = "competency_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties({ "exercises", "course" })
+    @OneToMany(mappedBy = "exercise", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("exercise")
     @JsonView(QuizView.Before.class)
-    private Set<CourseCompetency> competencies = new HashSet<>();
+    private Set<CompetencyExerciseLink> competencyLinks = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
@@ -461,12 +458,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
-    public Set<CourseCompetency> getCompetencies() {
-        return competencies;
+    public Set<CompetencyExerciseLink> getCompetencyLinks() {
+        return competencyLinks;
     }
 
-    public void setCompetencies(Set<CourseCompetency> competencies) {
-        this.competencies = competencies;
+    public void setCompetencyLinks(Set<CompetencyExerciseLink> competencyLinks) {
+        this.competencyLinks = competencyLinks;
     }
 
     public Long getNumberOfParticipations() {

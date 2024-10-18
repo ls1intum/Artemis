@@ -7,7 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureService } from 'app/lecture/lecture.service';
-import { CourseCompetencyProgress } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ArtemisTestModule } from '../../test.module';
@@ -90,7 +90,7 @@ describe('EditPrerequisiteComponent', () => {
         competencyOfResponse.title = 'test';
         competencyOfResponse.description = 'lorem ipsum';
         competencyOfResponse.optional = true;
-        competencyOfResponse.lectureUnits = [lectureUnit];
+        competencyOfResponse.lectureUnitLinks = [new CompetencyLectureUnitLink(competencyOfResponse, lectureUnit, 1)];
 
         const competencyResponse: HttpResponse<Prerequisite> = new HttpResponse({
             body: competencyOfResponse,
@@ -126,7 +126,7 @@ describe('EditPrerequisiteComponent', () => {
         expect(editPrerequisiteComponent.formData.title).toEqual(competencyOfResponse.title);
         expect(editPrerequisiteComponent.formData.description).toEqual(competencyOfResponse.description);
         expect(editPrerequisiteComponent.formData.optional).toEqual(competencyOfResponse.optional);
-        expect(editPrerequisiteComponent.formData.connectedLectureUnits).toEqual(competencyOfResponse.lectureUnits);
+        expect(editPrerequisiteComponent.formData.lectureUnitLinks).toEqual(competencyOfResponse.lectureUnitLinks);
         expect(editPrerequisiteComponent.lecturesWithLectureUnits).toEqual([lectureOfResponse]);
         expect(competencyFormComponent.formData).toEqual(editPrerequisiteComponent.formData);
     });
@@ -144,7 +144,7 @@ describe('EditPrerequisiteComponent', () => {
         competencyDatabase.title = 'test';
         competencyDatabase.description = 'lorem ipsum';
         competencyDatabase.optional = true;
-        competencyDatabase.lectureUnits = [textUnit];
+        competencyDatabase.lectureUnitLinks = [new CompetencyLectureUnitLink(competencyDatabase, textUnit, 1)];
 
         const findByIdResponse: HttpResponse<Prerequisite> = new HttpResponse({
             body: competencyDatabase,
@@ -189,7 +189,7 @@ describe('EditPrerequisiteComponent', () => {
             title: changedUnit.title,
             description: changedUnit.description,
             optional: changedUnit.optional,
-            connectedLectureUnits: changedUnit.lectureUnits,
+            lectureUnitLinks: changedUnit.lectureUnitLinks,
         });
 
         expect(updatedSpy).toHaveBeenCalledOnce();

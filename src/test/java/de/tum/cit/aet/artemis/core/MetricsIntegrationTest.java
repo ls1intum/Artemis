@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.util.StudentScoreUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO;
@@ -309,7 +311,9 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         void shouldReturnLectureUnitInformation() throws Exception {
 
             final var lectureUnit = lectureUtilService.createTextUnit();
-            lectureUnitService.linkLectureUnitsToCompetency(competencyUtilService.createCompetency(course), Set.of(lectureUnit), Set.of());
+            Competency competency = competencyUtilService.createCompetency(course);
+            lectureUnitService.linkLectureUnitsToCompetency(competencyUtilService.createCompetency(course), Set.of(new CompetencyLectureUnitLink(competency, lectureUnit, 1)),
+                    Set.of());
 
             final var testLecture = lectureUtilService.createLecture(course, null);
             lectureUtilService.addLectureUnitsToLecture(testLecture, List.of(lectureUnit));

@@ -63,7 +63,7 @@ export function getExerciseModeDetailSection(exercise: Exercise): DetailOverview
 }
 
 export function getExerciseProblemDetailSection(formattedProblemStatement: SafeHtml | null, exercise: Exercise): DetailOverviewSection {
-    const hasCompetencies = !!exercise.competencies?.length;
+    const hasCompetencies = !!exercise.competencyLinks?.length;
     const details: Detail[] = [
         {
             title: hasCompetencies ? 'artemisApp.exercise.problemStatement' : undefined,
@@ -76,7 +76,7 @@ export function getExerciseProblemDetailSection(formattedProblemStatement: SafeH
         details.push({
             title: 'artemisApp.competency.link.title',
             type: DetailType.Text,
-            data: { text: exercise.competencies?.map((competency) => competency.title).join(', ') },
+            data: { text: exercise.competencyLinks?.map((competencyLink) => competencyLink.competency?.title).join(', ') },
         });
     }
     return {

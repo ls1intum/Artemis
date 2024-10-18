@@ -8,7 +8,9 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import {
     Competency,
+    CompetencyExerciseLink,
     CompetencyImportResponseDTO,
+    CompetencyLectureUnitLink,
     CompetencyProgress,
     CompetencyRelation,
     CompetencyRelationType,
@@ -364,10 +366,10 @@ describe('CompetencyService', () => {
         const accountService = TestBed.inject(AccountService);
 
         const convertDateSpy = jest.spyOn(dateUtils, 'convertDateFromServer');
-        const convertLectureUnitsSpy = jest.spyOn(lectureUnitService, 'convertLectureUnitArrayDatesFromServer');
+        const convertLectureUnitSpy = jest.spyOn(lectureUnitService, 'convertLectureUnitDateFromServer');
         const setAccessRightsCourseSpy = jest.spyOn(accountService, 'setAccessRightsForCourse');
         const setAccessRightsExerciseSpy = jest.spyOn(accountService, 'setAccessRightsForExercise');
-        const convertExercisesSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer');
+        const convertExerciseSpy = jest.spyOn(ExerciseService, 'convertExerciseDatesFromServer');
         const parseCategoriesSpy = jest.spyOn(ExerciseService, 'parseExerciseCategories');
 
         const exercise: Exercise = {
@@ -378,27 +380,24 @@ describe('CompetencyService', () => {
         const competencyFromServer: Competency = {
             softDueDate: dayjs('2022-02-20') as Dayjs,
             course: { id: 1 },
-            lectureUnits: [{ id: 1 }, { id: 2 }],
-            exercises: [
-                { id: 3, ...exercise },
-                { id: 4, ...exercise },
-            ],
+            lectureUnitLinks: [new CompetencyLectureUnitLink(this, { id: 1 }, 1), new CompetencyLectureUnitLink(this, { id: 2 }, 1)],
+            exerciseLinks: [new CompetencyExerciseLink(this, { id: 3, ...exercise }, 1), new CompetencyExerciseLink(this, { id: 4, ...exercise }, 1)],
         };
 
         competencyService['convertCompetencyResponseFromServer']({} as HttpResponse<Competency>);
         expect(convertDateSpy).not.toHaveBeenCalled();
-        expect(convertLectureUnitsSpy).not.toHaveBeenCalled();
+        expect(convertLectureUnitSpy).not.toHaveBeenCalled();
         expect(setAccessRightsCourseSpy).not.toHaveBeenCalled();
-        expect(convertExercisesSpy).not.toHaveBeenCalled();
+        expect(convertExerciseSpy).not.toHaveBeenCalled();
         expect(parseCategoriesSpy).not.toHaveBeenCalled();
         expect(setAccessRightsExerciseSpy).not.toHaveBeenCalled();
 
         competencyService['convertCompetencyResponseFromServer']({ body: competencyFromServer } as HttpResponse<Competency>);
 
         expect(convertDateSpy).toHaveBeenCalled();
-        expect(convertLectureUnitsSpy).toHaveBeenCalledOnce();
+        expect(convertLectureUnitSpy).toHaveBeenCalledTimes(2);
         expect(setAccessRightsCourseSpy).toHaveBeenCalledOnce();
-        expect(convertExercisesSpy).toHaveBeenCalledOnce();
+        expect(convertExerciseSpy).toHaveBeenCalledTimes(2);
         expect(parseCategoriesSpy).toHaveBeenCalledTimes(2);
         expect(setAccessRightsExerciseSpy).toHaveBeenCalledTimes(2);
     });

@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
@@ -72,7 +74,9 @@ public class CompetencyUtilService {
         Competency competency = new Competency();
         competency.setTitle("ExampleCompetency");
         competency.setCourse(course);
-        competency.addExercise(exercise);
+        var link = new CompetencyExerciseLink();
+        link.setExercise(exercise);
+        competency.getExerciseLinks().add(link);
         return competencyRepo.save(competency);
     }
 
@@ -136,7 +140,9 @@ public class CompetencyUtilService {
      * @param lectureUnit The LectureUnit to update
      */
     public LectureUnit linkLectureUnitToCompetency(Competency competency, LectureUnit lectureUnit) {
-        lectureUnit.getCompetencies().add(competency);
+        CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(competency, lectureUnit, 1);
+        lectureUnit.getCompetencyLinks().add(link);
+        competency.getLectureUnitLinks().add(link);
         return lectureUnitRepository.save(lectureUnit);
     }
 
@@ -148,7 +154,9 @@ public class CompetencyUtilService {
      * @return The updated Exercise
      */
     public Exercise linkExerciseToCompetency(Competency competency, Exercise exercise) {
-        exercise.getCompetencies().add(competency);
+        CompetencyExerciseLink link = new CompetencyExerciseLink(competency, exercise, 1);
+        exercise.getCompetencyLinks().add(link);
+        competency.getExerciseLinks().add(link);
         return exerciseRepository.save(exercise);
     }
 

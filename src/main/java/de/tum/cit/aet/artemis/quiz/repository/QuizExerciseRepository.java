@@ -62,14 +62,14 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "competencies", "quizBatches",
-            "gradingCriteria" })
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "competencyLinks.competency",
+            "quizBatches", "gradingCriteria" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(Long quizExerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencies" })
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks.competency" })
     Optional<QuizExercise> findWithEagerQuestionsAndCompetenciesById(Long quizExerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
@@ -78,7 +78,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     @Query("""
             SELECT q
             FROM QuizExercise q
-                LEFT JOIN FETCH q.competencies
+                LEFT JOIN FETCH q.competencyLinks
             WHERE q.title = :title
                 AND q.course.id = :courseId
             """)

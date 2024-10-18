@@ -43,7 +43,9 @@ import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -126,13 +128,16 @@ public class ExerciseService {
 
     private final GroupNotificationScheduleService groupNotificationScheduleService;
 
+    private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, Optional<Lti13ResourceLaunchRepository> lti13ResourceLaunchRepository,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
             ParticipantScoreRepository participantScoreRepository, UserRepository userRepository, ComplaintRepository complaintRepository,
             TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository,
             FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository,
-            QuizBatchService quizBatchService, ExamLiveEventsService examLiveEventsService, GroupNotificationScheduleService groupNotificationScheduleService) {
+            QuizBatchService quizBatchService, ExamLiveEventsService examLiveEventsService, GroupNotificationScheduleService groupNotificationScheduleService,
+            CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -155,6 +160,7 @@ public class ExerciseService {
         this.quizBatchService = quizBatchService;
         this.examLiveEventsService = examLiveEventsService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
+        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
     }
 
     /**
@@ -761,12 +767,12 @@ public class ExerciseService {
     /**
      * Removes competency from all exercises.
      *
-     * @param exercises  set of exercises
-     * @param competency competency to remove
+     * @param exerciseLinks set of exercise links
+     * @param competency    competency to remove
      */
-    public void removeCompetency(@NotNull Set<Exercise> exercises, @NotNull CourseCompetency competency) {
-        exercises.forEach(exercise -> exercise.getCompetencies().remove(competency));
-        exerciseRepository.saveAll(exercises);
+    public void removeCompetency(@NotNull Set<CompetencyExerciseLink> exerciseLinks, @NotNull CourseCompetency competency) {
+        competencyExerciseLinkRepository.deleteAll(exerciseLinks);
+        competency.getExerciseLinks().removeAll(exerciseLinks);
     }
 
     /**

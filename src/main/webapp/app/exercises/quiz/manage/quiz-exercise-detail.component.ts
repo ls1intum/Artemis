@@ -78,11 +78,11 @@ export class QuizExerciseDetailComponent implements OnInit {
         const modeSection = getExerciseModeDetailSection(exercise);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
 
-        if (exercise.competencies?.length) {
+        if (exercise.competencyLinks?.length) {
             modeSection.details.push({
                 title: 'artemisApp.competency.link.title',
                 type: DetailType.Text,
-                data: { text: exercise.competencies?.map((competency) => competency.title).join(', ') },
+                data: { text: exercise.competencyLinks?.map((competencyLink) => competencyLink.competency?.title).join(', ') },
             });
         }
         return [

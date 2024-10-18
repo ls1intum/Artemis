@@ -45,7 +45,7 @@ public interface CompetencyMetricsRepository extends ArtemisJpaRepository<Compet
     @Query("""
             SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong(c.id, e.id)
             FROM Exercise e
-            JOIN e.competencies c
+            JOIN e.competencyLinks c
             WHERE c.id IN :competencyIds
             """)
     Set<MapEntryLongLong> findAllExerciseIdsByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
@@ -57,10 +57,10 @@ public interface CompetencyMetricsRepository extends ArtemisJpaRepository<Compet
      * @return the lecture unit ids for all lecture units that are associated with the competencies
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong(c.id, lu.id)
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong(cl.competency.id, lu.id)
             FROM LectureUnit lu
-            JOIN lu.competencies c
-            WHERE c.id IN :competencyIds
+            JOIN lu.competencyLinks cl
+            WHERE cl.competency.id IN :competencyIds
             """)
     Set<MapEntryLongLong> findAllLectureUnitIdsByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
 

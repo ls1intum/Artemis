@@ -21,8 +21,10 @@ public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisit
     @Query("""
             SELECT p
             FROM Prerequisite p
-                LEFT JOIN FETCH p.exercises
-                LEFT JOIN FETCH p.lectureUnits lu
+                LEFT JOIN FETCH p.exerciseLinks el
+                LEFT JOIN FETCH el.exercise
+                LEFT JOIN FETCH p.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit lu
                 LEFT JOIN FETCH lu.lecture l
                 LEFT JOIN FETCH l.attachments
             WHERE p.course.id = :courseId
@@ -32,8 +34,10 @@ public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisit
     @Query("""
             SELECT p
             FROM Prerequisite p
-                LEFT JOIN FETCH p.lectureUnits lu
-                LEFT JOIN FETCH p.exercises
+                LEFT JOIN FETCH p.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit
+                LEFT JOIN FETCH p.exerciseLinks el
+                LEFT JOIN FETCH el.exercise
             WHERE p.id = :competencyId
             """)
     Optional<Prerequisite> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);
@@ -41,7 +45,8 @@ public interface PrerequisiteRepository extends ArtemisJpaRepository<Prerequisit
     @Query("""
             SELECT p
             FROM Prerequisite p
-                LEFT JOIN FETCH p.lectureUnits lu
+                LEFT JOIN FETCH p.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit
             WHERE p.id = :competencyId
             """)
     Optional<Prerequisite> findByIdWithLectureUnits(@Param("competencyId") long competencyId);

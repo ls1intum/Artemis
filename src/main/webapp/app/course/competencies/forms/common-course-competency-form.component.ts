@@ -5,7 +5,7 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { intersection } from 'lodash-es';
-import { CompetencyTaxonomy, CourseCompetencyType, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink, CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -50,17 +50,17 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     @Input()
     form: FormGroup;
     @Input()
-    competencyType: CourseCompetencyType;
+    courseCompetency: CourseCompetency;
 
     @Output()
-    onLectureUnitSelectionChange = new EventEmitter<LectureUnit[]>();
+    onLectureUnitSelectionChange = new EventEmitter<CompetencyLectureUnitLink[]>();
     @Output()
     onTitleOrDescriptionChange = new EventEmitter<void>();
 
     protected readonly competencyValidators = CourseCompetencyValidators;
 
     selectedLectureInDropdown: Lecture;
-    selectedLectureUnitsInTable: LectureUnit[] = [];
+    selectedLectureUnitLinksInTable: CompetencyLectureUnitLink[] = [];
     suggestedTaxonomies: string[] = [];
 
     // Icons
@@ -120,9 +120,9 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
 
     private setFormValues(formData: CourseCompetencyFormData) {
         this.form.patchValue(formData);
-        if (formData.connectedLectureUnits) {
-            this.selectedLectureUnitsInTable = formData.connectedLectureUnits;
-            this.onLectureUnitSelectionChange.next(this.selectedLectureUnitsInTable);
+        if (formData.lectureUnitLinks) {
+            this.selectedLectureUnitLinksInTable = formData.lectureUnitLinks;
+            this.onLectureUnitSelectionChange.next(this.selectedLectureUnitLinksInTable);
         }
     }
 
@@ -132,24 +132,20 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
 
     selectLectureUnitInTable(lectureUnit: LectureUnit) {
         if (this.isLectureUnitAlreadySelectedInTable(lectureUnit)) {
-            this.selectedLectureUnitsInTable.forEach((selectedLectureUnit, index) => {
-                if (selectedLectureUnit.id === lectureUnit.id) {
-                    this.selectedLectureUnitsInTable.splice(index, 1);
-                }
-            });
+            this.selectedLectureUnitLinksInTable = this.selectedLectureUnitLinksInTable.filter((lectureUnitLink) => lectureUnitLink.lectureUnit?.id !== lectureUnit.id);
         } else {
-            this.selectedLectureUnitsInTable.push(lectureUnit);
+            this.selectedLectureUnitLinksInTable.push(new CompetencyLectureUnitLink(this.courseCompetency, lectureUnit, 1));
         }
-        this.onLectureUnitSelectionChange.next(this.selectedLectureUnitsInTable);
+        this.onLectureUnitSelectionChange.next(this.selectedLectureUnitLinksInTable);
     }
 
     isLectureUnitAlreadySelectedInTable(lectureUnit: LectureUnit) {
-        return this.selectedLectureUnitsInTable.map((selectedLectureUnit) => selectedLectureUnit.id).includes(lectureUnit.id);
+        return this.selectedLectureUnitLinksInTable.map((selectedLectureUnitLink) => selectedLectureUnitLink.lectureUnit?.id).includes(lectureUnit.id);
     }
 
     getLectureTitleForDropdown(lecture: Lecture) {
         const noOfSelectedUnitsInLecture = intersection(
-            this.selectedLectureUnitsInTable.map((unit) => unit.id),
+            this.selectedLectureUnitLinksInTable.map((unitLink) => unitLink.lectureUnit?.id),
             lecture.lectureUnits?.map((unit) => unit.id),
         ).length;
         return this.translateService.instant('artemisApp.courseCompetency.create.dropdown', {

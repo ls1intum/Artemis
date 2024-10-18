@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -143,7 +143,7 @@ public class ExerciseDeletionService {
      */
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
-        Set<CourseCompetency> competencies = exercise.getCompetencies();
+        Set<CompetencyExerciseLink> competenciyLinks = exercise.getCompetencyLinks();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         long start = System.nanoTime();
@@ -204,7 +204,7 @@ public class ExerciseDeletionService {
             exerciseRepository.delete(exercise);
         }
 
-        competencies.forEach(competencyProgressService::updateProgressByCompetencyAsync);
+        competenciyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(competencyProgressService::updateProgressByCompetencyAsync);
     }
 
     /**

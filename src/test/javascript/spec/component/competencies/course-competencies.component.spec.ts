@@ -3,7 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { of } from 'rxjs';
-import { Competency, CompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
+import { Competency, CompetencyLectureUnitLink, CompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseCompetenciesComponent } from 'app/overview/course-competencies/course-competencies.component';
@@ -99,7 +99,7 @@ describe('CourseCompetencies', () => {
         const textUnit = new TextUnit();
         competency.id = 1;
         competency.description = 'test';
-        competency.lectureUnits = [textUnit];
+        competency.lectureUnitLinks = [new CompetencyLectureUnitLink(competency, textUnit, 1)];
         competency.userProgress = [{ progress: 70, confidence: 45 } as CompetencyProgress];
 
         const getAllCourseCompetenciesForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(

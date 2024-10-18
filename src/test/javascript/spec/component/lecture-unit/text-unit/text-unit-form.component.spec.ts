@@ -123,7 +123,7 @@ describe('TextUnitFormComponent', () => {
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 name: 'Test',
                 releaseDate: null,
-                competencies: null,
+                competencyLinks: null,
                 content: exampleMarkdown,
             });
         });

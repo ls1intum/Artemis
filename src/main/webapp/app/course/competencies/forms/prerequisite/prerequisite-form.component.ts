@@ -7,6 +7,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
 import { CourseCompetencyType } from 'app/entities/competency.model';
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { Prerequisite } from 'app/entities/prerequisite.model';
 
 @Component({
     selector: 'jhi-prerequisite-form',
@@ -25,8 +26,10 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
         taxonomy: undefined,
         masteryThreshold: undefined,
         optional: false,
-        connectedLectureUnits: undefined,
+        lectureUnitLinks: undefined,
     };
+    @Input()
+    prerequisite: Prerequisite;
 
     @Output()
     formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
@@ -54,7 +57,7 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
 
     submitForm() {
         const competencyFormData: CourseCompetencyFormData = { ...this.form.value };
-        competencyFormData.connectedLectureUnits = this.selectedLectureUnitsInTable;
+        competencyFormData.lectureUnitLinks = this.selectedLectureUnitLinksInTable;
         this.formSubmitted.emit(competencyFormData);
     }
 }

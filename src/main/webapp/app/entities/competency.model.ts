@@ -58,8 +58,8 @@ export abstract class CourseCompetency extends BaseCompetency {
     masteryThreshold?: number;
     optional?: boolean;
     linkedStandardizedCompetency?: StandardizedCompetency;
-    exercises?: Exercise[];
-    lectureUnits?: LectureUnit[];
+    exerciseLinks?: CompetencyExerciseLink[];
+    lectureUnitLinks?: CompetencyLectureUnitLink[];
     userProgress?: CompetencyProgress[];
     courseProgress?: CourseCompetencyProgress;
     course?: Course;
@@ -76,6 +76,34 @@ export abstract class CourseCompetency extends BaseCompetency {
 export class Competency extends CourseCompetency {
     constructor() {
         super(CourseCompetencyType.COMPETENCY);
+    }
+}
+
+export class CompetencyLearningObjectLink {
+    competency?: CourseCompetency;
+    weight: number;
+
+    constructor(competency: CourseCompetency | undefined, weight: number) {
+        this.competency = competency;
+        this.weight = weight;
+    }
+}
+
+export class CompetencyExerciseLink extends CompetencyLearningObjectLink {
+    exercise?: Exercise;
+
+    constructor(competency: CourseCompetency | undefined, exercise: Exercise | undefined, weight: number) {
+        super(competency, weight);
+        this.exercise = exercise;
+    }
+}
+
+export class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
+    lectureUnit?: LectureUnit;
+
+    constructor(competency: CourseCompetency | undefined, lectureUnit: LectureUnit | undefined, weight: number) {
+        super(competency, weight);
+        this.lectureUnit = lectureUnit;
     }
 }
 

@@ -58,8 +58,8 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
                             this.prerequisite.courseProgress = courseProgressResult.body;
                         }
                         // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
-                        if (!this.prerequisite.lectureUnits) {
-                            this.prerequisite.lectureUnits = [];
+                        if (!this.prerequisite.lectureUnitLinks) {
+                            this.prerequisite.lectureUnitLinks = [];
                         }
                     }
 
@@ -68,7 +68,7 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
                         title: this.prerequisite.title,
                         description: this.prerequisite.description,
                         softDueDate: this.prerequisite.softDueDate,
-                        connectedLectureUnits: this.prerequisite.lectureUnits,
+                        lectureUnitLinks: this.prerequisite.lectureUnitLinks,
                         taxonomy: this.prerequisite.taxonomy,
                         masteryThreshold: this.prerequisite.masteryThreshold,
                         optional: this.prerequisite.optional,
@@ -79,7 +79,7 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
     }
 
     updateCompetency(formData: CourseCompetencyFormData) {
-        const { title, description, softDueDate, taxonomy, masteryThreshold, optional, connectedLectureUnits } = formData;
+        const { title, description, softDueDate, taxonomy, masteryThreshold, optional, lectureUnitLinks } = formData;
 
         this.prerequisite.title = title;
         this.prerequisite.description = description;
@@ -87,7 +87,7 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
         this.prerequisite.taxonomy = taxonomy;
         this.prerequisite.masteryThreshold = masteryThreshold;
         this.prerequisite.optional = optional;
-        this.prerequisite.lectureUnits = connectedLectureUnits;
+        this.prerequisite.lectureUnitLinks = lectureUnitLinks;
 
         this.isLoading = true;
 

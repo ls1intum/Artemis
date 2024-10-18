@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
@@ -144,7 +145,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var competencyToCreate = new Competency();
         competencyToCreate.setTitle("CompetencyToCreateTitle");
         competencyToCreate.setCourse(course);
-        competencyToCreate.setLectureUnits(Set.of(textUnit));
+        competencyToCreate.setLectureUnitLinks(Set.of(new CompetencyLectureUnitLink(competencyToCreate, textUnit, 1)));
         competencyToCreate.setMasteryThreshold(42);
         return request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies", competencyToCreate, Competency.class, HttpStatus.CREATED);
     }
@@ -662,7 +663,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
-        textExercise.setCompetencies(Set.of());
+        textExercise.setCompetencyLinks(Set.of());
         textExercise = exerciseRepository.save(textExercise);
 
         TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[2], false);
@@ -687,7 +688,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
-        textExercise.setCompetencies(Set.of());
+        textExercise.setCompetencyLinks(Set.of());
         textExercise = exerciseRepository.save(textExercise);
 
         TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[1], false);

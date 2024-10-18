@@ -22,6 +22,9 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
 import de.tum.cit.aet.artemis.atlas.domain.CompetencyProgressConfidenceReason;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
@@ -150,8 +153,10 @@ public class CompetencyProgressService {
     public void updateProgressForUpdatedLearningObjectAsync(LearningObject originalLearningObject, Optional<LearningObject> updatedLearningObject) {
         SecurityUtils.setAuthorizationObject(); // Required for async
 
-        Set<Long> originalCompetencyIds = originalLearningObject.getCompetencies().stream().map(CourseCompetency::getId).collect(Collectors.toSet());
-        Set<CourseCompetency> updatedCompetencies = updatedLearningObject.map(LearningObject::getCompetencies).orElse(Set.of());
+        Set<Long> originalCompetencyIds = originalLearningObject.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
+                .collect(Collectors.toSet());
+        Set<CourseCompetency> updatedCompetencies = updatedLearningObject
+                .map(learningObject -> learningObject.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).collect(Collectors.toSet())).orElse(Set.of());
         Set<Long> updatedCompetencyIds = updatedCompetencies.stream().map(CourseCompetency::getId).collect(Collectors.toSet());
 
         Set<Long> removedCompetencyIds = originalCompetencyIds.stream().filter(id -> !updatedCompetencyIds.contains(id)).collect(Collectors.toSet());
@@ -218,10 +223,11 @@ public class CompetencyProgressService {
         }
 
         CourseCompetency competency = optionalCompetency.get();
-        Set<LectureUnit> lectureUnits = competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
+        Set<LectureUnit> lectureUnits = competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit)
+                .filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
         Set<CompetencyExerciseMasteryCalculationDTO> exerciseInfos = courseCompetencyRepository.findAllExerciseInfoByCompetencyId(competencyId, user);
         int numberOfCompletedLectureUnits = lectureUnitCompletionRepository
-                .countByLectureUnitIdsAndUserId(competency.getLectureUnits().stream().map(LectureUnit::getId).collect(Collectors.toSet()), user.getId());
+                .countByLectureUnitIdsAndUserId(lectureUnits.stream().map(LectureUnit::getId).collect(Collectors.toSet()), user.getId());
 
         var competencyProgress = competencyProgressRepository.findEagerByCompetencyIdAndUserId(competencyId, user.getId());
 
@@ -491,8 +497,8 @@ public class CompetencyProgressService {
      * @return true if the competency can be mastered without completing any exercises, false otherwise
      */
     public static boolean canBeMasteredWithoutExercises(@NotNull CourseCompetency competency) {
-        double numberOfLectureUnits = competency.getLectureUnits().size();
-        double numberOfLearningObjects = numberOfLectureUnits + competency.getExercises().size();
+        double numberOfLectureUnits = competency.getLectureUnitLinks().size();
+        double numberOfLearningObjects = numberOfLectureUnits + competency.getExerciseLinks().size();
         if (numberOfLearningObjects == 0) {
             return true;
         }
@@ -521,7 +527,8 @@ public class CompetencyProgressService {
     public CourseCompetencyProgressDTO getCompetencyCourseProgress(@NotNull CourseCompetency competency, @NotNull Course course) {
         var numberOfStudents = competencyProgressRepository.countByCompetency(competency.getId());
         var numberOfMasteredStudents = competencyProgressRepository.countByCompetencyAndMastered(competency.getId(), competency.getMasteryThreshold());
-        var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(participantScoreService.getAverageOfAverageScores(competency.getExercises()), course);
+        Set<Exercise> exercises = competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise).collect(Collectors.toSet());
+        var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(participantScoreService.getAverageOfAverageScores(exercises), course);
         return new CourseCompetencyProgressDTO(competency.getId(), numberOfStudents, numberOfMasteredStudents, averageStudentScore);
     }
 }

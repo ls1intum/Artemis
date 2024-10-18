@@ -57,8 +57,8 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
                             this.competency.courseProgress = courseProgressResult.body;
                         }
                         // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
-                        if (!this.competency.lectureUnits) {
-                            this.competency.lectureUnits = [];
+                        if (!this.competency.lectureUnitLinks) {
+                            this.competency.lectureUnitLinks = [];
                         }
                     }
 
@@ -67,7 +67,7 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
                         title: this.competency.title,
                         description: this.competency.description,
                         softDueDate: this.competency.softDueDate,
-                        connectedLectureUnits: this.competency.lectureUnits,
+                        lectureUnitLinks: this.competency.lectureUnitLinks,
                         taxonomy: this.competency.taxonomy,
                         masteryThreshold: this.competency.masteryThreshold,
                         optional: this.competency.optional,
@@ -78,7 +78,7 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
     }
 
     updateCompetency(formData: CourseCompetencyFormData) {
-        const { title, description, softDueDate, taxonomy, masteryThreshold, optional, connectedLectureUnits } = formData;
+        const { title, description, softDueDate, taxonomy, masteryThreshold, optional, lectureUnitLinks } = formData;
 
         this.competency.title = title;
         this.competency.description = description;
@@ -86,7 +86,7 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
         this.competency.taxonomy = taxonomy;
         this.competency.masteryThreshold = masteryThreshold;
         this.competency.optional = optional;
-        this.competency.lectureUnits = connectedLectureUnits;
+        this.competency.lectureUnitLinks = lectureUnitLinks;
 
         this.isLoading = true;
 

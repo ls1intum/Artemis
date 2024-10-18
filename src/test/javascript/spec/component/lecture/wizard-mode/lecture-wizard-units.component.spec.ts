@@ -201,7 +201,7 @@ describe('LectureWizardUnitComponent', () => {
             expect(videoUnitCallArgument.description).toEqual(formData.description);
             expect(videoUnitCallArgument.releaseDate).toEqual(formData.releaseDate);
             expect(videoUnitCallArgument.source).toEqual(formData.source);
-            expect(videoUnitCallArgument.competencies).toEqual(formData.competencies);
+            expect(videoUnitCallArgument.competencyLinks).toEqual(formData.competencyLinks);
             expect(lectureIdCallArgument).toBe(1);
 
             expect(createStub).toHaveBeenCalledOnce();
@@ -279,7 +279,7 @@ describe('LectureWizardUnitComponent', () => {
             expect(textUnitCallArgument.name).toEqual(formData.name);
             expect(textUnitCallArgument.content).toEqual(formData.content);
             expect(textUnitCallArgument.releaseDate).toEqual(formData.releaseDate);
-            expect(textUnitCallArgument.competencies).toEqual(formData.competencies);
+            expect(textUnitCallArgument.competencyLinks).toEqual(formData.competencyLinks);
             expect(lectureIdCallArgument).toBe(1);
 
             expect(createStub).toHaveBeenCalledOnce();
@@ -433,7 +433,7 @@ describe('LectureWizardUnitComponent', () => {
             expect(onlineUnitCallArgument.description).toEqual(formDate.description);
             expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
             expect(onlineUnitCallArgument.source).toEqual(formDate.source);
-            expect(onlineUnitCallArgument.competencies).toEqual(formDate.competencies);
+            expect(onlineUnitCallArgument.competencyLinks).toEqual(formDate.competencyLinks);
             expect(lectureIdCallArgument).toBe(1);
 
             expect(createStub).toHaveBeenCalledOnce();

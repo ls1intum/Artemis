@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
@@ -173,7 +174,10 @@ public class LectureUtilService {
     public Lecture addCompetencyToLectureUnits(Lecture lecture, Set<CourseCompetency> competencies) {
         Lecture l = lectureRepo.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture.getId());
         l.getLectureUnits().forEach(lectureUnit -> {
-            lectureUnit.setCompetencies(competencies);
+            competencies.forEach(competency -> {
+                CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(competency, lectureUnit, 1);
+                lectureUnit.getCompetencyLinks().add(link);
+            });
             lectureUnitRepository.save(lectureUnit);
         });
         return l;

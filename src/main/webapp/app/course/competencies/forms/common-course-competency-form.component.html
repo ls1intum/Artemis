@@ -1,21 +1,24 @@
 <form [formGroup]="form">
     @if (!isInConnectMode) {
         <div class="form-group">
-            <label for="title" [jhiTranslate]="'artemisApp.' + competencyType + '.title'"></label>
+            <label for="title" [jhiTranslate]="'artemisApp.' + courseCompetency?.type + '.title'"></label>
             <input
                 type="text"
                 class="form-control"
                 id="title"
                 formControlName="title"
-                [placeholder]="'artemisApp.' + competencyType + '.create.titlePlaceholder' | artemisTranslate"
+                [placeholder]="'artemisApp.' + courseCompetency?.type + '.create.titlePlaceholder' | artemisTranslate"
             />
             @if (titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)) {
                 <div class="alert alert-danger">
                     @if (titleControl?.errors?.required) {
-                        <div [jhiTranslate]="'artemisApp.' + competencyType + '.create.titleRequiredValidationError'"></div>
+                        <div [jhiTranslate]="'artemisApp.' + courseCompetency?.type + '.create.titleRequiredValidationError'"></div>
                     }
                     @if (titleControl?.errors?.maxlength) {
-                        <div [jhiTranslate]="'artemisApp.' + competencyType + '.titleMaxLengthValidationError'" [translateValues]="{ max: competencyValidators.TITLE_MAX }"></div>
+                        <div
+                            [jhiTranslate]="'artemisApp.' + courseCompetency?.type + '.titleMaxLengthValidationError'"
+                            [translateValues]="{ max: competencyValidators.TITLE_MAX }"
+                        ></div>
                     }
                     @if (titleControl?.errors?.titleUnique) {
                         <div jhiTranslate="artemisApp.courseCompetency.create.titleUniqueValidationError"></div>
@@ -38,7 +41,7 @@
                 <div class="alert alert-danger">
                     @if (descriptionControl?.errors?.maxlength) {
                         <div
-                            [jhiTranslate]="'artemisApp.competency.' + competencyType + '.descriptionMaxLengthValidationError'"
+                            [jhiTranslate]="'artemisApp.competency.' + courseCompetency?.type + '.descriptionMaxLengthValidationError'"
                             [translateValues]="{ max: competencyValidators.DESCRIPTION_MAX }"
                         ></div>
                     }
@@ -49,8 +52,8 @@
     <div class="form-group">
         <jhi-date-time-picker
             id="softDueDate"
-            labelName="{{ 'artemisApp.' + competencyType + '.create.softDueDate' | artemisTranslate }}"
-            labelTooltip="{{ 'artemisApp.' + competencyType + '.create.softDueDateHint' | artemisTranslate }}"
+            labelName="{{ 'artemisApp.' + courseCompetency?.type + '.create.softDueDate' | artemisTranslate }}"
+            labelTooltip="{{ 'artemisApp.' + courseCompetency?.type + '.create.softDueDateHint' | artemisTranslate }}"
             formControlName="softDueDate"
         />
     </div>
@@ -78,11 +81,11 @@
     }
     <div class="form-group">
         <input type="checkbox" class="form-check-input" id="optional" formControlName="optional" />
-        <label class="form-control-label" [jhiTranslate]="'artemisApp.' + competencyType + '.optional'" for="optional"></label>
-        <jhi-help-icon [text]="'artemisApp.' + competencyType + '.optionalDescription'" />
+        <label class="form-control-label" [jhiTranslate]="'artemisApp.' + courseCompetency?.type + '.optional'" for="optional"></label>
+        <jhi-help-icon [text]="'artemisApp.' + courseCompetency?.type + '.optionalDescription'" />
     </div>
     <div>
-        <label [jhiTranslate]="'artemisApp.' + competencyType + '.create.connectWithLectureUnits'"></label>
+        <label [jhiTranslate]="'artemisApp.' + courseCompetency?.type + '.create.connectWithLectureUnits'"></label>
         @if (lecturesOfCourseWithLectureUnits && lecturesOfCourseWithLectureUnits.length > 0) {
             <div [hidden]="isInSingleLectureMode" ngbDropdown class="mb-2">
                 <button class="btn btn-outline-primary" ngbDropdownToggle type="button">

@@ -29,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
@@ -71,13 +70,13 @@ public abstract class CourseCompetency extends BaseCompetency {
     @JsonIgnoreProperties({ "competencies" })
     private StandardizedCompetency linkedStandardizedCompetency;
 
-    @ManyToMany(mappedBy = "competencies")
-    @JsonIgnoreProperties({ "competencies", "course" })
-    private Set<Exercise> exercises = new HashSet<>();
+    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("competency")
+    private Set<CompetencyExerciseLink> exerciseLinks = new HashSet<>();
 
-    @ManyToMany(mappedBy = "competencies")
-    @JsonIgnoreProperties("competencies")
-    private Set<LectureUnit> lectureUnits = new HashSet<>();
+    @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("competency")
+    private Set<CompetencyLectureUnitLink> lectureUnitLinks = new HashSet<>();
 
     @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties({ "user", "competency" })
@@ -161,40 +160,20 @@ public abstract class CourseCompetency extends BaseCompetency {
         this.linkedStandardizedCompetency = linkedStandardizedCompetency;
     }
 
-    public Set<Exercise> getExercises() {
-        return exercises;
+    public Set<CompetencyExerciseLink> getExerciseLinks() {
+        return exerciseLinks;
     }
 
-    public void setExercises(Set<Exercise> exercises) {
-        this.exercises = exercises;
+    public void setExerciseLinks(Set<CompetencyExerciseLink> exerciseLinks) {
+        this.exerciseLinks = exerciseLinks;
     }
 
-    public void addExercise(Exercise exercise) {
-        this.exercises.add(exercise);
-        exercise.getCompetencies().add(this);
+    public Set<CompetencyLectureUnitLink> getLectureUnitLinks() {
+        return lectureUnitLinks;
     }
 
-    public Set<LectureUnit> getLectureUnits() {
-        return lectureUnits;
-    }
-
-    public void setLectureUnits(Set<LectureUnit> lectureUnits) {
-        this.lectureUnits = lectureUnits;
-    }
-
-    /**
-     * Adds the lecture unit to the competency (bidirectional)
-     * Note: ExerciseUnits are not accepted, should be set via the connected exercise (see {@link #addExercise(Exercise)})
-     *
-     * @param lectureUnit The lecture unit to add
-     */
-    public void addLectureUnit(LectureUnit lectureUnit) {
-        if (lectureUnit instanceof ExerciseUnit) {
-            // The competencies of ExerciseUnits are taken from the corresponding exercise
-            throw new IllegalArgumentException("ExerciseUnits can not be connected to competencies");
-        }
-        this.lectureUnits.add(lectureUnit);
-        lectureUnit.getCompetencies().add(this);
+    public void setLectureUnitLinks(Set<CompetencyLectureUnitLink> lectureUnitLinks) {
+        this.lectureUnitLinks = lectureUnitLinks;
     }
 
     /**
@@ -208,8 +187,8 @@ public abstract class CourseCompetency extends BaseCompetency {
             // The competencies of ExerciseUnits are taken from the corresponding exercise
             throw new IllegalArgumentException("ExerciseUnits can not be disconnected from competencies");
         }
-        this.lectureUnits.remove(lectureUnit);
-        lectureUnit.getCompetencies().remove(this);
+        this.lectureUnitLinks.remove(lectureUnit);
+        lectureUnit.getCompetencyLinks().remove(this);
     }
 
     public Set<CompetencyProgress> getUserProgress() {
@@ -234,6 +213,6 @@ public abstract class CourseCompetency extends BaseCompetency {
     @PrePersist
     @PreUpdate
     public void prePersistOrUpdate() {
-        this.lectureUnits.removeIf(lectureUnit -> lectureUnit instanceof ExerciseUnit);
+        this.lectureUnitLinks.removeIf(lectureUnit -> lectureUnit.getLectureUnit() instanceof ExerciseUnit);
     }
 }
