@@ -47,8 +47,8 @@ import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.DependencyDownloadScript;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
+import de.tum.cit.aet.artemis.programming.service.ci.DependencyDownloadScript;
 
 /**
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.

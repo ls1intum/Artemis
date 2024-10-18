@@ -691,13 +691,13 @@
             },
             "dockerFlags": {
                 "disableNetworkAccess": {
-                    "title": "Disable network access when executing the student submission",
+                    "title": "Disable internet access when executing the student submission",
                     "description": "Activate this option to disable network access for containers. The network will be disabled when executing the student submission. The dependencies will still be downloaded and cached in the container before that."
                 },
                 "envVars": {
                     "title": "Environment Variables",
-                    "description": "Add environment variables to the Docker container. Please follow the following format KEY_1=\"value_1\",KEY_2=\"value_2\". (Max 128 chars)",
-                    "invalid": "Invalid environment variable format. Please follow the format KEY_1=\"value_1\",KEY_2=\"value_2\". Keys and values can be wrapped in single or double quotes."
+                    "description": "Add environment variables to the Docker container. For example, API_KEY=\"ABCD 1234\",API_SECRET='XYZ',\"API_TOKEN\"=1234",
+                    "invalid": "Invalid environment variable format. Keys and values can be wrapped in single or double quotes. For example, API_KEY=\"ABCD 1234\",API_SECRET='XYZ',\"API_TOKEN\"=1234"
                 }
             }
         },

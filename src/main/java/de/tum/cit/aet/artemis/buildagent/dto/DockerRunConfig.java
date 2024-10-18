@@ -5,27 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class DockerRunConfig implements Serializable {
-
-    private boolean isNetworkDisabled;
-
-    private List<String> env;
-
-    public boolean isNetworkDisabled() {
-        return isNetworkDisabled;
-    }
-
-    public void setNetworkDisabled(boolean networkDisabled) {
-        isNetworkDisabled = networkDisabled;
-    }
-
-    public List<String> getEnv() {
-        return env;
-    }
-
-    public void setEnv(List<String> env) {
-        this.env = env;
-    }
+public record DockerRunConfig(boolean isNetworkDisabled, List<String> env) implements Serializable {
 
     public enum AllowedDockerFlags {
 
