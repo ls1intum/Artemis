@@ -1,115 +1,58 @@
 <div class="course-competency-explanation-modal">
     <div class="col p-3">
         <div class="row m-0">
-            <span class="col p-0 h5 m-0 align-self-center">Introduction to course competencies</span>
+            <span class="col p-0 h5 m-0 align-self-center" jhiTranslate="artemisApp.courseCompetency.featureExplanation.title"></span>
             <fa-icon id="close-button" (click)="closeModal()" [icon]="closeIcon" class="col-md-auto h5 clickable m-0 p-1 pe-0" />
         </div>
     </div>
     <hr class="m-0" />
     <div class="h-100 p-3">
         <div>
-            <h5>What is Adaptive Learning?</h5>
-            <p>
-                Adaptive learning tailors educational content to each student's unique needs, adjusting in real-time based on their performance. By providing personalized support
-                and challenges, it helps students learn more efficiently, stay engaged, and achieve mastery at their own pace.
-            </p>
-            <p>
-                In Artemis course competencies are the foundation for Adaptive Learning. They are overarching learning objectives that can be obtained by interacting with different
-                lectures and exercises. Based on these competency models Artemis can offer students personalized learning paths that fit their individual needs.
-            </p>
+            <h5 jhiTranslate="artemisApp.courseCompetency.featureExplanation.adaptiveLearning.title1"></h5>
+            <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.adaptiveLearning.paragraph1"></p>
+            <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.adaptiveLearning.paragraph2"></p>
 
-            <h5>Why?</h5>
-            <p>
-                Competency-based education empowers students to master skills at their own pace, ensuring real progress and confidence. It creates a personalized, engaging learning
-                experience that leads to better outcomes and long-term success. So, even without enabling learning paths, students benefit from being able to track their progress.
-            </p>
-            <p>
-                With learning paths, students receive recommendations to support their learning efforts. Making it easier for them to master all the required competencies of a
-                course.
-            </p>
+            <h5 jhiTranslate="artemisApp.courseCompetency.featureExplanation.adaptiveLearning.title2"></h5>
+            <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.adaptiveLearning.paragraph3"></p>
+            <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.adaptiveLearning.paragraph4"></p>
         </div>
         <hr />
         <div>
-            <h5>How to create a course competency?</h5>
-            <p>In general we distinguish between a competency and a prerequisite.</p>
-            <p>
-                To create a competency, click the 'Create Competency' button at the top of the competency page. On the creation page, you can specify a unique name and an
-                appropriate description for the competency. Additionally, you have the option to set a recommended completion date, which indicates to students by when they should
-                master the connected learning objects.
-            </p>
-            <p>
-                You can also add taxonomy to the competency, providing students with greater insight into its purpose. If certain learning objects within this competency are
-                optional, you can establish a threshold for when the competency will be considered mastered. You also have the option to mark the entire competency as optional.
-            </p>
-            <p>
-                Finally, you can directly link lecture units to the competency. While you can also connect exercises to a competency, this must be done in the exercise
-                edit/creation view.
-            </p>
+            <h5 jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyCreation.title"></h5>
+            <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyCreation.paragraph1"></p>
+            <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyCreation.paragraph2"></p>
+            <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyCreation.paragraph3"></p>
+            <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyCreation.paragraph4"></p>
             <img src="public/videos/course-competencies/create-competencies.gif" alt="How to create a course competency" />
-            <p>
-                In addition to creating competencies or prerequisites yourself, you can also import them from other courses or utilize standardized competencies. For more
-                information on this process, please refer to the user <a [href]="DOCUMENTATION_LINK" target="_blank">manual for Artemis.</a>
-            </p>
+            <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyCreation.paragraph5" [translateValues]="{ link: DOCUMENTATION_LINK }"></p>
         </div>
         <hr />
         <div>
-            <h5>What are course competency relations?</h5>
-            <p>
-                Course competencies can build upon or depend on one another, which is why you can establish different types of relationships between them. Competencies can either
-                MATCH, EXTEND, or ASSUME each other. Detailed descriptions of these relationships are provided below.
-            </p>
+            <h5 jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.title"></h5>
+            <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.paragraph1"></p>
 
-            <strong><p>In summary:</p></strong>
-            <p>
-                MATCH is about equivalency between two skills.<br />
-                EXTEND is about building on an existing skill.<br />
-                ASSUME means one skill is a prerequisite for another.
-            </p>
-            <p>
-                To create these relationships, open the 'Edit Relations' modal. In this modal, you can either select the related competencies or click on each one consecutively.
-                After that, choose the desired relation type and create the relationship. To update or delete a relation, simply click on the specific relation and either update
-                the relation type in the form or delete it.
-            </p>
+            <strong><p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.paragraph2"></p> </strong>
+            <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.paragraph3"></p>
+            <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.paragraph4"></p>
             <img src="public/videos/course-competencies/create-course-competency-relations.gif" alt="How to create a course competency" />
 
             <div class="mt-3">
-                <h6>1. MATCH</h6>
-                <p>
-                    This relationship implies that two competencies are at the same level, covering the same skills and requirements. If you have one, you already have the other,
-                    and they can be considered interchangeable.
-                </p>
-                <strong><p>Example:</p></strong>
-                <p>
-                    Competency A: Balancing on a stationary bike. Competency B: Standing on one leg (balancing without moving). Here, balancing on a stationary bike might "MATCH"
-                    balancing on one leg because both involve the same fundamental skill of balance. If you can do one, you're very likely able to do the other, as the core
-                    competency (balance) is the same in both scenarios.
-                </p>
+                <h6 jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.relationTitle1"></h6>
+                <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.relationParagraph1"></p>
+                <strong><p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.exampleLabel"></p> </strong>
+                <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.relationParagraph2"></p>
             </div>
             <div>
-                <h6>2. EXTEND</h6>
-                <p>
-                    This relationship means one competency builds upon another by adding more complexity or breadth. In other words, once you have mastered one competency, you can
-                    move on to mastering the extended one, which takes that skill further.
-                </p>
-                <strong><p>Example:</p></strong>
-                <p>
-                    Competency A: Riding a bike in a straight line. Competency B: Riding a bike around curves and turns. Riding in a straight line is the foundational skill that
-                    "EXTENDS" into riding around curves and turns. Competency B extends Competency A by adding the need to navigate changes in direction while maintaining balance
-                    and control. Once you can ride in a straight line, you're ready to extend that ability to more complex riding scenarios.
-                </p>
+                <h6 jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.relationTitle2"></h6>
+                <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.relationParagraph3"></p>
+                <strong><p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.exampleLabel"></p> </strong>
+                <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.relationParagraph4"></p>
             </div>
             <div>
-                <h6>3. ASSUME</h6>
-                <p>
-                    This relationship implies that one competency relies on another being already mastered. To perform the more advanced competency, the learner must first have the
-                    underlying skill or knowledge.
-                </p>
-                <strong><p>Example:</p></strong>
-                <p>
-                    Competency A: Riding a bike with confidence on flat terrain. Competency B: Riding a bike uphill. Riding a bike uphill ASSUMES that the learner has already
-                    mastered riding on flat terrain. The skill of riding on flat ground is a prerequisite because uphill riding adds more resistance and requires additional
-                    strength and technique. Without mastering the basic competency of flat-ground riding, the learner wouldn't be ready to tackle riding uphill.
-                </p>
+                <h6 jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.relationTitle3"></h6>
+                <p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.relationParagraph5"></p>
+                <strong><p jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.exampleLabel"></p> </strong>
+                <p class="mb-0" jhiTranslate="artemisApp.courseCompetency.featureExplanation.courseCompetencyRelations.relationParagraph6"></p>
             </div>
         </div>
     </div>
