@@ -13,7 +13,7 @@ import {
 } from 'app/entities/competency.model';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription } from 'rxjs';
-import { faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -28,6 +28,7 @@ import {
     ImportAllCourseCompetenciesResult,
 } from 'app/course/competencies/components/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
+import { CourseCompetencyExplanationModalComponent } from 'app/course/competencies/components/course-competency-explanation-modal/course-competency-explanation-modal.component';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -53,6 +54,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     protected readonly faTrash = faTrash;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faRobot = faRobot;
+    protected readonly faCircleInfo = faCircleInfo;
 
     // other constants
     readonly getIcon = getIcon;
@@ -60,14 +62,14 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     readonly CourseCompetencyType = CourseCompetencyType;
 
     // Injected services
-    private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
-    private readonly courseCompetencyApiService: CourseCompetencyApiService = inject(CourseCompetencyApiService);
-    private readonly alertService: AlertService = inject(AlertService);
-    private readonly modalService: NgbModal = inject(NgbModal);
-    private readonly profileService: ProfileService = inject(ProfileService);
-    private readonly irisSettingsService: IrisSettingsService = inject(IrisSettingsService);
-    private readonly translateService: TranslateService = inject(TranslateService);
-    private readonly featureToggleService: FeatureToggleService = inject(FeatureToggleService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
+    private readonly alertService = inject(AlertService);
+    private readonly modalService = inject(NgbModal);
+    private readonly profileService = inject(ProfileService);
+    private readonly irisSettingsService = inject(IrisSettingsService);
+    private readonly translateService = inject(TranslateService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     ngOnInit(): void {
         this.activatedRoute.parent!.params.subscribe(async (params) => {
@@ -228,5 +230,13 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         this.prerequisites = this.prerequisites.filter((prerequisite) => prerequisite.id !== competencyId);
         this.relations = this.relations.filter((relation) => relation.tailCompetency?.id !== competencyId && relation.headCompetency?.id !== competencyId);
         this.courseCompetencies = this.competencies.concat(this.prerequisites);
+    }
+
+    openCourseCompetencyExplanation(): void {
+        this.modalService.open(CourseCompetencyExplanationModalComponent, {
+            size: 'xl',
+            backdrop: 'static',
+            windowClass: 'course-competency-explanation-modal',
+        });
     }
 }

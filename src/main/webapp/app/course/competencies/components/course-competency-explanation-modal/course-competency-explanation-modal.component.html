@@ -1,0 +1,56 @@
+<div class="course-competency-explanation-modal">
+    <div class="col p-3">
+        <div class="row m-0">
+            <span class="col p-0 h5 m-0 align-self-center">Introduction to course competencies</span>
+            <fa-icon id="close-button" (click)="closeModal()" [icon]="closeIcon" class="col-md-auto h5 clickable m-0 p-1 pe-0" />
+        </div>
+    </div>
+    <hr class="m-0" />
+    <div class="h-100 p-3">
+        <div>
+            <h5>What is adaptive learning?</h5>
+            <p>
+                Adaptive Learning in Artemis focuses on course competencies, which are overarching learning objectives that connect different lectures and exercises (learning
+                objects). Additionally, Artemis can offer students personalized learning paths based on these competencies and their interrelationships.
+            </p>
+            <p>Students can track their progress in their competency view and work on the next recommended learning object in their Learning Paths.</p>
+        </div>
+        <hr />
+        <div>
+            <h5>How to create a course competency?</h5>
+            <p>In general we distinguish between a competency and a prerequisite.</p>
+            <p>
+                To create a competency, click the 'Create Competency' button at the top of the competency page. On the creation page, you can specify a unique name and an
+                appropriate description for the competency. Additionally, you have the option to set a recommended completion date, which indicates to students by when they should
+                master the connected learning objects.
+            </p>
+            <p>
+                You can also add taxonomy to the competency, providing students with greater insight into its purpose. If certain learning objects within this competency are
+                optional, you can establish a threshold for when the competency will be considered mastered. You also have the option to mark the entire competency as optional.
+            </p>
+            <p>
+                Finally, you can directly link lecture units to the competency. While you can also connect exercises to a competency, this must be done in the exercise
+                edit/creation view.
+            </p>
+            <img src="public/videos/course-competencies/create-competencies.gif" alt="How to create a course competency" />
+            <p>
+                In addition to creating competencies or prerequisites yourself, you can also import them from other courses or utilize standardized competencies. For more
+                information on this process, please refer to the user <a [href]="DOCUMENTATION_LINK" target="_blank">manual for Artemis.</a>
+            </p>
+        </div>
+        <hr />
+        <div>
+            <h5>What are course competency relations?</h5>
+            <p>
+                Course competencies can build upon or depend on one another, which is why you can establish different types of relationships between them. Competencies can either
+                MATCH, EXTEND, or ASSUME each other.
+            </p>
+            <p>
+                To create these relationships, open the 'Edit Relations' modal. In this modal, you can either select the related competencies or click on each one consecutively.
+                After that, choose the desired relation type and create the relationship. To update or delete a relation, simply click on the specific relation and either update
+                the relation type in the form or delete it.
+            </p>
+            <img src="public/videos/course-competencies/create-course-competency-relations.gif" alt="How to create a course competency" />
+        </div>
+    </div>
+</div>

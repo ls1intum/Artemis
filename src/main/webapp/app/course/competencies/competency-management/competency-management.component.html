@@ -1,7 +1,9 @@
 <div>
     <div class="d-flex flex-wrap mt-4">
-        <h2 jhiTranslate="artemisApp.competency.manage.title"></h2>
-        <jhi-documentation-button [type]="documentationType" />
+        <div class="d-flex justify-content-center align-items-center">
+            <h2 class="m-0" jhiTranslate="artemisApp.competency.manage.title"></h2>
+            <fa-icon class="ms-2 clickable" [icon]="faCircleInfo" (click)="openCourseCompetencyExplanation()" />
+        </div>
         <div class="ms-auto justify-content-end">
             @if (irisCompetencyGenerationEnabled) {
                 <a class="btn btn-primary" id="generateButton" [routerLink]="['/course-management', courseId, 'competency-management', 'generate']">
