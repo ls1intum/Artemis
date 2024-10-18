@@ -172,6 +172,7 @@
             "softDueDate": "Recommended until",
             "masteryThreshold": "Mastery threshold",
             "manage": {
+                "helpButton": "Help",
                 "importAllButton": "Import all of a course"
             },
             "importSettings": {
@@ -240,6 +241,42 @@
                 "ANALYZE": "differentiate, examine, experiment, question, relate, test, break down, contrast, distinguish",
                 "EVALUATE": "appraise, argue, choose, defend, judge, select, support, value, critique",
                 "CREATE": "design, formulate, hypothesize, invent, plan, propose, write, assemble, construct, develop"
+            },
+            "featureExplanation": {
+                "title": "Introduction to course competencies",
+                "adaptiveLearning": {
+                    "title1": "What is Adaptive Learning?",
+                    "paragraph1": "Adaptive learning tailors educational content to each student's unique needs, adjusting in real-time based on their performance. By providing personalized support and challenges, it helps students learn more efficiently, stay engaged, and achieve mastery at their own pace.",
+                    "paragraph2": "In Artemis course competencies are the foundation for Adaptive Learning. They are overarching learning objectives that can be obtained by interacting with different lectures and exercises. Based on these competency models Artemis can offer students personalized learning paths that fit their individual needs.",
+                    "title2": "Why?",
+                    "paragraph3": "Competency-based education empowers students to master skills at their own pace, ensuring real progress and confidence. It creates a personalized, engaging learning experience that leads to better outcomes and long-term success. So, even without enabling learning paths, students benefit from being able to track their progress.",
+                    "paragraph4": "With learning paths, students receive recommendations to support their learning efforts. Making it easier for them to master all the required competencies of a course."
+                },
+                "courseCompetencyCreation": {
+                    "title": "How to create a course competency?",
+                    "paragraph1": "In general we distinguish between a competency and a prerequisite.",
+                    "paragraph2": "To create a competency, click the 'Create Competency' button at the top of the competency page. On the creation page, you can specify a unique name and an appropriate description for the competency. Additionally, you have the option to set a recommended completion date, which indicates to students by when they should master the connected learning objects.",
+                    "paragraph3": "You can also add taxonomy to the competency, providing students with greater insight into its purpose. If certain learning objects within this competency are optional, you can establish a threshold for when the competency will be considered mastered. You also have the option to mark the entire competency as optional.",
+                    "paragraph4": "Finally, you can directly link lecture units to the competency. While you can also connect exercises to a competency, this must be done in the exercise edit/creation view.",
+                    "paragraph5": "In addition to creating competencies or prerequisites yourself, you can also import them from other courses or utilize standardized competencies. For more information on this process, please refer to the user <a href={{ link }} target=\"_blank\">manual for Artemis.</a>"
+                },
+                "courseCompetencyRelations": {
+                    "title": "What are course competency relations?",
+                    "paragraph1": "Course competencies can build upon or depend on one another, which is why you can establish different types of relationships between them. Competencies can either MATCH, EXTEND, or ASSUME each other. Detailed descriptions of these relationships are provided below.",
+                    "paragraph2": "In summary:",
+                    "paragraph3": "MATCH is about equivalency between two skills.<br />EXTEND is about building on an existing skill.<br />ASSUME means one skill is a prerequisite for another.",
+                    "paragraph4": "To create these relationships, open the 'Edit Relations' modal. In this modal, you can either select the related competencies or click on each one consecutively. After that, choose the desired relation type and create the relationship. To update or delete a relation, simply click on the specific relation and either update the relation type in the form or delete it.",
+                    "relationTitle1": "1. MATCH",
+                    "relationParagraph1": "This relationship implies that two competencies are at the same level, covering the same skills and requirements. If you have one, you already have the other, and they can be considered interchangeable.",
+                    "exampleLabel": "Example:",
+                    "relationParagraph2": "Competency A: Balancing on a stationary bike. Competency B: Standing on one leg (balancing without moving). Here, balancing on a stationary bike might \"MATCH\" balancing on one leg because both involve the same fundamental skill of balance. If you can do one, you're very likely able to do the other, as the core competency (balance) is the same in both scenarios.",
+                    "relationTitle2": "2. EXTEND",
+                    "relationParagraph3": "This relationship means one competency builds upon another by adding more complexity or breadth. In other words, once you have mastered one competency, you can move on to mastering the extended one, which takes that skill further.",
+                    "relationParagraph4": "Competency A: Riding a bike in a straight line. Competency B: Riding a bike around curves and turns. Riding in a straight line is the foundational skill that \"EXTENDS\" into riding around curves and turns. Competency B extends Competency A by adding the need to navigate changes in direction while maintaining balance and control. Once you can ride in a straight line, you're ready to extend that ability to more complex riding scenarios.",
+                    "relationTitle3": "3. ASSUME",
+                    "relationParagraph5": "This relationship implies that one competency relies on another being already mastered. To perform the more advanced competency, the learner must first have the underlying skill or knowledge.",
+                    "relationParagraph6": "Competency A: Riding a bike with confidence on flat terrain. Competency B: Riding a bike uphill. Riding a bike uphill ASSUMES that the learner has already mastered riding on flat terrain. The skill of riding on flat ground is a prerequisite because uphill riding adds more resistance and requires additional strength and technique. Without mastering the basic competency of flat-ground riding, the learner wouldn't be ready to tackle riding uphill."
+                }
             }
         },
         "prerequisite": {
