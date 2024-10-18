@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLLMCostDTO;
+import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 /**
@@ -17,5 +17,5 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * @param tokens List of token usages send by Pyris for tracking the token usage and cost
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisCompetencyStatusUpdateDTO(List<PyrisStageDTO> stages, List<PyrisCompetencyRecommendationDTO> result, List<PyrisLLMCostDTO> tokens) {
+public record PyrisCompetencyStatusUpdateDTO(List<PyrisStageDTO> stages, List<PyrisCompetencyRecommendationDTO> result, List<LLMRequest> tokens) {
 }

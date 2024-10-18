@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -183,8 +184,14 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         }
 
         if (statusUpdate.tokens() != null) {
-            llmTokenUsageService.saveIrisTokenUsage(builder -> builder.withJob(job).withMessage(savedMessage).withExercise(session.getExercise()).withUser(session.getUser())
-                    .withCourse(session.getExercise().getCourseViaExerciseGroupOrCourseMember()).withTokens(statusUpdate.tokens()));
+            if (savedMessage != null) {
+                llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> builder.withIrisMessageID(savedMessage.getId())
+                        .withExercise(session.getExercise()).withUser(session.getUser()).withCourse(session.getExercise().getCourseViaExerciseGroupOrCourseMember()));
+            }
+            else {
+                llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> builder.withExercise(session.getExercise())
+                        .withUser(session.getUser()).withCourse(session.getExercise().getCourseViaExerciseGroupOrCourseMember()));
+            }
         }
 
         updateLatestSuggestions(session, statusUpdate.suggestions());
