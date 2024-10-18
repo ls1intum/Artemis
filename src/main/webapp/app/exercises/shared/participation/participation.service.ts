@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -23,13 +23,11 @@ export type BuildArtifact = {
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationService {
-    public resourceUrl = 'api/participations';
+    private http = inject(HttpClient);
+    private submissionService = inject(SubmissionService);
+    private accountService = inject(AccountService);
 
-    constructor(
-        private http: HttpClient,
-        private submissionService: SubmissionService,
-        private accountService: AccountService,
-    ) {}
+    public resourceUrl = 'api/participations';
 
     update(exercise: Exercise, participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertParticipationForServer(participation, exercise);

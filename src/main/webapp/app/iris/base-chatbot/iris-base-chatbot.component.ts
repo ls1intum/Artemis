@@ -1,6 +1,6 @@
 import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRedo, faThumbsDown, faThumbsUp, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
@@ -72,6 +72,12 @@ import * as _ from 'lodash-es';
     ],
 })
 export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
+    protected accountService = inject(AccountService);
+    protected modalService = inject(NgbModal);
+    protected translateService = inject(TranslateService);
+    protected statusService = inject(IrisStatusService);
+    protected chatService = inject(IrisChatService);
+
     // Icons
     faTrash = faTrash;
     faCircle = faCircle;
@@ -132,14 +138,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected readonly IrisTextMessageContent = IrisTextMessageContent;
     protected readonly IrisSender = IrisSender;
     protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
-
-    constructor(
-        protected accountService: AccountService,
-        protected modalService: NgbModal,
-        protected translateService: TranslateService,
-        protected statusService: IrisStatusService,
-        protected chatService: IrisChatService,
-    ) {}
 
     ngOnInit() {
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {

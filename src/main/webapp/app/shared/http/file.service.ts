@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { Observable } from 'rxjs';
@@ -8,9 +8,9 @@ import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/progr
 
 @Injectable({ providedIn: 'root' })
 export class FileService {
-    private resourceUrl = 'api/files';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private resourceUrl = 'api/files';
 
     /**
      * Fetches the template file for the given programming language

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
@@ -24,6 +24,11 @@ interface SearchQuery {
     templateUrl: './conversation-members.component.html',
 })
 export class ConversationMembersComponent implements OnInit, OnDestroy {
+    conversationService = inject(ConversationService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private cdr = inject(ChangeDetectorRef);
+
     private ngUnsubscribe = new Subject<void>();
 
     private readonly search$ = new Subject<SearchQuery>();
@@ -58,13 +63,6 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     TUTOR_FILTER_OPTION = ConversationMemberSearchFilter.TUTOR;
     STUDENT_FILTER_OPTION = ConversationMemberSearchFilter.STUDENT;
     CHANNEL_MODERATOR_FILTER_OPTION = ConversationMemberSearchFilter.CHANNEL_MODERATOR;
-
-    constructor(
-        public conversationService: ConversationService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     trackIdentity(index: number, item: ConversationUserDTO) {
         return item.id;

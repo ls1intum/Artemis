@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -8,9 +8,9 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './course-prerequisites-button.component.html',
 })
 export class CoursePrerequisitesButtonComponent {
-    @Input() course: Course;
+    private modalService = inject(NgbModal);
 
-    constructor(private modalService: NgbModal) {}
+    @Input() course: Course;
 
     /**
      * Opens a modal with the prerequisites for the course

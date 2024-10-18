@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
@@ -62,6 +62,17 @@ export enum HighlightType {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private sortService = inject(SortService);
+    private changeDetector = inject(ChangeDetectorRef);
+    private languageHelper = inject(JhiLanguageHelper);
+    private localeConversionService = inject(LocaleConversionService);
+    private participantScoresService = inject(ParticipantScoresService);
+    private gradingSystemService = inject(GradingSystemService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+
     private paramSub: Subscription;
     private languageChangeSubscription?: Subscription;
 
@@ -132,18 +143,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     faSpinner = faSpinner;
     faClipboard = faClipboard;
 
-    constructor(
-        private route: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private sortService: SortService,
-        private changeDetector: ChangeDetectorRef,
-        private languageHelper: JhiLanguageHelper,
-        private localeConversionService: LocaleConversionService,
-        private participantScoresService: ParticipantScoresService,
-        private gradingSystemService: GradingSystemService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private plagiarismCasesService: PlagiarismCasesService,
-    ) {
+    constructor() {
         this.reverse = false;
         this.predicate = 'id';
     }

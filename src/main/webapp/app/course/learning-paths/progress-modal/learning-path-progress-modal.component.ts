@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, Input, ViewChild, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
@@ -10,14 +10,12 @@ import { LearningPathInformationDTO, NgxLearningPathNode, NodeType } from 'app/e
     templateUrl: './learning-path-progress-modal.component.html',
 })
 export class LearningPathProgressModalComponent {
+    private activeModal = inject(NgbActiveModal);
+    private router = inject(Router);
+
     @Input() courseId: number;
     @Input() learningPath: LearningPathInformationDTO;
     @ViewChild('learningPathGraphComponent') learningPathGraphComponent: LearningPathGraphComponent;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private router: Router,
-    ) {}
 
     close() {
         this.activeModal.close();

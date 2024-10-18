@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
@@ -10,16 +10,14 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
     templateUrl: './exercise-node-details.component.html',
 })
 export class ExerciseNodeDetailsComponent implements OnInit {
+    private exerciseService = inject(ExerciseService);
+    private alertService = inject(AlertService);
+
     @Input() exerciseId: number;
     @Input() exercise?: Exercise;
     @Output() exerciseChange = new EventEmitter<Exercise>();
 
     isLoading = false;
-
-    constructor(
-        private exerciseService: ExerciseService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         if (!this.exercise) {

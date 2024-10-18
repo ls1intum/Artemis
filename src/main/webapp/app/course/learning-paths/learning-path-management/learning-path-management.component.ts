@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
@@ -27,6 +27,14 @@ export enum TableColumn {
     templateUrl: './learning-path-management.component.html',
 })
 export class LearningPathManagementComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private learningPathService = inject(LearningPathService);
+    private alertService = inject(AlertService);
+    private pagingService = inject(LearningPathPagingService);
+    private sortService = inject(SortService);
+    private modalService = inject(NgbModal);
+
     isLoading = false;
 
     courseId: number;
@@ -50,16 +58,6 @@ export class LearningPathManagementComponent implements OnInit {
     // icons
     faSort = faSort;
     faTriangleExclamation = faTriangleExclamation;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private learningPathService: LearningPathService,
-        private alertService: AlertService,
-        private pagingService: LearningPathPagingService,
-        private sortService: SortService,
-        private modalService: NgbModal,
-    ) {}
 
     get page(): number {
         return this.state.page;

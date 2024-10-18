@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
@@ -12,6 +12,9 @@ import { Subscription } from 'rxjs';
     templateUrl: './commits-info.component.html',
 })
 export class CommitsInfoComponent implements OnInit, OnDestroy {
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private profileService = inject(ProfileService);
+
     @Input() commits?: CommitInfo[];
     @Input() currentSubmissionHash?: string;
     @Input() previousSubmissionHash?: string;
@@ -27,11 +30,6 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     protected groupedCommits: { key: string; commits: CommitInfo[]; date: string }[] = [];
 
     localVC = false;
-
-    constructor(
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private profileService: ProfileService,
-    ) {}
 
     ngOnInit(): void {
         if (!this.commits) {

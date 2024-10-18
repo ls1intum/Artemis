@@ -1,12 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { Competency } from 'app/entities/competency.model';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LectureService } from 'app/lecture/lecture.service';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -21,17 +18,9 @@ import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-c
     imports: [ArtemisSharedModule, CompetencyFormComponent, ArtemisSharedComponentModule],
 })
 export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {
-    competencyToCreate: Competency = new Competency();
+    private competencyService = inject(CompetencyService);
 
-    constructor(
-        activatedRoute: ActivatedRoute,
-        router: Router,
-        alertService: AlertService,
-        lectureService: LectureService,
-        private competencyService: CompetencyService,
-    ) {
-        super(activatedRoute, router, alertService, lectureService);
-    }
+    competencyToCreate: Competency = new Competency();
 
     createCompetency(formData: CourseCompetencyFormData) {
         if (!formData?.title) {

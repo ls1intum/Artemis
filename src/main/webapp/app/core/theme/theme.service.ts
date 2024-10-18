@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { IconDefinition, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -43,6 +43,8 @@ export class Theme {
     providedIn: 'root',
 })
 export class ThemeService {
+    private localStorageService = inject(LocalStorageService);
+
     /**
      * The currently applied theme
      */
@@ -58,8 +60,6 @@ export class ThemeService {
     private preferenceSubject: BehaviorSubject<Theme | undefined> = new BehaviorSubject<Theme | undefined>(undefined);
 
     private darkSchemeMediaQuery: MediaQueryList;
-
-    constructor(private localStorageService: LocalStorageService) {}
 
     /**
      * Returns the currently active theme.

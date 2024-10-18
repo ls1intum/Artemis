@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/shared/util/request.util';
@@ -24,14 +24,12 @@ export class SubmissionWithComplaintDTO {
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionService {
+    private http = inject(HttpClient);
+    private complaintResponseService = inject(ComplaintResponseService);
+    private accountService = inject(AccountService);
+
     public resourceUrl = 'api/submissions';
     public resourceUrlParticipation = 'api/participations';
-
-    constructor(
-        private http: HttpClient,
-        private complaintResponseService: ComplaintResponseService,
-        private accountService: AccountService,
-    ) {}
 
     /**
      * Delete an existing submission

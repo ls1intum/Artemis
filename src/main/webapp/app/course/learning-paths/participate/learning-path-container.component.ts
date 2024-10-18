@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faChevronDown, faChevronUp, faEye } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
@@ -24,6 +24,15 @@ import { CompetencyGraphModalComponent } from 'app/course/learning-paths/compone
     templateUrl: './learning-path-container.component.html',
 })
 export class LearningPathContainerComponent implements OnInit {
+    private router = inject(Router);
+    private activatedRoute = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private learningPathService = inject(LearningPathService);
+    private lectureService = inject(LectureService);
+    private exerciseService = inject(ExerciseService);
+    private modalService = inject(NgbModal);
+    learningPathStorageService = inject(LearningPathStorageService);
+
     @ViewChild('learningPathComponent') learningPathComponent: LearningPathComponent;
 
     @Input() courseId: number;
@@ -39,17 +48,6 @@ export class LearningPathContainerComponent implements OnInit {
     faChevronUp = faChevronUp;
     faChevronDown = faChevronDown;
     faEye = faEye;
-
-    constructor(
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-        private alertService: AlertService,
-        private learningPathService: LearningPathService,
-        private lectureService: LectureService,
-        private exerciseService: ExerciseService,
-        private modalService: NgbModal,
-        public learningPathStorageService: LearningPathStorageService,
-    ) {}
 
     ngOnInit() {
         if (!this.courseId) {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { faCalendarAlt, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, from } from 'rxjs';
@@ -16,6 +16,9 @@ import { catchError, takeUntil } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupRowButtonsComponent implements OnDestroy {
+    private tutorialGroupsService = inject(TutorialGroupsService);
+    private modalService = inject(NgbModal);
+
     ngUnsubscribe = new Subject<void>();
 
     @Input() isAtLeastInstructor = false;
@@ -33,11 +36,6 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
     faUsers = faUsers;
     faTrash = faTrash;
     faCalendar = faCalendarAlt;
-
-    public constructor(
-        private tutorialGroupsService: TutorialGroupsService,
-        private modalService: NgbModal,
-    ) {}
 
     openSessionDialog(event: MouseEvent) {
         event.stopPropagation();

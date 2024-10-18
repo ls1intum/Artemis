@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { faFilter, faFilterCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
@@ -22,6 +22,11 @@ import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercis
     styleUrls: ['./sidebar.component.scss'],
 })
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
+    private route = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+    private sidebarEventService = inject(SidebarEventService);
+    private modalService = inject(NgbModal);
+
     @Output() onSelectConversation = new EventEmitter<number>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
     @Output() onPlusPressed = new EventEmitter<string>();
@@ -57,13 +62,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
 
     exerciseFilters?: ExerciseFilterOptions;
     isFilterActive: boolean = false;
-
-    constructor(
-        private route: ActivatedRoute,
-        private profileService: ProfileService,
-        private sidebarEventService: SidebarEventService,
-        private modalService: NgbModal,
-    ) {}
 
     ngOnInit(): void {
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {

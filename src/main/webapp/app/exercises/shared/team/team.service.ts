@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -102,17 +102,15 @@ export interface ITeamService {
 
 @Injectable({ providedIn: 'root' })
 export class TeamService implements ITeamService, OnDestroy {
+    protected http = inject(HttpClient);
+    private websocketService = inject(JhiWebsocketService);
+    private accountService = inject(AccountService);
+
     // Team Assignment Update Stream
     private teamAssignmentUpdates$: Observable<TeamAssignmentPayload> | null;
     private teamAssignmentUpdatesResolver: () => void;
     private authenticationStateSubscriber: Subscription;
     private websocketStatusSubscription?: Subscription;
-
-    constructor(
-        protected http: HttpClient,
-        private websocketService: JhiWebsocketService,
-        private accountService: AccountService,
-    ) {}
 
     ngOnDestroy(): void {
         this.websocketStatusSubscription?.unsubscribe();

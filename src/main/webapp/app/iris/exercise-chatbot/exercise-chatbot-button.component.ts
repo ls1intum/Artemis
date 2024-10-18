@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute } from '@angular/router';
@@ -14,8 +14,12 @@ import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
     styleUrls: ['./exercise-chatbot-button.component.scss'],
 })
 export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
-    @Input()
-    mode: ChatServiceMode;
+    dialog = inject(MatDialog);
+    protected overlay = inject(Overlay);
+    protected readonly chatService = inject(IrisChatService);
+    private route = inject(ActivatedRoute);
+
+    @Input() mode: ChatServiceMode;
 
     dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | null = null;
     chatOpen = false;
@@ -29,13 +33,6 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
 
     protected readonly IrisLogoLookDirection = IrisLogoLookDirection;
     protected readonly IrisLogoSize = IrisLogoSize;
-
-    constructor(
-        public dialog: MatDialog,
-        protected overlay: Overlay,
-        protected readonly chatService: IrisChatService,
-        private route: ActivatedRoute,
-    ) {}
 
     ngOnInit() {
         // Subscribes to route params and gets the exerciseId from the route

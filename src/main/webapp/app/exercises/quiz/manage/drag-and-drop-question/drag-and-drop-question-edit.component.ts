@@ -11,6 +11,7 @@ import {
     SimpleChanges,
     ViewChild,
     ViewEncapsulation,
+    inject,
 } from '@angular/core';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
@@ -61,6 +62,11 @@ import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/
     encapsulation: ViewEncapsulation.None,
 })
 export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
+    private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
+    private modalService = inject(NgbModal);
+    private changeDetector = inject(ChangeDetectorRef);
+    private fileService = inject(FileService);
+
     @ViewChild('clickLayer', { static: false }) private clickLayer: ElementRef;
     @ViewChild('backgroundImage ', { static: false }) private backgroundImage: SecuredImageComponent;
     @ViewChild('markdownEditor', { static: false }) private markdownEditor: MarkdownEditorMonacoComponent;
@@ -130,13 +136,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     faScissors = faScissors;
 
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
-
-    constructor(
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        private modalService: NgbModal,
-        private changeDetector: ChangeDetectorRef,
-        private fileService: FileService,
-    ) {}
 
     /**
      * Actions when initializing component.

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { Result } from 'app/entities/result.model';
@@ -12,14 +12,12 @@ import { Observable } from 'rxjs';
     styleUrls: ['./rating.component.scss'],
 })
 export class RatingComponent implements OnInit {
+    private ratingService = inject(RatingService);
+    private accountService = inject(AccountService);
+
     public rating: number;
     public disableRating = false;
     @Input() result?: Result;
-
-    constructor(
-        private ratingService: RatingService,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit(): void {
         if (!this.result?.id || !this.result.participation || !this.accountService.isOwnerOfParticipation(this.result.participation as StudentParticipation)) {

@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
@@ -19,6 +19,10 @@ import { faBan, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-sol
     encapsulation: ViewEncapsulation.None,
 })
 export class TeamsImportDialogComponent implements OnInit, OnDestroy {
+    private teamService = inject(TeamService);
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+
     readonly ImportStrategy = ImportStrategy;
     readonly ActionType = ActionType;
 
@@ -61,12 +65,6 @@ export class TeamsImportDialogComponent implements OnInit, OnDestroy {
     faSpinner = faSpinner;
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
-
-    constructor(
-        private teamService: TeamService,
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Life cycle hook to indicate component creation is done

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -18,14 +18,16 @@ import { PROFILE_IRIS } from 'app/app.constants';
     templateUrl: './non-programming-exercise-detail-common-actions.component.html',
 })
 export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit {
-    @Input()
-    exercise: Exercise;
+    private textExerciseService = inject(TextExerciseService);
+    private fileUploadExerciseService = inject(FileUploadExerciseService);
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private eventManager = inject(EventManager);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
 
-    @Input()
-    course: Course;
-
-    @Input()
-    isExamExercise = false;
+    @Input() exercise: Exercise;
+    @Input() course: Course;
+    @Input() isExamExercise = false;
 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -47,15 +49,6 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     faChartBar = faChartBar;
     faUserCheck = faUserCheck;
     faRobot = faRobot;
-
-    constructor(
-        private textExerciseService: TextExerciseService,
-        private fileUploadExerciseService: FileUploadExerciseService,
-        private modelingExerciseService: ModelingExerciseService,
-        private profileService: ProfileService,
-        private eventManager: EventManager,
-        private router: Router,
-    ) {}
 
     ngOnInit(): void {
         if (!this.isExamExercise) {

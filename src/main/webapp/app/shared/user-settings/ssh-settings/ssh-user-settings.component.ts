@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
@@ -16,6 +16,10 @@ import { getOS } from 'app/shared/util/os-detector.util';
     styleUrls: ['../user-settings.scss', './ssh-user-settings.component.scss'],
 })
 export class SshUserSettingsComponent implements OnInit {
+    private accountService = inject(AccountService);
+    private profileService = inject(ProfileService);
+    private alertService = inject(AlertService);
+
     readonly documentationType: DocumentationType = 'SshSetup';
     currentUser?: User;
     localVCEnabled = false;
@@ -36,12 +40,6 @@ export class SshUserSettingsComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();
 
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    constructor(
-        private accountService: AccountService,
-        private profileService: ProfileService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

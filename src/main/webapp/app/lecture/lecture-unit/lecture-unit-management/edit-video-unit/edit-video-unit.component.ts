@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,17 +15,15 @@ import { combineLatest } from 'rxjs';
     styles: [],
 })
 export class EditVideoUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private videoUnitService = inject(VideoUnitService);
+    private alertService = inject(AlertService);
+
     isLoading = false;
     videoUnit: VideoUnit;
     formData: VideoUnitFormData;
     lectureId: number;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private videoUnitService: VideoUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

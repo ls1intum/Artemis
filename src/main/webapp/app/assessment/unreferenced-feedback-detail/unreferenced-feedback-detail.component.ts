@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { faCheck, faExclamation, faExclamationTriangle, faQuestionCircle, faTrash, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
@@ -11,6 +11,8 @@ import { Subject } from 'rxjs';
     styleUrls: ['./unreferenced-feedback-detail.component.scss'],
 })
 export class UnreferencedFeedbackDetailComponent {
+    structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+
     @Input() public feedback: Feedback;
     @Input() isSuggestion: boolean;
     @Input() public readOnly: boolean;
@@ -36,8 +38,6 @@ export class UnreferencedFeedbackDetailComponent {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     /**
      * Emits assessment changes to parent component

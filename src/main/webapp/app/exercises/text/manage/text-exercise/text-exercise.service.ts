@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -16,12 +16,10 @@ export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TextExerciseService implements ExerciseServicable<TextExercise> {
-    private resourceUrl = 'api/text-exercises';
+    private http = inject(HttpClient);
+    private exerciseService = inject(ExerciseService);
 
-    constructor(
-        private http: HttpClient,
-        private exerciseService: ExerciseService,
-    ) {}
+    private resourceUrl = 'api/text-exercises';
 
     /**
      * Store a new text exercise on the server.

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -9,13 +9,13 @@ import { faLink, faTrash } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './grading-instruction-link-icon.component.html',
 })
 export class GradingInstructionLinkIconComponent implements OnInit {
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+
     @Input() linkIcon = faLink;
     @Input() feedback: Feedback;
     instruction: GradingInstruction | undefined;
     confirmIcon = faTrash;
     showConfirm = false;
-
-    constructor(private artemisTranslatePipe: ArtemisTranslatePipe) {}
 
     ngOnInit(): void {
         this.instruction = this.feedback.gradingInstruction;

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -13,9 +13,9 @@ export type SubmissionExportOptions = {
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionExportService {
-    public resourceUrl = 'api';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    public resourceUrl = 'api';
 
     /**
      * Exports submissions to the server by their participant identifiers

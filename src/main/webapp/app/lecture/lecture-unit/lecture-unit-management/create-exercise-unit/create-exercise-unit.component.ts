@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -18,6 +18,13 @@ import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./create-exercise-unit.component.scss'],
 })
 export class CreateExerciseUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private courseManagementService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    private exerciseUnitService = inject(ExerciseUnitService);
+
     @Input()
     hasCancelButton: boolean;
     @Input()
@@ -47,15 +54,6 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     // Icons
     faSort = faSort;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private courseManagementService: CourseManagementService,
-        private alertService: AlertService,
-        private sortService: SortService,
-        private exerciseUnitService: ExerciseUnitService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

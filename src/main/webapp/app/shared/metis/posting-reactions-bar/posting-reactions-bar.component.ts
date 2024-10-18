@@ -1,4 +1,4 @@
-import { Directive, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -42,6 +42,8 @@ interface ReactionMetaDataMap {
 
 @Directive()
 export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges {
+    protected metisService = inject(MetisService);
+
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
     speechBalloonId: string = SPEECH_BALLOON_ID;
@@ -91,8 +93,6 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      * and a flag that indicates if the current user has used this reaction
      */
     reactionMetaDataMap: ReactionMetaDataMap = {};
-
-    protected constructor(protected metisService: MetisService) {}
 
     /**
      * on initialization: updates the current posting and its reactions,

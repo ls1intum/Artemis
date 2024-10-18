@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
@@ -18,22 +18,19 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private courseManagementService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private courseStorageService = inject(CourseStorageService);
+    private cdr = inject(ChangeDetectorRef);
+
     ngUnsubscribe = new Subject<void>();
 
     newTutorialGroupsConfiguration = new TutorialGroupsConfiguration();
     isLoading: boolean;
     course: Course;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-        private courseManagementService: CourseManagementService,
-        private alertService: AlertService,
-        private courseStorageService: CourseStorageService,
-
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

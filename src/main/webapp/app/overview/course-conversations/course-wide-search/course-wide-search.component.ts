@@ -12,6 +12,7 @@ import {
     ViewChild,
     ViewChildren,
     ViewEncapsulation,
+    inject,
 } from '@angular/core';
 import { faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup } from '@angular/forms';
@@ -31,6 +32,11 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
     encapsulation: ViewEncapsulation.None,
 })
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
+    metisService = inject(MetisService);
+    metisConversationService = inject(MetisConversationService);
+    private formBuilder = inject(FormBuilder);
+    cdr = inject(ChangeDetectorRef);
+
     @Input()
     courseWideSearchConfig: CourseWideSearchConfig;
 
@@ -68,13 +74,6 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     formGroup: FormGroup;
 
     getAsChannel = getAsChannelDTO;
-
-    constructor(
-        public metisService: MetisService, // instance from course-conversations.component
-        public metisConversationService: MetisConversationService, // instance from course-conversations.component
-        private formBuilder: FormBuilder,
-        public cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit() {
         this.subscribeToMetis();

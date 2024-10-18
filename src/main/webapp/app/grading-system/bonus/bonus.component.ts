@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
@@ -30,6 +30,13 @@ export enum BonusStrategyDiscreteness {
     styleUrls: ['./bonus.component.scss'],
 })
 export class BonusComponent implements OnInit {
+    private bonusService = inject(BonusService);
+    private gradingSystemService = inject(GradingSystemService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
+
     readonly CALCULATION_PLUS = 1;
     readonly CALCULATION_MINUS = -1;
 
@@ -97,15 +104,6 @@ export class BonusComponent implements OnInit {
         sortingOrder: SortingOrder.DESCENDING,
         sortedColumn: 'ID',
     };
-
-    constructor(
-        private bonusService: BonusService,
-        private gradingSystemService: GradingSystemService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private translateService: TranslateService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

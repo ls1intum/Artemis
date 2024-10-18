@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -21,6 +21,13 @@ import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.ac
     styleUrls: ['./lecture-update.component.scss'],
 })
 export class LectureUpdateComponent implements OnInit {
+    protected alertService = inject(AlertService);
+    protected lectureService = inject(LectureService);
+    protected courseService = inject(CourseManagementService);
+    protected activatedRoute = inject(ActivatedRoute);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private router = inject(Router);
+
     readonly documentationType: DocumentationType = 'Lecture';
 
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
@@ -52,15 +59,6 @@ export class LectureUpdateComponent implements OnInit {
 
     toggleModeFunction = () => this.toggleWizardMode();
     saveLectureFunction = () => this.save();
-
-    constructor(
-        protected alertService: AlertService,
-        protected lectureService: LectureService,
-        protected courseService: CourseManagementService,
-        protected activatedRoute: ActivatedRoute,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private router: Router,
-    ) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component

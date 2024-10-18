@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { NgxLearningPathNode, getIcon } from 'app/entities/competency/learning-path.model';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
@@ -10,6 +10,9 @@ import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './learning-path.component.html',
 })
 export class LearningPathComponent implements OnInit {
+    private learningPathService = inject(LearningPathService);
+    private learningPathStorageService = inject(LearningPathStorageService);
+
     @Input() learningPathId: number;
     @Input() courseId: number;
     @Output() nodeClicked: EventEmitter<NgxLearningPathNode> = new EventEmitter();
@@ -22,11 +25,6 @@ export class LearningPathComponent implements OnInit {
     faChevronDown = faChevronDown;
 
     protected readonly getIcon = getIcon;
-
-    constructor(
-        private learningPathService: LearningPathService,
-        private learningPathStorageService: LearningPathStorageService,
-    ) {}
 
     ngOnInit() {
         this.loadData();

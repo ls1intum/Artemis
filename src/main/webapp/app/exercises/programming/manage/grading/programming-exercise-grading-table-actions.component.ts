@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { faCopy } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -16,6 +16,8 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
     templateUrl: './programming-exercise-grading-table-actions.component.html',
 })
 export class ProgrammingExerciseGradingTableActionsComponent {
+    private modalService = inject(NgbModal);
+
     readonly faCopy = faCopy;
     @Input() exercise: ProgrammingExercise;
     @Input() hasUnsavedChanges: boolean;
@@ -25,8 +27,6 @@ export class ProgrammingExerciseGradingTableActionsComponent {
     @Output() onSave = new EventEmitter();
     @Output() onReset = new EventEmitter();
     @Output() onCategoryImport = new EventEmitter<number>();
-
-    constructor(private modalService: NgbModal) {}
 
     openImportModal() {
         const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });

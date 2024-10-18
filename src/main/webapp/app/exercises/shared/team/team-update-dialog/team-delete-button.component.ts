@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
 import { Team } from 'app/entities/team.model';
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -26,6 +26,9 @@ import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
     `,
 })
 export class TeamDeleteButtonComponent implements OnDestroy {
+    private alertService = inject(AlertService);
+    private teamService = inject(TeamService);
+
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
@@ -40,11 +43,6 @@ export class TeamDeleteButtonComponent implements OnDestroy {
 
     // Icons
     faTrashAlt = faTrashAlt;
-
-    constructor(
-        private alertService: AlertService,
-        private teamService: TeamService,
-    ) {}
 
     /**
      * Life cycle hook to indicate component creation is done

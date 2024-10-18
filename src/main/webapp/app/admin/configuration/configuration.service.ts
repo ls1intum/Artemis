@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -7,7 +7,7 @@ import { Bean, Beans, ConfigProps, Env, PropertySource } from './configuration.m
 
 @Injectable({ providedIn: 'root' })
 export class ConfigurationService {
-    constructor(private http: HttpClient) {}
+    private http = inject(HttpClient);
 
     getBeans(): Observable<Bean[]> {
         return this.http.get<ConfigProps>('management/configprops').pipe(

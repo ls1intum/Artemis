@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Observable, Subscription, tap } from 'rxjs';
@@ -17,6 +17,11 @@ import { AlertService, AlertType } from 'app/core/util/alert.service';
     styleUrls: ['../user-settings.scss'],
 })
 export class AccountInformationComponent implements OnInit {
+    private accountService = inject(AccountService);
+    private modalService = inject(NgbModal);
+    private userSettingsService = inject(UserSettingsService);
+    private alertService = inject(AlertService);
+
     currentUser?: User;
     croppedImage?: string;
     private authStateSubscription: Subscription;
@@ -26,13 +31,6 @@ export class AccountInformationComponent implements OnInit {
     faPen = faPencil;
     faTrash = faTrash;
     faPlus = faPlus;
-
-    constructor(
-        private accountService: AccountService,
-        private modalService: NgbModal,
-        private userSettingsService: UserSettingsService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.authStateSubscription = this.accountService

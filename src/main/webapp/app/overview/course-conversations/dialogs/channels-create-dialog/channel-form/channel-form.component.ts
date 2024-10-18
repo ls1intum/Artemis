@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 
@@ -18,6 +18,8 @@ export const channelRegex = new RegExp('^[a-z0-9-]{1}[a-z0-9-]{0,30}$');
     templateUrl: './channel-form.component.html',
 })
 export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
+    private fb = inject(FormBuilder);
+
     private ngUnsubscribe = new Subject<void>();
 
     formData: ChannelFormData = {
@@ -31,8 +33,6 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
     @Output() isAnnouncementChannelChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
 
     form: FormGroup;
-
-    constructor(private fb: FormBuilder) {}
 
     get nameControl() {
         return this.form.get('name');

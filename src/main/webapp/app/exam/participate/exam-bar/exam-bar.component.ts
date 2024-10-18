@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisExamTimerModule } from 'app/exam/participate/timer/exam-timer.module';
@@ -18,6 +18,8 @@ import { StudentExam } from 'app/entities/student-exam.model';
     styleUrl: './exam-bar.component.scss',
 })
 export class ExamBarComponent implements AfterViewInit, OnInit {
+    private elementRef = inject(ElementRef);
+
     @Output() onExamHandInEarly = new EventEmitter<void>();
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() heightChange = new EventEmitter<number>();
@@ -40,8 +42,6 @@ export class ExamBarComponent implements AfterViewInit, OnInit {
     private previousHeight: number;
     examTitle: string;
     exercises: Exercise[] = [];
-
-    constructor(private elementRef: ElementRef) {}
 
     ngOnInit(): void {
         this.examTitle = this.exam.title ?? '';

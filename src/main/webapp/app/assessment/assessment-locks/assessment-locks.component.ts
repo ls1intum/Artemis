@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,6 +20,15 @@ import { combineLatest } from 'rxjs';
     templateUrl: './assessment-locks.component.html',
 })
 export class AssessmentLocksComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private modelingAssessmentService = inject(ModelingAssessmentService);
+    private textAssessmentService = inject(TextAssessmentService);
+    private fileUploadAssessmentService = inject(FileUploadAssessmentService);
+    private programmingAssessmentService = inject(ProgrammingAssessmentManualResultService);
+    private courseService = inject(CourseManagementService);
+    private examManagementService = inject(ExamManagementService);
+
     readonly ExerciseType = ExerciseType;
 
     course: Course;
@@ -40,17 +49,9 @@ export class AssessmentLocksComponent implements OnInit {
     faBan = faBan;
     faFolderOpen = faFolderOpen;
 
-    constructor(
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private modelingAssessmentService: ModelingAssessmentService,
-        private textAssessmentService: TextAssessmentService,
-        private fileUploadAssessmentService: FileUploadAssessmentService,
-        private programmingAssessmentService: ProgrammingAssessmentManualResultService,
-        translateService: TranslateService,
-        private courseService: CourseManagementService,
-        private examManagementService: ExamManagementService,
-    ) {
+    constructor() {
+        const translateService = inject(TranslateService);
+
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 

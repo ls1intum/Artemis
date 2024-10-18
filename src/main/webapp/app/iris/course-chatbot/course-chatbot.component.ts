@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
 
 @Component({
@@ -7,9 +7,9 @@ import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
     styleUrl: './course-chatbot.component.scss',
 })
 export class CourseChatbotComponent implements OnChanges {
-    @Input() courseId?: number;
+    chatService = inject(IrisChatService);
 
-    constructor(public chatService: IrisChatService) {}
+    @Input() courseId?: number;
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.courseId) {

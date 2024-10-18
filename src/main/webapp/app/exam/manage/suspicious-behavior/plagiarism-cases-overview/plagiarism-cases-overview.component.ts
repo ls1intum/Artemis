@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Exercise, getExerciseUrlSegment } from 'app/entities/exercise.model';
 import { Router } from '@angular/router';
 
@@ -7,13 +7,14 @@ import { Router } from '@angular/router';
     templateUrl: './plagiarism-cases-overview.component.html',
 })
 export class PlagiarismCasesOverviewComponent {
+    private router = inject(Router);
+
     @Input() exercises: Exercise[];
     @Input() plagiarismCasesPerExercise: Map<Exercise, number>;
     @Input() plagiarismResultsPerExercise: Map<Exercise, number> = new Map<Exercise, number>();
     @Input() anyPlagiarismCases = false;
     @Input() courseId: number;
     @Input() examId: number;
-    constructor(private router: Router) {}
 
     goToPlagiarismDetection(exercise: Exercise) {
         const exerciseGroupId = exercise.exerciseGroup?.id;

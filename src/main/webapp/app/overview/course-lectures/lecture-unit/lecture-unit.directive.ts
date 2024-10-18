@@ -1,5 +1,4 @@
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
-import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { effect, input, output } from '@angular/core';
@@ -17,8 +16,8 @@ export class LectureUnitDirective<T extends LectureUnit> extends AbstractScience
 
     readonly isPresentationMode = input<boolean>(false);
 
-    constructor(scienceService: ScienceService) {
-        super(scienceService, ScienceEventType.LECTURE__OPEN_UNIT);
+    constructor() {
+        super(ScienceEventType.LECTURE__OPEN_UNIT);
 
         effect(() => {
             this.setResourceId(this.lectureUnit().id!);

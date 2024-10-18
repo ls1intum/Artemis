@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -18,19 +18,17 @@ import { loadGradingKeyUrlParams } from 'app/grading-system/grading-key-overview
     styleUrls: ['../grading-key-overview.scss'],
 })
 export class GradingKeyTableComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private gradingSystemService = inject(GradingSystemService);
+    private bonusService = inject(BonusService);
+    private scoresStorageService = inject(ScoresStorageService);
+
     readonly faChevronLeft = faChevronLeft;
 
     readonly GradeEditMode = GradeEditMode;
 
     @Input() studentGradeOrBonusPointsOrGradeBonus?: string;
     @Input() forBonus?: boolean;
-
-    constructor(
-        private route: ActivatedRoute,
-        private gradingSystemService: GradingSystemService,
-        private bonusService: BonusService,
-        private scoresStorageService: ScoresStorageService,
-    ) {}
 
     plagiarismGrade: string;
     noParticipationGrade: string;

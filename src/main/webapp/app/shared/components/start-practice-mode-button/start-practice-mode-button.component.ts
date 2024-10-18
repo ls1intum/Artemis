@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { finalize } from 'rxjs/operators';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
@@ -16,6 +16,10 @@ import { InitializationState } from 'app/entities/participation/participation.mo
     styleUrls: ['./start-practice-mode-button.component.scss'],
 })
 export class StartPracticeModeButtonComponent implements OnInit {
+    private courseExerciseService = inject(CourseExerciseService);
+    private alertService = inject(AlertService);
+    private participationService = inject(ParticipationService);
+
     readonly FeatureToggle = FeatureToggle;
 
     @Input()
@@ -30,12 +34,6 @@ export class StartPracticeModeButtonComponent implements OnInit {
 
     // Icons
     faRedo = faRedo;
-
-    constructor(
-        private courseExerciseService: CourseExerciseService,
-        private alertService: AlertService,
-        private participationService: ParticipationService,
-    ) {}
 
     ngOnInit() {
         this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations ?? [], false);

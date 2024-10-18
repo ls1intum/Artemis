@@ -11,6 +11,7 @@ import {
     Signal,
     ViewChild,
     computed,
+    inject,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
@@ -86,6 +87,10 @@ const BORDER_HEIGHT_OFFSET = 2;
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
+    private alertService = inject(AlertService);
+    private fileUploaderService = inject(FileUploaderService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
@@ -245,11 +250,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly TAB_PREVIEW = MarkdownEditorMonacoComponent.TAB_PREVIEW;
     protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
 
-    constructor(
-        private alertService: AlertService,
-        private fileUploaderService: FileUploaderService,
-        private artemisMarkdown: ArtemisMarkdownService,
-    ) {
+    constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
     }
 

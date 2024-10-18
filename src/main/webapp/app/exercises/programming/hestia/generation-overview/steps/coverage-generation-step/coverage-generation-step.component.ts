@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -10,6 +10,9 @@ import { AlertService } from 'app/core/util/alert.service';
     styleUrls: ['../../code-hint-generation-overview/code-hint-generation-overview.component.scss'],
 })
 export class CoverageGenerationStepComponent implements OnInit {
+    private exerciseService = inject(ProgrammingExerciseService);
+    private alertService = inject(AlertService);
+
     @Input()
     exercise: ProgrammingExercise;
 
@@ -19,11 +22,6 @@ export class CoverageGenerationStepComponent implements OnInit {
     isLoading = false;
     coverageReport?: CoverageReport;
     fileContentByPath = new Map<string, string>();
-
-    constructor(
-        private exerciseService: ProgrammingExerciseService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

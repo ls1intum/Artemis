@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute } from '@angular/router';
@@ -25,6 +25,14 @@ import dayjs from 'dayjs/esm';
     providers: [MetisService],
 })
 export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {
+    protected metisService = inject(MetisService);
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private themeService = inject(ThemeService);
+    private accountService = inject(AccountService);
+
     courseId: number;
     plagiarismCaseId: number;
     plagiarismCase: PlagiarismCase;
@@ -46,16 +54,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     readonly pageType = PageType.PLAGIARISM_CASE_INSTRUCTOR;
     private postsSubscription: Subscription;
     posts: Post[];
-
-    constructor(
-        protected metisService: MetisService,
-        private plagiarismCasesService: PlagiarismCasesService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-        private themeService: ThemeService,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));

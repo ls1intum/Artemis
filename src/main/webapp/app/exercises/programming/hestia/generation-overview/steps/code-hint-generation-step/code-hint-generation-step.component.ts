@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -12,6 +12,10 @@ import { AlertService } from 'app/core/util/alert.service';
     styleUrls: ['../../code-hint-generation-overview/code-hint-generation-overview.component.scss'],
 })
 export class CodeHintGenerationStepComponent implements OnInit {
+    private exerciseService = inject(ProgrammingExerciseService);
+    private codeHintService = inject(CodeHintService);
+    private alertService = inject(AlertService);
+
     @Input()
     exercise: ProgrammingExercise;
 
@@ -22,12 +26,6 @@ export class CodeHintGenerationStepComponent implements OnInit {
     codeHints?: CodeHint[];
 
     faWrench = faWrench;
-
-    constructor(
-        private exerciseService: ProgrammingExerciseService,
-        private codeHintService: CodeHintService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.isLoading = true;

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -11,18 +11,16 @@ import { AlertService } from 'app/core/util/alert.service';
     templateUrl: './course-registration-button.component.html',
 })
 export class CourseRegistrationButtonComponent implements OnInit {
+    private accountService = inject(AccountService);
+    private courseService = inject(CourseManagementService);
+    private profileService = inject(ProfileService);
+    private alertService = inject(AlertService);
+
     @Input() course: Course;
     @Output() onRegistration = new EventEmitter<void>();
 
     userIsAllowedToRegister = false;
     loading = false;
-
-    constructor(
-        private accountService: AccountService,
-        private courseService: CourseManagementService,
-        private profileService: ProfileService,
-        private alertService: AlertService,
-    ) {}
 
     loadUserIsAllowedToRegister() {
         this.loading = true;

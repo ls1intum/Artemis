@@ -1,4 +1,4 @@
-import { Directive, ElementRef, HostListener, Input, OnInit, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, HostListener, Input, OnInit, Renderer2, inject } from '@angular/core';
 import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programming/manage/reset/programming-exercise-reset-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -7,13 +7,11 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
     selector: '[jhiProgrammingExerciseResetButton]',
 })
 export class ProgrammingExerciseResetButtonDirective implements OnInit {
-    @Input() programmingExercise: ProgrammingExercise;
+    private modalService = inject(NgbModal);
+    private renderer = inject(Renderer2);
+    private elementRef = inject(ElementRef);
 
-    constructor(
-        private modalService: NgbModal,
-        private renderer: Renderer2,
-        private elementRef: ElementRef,
-    ) {}
+    @Input() programmingExercise: ProgrammingExercise;
 
     ngOnInit() {
         this.renderer.addClass(this.elementRef.nativeElement, 'btn');

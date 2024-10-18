@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 
 @Component({
@@ -7,11 +7,11 @@ import { StringCountService } from 'app/exercises/text/participate/string-count.
     providers: [],
 })
 export class TextareaCounterComponent {
+    private stringCountService = inject(StringCountService);
+
     @Input() maxLength: number;
     @Input() content?: string;
     @Input() visible?: boolean;
-
-    constructor(private stringCountService: StringCountService) {}
 
     get characterCount(): number {
         return this.stringCountService.countCharacters(this.content);

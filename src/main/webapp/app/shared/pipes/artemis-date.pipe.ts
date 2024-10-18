@@ -1,4 +1,4 @@
-import { OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -27,6 +27,8 @@ export type DateFormat = 'short' | 'long' | 'short-date' | 'long-date' | 'time';
     pure: false,
 })
 export class ArtemisDatePipe implements PipeTransform, OnDestroy {
+    private translateService = inject(TranslateService);
+
     private dateTime: dayjs.Dayjs;
     private locale: string;
     private localizedDateTime: string;
@@ -37,8 +39,6 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
     private showSeconds = false;
     private showWeekday = false;
     private static mobileDeviceSize = 768;
-
-    constructor(private translateService: TranslateService) {}
 
     /**
      * Format a given dateTime to a localized date time string based on the current language setting.

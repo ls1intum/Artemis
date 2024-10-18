@@ -1,4 +1,4 @@
-import { Component, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, inject } from '@angular/core';
 import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ValidationReason } from 'app/entities/exercise.model';
@@ -9,12 +9,12 @@ import { ValidationReason } from 'app/entities/exercise.model';
     styleUrls: ['./quiz-confirm-import-invalid-questions-modal.scss'],
 })
 export class QuizConfirmImportInvalidQuestionsModalComponent {
+    activeModal = inject(NgbActiveModal);
+
     // Icons
     faBan = faBan;
     faTimes = faTimes;
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(public activeModal: NgbActiveModal) {}
 
     invalidFlaggedQuestions: ValidationReason[];
     shouldImport: EventEmitter<void> = new EventEmitter<void>();

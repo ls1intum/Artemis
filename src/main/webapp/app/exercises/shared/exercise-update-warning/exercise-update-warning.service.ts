@@ -1,4 +1,4 @@
-import { Component, Injectable } from '@angular/core';
+import { Component, Injectable, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/entities/exercise.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
@@ -7,6 +7,8 @@ import dayjs from 'dayjs/esm';
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseUpdateWarningService {
+    private modalService = inject(NgbModal);
+
     private ngbModalRef: NgbModalRef;
 
     instructionDeleted: boolean;
@@ -16,8 +18,6 @@ export class ExerciseUpdateWarningService {
     isSaving: boolean;
 
     isExamMode: boolean;
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Open the modal with the given content for the given exercise.

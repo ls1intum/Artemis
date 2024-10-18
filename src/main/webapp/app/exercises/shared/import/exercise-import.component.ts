@@ -1,6 +1,4 @@
-import { Component, Injector, Input, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, Injector, Input, OnInit, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { FileUploadExercisePagingService } from 'app/exercises/file-upload/manage/file-upload-exercise-paging.service';
@@ -11,7 +9,6 @@ import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exerci
 import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-paging.service';
 import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
 import { ImportComponent } from 'app/shared/import/import.component';
-import { SortService } from 'app/shared/service/sort.service';
 
 const DEFAULT_SORT_COLUMN = 'ID';
 
@@ -20,6 +17,8 @@ const DEFAULT_SORT_COLUMN = 'ID';
     templateUrl: './exercise-import.component.html',
 })
 export class ExerciseImportComponent extends ImportComponent<Exercise> implements OnInit {
+    private injector = inject(Injector);
+
     readonly ExerciseType = ExerciseType;
 
     @Input() exerciseType?: ExerciseType;
@@ -35,18 +34,6 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     isExamFilter = true;
 
     titleKey: string;
-
-    constructor(
-        router: Router,
-        sortService: SortService,
-        activeModal: NgbActiveModal,
-        private injector: Injector,
-    ) {
-        // The exercise import component does not know yet which paging service to use
-        // This gets determined based on the exercise type, which is not set when invoking the constructor
-        // Therefore we temporaily use this empty paging service which directly gets overwritten in ngOnInit().
-        super(router, sortService, activeModal, undefined);
-    }
 
     ngOnInit(): void {
         if (!this.exerciseType) {

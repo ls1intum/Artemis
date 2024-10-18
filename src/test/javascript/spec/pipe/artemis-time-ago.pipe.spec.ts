@@ -2,7 +2,7 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { ChangeDetectorRef, NgZone } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import dayjs from 'dayjs/esm';
 
 describe('ArtemisTimeAgoPipe', () => {
@@ -21,8 +21,7 @@ describe('ArtemisTimeAgoPipe', () => {
 
                 translateService = TestBed.inject(TranslateService);
                 translateService.use('en');
-                const ngZone = TestBed.inject(NgZone);
-                pipe = new ArtemisTimeAgoPipe(cdRef, ngZone, translateService);
+                pipe = new ArtemisTimeAgoPipe();
             });
     });
 

@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 export class ScoresDTO {
@@ -12,9 +12,9 @@ export class ScoresDTO {
 
 @Injectable({ providedIn: 'root' })
 export class ParticipantScoresService {
-    public resourceUrl = 'api';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    public resourceUrl = 'api';
 
     findCourseScores(courseId: number): Observable<HttpResponse<ScoresDTO[]>> {
         return this.http.get<ScoresDTO[]>(`${this.resourceUrl}/courses/${courseId}/course-scores`, {

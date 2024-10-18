@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -25,6 +25,11 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
     styleUrls: ['./student-exam-timeline.component.scss'],
 })
 export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private submissionService = inject(SubmissionService);
+    private submissionVersionService = inject(SubmissionVersionService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+
     readonly ExerciseType = ExerciseType;
     readonly SubmissionVersion = SubmissionVersion;
 
@@ -51,13 +56,6 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     @ViewChild('examNavigationBar') examNavigationBarComponent: ExamNavigationBarComponent;
 
     private activatedRouteSubscription: Subscription;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private submissionService: SubmissionService,
-        private submissionVersionService: SubmissionVersionService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-    ) {}
 
     ngOnInit(): void {
         this.activatedRouteSubscription = this.activatedRoute.data.subscribe(({ studentExam: studentExamWithGrade }) => {

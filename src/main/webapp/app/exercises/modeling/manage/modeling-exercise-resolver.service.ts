@@ -5,7 +5,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { of } from 'rxjs';
@@ -13,11 +13,9 @@ import { UMLDiagramType } from '@ls1intum/apollon';
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
-    constructor(
-        private modelingExerciseService: ModelingExerciseService,
-        private courseService: CourseManagementService,
-        private exerciseGroupService: ExerciseGroupService,
-    ) {}
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private courseService = inject(CourseManagementService);
+    private exerciseGroupService = inject(ExerciseGroupService);
 
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, CourseGroup } from 'app/entities/course.model';
@@ -42,6 +42,11 @@ export const titleRegex = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$');
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy {
+    private fb = inject(FormBuilder);
+    private courseManagementService = inject(CourseManagementService);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+
     @Input()
     formData: TutorialGroupFormData = {
         title: undefined,
@@ -88,13 +93,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     faSave = faSave;
 
     ngUnsubscribe = new Subject<void>();
-
-    constructor(
-        private fb: FormBuilder,
-        private courseManagementService: CourseManagementService,
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-    ) {}
 
     get titleControl() {
         return this.form.get('title');

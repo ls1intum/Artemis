@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import type { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
@@ -18,6 +18,8 @@ import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-
     imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule, ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent],
 })
 export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implements OnInit, OnChanges, OnDestroy {
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
     @Input() programmingLanguage?: ProgrammingLanguage;
@@ -26,8 +28,6 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     @Input() isCreateOrEdit = false;
     @Input() isEditMode = false;
     @Output() submissionBuildPlanEvent = new EventEmitter<BuildPlanCheckoutDirectoriesDTO>();
-
-    constructor(private programmingExerciseService: ProgrammingExerciseService) {}
 
     checkoutDirectorySubscription?: Subscription;
 

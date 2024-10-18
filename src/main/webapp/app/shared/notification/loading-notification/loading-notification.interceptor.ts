@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -6,9 +6,9 @@ import { LoadingNotificationService } from 'app/shared/notification/loading-noti
 
 @Injectable()
 export class LoadingNotificationInterceptor implements HttpInterceptor {
-    activeRequests = 0;
+    private loadingNotificationService = inject(LoadingNotificationService);
 
-    constructor(private loadingNotificationService: LoadingNotificationService) {}
+    activeRequests = 0;
 
     /**
      * Identifies and handles a given HTTP request. If any HTTP request is sent we enable the loading screen and count up the active requests.

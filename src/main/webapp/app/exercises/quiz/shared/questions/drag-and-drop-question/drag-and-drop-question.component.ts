@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
@@ -38,6 +38,9 @@ enum MappingResult {
     encapsulation: ViewEncapsulation.None,
 })
 export class DragAndDropQuestionComponent implements OnChanges, OnInit {
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
+
     /** needed to trigger a manual reload of the drag and drop background picture */
     @ViewChild(SecuredImageComponent, { static: false })
     secureImageComponent: SecuredImageComponent;
@@ -99,11 +102,6 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
     faExclamationCircle = faExclamationCircle;
-
-    constructor(
-        private artemisMarkdown: ArtemisMarkdownService,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-    ) {}
 
     ngOnInit(): void {
         this.evaluateDropLocations();

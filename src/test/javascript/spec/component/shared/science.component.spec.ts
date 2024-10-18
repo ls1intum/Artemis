@@ -9,8 +9,8 @@ import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({ template: '' })
 class ScienceComponent extends AbstractScienceComponent {
-    constructor(scienceService: ScienceService) {
-        super(scienceService, ScienceEventType.LECTURE__OPEN);
+    constructor() {
+        super(ScienceEventType.LECTURE__OPEN);
         super.logEvent();
     }
 }

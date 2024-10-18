@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
@@ -30,37 +30,32 @@ import { getInitialsFromString } from 'app/utils/text.utils';
     styleUrls: ['./conversation-member-row.component.scss'],
 })
 export class ConversationMemberRowComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private modalService = inject(NgbModal);
+    private translateService = inject(TranslateService);
+    private channelService = inject(ChannelService);
+    private groupChatService = inject(GroupChatService);
+    private alertService = inject(AlertService);
+
     private ngUnsubscribe = new Subject<void>();
 
-    @Input()
-    activeConversation: ConversationDTO;
+    @Input() activeConversation: ConversationDTO;
+    @Input() course: Course;
+    @Input() conversationMember: ConversationUserDTO;
+    @Output() changePerformed: EventEmitter<void> = new EventEmitter<void>();
 
-    @Input()
-    course: Course;
-
-    @Output()
-    changePerformed: EventEmitter<void> = new EventEmitter<void>();
-
-    @Input()
-    conversationMember: ConversationUserDTO;
+    @HostBinding('class.active') isCurrentUser = false;
 
     idOfLoggedInUser: number;
-
-    @HostBinding('class.active')
-    isCurrentUser = false;
-
     isCreator = false;
-
     canBeRemovedFromConversation = false;
-
     canBeGrantedChannelModeratorRole = false;
-
     canBeRevokedChannelModeratorRole = false;
-
     userLabel: string;
     userImageUrl: string | undefined;
     userDefaultPictureHue: string;
     userInitials: string;
+
     // icons
     userIcon: IconProp = faUser;
     userTooltip = '';
@@ -73,14 +68,6 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     canGrantChannelModeratorRole = canGrantChannelModeratorRole;
     canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
     canRemoveUsersFromConversation = canRemoveUsersFromConversation;
-    constructor(
-        private accountService: AccountService,
-        private modalService: NgbModal,
-        private translateService: TranslateService,
-        private channelService: ChannelService,
-        private groupChatService: GroupChatService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         if (this.conversationMember && this.activeConversation) {

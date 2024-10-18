@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -22,6 +22,10 @@ export const USER_DISPLAY_RELEVANT_EVENTS_REOPEN = [ExamLiveEventType.EXAM_WIDE_
     encapsulation: ViewEncapsulation.None,
 })
 export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private liveEventsService = inject(ExamParticipationLiveEventsService);
+
     private modalRef?: NgbModalRef;
     private liveEventsSubscription?: Subscription;
     private allEventsSubscription?: Subscription;
@@ -30,12 +34,6 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
 
     // Icons
     faBullhorn = faBullhorn;
-
-    constructor(
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private liveEventsService: ExamParticipationLiveEventsService,
-    ) {}
 
     ngOnInit(): void {
         this.allEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS_REOPEN).subscribe((events: ExamLiveEvent[]) => {

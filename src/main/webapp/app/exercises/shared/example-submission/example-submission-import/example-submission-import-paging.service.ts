@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Submission } from 'app/entities/submission.model';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
@@ -10,11 +10,9 @@ type EntityResponseType = SearchResult<Submission>;
 
 @Injectable({ providedIn: 'root' })
 export class ExampleSubmissionImportPagingService extends PagingService<Submission> {
-    private static readonly RESOURCE_URL = 'api/exercises';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {
-        super();
-    }
+    private static readonly RESOURCE_URL = 'api/exercises';
 
     /**
      * Gets all submissions with exerciseId

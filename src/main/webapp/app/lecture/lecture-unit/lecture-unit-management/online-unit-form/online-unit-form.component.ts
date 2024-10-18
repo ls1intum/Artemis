@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { map } from 'rxjs';
@@ -33,6 +33,9 @@ function urlValidator(control: AbstractControl) {
     templateUrl: './online-unit-form.component.html',
 })
 export class OnlineUnitFormComponent implements OnInit, OnChanges {
+    private fb = inject(FormBuilder);
+    private onlineUnitService = inject(OnlineUnitService);
+
     @Input()
     formData: OnlineUnitFormData;
     @Input()
@@ -53,11 +56,6 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
 
     // Icons
     faArrowLeft = faArrowLeft;
-
-    constructor(
-        private fb: FormBuilder,
-        private onlineUnitService: OnlineUnitService,
-    ) {}
 
     get nameControl() {
         return this.form.get('name');

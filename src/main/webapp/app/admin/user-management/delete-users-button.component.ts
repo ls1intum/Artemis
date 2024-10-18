@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, WritableSignal, signal } from '@angular/core';
+import { Component, EventEmitter, Output, WritableSignal, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -22,6 +22,10 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
 })
 export class DeleteUsersButtonComponent {
+    private adminUserService = inject(AdminUserService);
+    private alertService = inject(AlertService);
+    private deleteDialogService = inject(DeleteDialogService);
+
     @Output() deletionCompleted = new EventEmitter<{ [key: string]: boolean }>();
 
     users: WritableSignal<string[] | undefined> = signal(undefined);
@@ -32,12 +36,6 @@ export class DeleteUsersButtonComponent {
     // Boilerplate code for use in the template
     faEraser = faEraser;
     protected readonly ButtonType = ButtonType;
-
-    constructor(
-        private adminUserService: AdminUserService,
-        private alertService: AlertService,
-        private deleteDialogService: DeleteDialogService,
-    ) {}
 
     /**
      * Load the list of users to user confirmation and delete.

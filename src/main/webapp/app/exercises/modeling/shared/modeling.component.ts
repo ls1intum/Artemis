@@ -20,8 +20,6 @@ export abstract class ModelingComponent {
     faGripLines = faGripLines;
     faGripLinesVertical = faGripLinesVertical;
 
-    protected constructor() {}
-
     protected setupInteract(): void {
         if (this.resizeOptions) {
             interact('.resizable')

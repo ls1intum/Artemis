@@ -1,7 +1,7 @@
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { LectureService } from './lecture.service';
@@ -29,6 +29,15 @@ export enum LectureDateFilter {
     templateUrl: './lecture.component.html',
 })
 export class LectureComponent implements OnInit, OnDestroy {
+    protected lectureService = inject(LectureService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private sortService = inject(SortService);
+    private profileService = inject(ProfileService);
+    private irisSettingsService = inject(IrisSettingsService);
+
     lectures: Lecture[];
     filteredLectures: Lecture[];
     courseId: number;
@@ -59,16 +68,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     private profileInfoSubscription: Subscription;
 
-    constructor(
-        protected lectureService: LectureService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private sortService: SortService,
-        private profileService: ProfileService,
-        private irisSettingsService: IrisSettingsService,
-    ) {
+    constructor() {
         this.predicate = 'id';
         this.ascending = true;
     }

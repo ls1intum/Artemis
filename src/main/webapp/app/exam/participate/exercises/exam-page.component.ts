@@ -1,8 +1,8 @@
-import { ChangeDetectorRef, Directive } from '@angular/core';
+import { ChangeDetectorRef, Directive, inject } from '@angular/core';
 
 @Directive()
 export abstract class ExamPageComponent {
-    protected constructor(protected changeDetectorReference: ChangeDetectorRef) {}
+    protected changeDetectorReference = inject(ChangeDetectorRef);
 
     /**
      * Should be called when the component becomes active / visible. It activates Angular's change detection for this component.

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismAndTutorEffortDirective } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
@@ -21,6 +21,8 @@ interface SimilarityRangeComparisonStateDTO {
     templateUrl: './plagiarism-run-details.component.html',
 })
 export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirective implements OnChanges {
+    private inspectorService = inject(PlagiarismInspectorService);
+
     /**
      * Result of the automated plagiarism detection
      */
@@ -37,7 +39,7 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
 
     readonly round = round;
 
-    constructor(private inspectorService: PlagiarismInspectorService) {
+    constructor() {
         super();
         /**
          * The labels of the chart are fixed and represent the 10 intervals we group the similarities into.

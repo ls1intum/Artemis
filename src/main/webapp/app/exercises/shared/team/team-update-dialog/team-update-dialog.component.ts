@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { AbstractControl, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -23,6 +23,10 @@ export type StudentTeamConflict = { studentLogin: string; teamId: string };
     encapsulation: ViewEncapsulation.None,
 })
 export class TeamUpdateDialogComponent implements OnInit {
+    private participationService = inject(ParticipationService);
+    private teamService = inject(TeamService);
+    private activeModal = inject(NgbActiveModal);
+
     @ViewChild('editForm', { static: false }) editForm: NgForm;
 
     @Input() team: Team;
@@ -54,12 +58,6 @@ export class TeamUpdateDialogComponent implements OnInit {
     faSpinner = faSpinner;
     faExclamationTriangle = faExclamationTriangle;
     faTrashAlt = faTrashAlt;
-
-    constructor(
-        private participationService: ParticipationService,
-        private teamService: TeamService,
-        private activeModal: NgbActiveModal,
-    ) {}
 
     /**
      * Life cycle hook to indicate component creation is done

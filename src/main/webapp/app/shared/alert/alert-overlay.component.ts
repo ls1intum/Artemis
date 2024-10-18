@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Alert, AlertService } from 'app/core/util/alert.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { animate, group, style, transition, trigger } from '@angular/animations';
@@ -46,9 +46,9 @@ import { animate, group, style, transition, trigger } from '@angular/animations'
     ],
 })
 export class AlertOverlayComponent implements OnInit, OnDestroy {
-    alerts: Alert[] = [];
+    alertService = inject(AlertService);
 
-    constructor(public alertService: AlertService) {}
+    alerts: Alert[] = [];
 
     times = faTimes;
 

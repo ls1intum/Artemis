@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
@@ -36,6 +36,13 @@ interface CsvUser {
     encapsulation: ViewEncapsulation.None,
 })
 export class UsersImportDialogComponent implements OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+    private examManagementService = inject(ExamManagementService);
+    private courseManagementService = inject(CourseManagementService);
+    private adminUserService = inject(AdminUserService);
+    private tutorialGroupService = inject(TutorialGroupsService);
+
     readonly ActionType = ActionType;
 
     @ViewChild('importForm', { static: false }) importForm: NgForm;
@@ -67,15 +74,6 @@ export class UsersImportDialogComponent implements OnDestroy {
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
     faArrowRight = faArrowRight;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-        private examManagementService: ExamManagementService,
-        private courseManagementService: CourseManagementService,
-        private adminUserService: AdminUserService,
-        private tutorialGroupService: TutorialGroupsService,
-    ) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();

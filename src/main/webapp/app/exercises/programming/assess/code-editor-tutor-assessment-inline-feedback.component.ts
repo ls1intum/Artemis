@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { cloneDeep } from 'lodash-es';
@@ -14,6 +14,9 @@ import { Subject } from 'rxjs';
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
+    private translateService = inject(TranslateService);
+    structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+
     @Input()
     get feedback(): Feedback {
         return this._feedback;
@@ -66,11 +69,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     faTrashAlt = faTrashAlt;
     faExclamationTriangle = faExclamationTriangle;
 
-    constructor(
-        private translateService: TranslateService,
-        public structuredGradingCriterionService: StructuredGradingCriterionService,
-        elementRef: ElementRef,
-    ) {
+    constructor() {
+        const elementRef = inject(ElementRef);
+
         this.elementRef = elementRef;
     }
 

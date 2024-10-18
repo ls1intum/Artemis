@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -12,6 +12,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
     styleUrls: ['../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseDifficultyComponent implements OnInit {
+    private profileService = inject(ProfileService);
+
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     @ViewChild(TeamConfigFormGroupComponent) teamConfigComponent: TeamConfigFormGroupComponent;
@@ -21,8 +23,6 @@ export class ProgrammingExerciseDifficultyComponent implements OnInit {
     protected readonly ProjectType = ProjectType;
 
     theiaEnabled: boolean = false;
-
-    constructor(private profileService: ProfileService) {}
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

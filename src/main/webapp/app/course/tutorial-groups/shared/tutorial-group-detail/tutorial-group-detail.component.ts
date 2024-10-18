@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
+import { ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { SafeHtml } from '@angular/platform-browser';
@@ -18,6 +18,11 @@ import { getBackgroundColorHue } from 'app/utils/color.utils';
     styleUrls: ['./tutorial-group-detail.component.scss'],
 })
 export class TutorialGroupDetailComponent implements OnChanges {
+    private artemisMarkdownService = inject(ArtemisMarkdownService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+    private translateService = inject(TranslateService);
+    private sortService = inject(SortService);
+
     @ContentChild(TemplateRef, { static: true }) header: TemplateRef<any>;
 
     @Input()
@@ -47,13 +52,6 @@ export class TutorialGroupDetailComponent implements OnChanges {
     readonly faQuestionCircle = faQuestionCircle;
     readonly faCircle = faCircle;
     readonly faCircleXmark = faCircleXmark;
-
-    constructor(
-        private artemisMarkdownService: ArtemisMarkdownService,
-        private changeDetectorRef: ChangeDetectorRef,
-        private translateService: TranslateService,
-        private sortService: SortService,
-    ) {}
 
     ngOnChanges(changes: SimpleChanges) {
         for (const propName in changes) {

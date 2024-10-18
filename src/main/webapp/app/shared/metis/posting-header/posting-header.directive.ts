@@ -1,5 +1,5 @@
 import { Posting } from 'app/entities/metis/posting.model';
-import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UserRole } from 'app/shared/metis/metis.util';
@@ -13,6 +13,9 @@ import { getInitialsFromString } from 'app/utils/text.utils';
 
 @Directive()
 export abstract class PostingHeaderDirective<T extends Posting> implements OnInit {
+    protected metisService = inject(MetisService);
+    protected accountService = inject(AccountService);
+
     @Input() posting: T;
     @Input() isCommunicationPage: boolean;
 
@@ -29,11 +32,6 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     userProfilePictureBackgroundColor: string;
     userProfilePictureInitials: string;
     currentUser?: User;
-
-    protected constructor(
-        protected metisService: MetisService,
-        protected accountService: AccountService,
-    ) {}
 
     /**
      * on initialization: determines if user is at least tutor in the course and if user is author of posting by invoking the metis service,

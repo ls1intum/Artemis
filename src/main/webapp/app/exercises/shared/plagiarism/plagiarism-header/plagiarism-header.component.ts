@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -15,17 +15,15 @@ import { Exercise, getCourseId } from 'app/entities/exercise.model';
     templateUrl: './plagiarism-header.component.html',
 })
 export class PlagiarismHeaderComponent {
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private modalService = inject(NgbModal);
+
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
 
     readonly plagiarismStatus = PlagiarismStatus;
     isLoading = false;
-
-    constructor(
-        private plagiarismCasesService: PlagiarismCasesService,
-        private modalService: NgbModal,
-    ) {}
 
     /**
      * Set the status of the currently selected comparison to CONFIRMED.
