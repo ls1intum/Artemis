@@ -400,6 +400,18 @@ You must then change the paths in the build script if necessary. Please refer to
 
 .. _configure_static_code_analysis_tools:
 
+Edit Maximum Build Duration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**This option is only available when using** :ref:`integrated code lifecycle<integrated code lifecycle>`
+This section is optional. In most cases, the preconfigured build script does not need to be changed.
+
+The maximum build duration is the time limit for the build plan to execute. If the build plan exceeds this time limit, it will be terminated. The default value is 120 seconds.
+You can change the maximum build duration by using the slider.
+
+.. figure:: programming/timeout-slider.png
+          :align: center
+
 Configure static code analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
