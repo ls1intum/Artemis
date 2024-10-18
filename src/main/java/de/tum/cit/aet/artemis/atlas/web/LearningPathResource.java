@@ -204,6 +204,21 @@ public class LearningPathResource {
     }
 
     /**
+     * GET courses/{courseId}/learning-path/competency-instructor-graph : Gets the competency instructor graph
+     *
+     * @param courseId the id of the course for which the graph should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the graph
+     */
+    @GetMapping("courses/{courseId}/learning-path/competency-instructor-graph")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<LearningPathCompetencyGraphDTO> getLearningPathCompetencyInstructorGraph(@PathVariable long courseId) {
+        log.debug("REST request to get competency instructor graph for learning path with id: {}", courseId);
+
+        return ResponseEntity.ok(learningPathService.generateLearningPathCompetencyInstructorGraph(courseId));
+    }
+
+    /**
      * GET learning-path/:learningPathId/graph : Gets the ngx representation of the learning path as a graph.
      *
      * @param learningPathId the id of the learning path that should be fetched
