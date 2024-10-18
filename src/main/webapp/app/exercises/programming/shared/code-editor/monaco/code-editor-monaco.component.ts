@@ -109,14 +109,19 @@ export class CodeEditorMonacoComponent implements OnChanges {
     readonly feedbackInternal = signal<Feedback[]>([]);
     readonly feedbackSuggestionsInternal = signal<Feedback[]>([]);
 
-    readonly feedbackForSelectedFile = computed<FeedbackWithLineAndReference[]>(() => {
-        return this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((f) => this.attachLineToFeedback(f));
-    });
+    readonly feedbackForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
+        this.filterFeedbackForSelectedFile(this.feedbackInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
+    );
     readonly feedbackSuggestionsForSelectedFile = computed<FeedbackWithLineAndReference[]>(() =>
-        this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal()).map((f) => this.attachLineToFeedback(f)),
+        this.filterFeedbackForSelectedFile(this.feedbackSuggestionsInternal()).map((f) => this.attachLineAndReferenceToFeedback(f)),
     );
 
-    private attachLineToFeedback(feedback: Feedback): FeedbackWithLineAndReference {
+    /**
+     * Attaches the line number & reference to a feedback item, or -1 if no line is available. This is used to disambiguate feedback items in the template, avoiding warnings.
+     * @param feedback The feedback item to attach the line to.
+     * @private
+     */
+    private attachLineAndReferenceToFeedback(feedback: Feedback): FeedbackWithLineAndReference {
         return { ...feedback, line: Feedback.getReferenceLine(feedback) ?? -1, reference: feedback.reference ?? 'unreferenced' };
     }
 
