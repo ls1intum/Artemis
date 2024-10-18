@@ -10,7 +10,7 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
-import { Competency } from 'app/entities/competency.model';
+import { Competency, CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { By } from '@angular/platform-browser';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { Lecture } from 'app/entities/lecture.model';
@@ -112,7 +112,7 @@ describe('CreateCompetency', () => {
             title: 'Test',
             description: 'Lorem Ipsum',
             optional: true,
-            connectedLectureUnits: [textUnit],
+            lectureUnitLinks: [new CompetencyLectureUnitLink(undefined, textUnit, 1)],
         };
 
         const response: HttpResponse<Competency> = new HttpResponse({
@@ -133,7 +133,7 @@ describe('CreateCompetency', () => {
             competency.title = formData.title;
             competency.description = formData.description;
             competency.optional = formData.optional;
-            competency.lectureUnits = formData.connectedLectureUnits;
+            competency.lectureUnitLinks = formData.lectureUnitLinks;
 
             expect(createSpy).toHaveBeenCalledWith(competency, 1);
             expect(createSpy).toHaveBeenCalledOnce();

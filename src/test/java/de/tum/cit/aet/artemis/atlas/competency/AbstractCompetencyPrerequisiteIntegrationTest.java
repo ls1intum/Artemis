@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -95,29 +97,31 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         // creating lecture units for lecture one
         TextUnit textUnit = new TextUnit();
         textUnit.setName("TextUnitOfLectureOne");
-        textUnit.setCompetencies(Set.of(competency));
-        textUnit = textUnitRepository.save(textUnit);
-        textUnitOfLectureOne = textUnit;
+
+        CompetencyLectureUnitLink textLink = new CompetencyLectureUnitLink(competency, textUnit, 1);
+        textLink = competencyLectureUnitLinkRepository.save(textLink);
+        textUnitOfLectureOne = (TextUnit) textLink.getLectureUnit();
 
         AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
         attachmentUnit.setName("AttachmentUnitOfLectureOne");
-        attachmentUnit.setCompetencies(Set.of(competency));
-        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
-        attachmentUnitOfLectureOne = attachmentUnit;
+
+        CompetencyLectureUnitLink attachmentLink = new CompetencyLectureUnitLink(competency, attachmentUnit, 1);
+        attachmentLink = competencyLectureUnitLinkRepository.save(attachmentLink);
+        attachmentUnitOfLectureOne = (AttachmentUnit) attachmentLink.getLectureUnit();
 
         ExerciseUnit textExerciseUnit = new ExerciseUnit();
         textExerciseUnit.setExercise(textExercise);
-        exerciseUnitRepository.save(textExerciseUnit);
+        textExerciseUnit = exerciseUnitRepository.save(textExerciseUnit);
 
         ExerciseUnit teamTextExerciseUnit = new ExerciseUnit();
         teamTextExerciseUnit.setExercise(teamTextExercise);
-        exerciseUnitRepository.save(teamTextExerciseUnit);
+        teamTextExerciseUnit = exerciseUnitRepository.save(teamTextExerciseUnit);
 
-        for (LectureUnit lectureUnit : List.of(textUnit, attachmentUnit, textExerciseUnit, teamTextExerciseUnit)) {
+        for (LectureUnit lectureUnit : List.of(textUnitOfLectureOne, attachmentUnitOfLectureOne, textExerciseUnit, teamTextExerciseUnit)) {
             lecture.addLectureUnit(lectureUnit);
         }
 
-        lectureRepository.save(lecture);
+        lecture = lectureRepository.save(lecture);
     }
 
     Lecture createLecture(Course course) {
@@ -143,16 +147,24 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        textExercise.setCompetencies(competencies);
 
-        return exerciseRepository.save(textExercise);
+        var persistedExercise = exerciseRepository.save(textExercise);
+
+        Set<CompetencyExerciseLink> exerciseLinks = competencies.stream().map(competency -> new CompetencyExerciseLink(competency, persistedExercise, 1))
+                .collect(Collectors.toSet());
+        persistedExercise.setCompetencyLinks(new HashSet<>(competencyExerciseLinkRepository.saveAll(exerciseLinks)));
+
+        return exerciseRepository.save(persistedExercise);
     }
 
     private ProgrammingExercise createProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate) {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(releaseDate, dueDate, course, ProgrammingLanguage.JAVA);
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
-        programmingExercise.setCompetencies(Set.of(courseCompetency));
-        return exerciseRepository.save(programmingExercise);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+
+        CompetencyExerciseLink link = new CompetencyExerciseLink(courseCompetency, programmingExercise, 1);
+        competencyExerciseLinkRepository.save(link);
+        return (ProgrammingExercise) link.getExercise();
     }
 
     abstract CourseCompetency getCall(long courseId, long competencyId, HttpStatus expectedStatus) throws Exception;
@@ -181,7 +193,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         assertThat(response.getUserProgress()).hasSize(1);
 
         // only student2 has completed the textUnit
-        assertThat(response.getLectureUnits().stream().findFirst().get().getCompletedUsers()).isEmpty();
+        assertThat(response.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).findFirst().get().getCompletedUsers()).isEmpty();
     }
 
     // Test
@@ -208,13 +220,15 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         newCompetency.setTitle("Title");
         newCompetency.setDescription("Description");
         newCompetency.setCourse(course);
-        newCompetency.setLectureUnits(new HashSet<>(List.of(unreleasedLectureUnit)));
+        courseCompetencyRepository.save(newCompetency);
+
+        newCompetency.setLectureUnitLinks(new HashSet<>(List.of(new CompetencyLectureUnitLink(newCompetency, unreleasedLectureUnit, 1))));
         courseCompetencyRepository.save(newCompetency);
 
         List<? extends CourseCompetency> competenciesOfCourse = getAllCall(course.getId(), HttpStatus.OK);
 
         assertThat(competenciesOfCourse).anyMatch(c -> c.getId().equals(courseCompetency.getId()));
-        assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(newCompetency.getId())).findFirst().orElseThrow().getLectureUnits()).isEmpty();
+        assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(newCompetency.getId())).findFirst().orElseThrow().getLectureUnitLinks()).isEmpty();
     }
 
     // Test
@@ -263,14 +277,14 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         request.delete("/api/lectures/" + lecture.getId(), HttpStatus.OK);
 
         CourseCompetency result = getCall(course.getId(), courseCompetency.getId(), HttpStatus.OK);
-        assertThat(result.getLectureUnits()).isEmpty();
+        assertThat(result.getLectureUnitLinks()).isEmpty();
     }
 
     // Test
     void deleteLectureUnitShouldUpdateCompetency() throws Exception {
         request.delete("/api/lectures/" + lecture.getId() + "/lecture-units/" + textUnitOfLectureOne.getId(), HttpStatus.OK);
         CourseCompetency result = getCall(course.getId(), courseCompetency.getId(), HttpStatus.OK);
-        assertThat(result.getLectureUnits()).map(LectureUnit::getId).containsExactly(attachmentUnitOfLectureOne.getId());
+        assertThat(result.getLectureUnitLinks()).map(CompetencyLectureUnitLink::getLectureUnit).map(LectureUnit::getId).containsExactly(attachmentUnitOfLectureOne.getId());
     }
 
     abstract CourseCompetency updateCall(long courseId, CourseCompetency competency, HttpStatus expectedStatus) throws Exception;
@@ -286,7 +300,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
         assertThat(result.getTitle()).isEqualTo("Updated");
         assertThat(result.getDescription()).isEqualTo("Updated Description");
-        assertThat(result.getLectureUnits().stream().map(DomainObject::getId).collect(Collectors.toSet())).doesNotContain(textLectureUnit.getId());
+        assertThat(result.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).map(DomainObject::getId).collect(Collectors.toSet()))
+                .doesNotContain(textLectureUnit.getId());
     }
 
     // Test
@@ -306,8 +321,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         TextExercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exercise.setMaxPoints(1.0);
         exercise.setIncludedInOverallScore(includedInOverallScore);
-        exercise.setCompetencies(Set.of(newCompetency));
-        exerciseRepository.save(exercise);
+        CompetencyExerciseLink link = new CompetencyExerciseLink(newCompetency, exercise, 1);
+        competencyExerciseLinkRepository.save(link);
 
         newCompetency.setOptional(true);
         updateCall(course.getId(), newCompetency, HttpStatus.OK);
@@ -325,8 +340,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         newCompetency.setCourse(course);
         newCompetency.setMasteryThreshold(42);
         List<LectureUnit> allLectureUnits = lectureUnitRepository.findAll();
-        Set<LectureUnit> connectedLectureUnits = new HashSet<>(allLectureUnits);
-        newCompetency.setLectureUnits(connectedLectureUnits);
+        Set<CompetencyLectureUnitLink> lectureUnitLinks = allLectureUnits.stream().map(lu -> new CompetencyLectureUnitLink(newCompetency, lu, 1)).collect(Collectors.toSet());
+        newCompetency.setLectureUnitLinks(lectureUnitLinks);
 
         CourseCompetency result = createCall(course.getId(), newCompetency, HttpStatus.CREATED);
 
@@ -370,8 +385,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         assertThat(importedCompetency.getDescription()).isEqualTo(courseCompetency.getDescription());
         assertThat(importedCompetency.getMasteryThreshold()).isEqualTo(courseCompetency.getMasteryThreshold());
         assertThat(importedCompetency.getTaxonomy()).isEqualTo(courseCompetency.getTaxonomy());
-        assertThat(importedCompetency.getExercises()).isEmpty();
-        assertThat(importedCompetency.getLectureUnits()).isEmpty();
+        assertThat(importedCompetency.getExerciseLinks()).isEmpty();
+        assertThat(importedCompetency.getLectureUnitLinks()).isEmpty();
         assertThat(importedCompetency.getUserProgress()).isEmpty();
         verify(competencyProgressService, never()).updateProgressByCompetencyAsync(importedCompetency);
     }
@@ -393,9 +408,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     // Test
     void shouldImportExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
-        teamTextExercise.setCompetencies(null);
+        teamTextExercise.getCompetencyLinks().clear();
         exerciseRepository.save(teamTextExercise);
-        attachmentUnitOfLectureOne.setCompetencies(null);
+        attachmentUnitOfLectureOne = attachmentUnitRepository.findOneWithSlidesAndCompetencies(attachmentUnitOfLectureOne.getId());
+        attachmentUnitOfLectureOne.getCompetencyLinks().clear();
         attachmentUnitRepository.save(attachmentUnitOfLectureOne);
 
         ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
@@ -529,9 +545,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     // Test
     void shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
-        teamTextExercise.setCompetencies(null);
+        teamTextExercise.getCompetencyLinks().clear();
         exerciseRepository.save(teamTextExercise);
-        attachmentUnitOfLectureOne.setCompetencies(null);
+        attachmentUnitOfLectureOne = attachmentUnitRepository.findOneWithSlidesAndCompetencies(attachmentUnitOfLectureOne.getId());
+        attachmentUnitOfLectureOne.getCompetencyLinks().clear();
         attachmentUnitRepository.save(attachmentUnitOfLectureOne);
 
         ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
@@ -661,9 +678,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     // Test
     void shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
-        teamTextExercise.setCompetencies(null);
+        teamTextExercise.getCompetencyLinks().clear();
         exerciseRepository.save(teamTextExercise);
-        attachmentUnitOfLectureOne.setCompetencies(null);
+        attachmentUnitOfLectureOne = attachmentUnitRepository.findOneWithSlidesAndCompetencies(attachmentUnitOfLectureOne.getId());
+        attachmentUnitOfLectureOne.getCompetencyLinks().clear();
         attachmentUnitRepository.save(attachmentUnitOfLectureOne);
 
         ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));

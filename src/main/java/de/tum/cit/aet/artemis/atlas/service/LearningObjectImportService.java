@@ -28,9 +28,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
@@ -105,6 +109,10 @@ public class LearningObjectImportService {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
+    private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+
+    private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
+
     public LearningObjectImportService(ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
             FileUploadExerciseImportService fileUploadExerciseImportService, ModelingExerciseRepository modelingExerciseRepository,
@@ -112,7 +120,8 @@ public class LearningObjectImportService {
             QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService, LectureRepository lectureRepository,
             LectureImportService lectureImportService, LectureUnitRepository lectureUnitRepository, LectureUnitImportService lectureUnitImportService,
             CourseCompetencyRepository courseCompetencyRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            GradingCriterionRepository gradingCriterionRepository) {
+            GradingCriterionRepository gradingCriterionRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository,
+            CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
@@ -131,6 +140,8 @@ public class LearningObjectImportService {
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
+        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
+        this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
     }
 
     /**
@@ -168,19 +179,23 @@ public class LearningObjectImportService {
     private void importOrLoadExercises(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
             Course courseToImportInto, Set<Exercise> importedExercises) {
         for (CourseCompetency sourceCourseCompetency : sourceCourseCompetencies) {
-            for (Exercise sourceExercise : sourceCourseCompetency.getExercises()) {
+            sourceCourseCompetency.getExerciseLinks().forEach(sourceExerciseLink -> {
                 try {
-                    Exercise importedExercise = importOrLoadExercise(sourceExercise, courseToImportInto);
+                    Exercise importedExercise = importOrLoadExercise(sourceExerciseLink.getExercise(), courseToImportInto);
 
                     importedExercises.add(importedExercise);
 
-                    importedExercise.getCompetencies().add(idToImportedCompetency.get(sourceCourseCompetency.getId()).competency());
-                    idToImportedCompetency.get(sourceCourseCompetency.getId()).competency().getExercises().add(importedExercise);
+                    CourseCompetency importedCompetency = idToImportedCompetency.get(sourceCourseCompetency.getId()).competency();
+                    CompetencyExerciseLink link = new CompetencyExerciseLink(importedCompetency, importedExercise, sourceExerciseLink.getWeight());
+                    link = competencyExerciseLinkRepository.save(link);
+                    importedExercise.getCompetencyLinks().add(link);
+                    importedCompetency.getExerciseLinks().add(link);
                 }
                 catch (Exception e) {
-                    log.error("Failed to import exercise with title {} together with its competency with id {}", sourceExercise.getTitle(), sourceCourseCompetency.getId(), e);
+                    log.error("Failed to import exercise with title {} together with its competency with id {}", sourceExerciseLink.getExercise().getTitle(),
+                            sourceCourseCompetency.getId(), e);
                 }
-            }
+            });
         }
     }
 
@@ -257,7 +272,7 @@ public class LearningObjectImportService {
         programmingExercise.setAttachments(new HashSet<>());
         programmingExercise.setPosts(new HashSet<>());
         programmingExercise.setPlagiarismCases(new HashSet<>());
-        programmingExercise.setCompetencies(new HashSet<>());
+        programmingExercise.setCompetencyLinks(new HashSet<>());
     }
 
     /**
@@ -281,7 +296,7 @@ public class LearningObjectImportService {
             exercise = loadForImport.apply(exercise.getId());
             exercise.setCourse(course);
             exercise.setId(null);
-            exercise.setCompetencies(new HashSet<>());
+            exercise.setCompetencyLinks(new HashSet<>());
 
             return importFunction.apply(exercise, exercise);
         }
@@ -299,19 +314,23 @@ public class LearningObjectImportService {
     private void importOrLoadLectureUnits(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
             Course courseToImportInto, Map<String, Lecture> titleToImportedLectures, Set<LectureUnit> importedLectureUnits) {
         for (CourseCompetency sourceCourseCompetency : sourceCourseCompetencies) {
-            for (LectureUnit sourceLectureUnit : sourceCourseCompetency.getLectureUnits()) {
+            for (CompetencyLectureUnitLink sourceLectureUnitLink : sourceCourseCompetency.getLectureUnitLinks()) {
                 try {
-                    importOrLoadLectureUnit(sourceLectureUnit, sourceCourseCompetency, idToImportedCompetency, courseToImportInto, titleToImportedLectures, importedLectureUnits);
+                    importOrLoadLectureUnit(sourceLectureUnitLink, sourceCourseCompetency, idToImportedCompetency, courseToImportInto, titleToImportedLectures,
+                            importedLectureUnits);
                 }
                 catch (Exception e) {
-                    log.error("Failed to import lecture unit with name {} together with its competency with id {}", sourceLectureUnit.getName(), sourceCourseCompetency.getId(), e);
+                    log.error("Failed to import lecture unit with name {} together with its competency with id {}", sourceLectureUnitLink.getLectureUnit().getName(),
+                            sourceCourseCompetency.getId(), e);
                 }
             }
         }
     }
 
-    private void importOrLoadLectureUnit(LectureUnit sourceLectureUnit, CourseCompetency sourceCourseCompetency, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
-            Course courseToImportInto, Map<String, Lecture> titleToImportedLectures, Set<LectureUnit> importedLectureUnits) throws NoUniqueQueryException {
+    private void importOrLoadLectureUnit(CompetencyLectureUnitLink sourceLectureUnitLink, CourseCompetency sourceCourseCompetency,
+            Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures,
+            Set<LectureUnit> importedLectureUnits) throws NoUniqueQueryException {
+        LectureUnit sourceLectureUnit = sourceLectureUnitLink.getLectureUnit();
         Lecture sourceLecture = sourceLectureUnit.getLecture();
         Lecture importedLecture = importOrLoadLecture(sourceLecture, courseToImportInto, titleToImportedLectures);
 
@@ -330,8 +349,11 @@ public class LearningObjectImportService {
 
         importedLectureUnits.add(importedLectureUnit);
 
-        importedLectureUnit.getCompetencies().add(idToImportedCompetency.get(sourceCourseCompetency.getId()).competency());
-        idToImportedCompetency.get(sourceCourseCompetency.getId()).competency().getLectureUnits().add(importedLectureUnit);
+        CourseCompetency importedCompetency = idToImportedCompetency.get(sourceCourseCompetency.getId()).competency();
+        CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(importedCompetency, importedLectureUnit, sourceLectureUnitLink.getWeight());
+        link = competencyLectureUnitLinkRepository.save(link);
+        importedLectureUnit.getCompetencyLinks().add(link);
+        importedCompetency.getLectureUnitLinks().add(link);
     }
 
     private Lecture importOrLoadLecture(Lecture sourceLecture, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures) throws NoUniqueQueryException {

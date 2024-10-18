@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestR
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -226,7 +227,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         courseUtilService.enableMessagingForCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember());
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
-        modelingExercise.setCompetencies(Set.of(competency));
+        modelingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, modelingExercise, 1)));
 
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
@@ -407,7 +408,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteModelingExerciseWithCompetency() throws Exception {
-        classExercise.setCompetencies(Set.of(competency));
+        classExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, classExercise, 1)));
         modelingExerciseRepository.save(classExercise);
 
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
@@ -473,7 +474,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseToImport.setCourse(course2);
         String uniqueChannelName = "channel-" + UUID.randomUUID().toString().substring(0, 8);
         modelingExerciseToImport.setChannelName(uniqueChannelName);
-        modelingExerciseToImport.setCompetencies(Set.of(competency));
+        modelingExerciseToImport.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, modelingExerciseToImport, 1)));
 
         var importedExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExerciseToImport.getId(), modelingExerciseToImport, ModelingExercise.class,
                 HttpStatus.CREATED);

@@ -57,7 +57,7 @@ describe('CompetencyPopoverComponent', () => {
     it('should navigate to course competencies', fakeAsync(() => {
         const location: Location = TestBed.inject(Location);
         competencyPopoverComponent.navigateTo = 'courseCompetencies';
-        competencyPopoverComponent.competencies = [{}];
+        competencyPopoverComponent.competencyLinks = [{ weight: 1 }];
         competencyPopoverComponent.courseId = 1;
         competencyPopoverComponentFixture.detectChanges();
         const popoverButton = competencyPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
@@ -72,7 +72,7 @@ describe('CompetencyPopoverComponent', () => {
     it('should navigate to competency management', fakeAsync(() => {
         const location: Location = TestBed.inject(Location);
         competencyPopoverComponent.navigateTo = 'competencyManagement';
-        competencyPopoverComponent.competencies = [{}];
+        competencyPopoverComponent.competencyLinks = [{ weight: 1 }];
         competencyPopoverComponent.courseId = 1;
         competencyPopoverComponentFixture.detectChanges();
         const popoverButton = competencyPopoverComponentFixture.debugElement.nativeElement.querySelector('button');

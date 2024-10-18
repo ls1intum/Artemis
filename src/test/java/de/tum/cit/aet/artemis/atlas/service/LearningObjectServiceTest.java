@@ -17,7 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.util.StudentScoreUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -110,7 +110,7 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
             }
 
             @Override
-            public Set<CourseCompetency> getCompetencies() {
+            public Set<CompetencyLearningObjectLink> getCompetencyLinks() {
                 return Set.of();
             }
 

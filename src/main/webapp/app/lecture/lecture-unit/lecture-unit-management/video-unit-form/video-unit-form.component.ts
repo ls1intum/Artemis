@@ -3,14 +3,14 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angu
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Competency } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 
 export interface VideoUnitFormData {
     name?: string;
     description?: string;
     releaseDate?: dayjs.Dayjs;
     source?: string;
-    competencies?: Competency[];
+    competencyLinks?: CompetencyLectureUnitLink[];
 }
 
 function isTumLiveUrl(url: URL): boolean {
@@ -123,7 +123,7 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
             releaseDate: [undefined as dayjs.Dayjs | undefined],
             source: [undefined as string | undefined, [Validators.required, this.videoSourceUrlValidator]],
             urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
-            competencies: [undefined as Competency[] | undefined],
+            competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
         });
     }
 

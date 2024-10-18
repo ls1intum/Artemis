@@ -89,9 +89,9 @@
                             </div>
                             <div class="col-lg-1 col-2 my-auto mx-auto width-fit-content">
                                 <jhi-competencies-popover
-                                    [hidden]="!lectureUnit.competencies || lectureUnit.competencies!.length === 0"
+                                    [hidden]="!lectureUnit.competencyLinks?.length"
                                     [courseId]="lecture!.course!.id!"
-                                    [competencies]="lectureUnit.competencies || []"
+                                    [competencyLinks]="lectureUnit.competencyLinks || []"
                                     [navigateTo]="'courseCompetencies'"
                                 />
                             </div>

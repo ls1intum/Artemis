@@ -305,7 +305,7 @@ public class PrerequisiteResource {
         checkCourseForPrerequisite(course, existingPrerequisite);
 
         var persistedPrerequisite = prerequisiteService.updateCourseCompetency(existingPrerequisite, prerequisite);
-        lectureUnitService.linkLectureUnitsToCompetency(persistedPrerequisite, prerequisite.getLectureUnits(), existingPrerequisite.getLectureUnits());
+        lectureUnitService.linkLectureUnitsToCompetency(persistedPrerequisite, prerequisite.getLectureUnitLinks(), existingPrerequisite.getLectureUnitLinks());
 
         return ResponseEntity.ok(persistedPrerequisite);
     }

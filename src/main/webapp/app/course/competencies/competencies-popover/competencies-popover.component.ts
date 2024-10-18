@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { faFlag } from '@fortawesome/free-solid-svg-icons';
-import { Competency } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 
 @Component({
     selector: 'jhi-competencies-popover',
@@ -12,7 +12,7 @@ export class CompetenciesPopoverComponent implements OnInit {
     @Input()
     courseId: number;
     @Input()
-    competencies: Competency[] = [];
+    competencyLinks: CompetencyLectureUnitLink[] = [];
     @Input()
     navigateTo: 'competencyManagement' | 'courseCompetencies' = 'courseCompetencies';
 

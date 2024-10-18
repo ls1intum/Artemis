@@ -37,6 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -219,7 +220,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentUnit_asInstructor_shouldCreateAttachmentUnit() throws Exception {
-        attachmentUnit.setCompetencies(Set.of(competency));
+        attachmentUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentUnit, 1)));
         var result = request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
@@ -256,7 +257,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentUnit_asInstructor_shouldUpdateAttachmentUnit() throws Exception {
-        attachmentUnit.setCompetencies(Set.of(competency));
+        attachmentUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentUnit, 1)));
         var createResult = request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var attachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentUnit.class);
         var attachment = attachmentUnit.getAttachment();
@@ -345,7 +346,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteAttachmentUnit_withAttachment_shouldDeleteAttachment() throws Exception {
-        attachmentUnit.setCompetencies(Set.of(competency));
+        attachmentUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentUnit, 1)));
         var result = request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();

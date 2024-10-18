@@ -15,11 +15,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
@@ -34,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -72,12 +69,10 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Lecture lecture;
 
-    @ManyToMany
-    @JoinTable(name = "competency_lecture_unit", joinColumns = @JoinColumn(name = "lecture_unit_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "competency_id", referencedColumnName = "id"))
-    @OrderBy("title")
-    @JsonIgnoreProperties({ "lectureUnits", "course" })
+    @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("lectureUnit")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    protected Set<CourseCompetency> competencies = new HashSet<>();
+    protected Set<CompetencyLectureUnitLink> competencyLinks = new HashSet<>();
 
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore // important, so that the completion status of other users do not leak to anyone
@@ -108,12 +103,12 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     }
 
     @Override
-    public Set<CourseCompetency> getCompetencies() {
-        return competencies;
+    public Set<CompetencyLectureUnitLink> getCompetencyLinks() {
+        return competencyLinks;
     }
 
-    public void setCompetencies(Set<CourseCompetency> competencies) {
-        this.competencies = competencies;
+    public void setCompetencyLinks(Set<CompetencyLectureUnitLink> competencyLinks) {
+        this.competencyLinks = competencyLinks;
     }
 
     @JsonIgnore(false)

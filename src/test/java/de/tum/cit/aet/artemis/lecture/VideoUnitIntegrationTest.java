@@ -17,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
@@ -86,7 +87,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createVideoUnit_asInstructor_shouldCreateVideoUnit() throws Exception {
         videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
-        videoUnit.setCompetencies(Set.of(competency));
+        videoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, videoUnit, 1)));
         var persistedVideoUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.CREATED);
         assertThat(persistedVideoUnit.getId()).isNotNull();
         verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(persistedVideoUnit));
@@ -116,7 +117,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateVideoUnit_asInstructor_shouldUpdateVideoUnit() throws Exception {
-        videoUnit.setCompetencies(Set.of(competency));
+        videoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, videoUnit, 1)));
         persistVideoUnitWithLecture();
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
@@ -197,7 +198,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteVideoUnit_correctId_shouldDeleteVideoUnit() throws Exception {
-        videoUnit.setCompetencies(Set.of(competency));
+        videoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, videoUnit, 1)));
         persistVideoUnitWithLecture();
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();

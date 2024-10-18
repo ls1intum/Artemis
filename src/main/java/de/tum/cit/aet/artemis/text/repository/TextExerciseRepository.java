@@ -35,13 +35,13 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
             """)
     List<TextExercise> findByCourseIdWithCategories(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencies" })
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency" })
     Optional<TextExercise> findWithEagerCompetenciesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies", "plagiarismDetectionConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "plagiarismDetectionConfig" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(long exerciseId);
 
     @Query("""
@@ -82,7 +82,7 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @Query("""
             SELECT t
             FROM TextExercise t
-                LEFT JOIN FETCH t.competencies
+                LEFT JOIN FETCH t.competencyLinks
             WHERE t.title = :title
                 AND t.course.id = :courseId
             """)

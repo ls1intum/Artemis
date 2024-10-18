@@ -29,8 +29,10 @@ public interface ExerciseUnitRepository extends ArtemisJpaRepository<ExerciseUni
     @Query("""
             SELECT exerciseUnit
             FROM ExerciseUnit exerciseUnit
-                LEFT JOIN FETCH exerciseUnit.competencies c
-                LEFT JOIN FETCH c.lectureUnits
+                LEFT JOIN FETCH exerciseUnit.competencyLinks cl
+                LEFT JOIN FETCH cl.competency c
+                LEFT JOIN FETCH c.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit
             WHERE exerciseUnit.exercise.id = :exerciseId
             """)
     List<ExerciseUnit> findByIdWithCompetenciesBidirectional(@Param("exerciseId") Long exerciseId);

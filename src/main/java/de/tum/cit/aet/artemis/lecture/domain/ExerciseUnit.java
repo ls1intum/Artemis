@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.persistence.DiscriminatorValue;
@@ -12,13 +11,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
@@ -66,13 +64,13 @@ public class ExerciseUnit extends LectureUnit {
     }
 
     @Override
-    public Set<CourseCompetency> getCompetencies() {
-        return exercise == null || !Hibernate.isPropertyInitialized(exercise, "competencies") ? new HashSet<>() : exercise.getCompetencies();
+    public Set<CompetencyLectureUnitLink> getCompetencyLinks() {
+        throw new UnsupportedOperationException("Create the link in the associated exercise instead");
     }
 
     @Override
-    public void setCompetencies(Set<CourseCompetency> competencies) {
-        // Should be set in associated exercise
+    public void setCompetencyLinks(Set<CompetencyLectureUnitLink> competencyLinks) {
+        throw new UnsupportedOperationException("Retrieve the link in the associated exercise instead");
     }
 
     /**
@@ -83,7 +81,6 @@ public class ExerciseUnit extends LectureUnit {
     public void prePersistOrUpdate() {
         this.name = null;
         this.releaseDate = null;
-        this.competencies = new HashSet<>();
     }
 
     // IMPORTANT NOTICE: The following string has to be consistent with the one defined in LectureUnit.java

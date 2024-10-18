@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
@@ -106,12 +106,12 @@ public class AttachmentUnitService {
      */
     public AttachmentUnit updateAttachmentUnit(AttachmentUnit existingAttachmentUnit, AttachmentUnit updateUnit, Attachment updateAttachment, MultipartFile updateFile,
             boolean keepFilename) {
-        Set<CourseCompetency> existingCompetencies = existingAttachmentUnit.getCompetencies();
+        Set<CompetencyLectureUnitLink> existingCompetencyLinks = existingAttachmentUnit.getCompetencyLinks();
 
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
         existingAttachmentUnit.setName(updateUnit.getName());
         existingAttachmentUnit.setReleaseDate(updateUnit.getReleaseDate());
-        existingAttachmentUnit.setCompetencies(updateUnit.getCompetencies());
+        existingAttachmentUnit.setCompetencyLinks(updateUnit.getCompetencyLinks());
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(existingAttachmentUnit);
 
@@ -147,7 +147,7 @@ public class AttachmentUnitService {
         }
 
         // Set the original competencies back to the attachment unit so that the competencyProgressService can determine which competencies changed
-        existingAttachmentUnit.setCompetencies(existingCompetencies);
+        existingAttachmentUnit.setCompetencyLinks(existingCompetencyLinks);
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingAttachmentUnit, Optional.of(updateUnit));
 
         return savedAttachmentUnit;

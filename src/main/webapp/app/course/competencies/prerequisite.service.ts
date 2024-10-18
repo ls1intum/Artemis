@@ -38,6 +38,12 @@ export class PrerequisiteService extends CourseCompetencyService {
     }
 
     create(prerequisite: Prerequisite, courseId: number): Observable<EntityResponseType> {
+        prerequisite.lectureUnitLinks?.forEach((link) => {
+            link.lectureUnit = undefined;
+            if (link.competency?.lectureUnitLinks) {
+                link.competency.lectureUnitLinks = undefined;
+            }
+        });
         const copy = this.convertCompetencyFromClient(prerequisite);
         return this.httpClient.post<Prerequisite>(`${this.resourceURL}/courses/${courseId}/prerequisites`, copy, { observe: 'response' });
     }
@@ -90,6 +96,12 @@ export class PrerequisiteService extends CourseCompetencyService {
     }
 
     update(prerequisite: Prerequisite, courseId: number): Observable<EntityResponseType> {
+        prerequisite.lectureUnitLinks?.forEach((link) => {
+            link.lectureUnit = undefined;
+            if (link.competency?.lectureUnitLinks) {
+                link.competency.lectureUnitLinks = undefined;
+            }
+        });
         const copy = this.convertCompetencyFromClient(prerequisite);
         return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/prerequisites`, copy, { observe: 'response' });
     }

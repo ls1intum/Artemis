@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.fileupload;
 
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
-import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -34,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
@@ -328,7 +328,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteFileUploadExerciseWithCompetency() throws Exception {
-        fileUploadExercise.setCompetencies(Set.of(competency));
+        fileUploadExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, fileUploadExercise, 1)));
         fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
 
@@ -381,7 +381,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         final ZonedDateTime dueDate = ZonedDateTime.now().plusDays(10);
         fileUploadExercise.setDueDate(dueDate);
         fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(11));
-        fileUploadExercise.setCompetencies(Set.of(competency));
+        fileUploadExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, fileUploadExercise, 1)));
 
         FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId() + "?notificationText=notification",
                 fileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
@@ -681,7 +681,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         expectedFileUploadExercise.setCourse(course2);
         String uniqueChannelName = "test" + UUID.randomUUID().toString().substring(0, 8);
         expectedFileUploadExercise.setChannelName(uniqueChannelName);
-        expectedFileUploadExercise.setCompetencies(Set.of(competency));
+        fileUploadExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, fileUploadExercise, 1)));
 
         var sourceExerciseId = expectedFileUploadExercise.getId();
         var importedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,

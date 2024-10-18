@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -19,6 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -94,7 +96,9 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(null, null, course);
 
         programmingExercise.setMaxPoints(i * 10.0);
-        programmingExercise.setCompetencies(competencies);
+        Set<CompetencyExerciseLink> competencyExerciseLinks = competencies.stream().map(competency -> new CompetencyExerciseLink(competency, programmingExercise, 1))
+                .collect(Collectors.toSet());
+        programmingExercise.setCompetencyLinks(competencyExerciseLinks);
         programmingExercise.setDifficulty(i == 1 ? DifficultyLevel.EASY : i == 2 ? DifficultyLevel.MEDIUM : DifficultyLevel.HARD);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         return programmingExerciseRepository.save(programmingExercise);
