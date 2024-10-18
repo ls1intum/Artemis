@@ -245,6 +245,12 @@ export class CourseOverviewService {
         return exams.map((exam, index) => this.mapExamToSidebarCardElement(exam, studentExams?.[index]));
     }
 
+    mapTestExamAttemptsToSidebarCardElements(attempts?: StudentExam[], indices?: number[]) {
+        if (attempts && indices) {
+            return attempts.map((attempt, index) => this.mapAttemptToSidebarCardElement(attempt, index));
+        }
+    }
+
     mapConversationsToSidebarCardElements(conversations: ConversationDTO[]) {
         return conversations.map((conversation) => this.mapConversationToSidebarCardElement(conversation));
     }
@@ -295,10 +301,10 @@ export class CourseOverviewService {
         return exerciseCardItem;
     }
 
-    mapExamToSidebarCardElement(exam: Exam, studentExam?: StudentExam): SidebarCardElement {
+    mapExamToSidebarCardElement(exam: Exam, studentExam?: StudentExam, numberOfAttempts?: number): SidebarCardElement {
         const examCardItem: SidebarCardElement = {
             title: exam.title ?? '',
-            id: exam.id ?? '',
+            id: (exam.testExam ? exam.id + '/test-exam/' + 'start' : exam.id) ?? '',
             icon: faGraduationCap,
             subtitleLeft: exam.moduleNumber ?? '',
             startDateWithTime: exam.startDate,
@@ -306,6 +312,23 @@ export class CourseOverviewService {
             studentExam: studentExam,
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',
+            isAttempt: false,
+            testExam: exam.testExam,
+            attempts: numberOfAttempts ?? 0,
+        };
+        return examCardItem;
+    }
+
+    mapAttemptToSidebarCardElement(attempt: StudentExam, index: number): SidebarCardElement {
+        const examCardItem: SidebarCardElement = {
+            title: attempt.exam!.title ?? '',
+            id: attempt.exam!.id + '/test-exam/' + attempt.id,
+            icon: faGraduationCap,
+            subtitleLeft: this.translate.instant('artemisApp.courseOverview.sidebar.testExamAttempt') + ' ' + index,
+            submissionDate: attempt.submissionDate,
+            usedWorkingTime: this.calculateUsedWorkingTime(attempt),
+            size: 'L',
+            isAttempt: true,
         };
         return examCardItem;
     }
@@ -369,5 +392,15 @@ export class CourseOverviewService {
 
     setSidebarCollapseState(storageId: string, isCollapsed: boolean) {
         localStorage.setItem('sidebar.collapseState.' + storageId, JSON.stringify(isCollapsed));
+    }
+
+    calculateUsedWorkingTime(studentExam: StudentExam): number {
+        let usedWorkingTime = 0;
+        if (studentExam.exam!.testExam && studentExam.started && studentExam.submitted && studentExam.workingTime && studentExam.startedDate && studentExam.submissionDate) {
+            const regularExamDuration = studentExam.workingTime;
+            // As students may submit during the grace period, the workingTime is limited to the regular exam duration
+            usedWorkingTime = Math.min(regularExamDuration, dayjs(studentExam.submissionDate).diff(dayjs(studentExam.startedDate), 'seconds'));
+        }
+        return usedWorkingTime;
     }
 }
