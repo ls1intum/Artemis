@@ -24,7 +24,7 @@
         <h3 class="fw-medium mb-0">{{ 'artemisApp.studentDashboard.title' | artemisTranslate }} ({{ regularCourses.length + recentlyAccessedCourses.length }})</h3>
         <div class="d-flex gap-3 align-items-center ms-1">
             <div class="text-primary d-inline-flex">
-                <a (click)="onSort()" class="d-inline-flex align-items-center">
+                <a id="test-sort" (click)="onSort()" class="d-inline-flex align-items-center">
                     <fa-icon [icon]="isSortAscending ? faArrowDownAZ : faArrowUpAZ" />
                     <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.studentDashboard.sort"></span>
                 </a>
@@ -62,6 +62,13 @@
         <ng-template *ngTemplateOutlet="courseCardTemplate; context: { $implicit: regularCourses }" />
     }
 </div>
+@if (coursesLoaded) {
+    <div class="d-flex justify-content-center mt-3">
+        <div jhiTranslate="artemisApp.studentDashboard.archive.oldCourses"></div>
+        <div>&nbsp;</div>
+        <a [routerLink]="['/courses/archive']" jhiTranslate="artemisApp.studentDashboard.archive.here"></a>
+    </div>
+}
 
 <ng-template #courseCardTemplate let-courses>
     @if ((courses | searchFilter: ['title'] : searchCourseText).length > 0) {

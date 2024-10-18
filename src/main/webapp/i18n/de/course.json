@@ -34,6 +34,14 @@
                     "isTestCourse": "Testkurs"
                 }
             },
+            "archive": {
+                "title": "Archiv",
+                "sort": "Sortieren",
+                "tip": "Das Archiv ermöglicht dir, all deine vergangenen Kurse, organisiert nach Semestern, anzusehen. Klicke auf ein Semester, um es zu erweitern und die Kurse zu sehen, in die du in diesem Zeitraum eingeschrieben warst.",
+                "noCoursesPreviousSemester": "Keine Kurse aus früheren Semestern gefunden",
+                "winterSemester": "Wintersemester 20{{ param }}",
+                "summerSemester": "Sommersemester 20{{ param }}"
+            },
             "showActive": "Nur aktive Kurse anzeigen",
             "totalScore": "Gesamtergebnis:",
             "title": "Titel",

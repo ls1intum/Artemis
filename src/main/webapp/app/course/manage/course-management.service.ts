@@ -27,6 +27,7 @@ import { ScoresStorageService } from 'app/course/course-scores/scores-storage.se
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
+import { CourseForArchiveDTO } from './course-for-archive-dto';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -341,6 +342,13 @@ export class CourseManagementService {
                 }
             }),
         );
+    }
+
+    /**
+     * Find all courses for the archive using a GET request
+     */
+    getCoursesForArchive(): Observable<HttpResponse<CourseForArchiveDTO[]>> {
+        return this.http.get<CourseForArchiveDTO[]>(`${this.resourceUrl}/for-archive`, { observe: 'response' });
     }
 
     /**
@@ -702,5 +710,14 @@ export class CourseManagementService {
 
     disableCourseOverviewBackground() {
         this.courseOverviewSubject.next(false);
+    }
+
+    getSemesterCollapseStateFromStorage(storageId: string): boolean {
+        const storedCollapseState: string | null = localStorage.getItem('semester.collapseState.' + storageId);
+        return storedCollapseState ? JSON.parse(storedCollapseState) : false;
+    }
+
+    setSemesterCollapseState(storageId: string, isCollapsed: boolean) {
+        localStorage.setItem('semester.collapseState.' + storageId, JSON.stringify(isCollapsed));
     }
 }
