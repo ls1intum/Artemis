@@ -169,7 +169,7 @@ export class FaqComponent implements OnInit, OnDestroy {
         faq.faqState = newState;
         faq.course = this.course;
         this.faqService.update(courseId, faq).subscribe({
-            next: () => this.alertService.success(this.translateService.instant(successMessageKey, { id: faq.id })),
+            next: () => this.alertService.success(successMessageKey, { title: faq.questionTitle }),
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);
                 faq.faqState = previousState;

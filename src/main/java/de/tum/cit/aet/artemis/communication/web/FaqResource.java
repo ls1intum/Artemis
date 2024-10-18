@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
@@ -176,7 +175,7 @@ public class FaqResource {
      * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
      */
     @GetMapping("courses/{courseId}/faqs")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<FaqDTO>> getFaqForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faqs for the course with id : {}", courseId);
         Set<Faq> faqs = faqRepository.findAllByCourseId(courseId);
@@ -192,7 +191,7 @@ public class FaqResource {
      * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
      */
     @GetMapping("courses/{courseId}/faq-state/{faqState}")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<FaqDTO>> getAllFaqsForCourseByStatus(@PathVariable Long courseId, @PathVariable FaqState faqState) {
         log.debug("REST request to get all Faqs for the course with id : " + courseId + "and status " + faqState, courseId);
         Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(courseId, faqState);
@@ -207,7 +206,7 @@ public class FaqResource {
      * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
      */
     @GetMapping("courses/{courseId}/faq-categories")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<String>> getFaqCategoriesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faq Categories for the course with id : {}", courseId);
         Set<String> faqs = faqRepository.findAllCategoriesByCourseId(courseId);
