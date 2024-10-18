@@ -19,7 +19,11 @@
             </div>
 
             <dd>
-                <p style="font-size: smaller" jhiTranslate="artemisApp.userSettings.sshSettingsPage.key"></p>
+                @if (inCreateMode) {
+                    <p class="smaller-font" jhiTranslate="artemisApp.userSettings.sshSettingsPage.key"></p>
+                } @else {
+                    <p class="smaller-font">{{ displayedKeyLabel }}</p>
+                }
                 <textarea style="resize: none" class="form-control" rows="10" [readonly]="!inCreateMode" [(ngModel)]="displayedSshKey"></textarea>
             </dd>
 
@@ -30,19 +34,26 @@
                 </p>
             </div>
 
-            <dd class="mb-4">
-                <p style="font-size: smaller" jhiTranslate="artemisApp.userSettings.sshSettingsPage.label"></p>
-                <textarea class="form-control small-text-area" rows="1" [readonly]="!inCreateMode" [(ngModel)]="displayedKeyLabel"></textarea>
-            </dd>
+            @if (inCreateMode) {
+                <dd class="mb-4">
+                    <p class="smaller-font" jhiTranslate="artemisApp.userSettings.sshSettingsPage.label"></p>
+                    <textarea class="form-control small-text-area" rows="1" [readonly]="!inCreateMode" [(ngModel)]="displayedKeyLabel"></textarea>
+                </dd>
+            }
 
+            <!--
             @if (!inCreateMode) {
                 <dd class="mb-4">
-                    <p style="font-size: smaller" jhiTranslate="artemisApp.userSettings.sshSettingsPage.fingerPrint"></p>
-                    <div style="font-size: x-small">
+                    <p class="smaller-font" jhiTranslate="artemisApp.userSettings.sshSettingsPage.fingerprint"></p>
+                    <div class="smaller-font">
                         {{ displayedKeyHash }}
                     </div>
                 </dd>
+                <div>
+
+                </div>
             }
+            -->
             <div class="col col-auto text-right">
                 @if (inCreateMode) {
                     <div class="btn-group" role="group" aria-label="Actions">

@@ -54,9 +54,17 @@
                         @for (key of sshPublicKeys; track key; let i = $index) {
                             <tr>
                                 <td class="container" style="max-width: 250px">
-                                    <div>{{ key.label }}</div>
+                                    <div>
+                                        {{ key.label }}
+                                    </div>
                                     <div class="abbreviate-hash">
                                         {{ key.keyHash }}
+                                    </div>
+                                    <div class="text-and-date">
+                                        <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.createdOn"></div>
+                                        <div>
+                                            {{ key.creationDate | artemisDate: 'long-date' }}
+                                        </div>
                                     </div>
                                 </td>
 

@@ -44,7 +44,15 @@
                 "keysTablePageTitle": "SSH keys",
                 "keys": "Keys",
                 "actions": "Actions",
-                "keyName": "Key 1 (at the moment you can only have one key)"
+                "keyName": "Key 1 (at the moment you can only have one key)",
+                "label": "Label",
+                "creationDate": "Creation date:",
+                "createdOn": "Created on",
+                "lastUsed": "Last used",
+                "lastUsedOn": "Last used on",
+                "expiryDate": "Expiry date",
+                "leaveEmpty": "If you leave the label empty, the comment from the SSH key will be used.",
+                "fingerprint": "Fingerprint"
             },
             "vcsAccessTokensSettingsPage": {
                 "addTokenTitle": "Add personal access token",

@@ -44,9 +44,17 @@
                 "keysTablePageTitle": "SSH-Schlüssel",
                 "keys": "Schlüssel",
                 "actions": "Aktionen",
-                "keyName": "Key 1 (Aktuell wird nur ein Schlüssel unterstützt)"
+                "keyName": "Key 1 (Aktuell wird nur ein Schlüssel unterstützt)",
+                "label": "Label",
+                "creationDate": "Erstellungsdatum",
+                "createdOn": "Erstellt am",
+                "lastUsed": "Letzte Verwendung",
+                "lastUsedOn": "Letzte Verwendung am",
+                "expiryDate": "Ablaufdatum",
+                "leaveEmpty": "Wenn du das Label leer lässt, wird der Kommentar aus dem SSH-Schlüssel verwendet.",
+                "fingerprint": "Fingerabdruck"
             },
-            "vcsAccessTokensSettingsPage": {
+            "vcsAccessTokensSettingsFingerabdruckPage": {
                 "addTokenTitle": "Neues Zugriffstoken erzeugen",
                 "infoText": "Du kannst ein persönliches Zugriffstoken generieren, um mit dem Artemis Local Version Control System zu interagieren. Verwende es um dich über HTTP bei Git zu authentifizieren.",
                 "deleteVcsAccessTokenQuestion": "Möchtest du dein Zugriffstoken für das Versionskontrollsystem wirklich löschen? Du kannst dich nicht mehr bei lokalen Repositories authentifizieren, die mit diesem Token geklont wurden.",

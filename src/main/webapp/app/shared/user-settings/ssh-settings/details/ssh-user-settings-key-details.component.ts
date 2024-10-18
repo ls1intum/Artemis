@@ -1,10 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, concatMap, filter, tap } from 'rxjs';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PROFILE_LOCALVC } from 'app/app.constants';
-import { faEdit, faEllipsis, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
@@ -25,12 +23,10 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     subscription: Subscription;
 
     sshPublicKey: UserSshPublicKey;
-    localVCEnabled = false;
 
     // state change variables
     inCreateMode = false; // true when editing existing key, false when creating new key
 
-    keyCount = 0;
     isLoading = true;
     copyInstructions = '';
 
@@ -40,11 +36,10 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     displayedSshKey = '';
     displayedKeyHash = '';
     displayedExpiryDate?: dayjs.Dayjs;
+    displayCreationDate: dayjs.Dayjs;
 
     readonly faEdit = faEdit;
     readonly faSave = faSave;
-    readonly faTrash = faTrash;
-    readonly faEllipsis = faEllipsis;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     private dialogErrorSource = new Subject<string>();
@@ -52,16 +47,12 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
 
     constructor(
         private accountService: AccountService,
-        private profileService: ProfileService,
         private route: ActivatedRoute,
         private router: Router,
         private alertService: AlertService,
     ) {}
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-        });
         this.setMessageBasedOnOS(getOS());
 
         this.subscription = this.route.params
@@ -82,6 +73,9 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
                 }),
                 tap((publicKey: UserSshPublicKey) => {
                     this.displayedSshKey = publicKey.publicKey;
+                    this.displayedKeyLabel = publicKey.label;
+                    this.displayedKeyHash = publicKey.keyHash;
+                    this.displayCreationDate = publicKey.creationDate;
                     this.isLoading = false;
                 }),
             )

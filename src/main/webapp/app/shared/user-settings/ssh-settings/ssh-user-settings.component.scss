@@ -11,6 +11,15 @@ textarea {
     border-color: var(--border-color) !important;
 }
 
+.bold-text {
+    font-weight: bold;
+}
+
+.text-and-date {
+    display: flex;
+    gap: 5px;
+}
+
 .small-text-area {
     height: 30px;
 }
@@ -21,6 +30,10 @@ table {
     margin: 20px 0;
     font-size: 16px;
     text-align: left;
+}
+
+.smaller-font {
+    font-size: smaller;
 }
 
 th,
