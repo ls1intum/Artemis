@@ -1,6 +1,15 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, input } from '@angular/core';
 import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
-import { AccordionGroups, ChannelAccordionShowAdd, ChannelGroupCategory, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
+import {
+    AccordionGroups,
+    ChannelAccordionShowAdd,
+    ChannelAlwaysShow,
+    ChannelGroupCategory,
+    ChannelTypeIcons,
+    CollapseState,
+    SidebarCardElement,
+    SidebarTypes,
+} from 'app/types/sidebar';
 import { Params } from '@angular/router';
 
 @Component({
@@ -23,6 +32,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     @Input() showAddOptions = false;
     @Input() showAddOption?: ChannelAccordionShowAdd;
     @Input() channelTypeIcon?: ChannelTypeIcons;
+    alwaysShowChannel = input<ChannelAlwaysShow>();
     @Input() collapseState: CollapseState;
     @Input() isFilterActive: boolean = false;
 
@@ -79,4 +89,6 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         }
         return this.showAddOption[groupKey as ChannelGroupCategory];
     }
+
+    protected readonly console = console;
 }

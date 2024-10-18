@@ -1,9 +1,9 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, input } from '@angular/core';
 import { faFilter, faFilterCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
-import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarTypes } from 'app/types/sidebar';
+import { ChannelAccordionShowAdd, ChannelAlwaysShow, ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash-es';
@@ -32,6 +32,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Input() showAddOption?: ChannelAccordionShowAdd;
     @Input() channelTypeIcon?: ChannelTypeIcons;
     @Input() collapseState: CollapseState;
+    alwaysShowChannel = input<ChannelAlwaysShow>();
     @Input() showFilter: boolean = false;
 
     searchValue = '';
