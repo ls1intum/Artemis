@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -21,6 +22,8 @@ import java.util.Optional;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.MergeResult;
+import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
@@ -76,6 +79,8 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractSpringIntegrati
 
     private final LocalRepository localAuxiliaryRepo = new LocalRepository(defaultBranch);
 
+    private GitUtilService.MockFileRepositoryUri auxRepoUri;
+
     @BeforeEach
     void setup() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
@@ -98,7 +103,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractSpringIntegrati
 
         // add the auxiliary repository
         auxiliaryRepositoryRepository.deleteAll();
-        var auxRepoUri = new GitUtilService.MockFileRepositoryUri(localAuxiliaryRepo.localRepoFile);
+        auxRepoUri = new GitUtilService.MockFileRepositoryUri(localAuxiliaryRepo.localRepoFile);
         programmingExercise.setTestRepositoryUri(auxRepoUri.toString());
         var newAuxiliaryRepo = new AuxiliaryRepository();
         newAuxiliaryRepo.setName("AuxiliaryRepo");
@@ -145,6 +150,15 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractSpringIntegrati
     void testGetFilesAsStudent_accessForbidden() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         request.getMap(testRepoBaseUrl + auxiliaryRepository.getId() + "/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetFilesAsInstructor_checkoutConflict() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        doThrow(new WrongRepositoryStateException("conflict")).when(gitService).getOrCheckoutRepository(auxRepoUri, true);
+
+        request.getMap(testRepoBaseUrl + auxiliaryRepository.getId() + "/files", HttpStatus.CONFLICT, String.class, FileType.class);
     }
 
     @Test
@@ -393,6 +407,24 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractSpringIntegrati
         programmingExerciseRepository.save(programmingExercise);
         // student1 should not have access to instructor1's tests repository even if they assume an INSTRUCTOR role.
         request.put(testRepoBaseUrl + auxiliaryRepository.getId() + "/files?commit=true", List.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveFiles_conflict() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        doThrow(new WrongRepositoryStateException("conflict")).when(gitService).getOrCheckoutRepository(auxRepoUri, true);
+
+        request.put(testRepoBaseUrl + auxiliaryRepository.getId() + "/files?commit=true", List.of(), HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveFiles_serviceUnavailable() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        doThrow(new TransportException("unavailable")).when(gitService).getOrCheckoutRepository(auxRepoUri, true);
+
+        request.put(testRepoBaseUrl + auxiliaryRepository.getId() + "/files?commit=true", List.of(), HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @Test
