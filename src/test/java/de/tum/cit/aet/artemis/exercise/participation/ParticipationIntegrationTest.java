@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.participation;
 
 import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
+import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
@@ -631,7 +632,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         textCourse.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(textCourse);
 
-        this.textExercise.setFeedbackSuggestionModule("module_text_test");
+        this.textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
         this.exerciseRepository.save(textExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
@@ -642,7 +643,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(textParticipation);
 
         Result resultText1 = participationUtilService.createSubmissionAndResult(textParticipation, 100, true);
-        Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, resultText1.getSubmission());
+        TextSubmission submission = (TextSubmission) resultText1.getSubmission();
+        submission.setText("some random text");
+        Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, submission);
+        resultText2.setSuccessful(true);
         resultText2.setAssessmentType(AssessmentType.MANUAL);
         resultText2.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(resultText2);
@@ -654,6 +658,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         Result invokedTextResult = resultCaptor.getAllValues().get(1);
         assertThat(invokedTextResult).isNotNull();
         assertThat(invokedTextResult.getId()).isNotNull();
+        assertThat(invokedTextResult.isSuccessful()).isTrue();
         assertThat(invokedTextResult.isAthenaBased()).isTrue();
         assertThat(invokedTextResult.getFeedbacks()).hasSize(1);
     }
@@ -744,7 +749,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         textCourse.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(textCourse);
 
-        this.textExercise.setFeedbackSuggestionModule("module_text_test");
+        this.textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
+
         this.exerciseRepository.save(textExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("text");
@@ -762,7 +768,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
 
-        verify(resultWebsocketService, timeout(2000).times(1)).broadcastNewResult(any(), resultCaptor.capture());
+        verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(any(), resultCaptor.capture());
 
         Result invokedTextResult = resultCaptor.getAllValues().getFirst();
         assertThat(invokedTextResult).isNotNull();
