@@ -6,7 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CheckboxControlValueAccessor, DefaultValueAccessor, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
+import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { provideHttpClient } from '@angular/common/http';
@@ -54,6 +54,16 @@ describe('ProgrammingExerciseLanguageComponent', () => {
                 comp = fixture.componentInstance;
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
                 comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+
+                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+                    programmingLanguage: true,
+                    projectType: true,
+                    withExemplaryDependency: true,
+                    packageName: true,
+                    enableStaticCodeAnalysis: true,
+                    sequentialTestRuns: true,
+                    customizeBuildScript: true,
+                });
             });
     });
 
