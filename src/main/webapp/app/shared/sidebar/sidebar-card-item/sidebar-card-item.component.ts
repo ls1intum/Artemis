@@ -9,4 +9,5 @@ import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 export class SidebarCardItemComponent {
     @Input() sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
+    @Input() groupKey?: string;
 }
