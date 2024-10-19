@@ -1,0 +1,17 @@
+<div class="d-inline-block competency-node">
+    <div
+        class="progress-container d-inline-block"
+        [ngClass]="{
+            'competency-container': courseCompetencyType() === CourseCompetencyType.COMPETENCY,
+            'prerequisite-container': courseCompetencyType() === CourseCompetencyType.PREREQUISITE,
+        }"
+        [ngbTooltip]="'artemisApp.courseCompetency.relations.graph.tooltips.' + this.courseCompetencyType() | artemisTranslate"
+    >
+        <small>
+            <strong [jhiTranslate]="'artemisApp.courseCompetency.relations.graph.nodeTypes.' + this.courseCompetencyType()"></strong>
+        </small>
+    </div>
+    <span class="d-inline-block ms-1"
+        ><strong>{{ courseCompetencyNode().label }}</strong></span
+    >
+</div>

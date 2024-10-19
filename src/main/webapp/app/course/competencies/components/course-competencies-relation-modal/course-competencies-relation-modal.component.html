@@ -1,0 +1,33 @@
+<div class="course-competencies-graph-modal">
+    <div class="col p-3">
+        <div class="row m-0">
+            <span class="col p-0 h5 m-0 align-self-center" jhiTranslate="artemisApp.courseCompetency.relations.modalTitle"></span>
+            <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
+        </div>
+    </div>
+    <hr class="m-0" />
+    <div class="course-competencies-graph-modal-body h-100">
+        @if (isLoading()) {
+            <div class="row justify-content-center m-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only" jhiTranslate="loading"></span>
+                </div>
+            </div>
+        } @else {
+            <div class="p-3">
+                <jhi-course-competency-relation-form
+                    [(selectedRelationId)]="selectedRelationId"
+                    [courseId]="courseId()"
+                    [(relations)]="relations"
+                    [courseCompetencies]="courseCompetencies()"
+                />
+            </div>
+            <jhi-course-competencies-relation-graph
+                [(selectedRelationId)]="selectedRelationId"
+                [relations]="relations()"
+                [courseCompetencies]="courseCompetencies()"
+                (onCourseCompetencySelection)="selectCourseCompetency($event)"
+            />
+        }
+    </div>
+</div>
