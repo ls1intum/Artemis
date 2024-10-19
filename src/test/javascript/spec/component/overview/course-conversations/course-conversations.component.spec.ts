@@ -262,7 +262,6 @@ examples.forEach((activeConversation) => {
         });
 
         it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
-            fixture.detectChanges();
             component.toggleSidebar();
             expect(component.isCollapsed).toBeTrue();
 
@@ -300,7 +299,6 @@ examples.forEach((activeConversation) => {
         });
 
         it('onConversationSelected should change active conversation', () => {
-            fixture.detectChanges();
             const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation').mockImplementation();
             component.onConversationSelected(activeConversation?.id ?? 1);
             expect(setActiveConversationSpy).toHaveBeenCalled();

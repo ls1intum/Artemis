@@ -763,9 +763,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.dashboardSubscription?.unsubscribe();
-        this.closeSidebarEventSubscription.unsubscribe();
-        this.openSidebarEventSubscription.unsubscribe();
-        this.toggleSidebarEventSubscription.unsubscribe();
+        this.closeSidebarEventSubscription?.unsubscribe();
+        this.openSidebarEventSubscription?.unsubscribe();
+        this.toggleSidebarEventSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         this.ltiSubscription?.unsubscribe();
