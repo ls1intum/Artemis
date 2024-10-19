@@ -201,8 +201,6 @@ public class SharedQueueProcessingService {
             log.debug("There are only lite member in the cluster. Not updating build agent information.");
             return;
         }
-        // Print buildAgentInformation for debugging
-        log.debug("Build agent information: {}", buildAgentInformation.values());
 
         // Remove build agent information of offline nodes
         removeOfflineNodes();
