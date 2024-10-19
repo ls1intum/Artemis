@@ -91,11 +91,14 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             this.participationCouldNotBeFetched = false;
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
+            const repositoryId = Number(params['repositoryId']);
             this.repositoryType = participationId ? 'USER' : params['repositoryType'];
             this.vcsAccessLogRoute = this.router.url + '/vcs-access-log';
             this.enableVcsAccessLog = this.router.url.includes('course-management') && params['repositoryType'] !== 'TESTS';
             if (this.repositoryType === 'USER') {
                 this.loadStudentParticipation(participationId);
+            } else if (this.repositoryType === 'AUXILIARY') {
+                this.loadAuxiliaryRepository(exerciseId, repositoryId);
             } else {
                 this.loadDifferentParticipation(this.repositoryType, exerciseId);
             }
@@ -189,5 +192,28 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                 return participation;
             }),
         );
+    }
+
+    private loadAuxiliaryRepository(exerciseId: number, auxiliaryRepositoryId: number) {
+        this.programmingExerciseService
+            .findWithAuxiliaryRepository(exerciseId)
+            .pipe(
+                tap((exerciseResponse) => {
+                    this.exercise = exerciseResponse.body!;
+                    const auxiliaryRepo = this.exercise.auxiliaryRepositories?.find((repo) => repo.id === auxiliaryRepositoryId);
+                    if (auxiliaryRepo) {
+                        this.domainService.setDomain([DomainType.AUXILIARY_REPOSITORY, auxiliaryRepo]);
+                        this.repositoryUri = auxiliaryRepo.repositoryUri!;
+                    }
+                }),
+            )
+            .subscribe({
+                next: () => {
+                    this.loadingParticipation = false;
+                },
+                error: () => {
+                    this.participationCouldNotBeFetched = true;
+                },
+            });
     }
 }
