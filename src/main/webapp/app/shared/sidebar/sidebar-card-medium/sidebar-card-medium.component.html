@@ -5,7 +5,7 @@
         [ngClass]="{ 'bg-selected border-selected': itemSelected }"
         (click)="emitPageChangeForExam()"
     >
-        <jhi-sidebar-card-item [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
+        <jhi-sidebar-card-item [groupKey]="groupKey" [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
     </div>
 } @else {
     <div
@@ -21,6 +21,6 @@
         (click)="emitStoreAndRefresh(sidebarItem.id)"
         [routerLinkActive]="'bg-selected border-selected'"
     >
-        <jhi-sidebar-card-item [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
+        <jhi-sidebar-card-item [groupKey]="groupKey" [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
     </div>
 }

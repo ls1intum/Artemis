@@ -1,6 +1,5 @@
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { Type } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -29,21 +28,18 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { getElement } from '../../../helpers/utils/general.utils';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
-import { ChannelSubType } from 'app/entities/metis/conversation/channel.model';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
-import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
-import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
-import { AccordionAddOptionsComponent } from 'app/shared/sidebar/accordion-add-options/accordion-add-options.component';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
-import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
+import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -57,8 +53,8 @@ examples.forEach((activeConversation) => {
         let postsSubject: BehaviorSubject<Post[]>;
         let acceptCodeOfConductSpy: jest.SpyInstance;
         let setActiveConversationSpy: jest.SpyInstance;
-        let sidebarEventService: SidebarEventService;
         let metisConversationService: MetisConversationService;
+        let modalService: NgbModal;
         let courseSidebarService: CourseSidebarService;
 
         beforeEach(waitForAsync(() => {
@@ -75,7 +71,6 @@ examples.forEach((activeConversation) => {
                     MockComponent(ButtonComponent),
                     MockComponent(SidebarComponent),
                     MockComponent(CourseWideSearchComponent),
-                    MockComponent(AccordionAddOptionsComponent),
                     MockComponent(SidebarAccordionComponent),
                     MockPipe(ArtemisTranslatePipe),
                     MockPipe(HtmlForMarkdownPipe),
@@ -114,7 +109,6 @@ examples.forEach((activeConversation) => {
                 },
             });
 
-            sidebarEventService = TestBed.inject(SidebarEventService);
             metisConversationService = TestBed.inject(MetisConversationService);
             courseSidebarService = TestBed.inject(CourseSidebarService);
 
@@ -138,12 +132,10 @@ examples.forEach((activeConversation) => {
             postsSubject = new BehaviorSubject([]);
             jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
             jest.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(new BehaviorSubject(activeConversation).asObservable());
-            jest.spyOn(sidebarEventService, 'emitSidebarAccordionPlusClickedEvent').mockImplementation((groupKey: string) => {
-                component.onAccordionPlusButtonPressed(groupKey);
-            });
             setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
             acceptCodeOfConductSpy = jest.spyOn(metisConversationService, 'acceptCodeOfConduct');
             jest.spyOn(metisService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
+            modalService = TestBed.inject(NgbModal);
         }));
 
         afterEach(() => {
@@ -157,6 +149,57 @@ examples.forEach((activeConversation) => {
             expect(component.isLoading).toBeFalse();
             expect(component.conversationsOfUser).toHaveLength(1);
             expect(component.activeConversation).toEqual(activeConversation);
+        });
+
+        describe('Dialog Opening', () => {
+            const expectedResults = [undefined, true];
+            const mockModalRef: Partial<NgbModalRef> = {
+                componentInstance: {
+                    course: {},
+                    initialize: jest.fn(),
+                },
+            };
+
+            beforeEach(() => {
+                // Set a mock course with id 1
+                component.course = { id: 1 } as Course;
+            });
+
+            it('should open the group chat creation dialog', fakeAsync(() => {
+                mockModalRef.result = Promise.resolve(undefined);
+                const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+                component.openCreateGroupChatDialog();
+                tick();
+                expect(spy).toHaveBeenCalledExactlyOnceWith(GroupChatCreateDialogComponent, expect.anything());
+            }));
+
+            it('should open the one-to-one chat creation dialog', fakeAsync(() => {
+                const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+                component.openCreateOneToOneChatDialog();
+                tick();
+                expect(spy).toHaveBeenCalledExactlyOnceWith(OneToOneChatCreateDialogComponent, expect.anything());
+            }));
+
+            it('should open the channel overview dialog', fakeAsync(() => {
+                mockModalRef.result = Promise.resolve(expectedResults);
+                const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+                component.openChannelOverviewDialog();
+                tick();
+                expect(spy).toHaveBeenCalledExactlyOnceWith(ChannelsOverviewDialogComponent, expect.anything());
+                expect(mockModalRef.componentInstance.initialize).toHaveBeenCalled();
+            }));
+
+            it('should open the create channel dialog when onCreateChannelPressed is called', fakeAsync(() => {
+                mockModalRef.result = Promise.resolve(expectedResults);
+                const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+
+                component.openCreateChannelDialog();
+                tick();
+
+                expect(spy).toHaveBeenCalledExactlyOnceWith(ChannelsCreateDialogComponent, expect.anything());
+                expect(mockModalRef.componentInstance.course).toEqual(course);
+                expect(mockModalRef.componentInstance.initialize).toHaveBeenCalled();
+            }));
         });
 
         it('should update thread in post', fakeAsync(() => {
@@ -263,105 +306,70 @@ examples.forEach((activeConversation) => {
             expect(setActiveConversationSpy).toHaveBeenCalled();
         });
 
-        it('getChannelSubType method should return correct SubType', () => {
-            fixture.detectChanges();
-            expect(component.getChannelSubType('exerciseChannels')).toEqual(ChannelSubType.EXERCISE);
-            expect(component.getChannelSubType('examChannels')).toEqual(ChannelSubType.EXAM);
-            expect(component.getChannelSubType('generalChannels')).toEqual(ChannelSubType.GENERAL);
-            expect(component.getChannelSubType('lectureChannels')).toEqual(ChannelSubType.LECTURE);
-        });
+        describe('performChannelAction', () => {
+            let channelAction: ChannelAction;
+            let channel: ChannelDTO;
 
-        it('onAccordionPlusButtonPressed method should call openCreateGroupChatDialog when groupKey is groupChats', () => {
-            fixture.detectChanges();
-            const createGroupChatSpy = jest.spyOn(component, 'openCreateGroupChatDialog').mockImplementation();
-            component.onAccordionPlusButtonPressed('groupChats');
-            expect(createGroupChatSpy).toHaveBeenCalled();
-        });
+            beforeEach(() => {
+                channel = new ChannelDTO();
+                channel.id = 123;
+                channel.name = 'Test Channel';
 
-        it('onAccordionPlusButtonPressed method should call openCreateOneToOneChatDialog when groupKey is directMessages', () => {
-            fixture.detectChanges();
-            const createDirectMessageSpy = jest.spyOn(component, 'openCreateOneToOneChatDialog').mockImplementation();
-            component.onAccordionPlusButtonPressed('directMessages');
-            expect(createDirectMessageSpy).toHaveBeenCalled();
-        });
+                channelAction = {
+                    action: 'create',
+                    channel,
+                };
 
-        it('onAccordionPlusButtonPressed method should call openChannelOverviewDialog when groupKey is any channelType', () => {
-            fixture.detectChanges();
-            const openChannelOverviewDialogSpy = jest.spyOn(component, 'openChannelOverviewDialog').mockImplementation();
-            component.onAccordionPlusButtonPressed('generalChannels');
-            expect(openChannelOverviewDialogSpy).toHaveBeenCalledWith('generalChannels');
-            component.onAccordionPlusButtonPressed('examChannels');
-            expect(openChannelOverviewDialogSpy).toHaveBeenCalledWith('examChannels');
-            component.onAccordionPlusButtonPressed('lectureChannels');
-            expect(openChannelOverviewDialogSpy).toHaveBeenCalledWith('lectureChannels');
-            component.onAccordionPlusButtonPressed('exerciseChannels');
-            expect(openChannelOverviewDialogSpy).toHaveBeenCalledWith('exerciseChannels');
-            component.onAccordionPlusButtonPressed('randomInputShouldAddedToGeneralChannels');
-            expect(openChannelOverviewDialogSpy).toHaveBeenCalledWith('generalChannels');
-        });
+                component.createChannelFn = undefined;
+                component.ngOnInit();
 
-        it('should open create group chat dialog when button is pressed', fakeAsync(() => {
-            const createGroupChatSpy = jest.spyOn(metisConversationService, 'createGroupChat').mockReturnValue(EMPTY);
-            createConversationDialogTest([new UserPublicInfoDTO()], GroupChatCreateDialogComponent, 'groupChats');
-            fixture.whenStable().then(() => {
-                expect(createGroupChatSpy).toHaveBeenCalledOnce();
+                component.createChannelFn = jest.fn().mockReturnValue(EMPTY);
+                jest.spyOn(component, 'prepareSidebarData').mockImplementation();
             });
-        }));
 
-        it('should open one to one chat dialog when button is pressed', fakeAsync(() => {
-            const createOneToOneChatSpy = jest.spyOn(metisConversationService, 'createOneToOneChat').mockReturnValue(EMPTY);
-            const chatPartner = new UserPublicInfoDTO();
-            chatPartner.login = 'test';
-            createConversationDialogTest(chatPartner, OneToOneChatCreateDialogComponent, 'directMessages');
-            fixture.whenStable().then(() => {
-                expect(createOneToOneChatSpy).toHaveBeenCalledOnce();
+            it('should call createChannelFn with the provided channel', () => {
+                component.performChannelAction(channelAction);
+                expect(component.createChannelFn).toHaveBeenCalledWith(channel);
             });
-        }));
 
-        it('should open channel overview dialog when button is pressed', fakeAsync(() => {
-            fixture.detectChanges();
-            tick(301);
-            const modalService = TestBed.inject(NgbModal);
-            const mockModalRef = {
-                componentInstance: {
-                    course: undefined,
-                    createChannelFn: undefined,
-                    initialize: () => {},
-                },
-                result: Promise.resolve([new GroupChatDTO(), true]),
-            };
-            const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-            component.onAccordionPlusButtonPressed('generalChannels');
+            it('should call prepareSidebarData on successful completion', () => {
+                component.createChannelFn = jest.fn().mockReturnValue({
+                    pipe: () => ({
+                        subscribe: ({ complete }: any) => {
+                            complete();
+                        },
+                    }),
+                });
 
-            tick(301);
-            fixture.whenStable().then(() => {
-                expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);
-                expect(mockModalRef.componentInstance.course).toEqual(course);
+                component.performChannelAction(channelAction);
+                expect(component.prepareSidebarData).toHaveBeenCalled();
             });
-        }));
 
-        function createConversationDialogTest(modalReturnValue: any, dialog: Type<AbstractDialogComponent>, channelType: string) {
-            fixture.detectChanges();
-            tick(301);
-            const modalService = TestBed.inject(NgbModal);
-            const mockModalRef = {
-                componentInstance: {
-                    course: undefined,
-                    initialize: () => {},
-                },
-                result: Promise.resolve(modalReturnValue),
-            };
-            const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-            fixture.detectChanges();
+            it('should log an error if createChannelFn throws an error', () => {
+                const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
 
-            sidebarEventService.emitSidebarAccordionPlusClickedEvent(channelType);
-            tick(301);
-            fixture.whenStable().then(() => {
-                expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(dialog, defaultFirstLayerDialogOptions);
-                expect(mockModalRef.componentInstance.course).toEqual(course);
+                component.createChannelFn = jest.fn().mockReturnValue({
+                    pipe: () => ({
+                        subscribe: ({ error }: any) => {
+                            error('Test Error');
+                        },
+                    }),
+                });
+
+                component.performChannelAction(channelAction);
+                expect(consoleErrorSpy).toHaveBeenCalledWith('Error creating channel:', 'Test Error');
+
+                consoleErrorSpy.mockRestore();
             });
-        }
+
+            it('should not call createChannelFn or prepareSidebarData if createChannelFn is undefined', () => {
+                component.createChannelFn = undefined;
+                const prepareSidebarDataSpy = jest.spyOn(component, 'prepareSidebarData');
+                component.performChannelAction(channelAction);
+                expect(component.createChannelFn).toBeUndefined();
+                // Since createChannelFn is undefined, prepareSidebarData should not be called
+                expect(prepareSidebarDataSpy).not.toHaveBeenCalled();
+            });
+        });
     });
 });
