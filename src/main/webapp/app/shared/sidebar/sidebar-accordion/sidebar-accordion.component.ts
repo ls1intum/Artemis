@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, input } from '@angular/core';
 import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
-import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarTypes,SidebarItemShowAlways, } from 'app/types/sidebar';
+import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarItemShowAlways, SidebarTypes } from 'app/types/sidebar';
 import { Params } from '@angular/router';
 
 @Component({
