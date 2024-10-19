@@ -103,8 +103,8 @@ public class BuildJobContainerService {
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
                 // by the creation of a file "stop_container.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f " + LOCALCI_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
-                // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
+                // .withCmd("sh", "-c", "while [ ! -f " + LOCALCI_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
+                .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
     }
@@ -330,11 +330,12 @@ public class BuildJobContainerService {
     private void addAndPrepareDirectoryAndReplaceContent(String containerId, Path repositoryPath, String newDirectoryName) {
         copyToContainer(repositoryPath.toString(), containerId);
         addDirectory(containerId, newDirectoryName, true);
-        renameDirectoryOrFileAndReplace(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString() + "/*", newDirectoryName + "/");
+        removeDirectoryAndFiles(containerId, newDirectoryName);
+        renameDirectoryOrFile(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
 
-    private void renameDirectoryOrFileAndReplace(String containerId, String oldName, String newName) {
-        executeDockerCommand(containerId, null, false, false, true, "mv", "-f", oldName, newName);
+    private void removeDirectoryAndFiles(String containerId, String newName) {
+        executeDockerCommand(containerId, null, false, false, true, "rm", "-rf", newName);
     }
 
     private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
