@@ -258,9 +258,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
-        this.openSidebarEventSubscription.unsubscribe();
-        this.closeSidebarEventSubscription.unsubscribe();
-        this.toggleSidebarEventSubscription.unsubscribe();
+        this.openSidebarEventSubscription?.unsubscribe();
+        this.closeSidebarEventSubscription?.unsubscribe();
+        this.toggleSidebarEventSubscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
     }
 
