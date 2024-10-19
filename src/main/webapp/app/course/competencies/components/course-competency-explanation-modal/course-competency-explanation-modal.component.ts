@@ -10,6 +10,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     standalone: true,
     imports: [CompetencyGraphComponent, TranslateDirective, FontAwesomeModule],
     templateUrl: './course-competency-explanation-modal.component.html',
+    styleUrl: './course-competency-explanation-modal.component.scss',
 })
 export class CourseCompetencyExplanationModalComponent {
     protected readonly closeIcon = faXmark;
