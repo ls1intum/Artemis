@@ -117,6 +117,9 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.pause-grace-period-seconds:15}")
     private int pauseGracePeriodSeconds;
 
+    @Value("${artemis.continuous-integration.build-agent.short-name}")
+    private String buildAgentShortName;
+
     public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService, TaskScheduler taskScheduler) {
         this.hazelcastInstance = hazelcastInstance;
@@ -132,6 +135,13 @@ public class SharedQueueProcessingService {
      */
     @PostConstruct
     public void init() {
+        if (!buildAgentShortName.matches("^[a-z0-9-]+$")) {
+            String errorMessage = "Build agent short name must not be empty and only contain lowercase letters, numbers and hyphens."
+                    + " Build agent short name should be changed in the application properties under 'artemis.continuous-integration.build-agent.short-name'.";
+            log.error(errorMessage);
+            throw new IllegalArgumentException(errorMessage);
+        }
+
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
@@ -324,7 +334,8 @@ public class SharedQueueProcessingService {
 
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
-        return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs, publicSshKey);
+        return new BuildAgentInformation(buildAgentShortName, memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs,
+                publicSshKey);
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
