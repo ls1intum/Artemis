@@ -9,6 +9,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 export class SidebarCardItemComponent implements OnInit {
     @Input() sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
+    @Input() groupKey?: string;
     @Input() unreadCount!: number | undefined;
 
     formattedUnreadCount: string = '';
