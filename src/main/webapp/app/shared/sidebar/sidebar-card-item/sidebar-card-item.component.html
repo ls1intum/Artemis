@@ -52,7 +52,7 @@
                     class="small text-truncate me-2"
                     [title]="sidebarItem.title"
                     [class.muted]="sidebarItem.conversation?.isMuted"
-                    [ngClass]="unreadCount() > 0 ? 'fw-bold' : 'normal'"
+                    [ngClass]="unreadCount() > 0 ? 'fw-bold' : 'fw-normal'"
                 >
                     @if (sidebarItem.icon) {
                         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
