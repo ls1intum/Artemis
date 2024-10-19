@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 import { FeedbackAnalysisService } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
@@ -11,10 +10,11 @@ export interface FilterData {
     testCases: string[];
     occurrence: number[];
 }
+
 @Component({
     selector: 'jhi-feedback-filter-modal',
     templateUrl: './feedback-filter-modal.component.html',
-    imports: [RangeSliderComponent, ArtemisSharedCommonModule, ReactiveFormsModule],
+    imports: [RangeSliderComponent, ArtemisSharedCommonModule],
     providers: [FeedbackAnalysisService],
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,9 +22,8 @@ export interface FilterData {
 export class FeedbackFilterModalComponent {
     private localStorage = inject(LocalStorageService);
     private activeModal = inject(NgbActiveModal);
-    private fb = inject(FormBuilder);
+
     filterApplied = output<FilterData>();
-    readonly filterForm: FormGroup;
 
     readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
     readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
@@ -41,14 +40,6 @@ export class FeedbackFilterModalComponent {
         testCases: [],
         occurrence: [this.minCount(), this.maxCount() || 1],
     };
-
-    constructor() {
-        this.filterForm = this.fb.group({
-            tasks: [[]],
-            testCases: [[]],
-            occurrence: [[this.minCount(), this.maxCount() || 1]],
-        });
-    }
 
     applyFilter(): void {
         this.localStorage.store(this.FILTER_TASKS_KEY, this.filters.tasks);

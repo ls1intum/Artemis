@@ -135,12 +135,6 @@ export class FeedbackAnalysisComponent {
         this.maxCount.set(await this.feedbackAnalysisService.getMaxCount(this.exerciseId()));
         const modalRef = this.modalService.open(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
 
-        modalRef.componentInstance.filterForm.setValue({
-            tasks: this.selectedFiltersCount() !== 0 ? savedTasks : [],
-            testCases: this.selectedFiltersCount() !== 0 ? savedTestCases : [],
-            occurrence: this.selectedFiltersCount() !== 0 ? savedOccurrence : [this.minCount(), this.maxCount()],
-        });
-
         modalRef.componentInstance.totalAmountOfTasks = this.totalAmountOfTasks;
         modalRef.componentInstance.testCaseNames = this.testCaseNames;
         modalRef.componentInstance.exerciseId = this.exerciseId;
