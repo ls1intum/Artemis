@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -261,14 +263,16 @@ public class LectureResource {
 
     /**
      * POST /courses/{courseId}/ingest
-     * This endpooint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
+     * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
      *
      * @param courseId  the ID of the course for which all lectures should be ingested in pyris
      * @param lectureId If this id is present then only ingest this one lecture of the respective course
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
+    @Profile(PROFILE_IRIS)
     @PostMapping("courses/{courseId}/ingest")
-    public ResponseEntity<Void> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Boolean> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
         log.debug("REST request to ingest lectures of course : {}", courseId);
         Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
         if (lectureId.isPresent()) {

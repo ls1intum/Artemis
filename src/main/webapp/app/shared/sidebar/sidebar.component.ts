@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
-import { faFilter, faFilterCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, input, output } from '@angular/core';
+import { faFilter, faFilterCircleXmark, faHashtag, faPlusCircle, faSearch, faUser, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
@@ -24,7 +24,10 @@ import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercis
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Output() onSelectConversation = new EventEmitter<number>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
-    @Output() onPlusPressed = new EventEmitter<string>();
+    onDirectChatPressed = output<void>();
+    onGroupChatPressed = output<void>();
+    onBrowsePressed = output<void>();
+    onCreateChannelPressed = output<void>();
     @Input() searchFieldEnabled: boolean = true;
     @Input() sidebarData: SidebarData;
     @Input() courseId?: number;
@@ -33,7 +36,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Input() channelTypeIcon?: ChannelTypeIcons;
     @Input() collapseState: CollapseState;
     @Input() showFilter: boolean = false;
-
+    inCommunication = input<boolean>(false);
     searchValue = '';
     isCollapsed: boolean = false;
 
@@ -42,7 +45,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     paramSubscription?: Subscription;
     profileSubscription?: Subscription;
     sidebarEventSubscription?: Subscription;
-    sidebarAccordionEventSubscription?: Subscription;
 
     routeParams: Params;
     isProduction = true;
@@ -52,6 +54,11 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
 
     readonly faFilter = faFilter;
     readonly faFilterCurrentlyApplied = faFilterCircleXmark;
+    readonly faUser = faUser;
+    readonly faUsers = faUsers;
+    readonly faPlusCircle = faPlusCircle;
+    readonly faSearch = faSearch;
+    readonly faHashtag = faHashtag;
 
     sidebarDataBeforeFiltering: SidebarData;
 
@@ -64,6 +71,22 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         private sidebarEventService: SidebarEventService,
         private modalService: NgbModal,
     ) {}
+
+    createNewChannel() {
+        this.onCreateChannelPressed.emit();
+    }
+
+    browseChannels() {
+        this.onBrowsePressed.emit();
+    }
+
+    createDirectChat() {
+        this.onDirectChatPressed.emit();
+    }
+
+    createGroupChat() {
+        this.onGroupChatPressed.emit();
+    }
 
     ngOnInit(): void {
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
@@ -82,17 +105,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
                         this.onSelectConversation.emit(+itemId);
                         this.onUpdateSidebar.emit();
                     }
-                }
-            });
-
-        this.sidebarAccordionEventSubscription = this.sidebarEventService
-            .sidebarAccordionPlusClickedEventListener()
-            .pipe(
-                distinctUntilChanged(), // This ensures the function is only called when the actual value changes
-            )
-            .subscribe((groupKey) => {
-                if (groupKey) {
-                    this.onPlusPressed.emit(groupKey);
                 }
             });
     }
