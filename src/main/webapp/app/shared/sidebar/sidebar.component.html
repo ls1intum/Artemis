@@ -25,7 +25,7 @@
                                 </button>
 
                                 <div ngbDropdownMenu>
-                                    @if (sidebarData.messagingEnabled) {
+                                    @if (sidebarData?.messagingEnabled) {
                                         <button (click)="createDirectChat()" class="p-2" ngbDropdownItem>
                                             <fa-icon [icon]="faUser" class="item-icon" [fixedWidth]="true"></fa-icon>
                                             <span jhiTranslate="artemisApp.courseOverview.sidebar.createDirectChat"></span>
