@@ -45,14 +45,7 @@
             </div>
         </div>
         <label jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.filterModal.occurrence"></label>
-        <jhi-range-slider
-            [generalMinValue]="minCount()"
-            [generalMaxValue]="maxCount()"
-            [(selectedMinValue)]="occurrence[0]"
-            [(selectedMaxValue)]="occurrence[1]"
-            (selectedMinValueChange)="occurrence = [$event, occurrence[1]]"
-            (selectedMaxValueChange)="occurrence = [occurrence[0], $event]"
-        >
+        <jhi-range-slider [generalMinValue]="minCount()" [generalMaxValue]="maxCount()" [(selectedMinValue)]="filters.occurrence[0]" [(selectedMaxValue)]="filters.occurrence[1]">
         </jhi-range-slider>
     </div>
 

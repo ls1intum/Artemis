@@ -36,6 +36,12 @@ export class FeedbackFilterModalComponent {
     readonly maxCount = signal<number>(0);
     readonly taskArray = computed(() => Array.from({ length: this.totalAmountOfTasks() }, (_, i) => i + 1));
 
+    filters: FilterData = {
+        tasks: [],
+        testCases: [],
+        occurrence: [this.minCount(), this.maxCount() || 1],
+    };
+
     constructor() {
         this.filterForm = this.fb.group({
             tasks: [[]],
@@ -44,20 +50,11 @@ export class FeedbackFilterModalComponent {
         });
     }
 
-    get occurrence(): number[] {
-        return this.filterForm.get('occurrence')?.value;
-    }
-
-    set occurrence(value: number[]) {
-        this.filterForm.get('occurrence')?.setValue(value);
-    }
-
     applyFilter(): void {
-        const filters: FilterData = this.filterForm.value;
-        this.localStorage.store(this.FILTER_TASKS_KEY, filters.tasks);
-        this.localStorage.store(this.FILTER_TEST_CASES_KEY, filters.testCases);
-        this.localStorage.store(this.FILTER_OCCURRENCE_KEY, filters.occurrence);
-        this.filterApplied.emit(filters);
+        this.localStorage.store(this.FILTER_TASKS_KEY, this.filters.tasks);
+        this.localStorage.store(this.FILTER_TEST_CASES_KEY, this.filters.testCases);
+        this.localStorage.store(this.FILTER_OCCURRENCE_KEY, this.filters.occurrence);
+        this.filterApplied.emit(this.filters);
         this.activeModal.close();
     }
 
@@ -65,29 +62,24 @@ export class FeedbackFilterModalComponent {
         this.localStorage.clear(this.FILTER_TASKS_KEY);
         this.localStorage.clear(this.FILTER_TEST_CASES_KEY);
         this.localStorage.clear(this.FILTER_OCCURRENCE_KEY);
-        this.filterForm.reset({
+        this.filters = {
             tasks: [],
             testCases: [],
             occurrence: [this.minCount(), this.maxCount()],
-        });
-        this.filterApplied.emit(this.filterForm.value as FilterData);
+        };
+        this.filterApplied.emit(this.filters);
         this.activeModal.close();
     }
 
     onCheckboxChange(event: Event, controlName: keyof FilterData): void {
         const checkbox = event.target as HTMLInputElement;
+        const values = this.filters[controlName];
 
         if (controlName === 'occurrence') {
-            const values: number[] = this.filterForm.value[controlName];
             const numericValue = Number(checkbox.value);
-            this.pushValue(checkbox, values, numericValue);
-            this.filterForm.patchValue({ occurrence: values });
+            this.pushValue(checkbox, values as number[], numericValue);
         } else {
-            const values: string[] = this.filterForm.value[controlName];
-            this.pushValue(checkbox, values, checkbox.value);
-            const patch: Partial<FilterData> = {};
-            patch[controlName] = values;
-            this.filterForm.patchValue(patch);
+            this.pushValue(checkbox, values as string[], checkbox.value);
         }
     }
 

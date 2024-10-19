@@ -145,6 +145,11 @@ export class FeedbackAnalysisComponent {
         modalRef.componentInstance.testCaseNames = this.testCaseNames;
         modalRef.componentInstance.exerciseId = this.exerciseId;
         modalRef.componentInstance.maxCount = this.maxCount;
+        modalRef.componentInstance.filters = {
+            tasks: this.selectedFiltersCount() !== 0 ? savedTasks : [],
+            testCases: this.selectedFiltersCount() !== 0 ? savedTestCases : [],
+            occurrence: this.selectedFiltersCount() !== 0 ? savedOccurrence : [this.minCount(), this.maxCount()],
+        };
         modalRef.componentInstance.filterApplied.subscribe((filters: any) => {
             this.applyFilters(filters);
         });
