@@ -97,19 +97,19 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        job1 = new BuildJobQueueItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
-        job2 = new BuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
+        job1 = new BuildJobQueueItem("1", "job1", "buildagent1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
+        job2 = new BuildJobQueueItem("2", "job2", "buildagent1", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         agent1 = new BuildAgentInformation("build-agent", memberAddress, 1, 0, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE,
                 new ArrayList<>(List.of(job2)), null);
-        BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
-                buildConfig, null);
-        BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo2,
-                buildConfig, null);
-        BuildJobQueueItem finishedJobQueueItem3 = new BuildJobQueueItem("5", "job5", "address1", 5, course.getId() + 2, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo3,
-                buildConfig, null);
-        BuildJobQueueItem finishedJobQueueItemForLogs = new BuildJobQueueItem("6", "job5", "address1", 5, course.getId(), programmingExercise.getId(), 1, 1, BuildStatus.FAILED,
-                repositoryInfo, jobTimingInfo3, buildConfig, null);
+        BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", "buildagent1", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo,
+                jobTimingInfo1, buildConfig, null);
+        BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", "buildagent1", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo,
+                jobTimingInfo2, buildConfig, null);
+        BuildJobQueueItem finishedJobQueueItem3 = new BuildJobQueueItem("5", "job5", "buildagent1", "address1", 5, course.getId() + 2, 1, 1, 1, BuildStatus.FAILED, repositoryInfo,
+                jobTimingInfo3, buildConfig, null);
+        BuildJobQueueItem finishedJobQueueItemForLogs = new BuildJobQueueItem("6", "job5", "buildagent1", "address1", 5, course.getId(), programmingExercise.getId(), 1, 1,
+                BuildStatus.FAILED, repositoryInfo, jobTimingInfo3, buildConfig, null);
         var result1 = new Result().successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
         var result2 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
         var result3 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
@@ -289,7 +289,8 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
                 ZonedDateTime.now().plusDays(1).plusMinutes(10));
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
-        var failedJob1 = new BuildJobQueueItem("5", "job5", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo, buildConfig, null);
+        var failedJob1 = new BuildJobQueueItem("5", "job5", "buildagent1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo, buildConfig,
+                null);
         var jobResult = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
         var failedFinishedJob = new BuildJob(failedJob1, BuildStatus.FAILED, jobResult);
 

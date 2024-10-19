@@ -114,8 +114,8 @@
                                 <fa-icon [icon]="controls.iconForSortPropField('buildAgentAddress')" />
                             </span>
                         </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: value }">
+                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                            <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: row.buildAgentName }">
                                 {{ value }}
                             </a>
                         </ng-template>

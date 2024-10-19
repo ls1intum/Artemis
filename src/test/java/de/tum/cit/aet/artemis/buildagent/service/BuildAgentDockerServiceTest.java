@@ -92,7 +92,7 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
         doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         doThrow(new NotFoundException("")).when(inspectImageCmd).exec();
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
-        var build = new BuildJobQueueItem("1", "job1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
+        var build = new BuildJobQueueItem("1", "job1", "buildagent1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
         // Pull image
         try {
             buildAgentDockerService.pullDockerImage(build, new BuildLogsMap());

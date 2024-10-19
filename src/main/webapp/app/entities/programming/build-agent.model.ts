@@ -10,6 +10,7 @@ export enum BuildAgentStatus {
 export class BuildAgent implements BaseEntity {
     public id?: number;
     public name?: string;
+    public memberAddress?: string;
     public maxNumberOfConcurrentBuildJobs?: number;
     public numberOfCurrentBuildJobs?: number;
     public runningBuildJobs?: BuildJob[];

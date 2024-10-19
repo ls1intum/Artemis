@@ -104,9 +104,9 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        BuildJobQueueItem job1 = new BuildJobQueueItem("1", "job1", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        BuildJobQueueItem job1 = new BuildJobQueueItem("1", "job1", "buildagent1", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
-        BuildJobQueueItem job2 = new BuildJobQueueItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        BuildJobQueueItem job2 = new BuildJobQueueItem("2", "job2", "buildagent1", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");

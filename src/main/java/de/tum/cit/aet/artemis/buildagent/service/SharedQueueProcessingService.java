@@ -162,14 +162,14 @@ public class SharedQueueProcessingService {
 
         ITopic<String> pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
         pauseBuildAgentTopic.addMessageListener(message -> {
-            if (message.getMessageObject().equals(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
+            if (message.getMessageObject().equals(buildAgentShortName)) {
                 pauseBuildAgent();
             }
         });
 
         ITopic<String> resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
         resumeBuildAgentTopic.addMessageListener(message -> {
-            if (message.getMessageObject().equals(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
+            if (message.getMessageObject().equals(buildAgentShortName)) {
                 resumeBuildAgent();
             }
         });
@@ -201,6 +201,9 @@ public class SharedQueueProcessingService {
             log.debug("There are only lite member in the cluster. Not updating build agent information.");
             return;
         }
+        // Print buildAgentInformation for debugging
+        log.debug("Build agent information: {}", buildAgentInformation.values());
+
         // Remove build agent information of offline nodes
         removeOfflineNodes();
 
@@ -253,7 +256,7 @@ public class SharedQueueProcessingService {
             if (buildJob != null) {
                 processingJobs.remove(buildJob.id());
 
-                buildJob = new BuildJobQueueItem(buildJob, "");
+                buildJob = new BuildJobQueueItem(buildJob, "", "");
                 log.info("Adding build job back to the queue: {}", buildJob);
                 queue.add(buildJob);
                 localProcessingJobs.decrementAndGet();
@@ -275,7 +278,7 @@ public class SharedQueueProcessingService {
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
 
-            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, hazelcastMemberAddress);
+            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, buildAgentShortName, hazelcastMemberAddress);
 
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
@@ -297,10 +300,10 @@ public class SharedQueueProcessingService {
             // Add/update
             BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob);
             try {
-                buildAgentInformation.put(info.name(), info);
+                buildAgentInformation.put(info.memberAddress(), info);
             }
             catch (Exception e) {
-                log.error("Error while updating build agent information for agent {}", info.name(), e);
+                log.error("Error while updating build agent information for agent {} with address {}", info.name(), info.memberAddress(), e);
             }
         }
         finally {
@@ -372,9 +375,9 @@ public class SharedQueueProcessingService {
             log.debug("Build job completed: {}", buildJob);
             JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
 
-            BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(), buildJob.courseId(),
-                    buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
-                    null);
+            BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentName(), buildJob.buildAgentAddress(),
+                    buildJob.participationId(), buildJob.courseId(), buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL,
+                    buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(), null);
 
             List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
             buildLogsMap.removeBuildLogs(buildJob.id());

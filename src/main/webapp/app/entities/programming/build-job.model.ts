@@ -8,6 +8,7 @@ import dayjs from 'dayjs/esm';
 export class BuildJob implements StringBaseEntity {
     public id?: string;
     public name?: string;
+    public buildAgentName?: string;
     public buildAgentAddress?: string;
     public participationId?: number;
     public courseId?: number;
