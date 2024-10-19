@@ -70,6 +70,8 @@
                 "examChannels": "Klausuren",
                 "createChannel": "Kanal erstellen",
                 "browseChannels": "Kanäle durchsuchen",
+                "createGroupChat": "Gruppenchat erstellen",
+                "createDirectChat": "Direkt-Chat erstellen",
                 "groupChats": "Gruppenchats",
                 "directMessages": "Direktnachrichten",
                 "filterConversationPlaceholder": "Konversationen filtern"
