@@ -37,6 +37,8 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
  */
 class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
+    private static final String TEST_PREFIX = "localvcint";
+
     private LocalRepository assignmentRepository;
 
     private LocalRepository templateRepository;
@@ -60,6 +62,11 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-tests");
     }
 
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
     @AfterEach
     void removeRepositories() throws IOException {
         assignmentRepository.resetLocalRepo();
@@ -77,7 +84,16 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Delete the remote repository.
         someRepository.originGit.close();
-        FileUtils.deleteDirectory(someRepository.originRepoFile);
+        try {
+            FileUtils.deleteDirectory(someRepository.originRepoFile);
+        }
+        catch (IOException exception) {
+            // JGit creates a lock file in each repository that could cause deletion problems.
+            if (exception.getMessage().contains("gc.log.lock")) {
+                return;
+            }
+            throw exception;
+        }
 
         // Try to fetch from the remote repository.
         localVCLocalCITestService.testFetchThrowsException(someRepository.localGit, student1Login, USER_PASSWORD, projectKey, repositorySlug, InvalidRemoteException.class, "");
@@ -122,7 +138,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     void testFetchPush_wrongCredentials() throws InvalidNameException {
-        var student1 = new LdapUserDto().login(TEST_PREFIX + "student1");
+        var student1 = new LdapUserDto().login(getTestPrefix() + "student1");
         student1.setUid(new LdapName("cn=student1,ou=test,o=lab"));
 
         var fakeUser = new LdapUserDto().login(localVCBaseUsername);
