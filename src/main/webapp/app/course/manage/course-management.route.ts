@@ -363,7 +363,7 @@ export const courseManagementState: Routes = [
                                         path: 'new',
                                         component: FaqUpdateComponent,
                                         data: {
-                                            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                                            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                                             pageTitle: 'global.generic.create',
                                         },
                                         canActivate: [UserRouteAccessService],
