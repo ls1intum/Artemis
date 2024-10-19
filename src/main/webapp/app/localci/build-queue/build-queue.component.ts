@@ -232,11 +232,9 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
                 this.websocketService.subscribe(`/topic/admin/queued-jobs`);
                 this.websocketService.subscribe(`/topic/admin/running-jobs`);
                 this.websocketService.receive(`/topic/admin/queued-jobs`).subscribe((queuedBuildJobs) => {
-                    console.log('queuedBuildJobs', queuedBuildJobs);
                     this.queuedBuildJobs = queuedBuildJobs;
                 });
                 this.websocketService.receive(`/topic/admin/running-jobs`).subscribe((runningBuildJobs) => {
-                    console.log('runningBuildJobs', runningBuildJobs);
                     this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
                 });
             }
