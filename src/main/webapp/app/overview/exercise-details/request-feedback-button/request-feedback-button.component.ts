@@ -26,6 +26,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 export class RequestFeedbackButtonComponent implements OnInit {
     faPenSquare = faPenSquare;
     athenaEnabled = false;
+    requestFeedbackEnabled = false;
     isExamExercise: boolean;
     participation?: StudentParticipation;
 
@@ -34,7 +35,6 @@ export class RequestFeedbackButtonComponent implements OnInit {
     exercise = input.required<Exercise>();
     generatingFeedback = output<void>();
 
-    private feedbackSent = false;
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
@@ -52,6 +52,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
         if (this.isExamExercise || !this.exercise().id) {
             return;
         }
+        this.requestFeedbackEnabled = this.exercise().allowFeedbackRequests ?? false;
         this.updateParticipation();
     }
 
@@ -77,7 +78,6 @@ export class RequestFeedbackButtonComponent implements OnInit {
             next: (participation: StudentParticipation) => {
                 if (participation) {
                     this.generatingFeedback.emit();
-                    this.feedbackSent = true;
                     this.alertService.success('artemisApp.exercise.feedbackRequestSent');
                 }
             },
