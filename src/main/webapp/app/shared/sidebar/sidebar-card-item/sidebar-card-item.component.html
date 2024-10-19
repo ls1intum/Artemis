@@ -52,7 +52,7 @@
                     class="small text-truncate me-2"
                     [title]="sidebarItem.title"
                     [class.muted]="sidebarItem.conversation?.isMuted"
-                    [ngClass]="unreadCount && unreadCount > 0 ? 'fw-bold' : 'fw-semibold'"
+                    [ngClass]="unreadCount > 0 ? 'fw-bold' : 'fw-semibold'"
                 >
                     @if (sidebarItem.icon) {
                         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
@@ -64,7 +64,7 @@
                         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.rightIcon" />
                     }
                 </span>
-                @if (unreadCount && unreadCount > 0) {
+                @if (unreadCount > 0) {
                     <span class="unread-count">{{ formattedUnreadCount }}</span>
                 }
             </div>
