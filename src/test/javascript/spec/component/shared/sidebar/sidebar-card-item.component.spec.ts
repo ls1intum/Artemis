@@ -3,6 +3,7 @@ import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/s
 import { SidebarCardSize } from 'app/types/sidebar';
 import { ArtemisTestModule } from '../../../test.module';
 import { DifficultyLevel } from 'app/entities/exercise.model';
+import { input, runInInjectionContext } from '@angular/core';
 
 describe('SidebarCardItemComponent', () => {
     let component: SidebarCardItemComponent;
@@ -39,14 +40,18 @@ describe('SidebarCardItemComponent', () => {
     });
 
     it('should format unreadCount correctly when count is less than 99', () => {
-        component.unreadCount = 45;
-        component.ngOnInit();
-        expect(component.formattedUnreadCount).toBe('45');
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.unreadCount = input<number>(45);
+            component.ngOnInit();
+            expect(component.formattedUnreadCount).toBe('45');
+        });
     });
 
     it('should format unreadCount as "99+" when count exceeds 99', () => {
-        component.unreadCount = 120;
-        component.ngOnInit();
-        expect(component.formattedUnreadCount).toBe('99+');
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.unreadCount = input<number>(120);
+            component.ngOnInit();
+            expect(component.formattedUnreadCount).toBe('99+');
+        });
     });
 });

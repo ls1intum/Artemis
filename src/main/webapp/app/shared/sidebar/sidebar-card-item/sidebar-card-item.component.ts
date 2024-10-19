@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, input } from '@angular/core';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 
 @Component({
@@ -6,11 +6,11 @@ import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
     templateUrl: './sidebar-card-item.component.html',
     styleUrls: ['./sidebar-card-item.component.scss', '../sidebar.component.scss'],
 })
-export class SidebarCardItemComponent implements OnInit {
+export class SidebarCardItemComponent implements OnInit, OnChanges {
     @Input() sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() groupKey?: string;
-    @Input() unreadCount: number = 0;
+    unreadCount = input<number>(0);
 
     formattedUnreadCount: string = '';
 
@@ -18,10 +18,16 @@ export class SidebarCardItemComponent implements OnInit {
         this.formattedUnreadCount = this.getFormattedUnreadCount();
     }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['unreadCount']) {
+            this.formattedUnreadCount = this.getFormattedUnreadCount();
+        }
+    }
+
     private getFormattedUnreadCount(): string {
-        if (this.unreadCount > 99) {
+        if (this.unreadCount() > 99) {
             return '99+';
         }
-        return this.unreadCount?.toString() || '';
+        return this.unreadCount().toString() || '';
     }
 }
