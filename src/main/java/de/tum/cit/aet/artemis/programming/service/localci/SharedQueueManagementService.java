@@ -67,6 +67,10 @@ public class SharedQueueManagementService {
 
     private ITopic<String> canceledBuildJobsTopic;
 
+    private ITopic<String> pauseBuildAgentTopic;
+
+    private ITopic<String> resumeBuildAgentTopic;
+
     public SharedQueueManagementService(BuildJobRepository buildJobRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProfileService profileService) {
         this.buildJobRepository = buildJobRepository;
         this.hazelcastInstance = hazelcastInstance;
@@ -83,6 +87,8 @@ public class SharedQueueManagementService {
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
         this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
+        this.pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
+        this.resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
     }
 
     /**
@@ -133,6 +139,14 @@ public class SharedQueueManagementService {
     public List<BuildAgentInformation> getBuildAgentInformationWithoutRecentBuildJobs() {
         return buildAgentInformation.values().stream().map(agent -> new BuildAgentInformation(agent.name(), agent.maxNumberOfConcurrentBuildJobs(),
                 agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(), agent.status(), null, null)).toList();
+    }
+
+    public void pauseBuildAgent(String agent) {
+        pauseBuildAgentTopic.publish(agent);
+    }
+
+    public void resumeBuildAgent(String agent) {
+        resumeBuildAgentTopic.publish(agent);
     }
 
     /**

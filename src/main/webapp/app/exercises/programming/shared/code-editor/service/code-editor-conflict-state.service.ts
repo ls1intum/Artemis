@@ -66,6 +66,9 @@ export class CodeEditorConflictStateService extends DomainDependentService imple
 
     private getDomainKey = () => {
         const [domainType, domainValue] = this.domain;
+        if (domainType === DomainType.AUXILIARY_REPOSITORY) {
+            return `auxiliary-${domainValue.id!.toString()}`;
+        }
         return `${domainType === DomainType.PARTICIPATION ? 'participation' : 'test'}-${domainValue.id!.toString()}`;
     };
 }
