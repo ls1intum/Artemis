@@ -519,7 +519,7 @@
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
-                "usageDescription": "Du kannst Hilfsrepositorys verwenden, um zusätzlichen Code bereitzustellen, den Studierende nicht sehen oder ändern können. Der zusätzliche Code wird während des Builds der Abgabe am angegebenen Checkout-Verzeichnis eingefügt.",
+                "usageDescription": "Du kannst Hilfsrepositorien verwenden, um zusätzlichen Code bereitzustellen, den die Studierenden nicht sehen oder ändern können. Der zusätzliche Code wird im angegebenen Checkout-Verzeichnis eingefügt, bevor der Build erstellt wird. Er wird durch eine mv Operation eingefügt. Das bedeutet, dass es einen Unterschied beim Einfügen gibt, je nachdem, ob der Ordner des Checkout-Verzeichnis bereits existiert oder nicht. Wenn der Ordner existiert, wird der Inhalt des Repositorys im Checkout-Verzeichnis in einen neuen Ordner mit dem Namen des Repositorys eingefügt. Existiert der Ordner nicht, wird ein neuer Ordner im Checkout-Verzeichnis erstellt und der Inhalt des Hilfsrepositorys direkt dort eingefügt. Um die Dateien der Studierenden zu überschreiben, musst du das Build-Skript anpassen.",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
                 "description": "Beschreibung",
