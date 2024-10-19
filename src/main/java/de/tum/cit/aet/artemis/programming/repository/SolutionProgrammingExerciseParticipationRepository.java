@@ -43,7 +43,7 @@ public interface SolutionProgrammingExerciseParticipationRepository
             """)
     Optional<SolutionProgrammingExerciseParticipation> findByBuildPlanIdWithResults(@Param("buildPlanId") String buildPlanId);
 
-    Optional<SolutionProgrammingExerciseParticipation> findByRepositoryUri(@Param("repositoryUri") String repositoryUri);
+    Optional<SolutionProgrammingExerciseParticipation> findByRepositoryUri(String repositoryUri);
 
     default SolutionProgrammingExerciseParticipation findByRepositoryUriElseThrow(String repositoryUri) {
         return getValueElseThrow(findByRepositoryUri(repositoryUri));

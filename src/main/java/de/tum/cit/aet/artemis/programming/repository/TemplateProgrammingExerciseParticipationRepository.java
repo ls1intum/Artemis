@@ -48,7 +48,7 @@ public interface TemplateProgrammingExerciseParticipationRepository
         return getValueElseThrow(findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId));
     }
 
-    Optional<TemplateProgrammingExerciseParticipation> findByRepositoryUri(@Param("repositoryUri") String repositoryUri);
+    Optional<TemplateProgrammingExerciseParticipation> findByRepositoryUri(String repositoryUri);
 
     default TemplateProgrammingExerciseParticipation findByRepositoryUriElseThrow(String repositoryUri) {
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
