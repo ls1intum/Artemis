@@ -31,7 +31,7 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             .set('filterTestCases', options.filters.testCases.join(','))
             .set('filterOccurrence', options.filters.occurrence.join(','));
 
-        return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details-paged`, { params });
+        return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details`, { params });
     }
 
     getMaxCount(exerciseId: number): Promise<number> {

@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackPageableDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
@@ -44,7 +45,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -559,54 +559,62 @@ public class ResultService {
      * - Sorting is applied based on the specified column and order (ascending or descending).
      * - The result is paginated based on the provided page number and page size.
      *
-     * @param exerciseId       The ID of the exercise for which feedback details should be retrieved.
-     * @param search           The pageable search DTO containing page number, page size, sorting options, and a search term for filtering results.
-     * @param filterTasks      A list of task numbers to filter the feedback details based on the associated test cases (optional).
-     * @param filterTestCases  A list of test case names to filter the feedback details (optional).
-     * @param filterOccurrence An array of two strings representing the minimum and maximum occurrences to include (optional).
+     * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
+     * @param data       The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters (task names, test cases,
+     *                       occurrence range).
      * @return A {@link FeedbackAnalysisResponseDTO} object containing:
      *         - A {@link SearchResultPageDTO} of paginated feedback details.
      *         - The total number of distinct results for the exercise.
      *         - The total number of tasks associated with the feedback.
      *         - A list of test case names included in the feedback.
      */
-    public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, SearchTermPageableSearchDTO<String> search, List<String> filterTasks, List<String> filterTestCases,
-            String[] filterOccurrence) {
+    public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, FeedbackPageableDTO data) {
+
+        // 1. Fetch programming exercise with associated test cases
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesByIdElseThrow(exerciseId);
 
         long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
 
+        // 2. Extract test case names using streams
         List<String> testCaseNames = programmingExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
 
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
-        Map<String, String> taskNameToIndexMap = new HashMap<>();
-        for (int i = 0; i < tasks.size(); i++) {
-            taskNameToIndexMap.put(tasks.get(i).getTaskName(), String.valueOf(i + 1));
-        }
-        Map<String, String> taskIndexToNameMap = new HashMap<>();
-        for (int i = 0; i < tasks.size(); i++) {
-            taskIndexToNameMap.put(String.valueOf(i + 1), tasks.get(i).getTaskName());
-        }
 
-        List<String> filterTaskNames = filterTasks.stream().map(taskIndexToNameMap::get).filter(Objects::nonNull).toList();
+        // 3. Generate filter task names directly
+        List<String> filterTaskNames = data.getFilterTasks().stream().map(index -> {
+            int idx = Integer.parseInt(index); // Parse index from the filterTasks list
+            return (idx > 0 && idx <= tasks.size()) ? tasks.get(idx - 1).getTaskName() : null; // Retrieve task name if index is valid
+        }).filter(Objects::nonNull).toList();
 
-        long minOccurrence = 0;
-        long maxOccurrence = Integer.MAX_VALUE;
-        if (filterOccurrence.length == 2) {
-            minOccurrence = Integer.parseInt(filterOccurrence[0]);
-            maxOccurrence = Integer.parseInt(filterOccurrence[1]);
-        }
+        // 4. Set minOccurrence and maxOccurrence based on filterOccurrence
+        long minOccurrence = data.getFilterOccurrence().length == 2 ? Long.parseLong(data.getFilterOccurrence()[0]) : 0; // Default min = 0
+        long maxOccurrence = data.getFilterOccurrence().length == 2 ? Long.parseLong(data.getFilterOccurrence()[1]) : Integer.MAX_VALUE; // Default max = MAX_INT
 
-        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
+        // 5. Create pageable object for pagination
+        final var pageable = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
 
+        // 6. Fetch filtered feedback from the repository
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
-                StringUtils.isBlank(search.getSearchTerm()) ? "" : search.getSearchTerm().toLowerCase(), filterTestCases, filterTaskNames, minOccurrence, maxOccurrence, pageable);
+                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), filterTaskNames, minOccurrence, maxOccurrence,
+                pageable);
 
+        // 7. Process feedback details
         List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> {
-            String taskIndex = taskNameToIndexMap.getOrDefault(detail.taskNumber(), "0");
+            String taskIndex = tasks.stream().filter(task -> task.getTaskName().equals(detail.taskNumber())).findFirst().map(task -> String.valueOf(tasks.indexOf(task) + 1)) // Map
+                                                                                                                                                                              // to
+                                                                                                                                                                              // task
+                                                                                                                                                                              // index
+                                                                                                                                                                              // (+1
+                                                                                                                                                                              // for
+                                                                                                                                                                              // 1-based
+                                                                                                                                                                              // indexing)
+                    .orElse("0");
+
+            // Create and return a new FeedbackDetailDTO object
             return new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), taskIndex, "StudentError");
         }).toList();
 
+        // 8. Return the response DTO containing feedback details, total elements, and test case/task info
         return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), tasks.size(),
                 testCaseNames);
     }
