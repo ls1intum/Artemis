@@ -114,7 +114,7 @@ public class SharedQueueProcessingService {
      */
     private final AtomicBoolean processResults = new AtomicBoolean(true);
 
-    @Value("${artemis.continuous-integration.pause-grace-period-seconds:15}")
+    @Value("${artemis.continuous-integration.pause-grace-period-seconds:60}")
     private int pauseGracePeriodSeconds;
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
