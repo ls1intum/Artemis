@@ -70,6 +70,8 @@
                 "examChannels": "Exams",
                 "createChannel": "Create channel",
                 "browseChannels": "Browse channels",
+                "createGroupChat": "Create group chat",
+                "createDirectChat": "Create direct chat",
                 "groupChats": "Group Chats",
                 "directMessages": "Direct Messages",
                 "filterConversationPlaceholder": "Filter conversations"
