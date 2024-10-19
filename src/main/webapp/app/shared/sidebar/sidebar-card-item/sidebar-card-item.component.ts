@@ -10,7 +10,7 @@ export class SidebarCardItemComponent implements OnInit {
     @Input() sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() groupKey?: string;
-    @Input() unreadCount!: number | undefined;
+    @Input() unreadCount: number = 0;
 
     formattedUnreadCount: string = '';
 
@@ -19,7 +19,7 @@ export class SidebarCardItemComponent implements OnInit {
     }
 
     private getFormattedUnreadCount(): string {
-        if (this.unreadCount !== undefined && this.unreadCount > 99) {
+        if (this.unreadCount > 99) {
             return '99+';
         }
         return this.unreadCount?.toString() || '';

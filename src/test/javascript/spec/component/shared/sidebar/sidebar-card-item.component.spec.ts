@@ -49,10 +49,4 @@ describe('SidebarCardItemComponent', () => {
         component.ngOnInit();
         expect(component.formattedUnreadCount).toBe('99+');
     });
-
-    it('should return an empty string if unreadCount is undefined', () => {
-        component.unreadCount = undefined;
-        component.ngOnInit();
-        expect(component.formattedUnreadCount).toBe('');
-    });
 });
