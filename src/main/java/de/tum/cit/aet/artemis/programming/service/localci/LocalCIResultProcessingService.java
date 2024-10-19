@@ -99,6 +99,10 @@ public class LocalCIResultProcessingService {
         this.listenerId = resultQueue.addItemListener(new ResultQueueListener(), true);
     }
 
+    /**
+     * Removes the item listener from the Hazelcast result queue if the instance is active.
+     * Logs an error if Hazelcast is not running.
+     */
     @PreDestroy
     public void removeListener() {
         // check if Hazelcast is still active, before invoking this
