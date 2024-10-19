@@ -13,8 +13,10 @@ import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import edu.stanford.nlp.util.ArraySet;
 
 /**
  * Service for managing the LLMTokenUsage by all LLMs in Artemis
@@ -24,8 +26,11 @@ public class LLMTokenUsageService {
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
-    public LLMTokenUsageService(LLMTokenUsageTraceRepository llmTokenUsageTraceRepository) {
+    private final LLMTokenUsageRequestRepository llmTokenUsageRequestRepository;
+
+    public LLMTokenUsageService(LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository) {
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
+        this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
     }
 
     /**
@@ -42,17 +47,16 @@ public class LLMTokenUsageService {
 
         LLMTokenUsageBuilder builder = builderFunction.apply(new LLMTokenUsageBuilder());
         builder.getIrisMessageID().ifPresent(llmTokenUsageTrace::setIrisMessageId);
-        builder.getUser().ifPresent(user -> {
-            llmTokenUsageTrace.setUserId(user.getId());
-        });
-        builder.getExercise().ifPresent(exercise -> {
-            llmTokenUsageTrace.setExerciseId(exercise.getId());
-        });
-        builder.getCourse().ifPresent(course -> {
-            llmTokenUsageTrace.setCourseId(course.getId());
-        });
+        builder.getUser().ifPresent(user -> llmTokenUsageTrace.setUserId(user.getId()));
+        builder.getExercise().ifPresent(exercise -> llmTokenUsageTrace.setExerciseId(exercise.getId()));
+        builder.getCourse().ifPresent(course -> llmTokenUsageTrace.setCourseId(course.getId()));
 
         Set<LLMTokenUsageRequest> llmRequestsSet = llmTokenUsageTrace.getLLMRequests();
+        setLLMTokenUsageRequests(llmRequests, llmTokenUsageTrace, llmRequestsSet);
+        return llmTokenUsageTraceRepository.save(llmTokenUsageTrace);
+    }
+
+    private void setLLMTokenUsageRequests(List<LLMRequest> llmRequests, LLMTokenUsageTrace llmTokenUsageTrace, Set<LLMTokenUsageRequest> llmRequestsSet) {
         for (LLMRequest llmRequest : llmRequests) {
             LLMTokenUsageRequest llmTokenUsageRequest = new LLMTokenUsageRequest();
             llmTokenUsageRequest.setModel(llmRequest.model());
@@ -64,7 +68,12 @@ public class LLMTokenUsageService {
             llmTokenUsageRequest.setTrace(llmTokenUsageTrace);
             llmRequestsSet.add(llmTokenUsageRequest);
         }
-        return llmTokenUsageTraceRepository.save(llmTokenUsageTrace);
+    }
+
+    public void appendRequestsToTrace(List<LLMRequest> requests, LLMTokenUsageTrace trace) {
+        Set<LLMTokenUsageRequest> llmRequestsSet = new ArraySet<>();
+        setLLMTokenUsageRequests(requests, trace, llmRequestsSet);
+        llmTokenUsageRequestRepository.saveAll(llmRequestsSet);
     }
 
     /**

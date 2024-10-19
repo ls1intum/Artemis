@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import java.util.HashMap;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 
@@ -13,6 +15,8 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
     private final IrisSessionRepository irisSessionRepository;
 
     private final ObjectMapper objectMapper;
+
+    protected final HashMap<String, LLMTokenUsageTrace> traces = new HashMap<>();
 
     public AbstractIrisChatSessionService(IrisSessionRepository irisSessionRepository, ObjectMapper objectMapper) {
         this.irisSessionRepository = irisSessionRepository;

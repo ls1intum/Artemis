@@ -8,6 +8,8 @@ import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -24,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class LLMTokenUsageTrace extends DomainObject {
 
     @Column(name = "service")
+    @Enumerated(EnumType.STRING)
     private LLMServiceType serviceType;
 
     @Nullable

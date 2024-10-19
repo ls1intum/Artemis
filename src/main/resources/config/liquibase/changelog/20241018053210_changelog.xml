@@ -10,7 +10,7 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_llm_token_usage_trace"/>
             </column>
-            <column name="service" type="SMALLINT"/>
+            <column name="service" type="VARCHAR(255)"/>
             <column name="course_id" type="BIGINT"/>
             <column name="exercise_id" type="BIGINT"/>
             <column name="user_id" type="BIGINT"/>
