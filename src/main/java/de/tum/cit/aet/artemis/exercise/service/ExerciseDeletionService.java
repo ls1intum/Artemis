@@ -180,9 +180,6 @@ public class ExerciseDeletionService {
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         participationService.deleteAllByExercise(exercise, deleteStudentReposBuildPlans, deleteStudentReposBuildPlans, false);
 
-        // delete all competency links belonging to this exercise
-        competencyExerciseLinkRepository.deleteAll(exercise.getCompetencyLinks());
-
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
         exercise = exerciseRepository.findByIdWithEagerExampleSubmissionsElseThrow(exerciseId);
         exercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmissionService.deleteById(exampleSubmission.getId()));

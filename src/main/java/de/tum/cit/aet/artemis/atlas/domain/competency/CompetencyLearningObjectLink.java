@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
@@ -23,7 +24,7 @@ public abstract class CompetencyLearningObjectLink implements Serializable {
     @JsonIgnore
     protected CompetencyLearningObjectId id = new CompetencyLearningObjectId();
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, cascade = CascadeType.ALL)
     @MapsId("competencyId")
     protected CourseCompetency competency;
 

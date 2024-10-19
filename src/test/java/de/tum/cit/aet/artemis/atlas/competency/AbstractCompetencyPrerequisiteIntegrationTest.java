@@ -79,8 +79,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         courseCompetency = createCourseCompetencyForCourse.apply(course);
         lecture = createLecture(course);
 
-        textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(courseCompetency), false);
-        teamTextExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(courseCompetency), true);
+        textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, courseCompetency, false);
+        teamTextExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, courseCompetency, true);
 
         creatingLectureUnitsOfLecture(courseCompetency);
     }
@@ -95,19 +95,18 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     void creatingLectureUnitsOfLecture(CourseCompetency competency) {
         // creating lecture units for lecture one
-        TextUnit textUnit = new TextUnit();
-        textUnit.setName("TextUnitOfLectureOne");
+        textUnitOfLectureOne = new TextUnit();
+        textUnitOfLectureOne.setName("TextUnitOfLectureOne");
+        CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(competency, textUnitOfLectureOne, 1);
+        link = competencyLectureUnitLinkRepository.save(link);
+        textUnitOfLectureOne = (TextUnit) link.getLectureUnit();
 
-        CompetencyLectureUnitLink textLink = new CompetencyLectureUnitLink(competency, textUnit, 1);
-        textLink = competencyLectureUnitLinkRepository.save(textLink);
-        textUnitOfLectureOne = (TextUnit) textLink.getLectureUnit();
+        attachmentUnitOfLectureOne = lectureUtilService.createAttachmentUnit(true);
+        attachmentUnitOfLectureOne.setName("AttachmentUnitOfLectureOne");
 
-        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
-        attachmentUnit.setName("AttachmentUnitOfLectureOne");
-
-        CompetencyLectureUnitLink attachmentLink = new CompetencyLectureUnitLink(competency, attachmentUnit, 1);
-        attachmentLink = competencyLectureUnitLinkRepository.save(attachmentLink);
-        attachmentUnitOfLectureOne = (AttachmentUnit) attachmentLink.getLectureUnit();
+        link = new CompetencyLectureUnitLink(competency, attachmentUnitOfLectureOne, 1);
+        link = competencyLectureUnitLinkRepository.save(link);
+        attachmentUnitOfLectureOne = (AttachmentUnit) link.getLectureUnit();
 
         ExerciseUnit textExerciseUnit = new ExerciseUnit();
         textExerciseUnit.setExercise(textExercise);
@@ -133,7 +132,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         return lecture;
     }
 
-    TextExercise createTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assassmentDueDate, Set<CourseCompetency> competencies, boolean isTeamExercise) {
+    TextExercise createTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assassmentDueDate, CourseCompetency competency, boolean isTeamExercise) {
         // creating text exercise with Result
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assassmentDueDate, course);
 
@@ -147,14 +146,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
+        CompetencyExerciseLink link = new CompetencyExerciseLink(competency, textExercise, 1);
+        link = competencyExerciseLinkRepository.save(link);
 
-        var persistedExercise = exerciseRepository.save(textExercise);
-
-        Set<CompetencyExerciseLink> exerciseLinks = competencies.stream().map(competency -> new CompetencyExerciseLink(competency, persistedExercise, 1))
-                .collect(Collectors.toSet());
-        persistedExercise.setCompetencyLinks(new HashSet<>(competencyExerciseLinkRepository.saveAll(exerciseLinks)));
-
-        return exerciseRepository.save(persistedExercise);
+        return (TextExercise) link.getExercise();
     }
 
     private ProgrammingExercise createProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate) {

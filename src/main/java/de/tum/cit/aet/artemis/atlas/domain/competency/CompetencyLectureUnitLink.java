@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.domain.competency;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
@@ -15,7 +16,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 @Table(name = "competency_lecture_unit")
 public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, cascade = CascadeType.ALL)
     @MapsId("learningObjectId")
     private LectureUnit lectureUnit;
 

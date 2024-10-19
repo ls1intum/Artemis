@@ -20,7 +20,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
@@ -156,16 +155,6 @@ public class LectureUnitService {
     public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
-        if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
-            // update associated competencies
-            Set<CourseCompetency> competencies = lectureUnitToDelete.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).collect(Collectors.toSet());
-            courseCompetencyRepository.saveAll(competencies.stream().map(competency -> {
-                competency = courseCompetencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
-                competency.getLectureUnitLinks().remove(lectureUnitToDelete);
-                return competency;
-            }).toList());
-        }
-
         if (lectureUnitToDelete instanceof AttachmentUnit attachmentUnit) {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create((attachmentUnit.getAttachment().getLink()))), 5);
             if (attachmentUnit.getSlides() != null && !attachmentUnit.getSlides().isEmpty()) {
@@ -184,8 +173,6 @@ public class LectureUnitService {
         lectureRepository.save(lecture);
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
-            // Delete the links to competencies
-            competencyLectureUnitLinkRepository.deleteAll(lectureUnitToDelete.getCompetencyLinks());
             // update associated competency progress objects
             competencyProgressService.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty());
         }
