@@ -9,12 +9,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -39,14 +40,16 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.core.repository.cleanup.CleanupJobExecutionRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismMatch;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -106,10 +109,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
-    private TransactionTemplate transactionTemplate;
+    private ExerciseTestRepository exerciseRepository;
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
@@ -246,32 +246,10 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         var submission1 = participationUtilService.addSubmission(textExercise1, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student1");
         var submission2 = participationUtilService.addSubmission(textExercise1, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student2");
         var submission3 = participationUtilService.addSubmission(textExercise1, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student3");
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison1 = new PlagiarismComparison<>();
-        plagiarismComparison1.setPlagiarismResult(textPlagiarismResult1);
-        plagiarismComparison1.setStatus(CONFIRMED);
-        var plagiarismSubmissionA1 = new PlagiarismSubmission<TextSubmissionElement>();
-        plagiarismSubmissionA1.setStudentLogin(TEST_PREFIX + "student1");
-        plagiarismSubmissionA1.setSubmissionId(submission1.getId());
-        var plagiarismSubmissionB1 = new PlagiarismSubmission<TextSubmissionElement>();
-        plagiarismSubmissionB1.setStudentLogin(TEST_PREFIX + "student2");
-        plagiarismSubmissionB1.setSubmissionId(submission2.getId());
-        plagiarismComparison1.setSubmissionA(plagiarismSubmissionA1);
-        plagiarismComparison1.setSubmissionB(plagiarismSubmissionB1);
-        plagiarismComparison1.setMatches(Set.of(new PlagiarismMatch()));
+        var plagiarismComparison1 = getTextSubmissionElementPlagiarismComparison(textPlagiarismResult1, submission1, submission2);
         plagiarismComparison1 = plagiarismComparisonRepository.save(plagiarismComparison1);
 
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison2 = new PlagiarismComparison<>();
-        plagiarismComparison2.setPlagiarismResult(textPlagiarismResult1);
-        plagiarismComparison2.setStatus(NONE);
-        var plagiarismSubmissionA2 = new PlagiarismSubmission<TextSubmissionElement>();
-        plagiarismSubmissionA2.setStudentLogin(TEST_PREFIX + "student2");
-        plagiarismSubmissionA2.setSubmissionId(submission2.getId());
-        var plagiarismSubmissionB2 = new PlagiarismSubmission<TextSubmissionElement>();
-        plagiarismSubmissionB2.setStudentLogin(TEST_PREFIX + "student3");
-        plagiarismSubmissionB2.setSubmissionId(submission3.getId());
-        plagiarismComparison2.setSubmissionA(plagiarismSubmissionA2);
-        plagiarismComparison2.setSubmissionB(plagiarismSubmissionB2);
-        plagiarismComparison2.setMatches(Set.of(new PlagiarismMatch()));
+        var plagiarismComparison2 = getSubmissionElementPlagiarismComparison(textPlagiarismResult1, submission2, submission3);
         plagiarismComparison2 = plagiarismComparisonRepository.save(plagiarismComparison2);
 
         // new course, should not delete undecided plagiarism comparisons
@@ -281,32 +259,10 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         var submission4 = participationUtilService.addSubmission(textExercise2, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student1");
         var submission5 = participationUtilService.addSubmission(textExercise2, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student2");
         var submission6 = participationUtilService.addSubmission(textExercise2, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student3");
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison3 = new PlagiarismComparison<>();
-        plagiarismComparison3.setPlagiarismResult(textPlagiarismResult2);
-        plagiarismComparison3.setStatus(CONFIRMED);
-        var plagiarismSubmissionA3 = new PlagiarismSubmission<TextSubmissionElement>();
-        plagiarismSubmissionA3.setStudentLogin(TEST_PREFIX + "student1");
-        plagiarismSubmissionA3.setSubmissionId(submission4.getId());
-        var plagiarismSubmissionB3 = new PlagiarismSubmission<TextSubmissionElement>();
-        plagiarismSubmissionB3.setStudentLogin(TEST_PREFIX + "student2");
-        plagiarismSubmissionB3.setSubmissionId(submission5.getId());
-        plagiarismComparison3.setSubmissionA(plagiarismSubmissionA3);
-        plagiarismComparison3.setSubmissionB(plagiarismSubmissionB3);
-        plagiarismComparison3.setMatches(Set.of(new PlagiarismMatch()));
+        var plagiarismComparison3 = getTextSubmissionElementPlagiarismComparison(textPlagiarismResult2, submission4, submission5);
         plagiarismComparison3 = plagiarismComparisonRepository.save(plagiarismComparison3);
 
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison4 = new PlagiarismComparison<>();
-        plagiarismComparison4.setPlagiarismResult(textPlagiarismResult2);
-        plagiarismComparison4.setStatus(NONE);
-        var plagiarismSubmissionA4 = new PlagiarismSubmission<TextSubmissionElement>();
-        plagiarismSubmissionA4.setStudentLogin(TEST_PREFIX + "student2");
-        plagiarismSubmissionA4.setSubmissionId(submission2.getId());
-        var plagiarismSubmissionB4 = new PlagiarismSubmission<TextSubmissionElement>();
-        plagiarismSubmissionB4.setStudentLogin(TEST_PREFIX + "student3");
-        plagiarismSubmissionB4.setSubmissionId(submission6.getId());
-        plagiarismComparison4.setSubmissionA(plagiarismSubmissionA4);
-        plagiarismComparison4.setSubmissionB(plagiarismSubmissionB4);
-        plagiarismComparison4.setMatches(Set.of(new PlagiarismMatch()));
+        var plagiarismComparison4 = getSubmissionElementPlagiarismComparison(textPlagiarismResult2, submission2, submission6);
         plagiarismComparison4 = plagiarismComparisonRepository.save(plagiarismComparison4);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -325,6 +281,42 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
 
     }
 
+    @NotNull
+    private static PlagiarismComparison<TextSubmissionElement> getSubmissionElementPlagiarismComparison(TextPlagiarismResult textPlagiarismResult1, Submission submission2,
+            Submission submission3) {
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison2 = new PlagiarismComparison<>();
+        plagiarismComparison2.setPlagiarismResult(textPlagiarismResult1);
+        plagiarismComparison2.setStatus(NONE);
+        var plagiarismSubmissionA2 = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionA2.setStudentLogin(TEST_PREFIX + "student2");
+        plagiarismSubmissionA2.setSubmissionId(submission2.getId());
+        var plagiarismSubmissionB2 = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionB2.setStudentLogin(TEST_PREFIX + "student3");
+        plagiarismSubmissionB2.setSubmissionId(submission3.getId());
+        plagiarismComparison2.setSubmissionA(plagiarismSubmissionA2);
+        plagiarismComparison2.setSubmissionB(plagiarismSubmissionB2);
+        plagiarismComparison2.setMatches(Set.of(new PlagiarismMatch()));
+        return plagiarismComparison2;
+    }
+
+    @NotNull
+    private static PlagiarismComparison<TextSubmissionElement> getTextSubmissionElementPlagiarismComparison(TextPlagiarismResult textPlagiarismResult1, Submission submission1,
+            Submission submission2) {
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison1 = new PlagiarismComparison<>();
+        plagiarismComparison1.setPlagiarismResult(textPlagiarismResult1);
+        plagiarismComparison1.setStatus(CONFIRMED);
+        var plagiarismSubmissionA1 = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionA1.setStudentLogin(TEST_PREFIX + "student1");
+        plagiarismSubmissionA1.setSubmissionId(submission1.getId());
+        var plagiarismSubmissionB1 = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionB1.setStudentLogin(TEST_PREFIX + "student2");
+        plagiarismSubmissionB1.setSubmissionId(submission2.getId());
+        plagiarismComparison1.setSubmissionA(plagiarismSubmissionA1);
+        plagiarismComparison1.setSubmissionB(plagiarismSubmissionB1);
+        plagiarismComparison1.setMatches(Set.of(new PlagiarismMatch()));
+        return plagiarismComparison1;
+    }
+
     @Test
     @WithMockUser(roles = "ADMIN")
     void testDeleteNonRatedResults() throws Exception {
@@ -332,7 +324,6 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
         var oldStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
         var oldSubmission = participationUtilService.addSubmission(oldStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
-        ;
         var oldResult1 = participationUtilService.generateResult(oldSubmission, instructor);
         oldResult1.setParticipation(oldStudentParticipation);
         oldResult1.setRated(false);
@@ -364,7 +355,6 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
         var newStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
         var newSubmission = participationUtilService.addSubmission(newStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
-        ;
         var newResult1 = participationUtilService.generateResult(newSubmission, instructor);
         newResult1.setParticipation(newStudentParticipation);
         newResult1.setRated(false);
@@ -428,7 +418,6 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
         var oldStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
         var oldSubmission = participationUtilService.addSubmission(oldStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
-        ;
         var oldResult1 = participationUtilService.generateResult(oldSubmission, instructor); // should be deleted, with all associated entities
         oldResult1.setParticipation(oldStudentParticipation);
         var oldResult2 = participationUtilService.generateResult(oldSubmission, instructor);
@@ -458,7 +447,6 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
         var newStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
         var newSubmission = participationUtilService.addSubmission(newStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
-        ;
         var newResult1 = participationUtilService.generateResult(newSubmission, instructor); // should not be deleted, with all associated entities
         newResult1.setParticipation(newStudentParticipation);
         var newResult2 = participationUtilService.generateResult(newSubmission, instructor);

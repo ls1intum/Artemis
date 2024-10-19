@@ -41,6 +41,6 @@ public interface ExamLiveEventRepository extends ArtemisJpaRepository<ExamLiveEv
      *
      * @param examId the id of the exam
      */
-    @Transactional // delete
+    @Transactional // ok because of delete
     void deleteAllByExamId(Long examId);
 }

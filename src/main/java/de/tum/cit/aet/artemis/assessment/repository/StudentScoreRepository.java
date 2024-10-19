@@ -74,7 +74,7 @@ public interface StudentScoreRepository extends ArtemisJpaRepository<StudentScor
      * Deletes {@link StudentScore} entries where the associated user is {@code null}.
      */
     @Modifying
-    @Transactional
+    @Transactional // ok because of delete
     @Query("""
             DELETE FROM StudentScore ps WHERE ps.user IS NULL
             """)

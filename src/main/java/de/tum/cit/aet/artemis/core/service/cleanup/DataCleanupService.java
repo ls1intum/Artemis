@@ -9,14 +9,14 @@ import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
-import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
-import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.assessment.repository.cleanup.FeedbackCleanupRepository;
+import de.tum.cit.aet.artemis.assessment.repository.cleanup.LongFeedbackTextCleanupRepository;
+import de.tum.cit.aet.artemis.assessment.repository.cleanup.ParticipantScoreCleanupRepository;
+import de.tum.cit.aet.artemis.assessment.repository.cleanup.RatingCleanupRepository;
+import de.tum.cit.aet.artemis.assessment.repository.cleanup.ResultCleanupRepository;
 import de.tum.cit.aet.artemis.core.domain.CleanupJobExecution;
 import de.tum.cit.aet.artemis.core.domain.CleanupJobType;
 import de.tum.cit.aet.artemis.core.dto.CleanupServiceExecutionRecordDTO;
@@ -31,36 +31,36 @@ public class DataCleanupService {
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 
-    private final ResultRepository resultRepository;
+    private final ResultCleanupRepository resultCleanupRepository;
 
-    private final RatingRepository ratingRepository;
+    private final RatingCleanupRepository ratingCleanupRepository;
 
-    private final FeedbackRepository feedbackRepository;
+    private final FeedbackCleanupRepository feedbackCleanupRepository;
 
     private final TextBlockRepository textBlockRepository;
 
-    private final LongFeedbackTextRepository longFeedbackTextRepository;
+    private final LongFeedbackTextCleanupRepository longFeedbackTextCleanupRepository;
 
     private final StudentScoreRepository studentScoreRepository;
 
     private final TeamScoreRepository teamScoreRepository;
 
-    private final ParticipantScoreRepository participantScoreRepository;
+    private final ParticipantScoreCleanupRepository participantScoreCleanupRepository;
 
     public DataCleanupService(CleanupJobExecutionRepository cleanupJobExecutionRepository, PlagiarismComparisonRepository plagiarismComparisonRepository,
-            ResultRepository resultRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository, TextBlockRepository textBlockRepository,
-            LongFeedbackTextRepository longFeedbackTextRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            ParticipantScoreRepository participantScoreRepository) {
-        this.resultRepository = resultRepository;
-        this.ratingRepository = ratingRepository;
-        this.feedbackRepository = feedbackRepository;
+            ResultCleanupRepository resultCleanupRepository, RatingCleanupRepository ratingCleanupRepository, FeedbackCleanupRepository feedbackCleanupRepository,
+            TextBlockRepository textBlockRepository, LongFeedbackTextCleanupRepository longFeedbackTextCleanupRepository, StudentScoreRepository studentScoreRepository,
+            TeamScoreRepository teamScoreRepository, ParticipantScoreCleanupRepository participantScoreCleanupRepository) {
+        this.resultCleanupRepository = resultCleanupRepository;
+        this.ratingCleanupRepository = ratingCleanupRepository;
+        this.feedbackCleanupRepository = feedbackCleanupRepository;
         this.textBlockRepository = textBlockRepository;
-        this.longFeedbackTextRepository = longFeedbackTextRepository;
+        this.longFeedbackTextCleanupRepository = longFeedbackTextCleanupRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.cleanupJobExecutionRepository = cleanupJobExecutionRepository;
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
-        this.participantScoreRepository = participantScoreRepository;
+        this.participantScoreCleanupRepository = participantScoreCleanupRepository;
     }
 
     /**
@@ -70,16 +70,16 @@ public class DataCleanupService {
      * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
      */
     public CleanupServiceExecutionRecordDTO deleteOrphans() {
-        this.longFeedbackTextRepository.deleteLongFeedbackTextForEmptyFeedback();
+        this.longFeedbackTextCleanupRepository.deleteLongFeedbackTextForOrphanedFeedback();
         this.textBlockRepository.deleteTextBlockForEmptyFeedback();
-        this.feedbackRepository.deleteOrphanFeedback();
+        this.feedbackCleanupRepository.deleteOrphanFeedback();
         this.studentScoreRepository.deleteOrphanStudentScore();
         this.teamScoreRepository.deleteOrphanTeamScore();
-        this.longFeedbackTextRepository.deleteLongFeedbackTextForOrphanResult();
+        this.longFeedbackTextCleanupRepository.deleteLongFeedbackTextForOrphanResult();
         this.textBlockRepository.deleteTextBlockForOrphanResults();
-        this.feedbackRepository.deleteFeedbackForOrphanResults();
-        this.ratingRepository.deleteOrphanRating();
-        this.resultRepository.deleteResultWithoutParticipationAndSubmission();
+        this.feedbackCleanupRepository.deleteFeedbackForOrphanResults();
+        this.ratingCleanupRepository.deleteOrphanRating();
+        this.resultCleanupRepository.deleteResultWithoutParticipationAndSubmission();
         return CleanupServiceExecutionRecordDTO.of(this.createCleanupJobExecution(CleanupJobType.ORPHANS, null, null));
     }
 
@@ -106,12 +106,12 @@ public class DataCleanupService {
      * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
      */
     public CleanupServiceExecutionRecordDTO deleteNonRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        this.longFeedbackTextRepository.deleteLongFeedbackTextForNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        this.longFeedbackTextCleanupRepository.deleteLongFeedbackTextForNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         this.textBlockRepository.deleteTextBlockForNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        this.participantScoreRepository.deleteParticipantScoresForLatestNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        this.participantScoreRepository.deleteParticipantScoresForNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        this.feedbackRepository.deleteOldNonRatedFeedbackWhereCourseDateBetween(deleteFrom, deleteTo);
-        this.resultRepository.deleteNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        this.participantScoreCleanupRepository.deleteParticipantScoresForLatestNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        this.participantScoreCleanupRepository.deleteParticipantScoresForNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        this.feedbackCleanupRepository.deleteOldNonRatedFeedbackWhereCourseDateBetween(deleteFrom, deleteTo);
+        this.resultCleanupRepository.deleteNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         return CleanupServiceExecutionRecordDTO.of(this.createCleanupJobExecution(CleanupJobType.NON_RATED_RESULTS, deleteFrom, deleteTo));
     }
 
@@ -124,12 +124,12 @@ public class DataCleanupService {
      * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
      */
     public CleanupServiceExecutionRecordDTO deleteNonLatestRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        this.longFeedbackTextRepository.deleteLongFeedbackTextForRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        this.longFeedbackTextCleanupRepository.deleteLongFeedbackTextForRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         this.textBlockRepository.deleteTextBlockForRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        this.feedbackRepository.deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        this.participantScoreRepository.deleteParticipantScoresForNonLatestLastResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        this.participantScoreRepository.deleteParticipantScoresForNonLatestLastRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-        this.resultRepository.deleteNonLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        this.feedbackCleanupRepository.deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        this.participantScoreCleanupRepository.deleteParticipantScoresForNonLatestLastResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        this.participantScoreCleanupRepository.deleteParticipantScoresForNonLatestLastRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        this.resultCleanupRepository.deleteNonLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         return CleanupServiceExecutionRecordDTO.of(this.createCleanupJobExecution(CleanupJobType.RATED_RESULTS, deleteFrom, deleteTo));
     }
 
