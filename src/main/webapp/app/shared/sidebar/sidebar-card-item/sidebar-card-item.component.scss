@@ -5,3 +5,23 @@
 .muted {
     color: var(--metis-conversation-sidebar-muted);
 }
+
+.unread-count {
+    background-color: var(--bs-primary);
+    color: white;
+    padding: 0.1rem;
+    border-radius: 50%;
+    font-size: clamp(0.4rem, 1vw, 0.7rem);
+    width: 1.5rem;
+    height: 1.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.bold-text {
+    font-weight: 850;
+}
