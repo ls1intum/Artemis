@@ -37,4 +37,22 @@ describe('SidebarCardItemComponent', () => {
         const compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('#test-sidebar-card-title').textContent).toContain(testItem.title);
     });
+
+    it('should format unreadCount correctly when count is less than 99', () => {
+        component.unreadCount = 45;
+        component.ngOnInit();
+        expect(component.formattedUnreadCount).toBe('45');
+    });
+
+    it('should format unreadCount as "99+" when count exceeds 99', () => {
+        component.unreadCount = 120;
+        component.ngOnInit();
+        expect(component.formattedUnreadCount).toBe('99+');
+    });
+
+    it('should return an empty string if unreadCount is undefined', () => {
+        component.unreadCount = undefined;
+        component.ngOnInit();
+        expect(component.formattedUnreadCount).toBe('');
+    });
 });
