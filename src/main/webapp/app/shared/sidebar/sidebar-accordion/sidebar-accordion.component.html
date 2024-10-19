@@ -1,10 +1,7 @@
 @for (groupKey of Object.keys(groupedData); track groupKey; let i = $index) {
-    @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)!.length || sidebarItemAlwaysShow()[groupKey]) {
-        <div
-            id="test-accordion-item-container-{{ i }}"
-            class="pointer"
-            [ngClass]="{ 'd-none': (!showAddOptions || searchValue?.length !== 0) && !(groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }"
-        >
+    @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length || sidebarItemAlwaysShow()[groupKey]) {
+        <div id="test-accordion-item-container-{{ i }}" class="pointer">
+
             <div
                 [id]="'test-accordion-item-header-' + groupKey"
                 class="control-label d-flex align-items-center justify-content-between py-2 bg-module"
@@ -18,7 +15,6 @@
                     ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
                 </div>
                 <div class="icon-container pe-3">
-                    <jhi-accordion-add-options [hidden]="!showAddOptions || (showAddOption ? !getGroupKey(groupKey) : false)" [groupKey]="groupKey" />
                     <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseState[groupKey]" />
                 </div>
             </div>
@@ -34,6 +30,7 @@
                                 [itemSelected]="itemSelected"
                                 [sidebarType]="sidebarType"
                                 [sidebarItem]="sidebarItem"
+                                [groupKey]="groupKey"
                                 (onUpdateSidebar)="onUpdateSidebar.emit()"
                             ></div>
                         </div>

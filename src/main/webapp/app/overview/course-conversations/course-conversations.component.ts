@@ -1,12 +1,12 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { EMPTY, Subject, Subscription, from, take, takeUntil } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { EMPTY, Observable, Subject, Subscription, from, take, takeUntil } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { PageType, SortDirection } from 'app/shared/metis/metis.util';
@@ -16,11 +16,12 @@ import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/
 import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
-import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { defaultFirstLayerDialogOptions, defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
-import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
+import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -126,7 +127,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     faFilter = faFilter;
     faSearch = faSearch;
 
-    // MetisConversationService is created in course overview, so we can use it here
+    createChannelFn?: (channel: ChannelDTO) => Observable<never>;
+    channelActions$ = new EventEmitter<ChannelAction>();
+
     constructor(
         private router: Router,
         private activatedRoute: ActivatedRoute,
@@ -174,12 +177,37 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.isServiceSetUp = true;
                 this.isLoading = false;
             }
+            this.channelActions$
+                .pipe(
+                    debounceTime(500),
+                    distinctUntilChanged((prev, curr) => prev.action === curr.action && prev.channel.id === curr.channel.id),
+                    takeUntil(this.ngUnsubscribe),
+                )
+                .subscribe((channelAction) => {
+                    this.performChannelAction(channelAction);
+                });
+            this.createChannelFn = (channel: ChannelDTO) => this.metisConversationService.createChannel(channel);
         });
 
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
         });
+    }
+
+    performChannelAction(channelAction: ChannelAction) {
+        if (this.createChannelFn) {
+            this.createChannelFn(channelAction.channel)
+                .pipe(takeUntil(this.ngUnsubscribe))
+                .subscribe({
+                    complete: () => {
+                        this.prepareSidebarData();
+                    },
+                    error: (error) => {
+                        console.error('Error creating channel:', error);
+                    },
+                });
+        }
     }
 
     subscribeToQueryParameter() {
@@ -282,8 +310,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             storageId: 'conversation',
             groupedData: this.accordionConversationGroups,
             ungroupedData: this.sidebarConversations,
-            showAccordionAddOption: true,
             showAccordionLeadingIcon: true,
+            messagingEnabled: isMessagingEnabled(this.course),
         };
     }
 
@@ -294,16 +322,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     toggleSidebar() {
         this.isCollapsed = !this.isCollapsed;
         this.courseOverviewService.setSidebarCollapseState('conversation', this.isCollapsed);
-    }
-
-    onAccordionPlusButtonPressed(chatType: string) {
-        if (chatType === 'groupChats') {
-            this.openCreateGroupChatDialog();
-        } else if (chatType === 'directMessages') {
-            this.openCreateOneToOneChatDialog();
-        } else {
-            this.openChannelOverviewDialog(chatType);
-        }
     }
 
     openCreateGroupChatDialog() {
@@ -344,8 +362,22 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             });
     }
 
-    openChannelOverviewDialog(groupKey: string) {
-        const subType = this.getChannelSubType(groupKey);
+    openCreateChannelDialog() {
+        const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, defaultSecondLayerDialogOptions);
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.initialize();
+        from(modalRef.result)
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe((channel: ChannelDTO) => {
+                this.channelActions$.emit({ action: 'create', channel });
+            });
+    }
+
+    openChannelOverviewDialog() {
+        const subType = null;
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.createChannelFn = subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined;
@@ -373,22 +405,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 }
                 this.prepareSidebarData();
             });
-    }
-
-    getChannelSubType(groupKey: string) {
-        if (groupKey === 'exerciseChannels') {
-            return ChannelSubType.EXERCISE;
-        }
-        if (groupKey === 'generalChannels') {
-            return ChannelSubType.GENERAL;
-        }
-        if (groupKey === 'lectureChannels') {
-            return ChannelSubType.LECTURE;
-        }
-        if (groupKey === 'examChannels') {
-            return ChannelSubType.EXAM;
-        }
-        return ChannelSubType.GENERAL;
     }
 
     toggleChannelSearch() {

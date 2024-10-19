@@ -8,16 +8,14 @@ import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
-import { DebugElement } from '@angular/core';
-import { By } from '@angular/platform-browser';
 import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { RouterModule } from '@angular/router';
-import { AccordionAddOptionsComponent } from 'app/shared/sidebar/accordion-add-options/accordion-add-options.component';
+import { DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
 
 describe('SidebarAccordionComponent', () => {
     let component: SidebarAccordionComponent;
     let fixture: ComponentFixture<SidebarAccordionComponent>;
-    let debugElement: DebugElement;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -25,7 +23,6 @@ describe('SidebarAccordionComponent', () => {
             declarations: [
                 SidebarAccordionComponent,
                 SidebarCardMediumComponent,
-                MockComponent(AccordionAddOptionsComponent),
                 SidebarCardItemComponent,
                 SidebarCardDirective,
                 SearchFilterPipe,
@@ -39,7 +36,6 @@ describe('SidebarAccordionComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(SidebarAccordionComponent);
         component = fixture.componentInstance;
-        debugElement = fixture.debugElement;
 
         component.groupedData = {
             current: {
@@ -74,11 +70,19 @@ describe('SidebarAccordionComponent', () => {
     });
 
     it('should toggle collapse state when group header is clicked', () => {
-        const groupHeader = debugElement.query(By.css('#test-accordion-item-header-current'));
-        groupHeader.triggerEventHandler('click', null);
+        const groupKey = 'current';
+        const initialCollapseState = component.collapseState[groupKey];
+
+        component.searchValue = '';
         fixture.detectChanges();
 
-        expect(component.collapseState['current']).toBeTrue();
+        const headerElement: DebugElement = fixture.debugElement.query(By.css('#test-accordion-item-header-' + groupKey));
+        expect(headerElement).toBeTruthy();
+
+        headerElement.triggerEventHandler('click', null);
+        fixture.detectChanges();
+
+        expect(component.collapseState[groupKey]).toBe(!initialCollapseState);
     });
 
     it('should call expandAll when searchValue changes to a non-empty string', () => {
@@ -123,18 +127,17 @@ describe('SidebarAccordionComponent', () => {
         component.ngOnChanges();
         fixture.detectChanges();
 
-        const expectedDisplayedDiv = 2;
-        const expectedHiddenDiv = 0;
-        const elementIdDisplayedDiv = `#test-accordion-item-container-${expectedDisplayedDiv}`;
-        const elementIdHiddenDiv = `#test-accordion-item-container-${expectedHiddenDiv}`;
+        const displayedDivIndex = 2;
+        const elementIdDisplayedDiv = `#test-accordion-item-container-${displayedDivIndex}`;
         const itemDisplayedDiv: HTMLElement = fixture.nativeElement.querySelector(elementIdDisplayedDiv);
-        const itemHiddeniv: HTMLElement = fixture.nativeElement.querySelector(elementIdHiddenDiv);
 
-        // Check if the div exists and has the 'd-none' class
-        expect(itemDisplayedDiv).toBeTruthy(); // Ensure the element is found
+        expect(itemDisplayedDiv).toBeTruthy();
         expect(itemDisplayedDiv.classList.contains('d-none')).toBeFalse();
-        expect(itemHiddeniv).toBeTruthy(); // Ensure the element is found
-        expect(itemHiddeniv.classList.contains('d-none')).toBeTrue();
+
+        const elementIdHiddenDiv = `#test-accordion-item-container-0`;
+        const itemHiddenDiv: HTMLElement = fixture.nativeElement.querySelector(elementIdHiddenDiv);
+
+        expect(itemHiddenDiv).toBeNull();
     });
 
     it('should expand the group containing the selected item', () => {
