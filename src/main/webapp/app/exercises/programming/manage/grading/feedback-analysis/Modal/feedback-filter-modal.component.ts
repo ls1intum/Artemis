@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
+import { Component, computed, inject, output, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 import { FeedbackAnalysisService } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
@@ -17,7 +17,6 @@ export interface FilterData {
     imports: [RangeSliderComponent, ArtemisSharedCommonModule],
     providers: [FeedbackAnalysisService],
     standalone: true,
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeedbackFilterModalComponent {
     private localStorage = inject(LocalStorageService);

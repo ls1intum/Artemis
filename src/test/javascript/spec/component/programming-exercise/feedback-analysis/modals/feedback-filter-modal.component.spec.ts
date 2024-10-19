@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
 import { LocalStorageService } from 'ngx-webstorage';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
@@ -15,8 +14,8 @@ describe('FeedbackFilterModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ReactiveFormsModule, ArtemisSharedCommonModule, RangeSliderComponent, FeedbackFilterModalComponent],
-            providers: [{ provide: LocalStorageService, useValue: { store: jest.fn(), clear: jest.fn(), retrieve: jest.fn() } }, NgbActiveModal, FormBuilder],
+            imports: [TranslateModule.forRoot(), ArtemisSharedCommonModule, RangeSliderComponent, FeedbackFilterModalComponent],
+            providers: [{ provide: LocalStorageService, useValue: { store: jest.fn(), clear: jest.fn(), retrieve: jest.fn() } }, NgbActiveModal],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackFilterModalComponent);
@@ -28,10 +27,14 @@ describe('FeedbackFilterModalComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should initialize filter form correctly', () => {
-        expect(component.filterForm).toBeDefined();
-        component.filterForm.get('occurrence')?.setValue([component.minCount(), component.maxCount()]);
-        expect(component.filterForm.value).toEqual({
+    it('should initialize filters correctly', () => {
+        component.filters = {
+            tasks: [],
+            testCases: [],
+            occurrence: [component.minCount(), component.maxCount()],
+        };
+
+        expect(component.filters).toEqual({
             tasks: [],
             testCases: [],
             occurrence: [0, 10],
@@ -42,9 +45,8 @@ describe('FeedbackFilterModalComponent', () => {
         const storeSpy = jest.spyOn(localStorageService, 'store');
         const emitSpy = jest.spyOn(component.filterApplied, 'emit');
         const closeSpy = jest.spyOn(activeModal, 'close');
-        component.maxCount.set(0);
-        component.maxCount.set(10);
-        component.filterForm.get('occurrence')?.setValue([component.minCount(), component.maxCount()]);
+
+        component.filters.occurrence = [component.minCount(), component.maxCount()];
         component.applyFilter();
 
         expect(storeSpy).toHaveBeenCalledWith(component.FILTER_TASKS_KEY, []);
@@ -54,7 +56,7 @@ describe('FeedbackFilterModalComponent', () => {
         expect(closeSpy).toHaveBeenCalledOnce();
     });
 
-    it('should clear filters and reset the form', () => {
+    it('should clear filters and reset them correctly', () => {
         const clearSpy = jest.spyOn(localStorageService, 'clear');
         const emitSpy = jest.spyOn(component.filterApplied, 'emit');
         const closeSpy = jest.spyOn(activeModal, 'close');
@@ -64,7 +66,8 @@ describe('FeedbackFilterModalComponent', () => {
         expect(clearSpy).toHaveBeenCalledWith(component.FILTER_TASKS_KEY);
         expect(clearSpy).toHaveBeenCalledWith(component.FILTER_TEST_CASES_KEY);
         expect(clearSpy).toHaveBeenCalledWith(component.FILTER_OCCURRENCE_KEY);
-        expect(component.filterForm.value).toEqual({
+
+        expect(component.filters).toEqual({
             tasks: [],
             testCases: [],
             occurrence: [0, 10],
@@ -73,23 +76,17 @@ describe('FeedbackFilterModalComponent', () => {
         expect(closeSpy).toHaveBeenCalledOnce();
     });
 
-    it('should update form values when checkboxes change', () => {
+    it('should update filters when checkboxes change', () => {
         const event = { target: { checked: true, value: 'test-task' } } as unknown as Event;
         component.onCheckboxChange(event, 'tasks');
-        expect(component.filterForm.value.tasks).toEqual(['test-task']);
+        expect(component.filters.tasks).toEqual(['test-task']);
     });
 
-    it('should remove the value from form control when checkbox is unchecked', () => {
-        component.filterForm.get('tasks')?.setValue(['test-task', 'task-2']);
+    it('should remove the value from filters when checkbox is unchecked', () => {
+        component.filters.tasks = ['test-task', 'task-2'];
         const event = { target: { checked: false, value: 'test-task' } } as unknown as Event;
         component.onCheckboxChange(event, 'tasks');
-        expect(component.filterForm.value.tasks).toEqual(['task-2']);
-    });
-
-    it('should set occurrence correctly using the setter', () => {
-        const setValueSpy = jest.spyOn(component.filterForm.get('occurrence')!, 'setValue');
-        component.occurrence = [5, 15];
-        expect(setValueSpy).toHaveBeenCalledExactlyOnceWith([5, 15]);
+        expect(component.filters.tasks).toEqual(['task-2']);
     });
 
     it('should dismiss modal when closeModal is called', () => {

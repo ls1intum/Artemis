@@ -147,7 +147,6 @@ describe('FeedbackAnalysisComponent', () => {
             const modalService = fixture.debugElement.injector.get(NgbModal);
             const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({
                 componentInstance: {
-                    filterForm: { setValue: jest.fn() },
                     filterApplied: { subscribe: jest.fn() },
                 },
             } as any);
@@ -161,7 +160,7 @@ describe('FeedbackAnalysisComponent', () => {
             expect(getMaxCountSpy).toHaveBeenCalledWith(1);
             expect(modalSpy).toHaveBeenCalledWith(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
             const modalInstance = modalSpy.mock.results[0].value.componentInstance;
-            expect(modalInstance.filterForm.setValue).toHaveBeenCalledWith({
+            expect(modalInstance.filters).toEqual({
                 tasks: ['task1'],
                 testCases: ['testCase1'],
                 occurrence: [component.minCount(), 5],

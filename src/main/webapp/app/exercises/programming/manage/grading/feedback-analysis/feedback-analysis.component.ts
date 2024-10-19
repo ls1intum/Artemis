@@ -130,14 +130,14 @@ export class FeedbackAnalysisComponent {
         const savedTasks = this.localStorage.retrieve(this.FILTER_TASKS_KEY);
         const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY);
         const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY);
-
         this.minCount.set(0);
         this.maxCount.set(await this.feedbackAnalysisService.getMaxCount(this.exerciseId()));
+
         const modalRef = this.modalService.open(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
 
+        modalRef.componentInstance.exerciseId = this.exerciseId;
         modalRef.componentInstance.totalAmountOfTasks = this.totalAmountOfTasks;
         modalRef.componentInstance.testCaseNames = this.testCaseNames;
-        modalRef.componentInstance.exerciseId = this.exerciseId;
         modalRef.componentInstance.maxCount = this.maxCount;
         modalRef.componentInstance.filters = {
             tasks: this.selectedFiltersCount() !== 0 ? savedTasks : [],
