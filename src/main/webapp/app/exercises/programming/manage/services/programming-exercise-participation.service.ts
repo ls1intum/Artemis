@@ -185,4 +185,16 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     retrieveCommitHistoryForTemplateSolutionOrTests(exerciseId: number, repositoryType: string): Observable<CommitInfo[]> {
         return this.http.get<CommitInfo[]>(`${this.resourceUrl}${exerciseId}/commit-history/${repositoryType}`);
     }
+
+    /**
+     * Get the commit history for a specific auxiliary repository
+     * @param exerciseId                the exercise the repository belongs to
+     * @param repositoryType            the repositories type
+     * @param auxiliaryRepositoryId     the id of the repository
+     */
+    retrieveCommitHistoryForAuxiliaryRepository(exerciseId: number, auxiliaryRepositoryId: number): Observable<CommitInfo[]> {
+        const params: { [key: string]: number } = {};
+        params['repositoryId'] = auxiliaryRepositoryId;
+        return this.http.get<CommitInfo[]>(`${this.resourceUrl}${exerciseId}/commit-history/AUXILIARY`, { params: params });
+    }
 }
