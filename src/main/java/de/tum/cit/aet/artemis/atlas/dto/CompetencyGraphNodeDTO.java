@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 public record CompetencyGraphNodeDTO(String id, String label, ZonedDateTime softDueDate, Double value, CompetencyNodeValueType valueType) {
 
     public enum CompetencyNodeValueType {
-        MASTERY_PROGRESS
+        MASTERY_PROGRESS, AVERAGE_MASTERY_PROGRESS,
     }
 
     public static CompetencyGraphNodeDTO of(@NotNull CourseCompetency competency, Double value, CompetencyNodeValueType valueType) {

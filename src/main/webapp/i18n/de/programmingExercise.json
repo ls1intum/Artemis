@@ -56,6 +56,7 @@
                 "steps": {
                     "generalInfoStepTitle": "Informationen",
                     "difficultyStepTitle": "Modus",
+                    "buildPlansTitle": "Build-Pläne",
                     "languageStepTitle": "Sprache",
                     "gradingStepTitle": "Benotung",
                     "problemStepTitle": "Problem",
@@ -65,6 +66,7 @@
                     "generalInfoStepTitle": "Allgemein",
                     "generalInfoStepMessage": "Eingabe von Informationen, die die Grundlage für die Programmieraufgabe bilden",
                     "difficultyStepTitle": "Modus",
+                    "buildPlansTitle": "Build-Pläne",
                     "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
                     "languageStepTitle": "Sprache",
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Build Umgebung",
@@ -135,18 +137,21 @@
             "workdir": "Verzeichnis",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
+                "description": "Ein Online-Texteditor mit Datei-Explorer und Code-Hervorhebungsfunktionen, jedoch ohne die Möglichkeit, Code zu kompilieren oder auszuführen.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Offline-IDE erlauben",
+                "description": "Aktiviere diese Option, um den Studierenden zu erlauben, die Übung herunterzuladen und lokal mit der bevorzugten IDE daran zu arbeiten.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "offlineIde": "IDE",
             "allowOnlineIde": {
                 "title": "Online-IDE erlauben",
+                "description": "Eine auf Visual Studio Code basierende Online-Entwicklungsumgebung mit Code-Hervorhebungs- und Formatierungsfunktionen. Vorkonfiguriert für die Sprache der Übung und mit der Möglichkeit, Code online zu kompilieren oder auszuführen.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein.",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
@@ -514,14 +519,16 @@
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
-                "usageDescription": "Du kannst Hilfsrepositorys verwenden, um zusätzlichen Code bereitzustellen, den Studierende nicht sehen oder ändern können. Der zusätzliche Code wird während des Builds der Abgabe am angegebenen Checkout-Verzeichnis eingefügt.",
+                "usageDescription": "Du kannst Hilfsrepositorien verwenden, um zusätzlichen Code bereitzustellen, den die Studierenden nicht sehen oder ändern können. Der zusätzliche Code wird im angegebenen Checkout-Verzeichnis eingefügt, bevor der Build erstellt wird. Er wird durch eine mv Operation eingefügt. Das bedeutet, dass es einen Unterschied beim Einfügen gibt, je nachdem, ob der Ordner des Checkout-Verzeichnis bereits existiert oder nicht. Wenn der Ordner existiert, wird der Inhalt des Repositorys im Checkout-Verzeichnis in einen neuen Ordner mit dem Namen des Repositorys eingefügt. Existiert der Ordner nicht, wird ein neuer Ordner im Checkout-Verzeichnis erstellt und der Inhalt des Hilfsrepositorys direkt dort eingefügt. Um die Dateien der Studierenden zu überschreiben, musst du das Build-Skript anpassen.",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
                 "description": "Beschreibung",
+                "invalidRepositoryName": "Es existiert bereits ein Repository mit diesem Namen in der Aufgabe.",
                 "duplicateRepositoryNames": "Verschiedene Hilfs-Repositories dürfen nicht den gleichen Namen haben.",
                 "duplicateDirectoryNames": "Verschiedene Hilfs-Repositories dürfen nicht das gleiche Checkout-Verzeichnis haben.",
                 "warning": "Hilfs-Repositories können hinzugefügt, editiert und gelöscht werden. Editierungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
                 "editedWarning": "Du hast die Hilfs-Repositories verändert. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
+                "editedWarningLocalCI": "Du hast die Hilfs-Repositories verändert. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
                 "repositoryNameRequired": {
                     "pattern": "Der Name eines Hilfs-Repositories darf nicht 'exercise', 'solution', 'tests', oder 'auxiliary' sein. Außerdem darf der Name nur Wörter und die Sonderzeichen '-' und '_' enthalten."
                 },
