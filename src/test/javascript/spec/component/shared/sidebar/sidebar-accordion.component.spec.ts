@@ -53,7 +53,7 @@ describe('SidebarAccordionComponent', () => {
         };
         component.routeParams = { exerciseId: 3 };
         component.collapseState = { current: false, dueSoon: false, past: false, future: true, noDate: true };
-        fixture.componentRef.setInput('sidebarItemAlwaysShow', { current: true, dueSoon: true, past: true, future: true, noDate: true });
+        fixture.componentRef.setInput('sidebarItemAlwaysShow', { current: false, dueSoon: false, past: false, future: false, noDate: false });
         fixture.detectChanges();
     });
 
