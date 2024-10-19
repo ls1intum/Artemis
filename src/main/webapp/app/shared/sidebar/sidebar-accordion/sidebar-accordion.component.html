@@ -1,7 +1,6 @@
 @for (groupKey of Object.keys(groupedData); track groupKey; let i = $index) {
     @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length || sidebarItemAlwaysShow()[groupKey]) {
         <div id="test-accordion-item-container-{{ i }}" class="pointer">
-
             <div
                 [id]="'test-accordion-item-header-' + groupKey"
                 class="control-label d-flex align-items-center justify-content-between py-2 bg-module"
