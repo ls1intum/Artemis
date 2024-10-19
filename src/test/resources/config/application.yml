@@ -72,6 +72,8 @@ artemis:
                     default: "~~invalid~~"
                 r:
                     default: "~~invalid~~"
+                c_plus_plus:
+                    default: "~~invalid~~"
 
 spring:
     application:
