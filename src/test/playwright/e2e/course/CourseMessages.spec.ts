@@ -108,7 +108,7 @@ test.describe('Course messages', () => {
                 await courseManagementAPIRequests.createLecture(course, 'Test Lecture');
                 await login(instructor, `/courses/${course.id}/communication`);
                 await courseMessages.browseChannelsButton('lectureChannels').click();
-                await courseMessages.checkChannelsExists('lecture-test-lecture');
+                await courseMessages.checkChannelsExists('test-lecture');
             });
 
             test('Check that channel is created when an exercise is created', async ({ login, courseMessages, exerciseAPIRequests }) => {
@@ -116,7 +116,7 @@ test.describe('Course messages', () => {
                 await exerciseAPIRequests.createTextExercise({ course }, 'Test Exercise');
                 await login(instructor, `/courses/${course.id}/communication`);
                 await courseMessages.browseChannelsButton('exerciseChannels').click();
-                await courseMessages.checkChannelsExists('exercise-test-exercise');
+                await courseMessages.checkChannelsExists('test-exercise');
             });
 
             test('Check that channel is created when an exam is created', async ({ login, courseMessages, examAPIRequests }) => {

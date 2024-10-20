@@ -18,15 +18,15 @@ export class CourseMessagesPage {
      * Clicks the button to initiate channel creation.
      */
     async createChannelButton() {
-        await this.page.locator('#plusButton-generalChannels').click();
-        await this.page.locator('.modal-content #createChannel').click();
+        await this.page.click('.square-button > .ng-fa-icon');
+        await this.page.click('text=Create channel');
     }
 
     /**
      * Navigates to the channel overview section.
      */
     browseChannelsButton(channelGroup: string) {
-        return this.page.locator(`#plusButton-${channelGroup}`);
+        return this.page.locator(`#test-accordion-item-header-${channelGroup} > .my-2`);
     }
 
     /**
@@ -34,7 +34,7 @@ export class CourseMessagesPage {
      * @param name - The name of the channel to check for existence.
      */
     async checkChannelsExists(name: string) {
-        await expect(this.page.locator('.channels-overview .list-group-item').getByText(name)).toBeVisible();
+        await expect(this.page.locator('#test-sidebar-card-title').getByText(name)).toBeVisible();
     }
 
     /**
@@ -43,7 +43,7 @@ export class CourseMessagesPage {
      * @returns The ID of the channel.
      */
     async getChannelIdByName(name: string) {
-        const channelElement = this.page.locator('.channels-overview .list-group-item', { hasText: name });
+        const channelElement = this.page.locator('#test-sidebar-card-title', { hasText: name });
         const id = await channelElement.getAttribute('id');
         return id?.replace('channel-', '');
     }
