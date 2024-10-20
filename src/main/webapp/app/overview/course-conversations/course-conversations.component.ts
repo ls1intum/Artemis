@@ -23,7 +23,8 @@ import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/overview/cou
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
-import isMobile from 'ismobilejs-es5';
+import { LayoutService } from 'app/shared/breakpoints/layout.service';
+import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -79,6 +80,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private closeSidebarEventSubscription: Subscription;
     private openSidebarEventSubscription: Subscription;
     private toggleSidebarEventSubscription: Subscription;
+    private breakpointSubscription: Subscription;
     course?: Course;
     isLoading = false;
     isServiceSetUp = false;
@@ -133,6 +135,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         private modalService: NgbModal,
         private profileService: ProfileService,
         private courseSidebarService: CourseSidebarService,
+        private layoutService: LayoutService,
     ) {}
 
     getAsChannel = getAsChannelDTO;
@@ -151,7 +154,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.isMobile = isMobile(window.navigator.userAgent).any;
+        this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
+
+        this.breakpointSubscription = this.layoutService.subscribeToLayoutChanges().subscribe(() => {
+            this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
+        });
 
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
             this.setIsCollapsed(true);
@@ -262,6 +269,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.closeSidebarEventSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
+        this.breakpointSubscription?.unsubscribe();
     }
 
     private subscribeToActiveConversation() {

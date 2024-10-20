@@ -1143,3 +1143,9 @@ $transition-in-between-delay: 0.05s;
 .fs-small {
     font-size: 0.875rem;
 }
+
+@include media-breakpoint-down(sm) {
+    .emoji-mart {
+        transform: translateX(50%);
+    }
+}

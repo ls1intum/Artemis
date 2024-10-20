@@ -40,6 +40,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { LayoutService } from 'app/shared/breakpoints/layout.service';
+import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -56,9 +58,24 @@ examples.forEach((activeConversation) => {
         let metisConversationService: MetisConversationService;
         let modalService: NgbModal;
         let courseSidebarService: CourseSidebarService;
+        let layoutService: LayoutService;
+
+        const MockLayoutService = {
+            activeBreakpoints: [],
+            breakpointObserver: undefined,
+            breakpointService: {
+                getBreakpoints: jest.fn().mockReturnValue(['(min-width: 600px)']),
+                getBreakpointName: jest.fn().mockReturnValue(CustomBreakpointNames.medium),
+            },
+            subscribeToLayoutChanges: () => {
+                return EMPTY;
+            },
+            isBreakpointActive: jest.fn().mockReturnValue(CustomBreakpointNames.medium),
+        };
 
         beforeEach(waitForAsync(() => {
             queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
+
             TestBed.configureTestingModule({
                 declarations: [
                     CourseConversationsComponent,
@@ -97,6 +114,7 @@ examples.forEach((activeConversation) => {
                     MockProvider(MetisConversationService),
                     MockProvider(SidebarEventService),
                     MockProvider(ProfileService),
+                    { provide: LayoutService, useValue: MockLayoutService },
                 ],
                 imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule, NgbCollapseMocksModule, NgbTooltipMocksModule],
             }).compileComponents();
@@ -111,6 +129,7 @@ examples.forEach((activeConversation) => {
 
             metisConversationService = TestBed.inject(MetisConversationService);
             courseSidebarService = TestBed.inject(CourseSidebarService);
+            layoutService = TestBed.inject(LayoutService);
 
             Object.defineProperty(metisConversationService, 'isServiceSetup$', { get: () => new BehaviorSubject(true).asObservable() });
             Object.defineProperty(metisConversationService, 'conversationsOfUser$', { get: () => new BehaviorSubject([new GroupChatDTO()]).asObservable() });
@@ -220,6 +239,22 @@ examples.forEach((activeConversation) => {
             expect(setActiveConversationSpy).toHaveBeenCalledWith(12);
         }));
 
+        it('should call sidebar collapse if conversation changes', fakeAsync(() => {
+            const closeSidebarOnMobileSpy = jest.spyOn(component, 'closeSidebarOnMobile');
+            queryParamsSubject.next({ conversationId: '12' });
+            fixture.detectChanges();
+            tick();
+            expect(closeSidebarOnMobileSpy).toHaveBeenCalled();
+        }));
+
+        it('should call sidebar collapse if thread opens', fakeAsync(() => {
+            const closeSidebarOnMobileSpy = jest.spyOn(component, 'closeSidebarOnMobile');
+            queryParamsSubject.next({ messageId: '12' });
+            fixture.detectChanges();
+            tick();
+            expect(closeSidebarOnMobileSpy).toHaveBeenCalled();
+        }));
+
         it('should set the query params when an active conversation is selected', () => {
             const activatedRoute = TestBed.inject(ActivatedRoute);
             const navigateSpy = jest.spyOn(router, 'navigate');
@@ -279,6 +314,33 @@ examples.forEach((activeConversation) => {
 
             courseSidebarService.toggleSidebar();
             expect(component.isCollapsed).toBeTrue();
+        });
+
+        it('should switch to mobile if breakpoint returns true and open sidebar', () => {
+            const openSidebarSpy = jest.spyOn(courseSidebarService, 'openSidebar');
+            expect(component.isMobile).toBeFalse();
+            layoutService.isBreakpointActive = jest.fn().mockReturnValue(true);
+            component.ngOnInit();
+            expect(component.isMobile).toBeTrue();
+            expect(openSidebarSpy).toHaveBeenCalled();
+        });
+
+        it('should call close sidebar if coversation is selected', () => {
+            const closeSidebarSpy = jest.spyOn(courseSidebarService, 'closeSidebar');
+            component.isMobile = true;
+
+            component.onConversationSelected(activeConversation?.id ?? 1);
+
+            expect(closeSidebarSpy).toHaveBeenCalled();
+        });
+
+        it('should call close sidebar and search term is set and open sidebar otherwise if on mobile', () => {
+            const openSidebarSpy = jest.spyOn(courseSidebarService, 'openSidebar');
+            fixture.detectChanges();
+            component.isMobile = true;
+            component.courseWideSearchTerm = '';
+            component.onSearch();
+            expect(openSidebarSpy).toHaveBeenCalled();
         });
 
         it('should display sidebar when conversation is provided', () => {

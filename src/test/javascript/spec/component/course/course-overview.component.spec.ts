@@ -435,7 +435,6 @@ describe('CourseOverviewComponent', () => {
     }));
 
     it('should throw for unexpected registration responses from the server', fakeAsync(() => {
-        fixture.detectChanges();
         findOneForRegistrationStub.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
         // test that canRegisterForCourse throws
@@ -448,7 +447,7 @@ describe('CourseOverviewComponent', () => {
             },
         );
 
-        tick(500);
+        tick();
     }));
 
     it('should load the course, even when just calling loadCourse by itself (for refreshing)', () => {
