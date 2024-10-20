@@ -72,6 +72,8 @@ artemis:
                     default: "~~invalid~~"
                 r:
                     default: "~~invalid~~"
+                c_plus_plus:
+                    default: "~~invalid~~"
                 typescript:
                     default: "~~invalid~~"
 
@@ -79,6 +81,7 @@ spring:
     application:
         name: Artemis
     datasource:
+        url: jdbc:mysql://artemis-mysql:3306/
         type: com.zaxxer.hikari.HikariDataSource
         name:
         username:
@@ -292,3 +295,10 @@ jhipster:
 
 aeolus:
     url: http://mock-aeolus-url:8090
+
+# Eureka configuration
+eureka:
+    client:
+        enabled: false
+        service-url:
+            defaultZone: http://admin:admin@localhost:8761/eureka/

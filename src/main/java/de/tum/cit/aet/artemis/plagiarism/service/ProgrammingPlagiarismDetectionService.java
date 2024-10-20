@@ -30,6 +30,7 @@ import de.jplag.JPlagResult;
 import de.jplag.Language;
 import de.jplag.c.CLanguage;
 import de.jplag.clustering.ClusteringOptions;
+import de.jplag.cpp.CPPLanguage;
 import de.jplag.exceptions.ExitException;
 import de.jplag.java.JavaLanguage;
 import de.jplag.javascript.JavaScriptLanguage;
@@ -313,6 +314,7 @@ public class ProgrammingPlagiarismDetectionService {
     private Language getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
         return switch (programmingExercise.getProgrammingLanguage()) {
             case C -> new CLanguage();
+            case C_PLUS_PLUS -> new CPPLanguage();
             case JAVA -> new JavaLanguage();
             case JAVASCRIPT -> new JavaScriptLanguage();
             case KOTLIN -> new KotlinLanguage();
@@ -321,9 +323,8 @@ public class ProgrammingPlagiarismDetectionService {
             case RUST -> new RustLanguage();
             case SWIFT -> new SwiftLanguage();
             case TYPESCRIPT -> new TypeScriptLanguage();
-            case EMPTY, PHP, DART, HASKELL, ASSEMBLER, OCAML, C_SHARP, C_PLUS_PLUS, SQL, GO, MATLAB, BASH, VHDL, RUBY, POWERSHELL, ADA ->
-                throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
-                        "ProgrammingExercise", "notSupported");
+            case EMPTY, PHP, DART, HASKELL, ASSEMBLER, OCAML, C_SHARP, SQL, GO, MATLAB, BASH, VHDL, RUBY, POWERSHELL, ADA -> throw new BadRequestAlertException(
+                    "Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.", "ProgrammingExercise", "notSupported");
         };
     }
 

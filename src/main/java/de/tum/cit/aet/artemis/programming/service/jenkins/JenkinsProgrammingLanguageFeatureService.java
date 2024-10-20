@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins;
 
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C_PLUS_PLUS;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.EMPTY;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.HASKELL;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
@@ -36,6 +37,7 @@ public class JenkinsProgrammingLanguageFeatureService extends ProgrammingLanguag
         // Must be extended once a new programming language is added
         programmingLanguageFeatures.put(EMPTY, new ProgrammingLanguageFeature(EMPTY, false, false, false, false, false, List.of(), false, false));
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, false, true, false, false, List.of(FACT, GCC), false, false));
+        programmingLanguageFeatures.put(C_PLUS_PLUS, new ProgrammingLanguageFeature(C_PLUS_PLUS, false, false, true, false, false, List.of(), false, false));
         programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, false, false, false, false, true, List.of(), false, false));
         programmingLanguageFeatures.put(JAVA,
                 new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN, MAVEN_BLACKBOX), true, false));
