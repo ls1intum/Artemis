@@ -70,6 +70,8 @@
                 "examChannels": "Exams",
                 "createChannel": "Create channel",
                 "browseChannels": "Browse channels",
+                "createGroupChat": "Create group chat",
+                "createDirectChat": "Create direct chat",
                 "groupChats": "Group Chats",
                 "directMessages": "Direct Messages",
                 "filterConversationPlaceholder": "Filter conversations"
@@ -103,6 +105,7 @@
                 "achievedScore": "Achieved Score",
                 "achievablePoints": "Achievable Points",
                 "applyFilter": "Apply filter",
+                "resetFilter": "Reset filter",
                 "clearFilter": "Clear filter",
                 "noFilterAvailable": "There are no distinguishing filter options for the existing exercises",
                 "noMoreOptions": "No more options"

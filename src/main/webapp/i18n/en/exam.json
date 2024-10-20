@@ -212,6 +212,7 @@
         },
         "examScores": {
             "xAxes": "Score in %",
+            "xAxesSuffix": " + {Grade Name}",
             "xAxesSuffixNoBonus": " + {Grade Name}",
             "xAxesSuffixBonus": " + {Bonus Points}",
             "yAxes": "Number of Participants",
@@ -468,6 +469,7 @@
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "exampleSolutionPublicationDateTooltip": "Students can see the example solutions for all exercises in the exam from this time onwards if they participated in the exam. Leave blank to disable.",
+            "studentReviewEnabled": "Student review enabled",
             "maxPoints": {
                 "title": "Maximum number of points for exam",
                 "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value. This also affects all students' grades in the exam!"
