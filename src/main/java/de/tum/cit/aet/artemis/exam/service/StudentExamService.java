@@ -252,80 +252,104 @@ public class StudentExamService {
             // file upload submissions are only saved during submit in their respective submission page
             return;
         }
+        // here we know exercise is either QuizExercise, TextExercise or ModelingExercise
 
-        // if exercise is either QuizExercise, TextExercise or ModelingExercise and exactly one participation exists
-        if (exercise.getStudentParticipations() != null && exercise.getStudentParticipations().size() == 1) {
-            // this object comes from the client
-            StudentParticipation studentParticipationFromClient = exercise.getStudentParticipations().iterator().next();
-            // this object comes from the database
-            StudentParticipation existingParticipationInDatabase = existingRelevantParticipations.stream().filter(p -> p.getId().equals(studentParticipationFromClient.getId()))
-                    .findFirst().orElseThrow();
-            // if exactly one submission exists we save the submission
-            if (studentParticipationFromClient.getSubmissions() != null && studentParticipationFromClient.getSubmissions().size() == 1) {
-                // check that the current user owns the participation
-                if (!studentParticipationFromClient.isOwnedBy(currentUser) || !existingParticipationInDatabase.isOwnedBy(currentUser)) {
-                    throw new AccessForbiddenException("User " + currentUser.getLogin() + " is not allowed to access the participation " + existingParticipationInDatabase.getId());
-                }
-                studentParticipationFromClient.setExercise(exercise);
+        // check that exactly one participation exists
+        if (exercise.getStudentParticipations() == null || exercise.getStudentParticipations().size() != 1) {
+            return;
+        }
 
-                Submission submissionFromClient = studentParticipationFromClient.getSubmissions().iterator().next();
+        // this object comes from the client
+        StudentParticipation studentParticipationFromClient = exercise.getStudentParticipations().iterator().next();
+        // this object comes from the database
+        StudentParticipation existingParticipationInDatabase = existingRelevantParticipations.stream().filter(p -> p.getId().equals(studentParticipationFromClient.getId()))
+                .findFirst().orElseThrow();
 
-                // check that the submission belongs to the already saved participation
-                if (!existingParticipationInDatabase.getSubmissions().contains(submissionFromClient)) {
-                    throw new AccessForbiddenException("User " + currentUser.getLogin() + " cannot submit a different submission " + submissionFromClient + " for participation "
-                            + existingParticipationInDatabase.getId());
-                }
-                // check that no result has been injected
-                if (submissionFromClient.getLatestResult() != null) {
-                    throw new AccessForbiddenException("User " + currentUser.getLogin() + " cannot inject a result " + submissionFromClient.getLatestResult() + " for submission "
-                            + submissionFromClient + " and participation " + existingParticipationInDatabase.getId());
-                }
-                submissionFromClient.setParticipation(studentParticipationFromClient);
-                submissionFromClient.submissionDate(ZonedDateTime.now());
-                submissionFromClient.submitted(true);
-                if (exercise instanceof QuizExercise) {
-                    // recreate pointers back to submission in each submitted answer
-                    for (SubmittedAnswer submittedAnswer : ((QuizSubmission) submissionFromClient).getSubmittedAnswers()) {
-                        submittedAnswer.setSubmission(((QuizSubmission) submissionFromClient));
-                        if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                            ((DragAndDropSubmittedAnswer) submittedAnswer).getMappings()
-                                    .forEach(dragAndDropMapping -> dragAndDropMapping.setSubmittedAnswer(((DragAndDropSubmittedAnswer) submittedAnswer)));
-                        }
-                        else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
-                            ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts()
-                                    .forEach(submittedText -> submittedText.setSubmittedAnswer(((ShortAnswerSubmittedAnswer) submittedAnswer)));
-                        }
-                    }
+        // check that exactly one submission exists
+        if (studentParticipationFromClient.getSubmissions() == null || studentParticipationFromClient.getSubmissions().size() != 1) {
+            return;
+        }
 
-                    // load quiz submissions for existing participation to be able to compare them in saveSubmission
-                    // 5. DB Call: read
-                    submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(List.of(existingParticipationInDatabase));
+        // check that the current user owns the participation
+        if (!studentParticipationFromClient.isOwnedBy(currentUser) || !existingParticipationInDatabase.isOwnedBy(currentUser)) {
+            throw new AccessForbiddenException("User " + currentUser.getLogin() + " is not allowed to access the participation " + existingParticipationInDatabase.getId());
+        }
+        studentParticipationFromClient.setExercise(exercise);
 
-                    QuizSubmission existingSubmissionInDatabase = (QuizSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
-                    QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
+        Submission submissionFromClient = studentParticipationFromClient.getSubmissions().iterator().next();
 
-                    if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
-                        quizSubmissionRepository.save(quizSubmissionFromClient);
-                        saveSubmissionVersion(currentUser, submissionFromClient);
-                    }
-                }
-                else if (exercise instanceof TextExercise) {
-                    TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
-                    TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
-                    if (!isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
-                        textSubmissionRepository.save(textSubmissionFromClient);
-                        saveSubmissionVersion(currentUser, submissionFromClient);
-                    }
-                }
-                else if (exercise instanceof ModelingExercise) {
-                    ModelingSubmission existingSubmissionInDatabase = (ModelingSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
-                    ModelingSubmission modelingSubmissionFromClient = (ModelingSubmission) submissionFromClient;
-                    if (!isContentEqualTo(existingSubmissionInDatabase, modelingSubmissionFromClient)) {
-                        modelingSubmissionRepository.save(modelingSubmissionFromClient);
-                        saveSubmissionVersion(currentUser, submissionFromClient);
-                    }
-                }
+        // check that the submission belongs to the already saved participation
+        if (!existingParticipationInDatabase.getSubmissions().contains(submissionFromClient)) {
+            throw new AccessForbiddenException("User " + currentUser.getLogin() + " cannot submit a different submission " + submissionFromClient + " for participation "
+                    + existingParticipationInDatabase.getId());
+        }
+        // check that no result has been injected
+        if (submissionFromClient.getLatestResult() != null) {
+            throw new AccessForbiddenException("User " + currentUser.getLogin() + " cannot inject a result " + submissionFromClient.getLatestResult() + " for submission "
+                    + submissionFromClient + " and participation " + existingParticipationInDatabase.getId());
+        }
+
+        submissionFromClient.setParticipation(studentParticipationFromClient);
+        submissionFromClient.submissionDate(ZonedDateTime.now());
+        submissionFromClient.submitted(true);
+        switch (exercise) {
+            case QuizExercise ignored -> saveSubmissionQuizExercise(submissionFromClient, existingParticipationInDatabase, currentUser);
+            case TextExercise ignored -> saveSubmissionTextExercise(submissionFromClient, existingParticipationInDatabase, currentUser);
+            case ModelingExercise ignored -> saveSubmissionModelingExercise(submissionFromClient, existingParticipationInDatabase, currentUser);
+            default -> {
             }
+        }
+    }
+
+    /**
+     * Helper function for {@link #saveSubmission(User, List, Exercise)}
+     */
+    private void saveSubmissionQuizExercise(Submission submissionFromClient, StudentParticipation existingParticipationInDatabase, User currentUser) {
+        // recreate pointers back to submission in each submitted answer
+        for (SubmittedAnswer submittedAnswer : ((QuizSubmission) submissionFromClient).getSubmittedAnswers()) {
+            submittedAnswer.setSubmission(((QuizSubmission) submissionFromClient));
+            if (submittedAnswer instanceof DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
+                dragAndDropSubmittedAnswer.getMappings().forEach(dragAndDropMapping -> dragAndDropMapping.setSubmittedAnswer(((DragAndDropSubmittedAnswer) submittedAnswer)));
+            }
+            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+                shortAnswerSubmittedAnswer.getSubmittedTexts().forEach(submittedText -> submittedText.setSubmittedAnswer(((ShortAnswerSubmittedAnswer) submittedAnswer)));
+            }
+        }
+
+        // load quiz submissions for existing participation to be able to compare them in saveSubmission
+        // 5. DB Call: read
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(List.of(existingParticipationInDatabase));
+
+        QuizSubmission existingSubmissionInDatabase = (QuizSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
+        QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
+
+        if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
+            quizSubmissionRepository.save(quizSubmissionFromClient);
+            saveSubmissionVersion(currentUser, submissionFromClient);
+        }
+    }
+
+    /**
+     * Helper function for {@link #saveSubmission(User, List, Exercise)}
+     */
+    private void saveSubmissionTextExercise(Submission submissionFromClient, StudentParticipation existingParticipationInDatabase, User currentUser) {
+        TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
+        TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
+        if (!isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
+            textSubmissionRepository.save(textSubmissionFromClient);
+            saveSubmissionVersion(currentUser, submissionFromClient);
+        }
+    }
+
+    /**
+     * Helper function for {@link #saveSubmission(User, List, Exercise)}
+     */
+    private void saveSubmissionModelingExercise(Submission submissionFromClient, StudentParticipation existingParticipationInDatabase, User currentUser) {
+        ModelingSubmission existingSubmissionInDatabase = (ModelingSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
+        ModelingSubmission modelingSubmissionFromClient = (ModelingSubmission) submissionFromClient;
+        if (!isContentEqualTo(existingSubmissionInDatabase, modelingSubmissionFromClient)) {
+            modelingSubmissionRepository.save(modelingSubmissionFromClient);
+            saveSubmissionVersion(currentUser, submissionFromClient);
         }
     }
 
