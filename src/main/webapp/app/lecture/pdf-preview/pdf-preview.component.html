@@ -4,13 +4,13 @@
             <div class="d-flex text-start">
                 <h4>
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span>
-                    @if (attachment) {
-                        {{ attachment.id }}: {{ attachment.name }}
-                    } @else if (attachmentUnit) {
-                        {{ attachmentUnit.id }}: {{ attachmentUnit.name }}
+                    @if (attachment()) {
+                        {{ attachment()!.id! }}: {{ attachment()!.name! }}
+                    } @else if (attachmentUnit()!) {
+                        {{ attachmentUnit()!.id! }}: {{ attachmentUnit()!.name! }}
                     }
                 </h4>
-                @if (isPdfLoading) {
+                @if (isPdfLoading()) {
                     <div class="spinner-border" role="status">
                         <span class="sr-only" jhiTranslate="loading"></span>
                     </div>
@@ -26,13 +26,13 @@
                     [deleteQuestion]="allPagesSelected() ? 'artemisApp.attachment.pdfPreview.deleteAllPagesQuestion' : 'artemisApp.attachment.pdfPreview.deletePagesQuestion'"
                     (delete)="allPagesSelected() ? deleteAttachmentFile() : deleteSelectedSlides()"
                     [dialogError]="dialogError$"
-                    [disabled]="isPdfLoading || selectedPages.size === 0"
+                    [disabled]="isPdfLoading() || selectedPages().size === 0"
                     aria-label="Delete selected pages"
                 >
                     <fa-icon [icon]="faTrash" />
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.removePageButton"></span>
                 </button>
-                <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" [disabled]="isPdfLoading" />
+                <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" [disabled]="isPdfLoading()" />
                 <button (click)="triggerFileInput()" class="btn btn-primary text-truncate" aria-label="Append PDF file">
                     <fa-icon [icon]="faFileImport" />
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.appendPDFButton"></span>
@@ -40,17 +40,17 @@
             </div>
         </div>
         <div class="pdf-container" #pdfContainer>
-            @if (isEnlargedView) {
+            @if (isEnlargedView()) {
                 <div class="enlarged-container" (click)="closeIfOutside($event)">
                     <canvas #enlargedCanvas></canvas>
                     <button class="btn btn-close" (click)="closeEnlargedView($event)"></button>
-                    @if (currentPage !== 1) {
+                    @if (currentPage() !== 1) {
                         <button class="btn btn-secondary nav-button left" (click)="handleNavigation('prev', $event)" aria-label="Previous page">←</button>
                     }
-                    @if (currentPage !== totalPages) {
+                    @if (currentPage() !== totalPages()) {
                         <button class="btn btn-secondary nav-button right" (click)="handleNavigation('next', $event)" aria-label="Next page">→</button>
                     }
-                    <div class="page-number-display">{{ currentPage }}</div>
+                    <div class="page-number-display">{{ currentPage() }}</div>
                 </div>
             }
         </div>
@@ -60,9 +60,9 @@
                     type="button"
                     class="btn btn-default"
                     [routerLink]="
-                        attachment
-                            ? ['/course-management', course!.id, 'lectures', attachment!.lecture?.id, 'attachments']
-                            : ['/course-management', course!.id, 'lectures', attachmentUnit!.lecture?.id, 'unit-management']
+                        attachment()
+                            ? ['/course-management', course()!.id, 'lectures', attachment()!.lecture?.id, 'attachments']
+                            : ['/course-management', course()!.id, 'lectures', attachmentUnit()!.lecture?.id, 'unit-management']
                     "
                     [ngbTooltip]="'entity.action.view' | artemisTranslate"
                 >
@@ -71,7 +71,7 @@
                 </a>
             </div>
             <div>
-                <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="isPdfLoading || totalPages === 0 || !isFileChanged">
+                <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="isPdfLoading() || totalPages() === 0 || !isFileChanged()">
                     <fa-icon [icon]="faSave" [ngbTooltip]="'entity.action.save' | artemisTranslate"></fa-icon>
                     <span jhiTranslate="entity.action.save"></span>
                 </button>
