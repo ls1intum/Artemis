@@ -25,8 +25,9 @@ export class CourseMessagesPage {
     /**
      * Navigates to the channel overview section.
      */
-    browseChannelsButton(channelGroup: string) {
-        return this.page.locator(`#test-accordion-item-header-${channelGroup} > .my-2`);
+    async browseChannelsButton() {
+        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.locator('button', { hasText: 'Browse Channels' }).click();
     }
 
     /**
@@ -34,7 +35,7 @@ export class CourseMessagesPage {
      * @param name - The name of the channel to check for existence.
      */
     async checkChannelsExists(name: string) {
-        await expect(this.page.locator('#test-sidebar-card-title').getByText(name)).toBeVisible();
+        await expect(this.page.locator('.channels-overview .list-group-item').getByText(name)).toBeVisible();
     }
 
     /**
@@ -43,7 +44,7 @@ export class CourseMessagesPage {
      * @returns The ID of the channel.
      */
     async getChannelIdByName(name: string) {
-        const channelElement = this.page.locator('#test-sidebar-card-title', { hasText: name });
+        const channelElement = this.page.locator('.channels-overview .list-group-item', { hasText: name });
         const id = await channelElement.getAttribute('id');
         return id?.replace('channel-', '');
     }
@@ -288,7 +289,8 @@ export class CourseMessagesPage {
      * Clicks the button to initiate group chat creation.
      */
     async createGroupChatButton() {
-        await this.page.locator('#plusButton-groupChats').click();
+        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.locator('button', { hasText: 'Create Group Chat' }).click();
     }
 
     /**
