@@ -32,8 +32,8 @@ export interface SidebarData {
     groupedData?: AccordionGroups;
     ungroupedData?: SidebarCardElement[];
     storageId?: string;
-    showAccordionAddOption?: boolean;
     showAccordionLeadingIcon?: boolean;
+    messagingEnabled?: boolean;
 }
 
 export interface SidebarCardElement {

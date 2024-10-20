@@ -46,6 +46,7 @@ export class CompetencyNodeComponent implements AfterViewInit {
     isYellow(): boolean {
         switch (this.valueType()) {
             case CompetencyGraphNodeValueType.MASTERY_PROGRESS:
+            case CompetencyGraphNodeValueType.AVERAGE_MASTERY_PROGRESS:
                 return this.value() > 0 && this.value() < 100;
             default:
                 return false;
@@ -55,6 +56,7 @@ export class CompetencyNodeComponent implements AfterViewInit {
     isGray(): boolean {
         switch (this.valueType()) {
             case CompetencyGraphNodeValueType.MASTERY_PROGRESS:
+            case CompetencyGraphNodeValueType.AVERAGE_MASTERY_PROGRESS:
                 return this.value() === 0;
             default:
                 return false;

@@ -84,6 +84,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
         return getValueElseThrow(findByExerciseIdAndStudentLogin(exerciseId, username));
     }
 
+    Optional<ProgrammingExerciseStudentParticipation> findByRepositoryUri(String repositoryUri);
+
+    default ProgrammingExerciseStudentParticipation findByRepositoryUriElseThrow(String repositoryUri) {
+        return getValueElseThrow(findByRepositoryUri(repositoryUri));
+    }
+
     default ProgrammingExerciseStudentParticipation findFirstByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
         return getValueElseThrow(findFirstByExerciseIdAndStudentLoginOrderByIdDesc(exerciseId, username));
     }
