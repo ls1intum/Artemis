@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserPublicSshKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
@@ -46,36 +47,45 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
     public boolean authenticate(String username, PublicKey publicKey, ServerSession session) {
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
         var userSshPublicKey = userPublicSshKeyRepository.findByKeyHash(keyHash);
-        if (userSshPublicKey.isEmpty()) {
-            return false;
+        if (userSshPublicKey.isPresent()) {
+            return authenticateUser(userSshPublicKey.get(), publicKey, session);
         }
-        var user = userRepository.findById(userSshPublicKey.get().getUserId());
-        if (user.isPresent()) {
-            try {
-                // Retrieve the stored public key string
-                String storedPublicKeyString = userSshPublicKey.get().getPublicKey();
+        else {
+            return authenticateBuildAgent(publicKey, session);
+        }
+    }
 
-                // Parse the stored public key string
-                AuthorizedKeyEntry keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(storedPublicKeyString);
-                PublicKey storedPublicKey = keyEntry.resolvePublicKey(null, null, null);
-
-                // Compare the stored public key with the provided public key
-                if (Objects.equals(storedPublicKey, publicKey)) {
-                    log.debug("Found user {} for public key authentication", user.get().getLogin());
-                    session.setAttribute(SshConstants.USER_KEY, user.get());
-                    session.setAttribute(SshConstants.IS_BUILD_AGENT_KEY, false);
-                    return true;
-                }
-                else {
-                    log.warn("Public key mismatch for user {}", user.get().getLogin());
-                }
+    public boolean authenticateUser(UserSshPublicKey storedKey, PublicKey providedKey, ServerSession session) {
+        try {
+            var user = userRepository.findById(storedKey.getUserId());
+            if (user.isEmpty()) {
+                return false;
             }
-            catch (Exception e) {
-                log.error("Failed to convert stored public key string to PublicKey object", e);
+            // Retrieve and parse the stored public key string
+            AuthorizedKeyEntry keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(storedKey.getPublicKey());
+            PublicKey storedPublicKey = keyEntry.resolvePublicKey(null, null, null);
+
+            // Compare the stored public key with the provided public key
+            if (Objects.equals(storedPublicKey, providedKey)) {
+                log.debug("Found user {} for public key authentication", user.get().getLogin());
+                session.setAttribute(SshConstants.USER_KEY, user.get());
+                session.setAttribute(SshConstants.IS_BUILD_AGENT_KEY, false);
+                return true;
+            }
+            else {
+                log.warn("Public key mismatch for user {}", user.get().getLogin());
             }
         }
-        else if (localCIBuildJobQueueService.isPresent()
-                && localCIBuildJobQueueService.get().getBuildAgentInformation().stream().anyMatch(agent -> checkPublicKeyMatchesBuildAgentPublicKey(agent, publicKey))) {
+        catch (Exception e) {
+            log.error("Failed to convert stored public key string to PublicKey object", e);
+        }
+        return false;
+    }
+
+    private boolean authenticateBuildAgent(PublicKey providedKey, ServerSession session) {
+        if (localCIBuildJobQueueService.isPresent()
+                && localCIBuildJobQueueService.get().getBuildAgentInformation().stream().anyMatch(agent -> checkPublicKeyMatchesBuildAgentPublicKey(agent, providedKey))) {
+
             log.info("Authenticating as build agent");
             session.setAttribute(SshConstants.IS_BUILD_AGENT_KEY, true);
             return true;
