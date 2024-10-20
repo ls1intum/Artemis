@@ -633,13 +633,13 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(comp.canDeactivate()).toBeTrue();
             });
 
-            it('should set event return value to translate if not canDeactivate', () => {
+            it('should not deactivate with pending changes', () => {
                 comp.pendingChangesCache = true;
                 const canDeactivate = comp.canDeactivate();
                 expect(canDeactivate).toBeFalse();
             });
 
-            it('should not set event return value to translate if  canDeactivate', () => {
+            it('should deactivate with no pending changes', () => {
                 comp.pendingChangesCache = false;
                 const canDeactivate = comp.canDeactivate();
                 expect(canDeactivate).toBeTrue();
