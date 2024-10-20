@@ -603,8 +603,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             const formData = new FormData();
             formData.append('file', pdfFile);
-            formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited));
-            formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit));
+            formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
+            formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
 
             this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
                 next: () => {
