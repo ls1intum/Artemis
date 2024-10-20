@@ -33,9 +33,7 @@ export class LinkPreviewContainerComponent implements OnInit, OnChanges {
     }
 
     ngOnChanges() {
-        if (this.isEdited) {
-            this.reloadLinkPreviews();
-        }
+        this.reloadLinkPreviews();
     }
 
     private reloadLinkPreviews() {
