@@ -27,13 +27,13 @@
                                     name="searchTerm"
                                     id="field_searchTerm"
                                     formControlName="searchControl"
-                                    [(ngModel)]="searchTerm"
-                                    (focusout)="loadAll()"
+                                    (blur)="loadAll()"
+                                    (keydown)="onKeydown($event)"
                                 />
                                 <button class="btn btn-primary ms-3" (click)="loadAll()">
                                     <span jhiTranslate="artemisApp.userManagement.search"></span>
                                 </button>
-                                @if (searchControl.invalid && (searchControl.dirty || searchControl.touched)) {
+                                @if (searchInvalid) {
                                     <div class="alert alert-danger ms-3 mb-0">
                                         <div jhiTranslate="artemisApp.userManagement.searchError"></div>
                                     </div>
