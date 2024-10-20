@@ -1,0 +1,48 @@
+api: v0.0.1
+metadata:
+  name: C++
+  id: c_plus_plus
+  description: Test using the GBS Tester
+actions:
+  - name: setup_the_build_environment
+    script: |-
+      #!/usr/bin/env bash
+
+      # ------------------------------
+      # Task Description:
+      # Setup the build environment
+      # ------------------------------
+
+      mkdir test-reports
+
+      # Updating ownership...
+      chown -R artemis_user:artemis_user .
+
+      REQ_FILE=requirements.txt
+      if [ -f "$REQ_FILE" ]; then
+          python3 -m venv /venv
+          /venv/bin/pip3 install -r "$REQ_FILE"
+      else
+          echo "$REQ_FILE does not exist"
+      fi
+    runAlways: false
+  - name: build_and_run_all_tests
+    script: |-
+      #!/usr/bin/env bash
+
+      # ------------------------------
+      # Task Description:
+      # Build and run all tests
+      # ------------------------------
+
+      if [ -d /venv ]; then
+          . /venv/bin/activate
+      fi
+
+      # Run tests as unprivileged user
+      runuser -u artemis_user python3 Tests.py
+    runAlways: false
+    results:
+      - name: junit_test-reports/tests-results.xml
+        path: 'test-reports/*.xml'
+        type: junit
