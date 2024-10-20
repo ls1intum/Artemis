@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 
 @Profile(PROFILE_CORE)
 @Repository
-public interface UserPublicSshKeyRepository extends ArtemisJpaRepository<UserSshPublicKey, Long> {
+public interface UserSshPublicKeyRepository extends ArtemisJpaRepository<UserSshPublicKey, Long> {
 
     List<UserSshPublicKey> findAllByUserId(Long userId);
 

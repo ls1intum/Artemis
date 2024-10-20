@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
-import de.tum.cit.aet.artemis.programming.repository.UserPublicSshKeyRepository;
+import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
@@ -34,19 +34,19 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
 
     private final Optional<SharedQueueManagementService> localCIBuildJobQueueService;
 
-    private final UserPublicSshKeyRepository userPublicSshKeyRepository;
+    private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
     public GitPublickeyAuthenticatorService(UserRepository userRepository, Optional<SharedQueueManagementService> localCIBuildJobQueueService,
-            UserPublicSshKeyRepository userPublicSshKeyRepository) {
+            UserSshPublicKeyRepository userSshPublicKeyRepository) {
         this.userRepository = userRepository;
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
-        this.userPublicSshKeyRepository = userPublicSshKeyRepository;
+        this.userSshPublicKeyRepository = userSshPublicKeyRepository;
     }
 
     @Override
     public boolean authenticate(String username, PublicKey publicKey, ServerSession session) {
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
-        var userSshPublicKey = userPublicSshKeyRepository.findByKeyHash(keyHash);
+        var userSshPublicKey = userSshPublicKeyRepository.findByKeyHash(keyHash);
         if (userSshPublicKey.isPresent()) {
             return authenticateUser(userSshPublicKey.get(), publicKey, session);
         }

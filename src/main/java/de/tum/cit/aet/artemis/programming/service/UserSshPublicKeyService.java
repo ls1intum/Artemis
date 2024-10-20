@@ -18,24 +18,24 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
-import de.tum.cit.aet.artemis.programming.repository.UserPublicSshKeyRepository;
+import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 
 @Profile(PROFILE_CORE)
 @Service
 public class UserSshPublicKeyService {
 
-    private final UserPublicSshKeyRepository userPublicSshKeyRepository;
+    private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
-    public UserSshPublicKeyService(UserPublicSshKeyRepository userPublicSshKeyRepository) {
-        this.userPublicSshKeyRepository = userPublicSshKeyRepository;
+    public UserSshPublicKeyService(UserSshPublicKeyRepository userSshPublicKeyRepository) {
+        this.userSshPublicKeyRepository = userSshPublicKeyRepository;
     }
 
     public void createSshKeyForUser(User user, AuthorizedKeyEntry keyEntry, UserSshPublicKey sshPublicKey) throws GeneralSecurityException, IOException {
         PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
 
-        if (userPublicSshKeyRepository.findByKeyHash(keyHash).isPresent()) {
+        if (userSshPublicKeyRepository.findByKeyHash(keyHash).isPresent()) {
             throw new BadRequestAlertException("Invalid SSH key format", "SSH key", "invalidKeyFormat", true);
         }
 
@@ -47,11 +47,11 @@ public class UserSshPublicKeyService {
         newUserSshPublicKey.setExpiryDate(sshPublicKey.getExpiryDate());
         newUserSshPublicKey.setCreationDate(ZonedDateTime.now());
         newUserSshPublicKey.setExpiryDate(sshPublicKey.getExpiryDate());
-        userPublicSshKeyRepository.save(newUserSshPublicKey);
+        userSshPublicKeyRepository.save(newUserSshPublicKey);
     }
 
     public UserSshPublicKey getSshKeyForUser(User user, Long keyId) {
-        var userSshPublicKey = userPublicSshKeyRepository.findByIdElseThrow(keyId);
+        var userSshPublicKey = userSshPublicKeyRepository.findByIdElseThrow(keyId);
         if (Objects.equals(userSshPublicKey.getUserId(), user.getId())) {
             return userSshPublicKey;
         }
@@ -61,13 +61,13 @@ public class UserSshPublicKeyService {
     }
 
     public List<UserSshPublicKey> getAllSshKeysForUser(User user) {
-        return userPublicSshKeyRepository.findAllByUserId(user.getId());
+        return userSshPublicKeyRepository.findAllByUserId(user.getId());
     }
 
     public void deleteUserSshPublicKey(Long userId, Long keyId) {
-        var keys = userPublicSshKeyRepository.findAllByUserId(userId);
+        var keys = userSshPublicKeyRepository.findAllByUserId(userId);
         if (!keys.isEmpty() && keys.stream().map(UserSshPublicKey::getId).toList().contains(keyId)) {
-            userPublicSshKeyRepository.deleteById(keyId);
+            userSshPublicKeyRepository.deleteById(keyId);
         }
         else {
             throw new AccessForbiddenException("SSH key", keyId);

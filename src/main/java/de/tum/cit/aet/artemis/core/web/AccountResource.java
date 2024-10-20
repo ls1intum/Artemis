@@ -185,7 +185,6 @@ public class AccountResource {
         }
         // Extract the PublicKey object
         userSshPublicKeyService.createSshKeyForUser(user, keyEntry, sshPublicKey);
-        // userRepository.updateUserSshPublicKeyHash(user.getId(), keyHash, sshPublicKey);
         return ResponseEntity.ok().build();
     }
 

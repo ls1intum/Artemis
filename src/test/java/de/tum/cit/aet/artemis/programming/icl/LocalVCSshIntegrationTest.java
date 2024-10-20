@@ -12,6 +12,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -30,6 +31,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
+import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.localvc.SshGitCommandFactoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
@@ -41,6 +44,9 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     @Autowired
     private SshServer sshServer;
+
+    @Autowired
+    private UserSshPublicKeyRepository userSshPublicKeyRepository;
 
     @Override
     protected String getTestPrefix() {
@@ -200,6 +206,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     private KeyPair setupKeyPairAndAddToUser() throws GeneralSecurityException, IOException {
 
         User user = userTestRepository.getUser();
+        userSshPublicKeyRepository.deleteAll();
 
         KeyPair rsaKeyPair = generateKeyPair();
         String sshPublicKey = writePublicKeyToString(rsaKeyPair.getPublic(), user.getLogin() + "@host");
@@ -209,10 +216,11 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
 
-        userTestRepository.updateUserSshPublicKeyHash(user.getId(), keyHash, sshPublicKey);
-        user = userTestRepository.getUser();
-
-        assertThat(user.getSshPublicKey()).isEqualTo(sshPublicKey);
+        var userPublicSshKey = createNewPublicKey(keyHash, sshPublicKey, user);
+        userSshPublicKeyRepository.save(userPublicSshKey);
+        var fetchedKey = userSshPublicKeyRepository.findAllByUserId(user.getId());
+        assertThat(fetchedKey).isNotEmpty();
+        assertThat(fetchedKey.getFirst().getPublicKey()).isEqualTo(sshPublicKey);
         return rsaKeyPair;
     }
 
@@ -234,5 +242,16 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static UserSshPublicKey createNewPublicKey(String keyHash, String publicKey, User user) {
+        UserSshPublicKey userSshPublicKey = new UserSshPublicKey();
+        userSshPublicKey.setLabel("Key 1");
+        userSshPublicKey.setPublicKey(publicKey);
+        userSshPublicKey.setKeyHash(keyHash);
+        userSshPublicKey.setUserId(user.getId());
+        userSshPublicKey.setCreationDate(ZonedDateTime.now());
+
+        return userSshPublicKey;
     }
 }
