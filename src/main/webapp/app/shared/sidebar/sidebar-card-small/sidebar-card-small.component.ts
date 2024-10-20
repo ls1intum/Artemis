@@ -16,6 +16,8 @@ export class SidebarCardSmallComponent {
     @Input({ required: true }) sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
+    /** Key used for grouping or categorizing sidebar items */
+    @Input() groupKey?: string;
 
     constructor(
         private sidebarEventService: SidebarEventService,
