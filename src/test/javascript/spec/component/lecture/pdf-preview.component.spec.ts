@@ -6,7 +6,7 @@ import { of, throwError } from 'rxjs';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
-import { ElementRef } from '@angular/core';
+import { signal } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -119,12 +119,12 @@ describe('PdfPreviewComponent', () => {
         mockCanvasElement.height = 600;
 
         jest.spyOn(component, 'updateEnlargedCanvas').mockImplementation(() => {
-            component.enlargedCanvas.nativeElement = mockCanvasElement;
+            component.enlargedCanvas()!.nativeElement = mockCanvasElement;
         });
 
         mockEnlargedCanvas = document.createElement('canvas');
         mockEnlargedCanvas.classList.add('enlarged-canvas');
-        component.enlargedCanvas = new ElementRef(mockEnlargedCanvas);
+        component.enlargedCanvas = signal({ nativeElement: mockEnlargedCanvas });
 
         mockContext = {
             clearRect: jest.fn(),
@@ -139,13 +139,13 @@ describe('PdfPreviewComponent', () => {
         mockOverlay = document.createElement('div');
         mockOverlay.style.opacity = '0';
         mockCanvasElement.appendChild(mockOverlay);
-        component.currentPdfBlob = new Blob(['dummy content'], { type: 'application/pdf' });
+        component.currentPdfBlob.set(new Blob(['dummy content'], { type: 'application/pdf' }));
 
         global.URL.createObjectURL = jest.fn().mockReturnValue('blob-url');
         fixture.detectChanges();
 
-        component.pdfContainer = new ElementRef(document.createElement('div'));
-        component.enlargedCanvas = new ElementRef(document.createElement('canvas'));
+        component.pdfContainer = signal({ nativeElement: document.createElement('div') });
+        component.enlargedCanvas = signal({ nativeElement: document.createElement('canvas') });
         fixture.detectChanges();
     });
 
@@ -210,57 +210,57 @@ describe('PdfPreviewComponent', () => {
     it('should load PDF and verify rendering of pages', async () => {
         const spyCreateCanvas = jest.spyOn(component, 'createCanvas');
         const spyCreateCanvasContainer = jest.spyOn(component, 'createCanvasContainer');
-        const spyAppendChild = jest.spyOn(component.pdfContainer.nativeElement, 'appendChild');
+        const spyAppendChild = jest.spyOn(component.pdfContainer()!.nativeElement, 'appendChild');
 
         await component.loadOrAppendPdf('fake-url');
 
         expect(spyCreateCanvas).toHaveBeenCalled();
         expect(spyCreateCanvasContainer).toHaveBeenCalled();
         expect(spyAppendChild).toHaveBeenCalled();
-        expect(component.totalPages).toBe(1);
-        expect(component.isPdfLoading).toBeFalsy();
-        expect(component.fileInput.nativeElement.value).toBe('');
+        expect(component.totalPages()).toBe(1);
+        expect(component.isPdfLoading()).toBeFalsy();
+        expect(component.fileInput()!.nativeElement.value).toBe('');
     });
 
     it('should navigate through pages using keyboard in enlarged view', () => {
-        component.isEnlargedView = true;
-        component.totalPages = 5;
-        component.currentPage = 3;
+        component.isEnlargedView.set(true);
+        component.totalPages.set(5);
+        component.currentPage.set(3);
 
         const eventRight = new KeyboardEvent('keydown', { key: 'ArrowRight' });
         const eventLeft = new KeyboardEvent('keydown', { key: 'ArrowLeft' });
 
         component.handleKeyboardEvents(eventRight);
-        expect(component.currentPage).toBe(4);
+        expect(component.currentPage()).toBe(4);
 
         component.handleKeyboardEvents(eventLeft);
-        expect(component.currentPage).toBe(3);
+        expect(component.currentPage()).toBe(3);
     });
 
     it('should toggle enlarged view state', () => {
         const mockCanvas = document.createElement('canvas');
         component.displayEnlargedCanvas(mockCanvas);
-        expect(component.isEnlargedView).toBeTruthy();
+        expect(component.isEnlargedView()).toBeTruthy();
 
         const clickEvent = new MouseEvent('click', {
             button: 0,
         });
 
         component.closeEnlargedView(clickEvent);
-        expect(component.isEnlargedView).toBeFalsy();
+        expect(component.isEnlargedView()).toBeFalsy();
     });
 
     it('should prevent scrolling when enlarged view is active', () => {
         component.toggleBodyScroll(true);
-        expect(component.pdfContainer.nativeElement.style.overflow).toBe('hidden');
+        expect(component.pdfContainer()!.nativeElement.style.overflow).toBe('hidden');
 
         component.toggleBodyScroll(false);
-        expect(component.pdfContainer.nativeElement.style.overflow).toBe('auto');
+        expect(component.pdfContainer()!.nativeElement.style.overflow).toBe('auto');
     });
 
     it('should not update canvas size if not in enlarged view', () => {
-        component.isEnlargedView = false;
-        component.currentPage = 3;
+        component.isEnlargedView.set(false);
+        component.currentPage.set(3);
 
         const spy = jest.spyOn(component, 'updateEnlargedCanvas');
         component.adjustCanvasSize();
@@ -269,8 +269,8 @@ describe('PdfPreviewComponent', () => {
     });
 
     it('should not update canvas size if the current page canvas does not exist', () => {
-        component.isEnlargedView = true;
-        component.currentPage = 10;
+        component.isEnlargedView.set(true);
+        component.currentPage.set(10);
 
         const spy = jest.spyOn(component, 'updateEnlargedCanvas');
         component.adjustCanvasSize();
@@ -279,17 +279,18 @@ describe('PdfPreviewComponent', () => {
     });
 
     it('should prevent navigation beyond last page', () => {
-        component.currentPage = component.totalPages = 5;
+        component.currentPage.set(5);
+        component.totalPages.set(5);
         component.handleKeyboardEvents(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
 
-        expect(component.currentPage).toBe(5);
+        expect(component.currentPage()).toBe(5);
     });
 
     it('should prevent navigation before first page', () => {
-        component.currentPage = 1;
+        component.currentPage.set(1);
         component.handleKeyboardEvents(new KeyboardEvent('keydown', { key: 'ArrowLeft' }));
 
-        expect(component.currentPage).toBe(1);
+        expect(component.currentPage()).toBe(1);
     });
 
     it('should unsubscribe attachment subscription during component destruction', () => {
@@ -322,16 +323,14 @@ describe('PdfPreviewComponent', () => {
     });
 
     it('should call updateEnlargedCanvas when window is resized and conditions are met', () => {
-        component.isEnlargedView = true;
-        component.currentPage = 1;
+        component.isEnlargedView.set(true);
+        component.currentPage.set(1);
 
         const canvas = document.createElement('canvas');
         const pdfContainer = document.createElement('div');
         pdfContainer.classList.add('pdf-canvas-container');
         pdfContainer.appendChild(canvas);
-        component.pdfContainer = {
-            nativeElement: pdfContainer,
-        } as ElementRef;
+        component.pdfContainer = signal({ nativeElement: pdfContainer });
 
         const updateEnlargedCanvasSpy = jest.spyOn(component, 'updateEnlargedCanvas');
         const adjustCanvasSizeSpy = jest.spyOn(component, 'adjustCanvasSize');
@@ -346,20 +345,20 @@ describe('PdfPreviewComponent', () => {
         target.classList.add('enlarged-container');
         const mockEvent = createMockEvent(target);
 
-        component.isEnlargedView = true;
+        component.isEnlargedView.set(true);
         const closeSpy = jest.spyOn(component, 'closeEnlargedView');
 
         component.closeIfOutside(mockEvent);
 
         expect(closeSpy).toHaveBeenCalled();
-        expect(component.isEnlargedView).toBeFalsy();
+        expect(component.isEnlargedView()).toBeFalsy();
     });
 
     it('should not close the enlarged view if the click is on the canvas itself', () => {
         const mockEvent = createMockEvent(mockEnlargedCanvas);
         Object.defineProperty(mockEvent, 'target', { value: mockEnlargedCanvas, writable: false });
 
-        component.isEnlargedView = true;
+        component.isEnlargedView.set(true);
 
         const closeSpy = jest.spyOn(component, 'closeEnlargedView');
 
@@ -370,8 +369,8 @@ describe('PdfPreviewComponent', () => {
 
     it('should calculate the correct scale factor for horizontal slides', () => {
         // Mock container dimensions
-        Object.defineProperty(component.pdfContainer.nativeElement, 'clientWidth', { value: 1000, configurable: true });
-        Object.defineProperty(component.pdfContainer.nativeElement, 'clientHeight', { value: 800, configurable: true });
+        Object.defineProperty(component.pdfContainer()!.nativeElement, 'clientWidth', { value: 1000, configurable: true });
+        Object.defineProperty(component.pdfContainer()!.nativeElement, 'clientHeight', { value: 800, configurable: true });
 
         // Mock a horizontal canvas (width > height)
         mockCanvasElement.width = 500;
@@ -383,8 +382,8 @@ describe('PdfPreviewComponent', () => {
     });
 
     it('should calculate the correct scale factor for vertical slides', () => {
-        Object.defineProperty(component.pdfContainer.nativeElement, 'clientWidth', { value: 1000, configurable: true });
-        Object.defineProperty(component.pdfContainer.nativeElement, 'clientHeight', { value: 800, configurable: true });
+        Object.defineProperty(component.pdfContainer()!.nativeElement, 'clientWidth', { value: 1000, configurable: true });
+        Object.defineProperty(component.pdfContainer()!.nativeElement, 'clientHeight', { value: 800, configurable: true });
 
         // Mock a vertical canvas (height > width)
         mockCanvasElement.width = 400;
@@ -401,8 +400,8 @@ describe('PdfPreviewComponent', () => {
         mockCanvasElement.height = 400;
         component.resizeCanvas(mockCanvasElement, 2);
 
-        expect(component.enlargedCanvas.nativeElement.width).toBe(1000);
-        expect(component.enlargedCanvas.nativeElement.height).toBe(800);
+        expect(component.enlargedCanvas()!.nativeElement.width).toBe(1000);
+        expect(component.enlargedCanvas()!.nativeElement.height).toBe(800);
     });
 
     it('should clear and redraw the canvas with the new dimensions', () => {
@@ -415,8 +414,8 @@ describe('PdfPreviewComponent', () => {
         component.resizeCanvas(mockCanvasElement, 2);
         component.redrawCanvas(mockCanvasElement);
 
-        expect(component.enlargedCanvas.nativeElement.width).toBe(1000); // 500 * 2
-        expect(component.enlargedCanvas.nativeElement.height).toBe(800); // 400 * 2
+        expect(component.enlargedCanvas()!.nativeElement.width).toBe(1000); // 500 * 2
+        expect(component.enlargedCanvas()!.nativeElement.height).toBe(800); // 400 * 2
 
         expect(mockContext.clearRect).toHaveBeenCalledWith(0, 0, 1000, 800);
         expect(mockContext.drawImage).toHaveBeenCalledWith(mockCanvasElement, 0, 0, 1000, 800);
@@ -424,8 +423,14 @@ describe('PdfPreviewComponent', () => {
 
     it('should correctly position the canvas', () => {
         const parent = document.createElement('div');
-        component.pdfContainer = { nativeElement: { clientWidth: 1000, clientHeight: 800, scrollTop: 500 } } as ElementRef<HTMLDivElement>;
-        const canvasElem = component.enlargedCanvas.nativeElement;
+
+        const mockDivElement = document.createElement('div');
+        Object.defineProperty(mockDivElement, 'clientWidth', { value: 1000 });
+        Object.defineProperty(mockDivElement, 'clientHeight', { value: 800 });
+        Object.defineProperty(mockDivElement, 'scrollTop', { value: 500, writable: true });
+
+        component.pdfContainer = signal({ nativeElement: mockDivElement });
+        const canvasElem = component.enlargedCanvas()!.nativeElement;
         parent.appendChild(canvasElem);
         canvasElem.width = 500;
         canvasElem.height = 400;
@@ -482,9 +487,9 @@ describe('PdfPreviewComponent', () => {
     it('should trigger the file input click event', () => {
         const mockFileInput = document.createElement('input');
         mockFileInput.type = 'file';
-        component.fileInput = new ElementRef(mockFileInput);
+        component.fileInput = signal({ nativeElement: mockFileInput });
 
-        const clickSpy = jest.spyOn(component.fileInput.nativeElement, 'click');
+        const clickSpy = jest.spyOn(component.fileInput()!.nativeElement, 'click');
         component.triggerFileInput();
         expect(clickSpy).toHaveBeenCalled();
     });
@@ -509,10 +514,10 @@ describe('PdfPreviewComponent', () => {
             .mockImplementationOnce(() => Promise.resolve(existingPdfDoc))
             .mockImplementationOnce(() => Promise.resolve(newPdfDoc));
 
-        component.currentPdfBlob = new Blob(['existing pdf'], { type: 'application/pdf' });
-        component.currentPdfBlob.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8)); // Return an empty ArrayBuffer for simplicity
+        component.currentPdfBlob.set(new Blob(['existing pdf'], { type: 'application/pdf' }));
+        component.currentPdfBlob()!.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8)); // Return an empty ArrayBuffer for simplicity
 
-        component.selectedPages = new Set([1]); // Assume there is initially a selected page
+        component.selectedPages.set(new Set([1])); // Assume there is initially a selected page
 
         await component.mergePDF(mockEvent as any);
 
@@ -521,8 +526,8 @@ describe('PdfPreviewComponent', () => {
         expect(existingPdfDoc.addPage).toHaveBeenCalled();
         expect(existingPdfDoc.save).toHaveBeenCalled();
         expect(component.currentPdfBlob).toBeDefined();
-        expect(component.selectedPages.size).toBe(0);
-        expect(component.isPdfLoading).toBeFalsy();
+        expect(component.selectedPages()!.size).toBe(0);
+        expect(component.isPdfLoading()).toBeFalsy();
         expect(URL.createObjectURL).toHaveBeenCalledWith(new Blob([new Uint8Array([1, 2, 3])], { type: 'application/pdf' }));
     });
 
@@ -535,8 +540,8 @@ describe('PdfPreviewComponent', () => {
         const mockEvent = { target: { files: [mockFile] } };
         const error = new Error('Error loading PDF');
 
-        component.currentPdfBlob = new Blob(['existing pdf'], { type: 'application/pdf' });
-        component.currentPdfBlob.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8)); // Return an empty ArrayBuffer for simp
+        component.currentPdfBlob.set(new Blob(['existing pdf'], { type: 'application/pdf' }));
+        component.currentPdfBlob()!.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8)); // Return an empty ArrayBuffer for simp
 
         // Mock PDFDocument.load to throw an error on the first call
         PDFDocument.load = jest
@@ -547,7 +552,7 @@ describe('PdfPreviewComponent', () => {
         await component.mergePDF(mockEvent as any);
 
         expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
-        expect(component.isPdfLoading).toBeFalsy();
+        expect(component.isPdfLoading()).toBeFalsy();
     });
 
     it('should update the IDs of remaining pages after some have been removed', () => {
@@ -574,10 +579,10 @@ describe('PdfPreviewComponent', () => {
             mockContainer.appendChild(mockPageContainer);
         }
 
-        component.pdfContainer = new ElementRef(mockContainer);
+        component.pdfContainer = signal({ nativeElement: mockContainer });
         component.updatePageIDs();
 
-        const remainingPages = component.pdfContainer.nativeElement.querySelectorAll('.pdf-canvas-container');
+        const remainingPages = component.pdfContainer()!.nativeElement.querySelectorAll('.pdf-canvas-container');
         remainingPages.forEach((pageContainer, index) => {
             const pageIndex = index + 1;
             const canvas = pageContainer.querySelector('canvas');
@@ -595,7 +600,7 @@ describe('PdfPreviewComponent', () => {
     });
 
     it('should update attachment successfully and show success alert', () => {
-        component.attachment = { id: 1, version: 1 };
+        component.attachment.set({ id: 1, version: 1 });
         component.updateAttachmentWithFile();
 
         expect(attachmentServiceMock.update).toHaveBeenCalled();
@@ -604,7 +609,7 @@ describe('PdfPreviewComponent', () => {
 
     it('should not update attachment if file size exceeds the limit and show an error alert', () => {
         const oversizedData = new Uint8Array(MAX_FILE_SIZE + 1).fill(0);
-        component.currentPdfBlob = new Blob([oversizedData], { type: 'application/pdf' });
+        component.currentPdfBlob.set(new Blob([oversizedData], { type: 'application/pdf' }));
 
         component.updateAttachmentWithFile();
 
@@ -614,7 +619,7 @@ describe('PdfPreviewComponent', () => {
 
     it('should handle errors when updating an attachment fails', () => {
         attachmentServiceMock.update.mockReturnValue(throwError(() => new Error('Update failed')));
-        component.attachment = { id: 1, version: 1 };
+        component.attachment.set({ id: 1, version: 1 });
 
         component.updateAttachmentWithFile();
 
@@ -623,12 +628,12 @@ describe('PdfPreviewComponent', () => {
     });
 
     it('should update attachment unit successfully and show success alert', () => {
-        component.attachment = undefined;
-        component.attachmentUnit = {
+        component.attachment.set(undefined);
+        component.attachmentUnit.set({
             id: 1,
             lecture: { id: 1 },
             attachment: { id: 1, version: 1 },
-        };
+        });
         attachmentUnitServiceMock.update.mockReturnValue(of({}));
 
         component.updateAttachmentWithFile();
@@ -638,12 +643,12 @@ describe('PdfPreviewComponent', () => {
     });
 
     it('should handle errors when updating an attachment unit fails', () => {
-        component.attachment = undefined;
-        component.attachmentUnit = {
+        component.attachment.set(undefined);
+        component.attachmentUnit.set({
             id: 1,
             lecture: { id: 1 },
             attachment: { id: 1, version: 1 },
-        };
+        });
         const errorResponse = { message: 'Update failed' };
         attachmentUnitServiceMock.update.mockReturnValue(throwError(() => errorResponse));
 
@@ -661,14 +666,14 @@ describe('PdfPreviewComponent', () => {
 
         PDFDocument.load = jest.fn().mockResolvedValue(existingPdfDoc);
         const mockArrayBuffer = new ArrayBuffer(8);
-        component.currentPdfBlob = new Blob(['existing pdf'], { type: 'application/pdf' });
-        component.currentPdfBlob.arrayBuffer = jest.fn().mockResolvedValue(mockArrayBuffer);
+        component.currentPdfBlob.set(new Blob(['existing pdf'], { type: 'application/pdf' }));
+        component.currentPdfBlob()!.arrayBuffer = jest.fn().mockResolvedValue(mockArrayBuffer);
 
         const objectUrl = 'blob-url';
         global.URL.createObjectURL = jest.fn().mockReturnValue(objectUrl);
         global.URL.revokeObjectURL = jest.fn();
 
-        component.selectedPages = new Set([1, 2]); // Pages 1 and 2 selected
+        component.selectedPages.set(new Set([1, 2])); // Pages 1 and 2 selected
 
         const loadOrAppendPdfSpy = jest.spyOn(component, 'loadOrAppendPdf');
         const alertServiceErrorSpy = jest.spyOn(alertServiceMock, 'error');
@@ -680,18 +685,18 @@ describe('PdfPreviewComponent', () => {
         expect(existingPdfDoc.removePage).toHaveBeenCalledWith(0);
         expect(existingPdfDoc.removePage).toHaveBeenCalledTimes(2);
         expect(existingPdfDoc.save).toHaveBeenCalled();
-        expect(component.currentPdfBlob).toEqual(new Blob([new Uint8Array([1, 2, 3])], { type: 'application/pdf' }));
+        expect(component.currentPdfBlob()).toEqual(new Blob([new Uint8Array([1, 2, 3])], { type: 'application/pdf' }));
         expect(loadOrAppendPdfSpy).toHaveBeenCalledWith(objectUrl, false);
-        expect(component.selectedPages.size).toBe(0);
+        expect(component.selectedPages()!.size).toBe(0);
         expect(alertServiceErrorSpy).not.toHaveBeenCalled();
         expect(URL.revokeObjectURL).toHaveBeenCalledWith(objectUrl);
-        expect(component.isPdfLoading).toBeFalsy();
+        expect(component.isPdfLoading()).toBeFalsy();
     });
 
     it('should handle errors when deleting slides', async () => {
         // Mock the arrayBuffer method for the current PDF Blob
-        component.currentPdfBlob = new Blob(['existing pdf'], { type: 'application/pdf' });
-        component.currentPdfBlob.arrayBuffer = jest.fn().mockRejectedValue(new Error('Failed to load PDF'));
+        component.currentPdfBlob.set(new Blob(['existing pdf'], { type: 'application/pdf' }));
+        component.currentPdfBlob()!.arrayBuffer = jest.fn().mockRejectedValue(new Error('Failed to load PDF'));
 
         // Spy on the alert service
         const alertServiceErrorSpy = jest.spyOn(alertServiceMock, 'error');
@@ -703,6 +708,6 @@ describe('PdfPreviewComponent', () => {
         expect(alertServiceErrorSpy).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.pageDeleteError', { error: 'Failed to load PDF' });
 
         // Verify that the loading state is set to false after the operation
-        expect(component.isPdfLoading).toBeFalsy();
+        expect(component.isPdfLoading()).toBeFalsy();
     });
 });

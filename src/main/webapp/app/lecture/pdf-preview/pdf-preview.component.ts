@@ -582,8 +582,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             return;
         }
 
-        if (this.attachment) {
-            this.attachmentToBeEdited = this.attachment;
+        if (this.attachment()) {
+            this.attachmentToBeEdited.set(this.attachment());
             this.attachmentToBeEdited()!.version!++;
             this.attachmentToBeEdited()!.uploadDate = dayjs();
 
@@ -596,7 +596,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
                 },
             });
-        } else if (this.attachmentUnit) {
+        } else if (this.attachmentUnit()) {
             this.attachmentToBeEdited.set(this.attachmentUnit()!.attachment!);
             this.attachmentToBeEdited()!.version!++;
             this.attachmentToBeEdited()!.uploadDate = dayjs();
