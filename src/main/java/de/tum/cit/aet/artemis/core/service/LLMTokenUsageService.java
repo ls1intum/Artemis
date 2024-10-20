@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.core.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -21,6 +24,7 @@ import edu.stanford.nlp.util.ArraySet;
 /**
  * Service for managing the LLMTokenUsage by all LLMs in Artemis
  */
+@Profile(PROFILE_CORE)
 @Service
 public class LLMTokenUsageService {
 
@@ -41,6 +45,7 @@ public class LLMTokenUsageService {
      * @param builderFunction of type Function<IrisTokenUsageBuilder, IrisTokenUsageBuilder> using IrisTokenUsageBuilder
      * @return saved LLMTokenUsage as a List
      */
+    // TODO: this should ideally be done Async
     public LLMTokenUsageTrace saveLLMTokenUsage(List<LLMRequest> llmRequests, LLMServiceType serviceType, Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction) {
         LLMTokenUsageTrace llmTokenUsageTrace = new LLMTokenUsageTrace();
         llmTokenUsageTrace.setServiceType(serviceType);
@@ -70,6 +75,7 @@ public class LLMTokenUsageService {
         }
     }
 
+    // TODO: this should ideally be done Async
     public void appendRequestsToTrace(List<LLMRequest> requests, LLMTokenUsageTrace trace) {
         Set<LLMTokenUsageRequest> llmRequestsSet = new ArraySet<>();
         setLLMTokenUsageRequests(requests, trace, llmRequestsSet);
