@@ -13,9 +13,10 @@ import org.apache.commons.csv.CSVPrinter;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
-import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 
+// ToDo: Consider moving this class to atlas module
 /**
  * A Service to create the science event export data for users.
  * This includes the timestamps for every lecture, lecture unit and exercise opened.
@@ -25,10 +26,10 @@ import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 @Service
 public class DataExportScienceEventService {
 
-    private final ScienceEventRepository scienceEventRepository;
+    private final ScienceEventApi scienceEventApi;
 
-    public DataExportScienceEventService(ScienceEventRepository scienceEventRepository) {
-        this.scienceEventRepository = scienceEventRepository;
+    public DataExportScienceEventService(ScienceEventApi scienceEventApi) {
+        this.scienceEventApi = scienceEventApi;
     }
 
     /**
@@ -39,7 +40,7 @@ public class DataExportScienceEventService {
      * @throws IOException if the file cannot be created
      */
     public void createScienceEventExport(String login, Path workingDirectory) throws IOException {
-        var scienceEvents = scienceEventRepository.findAllByIdentity(login);
+        var scienceEvents = scienceEventApi.findAllByIdentity(login);
         createScienceEventExportFile(workingDirectory, scienceEvents);
     }
 

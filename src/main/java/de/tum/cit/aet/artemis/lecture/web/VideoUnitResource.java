@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -46,16 +46,16 @@ public class VideoUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
     public VideoUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, VideoUnitRepository videoUnitRepository,
-            CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService) {
+            CompetencyProgressApi competencyProgressApi, LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.videoUnitRepository = videoUnitRepository;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
     }
 
@@ -99,7 +99,7 @@ public class VideoUnitResource {
 
         VideoUnit result = videoUnitRepository.save(videoUnit);
 
-        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingVideoUnit, Optional.of(videoUnit));
+        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(existingVideoUnit, Optional.of(videoUnit));
 
         return ResponseEntity.ok(result);
     }
@@ -137,7 +137,7 @@ public class VideoUnitResource {
         Lecture updatedLecture = lectureRepository.save(lecture);
         VideoUnit persistedVideoUnit = (VideoUnit) updatedLecture.getLectureUnits().getLast();
 
-        competencyProgressService.updateProgressByLearningObjectAsync(persistedVideoUnit);
+        competencyProgressApi.updateProgressByLearningObjectAsync(persistedVideoUnit);
 
         return ResponseEntity.created(new URI("/api/video-units/" + persistedVideoUnit.getId())).body(persistedVideoUnit);
     }
