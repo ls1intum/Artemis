@@ -259,7 +259,7 @@ describe('GenerateCompetenciesComponent', () => {
         expect(warnMock).toHaveBeenCalled();
     });
 
-    it('should send a warning when trying to reload', () => {
+    it('should not deactivate when loading', () => {
         generateCompetenciesComponent.isLoading = true;
         const canDeactivate = generateCompetenciesComponent.canDeactivate();
         expect(canDeactivate).toBeFalse();
