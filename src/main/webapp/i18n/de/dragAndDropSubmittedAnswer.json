@@ -14,7 +14,8 @@
             "detail": {
                 "title": "Drag-and-Drop eingereichte Antwort"
             },
-            "mappings": "Zuordnungen"
+            "mappings": "Zuordnungen",
+            "assignments": "Anweisungen"
         }
     }
 }

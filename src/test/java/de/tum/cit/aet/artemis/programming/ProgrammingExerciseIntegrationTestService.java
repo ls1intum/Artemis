@@ -2153,6 +2153,14 @@ class ProgrammingExerciseIntegrationTestService {
         return repository;
     }
 
+    public void addAuxiliaryRepositoryToExercise(ProgrammingExercise exercise) {
+        AuxiliaryRepository repository = AuxiliaryRepositoryBuilder.defaults().get();
+        auxiliaryRepositoryRepository.save(repository);
+        exercise.setAuxiliaryRepositories(new ArrayList<>());
+        exercise.addAuxiliaryRepository(repository);
+        programmingExerciseRepository.save(exercise);
+    }
+
     private String defaultAuxiliaryRepositoryEndpoint() {
         return "/api/programming-exercises/setup";
     }

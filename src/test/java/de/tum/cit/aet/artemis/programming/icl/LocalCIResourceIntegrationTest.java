@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -42,6 +45,8 @@ import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
+    private static final String TEST_PREFIX = "localciresourceint";
+
     @Autowired
     @Qualifier("hazelcastInstance")
     private HazelcastInstance hazelcastInstance;
@@ -75,22 +80,27 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     protected IMap<String, BuildAgentInformation> buildAgentInformation;
 
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
     @BeforeEach
     void createJobs() {
         // temporarily remove listener to avoid triggering build job processing
-        sharedQueueProcessingService.removeListener();
+        sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
 
         JobTimingInfo jobTimingInfo1 = new JobTimingInfo(ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), ZonedDateTime.now().plusMinutes(3));
         JobTimingInfo jobTimingInfo2 = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2));
         JobTimingInfo jobTimingInfo3 = new JobTimingInfo(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(9), ZonedDateTime.now().plusSeconds(150));
 
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
         job1 = new BuildJobQueueItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
         job2 = new BuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        agent1 = new BuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), false, new ArrayList<>(List.of(job2)), null);
+        agent1 = new BuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, new ArrayList<>(List.of(job2)), null);
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
         BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo2,
@@ -136,11 +146,10 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetQueuedBuildJobs_returnsJobs() throws Exception {
         var retrievedJobs = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
-        assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
         queuedJobs.addAll(List.of(job1, job2));
         var retrievedJobs1 = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
-        assertThat(retrievedJobs1).hasSize(2);
+        assertThat(retrievedJobs1).hasSize(retrievedJobs.size() + 2);
     }
 
     @Test
@@ -277,7 +286,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         // Create a failed job to filter for
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(1).plusMinutes(2),
                 ZonedDateTime.now().plusDays(1).plusMinutes(10));
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
         var failedJob1 = new BuildJobQueueItem("5", "job5", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo, buildConfig, null);
         var jobResult = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
@@ -353,5 +362,15 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         assertThat(response.successfulBuilds()).isEqualTo(1);
         assertThat(response.failedBuilds()).isEqualTo(1);
         assertThat(response.cancelledBuilds()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testPauseBuildAgent() throws Exception {
+        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
+        await().until(() -> buildAgentInformation.get(agent1.name()).status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
+
+        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
+        await().until(() -> buildAgentInformation.get(agent1.name()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
     }
 }

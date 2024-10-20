@@ -150,6 +150,7 @@
             "falseName": "Entered name is incorrect. Please try again!",
             "notSet": "Not set",
             "startExamToolTip": "Button will be activated 5 minutes before the exam start.",
+            "yourSolution": "Your Solution",
             "cleanup": {
                 "title": "Cleanup",
                 "question": "Are you sure you want to clean up the exam <strong>{{ title }}</strong>? This will delete all student programming exercise repositories in the exam. This action can <strong class='text-danger'>NOT</strong> be undone!"
@@ -211,6 +212,7 @@
         },
         "examScores": {
             "xAxes": "Score in %",
+            "xAxesSuffix": " + {Grade Name}",
             "xAxesSuffixNoBonus": " + {Grade Name}",
             "xAxesSuffixBonus": " + {Bonus Points}",
             "yAxes": "Number of Participants",
@@ -470,6 +472,7 @@
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "exampleSolutionPublicationDateTooltip": "Students can see the example solutions for all exercises in the exam from this time onwards if they participated in the exam. Leave blank to disable.",
+            "studentReviewEnabled": "Student review enabled",
             "maxPoints": {
                 "title": "Maximum number of points for exam",
                 "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value. This also affects all students' grades in the exam!"
@@ -599,7 +602,26 @@
             "quizPool": "Quiz Pool",
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the exam to confirm."
+                "typeNameToConfirm": "Please type in the name of the exam to confirm.",
+                "summary": {
+                    "title": "Exam Summary",
+                    "numberExerciseGroups": "Number of Exercise Groups",
+                    "numberProgrammingExercises": "Number of Programming Exercises",
+                    "numberModelingExercises": "Number of Modeling Exercises",
+                    "numberTextExercises": "Number of Text Exercises",
+                    "numberFileUploadExercises": "Number of File Upload Exercises",
+                    "numberQuizExercises": "Number of Quiz Exercises",
+                    "numberRepositories": "Number of Repositories",
+                    "numberBuilds": "Number of Builds",
+                    "numberRegisteredStudents": "Number of Registered Students",
+                    "numberNotStartedExams": "Number of Exams (not started)",
+                    "numberStartedExams": "Number of Exams",
+                    "numberSubmittedExams": "Number of Exams (submitted)",
+                    "numberCommunicationPosts": "Number of Communication Posts",
+                    "numberAnswerPosts": "Number of Answer Posts",
+                    "isTestExam": "Test Exam",
+                    "isTestCourse": "Test Course"
+                }
             },
             "reset": {
                 "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted. Registered students and the exercise configurations will remain. This action can NOT be undone!",

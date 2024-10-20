@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { BuildJob } from 'app/entities/programming/build-job.model';
 import dayjs from 'dayjs/esm';
+import { lastValueFrom } from 'rxjs';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { BuildAgent } from 'app/entities/programming/build-agent.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
@@ -75,8 +77,8 @@ describe('BuildAgentsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(BuildAgentsService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -110,6 +112,74 @@ describe('BuildAgentsService', () => {
         const req = httpMock.expectOne(`${service.adminResourceUrl}/build-agent?agentName=buildAgent1`);
         expect(req.request.method).toBe('GET');
         req.flush(expectedResponse);
+    });
+
+    it('should handle get build agent details error', async () => {
+        const errorMessage = 'Failed to fetch build agent details buildAgent1';
+
+        const observable = lastValueFrom(service.getBuildAgentDetails('buildAgent1'));
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-agent?agentName=buildAgent1`);
+        expect(req.request.method).toBe('GET');
+        req.flush({ message: errorMessage }, { status: 500, statusText: 'Internal Server Error' });
+
+        try {
+            await observable;
+            throw new Error('expected an error, but got a success');
+        } catch (error) {
+            expect(error.message).toContain(errorMessage);
+        }
+    });
+
+    it('should pause build agent', () => {
+        service.pauseBuildAgent('buildAgent1').subscribe();
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agent/buildAgent1/pause`);
+        expect(req.request.method).toBe('PUT');
+        req.flush({});
+    });
+
+    it('should resume build agent', () => {
+        service.resumeBuildAgent('buildAgent1').subscribe();
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agent/buildAgent1/resume`);
+        expect(req.request.method).toBe('PUT');
+        req.flush({});
+    });
+
+    it('should handle pause build agent error', async () => {
+        const errorMessage = 'Failed to pause build agent buildAgent1';
+
+        const observable = lastValueFrom(service.pauseBuildAgent('buildAgent1'));
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agent/buildAgent1/pause`);
+        expect(req.request.method).toBe('PUT');
+        req.flush({ message: errorMessage }, { status: 500, statusText: 'Internal Server Error' });
+
+        try {
+            await observable;
+            throw new Error('expected an error, but got a success');
+        } catch (error) {
+            expect(error.message).toContain(errorMessage);
+        }
+    });
+
+    it('should handle resume build agent error', async () => {
+        const errorMessage = 'Failed to resume build agent buildAgent1';
+
+        const observable = lastValueFrom(service.resumeBuildAgent('buildAgent1'));
+
+        // Set up the expected HTTP request and flush the response with an error.
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agent/buildAgent1/resume`);
+        expect(req.request.method).toBe('PUT');
+        req.flush({ message: errorMessage }, { status: 500, statusText: 'Internal Server Error' });
+
+        try {
+            await observable;
+            throw new Error('expected an error, but got a success');
+        } catch (error) {
+            expect(error.message).toContain(errorMessage);
+        }
     });
 
     afterEach(() => {

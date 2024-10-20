@@ -1,4 +1,4 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { generateExampleGroupChatDTO } from '../helpers/conversationExampleModels';
@@ -10,6 +10,7 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('GroupChatService', () => {
     let service: GroupChatService;
@@ -18,8 +19,10 @@ describe('GroupChatService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: NotificationService, useClass: MockNotificationService },

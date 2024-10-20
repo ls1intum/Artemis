@@ -128,20 +128,40 @@
             "dockerImage": "Docker Image",
             "script": "Build script",
             "customizeDockerImage": "You can customize the Docker image. Make sure to provide it in amd64 and arm64 and include all build dependencies to guarantee a short build duration.",
+            "checkoutPath": {
+                "title": "Checkout Path",
+                "customize": "You can customize the checkout path where the repositories are cloned inside the Docker container. Make sure to provide a valid absolute UNIX path. The default path is /var/tmp.",
+                "alert": "Checkout paths must only contain words, '_', '-', and '/' characters, but must not start nor end with a '/' character. The paths must be different for each repository.",
+                "edit": "Edit repositories checkout path",
+                "assignment": "Assignment Repository Checkout Path. This can't be edited after creation.",
+                "solution": "Solution Repository Checkout Path. This can't be edited after creation.",
+                "tests": "Tests Repository Checkout Path. This can't be edited after creation.",
+                "invalid": "Invalid checkout paths",
+                "warning": "Modifying checkout paths may result in build failures. Some programming languages rely on Docker images that assume specific directory structures for the code.",
+                "warningBuildScript": "Make sure to adjust the build script and repositories accordingly."
+            },
+            "timeout": {
+                "title": "Maximum build duration in seconds",
+                "customize": "Set to 0 to use default value. Make sure to provide a valid integer value. The unit is seconds. Note that this value may be overridden by the maximum limit set by the administrators (default is 240s).",
+                "alert": "The timeout must be a valid integer value."
+            },
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
+                "description": "An online text editor featuring a file explorer, coding window, and code highlighting features but without the ability to compile or run code.",
                 "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Allow Offline IDE",
+                "description": "Enables students to download the exercise via Git and to work on it locally using their preferred IDE.",
                 "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "offlineIde": "IDE",
             "allowOnlineIde": {
                 "title": "Allow Online IDE",
+                "description": "An online coding environment based on Visual Studio Code featuring code highlighting and formatting features. Pre-configured to your exercise's language and with the ability to compile or run code online.",
                 "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected.",
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
@@ -448,6 +468,8 @@
                 "allowFeedbackRequestsTooltip": "Students can request feedback before the due date. The requests will be processed by Athena, or, if Athena cannot be reached, students can send manual feedback requests.",
                 "manualFeedbackRequests": "Manual feedback requests",
                 "manualFeedbackRequestsTooltip": "Students can request manual feedback before the due date to receive feedback.",
+                "feedbackRequestsEnabled": "Feedback requests are enabled.",
+                "feedbackRequestsDisabled": "Feedback requests are disabled.",
                 "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
                 "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",

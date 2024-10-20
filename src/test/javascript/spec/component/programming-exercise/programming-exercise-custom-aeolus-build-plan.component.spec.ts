@@ -8,8 +8,6 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
-import { ElementRef, Renderer2 } from '@angular/core';
-import { ThemeService } from 'app/core/theme/theme.service';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -18,10 +16,8 @@ import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.s
 import { PROFILE_AEOLUS } from 'app/app.constants';
 import { Observable } from 'rxjs';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
-    let mockThemeService: ThemeService;
     let comp: ProgrammingExerciseCustomAeolusBuildPlanComponent;
     const course = { id: 123 } as Course;
 
@@ -33,8 +29,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     let cleanBuildAction: ScriptAction = new ScriptAction();
     let platformAction: PlatformAction = new PlatformAction();
     let mockAeolusService: AeolusService;
-    let renderer2: Renderer2;
-    let translateService: TranslateService;
+    let monacoEditorComponent: MonacoEditorComponent;
 
     beforeEach(() => {
         programmingExercise = new ProgrammingExercise(course, undefined);
@@ -75,16 +70,13 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
             .compileComponents()
             .then(() => {
                 mockAeolusService = TestBed.inject(AeolusService);
-                mockThemeService = TestBed.inject(ThemeService);
             });
 
         const fixture = TestBed.createComponent(ProgrammingExerciseCustomAeolusBuildPlanComponent);
-        // These are not directly injected into the component, but are needed for the tests.
-        renderer2 = fixture.debugElement.injector.get(Renderer2);
-        translateService = fixture.debugElement.injector.get(TranslateService);
         comp = fixture.componentInstance;
 
         comp.programmingExercise = programmingExercise;
+        monacoEditorComponent = TestBed.createComponent(MonacoEditorComponent).componentInstance;
     });
 
     afterEach(() => {
@@ -123,11 +115,13 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         expect(programmingExercise.buildConfig?.windfile?.actions.length).toBe(size! + 1);
     });
 
-    it('should accept editor', () => {
-        const elementRef: ElementRef = new ElementRef(document.createElement('div'));
+    it('should accept and setup editor', () => {
+        const setTextStub = jest.spyOn(monacoEditorComponent, 'setText').mockImplementation();
+        comp.code = 'void';
         expect(comp.editor).toBeUndefined();
-        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
-        expect(comp.editor).toBeDefined();
+        comp.editor = monacoEditorComponent;
+        expect(comp.editor).toBe(monacoEditorComponent);
+        expect(setTextStub).toHaveBeenCalledExactlyOnceWith(comp.code);
     });
 
     it('should change code of active action', () => {
@@ -175,8 +169,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should set editor text', () => {
-        const elementRef: ElementRef = new ElementRef(document.createElement('div'));
-        comp.editor = new MonacoEditorComponent(mockThemeService, elementRef, renderer2, translateService);
+        comp.editor = monacoEditorComponent;
         comp.changeActiveAction('gradle');
         expect(comp.editor?.getText()).toBe(gradleBuildAction.script);
     });

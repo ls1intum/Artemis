@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -7,7 +7,6 @@ import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/man
 import { MockFileUploadExerciseService, fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AlertService } from 'app/core/util/alert.service';
-import { RouterTestingModule } from '@angular/router/testing';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
@@ -58,7 +57,7 @@ describe('FileUploadExercise Management Detail Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 FileUploadExerciseDetailComponent,
                 MockPipe(HtmlForMarkdownPipe),
@@ -68,6 +67,7 @@ describe('FileUploadExercise Management Detail Component', () => {
                 MockComponent(DocumentationButtonComponent),
             ],
             providers: [
+                provideRouter([]),
                 JhiLanguageHelper,
                 AlertService,
                 { provide: ActivatedRoute, useValue: route },
