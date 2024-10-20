@@ -187,8 +187,8 @@ public abstract class CourseCompetency extends BaseCompetency {
             // The competencies of ExerciseUnits are taken from the corresponding exercise
             throw new IllegalArgumentException("ExerciseUnits can not be disconnected from competencies");
         }
-        this.lectureUnitLinks.remove(lectureUnit);
-        lectureUnit.getCompetencyLinks().remove(this);
+        this.lectureUnitLinks.removeIf(lul -> lul.getLectureUnit().equals(lectureUnit));
+        lectureUnit.getCompetencyLinks().removeIf(cl -> cl.getCompetency().equals(this));
     }
 
     public Set<CompetencyProgress> getUserProgress() {

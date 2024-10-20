@@ -349,6 +349,8 @@ public class CourseCompetencyService {
         competencyToUpdate.setMasteryThreshold(competency.getMasteryThreshold());
         competencyToUpdate.setTaxonomy(competency.getTaxonomy());
         competencyToUpdate.setOptional(competency.isOptional());
+        competencyToUpdate.getLectureUnitLinks().forEach(link -> link.setCompetency(competency));
+        competencyToUpdate.setLectureUnitLinks(competency.getLectureUnitLinks());
         final var persistedCompetency = courseCompetencyRepository.save(competencyToUpdate);
 
         // update competency progress if necessary
@@ -445,7 +447,9 @@ public class CourseCompetencyService {
 
     private void updateLectureUnits(CourseCompetency competency, CourseCompetency createdCompetency) {
         if (!competency.getLectureUnitLinks().isEmpty()) {
-            lectureUnitService.linkLectureUnitsToCompetency(createdCompetency, competency.getLectureUnitLinks(), Set.of());
+            competency.getLectureUnitLinks().forEach(link -> link.setCompetency(competency));
+            competency.setLectureUnitLinks(competency.getLectureUnitLinks());
+            courseCompetencyRepository.save(competency);
             competencyProgressService.updateProgressByCompetencyAndUsersInCourseAsync(createdCompetency);
         }
     }

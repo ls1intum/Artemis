@@ -168,6 +168,8 @@ public class LectureService {
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());
         channelService.deleteChannel(lectureChannel);
 
+        competencyLectureUnitLinkRepository.deleteAllByLectureId(lecture.getId());
+
         lectureRepository.deleteById(lecture.getId());
     }
 

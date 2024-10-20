@@ -135,6 +135,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     TextExercise createTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assassmentDueDate, CourseCompetency competency, boolean isTeamExercise) {
         // creating text exercise with Result
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assassmentDueDate, course);
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(0.0);
 
         if (isTeamExercise) {
             textExercise.setMode(ExerciseMode.TEAM);
@@ -143,13 +145,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
             teamAssignmentConfig.setMaxTeamSize(2);
             textExercise.setTeamAssignmentConfig(teamAssignmentConfig);
         }
+        textExercise = exerciseRepository.save(textExercise);
 
-        textExercise.setMaxPoints(10.0);
-        textExercise.setBonusPoints(0.0);
         CompetencyExerciseLink link = new CompetencyExerciseLink(competency, textExercise, 1);
-        link = competencyExerciseLinkRepository.save(link);
-
-        return (TextExercise) link.getExercise();
+        return (TextExercise) competencyExerciseLinkRepository.save(link).getExercise();
     }
 
     private ProgrammingExercise createProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate) {
@@ -403,11 +402,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     // Test
     void shouldImportExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
-        teamTextExercise.getCompetencyLinks().clear();
-        exerciseRepository.save(teamTextExercise);
-        attachmentUnitOfLectureOne = attachmentUnitRepository.findOneWithSlidesAndCompetencies(attachmentUnitOfLectureOne.getId());
-        attachmentUnitOfLectureOne.getCompetencyLinks().clear();
-        attachmentUnitRepository.save(attachmentUnitOfLectureOne);
+        competencyExerciseLinkRepository.deleteAllByExerciseId(teamTextExercise.getId());
+        competencyLectureUnitLinkRepository.deleteAllByLectureUnitId(attachmentUnitOfLectureOne.getId());
 
         ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
         textExercise.setReleaseDate(releaseDate);
@@ -540,11 +536,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     // Test
     void shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
-        teamTextExercise.getCompetencyLinks().clear();
-        exerciseRepository.save(teamTextExercise);
-        attachmentUnitOfLectureOne = attachmentUnitRepository.findOneWithSlidesAndCompetencies(attachmentUnitOfLectureOne.getId());
-        attachmentUnitOfLectureOne.getCompetencyLinks().clear();
-        attachmentUnitRepository.save(attachmentUnitOfLectureOne);
+        competencyExerciseLinkRepository.deleteAllByExerciseId(teamTextExercise.getId());
+        competencyLectureUnitLinkRepository.deleteAllByLectureUnitId(attachmentUnitOfLectureOne.getId());
 
         ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
         textExercise.setReleaseDate(releaseDate);
@@ -673,11 +666,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     // Test
     void shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
-        teamTextExercise.getCompetencyLinks().clear();
-        exerciseRepository.save(teamTextExercise);
-        attachmentUnitOfLectureOne = attachmentUnitRepository.findOneWithSlidesAndCompetencies(attachmentUnitOfLectureOne.getId());
-        attachmentUnitOfLectureOne.getCompetencyLinks().clear();
-        attachmentUnitRepository.save(attachmentUnitOfLectureOne);
+        competencyExerciseLinkRepository.deleteAllByExerciseId(teamTextExercise.getId());
+        competencyLectureUnitLinkRepository.deleteAllByLectureUnitId(attachmentUnitOfLectureOne.getId());
 
         ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
         textExercise.setReleaseDate(releaseDate);

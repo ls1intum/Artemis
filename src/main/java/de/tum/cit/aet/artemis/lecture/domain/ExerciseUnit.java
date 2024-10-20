@@ -14,6 +14,7 @@ import jakarta.persistence.PreUpdate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
@@ -64,6 +65,7 @@ public class ExerciseUnit extends LectureUnit {
     }
 
     @Override
+    @JsonIgnore
     public Set<CompetencyLectureUnitLink> getCompetencyLinks() {
         throw new UnsupportedOperationException("Create the link in the associated exercise instead");
     }

@@ -183,15 +183,13 @@ public class LectureUnitService {
      *
      * @param competency               The competency to be linked
      * @param lectureUnitLinksToAdd    A set of lecture unit links to add to the specified competency
-     * @param lectureUnitLinksToRemove A set of lecture unit link to remove from the specified competency
+     * @param lectureUnitLinksToRemove A set of lecture unit links to remove from the specified competency
      */
     public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<CompetencyLectureUnitLink> lectureUnitLinksToAdd,
             Set<CompetencyLectureUnitLink> lectureUnitLinksToRemove) {
         lectureUnitLinksToAdd.forEach(link -> link.setCompetency(competency));
-        List<CompetencyLectureUnitLink> persistedLinks = competencyLectureUnitLinkRepository.saveAll(lectureUnitLinksToAdd);
-        competencyLectureUnitLinkRepository.deleteAll(lectureUnitLinksToRemove);
-
-        competency.getLectureUnitLinks().addAll(persistedLinks);
+        competency.setLectureUnitLinks(lectureUnitLinksToAdd);
+        courseCompetencyRepository.save(competency);
     }
 
     /**

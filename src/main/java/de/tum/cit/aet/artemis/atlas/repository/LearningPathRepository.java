@@ -63,7 +63,8 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
             """)
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencies", "competencies.lectureUnits", "competencies.exercises" })
+    @EntityGraph(type = LOAD, attributePaths = { "competencies", "competencies.lectureUnitLinks", "competencies.lectureUnitLinks.lectureUnit", "competencies.exerciseLinks",
+            "competencies.exerciseLinks.exercise" })
     Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesById(long learningPathId);
 
     default LearningPath findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(long learningPathId) {

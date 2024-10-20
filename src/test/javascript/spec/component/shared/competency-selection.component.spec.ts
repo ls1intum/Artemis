@@ -82,8 +82,8 @@ describe('CompetencySelection', () => {
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading).toBeFalse();
         expect(component.competencyLinks).toBeArrayOfSize(2);
-        expect(component.competencyLinks?.first()?.competency.course).toBeUndefined();
-        expect(component.competencyLinks?.first()?.competency.userProgress).toBeUndefined();
+        expect(component.competencyLinks?.first()?.competency?.course).toBeUndefined();
+        expect(component.competencyLinks?.first()?.competency?.userProgress).toBeUndefined();
     });
 
     it('should set disabled when error during loading', () => {
@@ -119,7 +119,7 @@ describe('CompetencySelection', () => {
 
         component.writeValue([new CompetencyLearningObjectLink({ id: 1, title: 'other' } as Competency, 1)]);
         expect(component.selectedCompetencyLinks).toBeArrayOfSize(1);
-        expect(component.selectedCompetencyLinks?.first()?.competency.title).toBe('test');
+        expect(component.selectedCompetencyLinks?.first()?.competency?.title).toBe('test');
     });
 
     it('should trigger change detection after loading competencies', () => {

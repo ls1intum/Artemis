@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -48,6 +49,9 @@ public class CompetencyUtilService {
 
     @Autowired
     private CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+
+    @Autowired
+    private CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
 
     /**
      * Creates and saves a Competency for the given Course.
@@ -146,9 +150,7 @@ public class CompetencyUtilService {
      */
     public LectureUnit linkLectureUnitToCompetency(Competency competency, LectureUnit lectureUnit) {
         CompetencyLectureUnitLink link = new CompetencyLectureUnitLink(competency, lectureUnit, 1);
-        lectureUnit.getCompetencyLinks().add(link);
-        competency.getLectureUnitLinks().add(link);
-        return lectureUnitRepository.save(lectureUnit);
+        return competencyLectureUnitLinkRepository.save(link).getLectureUnit();
     }
 
     /**
@@ -160,9 +162,7 @@ public class CompetencyUtilService {
      */
     public Exercise linkExerciseToCompetency(Competency competency, Exercise exercise) {
         CompetencyExerciseLink link = new CompetencyExerciseLink(competency, exercise, 1);
-        exercise.getCompetencyLinks().add(link);
-        competency.getExerciseLinks().add(link);
-        return exerciseRepository.save(exercise);
+        return competencyExerciseLinkRepository.save(link).getExercise();
     }
 
     /**

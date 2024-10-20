@@ -301,7 +301,6 @@ public class CompetencyResource {
         checkCourseForCompetency(course, existingCompetency);
 
         var persistedCompetency = competencyService.updateCourseCompetency(existingCompetency, competency);
-        lectureUnitService.linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnitLinks(), existingCompetency.getLectureUnitLinks());
 
         return ResponseEntity.ok(persistedCompetency);
     }
