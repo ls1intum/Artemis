@@ -52,7 +52,7 @@ describe('LinkPreviewContainerComponent', () => {
 
         component.ngOnInit();
 
-        expect(linkifyServiceSpy).toHaveBeenCalledWith(component.dataSafe());
+        expect(linkifyServiceSpy).toHaveBeenCalledWith(component.data());
         expect(linkPreviewServiceSpy).toHaveBeenCalledTimes(2);
         expect(linkPreviewServiceSpy).toHaveBeenCalledWith('https://example.com/link1');
         expect(linkPreviewServiceSpy).toHaveBeenCalledWith('https://example.com/link2');
@@ -81,7 +81,7 @@ describe('LinkPreviewContainerComponent', () => {
 
         component.ngOnInit();
 
-        expect(linkifyServiceSpy).toHaveBeenCalledWith(component.dataSafe());
+        expect(linkifyServiceSpy).toHaveBeenCalledWith(component.data());
         expect(linkPreviewServiceSpy).toHaveBeenCalledOnce();
         expect(linkPreviewServiceSpy).toHaveBeenCalledWith('https://example.com/link1');
         expect(component.linkPreviews()).toHaveLength(1);

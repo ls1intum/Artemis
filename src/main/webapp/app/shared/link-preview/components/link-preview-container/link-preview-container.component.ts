@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnChanges, OnInit, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnChanges, OnInit, inject, input, signal } from '@angular/core';
 import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 import { User } from 'app/core/user/user.model';
@@ -20,7 +20,6 @@ export class LinkPreviewContainerComponent implements OnInit, OnChanges {
     readonly isEdited = input<boolean>();
     readonly isReply = input<boolean>();
 
-    readonly dataSafe = computed<string>(() => this.data() ?? '');
     readonly linkPreviews = signal<LinkPreview[]>([]);
     readonly hasError = signal<boolean>(false);
     readonly loaded = signal<boolean>(false);
@@ -43,7 +42,7 @@ export class LinkPreviewContainerComponent implements OnInit, OnChanges {
     }
 
     private findPreviews() {
-        const links: Link[] = this.linkifyService.find(this.dataSafe());
+        const links: Link[] = this.linkifyService.find(this.data() ?? '');
         // TODO: The limit of 5 link previews should be configurable (maybe in course level)
         links
             .filter((link) => !link.isLinkPreviewRemoved)
