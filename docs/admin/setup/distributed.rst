@@ -621,7 +621,7 @@ These credentials are used to clone repositories via HTTPS. You must also add th
                     short-name: "artemis-build-agent-X"             # Short name of the build agent. This should be unique for each build agent. Only lowercase letters, numbers and hyphens are allowed.
 
 
-Please note that ``artemis.build-agent.short-name`` must be provided. Otherwise, the build agent will not start.
+Please note that ``artemis.continuous-integration.build-agent.short-name`` must be provided. Otherwise, the build agent will not start.
 
 Build agents run as `Hazelcast Lite Members <https://docs.hazelcast.com/hazelcast/5.3/maintain-cluster/lite-members>`__ and require a full member, in our case a core node, to be running.
 Thus, before starting a build agent make sure that at least the primary node is running. You can then add and remove build agents to the cluster as desired.
