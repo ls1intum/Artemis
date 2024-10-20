@@ -893,33 +893,33 @@ public class ExamService {
      * @return true if at least one submission is not empty else false
      */
     private boolean hasNonEmptySubmission(Set<Submission> submissions, Exercise exercise) {
-        if (exercise instanceof ProgrammingExercise) {
-            return submissions.stream().anyMatch(submission -> submission.getType() == SubmissionType.MANUAL);
-        }
-        else if (exercise instanceof FileUploadExercise) {
-            FileUploadSubmission textSubmission = (FileUploadSubmission) submissions.iterator().next();
-            return textSubmission.getFilePath() != null && !textSubmission.getFilePath().isEmpty();
-        }
-        else if (exercise instanceof TextExercise) {
-            TextSubmission textSubmission = (TextSubmission) submissions.iterator().next();
-            return textSubmission.getText() != null && !textSubmission.getText().isBlank();
-        }
-        else if (exercise instanceof ModelingExercise) {
-            ModelingSubmission modelingSubmission = (ModelingSubmission) submissions.iterator().next();
-            try {
-                return !modelingSubmission.isEmpty(this.defaultObjectMapper);
+        switch (exercise) {
+            case ProgrammingExercise ignored -> {
+                return submissions.stream().anyMatch(submission -> submission.getType() == SubmissionType.MANUAL);
             }
-            catch (Exception e) {
-                // Then the student most likely submitted something which breaks the model, if parsing fails
+            case FileUploadExercise ignored -> {
+                FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) submissions.iterator().next();
+                return fileUploadSubmission.getFilePath() != null && !fileUploadSubmission.getFilePath().isEmpty();
+            }
+            case TextExercise ignored -> {
+                TextSubmission textSubmission = (TextSubmission) submissions.iterator().next();
+                return textSubmission.getText() != null && !textSubmission.getText().isBlank();
+            }
+            case ModelingExercise ignored -> {
+                ModelingSubmission modelingSubmission = (ModelingSubmission) submissions.iterator().next();
+                try {
+                    return !modelingSubmission.isEmpty(this.defaultObjectMapper);
+                }
+                catch (Exception e) {
+                    // Then the student most likely submitted something which breaks the model, if parsing fails
+                    return true;
+                }
+            }
+            case QuizExercise ignored -> {
+                // NOTE: due to performance concerns, this is handled differently, search for quizSubmittedAnswerCounts to find out more
                 return true;
             }
-        }
-        else if (exercise instanceof QuizExercise) {
-            // NOTE: due to performance concerns, this is handled differently, search for quizSubmittedAnswerCounts to find out more
-            return true;
-        }
-        else {
-            throw new IllegalArgumentException("The exercise type of the exercise with id " + exercise.getId() + " is not supported");
+            case null, default -> throw new IllegalArgumentException("The exercise type of the exercise with id " + exercise.getId() + " is not supported");
         }
     }
 

@@ -202,25 +202,14 @@ public class ParticipationUtilService {
      */
     public Result createSubmissionAndResult(StudentParticipation studentParticipation, long scoreAwarded, boolean rated) {
         Exercise exercise = studentParticipation.getExercise();
-        Submission submission;
-        if (exercise instanceof ProgrammingExercise) {
-            submission = new ProgrammingSubmission();
-        }
-        else if (exercise instanceof ModelingExercise) {
-            submission = new ModelingSubmission();
-        }
-        else if (exercise instanceof TextExercise) {
-            submission = new TextSubmission();
-        }
-        else if (exercise instanceof FileUploadExercise) {
-            submission = new FileUploadSubmission();
-        }
-        else if (exercise instanceof QuizExercise) {
-            submission = new QuizSubmission();
-        }
-        else {
-            throw new RuntimeException("Unsupported exercise type: " + exercise);
-        }
+        Submission submission = switch (exercise) {
+            case ProgrammingExercise ignored -> new ProgrammingSubmission();
+            case ModelingExercise ignored -> new ModelingSubmission();
+            case TextExercise ignored -> new TextSubmission();
+            case FileUploadExercise ignored -> new FileUploadSubmission();
+            case QuizExercise ignored -> new QuizSubmission();
+            case null, default -> throw new RuntimeException("Unsupported exercise type: " + exercise);
+        };
 
         submission.setType(SubmissionType.MANUAL);
         submission.setParticipation(studentParticipation);

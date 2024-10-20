@@ -100,8 +100,13 @@ public class DataExportQuizExerciseCreationService {
             for (var question : quizQuestions) {
                 var submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(question);
                 // if this question wasn't answered, the submitted answer is null
-                if (submittedAnswer != null) {
-                    if (submittedAnswer instanceof DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
+                if (submittedAnswer == null) {
+                    // go to next question
+                    continue;
+                }
+
+                switch (submittedAnswer) {
+                    case DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer -> {
                         try {
                             dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerAndStoreAsPdf(dragAndDropSubmittedAnswer, outputDir, includeResults);
                         }
@@ -111,14 +116,15 @@ public class DataExportQuizExerciseCreationService {
                                     + quizExercise.getTitle() + " with id " + quizExercise.getId()));
                         }
                     }
-                    else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+                    case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer ->
                         shortAnswerQuestionsSubmissions.add(createExportForShortAnswerQuestion(shortAnswerSubmittedAnswer, includeResults));
-                    }
-                    else if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer) {
+                    case MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer ->
                         multipleChoiceQuestionsSubmissions.add(createExportForMultipleChoiceAnswerQuestion(multipleChoiceSubmittedAnswer, includeResults));
+                    default -> {
                     }
                 }
             }
+
             if (!multipleChoiceQuestionsSubmissions.isEmpty()) {
                 try {
                     FileUtils.writeLines(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_questions_answers" + TXT_FILE_EXTENSION).toFile(),

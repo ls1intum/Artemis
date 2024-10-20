@@ -62,14 +62,12 @@ public abstract class QuizService<T extends QuizConfiguration> {
                 quizQuestion.initializeStatistic();
             }
 
-            if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
-                fixReferenceMultipleChoice(multipleChoiceQuestion);
-            }
-            else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                fixReferenceDragAndDrop(dragAndDropQuestion);
-            }
-            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                fixReferenceShortAnswer(shortAnswerQuestion);
+            switch (quizQuestion) {
+                case MultipleChoiceQuestion multipleChoiceQuestion -> fixReferenceMultipleChoice(multipleChoiceQuestion);
+                case DragAndDropQuestion dragAndDropQuestion -> fixReferenceDragAndDrop(dragAndDropQuestion);
+                case ShortAnswerQuestion shortAnswerQuestion -> fixReferenceShortAnswer(shortAnswerQuestion);
+                default -> {
+                }
             }
         }
 
