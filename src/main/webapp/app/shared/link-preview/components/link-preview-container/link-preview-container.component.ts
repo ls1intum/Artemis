@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnChanges, OnInit, computed, inject, input, signal } from '@angular/core';
 import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 import { User } from 'app/core/user/user.model';
@@ -8,27 +8,26 @@ import { Posting } from 'app/entities/metis/posting.model';
     selector: 'jhi-link-preview-container',
     templateUrl: './link-preview-container.component.html',
     styleUrls: ['./link-preview-container.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LinkPreviewContainerComponent implements OnInit, OnChanges {
-    @Input() data: string | undefined;
-    @Input() author?: User;
-    @Input() posting?: Posting;
-    @Input() isEdited?: boolean;
-    @Input() isReply?: boolean;
+    private readonly linkPreviewService: LinkPreviewService = inject(LinkPreviewService);
+    private readonly linkifyService: LinkifyService = inject(LinkifyService);
 
-    linkPreviews: LinkPreview[] = [];
-    hasError: boolean;
-    loaded = false;
-    showLoadingsProgress = true;
-    multiple = false;
+    readonly data = input<string>();
+    readonly author = input<User>();
+    readonly posting = input<Posting>();
+    readonly isEdited = input<boolean>();
+    readonly isReply = input<boolean>();
 
-    constructor(
-        public linkPreviewService: LinkPreviewService,
-        public linkifyService: LinkifyService,
-    ) {}
+    readonly dataSafe = computed<string>(() => this.data() ?? '');
+    readonly linkPreviews = signal<LinkPreview[]>([]);
+    readonly hasError = signal<boolean>(false);
+    readonly loaded = signal<boolean>(false);
+    readonly showLoadingsProgress = signal<boolean>(true);
+    readonly multiple = signal<boolean>(false);
 
     ngOnInit() {
-        this.data = this.data ?? '';
         this.findPreviews();
     }
 
@@ -37,14 +36,14 @@ export class LinkPreviewContainerComponent implements OnInit, OnChanges {
     }
 
     private reloadLinkPreviews() {
-        this.loaded = false;
-        this.showLoadingsProgress = true;
-        this.linkPreviews = []; // Clear the existing link previews
+        this.loaded.set(false);
+        this.showLoadingsProgress.set(true);
+        this.linkPreviews.set([]); // Clear the existing link previews
         this.findPreviews();
     }
 
     private findPreviews() {
-        const links: Link[] = this.linkifyService.find(this.data!);
+        const links: Link[] = this.linkifyService.find(this.dataSafe());
         // TODO: The limit of 5 link previews should be configurable (maybe in course level)
         links
             .filter((link) => !link.isLinkPreviewRemoved)
@@ -54,17 +53,21 @@ export class LinkPreviewContainerComponent implements OnInit, OnChanges {
                     next: (linkPreview) => {
                         linkPreview.shouldPreviewBeShown = !!(linkPreview.url && linkPreview.title && linkPreview.description && linkPreview.image);
 
-                        const existingLinkPreview = this.linkPreviews.find((preview) => preview.url === linkPreview.url);
-                        if (existingLinkPreview) {
-                            Object.assign(existingLinkPreview, linkPreview);
+                        const existingLinkPreviewIndex = this.linkPreviews().findIndex((preview) => preview.url === linkPreview.url);
+                        if (existingLinkPreviewIndex !== -1) {
+                            this.linkPreviews.update((previews) => {
+                                const existingLinkPreview = previews[existingLinkPreviewIndex];
+                                Object.assign(existingLinkPreview, linkPreview);
+                                return previews;
+                            });
                         } else {
-                            this.linkPreviews.push(linkPreview);
+                            this.linkPreviews.set([...this.linkPreviews(), linkPreview]);
                         }
 
-                        this.hasError = false;
-                        this.loaded = true;
-                        this.showLoadingsProgress = false;
-                        this.multiple = this.linkPreviews.length > 1;
+                        this.hasError.set(false);
+                        this.loaded.set(true);
+                        this.showLoadingsProgress.set(false);
+                        this.multiple.set(this.linkPreviews().length > 1);
                     },
                 });
             });
