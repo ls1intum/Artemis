@@ -295,7 +295,7 @@ public class StudentExamService {
         submissionFromClient.submitted(true);
         switch (exercise) {
             case QuizExercise ignored -> saveSubmissionQuizExercise(submissionFromClient, existingParticipationInDatabase, currentUser);
-            case TextExercise ignored -> saveSubmissionTestExercise(submissionFromClient, existingParticipationInDatabase, currentUser);
+            case TextExercise ignored -> saveSubmissionTextExercise(submissionFromClient, existingParticipationInDatabase, currentUser);
             case ModelingExercise ignored -> saveSubmissionModelingExercise(submissionFromClient, existingParticipationInDatabase, currentUser);
             default -> {
             }
@@ -333,7 +333,7 @@ public class StudentExamService {
     /**
      * Helper function for {@link #saveSubmission(User, List, Exercise)}
      */
-    private void saveSubmissionTestExercise(Submission submissionFromClient, StudentParticipation existingParticipationInDatabase, User currentUser) {
+    private void saveSubmissionTextExercise(Submission submissionFromClient, StudentParticipation existingParticipationInDatabase, User currentUser) {
         TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
         TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
         if (!isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
