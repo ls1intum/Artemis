@@ -13,7 +13,7 @@
             "created": "The FAQ {{ title }} was successfully created",
             "updated": "The FAQ {{ title }} was successfully updated",
             "proposed": "The FAQ {{ title }} was successfully proposed",
-            "proposedChange": "The changes to the FAQ with the ID {{ id }} have been successfully proposed",
+            "proposedChange": "The changes to the FAQ {{ title }} have been successfully proposed",
             "deleted": "The FAQ was successfully deleted",
             "accepted": "The FAQ {{ title }} was successfully accepted",
             "rejected": "The FAQ {{ title }} was successfully rejected",

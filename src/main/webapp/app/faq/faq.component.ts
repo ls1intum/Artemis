@@ -35,7 +35,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     existingCategories: FaqCategory[];
     courseId: number;
     hasCategories: boolean = false;
-    isAtLeastInstructor: boolean = false;
+    isAtLeastInstructor = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -87,9 +87,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.dialogErrorSource.complete();
         this.searchInput.complete();
-        if (this.routeDataSubscription) {
-            this.routeDataSubscription.unsubscribe();
-        }
+        this.routeDataSubscription?.unsubscribe();
     }
 
     deleteFaq(courseId: number, faqId: number) {
