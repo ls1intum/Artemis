@@ -3,8 +3,8 @@
         <div class="w-100 bg-module">
             <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
                 @if (searchFieldEnabled) {
-                    <div class="mt-2 mb-2">
-                        <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-2" />
+                    <div class="mt-2 mb-1" [ngClass]="{ 'd-flex align-items-center': inCommunication() }">
+                        <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-1 flex-grow-1 search-filter" />
                         @if (showFilter) {
                             <div class="ms-2 mt-1 text-primary">
                                 <a (click)="openFilterExercisesDialog()">
@@ -17,8 +17,38 @@
                                 </a>
                             </div>
                         }
+
+                        @if (inCommunication()) {
+                            <div class="ms-2 mb-1" ngbDropdown>
+                                <button type="button" class="btn btn-primary btn-sm square-button" ngbDropdownToggle>
+                                    <fa-icon [icon]="faPlusCircle" class="item-icon"></fa-icon>
+                                </button>
+
+                                <div ngbDropdownMenu>
+                                    @if (sidebarData?.messagingEnabled) {
+                                        <button (click)="createDirectChat()" class="p-2" ngbDropdownItem>
+                                            <fa-icon [icon]="faUser" class="item-icon" [fixedWidth]="true"></fa-icon>
+                                            <span jhiTranslate="artemisApp.courseOverview.sidebar.createDirectChat"></span>
+                                        </button>
+                                        <button (click)="createGroupChat()" class="p-2" ngbDropdownItem>
+                                            <fa-icon [icon]="faUsers" class="item-icon" [fixedWidth]="true"></fa-icon>
+                                            <span jhiTranslate="artemisApp.courseOverview.sidebar.createGroupChat"></span>
+                                        </button>
+                                    }
+                                    <button (click)="createNewChannel()" class="p-2" ngbDropdownItem>
+                                        <fa-icon [icon]="faHashtag" class="item-icon"></fa-icon>
+                                        <span jhiTranslate="artemisApp.courseOverview.sidebar.createChannel"></span>
+                                    </button>
+                                    <button (click)="browseChannels()" class="p-2" ngbDropdownItem>
+                                        <fa-icon [icon]="faSearch" class="item-icon"></fa-icon>
+                                        <span jhiTranslate="artemisApp.courseOverview.sidebar.browseChannels"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        }
                     </div>
                 }
+
                 @if (!sidebarData?.ungroupedData || !(sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue)?.length) {
                     <div
                         [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
@@ -47,9 +77,7 @@
                                 [routeParams]="routeParams"
                                 [courseId]="courseId"
                                 [itemSelected]="itemSelected"
-                                [showAddOptions]="sidebarData.showAccordionAddOption ?? false"
                                 [showLeadingIcon]="sidebarData.showAccordionLeadingIcon ?? false"
-                                [showAddOption]="showAddOption"
                                 [channelTypeIcon]="channelTypeIcon"
                                 [collapseState]="collapseState"
                                 (onUpdateSidebar)="onUpdateSidebar.emit()"
