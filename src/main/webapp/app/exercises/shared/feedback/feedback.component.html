@@ -84,7 +84,7 @@
                     </div>
                 }
 
-                @if (result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && showScoreChart && result.participation?.exercise) {
+                @if (showScoreChart && result.participation?.exercise) {
                     <div class="result-score-chart">
                         <div id="feedback-chart" #containerRef class="chart-space">
                             <ngx-charts-bar-horizontal-stacked
@@ -119,11 +119,15 @@
                         <div class="d-flex justify-content-end m-1">
                             <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
                         </div>
-                        @if (exercise?.assessmentType !== AssessmentType.AUTOMATIC) {
-                            <p jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
-                        }
-                        @if (exercise?.assessmentType === AssessmentType.AUTOMATIC) {
-                            <p jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
+                        @if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+                            <p jhiTranslate="artemisApp.result.preliminaryTooltipAthena"></p>
+                        } @else {
+                            @if (exercise?.assessmentType !== AssessmentType.AUTOMATIC) {
+                                <p jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
+                            }
+                            @if (exercise?.assessmentType === AssessmentType.AUTOMATIC) {
+                                <p jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
+                            }
                         }
                     </div>
                 }

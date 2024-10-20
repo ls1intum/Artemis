@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { DebugElement } from '@angular/core';
@@ -21,7 +21,6 @@ import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-re
 import { Submission, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { RouterTestingModule } from '@angular/router/testing';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -40,7 +39,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -89,7 +88,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, NgxDatatableModule],
+            imports: [ArtemisTestModule, NgxDatatableModule, RouterModule.forRoot([])],
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),

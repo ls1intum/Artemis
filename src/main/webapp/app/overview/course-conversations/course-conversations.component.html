@@ -22,17 +22,22 @@
     }
     @if (isCodeOfConductAccepted && isServiceSetUp && course) {
         <div class="d-flex justify-content-between">
-            <div class="me-3" [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+            <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
                 <jhi-sidebar
                     (onSelectConversation)="onConversationSelected($event)"
                     (onUpdateSidebar)="prepareSidebarData()"
                     [itemSelected]="conversationSelected"
                     [courseId]="course.id"
                     [sidebarData]="sidebarData"
-                    (onPlusPressed)="onAccordionPlusButtonPressed($event)"
+                    (onCreateChannelPressed)="openCreateChannelDialog()"
+                    (onBrowsePressed)="openChannelOverviewDialog()"
+                    (onDirectChatPressed)="openCreateOneToOneChatDialog()"
+                    (onGroupChatPressed)="openCreateGroupChatDialog()"
                     [showAddOption]="CHANNEL_TYPE_SHOW_ADD_OPTION"
                     [channelTypeIcon]="CHANNEL_TYPE_ICON"
+                    [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
                     [collapseState]="DEFAULT_COLLAPSE_STATE"
+                    [inCommunication]="true"
                 />
             </div>
             @if (course && !activeConversation && isCodeOfConductPresented) {

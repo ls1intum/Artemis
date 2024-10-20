@@ -17,11 +17,11 @@
         "validation": "Validierungsfehler auf dem Server.",
         "resultStringNull": "Fehler! Ein Ergebnistext ist erforderlich.",
         "resultStringTooLong": "Fehler! Der Ergebnistext ist zu lange (max. 255 Zeichen)",
-        "scoreNull": "Fehler! Eine Bewertung is erforderlich.",
+        "scoreNull": "Fehler! Eine Bewertung ist erforderlich.",
         "resultNotRated": "Fehler! Ein Ergebnis muss bewertet sein.",
         "submissionMissing": "Fehler! Die Abgabe ist nicht mehr mit dem Ergebnis verknüpft. Deine Änderungen wurden abgelehnt.",
         "resultAlreadyExists": "Es liegt bereits ein Ergebnis für diese Übung vor.",
-        "scoreAndSuccessfulNotMatching": "Fehler! Nur ein Ergebnis mit 100% kann erfolgreich sein.",
+        "scoreAndSuccessfulNotMatching": "Fehler! Nur ein Ergebnis mit 100 % kann erfolgreich sein.",
         "feedbackDetailTextNull": "Fehler! Wenn Feedback vorhanden ist, müssen die Feedback Details ausgefüllt werden.",
         "quizAlreadyVisible": "Das Quiz ist bereits sichtbar.",
         "quizAlreadyStarted": "Das Quiz wurde bereits gestartet.",
@@ -95,6 +95,8 @@
         "titleAlreadyExists": "Es existiert bereits eine Programmieraufgabe mit demselben Titel, bitte nutze einen anderen Titel.",
         "shortnameAlreadyExists": "Es existiert bereits eine Programmieraufgabe mit demselben Kurznamen, bitte nutze einen anderen Kurznamen.",
         "courseTitleTooLong": "Der Kurstitel ist zu lang (max. 255 Zeichen), bitte nutze einen kürzeren Kurstitel.",
-        "notAllowedInExam": "Diese Aktion ist in einer Klausur nicht erlaubt."
+        "notAllowedInExam": "Diese Aktion ist in einer Klausur nicht erlaubt.",
+        "profilePictureFilesizeTooBig": "Die Dateigröße des hochgeladenen Bilds ist zu groß, bitte lade ein kleineres Bild hoch.",
+        "profilePictureFileFormatNotSupported": "Das Dateiformat wird nicht unterstützt, bitte lade eine .png oder .jpg Datei hoch."
     }
 }

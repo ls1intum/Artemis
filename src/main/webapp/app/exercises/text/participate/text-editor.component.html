@@ -49,7 +49,7 @@
                         >
                         </span>
                     </div>
-                    @if (!result) {
+                    @if (!result || isAutomaticResult) {
                         <textarea
                             id="text-editor"
                             #textEditor
@@ -109,7 +109,7 @@
                             </div>
                         }
                     }
-                    @if (textExercise && result && participation && !examMode) {
+                    @if (textExercise && result && participation && !examMode && !isAutomaticResult) {
                         <jhi-complaint-student-view [exercise]="textExercise" [result]="resultWithComplaint ? resultWithComplaint : result" [participation]="participation" />
                     }
                 </div>
@@ -127,5 +127,8 @@
             </ng-container>
             <!--endregion-->
         </jhi-resizeable-container>
+        @if (!textExercise.exerciseGroup && irisSettings?.irisTextExerciseChatSettings?.enabled) {
+            <jhi-exercise-chatbot-button [mode]="ChatServiceMode.TEXT_EXERCISE" />
+        }
     }
 </div>

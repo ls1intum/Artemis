@@ -1,6 +1,6 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import { MonacoEditorGlyphMarginWidget } from 'app/shared/monaco-editor/model/monaco-editor-glyph-margin-widget.model';
-
+import { Disposable, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import * as monaco from 'monaco-editor';
 
 export enum MonacoEditorBuildAnnotationType {
@@ -20,7 +20,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
     private outdated: boolean;
     private hoverMessage: string;
     private type: MonacoEditorBuildAnnotationType;
-    private updateListener: monaco.IDisposable;
+    private updateListener: Disposable;
 
     /**
      * @param editor The editor to render this annotation in.
@@ -30,7 +30,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
      * @param type The type of this annotation: error or warning.
      * @param outdated Whether this annotation is outdated and should be grayed out. Defaults to false.
      */
-    constructor(editor: monaco.editor.ICodeEditor, id: string, lineNumber: number, hoverMessage: string, type: MonacoEditorBuildAnnotationType, outdated = false) {
+    constructor(editor: monaco.editor.IStandaloneCodeEditor, id: string, lineNumber: number, hoverMessage: string, type: MonacoEditorBuildAnnotationType, outdated = false) {
         super(editor, id);
         this.decorationsCollection = this.editor.createDecorationsCollection([]);
         this.hoverMessage = hoverMessage;
@@ -51,7 +51,7 @@ export class MonacoEditorBuildAnnotation extends MonacoCodeEditorElement {
         const marginClassName = this.outdated ? 'monaco-annotation-outdated' : `monaco-annotation-${this.type}`;
         const lineNumber = this.getLineNumber();
         return {
-            range: new monaco.Range(lineNumber, 0, lineNumber, 0),
+            range: makeEditorRange(lineNumber, 0, lineNumber, 0),
             options: {
                 marginClassName,
                 isWholeLine: true,

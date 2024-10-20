@@ -14,6 +14,8 @@
                 *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise }"
                 [courseId]="courseId"
                 [exercise]="exercise"
+                [isGeneratingFeedback]="isGeneratingFeedback"
+                (generatingFeedback)="this.isGeneratingFeedback = true"
             />
             @if (plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
                 <a class="col-auto btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]">
@@ -239,7 +241,7 @@
                     </div>
                 }
                 @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
-                    <jhi-exercise-chatbot-button />
+                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.EXERCISE" />
                 }
                 <jhi-exercise-hint-button-overlay
                     class="p-3"

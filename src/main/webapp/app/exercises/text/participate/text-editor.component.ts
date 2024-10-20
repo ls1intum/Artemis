@@ -27,6 +27,12 @@ import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { ChatServiceMode } from 'app/iris/iris-chat.service';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_IRIS } from 'app/app.constants';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-text-editor',
@@ -37,6 +43,7 @@ import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly ButtonType = ButtonType;
     readonly MAX_CHARACTER_COUNT = MAX_SUBMISSION_TEXT_LENGTH;
+    readonly ChatServiceMode = ChatServiceMode;
 
     @Input() participationId?: number;
     @Input() displayHeader: boolean = true;
@@ -67,6 +74,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     isAfterAssessmentDueDate: boolean;
     examMode = false;
 
+    irisSettings?: IrisSettings;
+
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate: boolean;
     isOwnerOfParticipation: boolean;
@@ -83,6 +92,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         private participationWebsocketService: ParticipationWebsocketService,
         private stringCountService: StringCountService,
         private accountService: AccountService,
+        private profileService: ProfileService,
+        private irisSettingsService: IrisSettingsService,
     ) {
         this.isSaving = false;
     }
@@ -101,6 +112,15 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
         }
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS)) {
+                this.route.params.subscribe((params) => {
+                    this.irisSettingsService.getCombinedExerciseSettings(params['exerciseId']).subscribe((irisSettings) => {
+                        this.irisSettings = irisSettings;
+                    });
+                });
+            }
+        });
     }
 
     private inputValuesArePresent(): boolean {
@@ -141,7 +161,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.course = getCourseFromExercise(this.textExercise);
 
         if (participation.submissions?.length) {
-            this.submission = participation.submissions[0] as TextSubmission;
+            this.submission = participation.submissions.last() as TextSubmission;
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
             if (this.submission?.results && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
                 this.result = this.submission.latestResult!;
@@ -186,13 +206,16 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.isAlwaysActive = !!isAlwaysActive;
     }
 
+    get isAutomaticResult(): boolean {
+        return this.result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+    }
     /**
      * True, if the due date is after the current date, or there is no due date, or the exercise is always active
      */
     get isActive(): boolean {
         const isActive =
             !this.examMode &&
-            !this.result &&
+            (!this.result || this.isAutomaticResult) &&
             (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && !hasExerciseDueDatePassed(this.textExercise, this.participation)));
         return !!isActive;
     }

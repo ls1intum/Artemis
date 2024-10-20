@@ -1,4 +1,4 @@
-import { Component, ContentChild, HostBinding, Input, OnChanges, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
@@ -39,6 +39,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Input() courseId: number;
     @Input() smallButtons: boolean;
     @Input() examMode: boolean;
+    @Input() isGeneratingFeedback: boolean;
+
+    @Output() generatingFeedback: EventEmitter<void> = new EventEmitter<void>();
 
     // extension points, see shared/extension-point
     @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
@@ -133,8 +136,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+            });
         } else if (this.exercise.type === ExerciseType.TEXT) {
             this.editorLabel = 'openTextEditor';
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+            });
         } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
             this.editorLabel = 'uploadFile';
         }
@@ -169,7 +178,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
 
-        this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true);
+        this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
     }
 
     /**
@@ -249,17 +258,20 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
     }
 
+    // TODO remove this method once support of the button component is implemented for text and modeling exercises
     requestFeedback() {
         if (!this.assureConditionsSatisfied()) return;
-
-        const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
-        if (!window.confirm(confirmLockRepository)) {
-            return;
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
+            if (!window.confirm(confirmLockRepository)) {
+                return;
+            }
         }
 
         this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
             next: (participation: StudentParticipation) => {
                 if (participation) {
+                    this.generatingFeedback.emit();
                     this.feedbackSent = true;
                     this.alertService.success('artemisApp.exercise.feedbackRequestSent');
                 }
@@ -331,41 +343,60 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * 3. There is no already pending feedback request.
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
+    // TODO remove this method once support of the button component is implemented for text and modeling exercises
     assureConditionsSatisfied(): boolean {
         this.updateParticipations();
-        const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
-        const someHiddenTestsPassed = latestResult?.score !== undefined;
-        const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.notEnoughPoints');
-        if (!someHiddenTestsPassed) {
-            window.alert(testsNotPassedWarning);
-            return false;
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
+            const someHiddenTestsPassed = latestResult?.score !== undefined;
+            const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.notEnoughPoints');
+            if (!someHiddenTestsPassed) {
+                window.alert(testsNotPassedWarning);
+                return false;
+            }
         }
 
         const afterDueDate = !this.exercise.dueDate || dayjs().isSameOrAfter(this.exercise.dueDate);
         const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
         if (afterDueDate) {
-            window.alert(dueDateWarning);
+            this.alertService.warning(dueDateWarning);
             return false;
         }
 
         const requestAlreadySent = (this.gradedParticipation?.individualDueDate && this.gradedParticipation.individualDueDate.isBefore(Date.now())) ?? false;
         const requestAlreadySentWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAlreadySent');
         if (requestAlreadySent) {
-            window.alert(requestAlreadySentWarning);
+            this.alertService.warning(requestAlreadySentWarning);
             return false;
         }
 
         if (this.gradedParticipation?.results) {
             const athenaResults = this.gradedParticipation.results.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA');
-            const countOfSuccessfulRequests = athenaResults.filter((result) => result.successful === true).length;
+            const countOfSuccessfulRequests = athenaResults.length;
 
-            if (countOfSuccessfulRequests >= 20) {
+            if (countOfSuccessfulRequests >= 10) {
                 const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
-                window.alert(rateLimitExceededWarning);
+                this.alertService.warning(rateLimitExceededWarning);
                 return false;
             }
         }
 
+        if (this.hasAthenaResultForLatestSubmission()) {
+            const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
+            this.alertService.warning(submitFirstWarning);
+            return false;
+        }
         return true;
+    }
+
+    hasAthenaResultForLatestSubmission(): boolean {
+        if (this.gradedParticipation?.submissions && this.gradedParticipation?.results) {
+            // submissions.results is always undefined so this is necessary
+            return (
+                this.gradedParticipation.submissions.last()?.id ===
+                this.gradedParticipation?.results.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA).first()?.submission?.id
+            );
+        }
+        return false;
     }
 }

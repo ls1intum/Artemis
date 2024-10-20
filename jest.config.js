@@ -14,7 +14,7 @@ const esModules = [
     '@angular/service-worker',
     '@ctrl/ngx-emoji-mart',
     '@danielmoncada/angular-datetime-picker',
-    '@flaviosantoro92/ngx-datatable',
+    '@siemens/ngx-datatable',
     '@fortawesome/angular-fontawesome',
     '@ls1intum/apollon',
     '@ng-bootstrap/ng-bootstrap',
@@ -103,8 +103,8 @@ module.exports = {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
             statements: 87.39,
-            branches: 73.61,
-            functions: 81.93,
+            branches: 73.60,
+            functions: 81.97,
             lines: 87.45,
         },
     },
@@ -125,7 +125,7 @@ module.exports = {
             },
         ],
     },
-    modulePathIgnorePatterns: [],
+    modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/'],
     testTimeout: 3000,
     testMatch: [
         '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',

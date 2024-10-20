@@ -14,7 +14,6 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { RouterTestingModule } from '@angular/router/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
@@ -27,6 +26,7 @@ import { ConversationDetailDialogComponent } from 'app/overview/course-conversat
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { provideRouter } from '@angular/router';
 
 const examples: (() => ConversationDTO)[] = [
     () => generateOneToOneChatDTO({}),
@@ -51,17 +51,14 @@ examples.forEach((conversation) => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [
-                    ArtemisSharedModule,
-                    NgbDropdownMocksModule,
-                    RouterTestingModule.withRoutes([
+                imports: [ArtemisSharedModule, NgbDropdownMocksModule],
+                declarations: [ConversationOptionsComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+                providers: [
+                    provideRouter([
                         { path: 'courses/:courseId/lectures/:lectureId', component: CourseLectureDetailsComponent },
                         { path: 'courses/:courseId/exercises/:exerciseId', component: CourseExerciseDetailsComponent },
                         { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
                     ]),
-                ],
-                declarations: [ConversationOptionsComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-                providers: [
                     MockProvider(ConversationService),
                     MockProvider(MetisConversationService),
                     MockProvider(AlertService),
@@ -87,6 +84,43 @@ examples.forEach((conversation) => {
         it('should create', () => {
             expect(component).toBeTruthy();
         });
+
+        it('should remove conversation from favorites when hidden', fakeAsync(() => {
+            component.conversation.isFavorite = true;
+            component.conversation.isHidden = false;
+
+            const hideButton = fixture.debugElement.nativeElement.querySelector('.hide');
+            hideButton.click();
+            tick(501);
+
+            expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
+            expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, component.conversation.id, false);
+
+            expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
+            expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
+
+            expect(component.conversation.isFavorite).toBeFalse();
+            expect(component.conversation.isHidden).toBeTrue();
+        }));
+
+        it('should remove conversation from hidden when favorited', fakeAsync(() => {
+            component.conversation.isFavorite = false;
+            component.conversation.isHidden = true;
+            fixture.detectChanges();
+
+            const favoriteButton = fixture.debugElement.nativeElement.querySelector('.favorite');
+            favoriteButton.click();
+            tick(501);
+
+            expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
+            expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, component.conversation.id, false);
+
+            expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
+            expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
+
+            expect(component.conversation.isHidden).toBeFalse();
+            expect(component.conversation.isFavorite).toBeTrue();
+        }));
 
         it('should call updateIsFavorite when button is clicked', fakeAsync(() => {
             const button = fixture.debugElement.nativeElement.querySelector('.favorite');

@@ -26,7 +26,7 @@
             "practiceMode": {
                 "title": "Practice Mode",
                 "explanation": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will setup a separate repository for you to clone as usual.",
-                "repositoryChoice": "You already have a graded participation from before the due date. Therefore you can choose if the code in the separate repository should be the template repository of this exercise or your graded participation.",
+                "repositoryChoice": "You already have a graded participation from before the due date. Therefore, you can choose if the code in the separate repository should be the template repository of this exercise or your graded participation.",
                 "practiceWithTemplate": "Practice with template repository",
                 "practiceWithGradedParticipation": "Practice with graded participation"
             },
@@ -36,7 +36,7 @@
                 "titlePractice": "Reset practice participation",
                 "explanation": "You can reset your repository back to its initial state and start working again from there. This will override any changes you made so far! But the submitted changes will remain in the history.",
                 "offlineIDEExplanation": "After you reset the repository you have to pull the changes on your local machine in order to start working again.",
-                "repositoryChoice": "You already have a graded participation from before the due date. Therefore you can choose if you want to reset your practice repository to the template of this exercise or the code of your graded participation.",
+                "repositoryChoice": "You already have a graded participation from before the due date. Therefore, you can choose if you want to reset your practice repository to the template of this exercise or the code of your graded participation.",
                 "questionGraded": "Are you sure you want to reset the graded repository of exercise <strong>{{ title }}</strong>?",
                 "questionPractice": "Are you sure you want to reset the practice repository of exercise <strong>{{ title }}</strong>?",
                 "typeNameToConfirm": "Please type in the name of the exercise to confirm.",
@@ -44,7 +44,7 @@
                 "resetToGradedParticipation": "Reset to graded participation",
                 "success": "Resetting repository was successful. You can start over now."
             },
-            "practiceModeTooltip": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will setup a separate repository for you to clone.",
+            "practiceModeTooltip": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will set up a separate repository for you to clone.",
             "code": "Code",
             "cloneRatedRepository": "Clone your repository for this exercise:",
             "clonePracticeRepository": "Clone your practice repository for this exercise:",
@@ -55,13 +55,9 @@
                 "button": "Clone in Git client",
                 "helpIcon": "This opens the repository in Sourcetree or Tower. If you do not have them, you can still clone the repository using your IDE or terminal."
             },
-            "cloneVSCode": {
-                "button": "Clone in VSCode",
-                "helpIcon": "Clone this repository in Visual Studio Code."
-            },
-            "cloneIntelliJ": {
-                "button": "Clone in IntelliJ",
-                "helpIcon": "Clone this repository in IntelliJ IDEA. This feature requires the Jetbrains Toolbox."
+            "ideButton": {
+                "openIn": "Open in {{ ideName }}",
+                "helpIcon": "IDE can be defined in the settings"
             },
             "goToBuildPlan": "Go to build plan",
             "openTextEditor": "Open text editor",

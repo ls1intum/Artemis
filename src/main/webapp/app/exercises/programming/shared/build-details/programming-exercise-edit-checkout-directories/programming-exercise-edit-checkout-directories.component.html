@@ -1,0 +1,58 @@
+<div class="form-group">
+    @if (isAssigmentRepositoryEditable) {
+        <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.assignment"></label>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
+        <input
+            #field_assignmentRepositoryCheckoutPath="ngModel"
+            required
+            type="text"
+            class="form-control"
+            name="assignmentRepositoryCheckoutPath"
+            id="field_assignmentRepositoryCheckoutPath"
+            [pattern]="pattern()"
+            [(ngModel)]="assignmentCheckoutPath"
+            (ngModelChange)="onAssigmentRepositoryCheckoutPathChange($event)"
+        />
+    }
+    @if (isTestRepositoryEditable) {
+        <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.tests"></label>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
+        <input
+            #field_testRepositoryCheckoutPath="ngModel"
+            required
+            type="text"
+            class="form-control"
+            name="testRepositoryCheckoutPath"
+            id="field_testRepositoryCheckoutPath"
+            [(ngModel)]="testCheckoutPath"
+            (ngModelChange)="onTestRepositoryCheckoutPathChange($event)"
+            [pattern]="pattern()"
+        />
+    }
+    @if (isSolutionRepositoryEditable) {
+        <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.solution"></label>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
+        <input
+            #field_solutionRepositoryCheckoutPath="ngModel"
+            required
+            type="text"
+            class="form-control"
+            name="solutionRepositoryCheckoutPath"
+            id="field_solutionRepositoryCheckoutPath"
+            [(ngModel)]="solutionCheckoutPath"
+            (ngModelChange)="onSolutionRepositoryCheckoutPathChange($event)"
+            [pattern]="pattern()"
+        />
+    }
+    @if (!formValid) {
+        <div class="alert alert-danger mt-2" role="alert">
+            <strong jhiTranslate="artemisApp.programmingExercise.checkoutPath.alert"></strong>
+        </div>
+    }
+    <div class="warning alert-warning mt-2" role="alert">
+        <strong jhiTranslate="artemisApp.programmingExercise.checkoutPath.warning"></strong>
+    </div>
+    <div class="warning alert-warning mt-1" role="alert">
+        <strong jhiTranslate="artemisApp.programmingExercise.checkoutPath.warningBuildScript"></strong>
+    </div>
+</div>

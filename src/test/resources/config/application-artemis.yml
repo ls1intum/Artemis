@@ -48,6 +48,7 @@ artemis:
         password: fake-password
         token: fake-token
         url: https://continuous-integration.fake.fake
+        concurrent-build-size: 1
         secret-push-token: fake-token-hash
         vcs-credentials: fake-key
         artemis-authentication-token-key: fake-key

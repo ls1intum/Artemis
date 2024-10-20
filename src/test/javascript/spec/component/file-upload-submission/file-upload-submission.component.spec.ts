@@ -1,19 +1,18 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { routes } from 'app/exercises/file-upload/participate/file-upload-participation.route';
 import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 import { MockFileUploadSubmissionService, createFileUploadSubmission, fileUploadParticipation } from '../../helpers/mocks/service/mock-file-upload-submission.service';
@@ -54,7 +53,7 @@ describe('FileUploadSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot(), RouterTestingModule.withRoutes([routes[0]])],
+            imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot(), RouterModule.forRoot([routes[0]])],
             declarations: [
                 FileUploadSubmissionComponent,
                 MockComponent(ComplaintsForTutorComponent),

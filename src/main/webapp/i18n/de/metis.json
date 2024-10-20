@@ -29,7 +29,7 @@
             "edited": "(bearbeitet)",
             "markAsResolvingAnswerTooltip": "Bestätige, dass die ursprüngliche Nachricht durch diese Antwort geklärt wird",
             "resolvingAnswerTooltip": "Die ursprüngliche Nachricht wird durch diese Antwort geklärt",
-            "unmarkAsResolvingAnswerTooltip": "Widerrufe dass die ursprüngliche Nachricht durch diese Antwort geklärt wird",
+            "unmarkAsResolvingAnswerTooltip": "Widerrufe, dass die ursprüngliche Nachricht durch diese Antwort geklärt wird",
             "today": "Heute",
             "pinnedPostTooltip": "Diese Nachricht wurde angeheftet",
             "pinPostTooltip": "Klicke, um diese Nachricht anzuheften",
@@ -66,7 +66,7 @@
             },
             "overview": {
                 "title": "Nachrichten",
-                "searchBarDefault": "Suche nach Nachrichten in allen Kanälen (Ctrl/Cmd + K)",
+                "searchBarDefault": "Suche nach Nachrichten in allen Kanälen (Strg/Cmd + K)",
                 "sortedByDate": "Sortiert nach Datum",
                 "postContextFilter": "Zeige Nachrichten in:",
                 "one_extra_context": "weiterer",
@@ -90,7 +90,9 @@
                 "TECH_SUPPORT": "Technische Hilfe",
                 "ORGANIZATION": "Organisation",
                 "RANDOM": "Sonstiges",
-                "ANNOUNCEMENT": "Ankündigung"
+                "ANNOUNCEMENT": "Ankündigung",
+                "allPublicMessages": "Alle öffentlichen Nachrichten",
+                "searchResults": "Suchergebnisse für {{ search }}"
             },
             "post": {
                 "context": "Kontext",

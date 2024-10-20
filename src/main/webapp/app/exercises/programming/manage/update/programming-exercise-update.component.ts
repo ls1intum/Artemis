@@ -270,6 +270,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             } else {
                 this.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
             }
+            this.programmingExercise.customizeBuildPlanWithAeolus = language === ProgrammingLanguage.EMPTY;
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -410,6 +411,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     tap((segments) => {
                         this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
                         this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
+                        this.isEdit = segments.some((segment) => segment.path === 'edit');
                     }),
                     switchMap(() => this.activatedRoute.params),
                     tap((params) => {
@@ -626,6 +628,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
             this.programmingExercise.buildConfig!.windfile = undefined;
         }
+
+        if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {
+            this.programmingExercise.buildConfig!.timeoutSeconds = 0;
+        }
+
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
         if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {
             this.programmingExercise.submissionPolicy = undefined;
@@ -869,6 +876,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateExerciseBonusPoints(validationErrorReasons);
         this.validateExerciseSCAMaxPenalty(validationErrorReasons);
         this.validateExerciseSubmissionLimit(validationErrorReasons);
+        this.validateTimeout(validationErrorReasons);
+        this.validateCheckoutPaths(validationErrorReasons);
 
         return validationErrorReasons;
     }
@@ -1078,6 +1087,39 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateValues: {},
             });
         }
+    }
+
+    private validateTimeout(validationErrorReasons: ValidationReason[]): void {
+        if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig.timeoutSeconds < 0) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.timeout.alert',
+                translateValues: {},
+            });
+        }
+    }
+
+    private validateCheckoutPaths(validationErrorReasons: ValidationReason[]): void {
+        const checkoutPaths = [
+            this.programmingExercise.buildConfig?.assignmentCheckoutPath,
+            this.programmingExercise.buildConfig?.solutionCheckoutPath,
+            this.programmingExercise.buildConfig?.testCheckoutPath,
+        ];
+        if (!this.areValuesUnique(checkoutPaths) || !this.testCheckoutPathsPattern(checkoutPaths)) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
+        }
+    }
+
+    private areValuesUnique(values: (string | undefined)[]): boolean {
+        const filteredValues = values.filter((value): value is string => value !== undefined && value !== '');
+        const uniqueValues = new Set(filteredValues);
+        return filteredValues.length === uniqueValues.size;
+    }
+
+    private testCheckoutPathsPattern(checkoutPath: (string | undefined)[]): boolean {
+        return checkoutPath.every((path) => path === undefined || path.trim() === '' || this.invalidDirectoryNamePattern.test(path));
     }
 
     private createProgrammingExerciseForImportFromFile() {

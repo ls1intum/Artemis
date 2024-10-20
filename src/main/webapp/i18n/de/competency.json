@@ -10,7 +10,7 @@
             "taxonomy": "Taxonomie",
             "softDueDate": "Empfohlen bis",
             "optional": "Optional",
-            "optionalDescription": "Optionale Kompetenzen müssen nicht absolviert werden um den Lernpfad zu vervollständigen. Sie dienen entweder als zusätzliche Übung oder gehen über die erwarteten Inhalte des Kurses hinaus.",
+            "optionalDescription": "Optionale Kompetenzen müssen nicht absolviert werden, um den Lernpfad zu vervollständigen. Sie dienen entweder als zusätzliche Übung oder gehen über die erwarteten Inhalte des Kurses hinaus.",
             "course": "Kurs",
             "progress": "Fortschritt",
             "progressDescription": "Der Fortschritt basiert auf dem Prozentsatz an abgeschlossenen Vorlesungseinheiten und den erreichten Punkten in den Übungen.",
@@ -108,7 +108,7 @@
                 "titleMaxLengthValidationError": "Der Titel einer Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "softDueDate": "Empfohlenes Fertigstellungsdatum",
-                "softDueDateHint": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Kompetenz gemeistert haben sollten. Dies ist keine harte Frist.",
+                "softDueDateHint": "Empfehle einen Zeitpunkt, zu dem die Studierenden diese Kompetenz gemeistert haben sollten. Dies ist keine harte Frist.",
                 "connectWithLectureUnits": "Verbinde die Kompetenz mit Vorlesungseinheiten"
             },
             "edit": {
@@ -172,7 +172,38 @@
             "softDueDate": "Empfohlen bis",
             "masteryThreshold": "Schwellwert zum Erreichen der Kompetenz",
             "manage": {
+                "helpButton": "Hilfe",
                 "importAllButton": "Alles eines Kurses importieren"
+            },
+            "importSettings": {
+                "importRelationsLabel": "Beziehungen importieren",
+                "importRelationsTooltip": "Alle Beziehungen zwischen den importierten Kompetenzen werden ebenfalls importiert",
+                "importExercisesLabel": "Aufgaben importieren",
+                "importExercisesTooltip": "Importiert alle Aufgaben, die mit den importierten Kompetenzen verknüpft sind oder verknüpft sie, wenn eine Aufgabe mit diesem Namen bereits existiert",
+                "importLecturesLabel": "Vorlesungen importieren",
+                "importLecturesTooltip": "Importiert alle Vorlesungen, die mit den importierten Kompetenzen verknüpft sind oder verknüpft sie, wenn eine Vorlesung mit diesem Namen bereits existiert",
+                "referenceDateLabel": "Referenzdatum",
+                "referenceDateTooltip": "Das Referenzdatum wird verwendet, um alle Daten der importierten Resourcen zu setzen. Das früheste Datum dieses Typs wird auf das Referenzdatum gesetzt und alle anderen Daten werden relativ dazu gesetzt.",
+                "referenceDateTypeLabel": "Referenzdatumstyp",
+                "referenceDateTypeTooltip": "'Veröffentlichungsdatum' bezieht sich auf das Veröffentlichungsdatum von Aufgaben und Vorlesungseinheiten sowie das Sichtbarkeitsdatum von Vorlesungen. 'Fälligkeitsdatum' bezieht sich auf das Fälligkeitsdatum von Aufgaben und Kompetenzen sowie Das Enddatum von Vorlesungen.",
+                "referenceDateType": {
+                    "noSelection": "-- Wähle zuerst ein Referenzdatum --",
+                    "releaseDate": "Veröffentlichungsdatum",
+                    "dueDate": "Fälligkeitsdatum"
+                }
+            },
+            "importAll": {
+                "title": "Alle Kompetenzen eines Kurses importieren",
+                "success": "{{ noOfCompetencies }} Kompetenzen aus dem Kurs \"{{ courseTitle }}\" importiert.",
+                "warning": "Es wurden keine Kompetenzen für den Kurs \"{{ courseTitle }}\" gefunden.",
+                "table": {
+                    "title": "Kurse",
+                    "columns": {
+                        "TITLE": "Titel",
+                        "SHORT_NAME": "Kurzname",
+                        "SEMESTER": "Semester"
+                    }
+                }
             },
             "taxonomies": {
                 "REMEMBER": "Erinnern",
@@ -195,6 +226,7 @@
                 "titleUniqueValidationError": "Es gibt bereits eine Kompetenz/Voraussetzung mit diesem Titel in dem Kurs",
                 "suggestedTaxonomy": "Vorschlag",
                 "averageMastery": "Durchschnittliche Kompetenzbeherrschung der Studierenden",
+                "averageStudentScore": "Durchschnittliche Bewertung der Studierenden",
                 "selectLecture": "Wähle eine Vorlesung aus",
                 "noLectures": "Dieser Kurs hat keine Vorlesungen",
                 "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} Vorlesungseinheiten verbunden)",
@@ -209,6 +241,42 @@
                     "noOfParticipants": "Anzahl der Teilnehmenden",
                     "participationRate": "Teilnahmerate"
                 }
+            },
+            "featureExplanation": {
+                "title": "Einführung in Kurskompetenzen",
+                "adaptiveLearning": {
+                    "title1": "Was bedeutet adaptives Lernen?",
+                    "paragraph1": "Adaptives Lernen schneidet die Lerninhalte auf die individuellen Bedürfnisse jedes einzelnen Studierenden zu und passt sie in Echtzeit an seine Leistungen an. Durch personalisierte Unterstützung und Herausforderungen hilft es den Studierenden, effizienter zu lernen, sich zu engagieren und den Lernstoff in ihrem eigenen Tempo zu bewältigen.",
+                    "paragraph2": "Im Artemis bilden Kompetenzen die Grundlage für Adaptives Lernen. Sie sind übergreifende Lernziele, die durch die Interaktion mit verschiedenen Vorlesungen und Übungen erreicht werden können. Basierend auf diesen Kompetenzmodellen kann Artemis den Studierenden personalisierte Lernpfade anbieten, die ihren individuellen Bedürfnissen entsprechen.",
+                    "title2": "Warum?",
+                    "paragraph3": "Der kompetenzbasierte Unterricht ermöglicht es den Studierenden, sich die Fähigkeiten in ihrem eigenen Tempo anzueignen, was echte Fortschritte und Selbstvertrauen gewährleistet. Sie schafft eine personalisierte, ansprechende Lernerfahrung, die zu besseren Ergebnissen und langfristigem Erfolg führt. Auch ohne Lernpfade profitieren die Studierenden von der Möglichkeit, ihre Fortschritte zu verfolgen.",
+                    "paragraph4": "Durch Lernpfade erhalten die Studierenden Empfehlungen zur Unterstützung ihrer Lernanstrengungen. So wird es für sie einfacher, alle erforderlichen Kompetenzen eines Kurses zu beherrschen."
+                },
+                "courseCompetencyCreation": {
+                    "title": "Wie erstellt man eine Kurskompetenz?",
+                    "paragraph1": "Im Allgemeinen unterscheiden wir zwischen einer Kompetenz und einer Voraussetzung.",
+                    "paragraph2": "Um eine Kompetenz zu erstellen, klicke auf die Schaltfläche „Kompetenz erstellen“ am oberen Rand der Kompetenzseite. Auf der Erstellungsseite kann eindeutiger Name und eine passende Beschreibung für die Kompetenz angeben werden. Außerdem gibt es die Möglichkeit, ein empfohlenes Abschlussdatum festzulegen, das den Lernenden anzeigt, bis wann sie die verbundenen Lernobjekte beherrschen sollten.",
+                    "paragraph3": "Im Kompetenzbereich kann auch eine Taxonomie hinzugefügt werden, um den Studierenden einen besseren Einblick in den Zweck des Kompetenzbereichs zu geben. Wenn bestimmte Lernobjekte innerhalb dieses Kompetenzbereichs optional sind, kann eine Schwelle festgelegt werden, ab der der Kompetenzbereich als beherrscht gilt. Es gibt auch die Möglichkeit, den gesamten Kompetenzbereich als optional zu kennzeichnen.",
+                    "paragraph4": "Außerdem können Vorlesungseinheiten direkt mit dem Kompetenzbereich verknüpft werden. Es können zwar auch Übungen mit einem Kompetenzbereich verknüpft werden, dies muss jedoch in der Ansicht zur Bearbeitung/Erstellung von Übungen geschehen.",
+                    "paragraph5": "Neben der Möglichkeit, Kompetenzen oder Voraussetzungen selbst zu erstellen, besteht auch die Möglichkeit, diese aus anderen Kursen zu importieren oder standardisierte Kompetenzen zu verwenden. Weitere Informationen zu diesem Prozess enthält das <a href={{ link }} target=\"_blank\">Benutzerhandbuch für Artemis.</a>"
+                },
+                "courseCompetencyRelations": {
+                    "title": "Was sind Relationen zwischen Kurskompetenzen?",
+                    "paragraph1": "Lernkompetenzen können aufeinander aufbauen oder voneinander abhängig sein, weshalb Sie verschiedene Arten von Beziehungen zwischen ihnen herstellen können. Die Kompetenzen können sich entweder \"Stimmt überein mit\", \"Erweitert\" oder \"Setzt voraus\". Im Folgenden werden diese Beziehungen ausführlich beschrieben.",
+                    "paragraph2": "Zusammenfassend:",
+                    "paragraph3": "Bei \"Stimmt überein mit\" geht es um die Gleichwertigkeit zweier Fähigkeiten.<br />\"Erweitert\" bedeutet, dass man auf einer vorhandenen Fähigkeit aufbaut.<br />\"Setzt voraus\" bedeutet, dass eine Fähigkeit Voraussetzung für eine andere ist.",
+                    "paragraph4": "Um diese Beziehungen zu erstellen, öffne das Modal „Beziehungen bearbeiten“. In diesem Modal kann man die verbundenen Kompetenzen auswählen oder nacheinander auf jede einzelne klicken. Danach kann der gewünschte Beziehungstyp gewählt und die Beziehung erstellt werden. Um eine Beziehung zu aktualisieren oder zu löschen, klicke einfach auf die betreffende Beziehung und aktualisiere entweder den Beziehungstyp im Formular oder lösche ihn.",
+                    "relationTitle1": "1. Stimmt überein mit",
+                    "relationParagraph1": "Diese Beziehung impliziert, dass zwei Kompetenzen auf demselben Niveau sind und dieselben Fähigkeiten und Anforderungen abdecken. Wenn man die eine hat, hat man auch schon die andere, und sie können als austauschbar betrachtet werden.",
+                    "exampleLabel": "Beispiel:",
+                    "relationParagraph2": "Kompetenz A: Balancieren auf einem stationären Fahrrad. Kompetenz B: Auf einem Bein stehen (balancieren, ohne sich zu bewegen). Hier könnte das Balancieren auf einem stationären Fahrrad „stimmt überein mit“ mit dem Balancieren auf einem Bein sein, da beide die gleiche grundlegende Fähigkeit des Gleichgewichts erfordern. Wenn du das eine kannst, kannst du höchstwahrscheinlich auch das andere, da die Kernkompetenz (Gleichgewicht) in beiden Szenarien dieselbe ist.",
+                    "relationTitle2": "2. Erweitert",
+                    "relationParagraph3": "Diese Beziehung bedeutet, dass eine Kompetenz auf einer anderen aufbaut, indem sie komplexer oder umfangreicher wird. Mit anderen Worten: Wenn du eine Kompetenz beherrschst, kannst du zur Beherrschung der erweiterten Kompetenz übergehen, die diese Fähigkeit weiter ausbaut.",
+                    "relationParagraph4": "Kompetenz A: Mit dem Fahrrad in einer geraden Linie fahren. Kompetenz B: Mit dem Fahrrad um Kurven und Abbiegungen fahren. Das Fahren in einer geraden Linie ist die grundlegende Fähigkeit, die sich auf das Fahren in Kurven und beim Abbiegen ausweitet. Kompetenz B erweitert Kompetenz A um die Notwendigkeit, Richtungsänderungen zu bewältigen und dabei das Gleichgewicht und die Kontrolle zu behalten. Sobald du in einer geraden Linie fahren kannst, bist du bereit, diese Fähigkeit auf komplexere Fahrszenarien auszuweiten.",
+                    "relationTitle3": "3. Setzt voraus",
+                    "relationParagraph5": "Diese Beziehung impliziert, dass eine Kompetenz davon abhängt, dass eine andere bereits beherrscht wird. Um die fortgeschrittenere Kompetenz ausüben zu können, muss der Lernende zunächst die zugrunde liegende Fähigkeit oder das Wissen besitzen.",
+                    "relationParagraph6": "Kompetenz A: Sicheres Fahren mit dem Fahrrad in flachem Gelände. Kompetenz B: Mit dem Fahrrad bergauf fahren. Das Fahren mit dem Fahrrad bergauf setzt voraus, dass der Lernende bereits das Fahren auf ebenem Gelände beherrscht. Die Beherrschung des Fahrens in der Ebene ist eine Voraussetzung, da das Fahren bergauf einen größeren Widerstand darstellt und zusätzliche Kraft und Technik erfordert. Ohne die Beherrschung der grundlegenden Fähigkeiten des Fahrens in der Ebene ist der Lernende nicht in der Lage, das Fahren bergauf in Angriff zu nehmen."
+                }
             }
         },
         "prerequisite": {
@@ -217,7 +285,7 @@
             "deleted": "Voraussetzungen gelöscht",
             "updated": "Voraussetzungen bearbeitet",
             "optional": "Optional",
-            "optionalDescription": "Optionale Voraussetzungen müssen nicht absolviert werden um den Lernpfad zu vervollständigen. Sie dienen entweder als zusätzliche Übung oder gehen über die erwarteten Inhalte des Kurses hinaus.",
+            "optionalDescription": "Optionale Voraussetzungen müssen nicht absolviert werden, um den Lernpfad zu vervollständigen. Sie dienen entweder als zusätzliche Übung oder gehen über die erwarteten Inhalte des Kurses hinaus.",
             "manage": {
                 "title": "Voraussetzungsmanagement",
                 "createButton": "Voraussetzung erstellen",
@@ -245,11 +313,16 @@
                 "titleMaxLengthValidationError": "Der Titel einer Voraussetzung ist auf maximal {{max}} Symbole beschränkt",
                 "descriptionMaxLengthValidationError": "Die Beschreibung der Voraussetzung ist auf maximal {{max}} Symbole beschränkt",
                 "softDueDate": "Empfohlenes Fertigstellungsdatum",
-                "softDueDateHint": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Voraussetzung gemeistert haben sollten. Dies ist keine harte Frist.",
+                "softDueDateHint": "Empfehle einen Zeitpunkt, zu dem die Studierenden diese Voraussetzung gemeistert haben sollten. Dies ist keine harte Frist.",
                 "connectWithLectureUnits": "Verbinde die Voraussetzung mit Vorlesungseinheiten"
             },
             "edit": {
                 "title": "Bearbeite eine Voraussetzung"
+            },
+            "importAll": {
+                "title": "Alle Kompetenzen eines Kurses importieren",
+                "success": "{{ noOfCompetencies }} Kompetenzen aus dem Kurs \"{{ courseTitle }}\" importiert.",
+                "warning": "Es wurden keine Kompetenzen für den Kurs \"{{ courseTitle }}\" gefunden."
             },
             "competencyCard": {
                 "delete": {
@@ -269,19 +342,19 @@
                 "health": {
                     "missing": {
                         "title": "Fehlende Lernpfade",
-                        "body": "Für einige Studierende wurde noch kein Lernpfad erstellt. Dies ist nicht kritisch. Ihre Lernpfade werden generiert, wenn sie ihren Lernpfad das erste mal anfragen.",
+                        "body": "Für einige Studierende wurde noch kein Lernpfad erstellt. Dies ist nicht kritisch. Ihre Lernpfade werden generiert, wenn sie ihren Lernpfad das erste Mal anfragen.",
                         "action": "Erstellen",
                         "hint": "Erstellen der fehlenden Lernpfade"
                     },
                     "noCompetencies": {
                         "title": "Keine Kompetenzen",
-                        "body": "Es wurden noch keine Kompetenzen erstellt. Lernpfade setzen sich aus den Kompetenzen zusammen, die Studierende erreichen müssen. Gehe zum Kompetenzmanagement um neue Kompetenzen zu erstellen oder bestehende zu importieren.",
+                        "body": "Es wurden noch keine Kompetenzen erstellt. Lernpfade setzen sich aus den Kompetenzen zusammen, die Studierende erreichen müssen. Gehe zum Kompetenzmanagement, um neue Kompetenzen zu erstellen oder bestehende zu importieren.",
                         "action": "Kompetenzmanagement",
                         "hint": "Gehe zum Kompetenzmanagement"
                     },
                     "noRelations": {
                         "title": "Keine Beziehungen",
-                        "body": "Es wurden noch keine Beziehungen zwischen Kompetenzen konfiguriert. Lernpfade nutzen die Informationen über die Struktur der Lerninhalte um zuverlässig qualitiv hochwertige Empfehlungen für Studierende zu generieren. Gehe zum Kompetenzmanagement um die Beziehungen zwischen Kompetenzen zu konfigurieren.",
+                        "body": "Es wurden noch keine Beziehungen zwischen Kompetenzen konfiguriert. Lernpfade nutzen die Informationen über die Struktur der Lerninhalte, um zuverlässig qualitativ hochwertige Empfehlungen für Studierende zu generieren. Gehe zum Kompetenzmanagement, um die Beziehungen zwischen Kompetenzen zu konfigurieren.",
                         "action": "Kompetenzmanagement",
                         "hint": "Gehe zum Kompetenzmanagement"
                     }
@@ -316,7 +389,7 @@
                 "legend": {
                     "competencyEnd": {
                         "title": "Kompetenzende",
-                        "tooltip": "Hier endet eine Kompetenz. Die Knoten zwischen Kompetenzbeginn und -ende sind Inhalte die dir beim erreichen dieser Kompetenz helfen."
+                        "tooltip": "Hier endet eine Kompetenz. Die Knoten zwischen Kompetenzbeginn und -ende sind Inhalte, die dir beim Erreichen dieser Kompetenz helfen."
                     },
                     "matchStart": {
                         "title": "Verzweigung",
