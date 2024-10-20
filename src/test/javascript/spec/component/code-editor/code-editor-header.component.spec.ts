@@ -36,8 +36,8 @@ describe('CodeEditorHeaderComponent', () => {
         expect(comp.tabSize()).toBe(MAX_TAB_SIZE);
     });
 
-    it('should notify when the tab size changed', fakeAsync(() => {
-        comp.tabSizeChanged.subscribe((tabSize) => {
+    it('should notify when the tab size was validated', fakeAsync(() => {
+        comp.onValidateTabSize.subscribe((tabSize) => {
             expect(tabSize).toBe(5);
         });
 

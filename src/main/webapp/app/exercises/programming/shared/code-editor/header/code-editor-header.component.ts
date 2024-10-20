@@ -15,7 +15,7 @@ export class CodeEditorHeaderComponent {
     readonly fileName = input<string>();
     readonly isLoading = input<boolean>(false);
     readonly showTabSizeSelector = input<boolean>(true);
-    readonly tabSizeChanged = output<number>();
+    readonly onValidateTabSize = output<number>();
 
     readonly tabSize = model<number>(4);
 
@@ -33,6 +33,6 @@ export class CodeEditorHeaderComponent {
      */
     validateTabSize(): void {
         this.tabSize.set(Math.max(1, Math.min(this.tabSize(), MAX_TAB_SIZE)));
-        this.tabSizeChanged.emit(this.tabSize());
+        this.onValidateTabSize.emit(this.tabSize());
     }
 }
