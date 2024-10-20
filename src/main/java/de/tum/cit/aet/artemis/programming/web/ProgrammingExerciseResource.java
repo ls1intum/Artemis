@@ -538,6 +538,21 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * GET /programming-exercises/:exerciseId/with-auxiliary-repository
+     *
+     * @param exerciseId the id of the programmingExercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
+     */
+    @GetMapping("programming-exercises/{exerciseId}/with-auxiliary-repository")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAuxiliaryRepository(@PathVariable long exerciseId) {
+
+        log.debug("REST request to get programming exercise with auxiliary repositories: {}", exerciseId);
+        final var programmingExercise = programmingExerciseService.loadProgrammingExerciseWithAuxiliaryRepositories(exerciseId);
+        return ResponseEntity.ok(programmingExercise);
+    }
+
+    /**
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
      * @param exerciseId                   the id of the programmingExercise to delete
