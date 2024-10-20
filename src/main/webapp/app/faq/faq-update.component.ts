@@ -127,7 +127,6 @@ export class FaqUpdateComponent implements OnInit {
         if (this.isAtLeastInstructor) {
             messageKey = newlyCreated ? 'artemisApp.faq.updated' : 'artemisApp.faq.created';
         } else {
-            console.log(faq.id);
             messageKey = newlyCreated ? 'artemisApp.faq.proposedChange' : 'artemisApp.faq.proposed';
         }
         this.alertService.success(messageKey, { title: faq.questionTitle });
