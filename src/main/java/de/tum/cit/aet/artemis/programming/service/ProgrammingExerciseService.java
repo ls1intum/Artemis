@@ -272,7 +272,9 @@ public class ProgrammingExerciseService {
         // We save once in order to generate an id for the programming exercise
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         programmingExercise.setBuildConfig(savedBuildConfig);
-        var savedProgrammingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
+
+        var savedProgrammingExercise = exerciseService.createWithCompetencyLinks(programmingExercise, programmingExerciseRepository::saveForCreation);
+
         savedProgrammingExercise.getBuildConfig().setProgrammingExercise(savedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
         // Step 1: Setting constant facts for a programming exercise

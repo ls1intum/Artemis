@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
@@ -793,6 +794,22 @@ public class ExerciseService {
             User instructor = userRepository.getUser();
             this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText, instructor);
         }
+    }
+
+    public <T extends Exercise> T createWithCompetencyLinks(T exercise, Function<T, T> saveFunction) {
+        // persist exercise before linking it to the competency
+        Set<CompetencyExerciseLink> links = exercise.getCompetencyLinks();
+        exercise.setCompetencyLinks(new HashSet<>());
+
+        T savedExercise = saveFunction.apply(exercise);
+
+        if (!links.isEmpty()) {
+            savedExercise.setCompetencyLinks(links);
+            reconnectCompetencyExerciseLinks(savedExercise);
+            savedExercise.setCompetencyLinks(new HashSet<>(competencyExerciseLinkRepository.saveAll(links)));
+        }
+
+        return savedExercise;
     }
 
     /**

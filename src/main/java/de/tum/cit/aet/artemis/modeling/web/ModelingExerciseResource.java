@@ -177,7 +177,7 @@ public class ModelingExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
+        ModelingExercise result = exerciseService.createWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         modelingExerciseService.scheduleOperations(result.getId());

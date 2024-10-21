@@ -33,7 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -87,10 +87,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final ExerciseService exerciseService;
 
+    private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, FileService fileService, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService) {
+            ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -101,6 +103,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.fileService = fileService;
         this.exerciseService = exerciseService;
+        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
     }
 
     /**
@@ -434,17 +437,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // make sure the pointers in the statistics are correct
         quizExercise.recalculatePointCounters();
 
-        // persist lecture unit before competency links to prevent error
-        Set<CompetencyExerciseLink> links = quizExercise.getCompetencyLinks();
-        quizExercise.setCompetencyLinks(new HashSet<>());
-
-        QuizExercise savedQuizExercise = super.save(quizExercise);
-
-        if (!links.isEmpty()) {
-            savedQuizExercise.setCompetencyLinks(links);
-            exerciseService.reconnectCompetencyExerciseLinks(savedQuizExercise);
-            savedQuizExercise = quizExerciseRepository.saveAndFlush(savedQuizExercise);
-        }
+        QuizExercise savedQuizExercise = exerciseService.createWithCompetencyLinks(quizExercise, super::save);
 
         if (savedQuizExercise.isCourseExercise()) {
             // only schedule quizzes for course exercises, not for exam exercises

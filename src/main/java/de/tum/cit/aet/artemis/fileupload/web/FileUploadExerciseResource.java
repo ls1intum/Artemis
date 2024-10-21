@@ -156,7 +156,7 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
+        FileUploadExercise result = exerciseService.createWithCompetencyLinks(fileUploadExercise, fileUploadExerciseRepository::save);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);

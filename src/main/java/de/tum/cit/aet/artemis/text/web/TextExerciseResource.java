@@ -222,7 +222,7 @@ public class TextExerciseResource {
         // Check that only allowed athena modules are used
         athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
-        TextExercise result = textExerciseRepository.save(textExercise);
+        TextExercise result = exerciseService.createWithCompetencyLinks(textExercise, textExerciseRepository::save);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
