@@ -2,24 +2,20 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageTrace;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * Service for managing the LLMTokenUsage by all LLMs in Artemis
@@ -38,12 +34,17 @@ public class LLMTokenUsageService {
     }
 
     /**
-     * method saves the token usage to the database
+     * Saves the token usage to the database.
+     * This method records the usage of tokens by various LLM services in the system.
      *
-     * @param llmRequests     List of LLM requests
-     * @param serviceType     type of the LLM service
-     * @param builderFunction of type Function<IrisTokenUsageBuilder, IrisTokenUsageBuilder> using IrisTokenUsageBuilder
-     * @return saved LLMTokenUsage as a List
+     * @param llmRequests     List of LLM requests containing details about the token usage.
+     * @param serviceType     Type of the LLM service (e.g., IRIS, GPT-3).
+     * @param builderFunction A function that takes an LLMTokenUsageBuilder and returns a modified LLMTokenUsageBuilder.
+     *                            This function is used to set additional properties on the LLMTokenUsageTrace object, such as
+     *                            the course ID, user ID, exercise ID, and Iris message ID.
+     *                            Example usage:
+     *                            builder -> builder.withCourse(courseId).withUser(userId)
+     * @return The saved LLMTokenUsageTrace object, which includes the details of the token usage.
      */
     // TODO: this should ideally be done Async
     public LLMTokenUsageTrace saveLLMTokenUsage(List<LLMRequest> llmRequests, LLMServiceType serviceType, Function<LLMTokenUsageBuilder, LLMTokenUsageBuilder> builderFunction) {
@@ -52,34 +53,32 @@ public class LLMTokenUsageService {
 
         LLMTokenUsageBuilder builder = builderFunction.apply(new LLMTokenUsageBuilder());
         builder.getIrisMessageID().ifPresent(llmTokenUsageTrace::setIrisMessageId);
-        builder.getUser().ifPresent(user -> llmTokenUsageTrace.setUserId(user.getId()));
-        builder.getExercise().ifPresent(exercise -> llmTokenUsageTrace.setExerciseId(exercise.getId()));
-        builder.getCourse().ifPresent(course -> llmTokenUsageTrace.setCourseId(course.getId()));
+        builder.getCourseID().ifPresent(llmTokenUsageTrace::setCourseId);
+        builder.getExerciseID().ifPresent(llmTokenUsageTrace::setExerciseId);
+        builder.getUserID().ifPresent(llmTokenUsageTrace::setUserId);
 
-        Set<LLMTokenUsageRequest> llmRequestsSet = llmTokenUsageTrace.getLLMRequests();
-        setLLMTokenUsageRequests(llmRequests, llmTokenUsageTrace, llmRequestsSet);
+        llmTokenUsageTrace.setLlmRequests(llmRequests.stream().map(LLMTokenUsageService::convertLLMRequestToLLMTokenUsageRequest)
+                .peek(llmTokenUsageRequest -> llmTokenUsageRequest.setTrace(llmTokenUsageTrace)).collect(Collectors.toSet()));
+
         return llmTokenUsageTraceRepository.save(llmTokenUsageTrace);
     }
 
-    private void setLLMTokenUsageRequests(List<LLMRequest> llmRequests, LLMTokenUsageTrace llmTokenUsageTrace, Set<LLMTokenUsageRequest> llmRequestsSet) {
-        for (LLMRequest llmRequest : llmRequests) {
-            LLMTokenUsageRequest llmTokenUsageRequest = new LLMTokenUsageRequest();
-            llmTokenUsageRequest.setModel(llmRequest.model());
-            llmTokenUsageRequest.setNumInputTokens(llmRequest.numInputTokens());
-            llmTokenUsageRequest.setNumOutputTokens(llmRequest.numOutputTokens());
-            llmTokenUsageRequest.setCostPerMillionInputTokens(llmRequest.costPerMillionInputToken());
-            llmTokenUsageRequest.setCostPerMillionOutputTokens(llmRequest.costPerMillionOutputToken());
-            llmTokenUsageRequest.setServicePipelineId(llmRequest.pipelineId());
-            llmTokenUsageRequest.setTrace(llmTokenUsageTrace);
-            llmRequestsSet.add(llmTokenUsageRequest);
-        }
+    private static LLMTokenUsageRequest convertLLMRequestToLLMTokenUsageRequest(LLMRequest llmRequest) {
+        LLMTokenUsageRequest llmTokenUsageRequest = new LLMTokenUsageRequest();
+        llmTokenUsageRequest.setModel(llmRequest.model());
+        llmTokenUsageRequest.setNumInputTokens(llmRequest.numInputTokens());
+        llmTokenUsageRequest.setNumOutputTokens(llmRequest.numOutputTokens());
+        llmTokenUsageRequest.setCostPerMillionInputTokens(llmRequest.costPerMillionInputToken());
+        llmTokenUsageRequest.setCostPerMillionOutputTokens(llmRequest.costPerMillionOutputToken());
+        llmTokenUsageRequest.setServicePipelineId(llmRequest.pipelineId());
+        return llmTokenUsageRequest;
     }
 
     // TODO: this should ideally be done Async
     public void appendRequestsToTrace(List<LLMRequest> requests, LLMTokenUsageTrace trace) {
-        Set<LLMTokenUsageRequest> llmRequestsSet = new HashSet<>();
-        setLLMTokenUsageRequests(requests, trace, llmRequestsSet);
-        llmTokenUsageRequestRepository.saveAll(llmRequestsSet);
+        var requestSet = requests.stream().map(LLMTokenUsageService::convertLLMRequestToLLMTokenUsageRequest).peek(llmTokenUsageRequest -> llmTokenUsageRequest.setTrace(trace))
+                .collect(Collectors.toSet());
+        llmTokenUsageRequestRepository.saveAll(requestSet);
     }
 
     /**
@@ -87,16 +86,16 @@ public class LLMTokenUsageService {
      */
     public static class LLMTokenUsageBuilder {
 
-        private Optional<Course> course = Optional.empty();
+        private Optional<Long> courseID = Optional.empty();
 
         private Optional<Long> irisMessageID = Optional.empty();
 
-        private Optional<Exercise> exercise = Optional.empty();
+        private Optional<Long> exerciseID = Optional.empty();
 
-        private Optional<User> user = Optional.empty();
+        private Optional<Long> userID = Optional.empty();
 
-        public LLMTokenUsageBuilder withCourse(Course course) {
-            this.course = Optional.ofNullable(course);
+        public LLMTokenUsageBuilder withCourse(Long courseID) {
+            this.courseID = Optional.ofNullable(courseID);
             return this;
         }
 
@@ -105,30 +104,30 @@ public class LLMTokenUsageService {
             return this;
         }
 
-        public LLMTokenUsageBuilder withExercise(Exercise exercise) {
-            this.exercise = Optional.ofNullable(exercise);
+        public LLMTokenUsageBuilder withExercise(Long exerciseID) {
+            this.exerciseID = Optional.ofNullable(exerciseID);
             return this;
         }
 
-        public LLMTokenUsageBuilder withUser(User user) {
-            this.user = Optional.ofNullable(user);
+        public LLMTokenUsageBuilder withUser(Long userID) {
+            this.userID = Optional.ofNullable(userID);
             return this;
         }
 
-        public Optional<Course> getCourse() {
-            return course;
+        public Optional<Long> getCourseID() {
+            return courseID;
         }
 
         public Optional<Long> getIrisMessageID() {
             return irisMessageID;
         }
 
-        public Optional<Exercise> getExercise() {
-            return exercise;
+        public Optional<Long> getExerciseID() {
+            return exerciseID;
         }
 
-        public Optional<User> getUser() {
-            return user;
+        public Optional<Long> getUserID() {
+            return userID;
         }
     }
 }

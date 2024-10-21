@@ -10,6 +10,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
@@ -36,13 +37,16 @@ public class IrisCompetencyGenerationService {
 
     private final PyrisJobService pyrisJobService;
 
+    private final UserRepository userRepository;
+
     public IrisCompetencyGenerationService(PyrisPipelineService pyrisPipelineService, LLMTokenUsageService llmTokenUsageService, CourseRepository courseRepository,
-            IrisWebsocketService websocketService, PyrisJobService pyrisJobService) {
+            IrisWebsocketService websocketService, PyrisJobService pyrisJobService, UserRepository userRepository) {
         this.pyrisPipelineService = pyrisPipelineService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.courseRepository = courseRepository;
         this.websocketService = websocketService;
         this.pyrisJobService = pyrisJobService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -58,7 +62,7 @@ public class IrisCompetencyGenerationService {
         pyrisPipelineService.executePipeline(
                 "competency-extraction",
                 "default",
-                pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user)),
+                pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getId())),
                 executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, CompetencyTaxonomy.values(), 5),
                 stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId()), new PyrisCompetencyStatusUpdateDTO(stages, null, null))
         );
@@ -74,9 +78,11 @@ public class IrisCompetencyGenerationService {
     public void handleStatusUpdate(CompetencyExtractionJob job, PyrisCompetencyStatusUpdateDTO statusUpdate) {
         Course course = courseRepository.findByIdForUpdateElseThrow(job.courseId());
         if (statusUpdate.tokens() != null && !statusUpdate.tokens().isEmpty()) {
-            llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> builder.withCourse(course).withUser(job.user()));
+            llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> builder.withCourse(course.getId()).withUser(job.userId()));
         }
-        websocketService.send(job.user().getLogin(), websocketTopic(job.courseId()), statusUpdate);
+
+        var user = userRepository.findById(job.userId()).orElseThrow();
+        websocketService.send(user.getLogin(), websocketTopic(job.courseId()), statusUpdate);
     }
 
     private static String websocketTopic(long courseId) {

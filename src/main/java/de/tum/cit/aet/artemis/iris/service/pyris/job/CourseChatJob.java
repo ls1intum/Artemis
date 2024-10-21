@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
  * This job is used to reference the details of a course chat session when Pyris sends a status update.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseChatJob(String jobId, long courseId, long sessionId) implements PyrisJob {
+public record CourseChatJob(String jobId, long courseId, long sessionId) implements SessionBasedPyrisJob {
 
     @Override
     public boolean canAccess(Course course) {

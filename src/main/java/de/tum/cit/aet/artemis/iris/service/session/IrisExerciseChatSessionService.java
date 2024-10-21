@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -19,16 +18,12 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -43,10 +38,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisExerciseChatSession> implements IrisRateLimitedFeatureInterface {
-
-    private final IrisMessageService irisMessageService;
-
-    private final LLMTokenUsageService llmTokenUsageService;
 
     private final IrisSettingsService irisSettingsService;
 
@@ -71,9 +62,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository,
             ObjectMapper objectMapper) {
-        super(irisSessionRepository, objectMapper);
-        this.irisMessageService = irisMessageService;
-        this.llmTokenUsageService = llmTokenUsageService;
+        super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
@@ -163,49 +152,9 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
                 .flatMap(sub -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(sub.getId()));
     }
 
-    /**
-     * Handles the status update of a ExerciseChatJob by sending the result to the student via the Websocket.
-     *
-     * @param job          The job that was executed
-     * @param statusUpdate The status update of the job
-     */
-    public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        var session = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
-        IrisMessage savedMessage;
-        if (statusUpdate.result() != null) {
-            var message = new IrisMessage();
-            message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-            savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
-        }
-        else {
-            savedMessage = null;
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
-        }
-
-        if (statusUpdate.tokens() != null && !statusUpdate.tokens().isEmpty()) {
-            if (savedMessage != null) {
-                // generated message is first sent and generated trace is saved
-                var llmTokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS,
-                        builder -> builder.withIrisMessageID(savedMessage.getId()).withExercise(session.getExercise()).withUser(session.getUser())
-                                .withCourse(session.getExercise().getCourseViaExerciseGroupOrCourseMember()));
-                traces.put(job.jobId(), llmTokenUsageTrace);
-            }
-            else {
-                // interaction suggestion is sent and appended to the generated trace if it exists, trace is then removed,
-                // because interaction suggestion is the last message from Iris in the pipeline
-                if (traces.containsKey(job.jobId())) {
-                    var trace = traces.get(job.jobId());
-                    llmTokenUsageService.appendRequestsToTrace(statusUpdate.tokens(), trace);
-                    traces.remove(job.jobId());
-                }
-                else {
-                    llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> builder.withExercise(session.getExercise())
-                            .withUser(session.getUser()).withCourse(session.getExercise().getCourseViaExerciseGroupOrCourseMember()));
-                }
-            }
-        }
-
-        updateLatestSuggestions(session, statusUpdate.suggestions());
+    @Override
+    protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisExerciseChatSession session) {
+        var exercise = session.getExercise();
+        builder.withCourse(exercise.getCourseViaExerciseGroupOrCourseMember().getId()).withExercise(exercise.getId());
     }
 }
