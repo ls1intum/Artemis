@@ -1,3 +1,7 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
 $profile-picture-height: 2.15rem;
 
 .post-result-information {
@@ -119,4 +123,22 @@ $profile-picture-height: 2.15rem;
 
 .card {
     border-radius: 1em;
+}
+
+@include media-breakpoint-down(sm) {
+    .post-header-author-date {
+        flex-direction: column;
+    }
+
+    .post-content-margin {
+        margin-left: 0;
+    }
+
+    .post-header-date-separator {
+        display: none;
+    }
+
+    .post-header-date {
+        color: $secondary;
+    }
 }

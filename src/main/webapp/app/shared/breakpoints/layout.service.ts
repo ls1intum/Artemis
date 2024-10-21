@@ -32,6 +32,6 @@ export class LayoutService {
     }
 
     isBreakpointActive(breakpointName: string) {
-        return this.activeBreakpoints.find((breakpoint) => breakpoint === breakpointName);
+        return !!this.activeBreakpoints.find((breakpoint) => breakpoint === breakpointName);
     }
 }

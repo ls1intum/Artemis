@@ -20,6 +20,7 @@ import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { TraceService } from '@sentry/angular';
 import { Router } from '@angular/router';
+import isMobile from 'ismobilejs-es5';
 
 @NgModule({
     imports: [
@@ -109,5 +110,8 @@ export class ArtemisCoreModule {
         const languageKey = sessionStorageService.retrieve('locale') || languageHelper.determinePreferredLanguage();
         translateService.use(languageKey);
         tooltipConfig.container = 'body';
+        if (isMobile(window.navigator.userAgent).any ?? false) {
+            tooltipConfig.disableTooltip = true;
+        }
     }
 }
