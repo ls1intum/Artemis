@@ -64,6 +64,25 @@
                         }
                     </ng-template>
                 </ngx-datatable-column>
+                <ngx-datatable-column prop="" [minWidth]="100" [width]="120" [maxWidth]="120">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper">
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.course.courseGroup.profilePicture"></span>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <jhi-profile-picture
+                            imageSizeInRem="1.5"
+                            fontSizeInRem="0.6"
+                            imageId="user-profile-picture"
+                            defaultPictureId="user-default-profile-picture"
+                            [authorId]="value.id"
+                            [authorName]="value.name"
+                            [imageUrl]="value.imageUrl"
+                        >
+                        </jhi-profile-picture>
+                    </ng-template>
+                </ngx-datatable-column>
                 <ngx-datatable-column prop="login" [minWidth]="150" [width]="200" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">

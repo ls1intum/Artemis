@@ -9,8 +9,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { faCircle, faCircleInfo, faCircleXmark, faPercent, faQuestionCircle, faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';
-import { getInitialsFromString } from 'app/utils/text.utils';
-import { getBackgroundColorHue } from 'app/utils/color.utils';
 
 @Component({
     selector: 'jhi-tutorial-group-detail',
@@ -34,9 +32,7 @@ export class TutorialGroupDetailComponent implements OnChanges {
 
     sessions: TutorialGroupSession[] = [];
 
-    tutorInitials: string;
     tutorialTimeslotString: string | undefined;
-    tutorDefaultProfilePictureHue: string;
     isMessagingEnabled: boolean;
     utilization: number | undefined;
 
@@ -91,8 +87,6 @@ export class TutorialGroupDetailComponent implements OnChanges {
     getTutorialDetail() {
         const tutorialGroup = this.tutorialGroup;
 
-        this.tutorDefaultProfilePictureHue = getBackgroundColorHue(tutorialGroup.teachingAssistantId ? tutorialGroup.teachingAssistantId.toString() : 'default');
-        this.tutorInitials = getInitialsFromString(tutorialGroup.teachingAssistantName ?? 'NA');
         this.isMessagingEnabled = isMessagingEnabled(this.course);
         if (tutorialGroup.averageAttendance && tutorialGroup.capacity) {
             this.utilization = Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);

@@ -22,6 +22,7 @@ import { metisAnswerPostUser2, metisPostInChannel, metisResolvingAnswerPostUser1
 import { UserRole } from 'app/shared/metis/metis.util';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 describe('AnswerPostHeaderComponent', () => {
     let component: AnswerPostHeaderComponent;
@@ -58,6 +59,7 @@ describe('AnswerPostHeaderComponent', () => {
                 MockComponent(PostingButtonComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(ConfirmIconComponent),
+                MockComponent(ProfilePictureComponent),
             ],
         })
             .compileComponents()
@@ -81,11 +83,6 @@ describe('AnswerPostHeaderComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    it('should display default profile picture', () => {
-        fixture.detectChanges();
-        expect(getElement(debugElement, '#post-default-profile-picture')).not.toBeNull();
     });
 
     it('should set author information correctly', () => {

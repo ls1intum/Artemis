@@ -102,7 +102,8 @@
             "search": "Suche",
             "loading": "Laden...",
             "searchError": "Der Suchbegriff muss leer oder mindestens 3 Zeichen lang sein.",
-            "jenkinsChange": "Die Änderung des Benutzernamens wird für dein aktuelles Setup (Jenkins) nicht unterstützt. Möglicherweise musst du den Benutzernamen in Jenkins manuell ändern.\nDu hast den Benutzer <i>{{ oldLogin }}</i> auf <i>{{ newLogin }}</i> aktualisiert."
+            "jenkinsChange": "Die Änderung des Benutzernamens wird für dein aktuelles Setup (Jenkins) nicht unterstützt. Möglicherweise musst du den Benutzernamen in Jenkins manuell ändern.\nDu hast den Benutzer <i>{{ oldLogin }}</i> auf <i>{{ newLogin }}</i> aktualisiert.",
+            "profilePicture": "Profilbild"
         }
     }
 }

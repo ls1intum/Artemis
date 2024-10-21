@@ -5,9 +5,10 @@ import { UserImportModule } from 'app/shared/user-import/user-import.module';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @NgModule({
-    imports: [ArtemisDataTableModule, UserImportModule, NgxDatatableModule, ArtemisSharedModule, RouterModule],
+    imports: [ArtemisDataTableModule, UserImportModule, NgxDatatableModule, ArtemisSharedModule, RouterModule, ProfilePictureComponent],
     declarations: [CourseGroupComponent],
     exports: [CourseGroupComponent],
 })
