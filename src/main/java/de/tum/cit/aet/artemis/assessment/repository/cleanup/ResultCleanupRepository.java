@@ -17,7 +17,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 
 /**
- * Spring Data JPA repository for the Result entity.
+ * Spring Data JPA repository for cleaning up old and orphaned results.
+ * THE FOLLOWING METHODS ARE USED FOR CLEANUP PURPOSES AND SHOULD NOT BE USED IN OTHER CASES
  */
 @Profile(PROFILE_CORE)
 @Repository
