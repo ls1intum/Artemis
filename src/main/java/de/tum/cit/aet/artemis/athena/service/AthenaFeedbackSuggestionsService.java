@@ -20,6 +20,9 @@ import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
 import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.LLMRequest;
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
@@ -167,10 +170,16 @@ public class AthenaFeedbackSuggestionsService {
         if (meta == null) {
             return;
         }
-        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        Long exerciseId = exercise.getId();
-        Long userId = ((StudentParticipation) submission.getParticipation()).getStudent().map(User::getId).orElse(null);
 
-        llmTokenUsageService.saveAthenaTokenUsage(courseId, exerciseId, userId, meta, isPreliminaryFeedback);
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        User user = ((StudentParticipation) submission.getParticipation()).getStudent().orElse(null);
+
+        // Temporary pipelineId until Athena provides it in the response
+        String pipelineId = isPreliminaryFeedback ? "PRELIMINARY_FEEDBACK" : "FEEDBACK_SUGGESTION";
+
+        List<LLMRequest> llmRequests = meta.llmCalls().stream().map(llmCall -> new LLMRequest(llmCall.modelName(), llmCall.inputTokens(), 0, llmCall.outputTokens(), 0, pipelineId))
+                .toList();
+        llmTokenUsageService.saveLLMTokenUsage(llmRequests, LLMServiceType.ATHENA,
+                (llmTokenUsageBuilder -> llmTokenUsageBuilder.withCourse(course).withExercise(exercise).withUser(user)));
     }
 }
