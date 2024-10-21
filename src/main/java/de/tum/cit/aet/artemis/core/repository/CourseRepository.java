@@ -542,4 +542,30 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     boolean hasLearningPathsEnabled(@Param("courseId") long courseId);
 
+    /**
+     * Retrieves all courses that the user has access to based on their role
+     * or if they are an admin. Filters out any courses that do not belong to
+     * a specific semester (i.e., have a null semester).
+     *
+     * @param userId  The id of the user whose courses are being retrieved
+     * @param isAdmin A boolean flag indicating whether the user is an admin
+     * @param now     The current time to check if the course is still active
+     * @return A set of courses that the user has access to and belong to a specific semester
+     */
+    @Query("""
+            SELECT DISTINCT c
+            FROM Course c
+            LEFT JOIN UserGroup ug ON ug.group IN (
+                c.studentGroupName,
+                c.teachingAssistantGroupName,
+                c.editorGroupName,
+                c.instructorGroupName
+            )
+            WHERE (:isAdmin = TRUE OR ug.userId = :userId)
+            AND c.semester IS NOT NULL
+            AND c.endDate IS NOT NULL
+            AND c.endDate < :now
+            """)
+    Set<Course> findInactiveCoursesForUserRolesWithNonNullSemester(@Param("userId") long userId, @Param("isAdmin") boolean isAdmin, @Param("now") ZonedDateTime now);
+
 }
