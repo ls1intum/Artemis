@@ -22,7 +22,7 @@ public record PyrisMessageDTO(Instant sentAt, IrisMessageSender sender, List<Pyr
      * @param message The message to convert.
      * @return The converted message.
      */
-    public static PyrisMessageDTO of(IrisMessage message) {
+    public static PyrisMessageDTO from(IrisMessage message) {
         var content = message.getContent().stream().map(messageContent -> {
             PyrisMessageContentBaseDTO result = null;
             if (messageContent.getClass().equals(IrisTextMessageContent.class)) {

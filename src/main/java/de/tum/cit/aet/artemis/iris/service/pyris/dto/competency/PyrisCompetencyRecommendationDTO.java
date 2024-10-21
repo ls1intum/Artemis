@@ -12,6 +12,11 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
  * @param description The description of the competency
  * @param taxonomy    The taxonomy of the competency
  */
+// @formatter:off
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisCompetencyRecommendationDTO(String title, String description, CompetencyTaxonomy taxonomy) {
-}
+public record PyrisCompetencyRecommendationDTO(
+        String title,
+        String description,
+        CompetencyTaxonomy taxonomy
+) {}
+// @formatter:on

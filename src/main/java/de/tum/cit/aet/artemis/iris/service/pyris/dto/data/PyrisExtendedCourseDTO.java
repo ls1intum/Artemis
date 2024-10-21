@@ -14,10 +14,26 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * An extended course DTO for Pyris so it can better answer
  * questions regarding the course organization and content.
  */
+// @formatter:off
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisExtendedCourseDTO(long id, String name, String description, Instant startTime, Instant endTime, ProgrammingLanguage defaultProgrammingLanguage,
-        int maxComplaints, int maxTeamComplaints, int maxComplaintTimeDays, int maxRequestMoreFeedbackTimeDays, Integer maxPoints, Integer presentationScore,
-        List<PyrisExerciseWithStudentSubmissionsDTO> exercises, List<PyrisExamDTO> exams, List<PyrisCompetencyDTO> competencies) {
+public record PyrisExtendedCourseDTO(
+        long id,
+        String name,
+        String description,
+        Instant startTime,
+        Instant endTime,
+        ProgrammingLanguage defaultProgrammingLanguage,
+        int maxComplaints,
+        int maxTeamComplaints,
+        int maxComplaintTimeDays,
+        int maxRequestMoreFeedbackTimeDays,
+        Integer maxPoints,
+        Integer presentationScore,
+        List<PyrisExerciseWithStudentSubmissionsDTO> exercises,
+        List<PyrisExamDTO> exams,
+        List<PyrisCompetencyDTO> competencies
+// @formatter:on
+) {
 
     /**
      * Convert a course to a PyrisExtendedCourseDTO.
@@ -25,14 +41,29 @@ public record PyrisExtendedCourseDTO(long id, String name, String description, I
      * @param course The course to convert.
      * @return The converted course.
      */
-    public static PyrisExtendedCourseDTO of(Course course) {
-        List<PyrisExerciseWithStudentSubmissionsDTO> exercises = course.getExercises().stream().map(PyrisExerciseWithStudentSubmissionsDTO::of).toList();
+    public static PyrisExtendedCourseDTO from(Course course) {
+        List<PyrisExerciseWithStudentSubmissionsDTO> exercises = course.getExercises().stream().map(PyrisExerciseWithStudentSubmissionsDTO::from).toList();
+        List<PyrisExamDTO> exams = course.getExams().stream().map(PyrisExamDTO::from).toList();
+        List<PyrisCompetencyDTO> competencies = course.getCompetencies().stream().map(PyrisCompetencyDTO::from).toList();
 
-        List<PyrisExamDTO> exams = course.getExams().stream().map(PyrisExamDTO::of).toList();
-        List<PyrisCompetencyDTO> competencies = course.getCompetencies().stream().map(PyrisCompetencyDTO::of).toList();
-
-        return new PyrisExtendedCourseDTO(course.getId(), course.getTitle(), course.getDescription(), toInstant(course.getStartDate()), toInstant(course.getEndDate()),
-                course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
-                course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxPoints(), course.getPresentationScore(), exercises, exams, competencies);
+        // @formatter:off
+        return new PyrisExtendedCourseDTO(
+                course.getId(),
+                course.getTitle(),
+                course.getDescription(),
+                toInstant(course.getStartDate()),
+                toInstant(course.getEndDate()),
+                course.getDefaultProgrammingLanguage(),
+                course.getMaxComplaints(),
+                course.getMaxTeamComplaints(),
+                course.getMaxComplaintTimeDays(),
+                course.getMaxRequestMoreFeedbackTimeDays(),
+                course.getMaxPoints(),
+                course.getPresentationScore(),
+                exercises,
+                exams,
+                competencies
+        );
+        // @formatter:on
     }
 }
