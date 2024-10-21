@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -19,7 +20,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import edu.stanford.nlp.util.ArraySet;
 
 /**
  * Service for managing the LLMTokenUsage by all LLMs in Artemis
@@ -77,7 +77,7 @@ public class LLMTokenUsageService {
 
     // TODO: this should ideally be done Async
     public void appendRequestsToTrace(List<LLMRequest> requests, LLMTokenUsageTrace trace) {
-        Set<LLMTokenUsageRequest> llmRequestsSet = new ArraySet<>();
+        Set<LLMTokenUsageRequest> llmRequestsSet = new HashSet<>();
         setLLMTokenUsageRequests(requests, trace, llmRequestsSet);
         llmTokenUsageRequestRepository.saveAll(llmRequestsSet);
     }
