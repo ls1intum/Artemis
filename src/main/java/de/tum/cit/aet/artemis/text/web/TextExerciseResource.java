@@ -222,7 +222,7 @@ public class TextExerciseResource {
         // Check that only allowed athena modules are used
         athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
-        TextExercise result = exerciseService.createWithCompetencyLinks(textExercise, textExerciseRepository::save);
+        TextExercise result = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
@@ -278,9 +278,8 @@ public class TextExerciseResource {
 
         channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
 
-        exerciseService.reconnectCompetencyExerciseLinks(textExercise);
+        TextExercise updatedTextExercise = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
 
-        TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(textExerciseBeforeUpdate, updatedTextExercise);
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedTextExercise, textExerciseBeforeUpdate.getDueDate());

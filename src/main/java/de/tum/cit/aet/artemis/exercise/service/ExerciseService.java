@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -796,14 +797,22 @@ public class ExerciseService {
         }
     }
 
-    public <T extends Exercise> T createWithCompetencyLinks(T exercise, Function<T, T> saveFunction) {
+    /**
+     * Saves the exercise and links it to the competencies.
+     *
+     * @param exercise     exercise to save
+     * @param saveFunction function to save the exercise
+     * @param <T>          type of the exercise
+     * @return saved exercise
+     */
+    public <T extends Exercise> T saveWithCompetencyLinks(T exercise, Function<T, T> saveFunction) {
         // persist exercise before linking it to the competency
         Set<CompetencyExerciseLink> links = exercise.getCompetencyLinks();
         exercise.setCompetencyLinks(new HashSet<>());
 
         T savedExercise = saveFunction.apply(exercise);
 
-        if (!links.isEmpty()) {
+        if (Hibernate.isInitialized(links) && !links.isEmpty()) {
             savedExercise.setCompetencyLinks(links);
             reconnectCompetencyExerciseLinks(savedExercise);
             savedExercise.setCompetencyLinks(new HashSet<>(competencyExerciseLinkRepository.saveAll(links)));

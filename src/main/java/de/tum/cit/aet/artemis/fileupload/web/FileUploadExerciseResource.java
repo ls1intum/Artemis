@@ -156,7 +156,7 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        FileUploadExercise result = exerciseService.createWithCompetencyLinks(fileUploadExercise, fileUploadExerciseRepository::save);
+        FileUploadExercise result = exerciseService.saveWithCompetencyLinks(fileUploadExercise, fileUploadExerciseRepository::save);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
@@ -281,9 +281,7 @@ public class FileUploadExerciseResource {
 
         channelService.updateExerciseChannel(fileUploadExerciseBeforeUpdate, fileUploadExercise);
 
-        exerciseService.reconnectCompetencyExerciseLinks(fileUploadExercise);
-
-        var updatedExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+        var updatedExercise = exerciseService.saveWithCompetencyLinks(fileUploadExercise, fileUploadExerciseRepository::save);
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());

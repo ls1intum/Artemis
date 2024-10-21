@@ -437,7 +437,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // make sure the pointers in the statistics are correct
         quizExercise.recalculatePointCounters();
 
-        QuizExercise savedQuizExercise = exerciseService.createWithCompetencyLinks(quizExercise, super::save);
+        QuizExercise savedQuizExercise = exerciseService.saveWithCompetencyLinks(quizExercise, super::save);
 
         if (savedQuizExercise.isCourseExercise()) {
             // only schedule quizzes for course exercises, not for exam exercises
