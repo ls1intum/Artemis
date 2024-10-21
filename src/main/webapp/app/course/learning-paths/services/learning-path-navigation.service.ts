@@ -1,19 +1,19 @@
-import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { LearningPathNavigationDTO, LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 
 @Injectable({ providedIn: 'root' })
 export class LearningPathNavigationService {
-    private readonly learningPathApiService: LearningPathApiService = inject(LearningPathApiService);
-    private readonly alertService: AlertService = inject(AlertService);
+    private readonly learningPathApiService = inject(LearningPathApiService);
+    private readonly alertService = inject(AlertService);
 
-    readonly isLoading: WritableSignal<boolean> = signal(false);
+    readonly isLoading = signal<boolean>(false);
 
-    readonly learningPathNavigation: WritableSignal<LearningPathNavigationDTO | undefined> = signal(undefined);
-    readonly currentLearningObject: Signal<LearningPathNavigationObjectDTO | undefined> = computed(() => this.learningPathNavigation()?.currentLearningObject);
+    readonly learningPathNavigation = signal<LearningPathNavigationDTO | undefined>(undefined);
+    readonly currentLearningObject = computed(() => this.learningPathNavigation()?.currentLearningObject);
 
-    readonly isCurrentLearningObjectCompleted: WritableSignal<boolean> = signal(false);
+    readonly isCurrentLearningObjectCompleted = signal<boolean>(false);
 
     async loadLearningPathNavigation(learningPathId: number): Promise<void> {
         try {
