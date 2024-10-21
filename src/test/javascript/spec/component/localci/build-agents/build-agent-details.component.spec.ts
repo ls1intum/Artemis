@@ -9,7 +9,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { BuildAgent, BuildAgentStatus } from 'app/entities/programming/build-agent.model';
+import { BuildAgentInformation, BuildAgentStatus } from 'app/entities/programming/build-agent.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
@@ -110,9 +110,9 @@ describe('BuildAgentDetailsComponent', () => {
         },
     ];
 
-    const mockBuildAgent: BuildAgent = {
+    const mockBuildAgent: BuildAgentInformation = {
         id: 1,
-        name: 'buildagent1',
+        buildAgent: { name: 'agent1', memberAddress: 'localhost:8080', displayName: 'Agent 1' },
         maxNumberOfConcurrentBuildJobs: 2,
         numberOfCurrentBuildJobs: 2,
         runningBuildJobs: mockRunningJobs1,
@@ -139,7 +139,7 @@ describe('BuildAgentDetailsComponent', () => {
         fixture = TestBed.createComponent(BuildAgentDetailsComponent);
         component = fixture.componentInstance;
         activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
-        activatedRoute.setParameters({ agentName: mockBuildAgent.name });
+        activatedRoute.setParameters({ agentName: mockBuildAgent.buildAgent?.name });
         alertService = TestBed.inject(AlertService);
         alertServiceAddAlertStub = jest.spyOn(alertService, 'addAlert');
     }));
@@ -164,8 +164,8 @@ describe('BuildAgentDetailsComponent', () => {
         component.ngOnInit();
 
         expect(component.buildAgent).toEqual(mockBuildAgent);
-        expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.name);
-        expect(mockWebsocketService.receive).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.name);
+        expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.buildAgent?.name);
+        expect(mockWebsocketService.receive).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.buildAgent?.name);
     });
 
     it('should unsubscribe from the websocket channel on destruction', () => {
@@ -175,7 +175,7 @@ describe('BuildAgentDetailsComponent', () => {
 
         component.ngOnDestroy();
 
-        expect(mockWebsocketService.unsubscribe).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.name);
+        expect(mockWebsocketService.unsubscribe).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.buildAgent?.name);
     });
 
     it('should set recent build jobs duration', () => {
@@ -213,7 +213,7 @@ describe('BuildAgentDetailsComponent', () => {
     });
 
     it('should show an alert when pausing build agent without a name', () => {
-        component.buildAgent = { ...mockBuildAgent, name: '' };
+        component.buildAgent = { ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } };
         component.pauseBuildAgent();
 
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
@@ -223,7 +223,7 @@ describe('BuildAgentDetailsComponent', () => {
     });
 
     it('should show an alert when resuming build agent without a name', () => {
-        component.buildAgent = { ...mockBuildAgent, name: '' };
+        component.buildAgent = { ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } };
         component.resumeBuildAgent();
 
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({

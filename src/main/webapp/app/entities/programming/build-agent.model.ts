@@ -7,10 +7,15 @@ export enum BuildAgentStatus {
     IDLE = 'IDLE',
 }
 
-export class BuildAgent implements BaseEntity {
-    public id?: number;
+export class BuildAgent {
     public name?: string;
     public memberAddress?: string;
+    public displayName?: string;
+}
+
+export class BuildAgentInformation implements BaseEntity {
+    public id?: number;
+    public buildAgent?: BuildAgent;
     public maxNumberOfConcurrentBuildJobs?: number;
     public numberOfCurrentBuildJobs?: number;
     public runningBuildJobs?: BuildJob[];

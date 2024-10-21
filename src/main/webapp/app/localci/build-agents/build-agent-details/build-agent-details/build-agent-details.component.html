@@ -6,9 +6,10 @@
                     <div class="d-flex align-items-center">
                         <h3 class="mb-0" id="build-agent-heading" jhiTranslate="artemisApp.buildAgents.details"></h3>
                         <span class="h3 mb-0">:</span>
-                        <h3 id="build-agent-name" class="mb-0 ms-2">{{ buildAgent.name }}</h3>
+                        <h3 id="build-agent-display-name" class="mb-0 ms-2">{{ buildAgent.buildAgent?.displayName }}</h3>
                     </div>
-                    <span class="text-muted" id="build-agent-member-address">{{ buildAgent.memberAddress }}</span>
+                    <span class="text-muted" id="build-agent-name">{{ buildAgent.buildAgent?.name }}</span>
+                    <span class="text-muted" id="build-agent-member-address">{{ buildAgent.buildAgent?.memberAddress }}</span>
                 </div>
                 <div class="ms-3 d-flex justify-content-center gap-2">
                     @if (buildAgent.status === 'PAUSED') {
