@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -182,9 +183,27 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
         }
 
-        if (statusUpdate.tokens() != null) {
-            llmTokenUsageService.saveIrisTokenUsage(builder -> builder.withJob(job).withMessage(savedMessage).withExercise(session.getExercise()).withUser(session.getUser())
-                    .withCourse(session.getExercise().getCourseViaExerciseGroupOrCourseMember()).withTokens(statusUpdate.tokens()));
+        if (statusUpdate.tokens() != null && !statusUpdate.tokens().isEmpty()) {
+            if (savedMessage != null) {
+                // generated message is first sent and generated trace is saved
+                var llmTokenUsageTrace = llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS,
+                        builder -> builder.withIrisMessageID(savedMessage.getId()).withExercise(session.getExercise()).withUser(session.getUser())
+                                .withCourse(session.getExercise().getCourseViaExerciseGroupOrCourseMember()));
+                traces.put(job.jobId(), llmTokenUsageTrace);
+            }
+            else {
+                // interaction suggestion is sent and appended to the generated trace if it exists, trace is then removed,
+                // because interaction suggestion is the last message from Iris in the pipeline
+                if (traces.containsKey(job.jobId())) {
+                    var trace = traces.get(job.jobId());
+                    llmTokenUsageService.appendRequestsToTrace(statusUpdate.tokens(), trace);
+                    traces.remove(job.jobId());
+                }
+                else {
+                    llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> builder.withExercise(session.getExercise())
+                            .withUser(session.getUser()).withCourse(session.getExercise().getCourseViaExerciseGroupOrCourseMember()));
+                }
+            }
         }
 
         updateLatestSuggestions(session, statusUpdate.suggestions());

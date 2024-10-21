@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
@@ -72,8 +73,8 @@ public class IrisCompetencyGenerationService {
      */
     public void handleStatusUpdate(CompetencyExtractionJob job, PyrisCompetencyStatusUpdateDTO statusUpdate) {
         Course course = courseRepository.findByIdForUpdateElseThrow(job.courseId());
-        if (statusUpdate.tokens() != null) {
-            llmTokenUsageService.saveIrisTokenUsage(builder -> builder.withJob(job).withCourse(course).withUser(job.user()).withTokens(statusUpdate.tokens()));
+        if (statusUpdate.tokens() != null && !statusUpdate.tokens().isEmpty()) {
+            llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> builder.withCourse(course).withUser(job.user()));
         }
         websocketService.send(job.user().getLogin(), websocketTopic(job.courseId()), statusUpdate);
     }

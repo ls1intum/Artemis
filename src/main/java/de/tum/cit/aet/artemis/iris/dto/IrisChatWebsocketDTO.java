@@ -7,9 +7,9 @@ import jakarta.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLLMCostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 /**
@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages,
-        List<String> suggestions, List<PyrisLLMCostDTO> tokens) {
+        List<String> suggestions, List<LLMRequest> tokens) {
 
     /**
      * Creates a new IrisWebsocketDTO instance with the given parameters
@@ -33,7 +33,7 @@ public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessage me
      * @param stages        the stages of the Pyris pipeline
      */
     public IrisChatWebsocketDTO(@Nullable IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages, List<String> suggestions,
-            List<PyrisLLMCostDTO> tokens) {
+            List<LLMRequest> tokens) {
         this(determineType(message), message, rateLimitInfo, stages, suggestions, tokens);
     }
 

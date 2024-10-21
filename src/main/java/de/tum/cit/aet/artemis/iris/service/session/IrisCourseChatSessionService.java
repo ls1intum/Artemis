@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -139,17 +140,25 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     public void handleStatusUpdate(CourseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         var session = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
+        IrisMessage savedMessage;
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-            var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            llmTokenUsageService.saveIrisTokenUsage(
-                    builder -> builder.withJob(job).withMessage(savedMessage).withUser(session.getUser()).withCourse(session.getCourse()).withTokens(statusUpdate.tokens()));
+            savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
         }
         else {
-            llmTokenUsageService.saveIrisTokenUsage(builder -> builder.withJob(job).withUser(session.getUser()).withCourse(session.getCourse()).withTokens(statusUpdate.tokens()));
+            savedMessage = null;
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
+        }
+        if (statusUpdate.tokens() != null && !statusUpdate.tokens().isEmpty()) {
+            if (savedMessage != null) {
+                llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS,
+                        builder -> builder.withIrisMessageID(savedMessage.getId()).withUser(session.getUser()).withCourse(session.getCourse()));
+            }
+            else {
+                llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> builder.withUser(session.getUser()).withCourse(session.getCourse()));
+            }
         }
         updateLatestSuggestions(session, statusUpdate.suggestions());
     }

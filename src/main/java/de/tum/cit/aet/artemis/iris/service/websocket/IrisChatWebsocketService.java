@@ -7,11 +7,11 @@ import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLLMCostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 @Service
@@ -64,7 +64,7 @@ public class IrisChatWebsocketService {
      * @param suggestions the suggestions to send
      * @param tokens      token usage and cost send by Pyris
      */
-    public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, List<String> suggestions, List<PyrisLLMCostDTO> tokens) {
+    public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, List<String> suggestions, List<LLMRequest> tokens) {
         var user = session.getUser();
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
