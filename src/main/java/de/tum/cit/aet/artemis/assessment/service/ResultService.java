@@ -582,13 +582,13 @@ public class ResultService {
 
         // 3. Generate filter task names directly
         List<String> filterTaskNames = data.getFilterTasks().stream().map(index -> {
-            int idx = Integer.parseInt(index); // Parse index from the filterTasks list
-            return (idx > 0 && idx <= tasks.size()) ? tasks.get(idx - 1).getTaskName() : null; // Retrieve task name if index is valid
+            int idx = Integer.parseInt(index);
+            return (idx > 0 && idx <= tasks.size()) ? tasks.get(idx - 1).getTaskName() : null;
         }).filter(Objects::nonNull).toList();
 
         // 4. Set minOccurrence and maxOccurrence based on filterOccurrence
-        long minOccurrence = data.getFilterOccurrence().length == 2 ? Long.parseLong(data.getFilterOccurrence()[0]) : 0; // Default min = 0
-        long maxOccurrence = data.getFilterOccurrence().length == 2 ? Long.parseLong(data.getFilterOccurrence()[1]) : Integer.MAX_VALUE; // Default max = MAX_INT
+        long minOccurrence = data.getFilterOccurrence().length == 2 ? Long.parseLong(data.getFilterOccurrence()[0]) : 0;
+        long maxOccurrence = data.getFilterOccurrence().length == 2 ? Long.parseLong(data.getFilterOccurrence()[1]) : Integer.MAX_VALUE;
 
         // 5. Create pageable object for pagination
         final var pageable = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
@@ -609,8 +609,6 @@ public class ResultService {
                                                                                                                                                                               // 1-based
                                                                                                                                                                               // indexing)
                     .orElse("0");
-
-            // Create and return a new FeedbackDetailDTO object
             return new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), taskIndex, "StudentError");
         }).toList();
 
