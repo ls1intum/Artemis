@@ -2,6 +2,7 @@ import { of } from 'rxjs';
 import { ProgrammingExerciseInstructorRepositoryType } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 export class MockProgrammingExerciseService {
@@ -20,6 +21,7 @@ export class MockProgrammingExerciseService {
     deleteTasksWithSolutionEntries = (exerciseId: number) => of();
     getDiffReport = (exerciseId: number) => of({});
     getBuildLogStatistics = (exerciseId: number) => of({});
+    getBuildConfig = (exerciseId: number) => of({});
     createStructuralSolutionEntries = (exerciseId: number) => of({});
     createBehavioralSolutionEntries = (exerciseId: number) => of({});
     getLatestResult = (participation: Participation) => of({});
