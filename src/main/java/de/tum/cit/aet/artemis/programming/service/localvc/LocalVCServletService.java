@@ -436,7 +436,9 @@ public class LocalVCServletService {
 
         ProgrammingExerciseParticipation participation;
         try {
-            participation = programmingExerciseParticipationService.retrieveParticipationForRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
+            participation = programmingExerciseParticipationService.retrieveParticipationForRepository(exercise, repositoryTypeOrUserName,
+                    localVCRepositoryUri.isPracticeRepository(), true);
+            // participation = programmingExerciseParticipationService.retrieveParticipationForRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException(
