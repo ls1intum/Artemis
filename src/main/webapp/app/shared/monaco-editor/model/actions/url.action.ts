@@ -18,7 +18,7 @@ export class UrlAction extends TextEditorAction {
     static readonly DEFAULT_INSERT_TEXT = '[](https://)';
 
     // We remove the global flag from the URL regex to avoid stateful behavior.
-    private statelessUrlRegex = new RegExp(urlRegex.source, urlRegex.flags.replace('g', ''));
+    private statelessUrlRegex = new RegExp(`^${urlRegex.source}$`, urlRegex.flags.replace('g', ''));
     private disposableSelectionChangeListener?: Disposable;
     private disposablePasteListener?: Disposable;
 
