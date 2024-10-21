@@ -27,8 +27,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.dto.IrisStatusDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_IRIS)
 @RestController
@@ -43,20 +43,20 @@ public class IrisResource {
 
     protected final PyrisHealthIndicator pyrisHealthIndicator;
 
-    private final PyrisConnectorService pyrisConnectorService;
-
     private final AuthorizationCheckService authorizationCheckService;
 
     private final CourseRepository courseRepository;
 
+    private final PyrisWebhookService pyrisWebhookService;
+
     public IrisResource(UserRepository userRepository, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService,
-            PyrisConnectorService pyrisConnectorService, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, PyrisWebhookService pyrisWebhookService) {
         this.userRepository = userRepository;
         this.pyrisHealthIndicator = pyrisHealthIndicator;
         this.irisRateLimitService = irisRateLimitService;
-        this.pyrisConnectorService = pyrisConnectorService;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
+        this.pyrisWebhookService = pyrisWebhookService;
     }
 
     /**
@@ -92,7 +92,7 @@ public class IrisResource {
         try {
             Course course = courseRepository.findByIdElseThrow(courseId);
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-            return ResponseEntity.ok(pyrisConnectorService.getLecturesIngestionState(courseId));
+            return ResponseEntity.ok(pyrisWebhookService.getLecturesIngestionState(courseId));
         }
         catch (EntityNotFoundException e) {
             log.error("Error finding course while fetching ingestion state: ", e);
@@ -124,7 +124,7 @@ public class IrisResource {
         try {
             Course course = courseRepository.findByIdElseThrow(courseId);
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-            return ResponseEntity.ok(pyrisConnectorService.getLectureUnitsIngestionState(courseId, lectureId));
+            return ResponseEntity.ok(pyrisWebhookService.getLectureUnitsIngestionState(courseId, lectureId));
         }
         catch (EntityNotFoundException e) {
             log.error("Error finding course while fetching ingestion state: ", e);

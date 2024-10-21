@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.security.SecureRandom;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -117,16 +118,10 @@ public class PyrisJobService {
     }
 
     /**
-     * Checks if a job with the specified course, lecture, and lecture unit IDs exists in the job map.
-     *
-     * @param courseId      The ID of the course to check.
-     * @param lectureId     The ID of the lecture to check.
-     * @param lectureUnitId The ID of the lecture unit to check.
-     * @return true if a matching IngestionWebhookJob exists; false otherwise.
+     * Get all current jobs.
      */
-    public boolean jobExists(long courseId, long lectureId, long lectureUnitId) {
-        return jobMap.values().stream().filter(job -> job instanceof IngestionWebhookJob).map(job -> (IngestionWebhookJob) job)
-                .anyMatch(ingestionJob -> ingestionJob.courseId() == courseId && ingestionJob.lectureId() == lectureId && ingestionJob.lectureUnitId() == lectureUnitId);
+    public Collection<PyrisJob> currentJobs() {
+        return jobMap.values();
     }
 
     /**

@@ -7,8 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +22,6 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
@@ -33,11 +30,8 @@ import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.web.open.PublicPyrisStatusUpdateResource;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 /**
  * This service connects to the Python implementation of Iris (called Pyris).
@@ -54,8 +48,6 @@ public class PyrisConnectorService {
 
     private final ObjectMapper objectMapper;
 
-    private final LectureRepository lectureRepository;
-
     private final PyrisJobService pyrisJobService;
 
     @Value("${server.url}")
@@ -65,10 +57,9 @@ public class PyrisConnectorService {
     private String pyrisUrl;
 
     public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            LectureRepository lectureRepository, PyrisJobService pyrisJobService) {
+            PyrisJobService pyrisJobService) {
         this.restTemplate = restTemplate;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
-        this.lectureRepository = lectureRepository;
         this.pyrisJobService = pyrisJobService;
     }
 
@@ -135,62 +126,6 @@ public class PyrisConnectorService {
     }
 
     /**
-     * uses getLectureUnitIngestionState for all lecture units and then determines the IngestionState of the lecture
-     *
-     * @param courseId id of the course
-     * @return The ingestion state of the lecture
-     *
-     */
-    public Map<Long, IngestionState> getLecturesIngestionState(long courseId) {
-        Set<Lecture> lectures = lectureRepository.findAllByCourseId(courseId);
-        return lectures.stream().collect(Collectors.toMap(DomainObject::getId, lecture -> getLectureIngestionState(courseId, lecture.getId())));
-
-    }
-
-    /**
-     * uses getLectureUnitIngestionState for all lecture units and then determines the IngestionState of the lecture
-     *
-     * @param courseId  id of the course
-     * @param lectureId id of the lecture
-     * @return The ingestion state of the lecture
-     *
-     */
-    private IngestionState getLectureIngestionState(long courseId, long lectureId) {
-        Map<Long, IngestionState> states = getLectureUnitsIngestionState(courseId, lectureId);
-
-        if (states.values().stream().allMatch(state -> state == IngestionState.DONE)) {
-            return IngestionState.DONE;
-        }
-
-        if (states.values().stream().allMatch(state -> state == IngestionState.NOT_STARTED)) {
-            return IngestionState.NOT_STARTED;
-        }
-
-        if (states.values().stream().allMatch(state -> state == IngestionState.ERROR)) {
-            return IngestionState.ERROR;
-        }
-
-        if (states.containsValue(IngestionState.DONE) || states.containsValue(IngestionState.IN_PROGRESS)) {
-            return IngestionState.PARTIALLY_INGESTED;
-        }
-
-        return IngestionState.NOT_STARTED;
-    }
-
-    /**
-     * uses send an api call to get all the ingestion states of the lecture units of one lecture in Pyris
-     *
-     * @param courseId  id of the course
-     * @param lectureId id of the lecture
-     * @return The ingestion state of the lecture Unit
-     */
-    public Map<Long, IngestionState> getLectureUnitsIngestionState(long courseId, long lectureId) {
-        List<LectureUnit> lectureunits = lectureRepository.findByIdWithLectureUnits(lectureId).get().getLectureUnits();
-        return lectureunits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
-                .collect(Collectors.toMap(DomainObject::getId, unit -> getLectureUnitIngestionState(courseId, lectureId, unit.getId())));
-    }
-
-    /**
      * uses send an api call to get the ingestion state in Pyris
      *
      * @param courseId      id of the course
@@ -199,19 +134,17 @@ public class PyrisConnectorService {
      * @return The ingestion state of the lecture Unit
      *
      */
-    private IngestionState getLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId) {
+    IngestionState getLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId) {
         try {
             String encodedBaseUrl = URLEncoder.encode(artemisBaseUrl, StandardCharsets.UTF_8);
             String url = String.format("%s/api/v1/courses/%d/lectures/%d/lectureUnits/%d/ingestion-state?base_url=%s", pyrisUrl, courseId, lectureId, lectureUnitId,
                     encodedBaseUrl);
-
             Map<String, String> response = restTemplate.getForObject(url, Map.class);
-
             String stateString = response.get("state");
             IngestionState state = IngestionState.valueOf(stateString);
-
             if (state != IngestionState.DONE) {
-                if (pyrisJobService.jobExists(courseId, lectureId, lectureUnitId)) {
+                if (pyrisJobService.currentJobs().stream().filter(job -> job instanceof IngestionWebhookJob).map(job -> (IngestionWebhookJob) job)
+                        .anyMatch(ingestionJob -> ingestionJob.courseId() == courseId && ingestionJob.lectureId() == lectureId && ingestionJob.lectureUnitId() == lectureUnitId)) {
                     return IngestionState.IN_PROGRESS;
                 }
             }

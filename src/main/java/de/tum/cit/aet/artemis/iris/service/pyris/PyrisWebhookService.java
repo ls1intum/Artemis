@@ -9,6 +9,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +20,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
+import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
@@ -28,6 +33,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 @Service
@@ -46,16 +54,19 @@ public class PyrisWebhookService {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final LectureRepository lectureRepository;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
-            IrisSettingsRepository irisSettingsRepository, LectureUnitRepository lectureUnitRepository) {
+            IrisSettingsRepository irisSettingsRepository, LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.irisSettingsRepository = irisSettingsRepository;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.lectureRepository = lectureRepository;
     }
 
     private boolean lectureIngestionEnabled(Course course) {
@@ -179,6 +190,62 @@ public class PyrisWebhookService {
         PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnit, settingsDTO, List.of());
         pyrisConnectorService.executeLectureAddtionWebhook("fullIngestion", executionDTO);
         return jobToken;
+    }
+
+    /**
+     * uses getLectureUnitIngestionState for all lecture units and then determines the IngestionState of the lecture
+     *
+     * @param courseId id of the course
+     * @return The ingestion state of the lecture
+     *
+     */
+    public Map<Long, IngestionState> getLecturesIngestionState(long courseId) {
+        Set<Lecture> lectures = lectureRepository.findAllByCourseId(courseId);
+        return lectures.stream().collect(Collectors.toMap(DomainObject::getId, lecture -> getLectureIngestionState(courseId, lecture.getId())));
+
+    }
+
+    /**
+     * uses getLectureUnitIngestionState for all lecture units and then determines the IngestionState of the lecture
+     *
+     * @param courseId  id of the course
+     * @param lectureId id of the lecture
+     * @return The ingestion state of the lecture
+     *
+     */
+    private IngestionState getLectureIngestionState(long courseId, long lectureId) {
+        Map<Long, IngestionState> states = getLectureUnitsIngestionState(courseId, lectureId);
+
+        if (states.values().stream().allMatch(state -> state == IngestionState.DONE)) {
+            return IngestionState.DONE;
+        }
+
+        if (states.values().stream().allMatch(state -> state == IngestionState.NOT_STARTED)) {
+            return IngestionState.NOT_STARTED;
+        }
+
+        if (states.values().stream().allMatch(state -> state == IngestionState.ERROR)) {
+            return IngestionState.ERROR;
+        }
+
+        if (states.containsValue(IngestionState.DONE) || states.containsValue(IngestionState.IN_PROGRESS)) {
+            return IngestionState.PARTIALLY_INGESTED;
+        }
+
+        return IngestionState.NOT_STARTED;
+    }
+
+    /**
+     * uses send an api call to get all the ingestion states of the lecture units of one lecture in Pyris
+     *
+     * @param courseId  id of the course
+     * @param lectureId id of the lecture
+     * @return The ingestion state of the lecture Unit
+     */
+    public Map<Long, IngestionState> getLectureUnitsIngestionState(long courseId, long lectureId) {
+        List<LectureUnit> lectureunits = lectureRepository.findByIdWithLectureUnits(lectureId).get().getLectureUnits();
+        return lectureunits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
+                .collect(Collectors.toMap(DomainObject::getId, unit -> pyrisConnectorService.getLectureUnitIngestionState(courseId, lectureId, unit.getId())));
     }
 
 }
