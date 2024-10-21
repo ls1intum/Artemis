@@ -10,7 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { BuildAgent, BuildAgentStatus } from 'app/entities/programming/build-agent.model';
+import { BuildAgentInformation, BuildAgentStatus } from 'app/entities/programming/build-agent.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
@@ -117,10 +117,10 @@ describe('BuildAgentSummaryComponent', () => {
         },
     ];
 
-    const mockBuildAgents: BuildAgent[] = [
+    const mockBuildAgents: BuildAgentInformation[] = [
         {
             id: 1,
-            name: 'buildagent1',
+            buildAgent: { name: 'buildagent1', displayName: 'Build Agent 1', memberAddress: 'agent1' },
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 2,
             runningBuildJobs: mockRunningJobs1,
@@ -128,7 +128,7 @@ describe('BuildAgentSummaryComponent', () => {
         },
         {
             id: 2,
-            name: 'buildagent2',
+            buildAgent: { name: 'buildagent2', displayName: 'Build Agent 2', memberAddress: 'agent2' },
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 2,
             runningBuildJobs: mockRunningJobs2,
@@ -196,9 +196,9 @@ describe('BuildAgentSummaryComponent', () => {
         const spy = jest.spyOn(component, 'cancelAllBuildJobs');
 
         component.ngOnInit();
-        component.cancelAllBuildJobs(buildAgent.name!);
+        component.cancelAllBuildJobs(buildAgent.buildAgent?.name!);
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(buildAgent.name!);
+        expect(spy).toHaveBeenCalledExactlyOnceWith(buildAgent.buildAgent?.name!);
     });
 
     it('should calculate the build capacity and current builds', () => {

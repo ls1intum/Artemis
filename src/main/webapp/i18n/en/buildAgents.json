@@ -5,6 +5,7 @@
             "summary": "Build Agents Summary",
             "details": "Build Agents Details",
             "name": "Name",
+            "memberAddress": "Member Address",
             "maxNumberOfConcurrentBuildJobs": "Max # of concurrent build jobs",
             "numberOfCurrentBuildJobs": "# of current build jobs",
             "runningBuildJobs": "Running build jobs",

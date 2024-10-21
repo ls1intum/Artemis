@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { BuildAgent } from 'app/entities/programming/build-agent.model';
+import { BuildAgentInformation } from 'app/entities/programming/build-agent.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
@@ -13,7 +13,7 @@ import { Router } from '@angular/router';
     styleUrl: './build-agent-summary.component.scss',
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
-    buildAgents: BuildAgent[] = [];
+    buildAgents: BuildAgentInformation[] = [];
     buildCapacity = 0;
     currentBuilds = 0;
     channel: string = '/topic/admin/build-agents';
@@ -56,7 +56,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
         });
     }
 
-    private updateBuildAgents(buildAgents: BuildAgent[]) {
+    private updateBuildAgents(buildAgents: BuildAgentInformation[]) {
         this.buildAgents = buildAgents;
         this.buildCapacity = this.buildAgents.reduce((sum, agent) => sum + (agent.maxNumberOfConcurrentBuildJobs || 0), 0);
         this.currentBuilds = this.buildAgents.reduce((sum, agent) => sum + (agent.numberOfCurrentBuildJobs || 0), 0);
@@ -76,9 +76,9 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     }
 
     cancelAllBuildJobs(buildAgentName: string) {
-        const buildAgent = this.buildAgents.find((agent) => agent.name === buildAgentName);
-        if (buildAgent && buildAgent.name) {
-            this.buildQueueService.cancelAllRunningBuildJobsForAgent(buildAgent.name).subscribe();
+        const buildAgent = this.buildAgents.find((agent) => agent.buildAgent?.name === buildAgentName);
+        if (buildAgent && buildAgent.buildAgent?.name) {
+            this.buildQueueService.cancelAllRunningBuildJobsForAgent(buildAgent.buildAgent?.name).subscribe();
         }
     }
 }

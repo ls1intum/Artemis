@@ -8,7 +8,7 @@ import { BuildJob } from 'app/entities/programming/build-job.model';
 import dayjs from 'dayjs/esm';
 import { lastValueFrom } from 'rxjs';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
-import { BuildAgent } from 'app/entities/programming/build-agent.model';
+import { BuildAgentInformation } from 'app/entities/programming/build-agent.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
@@ -16,7 +16,7 @@ import { BuildConfig } from 'app/entities/programming/build-config.model';
 describe('BuildAgentsService', () => {
     let service: BuildAgentsService;
     let httpMock: HttpTestingController;
-    let element: BuildAgent;
+    let element: BuildAgentInformation;
 
     const repositoryInfo: RepositoryInfo = {
         repositoryName: 'repo2',
@@ -82,9 +82,9 @@ describe('BuildAgentsService', () => {
         });
         service = TestBed.inject(BuildAgentsService);
         httpMock = TestBed.inject(HttpTestingController);
-        element = new BuildAgent();
+        element = new BuildAgentInformation();
         element.id = 1;
-        element.name = 'BuildAgent1';
+        element.buildAgent = { name: 'buildAgent1', memberAddress: 'localhost:8080', displayName: 'Build Agent 1' };
         element.maxNumberOfConcurrentBuildJobs = 3;
         element.numberOfCurrentBuildJobs = 1;
         element.runningBuildJobs = mockRunningJobs;

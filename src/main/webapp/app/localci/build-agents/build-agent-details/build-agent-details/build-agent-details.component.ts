@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { BuildAgent } from 'app/entities/programming/build-agent.model';
+import { BuildAgentInformation } from 'app/entities/programming/build-agent.model';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faPause, faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -17,7 +17,7 @@ import { AlertService, AlertType } from 'app/core/util/alert.service';
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
-    buildAgent: BuildAgent;
+    buildAgent: BuildAgentInformation;
     agentName: string;
     websocketSubscription: Subscription;
     restSubscription: Subscription;
@@ -77,7 +77,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
-    private updateBuildAgent(buildAgent: BuildAgent) {
+    private updateBuildAgent(buildAgent: BuildAgentInformation) {
         this.buildAgent = buildAgent;
         this.setRecentBuildJobsDuration();
     }
@@ -100,8 +100,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     }
 
     cancelAllBuildJobs() {
-        if (this.buildAgent.name) {
-            this.buildQueueService.cancelAllRunningBuildJobsForAgent(this.buildAgent.name).subscribe();
+        if (this.buildAgent.buildAgent?.name) {
+            this.buildQueueService.cancelAllRunningBuildJobsForAgent(this.buildAgent.buildAgent?.name).subscribe();
         }
     }
 
@@ -111,8 +111,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     }
 
     pauseBuildAgent(): void {
-        if (this.buildAgent.name) {
-            this.buildAgentsService.pauseBuildAgent(this.buildAgent.name).subscribe({
+        if (this.buildAgent.buildAgent?.name) {
+            this.buildAgentsService.pauseBuildAgent(this.buildAgent.buildAgent.name).subscribe({
                 next: () => {
                     this.alertService.addAlert({
                         type: AlertType.SUCCESS,
@@ -135,8 +135,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     }
 
     resumeBuildAgent(): void {
-        if (this.buildAgent.name) {
-            this.buildAgentsService.resumeBuildAgent(this.buildAgent.name).subscribe({
+        if (this.buildAgent.buildAgent?.name) {
+            this.buildAgentsService.resumeBuildAgent(this.buildAgent.buildAgent.name).subscribe({
                 next: () => {
                     this.alertService.addAlert({
                         type: AlertType.SUCCESS,

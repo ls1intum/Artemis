@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -85,6 +86,12 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         return TEST_PREFIX;
     }
 
+    @Value("${artemis.continuous-integration.build-agent.short-name}")
+    private String buildAgentShortName;
+
+    @Value("${artemis.continuous-integration.build-agent.display-name:}")
+    private String buildAgentDisplayName;
+
     @BeforeEach
     void createJobs() {
         // temporarily remove listener to avoid triggering build job processing
@@ -97,18 +104,19 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        job1 = new BuildJobQueueItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
-        job2 = new BuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
+        job1 = new BuildJobQueueItem("1", "job1", "buildagent1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
+        job2 = new BuildJobQueueItem("2", "job2", "buildagent1", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        agent1 = new BuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, new ArrayList<>(List.of(job2)), null);
-        BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
-                buildConfig, null);
-        BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo2,
-                buildConfig, null);
-        BuildJobQueueItem finishedJobQueueItem3 = new BuildJobQueueItem("5", "job5", "address1", 5, course.getId() + 2, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo3,
-                buildConfig, null);
-        BuildJobQueueItem finishedJobQueueItemForLogs = new BuildJobQueueItem("6", "job5", "address1", 5, course.getId(), programmingExercise.getId(), 1, 1, BuildStatus.FAILED,
-                repositoryInfo, jobTimingInfo3, buildConfig, null);
+        BuildAgentInformation.BuildAgent buildAgent = new BuildAgentInformation.BuildAgent(buildAgentShortName, memberAddress, buildAgentDisplayName);
+        agent1 = new BuildAgentInformation(buildAgent, 1, 0, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, new ArrayList<>(List.of(job2)), null);
+        BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", "buildagent1", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo,
+                jobTimingInfo1, buildConfig, null);
+        BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", "buildagent1", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo,
+                jobTimingInfo2, buildConfig, null);
+        BuildJobQueueItem finishedJobQueueItem3 = new BuildJobQueueItem("5", "job5", "buildagent1", "address1", 5, course.getId() + 2, 1, 1, 1, BuildStatus.FAILED, repositoryInfo,
+                jobTimingInfo3, buildConfig, null);
+        BuildJobQueueItem finishedJobQueueItemForLogs = new BuildJobQueueItem("6", "job5", "buildagent1", "address1", 5, course.getId(), programmingExercise.getId(), 1, 1,
+                BuildStatus.FAILED, repositoryInfo, jobTimingInfo3, buildConfig, null);
         var result1 = new Result().successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
         var result2 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
         var result3 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
@@ -205,8 +213,8 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetBuildAgentDetails_returnsAgent() throws Exception {
-        var retrievedAgent = request.get("/api/admin/build-agent?agentName=" + agent1.name(), HttpStatus.OK, BuildAgentInformation.class);
-        assertThat(retrievedAgent.name()).isEqualTo(agent1.name());
+        var retrievedAgent = request.get("/api/admin/build-agent?agentName=" + agent1.buildAgent().name(), HttpStatus.OK, BuildAgentInformation.class);
+        assertThat(retrievedAgent.buildAgent().name()).isEqualTo(agent1.buildAgent().name());
     }
 
     @Test
@@ -259,7 +267,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelAllRunningBuildJobsForAgent() throws Exception {
-        request.delete("/api/admin/cancel-all-running-jobs-for-agent?agentName=" + agent1.name(), HttpStatus.NO_CONTENT);
+        request.delete("/api/admin/cancel-all-running-jobs-for-agent?agentName=" + agent1.buildAgent().name(), HttpStatus.NO_CONTENT);
     }
 
     @Test
@@ -288,7 +296,8 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
                 ZonedDateTime.now().plusDays(1).plusMinutes(10));
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
-        var failedJob1 = new BuildJobQueueItem("5", "job5", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo, buildConfig, null);
+        var failedJob1 = new BuildJobQueueItem("5", "job5", "buildagent1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo, buildConfig,
+                null);
         var jobResult = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
         var failedFinishedJob = new BuildJob(failedJob1, BuildStatus.FAILED, jobResult);
 
@@ -367,10 +376,10 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testPauseBuildAgent() throws Exception {
-        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
-        await().until(() -> buildAgentInformation.get(agent1.name()).status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
+        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
+        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
 
-        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
-        await().until(() -> buildAgentInformation.get(agent1.name()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
+        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
+        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
     }
 }

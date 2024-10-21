@@ -33,6 +33,7 @@ artemis:
         container-cleanup:
             expiry-minutes: 5
             cleanup-schedule-minutes: 60
+        pause-grace-period-seconds: 60
     git:
         name: Artemis
         email: artemis@xcit.tum.de
