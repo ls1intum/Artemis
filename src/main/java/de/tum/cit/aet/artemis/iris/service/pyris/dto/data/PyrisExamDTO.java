@@ -8,6 +8,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 
+/**
+ * Pyris DTO mapping for an {@link Exam}.
+ */
 // @formatter:off
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisExamDTO(
@@ -22,6 +25,9 @@ public record PyrisExamDTO(
 // @formatter:on
 ) {
 
+    /**
+     * Create a {@link PyrisExamDTO} from an {@link Exam}.
+     */
     public static PyrisExamDTO from(Exam exam) {
         // @formatter:off
         return new PyrisExamDTO(

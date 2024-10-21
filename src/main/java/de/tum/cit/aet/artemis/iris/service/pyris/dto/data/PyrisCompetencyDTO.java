@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 
 /**
- * Pyris DTO mapping for a {@code Competency}.
+ * Pyris DTO mapping for a {@link Competency}.
  */
 // @formatter:off
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -24,6 +24,9 @@ public record PyrisCompetencyDTO(
 // @formatter:on
 ) {
 
+    /**
+     * Create a {@link PyrisCompetencyDTO} from a {@link Competency}.
+     */
     public static PyrisCompetencyDTO from(Competency competency) {
         // @formatter:off
         return new PyrisCompetencyDTO(
