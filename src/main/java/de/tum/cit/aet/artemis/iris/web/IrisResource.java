@@ -91,7 +91,7 @@ public class IrisResource {
     public ResponseEntity<Map<Long, IngestionState>> getStatusOfLectureIngestion(@PathVariable long courseId) {
         try {
             Course course = courseRepository.findByIdElseThrow(courseId);
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
             return ResponseEntity.ok(pyrisConnectorService.getLecturesIngestionState(courseId));
         }
         catch (EntityNotFoundException e) {
@@ -123,7 +123,7 @@ public class IrisResource {
     public ResponseEntity<Map<Long, IngestionState>> getStatusOfLectureUnitsIngestion(@PathVariable long courseId, @PathVariable long lectureId) {
         try {
             Course course = courseRepository.findByIdElseThrow(courseId);
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
             return ResponseEntity.ok(pyrisConnectorService.getLectureUnitsIngestionState(courseId, lectureId));
         }
         catch (EntityNotFoundException e) {
