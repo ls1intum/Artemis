@@ -13,18 +13,20 @@ import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import dayjs from 'dayjs/esm';
 
 export enum ProgrammingLanguage {
-    JAVA = 'JAVA',
-    PYTHON = 'PYTHON',
-    C = 'C',
-    HASKELL = 'HASKELL',
-    KOTLIN = 'KOTLIN',
-    VHDL = 'VHDL',
-    ASSEMBLER = 'ASSEMBLER',
-    SWIFT = 'SWIFT',
-    OCAML = 'OCAML',
     EMPTY = 'EMPTY',
-    RUST = 'RUST',
+    ASSEMBLER = 'ASSEMBLER',
+    C = 'C',
+    C_PLUS_PLUS = 'C_PLUS_PLUS',
+    HASKELL = 'HASKELL',
+    JAVA = 'JAVA',
     JAVASCRIPT = 'JAVASCRIPT',
+    KOTLIN = 'KOTLIN',
+    OCAML = 'OCAML',
+    PYTHON = 'PYTHON',
+    R = 'R',
+    RUST = 'RUST',
+    SWIFT = 'SWIFT',
+    VHDL = 'VHDL',
 }
 
 export enum ProjectType {
@@ -113,7 +115,9 @@ export function resetProgrammingForImport(exercise: ProgrammingExercise) {
 export function copyBuildConfigFromExerciseJson(exerciseJson: ProgrammingExerciseBuildConfig): ProgrammingExerciseBuildConfig {
     const buildConfig = new ProgrammingExerciseBuildConfig();
     buildConfig.sequentialTestRuns = exerciseJson.sequentialTestRuns ?? false;
-    buildConfig.checkoutPath = exerciseJson.checkoutPath ?? '';
+    buildConfig.assignmentCheckoutPath = exerciseJson.assignmentCheckoutPath ?? '';
+    buildConfig.solutionCheckoutPath = exerciseJson.solutionCheckoutPath ?? '';
+    buildConfig.testCheckoutPath = exerciseJson.testCheckoutPath ?? '';
     buildConfig.buildPlanConfiguration = exerciseJson.buildPlanConfiguration ?? '';
     buildConfig.checkoutSolutionRepository = exerciseJson.checkoutSolutionRepository ?? false;
     buildConfig.timeoutSeconds = exerciseJson.timeoutSeconds ?? 0;

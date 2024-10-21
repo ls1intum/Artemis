@@ -11,14 +11,14 @@ import { ProgrammingExercise } from 'app/entities/programming/programming-exerci
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
-import { faCodeBranch, faEye, faFolderOpen, faPenSquare, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch, faDesktop, faEye, faFolderOpen, faPenSquare, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_ATHENA, PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
@@ -60,6 +60,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     routerLink: string;
     repositoryLink: string;
 
+    theiaEnabled: boolean = false;
+    theiaPortalURL: string;
+
     // Icons
     readonly faFolderOpen = faFolderOpen;
     readonly faUsers = faUsers;
@@ -67,6 +70,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly faPlayCircle = faPlayCircle;
     readonly faRedo = faRedo;
     readonly faCodeBranch = faCodeBranch;
+    readonly faDesktop = faDesktop;
     readonly faPenSquare = faPenSquare;
 
     private feedbackSent = false;
@@ -106,6 +110,29 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+
+                // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
+                if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.programmingExercise) {
+                    this.theiaEnabled = true;
+
+                    // Set variables now, sanitize later on
+                    this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
+
+                    // Verify that Theia's portal URL is set
+                    if (this.theiaPortalURL === '') {
+                        this.theiaEnabled = false;
+                    }
+
+                    // Verify that the exercise allows the online IDE
+                    if (!this.programmingExercise.allowOnlineIde) {
+                        this.theiaEnabled = false;
+                    }
+
+                    // Verify that the exercise has a theia blueprint configured
+                    if (!this.programmingExercise.buildConfig?.theiaImage) {
+                        this.theiaEnabled = false;
+                    }
+                }
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
@@ -130,6 +157,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     ngOnChanges() {
         this.updateParticipations();
         this.isTeamAvailable = !!(this.exercise.teamMode && this.exercise.studentAssignedTeamIdComputed && this.exercise.studentAssignedTeamId);
+    }
+
+    startOnlineIDE() {
+        window.open(this.theiaPortalURL, '_blank');
     }
 
     receiveNewParticipation(newParticipation: StudentParticipation) {
@@ -227,6 +258,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
     }
 
+    // TODO remove this method once support of the button component is implemented for text and modeling exercises
     requestFeedback() {
         if (!this.assureConditionsSatisfied()) return;
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -311,6 +343,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * 3. There is no already pending feedback request.
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
+    // TODO remove this method once support of the button component is implemented for text and modeling exercises
     assureConditionsSatisfied(): boolean {
         this.updateParticipations();
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -348,7 +381,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             }
         }
 
-        if (this.hasAthenaResultForlatestSubmission()) {
+        if (this.hasAthenaResultForLatestSubmission()) {
             const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
             this.alertService.warning(submitFirstWarning);
             return false;
@@ -356,29 +389,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         return true;
     }
 
-    hasAthenaResultForlatestSubmission(): boolean {
+    hasAthenaResultForLatestSubmission(): boolean {
         if (this.gradedParticipation?.submissions && this.gradedParticipation?.results) {
-            const sortedSubmissions = this.gradedParticipation.submissions.slice().sort((a, b) => {
-                const dateA = this.getDateValue(a.submissionDate) ?? -Infinity;
-                const dateB = this.getDateValue(b.submissionDate) ?? -Infinity;
-                return dateB - dateA;
-            });
-
-            return this.gradedParticipation.results.some((result) => result.submission?.id === sortedSubmissions[0]?.id);
+            // submissions.results is always undefined so this is necessary
+            return (
+                this.gradedParticipation.submissions.last()?.id ===
+                this.gradedParticipation?.results.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA).first()?.submission?.id
+            );
         }
         return false;
     }
-
-    private getDateValue = (date: any): number => {
-        if (dayjs.isDayjs(date)) {
-            return date.valueOf();
-        }
-        if (date instanceof Date) {
-            return date.valueOf();
-        }
-        if (typeof date === 'string') {
-            return new Date(date).valueOf();
-        }
-        return -Infinity; // fallback for null, undefined, or invalid dates
-    };
 }

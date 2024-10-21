@@ -41,6 +41,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
@@ -51,8 +52,12 @@ import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Frame;
+import com.hazelcast.collection.IQueue;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -81,6 +86,8 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 @Execution(ExecutionMode.SAME_THREAD)
 class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
+    private static final String TEST_PREFIX = "localciint";
+
     @Autowired
     private LocalVCServletService localVCServletService;
 
@@ -93,11 +100,20 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Autowired
     private BuildLogEntryService buildLogEntryService;
 
+    @Autowired
+    @Qualifier("hazelcastInstance")
+    private HazelcastInstance hazelcastInstance;
+
     @Value("${artemis.user-management.internal-admin.username}")
     private String localVCUsername;
 
     @Value("${artemis.user-management.internal-admin.password}")
     private String localVCPassword;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
 
     private LocalRepository studentAssignmentRepository;
 
@@ -262,7 +278,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Should still work because in that case the latest commit should be retrieved from the repository.
         localVCServletService.processNewPush(null, studentAssignmentRepository.originGit.getRepository());
-        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
+        // ToDo: Investigate why specifically this test requires so much time (all other << 5s)
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false, 120);
     }
 
     @Test
@@ -291,7 +308,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCannotFindResults() {
+    void testResultsNotFound() {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Should return a build result that indicates that the build failed.
@@ -481,5 +498,38 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
             assertThat(result.isSuccessful()).isFalse();
             return true;
         }), Mockito.eq(participation)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCustomCheckoutPaths() {
+        var buildConfig = programmingExercise.getBuildConfig();
+        buildConfig.setAssignmentCheckoutPath("customAssignmentPath");
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPauseAndResumeBuildAgent() {
+        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        hazelcastInstance.getTopic("pauseBuildAgentTopic").publish(memberAddress);
+
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        await().until(() -> {
+            IQueue<BuildJobQueueItem> buildQueue = hazelcastInstance.getQueue("buildJobQueue");
+            IMap<String, BuildJobQueueItem> buildJobMap = hazelcastInstance.getMap("processingJobs");
+            BuildJobQueueItem buildJobQueueItem = buildQueue.peek();
+
+            return buildJobQueueItem != null && buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash) && !buildJobMap.containsKey(buildJobQueueItem.id());
+        });
+
+        hazelcastInstance.getTopic("resumeBuildAgentTopic").publish(memberAddress);
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
     }
 }

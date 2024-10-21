@@ -224,6 +224,10 @@ export class AccountService implements IAccountService {
         return this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 
+    isAtLeastTutor(): boolean {
+        return this.hasAnyAuthorityDirect([Authority.ADMIN, Authority.EDITOR, Authority.INSTRUCTOR, Authority.TA]);
+    }
+
     isAuthenticated(): boolean {
         return this.authenticated;
     }

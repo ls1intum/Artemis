@@ -38,18 +38,20 @@ public enum ProgrammingLanguage {
     PHP("php");
 
     private static final Set<ProgrammingLanguage> ENABLED_LANGUAGES = Set.of(
-        EMPTY,
-        JAVA,
-        PYTHON,
-        C,
-        HASKELL,
-        KOTLIN,
-        VHDL,
         ASSEMBLER,
-        SWIFT,
+        C,
+        C_PLUS_PLUS,
+        HASKELL,
+        JAVA,
+        JAVASCRIPT,
+        KOTLIN,
         OCAML,
+        PYTHON,
+        R,
         RUST,
-        JAVASCRIPT
+        SWIFT,
+        VHDL,
+        EMPTY
     );
     // @formatter:on
 

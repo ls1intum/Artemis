@@ -30,6 +30,7 @@ import de.jplag.JPlagResult;
 import de.jplag.Language;
 import de.jplag.c.CLanguage;
 import de.jplag.clustering.ClusteringOptions;
+import de.jplag.cpp.CPPLanguage;
 import de.jplag.exceptions.ExitException;
 import de.jplag.java.JavaLanguage;
 import de.jplag.javascript.JavaScriptLanguage;
@@ -37,6 +38,7 @@ import de.jplag.kotlin.KotlinLanguage;
 import de.jplag.options.JPlagOptions;
 import de.jplag.python3.PythonLanguage;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
+import de.jplag.rlang.RLanguage;
 import de.jplag.rust.RustLanguage;
 import de.jplag.swift.SwiftLanguage;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -310,16 +312,17 @@ public class ProgrammingPlagiarismDetectionService {
 
     private Language getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
         return switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA -> new JavaLanguage();
             case C -> new CLanguage();
-            case PYTHON -> new PythonLanguage();
-            case SWIFT -> new SwiftLanguage();
-            case KOTLIN -> new KotlinLanguage();
-            case RUST -> new RustLanguage();
+            case C_PLUS_PLUS -> new CPPLanguage();
+            case JAVA -> new JavaLanguage();
             case JAVASCRIPT -> new JavaScriptLanguage();
-            case EMPTY, PHP, DART, HASKELL, ASSEMBLER, OCAML, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, GO, MATLAB, BASH, VHDL, RUBY, POWERSHELL, ADA ->
-                throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
-                        "ProgrammingExercise", "notSupported");
+            case KOTLIN -> new KotlinLanguage();
+            case PYTHON -> new PythonLanguage();
+            case R -> new RLanguage();
+            case RUST -> new RustLanguage();
+            case SWIFT -> new SwiftLanguage();
+            case EMPTY, PHP, DART, HASKELL, ASSEMBLER, OCAML, C_SHARP, SQL, TYPESCRIPT, GO, MATLAB, BASH, VHDL, RUBY, POWERSHELL, ADA -> throw new BadRequestAlertException(
+                    "Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.", "ProgrammingExercise", "notSupported");
         };
     }
 

@@ -43,6 +43,7 @@ import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { ChatServiceMode } from 'app/iris/iris-chat.service';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -62,6 +63,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly evaluateBadge = ResultService.evaluateBadge;
     readonly dayjs = dayjs;
+    readonly ChatServiceMode = ChatServiceMode;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
@@ -198,7 +200,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.exerciseCategories = this.exercise.categories ?? [];
         this.allowComplaintsForAutomaticAssessments = false;
         this.plagiarismCaseInfo = newExerciseDetails.plagiarismCaseInfo;
-
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = this.exercise as ProgrammingExercise;
             const isAfterDateForComplaint =
@@ -243,7 +244,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     private filterUnfinishedResults(participations?: StudentParticipation[]) {
         participations?.forEach((participation: Participation) => {
             if (participation.results) {
-                participation.results = participation.results.filter((result: Result) => result.completionDate && result.successful !== undefined);
+                participation.results = participation.results.filter((result: Result) => result.completionDate);
             }
         });
     }
@@ -254,7 +255,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.sortedHistoryResults = this.studentParticipations
                 .flatMap((participation) => participation.results ?? [])
                 .sort(this.resultSortFunction)
-                .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful == undefined));
+                .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && dayjs().isBefore(result.completionDate)));
         }
     }
 

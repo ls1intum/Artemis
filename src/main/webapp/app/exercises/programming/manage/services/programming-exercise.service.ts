@@ -284,6 +284,16 @@ export class ProgrammingExerciseService {
         );
     }
 
+    /**
+     * Finds the programming exercise for the given exerciseId with its auxiliary repositories
+     * @param programmingExerciseId of the programming exercise to retrieve
+     */
+    findWithAuxiliaryRepository(programmingExerciseId: number): Observable<EntityResponseType> {
+        return this.http.get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-auxiliary-repository`, {
+            observe: 'response',
+        });
+    }
+
     private setLatestResultForTemplateAndSolution(programmingExercise: ProgrammingExercise) {
         if (programmingExercise.templateParticipation) {
             const latestTemplateResult = this.getLatestResult(programmingExercise.templateParticipation);

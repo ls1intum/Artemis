@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!-- Add iris text exercise chat support -->
+    <changeSet id="20240909090909" author="michaeldyer">
+        <addColumn tableName="iris_settings">
+            <column name="iris_text_exercise_chat_settings_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

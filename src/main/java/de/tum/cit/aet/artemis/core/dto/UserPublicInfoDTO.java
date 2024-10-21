@@ -25,6 +25,8 @@ public class UserPublicInfoDTO {
 
     private String lastName;
 
+    private String imageUrl;
+
     private Boolean isInstructor;
 
     private Boolean isEditor;
@@ -43,6 +45,7 @@ public class UserPublicInfoDTO {
         this.name = user.getName();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
+        this.imageUrl = user.getImageUrl();
     }
 
     /**
@@ -101,6 +104,14 @@ public class UserPublicInfoDTO {
         this.lastName = lastName;
     }
 
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
     public Boolean getIsInstructor() {
         return isInstructor;
     }
@@ -152,6 +163,7 @@ public class UserPublicInfoDTO {
     @Override
     public String toString() {
         return "UserPublicInfoDTO{" + "id=" + id + ", login='" + login + '\'' + ", name='" + name + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\''
-                + ", isInstructor=" + isInstructor + ", isEditor=" + isEditor + ", isTeachingAssistant=" + isTeachingAssistant + ", isStudent=" + isStudent + '}';
+                + ", imageUrl='" + imageUrl + '\'' + ", isInstructor=" + isInstructor + ", isEditor=" + isEditor + ", isTeachingAssistant=" + isTeachingAssistant + ", isStudent="
+                + isStudent + '}';
     }
 }
