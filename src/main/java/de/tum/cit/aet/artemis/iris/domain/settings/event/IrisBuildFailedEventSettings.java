@@ -14,12 +14,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class IrisBuildFailedEventSettings extends IrisEventSettings {
 
     @Override
-    public IrisEventTarget getDefaultLevel() {
-        return IrisEventTarget.EXERCISE;
+    public IrisEventSessionType getDefaultSessionType() {
+        return IrisEventSessionType.EXERCISE;
     }
 
     @Override
-    public String getDefaultPipelineVariant() {
+    public String getDefaultSelectedEventVariant() {
         return "build_failed";
     }
 }

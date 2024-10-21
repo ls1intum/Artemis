@@ -4,13 +4,13 @@ import jakarta.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventSessionType;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventTarget;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisCombinedEventSettingsDTO(boolean isActive, String pipelineVariant, @Nullable IrisEventTarget target) {
+public record IrisCombinedEventSettingsDTO(boolean enabled, String selectedEventVariant, @Nullable IrisEventSessionType sessionType) {
 
     public static IrisCombinedEventSettingsDTO of(IrisEventSettings eventSettings) {
-        return new IrisCombinedEventSettingsDTO(eventSettings.isActive(), eventSettings.getPipelineVariant(), eventSettings.getTarget());
+        return new IrisCombinedEventSettingsDTO(eventSettings.isEnabled(), eventSettings.getSelectedEventVariant(), eventSettings.getSessionType());
     }
 }

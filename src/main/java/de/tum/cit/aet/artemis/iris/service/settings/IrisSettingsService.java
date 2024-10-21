@@ -133,7 +133,11 @@ public class IrisSettingsService {
 
     private void initializeIrisProactiveSettings(IrisGlobalSettings settings) {
         var irisProactivitySettings = settings.getIrisProactivitySettings();
-        irisProactivitySettings = initializeSettings(irisProactivitySettings, IrisProactivitySubSettings::new);
+
+        if (irisProactivitySettings == null) {
+            irisProactivitySettings = new IrisProactivitySubSettings();
+            irisProactivitySettings.setEnabled(false);
+        }
         initializeIrisEventSettings(irisProactivitySettings);
         settings.setIrisProactivitySettings(irisProactivitySettings);
     }
@@ -142,15 +146,15 @@ public class IrisSettingsService {
         HashSet<IrisEventSettings> eventSettings = new HashSet<>();
 
         var jolEventSettings = new IrisJolEventSettings();
-        jolEventSettings.setActive(false);
+        jolEventSettings.setEnabled(false);
         eventSettings.add(jolEventSettings);
 
         var submissionFailedEventSettings = new IrisBuildFailedEventSettings();
-        submissionFailedEventSettings.setActive(false);
+        submissionFailedEventSettings.setEnabled(false);
         eventSettings.add(submissionFailedEventSettings);
 
         var submissionSuccessfulEventSettings = new IrisProgressStalledEventSettings();
-        submissionSuccessfulEventSettings.setActive(false);
+        submissionSuccessfulEventSettings.setEnabled(false);
         eventSettings.add(submissionSuccessfulEventSettings);
 
         eventSettings.forEach(event -> event.setProactivitySubSettings(settings));
@@ -673,7 +677,7 @@ public class IrisSettingsService {
      */
     private boolean isEventEnabledInSettings(IrisCombinedEventSettingsDTO settings, IrisEventType type) {
         return switch (type) {
-            case JOL, PROGRESS_STALLED, BUILD_FAILED -> settings.isActive();
+            case JOL, PROGRESS_STALLED, BUILD_FAILED -> settings.enabled();
         };
     }
 }

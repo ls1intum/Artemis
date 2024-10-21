@@ -165,7 +165,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     @Override
     public void requestAndHandleResponse(IrisExerciseChatSession session) {
-        requestAndHandleResponse(session, "default");
+        requestAndHandleResponse(session, Optional.empty());
     }
 
     /**
@@ -173,9 +173,9 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * and sending it to the student via the Websocket.
      *
      * @param session The chat session to send to the LLM
-     * @param variant The variant of the pipeline to use
+     * @param event   The event to trigger on Pyris side
      */
-    public void requestAndHandleResponse(IrisExerciseChatSession session, String variant) {
+    public void requestAndHandleResponse(IrisExerciseChatSession session, Optional<String> event) {
         var chatSession = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         if (chatSession.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
@@ -184,7 +184,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var latestSubmission = getLatestSubmissionIfExists(exercise, chatSession.getUser());
 
         var variant = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false).irisChatSettings().selectedVariant();
-        pyrisPipelineService.executeExerciseChatPipeline(variant, latestSubmission, exercise, chatSession);
+        pyrisPipelineService.executeExerciseChatPipeline(variant, latestSubmission, exercise, chatSession, event);
     }
 
     /**
@@ -210,7 +210,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             if (participant instanceof User user) {
                 var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
                 log.info("Build failed for user {}", user.getName());
-                CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "build_failed"));
+                CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of("build_failed")));
             }
             else {
                 throw new ConflictException("Build failure event is not supported for team participations", "Iris", "irisTeamParticipation");
@@ -250,7 +250,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
                 var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
                 if (participant instanceof User user) {
                     var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
-                    CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "progress_stalled"));
+                    CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of("progress_stalled")));
                 }
                 else {
                     throw new ConflictException("Progress stalled event is not supported for team participations", "Iris", "irisTeamParticipation");

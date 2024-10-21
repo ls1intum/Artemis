@@ -4,26 +4,42 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventSettings;
 
 /**
- * Represents the specific ingestion sub-settings of lectures for Iris.
- * This class extends {@link IrisSubSettings} to provide settings required for lecture data ingestion.
+ * Represents the proactivity sub settings for Iris.
  */
 @Entity
-@DiscriminatorValue("PROACTIVITY")
+@Table(name = "iris_proactivity_settings")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisProactivitySubSettings extends IrisSubSettings {
+public class IrisProactivitySubSettings extends DomainObject implements IrisToggleableSetting {
+
+    @Column(name = "enabled")
+    private boolean enabled = false;
 
     @OneToMany(mappedBy = "proactivitySubSettings", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<IrisEventSettings> eventSettings = new HashSet<>();
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
     public Set<IrisEventSettings> getEventSettings() {
         return eventSettings;

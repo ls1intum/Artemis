@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,13 +61,13 @@ public class PyrisConnectorService {
         try {
             var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/pipelines/" + feature.name() + "/variants", PyrisVariantDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
-                throw new PyrisConnectorException("Could not fetch offered models");
+                throw new PyrisConnectorException("Could not fetch offered variants");
             }
             return Arrays.asList(response.getBody());
         }
         catch (HttpStatusCodeException e) {
-            log.error("Failed to fetch offered models from Pyris", e);
-            throw new PyrisConnectorException("Could not fetch offered models");
+            log.error("Failed to fetch offered variants from Pyris", e);
+            throw new PyrisConnectorException("Could not fetch offered variants");
         }
     }
 
@@ -77,8 +78,10 @@ public class PyrisConnectorService {
      * @param variant      The variant of the feature to execute
      * @param executionDTO The DTO sent as a body for the execution
      */
-    public void executePipeline(String feature, String variant, Object executionDTO) {
+    public void executePipeline(String feature, String variant, Object executionDTO, Optional<String> event) {
         var endpoint = "/api/v1/pipelines/" + feature + "/" + variant + "/run";
+        // Add event query parameter if present
+        endpoint += event.map(e -> "?event=" + e).orElse("");
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
         }

@@ -1,17 +1,17 @@
 <div class="btn-group">
     <div
         class="btn"
-        [ngClass]="{ 'btn-success selected': active(), 'btn-default': !active() }"
+        [ngClass]="{ 'btn-success selected': enabled(), 'btn-default': !enabled() }"
         [class.disabled]="isSettingsSwitchDisabled()"
-        (click)="updateSetting('active', !active())"
+        (click)="updateSetting('enabled', !enabled())"
     >
         {{ 'artemisApp.iris.settings.subSettings.proactivitySettings.eventSettings.active' | artemisTranslate }}
     </div>
     <div
         class="btn"
-        [ngClass]="{ 'btn-danger selected': !active(), 'btn-default': active() }"
+        [ngClass]="{ 'btn-danger selected': !enabled(), 'btn-default': enabled() }"
         [class.disabled]="isSettingsSwitchDisabled()"
-        (click)="updateSetting('active', !active())"
+        (click)="updateSetting('enabled', !enabled())"
     >
         {{ 'artemisApp.iris.settings.subSettings.proactivitySettings.eventSettings.inactive' | artemisTranslate }}
     </div>

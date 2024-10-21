@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.iris.domain.settings.event;
 
+import java.util.SortedSet;
+import java.util.TreeSet;
+
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.Entity;
@@ -25,8 +29,18 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisListConverter;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisProactivitySubSettings;
 
+/**
+ * IrisEventSettings is an abstract super class for the specific sub event settings types.
+ * Sub Event Settings are settings for a proactive event of Iris.
+ * {@link IrisProgressStalledEventSettings} are used to specify settings for the progress stalled event.
+ * {@link IrisBuildFailedEventSettings} are used to specify settings for the build failed event.
+ * {@link IrisJolEventSettings} are used to specify settings for the JOL event.
+ * <p>
+ * Also see {@link de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService} for more information.
+ */
 @Entity
 @Table(name = "iris_event_settings")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -41,19 +55,22 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisProactivitySubSettings;
 })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisEventSettings extends DomainObject {
-    // Is event active
-    @Column(name = "is_active", nullable = false)
-    private boolean isActive;
+    @Column(name = "enabled", nullable = false)
+    private boolean enabled;
 
-    // The variant of the pipeline the event is associated with
-    @Column(name = "pipeline_variant", nullable = false)
-    private String pipelineVariant;
+    @Column(name = "allowed_event_variants", nullable = false)
+    @Convert(converter = IrisListConverter.class)
+    private SortedSet<String> allowedEventVariants = new TreeSet<>();
 
-    // The level of the event which type of session the event will be triggered in
+    // The selected event variant of the pipeline the event is associated with
+    @Column(name = "selected_event_variant", nullable = false)
+    private String selectedEventVariant;
+
+    // The session type of the event which type of session the event will be triggered in
     @Nullable
     @Enumerated(EnumType.STRING)
-    @Column(name = "target")
-    private IrisEventTarget target;
+    @Column(name = "session_type", nullable = false)
+    private IrisEventSessionType sessionType;
 
     @JsonIgnore
     @ManyToOne
@@ -63,11 +80,11 @@ public abstract class IrisEventSettings extends DomainObject {
     @PrePersist
     @PreUpdate
     protected void onCreate() {
-        if (target == null) {
-            target = getDefaultLevel();
+        if (sessionType == null) {
+            sessionType = getDefaultSessionType();
         }
-        if (pipelineVariant == null) {
-            pipelineVariant = getDefaultPipelineVariant();
+        if (selectedEventVariant == null) {
+            selectedEventVariant = getDefaultSelectedEventVariant();
         }
     }
 
@@ -79,29 +96,38 @@ public abstract class IrisEventSettings extends DomainObject {
         this.proactivitySubSettings = proactivitySubSettings;
     }
 
-    public boolean isActive() {
-        return isActive;
+    public boolean isEnabled() {
+        return enabled;
     }
 
-    public void setActive(boolean active) {
-        isActive = active;
+    public void setEnabled(boolean active) {
+        enabled = active;
     }
 
-    public String getPipelineVariant() {
-        return pipelineVariant;
+    public IrisEventSessionType getSessionType() {
+        return sessionType;
     }
 
-    public void setPipelineVariant(String pipelineVariant) {
-        this.pipelineVariant = pipelineVariant;
+    public SortedSet<String> getAllowedEventVariants() {
+        return allowedEventVariants;
     }
 
-    public IrisEventTarget getTarget() {
-        return target;
+    public void setAllowedEventVariants(SortedSet<String> allowedEventVariants) {
+        this.allowedEventVariants = allowedEventVariants;
+    }
+
+    @Nullable
+    public String getSelectedEventVariant() {
+        return selectedEventVariant;
+    }
+
+    public void setSelectedEventVariant(@Nullable String selectedVariant) {
+        this.selectedEventVariant = selectedVariant;
     }
 
     @JsonIgnore
-    protected abstract IrisEventTarget getDefaultLevel();
+    protected abstract IrisEventSessionType getDefaultSessionType();
 
     @JsonIgnore
-    protected abstract String getDefaultPipelineVariant();
+    protected abstract String getDefaultSelectedEventVariant();
 }

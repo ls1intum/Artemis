@@ -98,7 +98,8 @@ public class PyrisPipelineService {
      * @param dtoMapper     a function to create the concrete DTO type for this pipeline from the base DTO
      * @param statusUpdater a consumer to update the status of the pipeline execution
      */
-    public void executePipeline(String name, String variant, String jobToken, Function<PyrisPipelineExecutionDTO, Object> dtoMapper, Consumer<List<PyrisStageDTO>> statusUpdater) {
+    public void executePipeline(String name, String variant, Optional<String> event, String jobToken, Function<PyrisPipelineExecutionDTO, Object> dtoMapper,
+            Consumer<List<PyrisStageDTO>> statusUpdater) {
         // Define the preparation stages of pipeline execution with their initial states
         // There will be more stages added in Pyris later
         var preparing = new PyrisStageDTO("Preparing", 10, null, null);
@@ -116,7 +117,7 @@ public class PyrisPipelineService {
 
             try {
                 // Execute the pipeline using the connector service
-                pyrisConnectorService.executePipeline(name, variant, pipelineDto);
+                pyrisConnectorService.executePipeline(name, variant, pipelineDto, event);
             }
             catch (PyrisConnectorException | IrisException e) {
                 log.error("Failed to execute {} pipeline", name, e);
@@ -143,11 +144,13 @@ public class PyrisPipelineService {
      * @param session          the chat session
      * @see PyrisPipelineService#executePipeline for more details on the pipeline execution process.
      */
-    public void executeExerciseChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisExerciseChatSession session) {
+    public void executeExerciseChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisExerciseChatSession session,
+            Optional<String> eventVariant) {
         // @formatter:off
         executePipeline(
                 "tutor-chat", // TODO: Rename this to 'exercise-chat' with next breaking Pyris version
                 variant,
+                eventVariant,
                 pyrisJobService.addExerciseChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()),
                 executionDto -> {
                     var course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -180,10 +183,10 @@ public class PyrisPipelineService {
      * @param <T>           the type of the object
      * @param <U>           the type of the DTO
      */
-    private <T, U> void executeCourseChatPipeline(String variant, IrisCourseChatSession session, T eventObject, Class<U> eventDtoClass) {
+    private <T, U> void executeCourseChatPipeline(String variant, IrisCourseChatSession session, T eventObject, Class<U> eventDtoClass, Optional<String> eventVariant) {
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
-        executePipeline("course-chat", variant, pyrisJobService.addCourseChatJob(courseId, session.getId()), executionDto -> {
+        executePipeline("course-chat", variant, eventVariant, pyrisJobService.addCourseChatJob(courseId, session.getId()), executionDto -> {
             var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
             return new PyrisCourseChatPipelineExecutionDTO(PyrisExtendedCourseDTO.of(fullCourse),
                     learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId), generateEventPayloadFromObjectType(eventDtoClass, eventObject),
@@ -209,9 +212,9 @@ public class PyrisPipelineService {
     public void executeCourseChatPipeline(String variant, IrisCourseChatSession session, Object object) {
         log.debug("Executing course chat pipeline variant {} with object {}", variant, object);
         switch (object) {
-            case null -> executeCourseChatPipeline(variant, session, null, null);
-            case CompetencyJol competencyJol -> executeCourseChatPipeline(variant, session, competencyJol, CompetencyJolDTO.class);
-            case Exercise exercise -> executeCourseChatPipeline(variant, session, exercise, PyrisExerciseWithStudentSubmissionsDTO.class);
+            case null -> executeCourseChatPipeline(variant, session, null, null, Optional.empty());
+            case CompetencyJol competencyJol -> executeCourseChatPipeline(variant, session, competencyJol, CompetencyJolDTO.class, Optional.of("jol"));
+            case Exercise exercise -> executeCourseChatPipeline(variant, session, exercise, PyrisExerciseWithStudentSubmissionsDTO.class, Optional.empty());
             default -> throw new UnsupportedOperationException("Unsupported Pyris event payload type: " + object);
         }
     }

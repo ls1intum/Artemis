@@ -28,13 +28,13 @@ export class IrisEventSettingsUpdateComponent {
     private proactivityDisabledSignal = signal(false);
 
     inheritDisabled = computed(() =>
-        this.parentEventSettings !== undefined ? this.proactivityDisabledSignal() || !this.parentEventSettings.active : this.proactivityDisabledSignal(),
+        this.parentEventSettings !== undefined ? this.proactivityDisabledSignal() || !this.parentEventSettings.enabled : this.proactivityDisabledSignal(),
     );
     isSettingsSwitchDisabled = computed(() => (!this.isAdmin() && this.settingsType !== IrisSettingsType.EXERCISE) || this.inheritDisabled());
 
     // Computed properties
     settings = computed(() => this.settingsSignal());
-    active = computed(() => this.settings().active);
+    enabled = computed(() => this.settings().enabled);
     isAdmin = signal(false);
 
     // Constants

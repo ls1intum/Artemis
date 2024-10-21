@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisToggleableSetting;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisBuildFailedEventSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisJolEventSettings;
@@ -347,7 +348,7 @@ public class IrisSubSettingsService {
      * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
      * @return Combined enabled field.
      */
-    private boolean getCombinedEnabled(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
+    private <T extends IrisToggleableSetting> boolean getCombinedEnabled(List<IrisSettings> settingsList, Function<IrisSettings, T> subSettingsFunction) {
         for (var irisSettings : settingsList) {
             if (irisSettings == null) {
                 return false;

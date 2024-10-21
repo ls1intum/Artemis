@@ -14,12 +14,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class IrisJolEventSettings extends IrisEventSettings {
 
     @Override
-    public IrisEventTarget getDefaultLevel() {
-        return IrisEventTarget.COURSE;
+    public IrisEventSessionType getDefaultSessionType() {
+        return IrisEventSessionType.COURSE;
     }
 
     @Override
-    public String getDefaultPipelineVariant() {
+    public String getDefaultSelectedEventVariant() {
         return "jol";
     }
 }

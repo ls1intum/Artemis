@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 
-export enum IrisEventLevel {
+export enum IrisEventSessionType {
     COURSE = 'COURSE',
     EXERCISE = 'EXERCISE',
 }
@@ -14,24 +14,24 @@ export enum IrisEventType {
 export class IrisEventSettings implements BaseEntity {
     id?: number;
     type: IrisEventType;
-    active = false;
-    pipelineVariant: string;
-    target: IrisEventLevel;
+    enabled = false;
+    selectedEventVariant: string;
+    sessionType: IrisEventSessionType;
 }
 export class JolEventSettings extends IrisEventSettings {
-    target = IrisEventLevel.COURSE;
+    sessionType = IrisEventSessionType.COURSE;
     type = IrisEventType.JOL;
-    pipelineVariant = 'jol';
+    selectedEventVariant = 'jol';
 }
 
 export class ProgressStalledEventSettings extends IrisEventSettings {
-    target = IrisEventLevel.COURSE;
+    sessionType = IrisEventSessionType.COURSE;
     type = IrisEventType.PROGRESS_STALLED;
-    pipelineVariant = 'progress_stalled';
+    selectedEventVariant = 'progress_stalled';
 }
 
 export class BuildFailedEventSettings extends IrisEventSettings {
-    target = IrisEventLevel.EXERCISE;
+    sessionType = IrisEventSessionType.EXERCISE;
     type = IrisEventType.BUILD_FAILED;
-    pipelineVariant = 'build_failed';
+    selectedEventVariant = 'build_failed';
 }

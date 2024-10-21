@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import java.util.Optional;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -48,6 +50,7 @@ public class IrisCompetencyGenerationService {
         pyrisPipelineService.executePipeline(
                 "competency-extraction",
                 "default",
+                Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getLogin())),
                 executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, CompetencyTaxonomy.values(), 5),
                 stages -> websocketService.send(user.getLogin(), websocketTopic(course.getId()), new PyrisCompetencyStatusUpdateDTO(stages, null))

@@ -41,12 +41,11 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
     @JsonSubTypes.Type(value = IrisChatSubSettings.class, name = "chat"),
     @JsonSubTypes.Type(value = IrisTextExerciseChatSubSettings.class, name = "text-exercise-chat"),
     @JsonSubTypes.Type(value = IrisLectureIngestionSubSettings.class, name = "lecture-ingestion"),
-    @JsonSubTypes.Type(value = IrisCompetencyGenerationSubSettings.class, name = "competency-generation"),
-    @JsonSubTypes.Type(value = IrisProactivitySubSettings.class, name = "proactivity")
+    @JsonSubTypes.Type(value = IrisCompetencyGenerationSubSettings.class, name = "competency-generation")
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class IrisSubSettings extends DomainObject {
+public abstract class IrisSubSettings extends DomainObject implements IrisToggleableSetting {
 
     @Column(name = "enabled")
     private boolean enabled = false;
