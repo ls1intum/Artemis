@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
 import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -170,11 +169,14 @@ public class AthenaFeedbackSuggestionsService {
         if (meta == null) {
             return;
         }
-
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        User user = ((StudentParticipation) submission.getParticipation()).getStudent().orElse(null);
+        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        Long userId = ((StudentParticipation) submission.getParticipation()).getStudent().map(User::getId).orElse(null);
         List<LLMRequest> llmRequests = meta.llmRequests();
+        if (llmRequests == null) {
+            return;
+        }
+
         llmTokenUsageService.saveLLMTokenUsage(llmRequests, LLMServiceType.ATHENA,
-                (llmTokenUsageBuilder -> llmTokenUsageBuilder.withCourse(course).withExercise(exercise).withUser(user)));
+                (llmTokenUsageBuilder -> llmTokenUsageBuilder.withCourse(courseId).withExercise(exercise.getId()).withUser(userId)));
     }
 }
