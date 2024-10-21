@@ -30,6 +30,11 @@ export interface TextEditor {
     focus(): void;
 
     /**
+     * Undoes the last edit in the editor.
+     */
+    undo(): void;
+
+    /**
      * Replaces the text in the editor at the given range with the given text.
      * @param range The range to replace the text at.
      * @param text The text to replace the range with.
@@ -106,4 +111,18 @@ export interface TextEditor {
      * @return A disposable that can be used to remove the completer from the editor.
      */
     addCompleter<ItemType>(completer: TextEditorCompleter<ItemType>): Disposable;
+
+    /**
+     * Adds a listener that is called when the selection in the editor changes.
+     * @param callback The callback to call when the selection changes. The selected text is passed to the callback.
+     * @return A disposable that can be used to remove the listener from the editor.
+     */
+    addSelectionChangeListener(callback: (selectedText: string) => void): Disposable;
+
+    /**
+     * Adds a listener that is called when the editor is pasted into.
+     * @param callback The callback to call when the editor is pasted into. The range of the pasted text is passed to the callback.
+     * @return A disposable that can be used to remove the listener from the editor.
+     */
+    addPasteListener(callback: (editor: TextEditor, range: TextEditorRange) => void): Disposable;
 }

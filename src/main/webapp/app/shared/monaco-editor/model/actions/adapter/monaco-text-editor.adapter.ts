@@ -139,6 +139,10 @@ export class MonacoTextEditorAdapter implements TextEditor {
         this.editor.focus();
     }
 
+    undo(): void {
+        this.editor.trigger('MonacoTextEditorAdapter::undo', 'undo', {});
+    }
+
     replaceTextAtRange(range: TextEditorRange, text: string): void {
         this.editor.executeEdits('MonacoTextEditorAdapter::replaceTextAtRange', [
             {
@@ -192,6 +196,22 @@ export class MonacoTextEditorAdapter implements TextEditor {
 
     revealRange(range: TextEditorRange): void {
         this.editor.revealRangeInCenter(this.toMonacoRange(range));
+    }
+
+    addSelectionChangeListener(callback: (selectedText: string) => void): Disposable {
+        return this.editor.onDidChangeCursorSelection((event) => {
+            const selectedText = this.getTextAtRange(
+                makeTextEditorRange(event.selection.startLineNumber, event.selection.startColumn, event.selection.endLineNumber, event.selection.endColumn),
+            );
+            callback(selectedText);
+        });
+    }
+
+    addPasteListener(callback: (editor: TextEditor, range: TextEditorRange) => void): Disposable {
+        return this.editor.onDidPaste((event) => {
+            const range = makeTextEditorRange(event.range.startLineNumber, event.range.startColumn, event.range.endLineNumber, event.range.endColumn);
+            callback(this, range);
+        });
     }
 
     private toMonacoPosition(position: TextEditorPosition): monaco.IPosition {
