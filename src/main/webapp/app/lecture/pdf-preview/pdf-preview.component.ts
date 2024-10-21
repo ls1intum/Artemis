@@ -473,7 +473,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 },
             });
         } else if (this.attachmentUnit()) {
-            this.lectureUnitService.delete(this.attachmentUnit()!.id!, this.attachmentUnit()!.lecture?.id!).subscribe({
+            this.lectureUnitService.delete(this.attachmentUnit()!.id!, this.attachmentUnit()!.lecture!.id!).subscribe({
                 next: () => {
                     this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
                     this.dialogErrorSource.next('');
