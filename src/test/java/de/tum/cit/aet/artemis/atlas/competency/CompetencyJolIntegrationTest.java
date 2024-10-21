@@ -181,7 +181,7 @@ class CompetencyJolIntegrationTest extends AbstractAtlasIntegrationTest {
             final var jol1 = competencyUtilService.createJol(competency[1], student, (short) 8, ZonedDateTime.now(), 0.1, 0.2);
             final var jolMap = sendRequest(HttpStatus.OK);
             assertThat(jolMap).isNotNull();
-            final var expectedMap = Map.of(competency[0].getId(), CompetencyJolPairDTO.from(jol01, jol00), competency[1].getId(), CompetencyJolPairDTO.from(jol1, null));
+            final var expectedMap = Map.of(competency[0].getId(), CompetencyJolPairDTO.of(jol01, jol00), competency[1].getId(), CompetencyJolPairDTO.of(jol1, null));
             expectedMap.forEach((expKey, expValue) -> {
                 final var current = jolMap.get(expKey).current();
                 final var expCurrent = expValue.current();

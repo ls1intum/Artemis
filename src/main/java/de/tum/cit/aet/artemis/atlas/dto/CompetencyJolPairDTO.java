@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyJolPairDTO(CompetencyJolDTO current, CompetencyJolDTO prior) {
 
-    public static CompetencyJolPairDTO from(CompetencyJol current, CompetencyJol prior) {
-        return new CompetencyJolPairDTO(current != null ? CompetencyJolDTO.from(current) : null, prior != null ? CompetencyJolDTO.from(prior) : null);
+    public static CompetencyJolPairDTO of(CompetencyJol current, CompetencyJol prior) {
+        return new CompetencyJolPairDTO(current != null ? CompetencyJolDTO.of(current) : null, prior != null ? CompetencyJolDTO.of(prior) : null);
     }
 }
