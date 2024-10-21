@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -32,7 +34,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseTestService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
@@ -49,58 +51,67 @@ import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupSchedul
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
-/**
- * Contains useful methods for testing the tutorial groups feature.
- */
-abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+
+    // Repositories
+    @Autowired
+    protected TutorialGroupTestRepository tutorialGroupTestRepository;
 
     @Autowired
-    CourseTestService courseTestService;
+    protected TutorialGroupSessionRepository tutorialGroupSessionRepository;
 
     @Autowired
-    UserTestRepository userRepository;
+    protected TutorialGroupScheduleTestRepository tutorialGroupScheduleTestRepository;
 
     @Autowired
-    CourseTestRepository courseRepository;
+    protected TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository;
 
     @Autowired
-    TutorialGroupTestRepository tutorialGroupTestRepository;
+    protected TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 
     @Autowired
-    TutorialGroupSessionRepository tutorialGroupSessionRepository;
+    protected TutorialGroupRegistrationTestRepository tutorialGroupRegistrationTestRepository;
+
+    // External Repositories
+    @Autowired
+    protected UserTestRepository userRepository;
 
     @Autowired
-    TutorialGroupScheduleTestRepository tutorialGroupScheduleTestRepository;
+    protected CourseTestRepository courseRepository;
 
     @Autowired
-    TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository;
+    protected ChannelRepository channelRepository;
 
     @Autowired
-    TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
+    protected ConversationParticipantTestRepository conversationParticipantRepository;
 
     @Autowired
-    TutorialGroupRegistrationTestRepository tutorialGroupRegistrationTestRepository;
+    protected PostTestRepository postRepository;
+
+    // Services
+    @Autowired
+    protected TutorialGroupService tutorialGroupService;
 
     @Autowired
-    TutorialGroupService tutorialGroupService;
+    protected TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
+
+    // Util Services
+    @Autowired
+    protected TutorialGroupUtilService tutorialGroupUtilService;
+
+    // External Util Services
+    @Autowired
+    protected CourseUtilService courseUtilService;
 
     @Autowired
-    ChannelRepository channelRepository;
+    protected UserUtilService userUtilService;
 
     @Autowired
-    ConversationParticipantTestRepository conversationParticipantRepository;
+    protected ConversationUtilService conversationUtilService;
 
+    // Misc
     @Autowired
-    TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
-
-    @Autowired
-    TutorialGroupUtilService tutorialGroupUtilService;
-
-    @Autowired
-    CourseUtilService courseUtilService;
-
-    @Autowired
-    UserUtilService userUtilService;
+    protected CourseTestService courseTestService;
 
     Long exampleCourseId;
 

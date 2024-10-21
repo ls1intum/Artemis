@@ -1,9 +1,13 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
@@ -11,8 +15,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -35,11 +41,15 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -71,6 +81,13 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    // TODO remove again after refactoring and cleanup
+    @Autowired
+    private ProgrammingExerciseIntegrationTestService programmingExerciseIntegrationTestService;
+
     private ProgrammingExercise programmingExercise;
 
     private Participation programmingExerciseParticipation;
@@ -81,6 +98,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
     }
 
     private static Stream<Arguments> argumentsForGetParticipationResults() {
@@ -702,6 +720,144 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * TODO move the following test into a different test file, as they do not use the programming-exercise-participations/.. endpoint, but programming-exercise/..
+     * move the endpoint itself too
+     * <p>
+     * Test for GET - programming-exercise/{exerciseID}/commit-history/{repositoryType}
+     */
+    @Nested
+    class GetCommitHistoryForTemplateSolutionTestOrAuxRepo {
+
+        String PATH_PREFIX;
+
+        ProgrammingExercise programmingExerciseWithAuxRepo;
+
+        @BeforeEach
+        void setup() throws GitAPIException {
+            userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
+            var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+            programmingExerciseWithAuxRepo = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+            programmingExerciseWithAuxRepo = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseWithAuxRepo.getId()).orElseThrow();
+            programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExerciseWithAuxRepo);
+
+            doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(any());
+            PATH_PREFIX = "/api/programming-exercise/" + programmingExerciseWithAuxRepo.getId() + "/commit-history/";
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldReturnBadRequestForInvalidRepositoryType() throws Exception {
+            request.getList(PATH_PREFIX + "INVALIDTYPE", HttpStatus.BAD_REQUEST, CommitInfoDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldGetListForTemplateRepository() throws Exception {
+            assertThat(request.getList(PATH_PREFIX + "TEMPLATE", HttpStatus.OK, CommitInfoDTO.class)).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldGetListForSolutionRepository() throws Exception {
+            assertThat(request.getList(PATH_PREFIX + "SOLUTION", HttpStatus.OK, CommitInfoDTO.class)).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldGetListForTestsRepository() throws Exception {
+            assertThat(request.getList(PATH_PREFIX + "TESTS", HttpStatus.OK, CommitInfoDTO.class)).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldGetListForAuxiliaryRepository() throws Exception {
+            assertThat(request.getList(PATH_PREFIX + "AUXILIARY?repositoryId=" + programmingExerciseWithAuxRepo.getAuxiliaryRepositories().getFirst().getId(), HttpStatus.OK,
+                    CommitInfoDTO.class)).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldThrowWithInvalidAuxiliaryRepositoryId() throws Exception {
+            request.getList(PATH_PREFIX + "AUXILIARY?repositoryId=" + 128, HttpStatus.NOT_FOUND, CommitInfoDTO.class);
+        }
+    }
+
+    /**
+     * Tests for programming-exercise-participations/{participationId}/files-content/{commitId}
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getParticipationRepositoryFilesInstructorSuccess() throws Exception {
+        var commitHash = "commitHash";
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author", "authorEmail");
+        var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
+        doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
+        doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).checkoutRepositoryAtCommit(participation.getVcsRepositoryUri(), commitHash, true);
+        doReturn(Map.of()).when(gitService).listFilesAndFolders(any());
+        doNothing().when(gitService).switchBackToDefaultBranchHead(any());
+
+        request.getMap("/api/programming-exercise-participations/" + participation.getId() + "/files-content/" + commitHash, HttpStatus.OK, String.class, String.class);
+    }
+
+    /**
+     * TODO refactor endpoint to contain participation -> programming-exercise-participations
+     * tests GET - programming-exercise/{exerciseId}/files-content-commit-details/{commitId}
+     */
+    @Nested
+    class GetParticipationRepositoryFilesForCommitsDetailsView {
+
+        String PATH_PREFIX;
+
+        String COMMIT_HASH;
+
+        ProgrammingExerciseParticipation participation;
+
+        @BeforeEach
+        void setup() throws GitAPIException, URISyntaxException, IOException {
+            userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
+            participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+            var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+            programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+            programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
+            programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
+            COMMIT_HASH = "commitHash";
+
+            doReturn(Map.of()).when(gitService).listFilesAndFolders(any());
+            doNothing().when(gitService).switchBackToDefaultBranchHead(any());
+            doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).checkoutRepositoryAtCommit(any(VcsRepositoryUri.class), any(String.class),
+                    any(Boolean.class));
+            doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(any());
+            PATH_PREFIX = "/api/programming-exercise/" + participation.getProgrammingExercise().getId() + "/files-content-commit-details/" + COMMIT_HASH;
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldReturnBadRequestWithoutAnyProvidedParameters() throws Exception {
+            request.getMap(PATH_PREFIX, HttpStatus.BAD_REQUEST, String.class, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldReturnForParticipation() throws Exception {
+            assertThat(request.getMap(PATH_PREFIX + "?participationId=" + participation.getId(), HttpStatus.OK, String.class, String.class)).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldReturnFilesForTemplateRepository() throws Exception {
+            assertThat(request.getMap(PATH_PREFIX + "?repositoryType=TEMPLATE", HttpStatus.OK, String.class, String.class)).isEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldReturnFilesForSolutionRepository() throws Exception {
+            assertThat(request.getMap(PATH_PREFIX + "?repositoryType=SOLUTION", HttpStatus.OK, String.class, String.class)).isEmpty();
+        }
+
     }
 
     @Test

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service;
+package de.tum.cit.aet.artemis.core.service.telemetry;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 @Service
 @Profile(PROFILE_SCHEDULING)
@@ -22,37 +22,30 @@ public class TelemetryService {
 
     private final TelemetrySendingService telemetrySendingService;
 
-    @Value("${artemis.telemetry.enabled}")
-    public boolean useTelemetry;
+    private final boolean useTelemetry;
 
-    @Value("${artemis.telemetry.destination}")
-    private String destination;
+    private final boolean sendAdminDetails;
 
-    public TelemetryService(ProfileService profileService, TelemetrySendingService telemetrySendingService) {
+    public TelemetryService(ProfileService profileService, TelemetrySendingService telemetrySendingService, @Value("${artemis.telemetry.enabled}") boolean useTelemetry,
+            @Value("${artemis.telemetry.sendAdminDetails}") boolean sendAdminDetails) {
         this.profileService = profileService;
         this.telemetrySendingService = telemetrySendingService;
+        this.useTelemetry = useTelemetry;
+        this.sendAdminDetails = sendAdminDetails;
     }
 
     /**
-     * Sends telemetry to the server specified in artemis.telemetry.destination.
-     * This function runs once, at the startup of the application.
-     * If telemetry is disabled in artemis.telemetry.enabled, no data is sent.
+     * Sends telemetry data to the server after the application is ready.
+     * This method is triggered automatically when the application context is fully initialized.
+     * <p>
+     * If telemetry is disabled (as specified by the {@code useTelemetry} flag), the task will not be executed.
      */
     @EventListener(ApplicationReadyEvent.class)
     public void sendTelemetry() {
         if (!useTelemetry || profileService.isDevActive()) {
             return;
         }
-
-        log.info("Sending telemetry information");
-        try {
-            telemetrySendingService.sendTelemetryByPostRequest();
-        }
-        catch (JsonProcessingException e) {
-            log.warn("JsonProcessingException in sendTelemetry.", e);
-        }
-        catch (Exception e) {
-            log.warn("Exception in sendTelemetry, with dst URI: {}", destination, e);
-        }
+        log.info("Start sending telemetry data asynchronously");
+        telemetrySendingService.sendTelemetryByPostRequest(sendAdminDetails);
     }
 }
