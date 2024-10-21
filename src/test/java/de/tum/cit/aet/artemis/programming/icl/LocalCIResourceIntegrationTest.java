@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -384,9 +383,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         processingJobs.clear();
 
         request.put("/api/admin/agent/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
-        await().atMost(10, TimeUnit.HOURS).until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
+        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
 
         request.put("/api/admin/agent/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
-        await().atMost(10, TimeUnit.HOURS).until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
+        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
     }
 }

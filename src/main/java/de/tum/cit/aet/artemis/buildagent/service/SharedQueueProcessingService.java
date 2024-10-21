@@ -171,14 +171,14 @@ public class SharedQueueProcessingService {
 
         ITopic<String> pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
         pauseBuildAgentTopic.addMessageListener(message -> {
-            if (message.getMessageObject().equals(buildAgentShortName)) {
+            if (Objects.equals(message.getMessageObject(), buildAgentShortName)) {
                 pauseBuildAgent();
             }
         });
 
         ITopic<String> resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
         resumeBuildAgentTopic.addMessageListener(message -> {
-            if (message.getMessageObject().equals(buildAgentShortName)) {
+            if (Objects.equals(message.getMessageObject(), buildAgentShortName)) {
                 resumeBuildAgent();
             }
         });
