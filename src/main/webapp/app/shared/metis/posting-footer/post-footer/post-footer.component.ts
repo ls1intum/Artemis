@@ -105,10 +105,18 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
             return;
         }
 
-        const sortedPosts: AnswerPost[] = [...this.sortedAnswerPosts].sort((a, b) => {
-            const aDate = a.creationDate ? dayjs(a.creationDate).toDate() : new Date(0);
-            const bDate = b.creationDate ? dayjs(b.creationDate).toDate() : new Date(0);
-            return aDate.getTime() - bDate.getTime();
+        this.sortedAnswerPosts = this.sortedAnswerPosts
+            .slice()
+            .reverse()
+            .map((post) => {
+                (post as any).creationDateDayjs = post.creationDate ? dayjs(post.creationDate) : undefined;
+                return post;
+            });
+
+        const sortedPosts = this.sortedAnswerPosts.sort((a, b) => {
+            const aDate = (a as any).creationDateDayjs;
+            const bDate = (b as any).creationDateDayjs;
+            return aDate?.valueOf() - bDate?.valueOf();
         });
 
         const groups: PostGroup[] = [];
@@ -121,13 +129,16 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
             const currentPost = sortedPosts[i];
             const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
 
-            const currentDate = currentPost.creationDate ? dayjs(currentPost.creationDate).toDate() : new Date(0);
-            const lastDate = lastPostInGroup.creationDate ? dayjs(lastPostInGroup.creationDate).toDate() : new Date(0);
+            const currentDate = (currentPost as any).creationDateDayjs;
+            const lastDate = (lastPostInGroup as any).creationDateDayjs;
 
-            const timeDiff = Math.abs(currentDate.getTime() - lastDate.getTime()) / 60000; // in minutes
+            let timeDiff = Number.MAX_SAFE_INTEGER;
+            if (currentDate && lastDate) {
+                timeDiff = currentDate.diff(lastDate, 'minute');
+            }
 
-            if (currentPost.author?.id === currentGroup.author?.id && timeDiff <= 60) {
-                currentGroup.posts.push({ ...currentPost, isConsecutive: true });
+            if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 1 && timeDiff >= 0) {
+                currentGroup.posts.push({ ...currentPost, isConsecutive: true }); // consecutive post
             } else {
                 groups.push(currentGroup);
                 currentGroup = {
@@ -139,6 +150,7 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
 
         groups.push(currentGroup);
         this.groupedAnswerPosts = groups;
+        this.changeDetector.detectChanges();
     }
 
     trackGroupByFn(_: number, group: PostGroup): number {

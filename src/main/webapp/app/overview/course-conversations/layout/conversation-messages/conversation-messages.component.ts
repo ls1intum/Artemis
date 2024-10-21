@@ -30,15 +30,6 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 
-import { Pipe, PipeTransform } from '@angular/core';
-
-@Pipe({ standalone: true, name: 'dayjsToDate' })
-export class DayjsToDatePipe implements PipeTransform {
-    transform(value: dayjs.Dayjs | undefined): Date | undefined {
-        return value ? value.toDate() : undefined;
-    }
-}
-
 interface PostGroup {
     author: User | undefined;
     posts: Post[];
@@ -177,10 +168,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         };
     }
 
-    toDate(dayjsDate: dayjs.Dayjs | undefined): Date | undefined {
-        return dayjsDate ? dayjsDate.toDate() : undefined;
-    }
-
     private groupPosts(): void {
         if (!this.posts || this.posts.length === 0) {
             this.groupedPosts = [];
@@ -188,9 +175,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
 
         const sortedPosts = this.posts.sort((a, b) => {
-            const aDate = (a as any).creationDateAsDate;
-            const bDate = (b as any).creationDateAsDate;
-            return (aDate?.getTime() || 0) - (bDate?.getTime() || 0);
+            const aDate = (a as any).creationDateDayjs;
+            const bDate = (b as any).creationDateDayjs;
+            return aDate?.valueOf() - bDate?.valueOf();
         });
 
         const groups: PostGroup[] = [];
@@ -203,15 +190,15 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             const currentPost = sortedPosts[i];
             const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
 
-            const currentDate = (currentPost as any).creationDateAsDate;
-            const lastDate = (lastPostInGroup as any).creationDateAsDate;
+            const currentDate = (currentPost as any).creationDateDayjs;
+            const lastDate = (lastPostInGroup as any).creationDateDayjs;
 
             let timeDiff = Number.MAX_SAFE_INTEGER;
             if (currentDate && lastDate) {
-                timeDiff = Math.abs(currentDate.getTime() - lastDate.getTime()) / 60000;
+                timeDiff = currentDate.diff(lastDate, 'minute');
             }
 
-            if (currentPost.author?.id === currentGroup.author?.id && timeDiff <= 60) {
+            if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
                 currentGroup.posts.push({ ...currentPost, isConsecutive: true }); // consecutive post
             } else {
                 groups.push(currentGroup);
@@ -236,7 +223,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             .slice()
             .reverse()
             .map((post) => {
-                (post as any).creationDateAsDate = post.creationDate ? dayjs(post.creationDate).toDate() : undefined;
+                (post as any).creationDateDayjs = post.creationDate ? dayjs(post.creationDate) : undefined;
                 return post;
             });
 
