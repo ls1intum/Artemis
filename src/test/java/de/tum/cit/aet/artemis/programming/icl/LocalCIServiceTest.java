@@ -23,6 +23,7 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgent;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
@@ -104,9 +105,12 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        BuildJobQueueItem job1 = new BuildJobQueueItem("1", "job1", "buildagent1", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        BuildAgent buildAgent = new BuildAgent("artemis-build-agent-test", memberAddress, "artemis-build-agent-test");
+
+        BuildJobQueueItem job1 = new BuildJobQueueItem("1", "job1", buildAgent, participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
-        BuildJobQueueItem job2 = new BuildJobQueueItem("2", "job2", "buildagent1", "address1", participation.getId(), course.getId(), 1, 1, 1,
+        BuildJobQueueItem job2 = new BuildJobQueueItem("2", "job2", buildAgent, participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");

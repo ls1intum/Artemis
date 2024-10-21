@@ -14,8 +14,8 @@ import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record BuildJobQueueItem(String id, String name, String buildAgentName, String buildAgentAddress, long participationId, long courseId, long exerciseId, int retryCount,
-        int priority, BuildStatus status, RepositoryInfo repositoryInfo, JobTimingInfo jobTimingInfo, BuildConfig buildConfig, ResultDTO submissionResult) implements Serializable {
+public record BuildJobQueueItem(String id, String name, BuildAgent buildAgent, long participationId, long courseId, long exerciseId, int retryCount, int priority,
+        BuildStatus status, RepositoryInfo repositoryInfo, JobTimingInfo jobTimingInfo, BuildConfig buildConfig, ResultDTO submissionResult) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -28,25 +28,24 @@ public record BuildJobQueueItem(String id, String name, String buildAgentName, S
      * @param status              The status/result of the build job
      */
     public BuildJobQueueItem(BuildJobQueueItem queueItem, ZonedDateTime buildCompletionDate, BuildStatus status) {
-        this(queueItem.id(), queueItem.name(), queueItem.buildAgentName(), queueItem.buildAgentAddress(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(),
-                queueItem.retryCount(), queueItem.priority(), status, queueItem.repositoryInfo(),
+        this(queueItem.id(), queueItem.name(), queueItem.buildAgent(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
+                queueItem.priority(), status, queueItem.repositoryInfo(),
                 new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), queueItem.jobTimingInfo.buildStartDate(), buildCompletionDate), queueItem.buildConfig(), null);
     }
 
     /**
      * Constructor used to create a new processing build job from a queued build job
      *
-     * @param queueItem              The queued build job
-     * @param hazelcastMemberAddress The address of the hazelcast member that is processing the build job
+     * @param queueItem  The queued build job
+     * @param buildAgent The build agent that will process the build job
      */
-    public BuildJobQueueItem(BuildJobQueueItem queueItem, String buildAgentName, String hazelcastMemberAddress) {
-        this(queueItem.id(), queueItem.name(), buildAgentName, hazelcastMemberAddress, queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(),
-                queueItem.retryCount(), queueItem.priority(), null, queueItem.repositoryInfo(),
-                new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null), queueItem.buildConfig(), null);
+    public BuildJobQueueItem(BuildJobQueueItem queueItem, BuildAgent buildAgent) {
+        this(queueItem.id(), queueItem.name(), buildAgent, queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(), queueItem.priority(),
+                null, queueItem.repositoryInfo(), new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null), queueItem.buildConfig(), null);
     }
 
     public BuildJobQueueItem(BuildJobQueueItem queueItem, ResultDTO submissionResult) {
-        this(queueItem.id(), queueItem.name(), queueItem.buildAgentName(), queueItem.buildAgentAddress(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(),
-                queueItem.retryCount(), queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult);
+        this(queueItem.id(), queueItem.name(), queueItem.buildAgent(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
+                queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult);
     }
 }

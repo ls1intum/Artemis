@@ -31,10 +31,4 @@ public record BuildAgentInformation(BuildAgent buildAgent, int maxNumberOfConcur
     public enum BuildAgentStatus {
         ACTIVE, IDLE, PAUSED
     }
-
-    public record BuildAgent(String name, String memberAddress, String displayName) implements Serializable {
-
-        @Serial
-        private static final long serialVersionUID = 1L;
-    }
 }

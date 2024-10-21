@@ -44,8 +44,8 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgent;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
-import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation.BuildAgent;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
@@ -263,7 +263,7 @@ public class SharedQueueProcessingService {
             if (buildJob != null) {
                 processingJobs.remove(buildJob.id());
 
-                buildJob = new BuildJobQueueItem(buildJob, "", "");
+                buildJob = new BuildJobQueueItem(buildJob, new BuildAgent("", "", ""));
                 log.info("Adding build job back to the queue: {}", buildJob);
                 queue.add(buildJob);
                 localProcessingJobs.decrementAndGet();
@@ -285,7 +285,7 @@ public class SharedQueueProcessingService {
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
 
-            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, buildAgentShortName, hazelcastMemberAddress);
+            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, new BuildAgent(buildAgentShortName, hazelcastMemberAddress, buildAgentDisplayName));
 
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
@@ -350,7 +350,7 @@ public class SharedQueueProcessingService {
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
-        return processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), memberAddress)).toList();
+        return processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgent().memberAddress(), memberAddress)).toList();
     }
 
     private void removeOfflineNodes() {
@@ -383,9 +383,9 @@ public class SharedQueueProcessingService {
             log.debug("Build job completed: {}", buildJob);
             JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
 
-            BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentName(), buildJob.buildAgentAddress(),
-                    buildJob.participationId(), buildJob.courseId(), buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL,
-                    buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(), null);
+            BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgent(), buildJob.participationId(), buildJob.courseId(),
+                    buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
+                    null);
 
             List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
             buildLogsMap.removeBuildLogs(buildJob.id());

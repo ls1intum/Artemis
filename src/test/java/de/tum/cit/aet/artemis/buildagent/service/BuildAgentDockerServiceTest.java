@@ -28,6 +28,7 @@ import com.github.dockerjava.api.model.Info;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgent;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
@@ -92,7 +93,9 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
         doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         doThrow(new NotFoundException("")).when(inspectImageCmd).exec();
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test-image-name", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
-        var build = new BuildJobQueueItem("1", "job1", "buildagent1", "address1", 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
+
+        BuildAgent buildAgent = new BuildAgent("buildagent1", "address1", "buildagent1");
+        var build = new BuildJobQueueItem("1", "job1", buildAgent, 1, 1, 1, 1, 1, BuildStatus.SUCCESSFUL, null, null, buildConfig, null);
         // Pull image
         try {
             buildAgentDockerService.pullDockerImage(build, new BuildLogsMap());
