@@ -23,14 +23,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,7 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
@@ -130,7 +132,7 @@ public class SharedQueueProcessingService {
     /**
      * Initialize relevant data from hazelcast
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
@@ -172,7 +174,15 @@ public class SharedQueueProcessingService {
     }
 
     private void removeListener() {
-        this.queue.removeItemListener(this.listenerId);
+        // check if Hazelcast is still active, before invoking this
+        try {
+            if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
+                this.queue.removeItemListener(this.listenerId);
+            }
+        }
+        catch (HazelcastInstanceNotActiveException e) {
+            log.error("Failed to remove listener from SharedQueueProcessingService as Hazelcast instance is not active any more.");
+        }
     }
 
     private void cancelCheckAvailabilityAndProcessNextBuildScheduledFuture() {
@@ -205,7 +215,7 @@ public class SharedQueueProcessingService {
      * If so, process the next build job.
      */
     private void checkAvailabilityAndProcessNextBuild() {
-        if (noDataMemberInClusterAvailable(hazelcastInstance)) {
+        if (noDataMemberInClusterAvailable(hazelcastInstance) || queue == null) {
             log.debug("There are only lite member in the cluster. Not processing build jobs.");
             return;
         }
