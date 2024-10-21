@@ -95,8 +95,8 @@ public class AdminBuildJobQueueResource {
     @GetMapping("build-agent")
     public ResponseEntity<BuildAgentInformation> getBuildAgentDetails(@RequestParam String agentName) {
         log.debug("REST request to get information on build agent {}", agentName);
-        BuildAgentInformation buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream().filter(agent -> agent.name().equals(agentName)).findFirst()
-                .orElse(null);
+        BuildAgentInformation buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream().filter(agent -> agent.buildAgent().name().equals(agentName))
+                .findFirst().orElse(null);
         return ResponseEntity.ok(buildAgentDetails);
     }
 

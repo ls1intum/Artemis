@@ -44,6 +44,7 @@ import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation.BuildAgent;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
@@ -119,6 +120,9 @@ public class SharedQueueProcessingService {
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
+
+    @Value("${artemis.continuous-integration.build-agent.display-name:}")
+    private String buildAgentDisplayName;
 
     public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService, TaskScheduler taskScheduler) {
@@ -298,10 +302,10 @@ public class SharedQueueProcessingService {
             // Add/update
             BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob);
             try {
-                buildAgentInformation.put(info.memberAddress(), info);
+                buildAgentInformation.put(info.buildAgent().memberAddress(), info);
             }
             catch (Exception e) {
-                log.error("Error while updating build agent information for agent {} with address {}", info.name(), info.memberAddress(), e);
+                log.error("Error while updating build agent information for agent {} with address {}", info.buildAgent().name(), info.buildAgent().memberAddress(), e);
             }
         }
         finally {
@@ -335,8 +339,9 @@ public class SharedQueueProcessingService {
 
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
-        return new BuildAgentInformation(buildAgentShortName, memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs,
-                publicSshKey);
+        BuildAgent agentInfo = new BuildAgent(buildAgentShortName, memberAddress, buildAgentDisplayName);
+
+        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs, publicSshKey);
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
