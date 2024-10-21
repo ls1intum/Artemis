@@ -42,6 +42,7 @@ import { LinkPreviewModule } from 'app/shared/link-preview/link-preview.module';
 import { LinkPreviewComponent } from 'app/shared/link-preview/components/link-preview/link-preview.component';
 import { LinkPreviewContainerComponent } from 'app/shared/link-preview/components/link-preview-container/link-preview-container.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @NgModule({
     imports: [
@@ -63,6 +64,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
         MatFormFieldModule,
         MatDialogModule,
         LinkPreviewModule,
+        ProfilePictureComponent,
     ],
     declarations: [
         PostingThreadComponent,

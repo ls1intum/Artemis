@@ -223,7 +223,8 @@
                 "email": "Email",
                 "removeFromGroup": {
                     "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this course group?"
-                }
+                },
+                "profilePicture": "Profile Picture"
             },
             "averageScore": "Average Score",
             "releasedSoon": "Released Soon",
