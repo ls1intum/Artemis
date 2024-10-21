@@ -173,12 +173,7 @@ public class AthenaFeedbackSuggestionsService {
 
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         User user = ((StudentParticipation) submission.getParticipation()).getStudent().orElse(null);
-
-        // Temporary pipelineId until Athena provides it in the response
-        String pipelineId = isPreliminaryFeedback ? "PRELIMINARY_FEEDBACK" : "FEEDBACK_SUGGESTION";
-
-        List<LLMRequest> llmRequests = meta.llmCalls().stream().map(llmCall -> new LLMRequest(llmCall.modelName(), llmCall.inputTokens(), 0, llmCall.outputTokens(), 0, pipelineId))
-                .toList();
+        List<LLMRequest> llmRequests = meta.llmRequests();
         llmTokenUsageService.saveLLMTokenUsage(llmRequests, LLMServiceType.ATHENA,
                 (llmTokenUsageBuilder -> llmTokenUsageBuilder.withCourse(course).withExercise(exercise).withUser(user)));
     }
