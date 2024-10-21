@@ -41,13 +41,13 @@ export class CreateVideoUnitComponent implements OnInit {
             return;
         }
 
-        const { name, description, releaseDate, source, competencies } = formData;
+        const { name, description, releaseDate, source, competencyLinks } = formData;
 
         this.videoUnitToCreate.name = name || undefined;
         this.videoUnitToCreate.releaseDate = releaseDate || undefined;
         this.videoUnitToCreate.description = description || undefined;
         this.videoUnitToCreate.source = source || undefined;
-        this.videoUnitToCreate.competencies = competencies || [];
+        this.videoUnitToCreate.competencyLinks = competencyLinks || [];
 
         this.isLoading = true;
 

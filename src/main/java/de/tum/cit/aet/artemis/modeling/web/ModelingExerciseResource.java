@@ -177,7 +177,7 @@ public class ModelingExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
+        ModelingExercise result = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         modelingExerciseService.scheduleOperations(result.getId());
@@ -242,7 +242,8 @@ public class ModelingExerciseResource {
 
         channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
 
-        ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
+        ModelingExercise updatedModelingExercise = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
+
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
 

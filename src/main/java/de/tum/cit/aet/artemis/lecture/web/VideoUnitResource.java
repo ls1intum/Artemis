@@ -4,7 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -97,6 +100,7 @@ public class VideoUnitResource {
         lectureUnitService.validateUrlStringAndReturnUrl(videoUnit.getSource());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
 
+        lectureUnitService.reconnectCompetencyLectureUnitLinks(videoUnit);
         VideoUnit result = videoUnitRepository.save(videoUnit);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingVideoUnit, Optional.of(videoUnit));
@@ -131,7 +135,14 @@ public class VideoUnitResource {
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         videoUnit.setLecture(null);
+        // persist lecture unit before competency links to prevent error
+        Set<CompetencyLectureUnitLink> links = videoUnit.getCompetencyLinks();
+        videoUnit.setCompetencyLinks(new HashSet<>());
+
         videoUnit = videoUnitRepository.saveAndFlush(videoUnit);
+        videoUnit.setCompetencyLinks(links);
+        lectureUnitService.reconnectCompetencyLectureUnitLinks(videoUnit);
+
         videoUnit.setLecture(lecture);
         lecture.addLectureUnit(videoUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);

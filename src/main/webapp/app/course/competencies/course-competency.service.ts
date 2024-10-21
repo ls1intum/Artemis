@@ -192,19 +192,21 @@ export class CourseCompetencyService {
         if (res.body?.softDueDate) {
             res.body.softDueDate = convertDateFromServer(res.body.softDueDate);
         }
-        if (res.body?.lectureUnits) {
-            res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
-        }
+        res.body?.lectureUnitLinks?.forEach((lectureUnitLink) => {
+            if (lectureUnitLink.lectureUnit) {
+                lectureUnitLink.lectureUnit = this.lectureUnitService.convertLectureUnitDateFromServer(lectureUnitLink.lectureUnit);
+            }
+        });
         if (res.body?.course) {
             this.accountService.setAccessRightsForCourse(res.body.course);
         }
-        if (res.body?.exercises) {
-            res.body.exercises = ExerciseService.convertExercisesDateFromServer(res.body.exercises);
-            res.body.exercises.forEach((exercise) => {
-                ExerciseService.parseExerciseCategories(exercise);
-                this.accountService.setAccessRightsForExercise(exercise);
-            });
-        }
+        res.body?.exerciseLinks?.forEach((exerciseLink) => {
+            exerciseLink.exercise = ExerciseService.convertExerciseDatesFromServer(exerciseLink.exercise);
+            ExerciseService.parseExerciseCategories(exerciseLink.exercise);
+            if (exerciseLink.exercise) {
+                this.accountService.setAccessRightsForExercise(exerciseLink.exercise);
+            }
+        });
 
         return res;
     }
@@ -213,12 +215,17 @@ export class CourseCompetencyService {
         const copy = Object.assign({}, prerequisite, {
             softDueDate: convertDateFromClient(prerequisite.softDueDate),
         });
-        if (copy.lectureUnits) {
-            copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
-        }
-        if (copy.exercises) {
-            copy.exercises = copy.exercises.map((exercise) => ExerciseService.convertExerciseFromClient(exercise));
-        }
+        copy.lectureUnitLinks?.forEach((lectureUnitLink) => {
+            if (lectureUnitLink.lectureUnit) {
+                lectureUnitLink.lectureUnit = this.lectureUnitService.convertLectureUnitDatesFromClient(lectureUnitLink.lectureUnit);
+            }
+        });
+        copy.exerciseLinks?.forEach((exerciseLink) => {
+            if (exerciseLink.exercise) {
+                exerciseLink.exercise = ExerciseService.convertExerciseFromClient(exerciseLink.exercise);
+            }
+        });
+
         return copy;
     }
 

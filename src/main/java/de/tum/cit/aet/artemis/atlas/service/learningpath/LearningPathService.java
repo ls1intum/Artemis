@@ -18,6 +18,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -45,7 +47,6 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -430,17 +431,19 @@ public class LearningPathService {
         LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
 
         // Remove exercises that are not visible to students
-        learningPath.getCompetencies()
-                .forEach(competency -> competency.setExercises(competency.getExercises().stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet())));
+        learningPath.getCompetencies().forEach(competency -> competency
+                .setExerciseLinks(competency.getExerciseLinks().stream().filter(exerciseLink -> exerciseLink.getExercise().isVisibleToStudents()).collect(Collectors.toSet())));
         // Remove unreleased lecture units as well as exercise units, since they are already retrieved as exercises
-        learningPath.getCompetencies().forEach(competency -> competency.setLectureUnits(competency.getLectureUnits().stream()
-                .filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit) && lectureUnit.isVisibleToStudents()).collect(Collectors.toSet())));
+        learningPath.getCompetencies()
+                .forEach(competency -> competency.setLectureUnitLinks(competency.getLectureUnitLinks().stream()
+                        .filter(lectureUnitLink -> !(lectureUnitLink.getLectureUnit() instanceof ExerciseUnit) && lectureUnitLink.getLectureUnit().isVisibleToStudents())
+                        .collect(Collectors.toSet())));
 
         if (learningPath.getUser() == null) {
             learningPath.getCompetencies().forEach(competency -> {
                 competency.setUserProgress(Collections.emptySet());
-                competency.getLectureUnits().forEach(lectureUnit -> lectureUnit.setCompletedUsers(Collections.emptySet()));
-                competency.getExercises().forEach(exercise -> exercise.setStudentParticipations(Collections.emptySet()));
+                competency.getLectureUnitLinks().forEach(lectureUnitLink -> lectureUnitLink.getLectureUnit().setCompletedUsers(Collections.emptySet()));
+                competency.getExerciseLinks().forEach(exerciseLink -> exerciseLink.getExercise().setStudentParticipations(Collections.emptySet()));
             });
             return learningPath;
         }
@@ -448,10 +451,12 @@ public class LearningPathService {
         Set<Long> competencyIds = learningPath.getCompetencies().stream().map(CourseCompetency::getId).collect(Collectors.toSet());
         Map<Long, CompetencyProgress> competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId).stream()
                 .collect(Collectors.toMap(progress -> progress.getCompetency().getId(), cp -> cp));
-        Set<LectureUnit> lectureUnits = learningPath.getCompetencies().stream().flatMap(competency -> competency.getLectureUnits().stream()).collect(Collectors.toSet());
+        Set<LectureUnit> lectureUnits = learningPath.getCompetencies().stream()
+                .flatMap(competency -> competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit)).collect(Collectors.toSet());
         Map<Long, LectureUnitCompletion> completions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, userId).stream()
                 .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), cp -> cp));
-        Set<Long> exerciseIds = learningPath.getCompetencies().stream().flatMap(competency -> competency.getExercises().stream()).map(Exercise::getId).collect(Collectors.toSet());
+        Set<Long> exerciseIds = learningPath.getCompetencies().stream().flatMap(competency -> competency.getExerciseLinks().stream())
+                .map(exerciseLink -> exerciseLink.getExercise().getId()).collect(Collectors.toSet());
         Map<Long, StudentParticipation> studentParticipations = studentParticipationRepository.findDistinctAllByExerciseIdInAndStudentId(exerciseIds, userId).stream()
                 .collect(Collectors.toMap(participation -> participation.getExercise().getId(), sp -> sp));
         learningPath.getCompetencies().forEach(competency -> {
@@ -461,7 +466,7 @@ public class LearningPathService {
             else {
                 competency.setUserProgress(Collections.emptySet());
             }
-            competency.getLectureUnits().forEach(lectureUnit -> {
+            competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).forEach(lectureUnit -> {
                 if (completions.containsKey(lectureUnit.getId())) {
                     lectureUnit.setCompletedUsers(Set.of(completions.get(lectureUnit.getId())));
                 }
@@ -469,7 +474,7 @@ public class LearningPathService {
                     lectureUnit.setCompletedUsers(Collections.emptySet());
                 }
             });
-            competency.getExercises().forEach(exercise -> {
+            competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise).forEach(exercise -> {
                 if (studentParticipations.containsKey(exercise.getId())) {
                     exercise.setStudentParticipations(Set.of(studentParticipations.get(exercise.getId())));
                 }

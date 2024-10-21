@@ -7,6 +7,7 @@ import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -51,6 +52,9 @@ public class AbstractFileUploadIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     protected ParticipationTestRepository participationRepository;
+
+    @Autowired
+    protected CompetencyExerciseLinkTestRepository competencyExerciseLinkRepository;
 
     // Services
     @Autowired

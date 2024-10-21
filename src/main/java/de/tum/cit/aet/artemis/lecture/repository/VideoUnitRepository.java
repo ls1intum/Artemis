@@ -24,7 +24,8 @@ public interface VideoUnitRepository extends ArtemisJpaRepository<VideoUnit, Lon
     @Query("""
             SELECT vu
             FROM VideoUnit vu
-                LEFT JOIN FETCH vu.competencies
+                LEFT JOIN FETCH vu.competencyLinks cl
+                LEFT JOIN FETCH cl.competency c
             WHERE vu.id = :videoUnitId
             """)
     Optional<VideoUnit> findByIdWithCompetencies(@Param("videoUnitId") long videoUnitId);

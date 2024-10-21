@@ -119,18 +119,18 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                     exercise.course = this.course;
                     this.accountService.setAccessRightsForExercise(exercise);
                     if (exercise.projectKey) {
-                        if (exercise.solutionParticipation!.buildPlanId) {
-                            exercise.solutionParticipation!.buildPlanUrl = createBuildPlanUrl(
+                        if (exercise.solutionParticipation?.buildPlanId) {
+                            exercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
                                 this.buildPlanLinkTemplate,
                                 exercise.projectKey,
-                                exercise.solutionParticipation!.buildPlanId,
+                                exercise.solutionParticipation.buildPlanId,
                             );
                         }
-                        if (exercise.templateParticipation!.buildPlanId) {
-                            exercise.templateParticipation!.buildPlanUrl = createBuildPlanUrl(
+                        if (exercise.templateParticipation?.buildPlanId) {
+                            exercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
                                 this.buildPlanLinkTemplate,
                                 exercise.projectKey,
-                                exercise.templateParticipation!.buildPlanId,
+                                exercise.templateParticipation.buildPlanId,
                             );
                         }
                     }

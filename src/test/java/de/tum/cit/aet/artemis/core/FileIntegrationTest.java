@@ -35,9 +35,9 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -50,7 +50,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private AttachmentRepository attachmentRepo;
 
     @Autowired
-    private AttachmentUnitRepository attachmentUnitRepo;
+    private AttachmentUnitTestRepository attachmentUnitRepo;
 
     @Autowired
     private LectureUnitCompletionRepository lectureUnitCompletionRepository;

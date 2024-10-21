@@ -37,6 +37,12 @@ export class CompetencyService extends CourseCompetencyService {
     }
 
     create(competency: Competency, courseId: number): Observable<EntityResponseType> {
+        competency.lectureUnitLinks?.forEach((link) => {
+            link.lectureUnit = undefined;
+            if (link.competency?.lectureUnitLinks) {
+                link.competency.lectureUnitLinks = undefined;
+            }
+        });
         const copy = this.convertCompetencyFromClient(competency);
         return this.httpClient.post<Competency>(`${this.resourceURL}/courses/${courseId}/competencies`, copy, { observe: 'response' });
     }
@@ -91,6 +97,12 @@ export class CompetencyService extends CourseCompetencyService {
     }
 
     update(competency: Competency, courseId: number): Observable<EntityResponseType> {
+        competency.lectureUnitLinks?.forEach((link) => {
+            link.lectureUnit = undefined;
+            if (link.competency?.lectureUnitLinks) {
+                link.competency.lectureUnitLinks = undefined;
+            }
+        });
         const copy = this.convertCompetencyFromClient(competency);
         return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/competencies`, copy, { observe: 'response' });
     }

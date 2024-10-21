@@ -36,14 +36,15 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             """)
     List<ModelingExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencies", "exampleSubmissions.submission.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencyLinks.competency",
+            "exampleSubmissions.submission.results" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencies", "exampleSubmissions.submission.results",
+    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencyLinks.competency", "exampleSubmissions.submission.results",
             "plagiarismDetectionConfig" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencies" })
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency" })
     Optional<ModelingExercise> findWithEagerCompetenciesById(Long exerciseId);
 
     @Query("""
@@ -100,7 +101,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @Query("""
             SELECT m
             FROM ModelingExercise m
-                LEFT JOIN FETCH m.competencies
+                LEFT JOIN FETCH m.competencyLinks
             WHERE m.title = :title
                 AND m.course.id = :courseId
             """)

@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.common.net.InternetDomainName;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.dto.OnlineResourceDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -108,6 +111,7 @@ public class OnlineUnitResource {
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
 
+        lectureUnitService.reconnectCompetencyLectureUnitLinks(onlineUnit);
         OnlineUnit result = onlineUnitRepository.save(onlineUnit);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingOnlineUnit, Optional.of(onlineUnit));
@@ -141,7 +145,14 @@ public class OnlineUnitResource {
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         onlineUnit.setLecture(null);
+        // persist lecture unit before competency links to prevent error
+        Set<CompetencyLectureUnitLink> links = onlineUnit.getCompetencyLinks();
+        onlineUnit.setCompetencyLinks(new HashSet<>());
+
         OnlineUnit persistedOnlineUnit = onlineUnitRepository.saveAndFlush(onlineUnit);
+
+        persistedOnlineUnit.setCompetencyLinks(links);
+        lectureUnitService.reconnectCompetencyLectureUnitLinks(persistedOnlineUnit);
 
         persistedOnlineUnit.setLecture(lecture);
         lecture.addLectureUnit(persistedOnlineUnit);

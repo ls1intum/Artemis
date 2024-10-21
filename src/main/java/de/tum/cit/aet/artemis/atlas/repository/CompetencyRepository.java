@@ -26,8 +26,10 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
     @Query("""
             SELECT c
             FROM Competency c
-                LEFT JOIN FETCH c.exercises
-                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH c.exerciseLinks el
+                LEFT JOIN FETCH el.exercise
+                LEFT JOIN FETCH c.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit lu
                 LEFT JOIN FETCH lu.lecture l
                 LEFT JOIN FETCH l.attachments
             WHERE c.course.id = :courseId
@@ -37,7 +39,8 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
     @Query("""
             SELECT c
             FROM Competency c
-                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH c.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit lu
             WHERE c.id = :competencyId
             """)
     Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
@@ -45,8 +48,10 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
     @Query("""
             SELECT c
             FROM Competency c
-                LEFT JOIN FETCH c.lectureUnits lu
-                LEFT JOIN FETCH c.exercises
+                LEFT JOIN FETCH c.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit
+                LEFT JOIN FETCH c.exerciseLinks el
+                LEFT JOIN FETCH el.exercise
             WHERE c.id = :competencyId
             """)
     Optional<Competency> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);
