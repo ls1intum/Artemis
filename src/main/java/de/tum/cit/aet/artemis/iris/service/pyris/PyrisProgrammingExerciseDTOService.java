@@ -57,7 +57,7 @@ public class PyrisProgrammingExerciseDTOService {
      * @param exercise the programming exercise to convert
      * @return the converted PyrisProgrammingExerciseDTO
      */
-    public PyrisProgrammingExerciseDTO convert(ProgrammingExercise exercise) {
+    public PyrisProgrammingExerciseDTO convertExercise(ProgrammingExercise exercise) {
         var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation());
         var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation());
         Optional<Repository> testRepo = Optional.empty();
@@ -91,7 +91,7 @@ public class PyrisProgrammingExerciseDTOService {
      * @param submission the students submission
      * @return the converted PyrisSubmissionDTO
      */
-    public PyrisSubmissionDTO convert(ProgrammingSubmission submission) {
+    public PyrisSubmissionDTO convertSubmission(ProgrammingSubmission submission) {
         // @formatter:off
         var buildLogEntries = submission.getBuildLogEntries()
                 .stream()

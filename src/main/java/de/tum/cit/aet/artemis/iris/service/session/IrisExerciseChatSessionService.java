@@ -153,8 +153,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
         String variant = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false).irisChatSettings().selectedVariant();
         var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getExercise().getId());
-        var latestSubmissionDTO = getLatestSubmissionIfExists(exercise, session.getUser()).map(pyrisProgrammingExerciseDTOService::convert).orElse(null);
-        var exerciseDTO = pyrisProgrammingExerciseDTOService.convert(exercise);
+        var latestSubmissionDTO = getLatestSubmissionIfExists(exercise, session.getUser()).map(pyrisProgrammingExerciseDTOService::convertSubmission).orElse(null);
+        var exerciseDTO = pyrisProgrammingExerciseDTOService.convertExercise(exercise);
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var courseDTO = PyrisCourseDTO.from(course);
         var conversationDTO = session.getMessages().stream().map(PyrisMessageDTO::from).toList();
