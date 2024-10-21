@@ -89,12 +89,8 @@ public class AthenaRepositoryExportService {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);
 
-        var exportOptions = new RepositoryExportOptionsDTO();
-        exportOptions.setAnonymizeRepository(true);
-        exportOptions.setExportAllParticipants(false);
-        exportOptions.setFilterLateSubmissions(true);
-        exportOptions.setFilterLateSubmissionsDate(programmingExercise.getDueDate());
-        exportOptions.setFilterLateSubmissionsIndividualDueDate(false); // Athena currently does not support individual due dates
+        // Athena currently does not support individual due dates
+        var exportOptions = new RepositoryExportOptionsDTO(false, true, false, programmingExercise.getDueDate(), false, false, false, true, false);
 
         if (!Files.exists(repoDownloadClonePath)) {
             Files.createDirectories(repoDownloadClonePath);
