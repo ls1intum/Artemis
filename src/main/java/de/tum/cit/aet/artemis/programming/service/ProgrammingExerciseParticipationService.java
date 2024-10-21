@@ -6,6 +6,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
@@ -520,6 +521,14 @@ public class ProgrammingExerciseParticipationService {
         if (repositoryTypeOrUserName.equals(RepositoryType.AUXILIARY.toString())) {
             throw new EntityNotFoundException("Auxiliary repositories do not have participations.");
         }
+        var opt = studentParticipationRepository.findByRepositoryUri(repositoryURI);
+        if (opt.isEmpty()) {
+            var all = studentParticipationRepository.findAll();
+            var li = all.stream().map(ProgrammingExerciseStudentParticipation::getRepositoryUri).toList();
+            String listString = String.join(", ", li);
+            throw new NoSuchElementException(listString + "\nrepori:: " + repositoryURI);
+        }
+
         return studentParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
     }
 
