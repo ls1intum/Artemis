@@ -15,6 +15,8 @@
             "hideAllCurrentlyDisplayedNotifications": "Hide all currently displayed notifications",
             "target": {
                 "newAnswer": "View reply",
+                "newAnswerPost": "View reply",
+                "newPost": "View post",
                 "newQuestion": "View post",
                 "exerciseCreated": "View exercise",
                 "exerciseUpdated": "View exercise",
