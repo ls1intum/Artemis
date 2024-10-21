@@ -7,8 +7,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
-import java.security.PublicKey;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -45,8 +45,9 @@ import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
+import de.tum.cit.aet.artemis.programming.service.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService;
-import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 
 /**
  * REST controller for managing the current user's account.
@@ -67,6 +68,8 @@ public class AccountResource {
 
     private final UserService userService;
 
+    private final UserSshPublicKeyService userSshPublicKeyService;
+
     private final UserCreationService userCreationService;
 
     private final AccountService accountService;
@@ -75,13 +78,14 @@ public class AccountResource {
 
     private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
 
-    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AccountService accountService,
-            FileService fileService) {
+    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AccountService accountService, FileService fileService,
+            UserSshPublicKeyService userSSHPublicKeyService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.accountService = accountService;
         this.fileService = fileService;
+        this.userSshPublicKeyService = userSSHPublicKeyService;
     }
 
     /**
@@ -133,46 +137,70 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/ssh-public-key : sets the ssh public key
+     * GET account/ssh-public-keys : sets the ssh public key
      *
-     * @param sshPublicKey the ssh public key to set
+     * @return the ResponseEntity containing all public SSH keys of a user with status 200 (OK), or with status 400 (Bad Request)
+     */
+    @GetMapping("account/ssh-public-keys")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<UserSshPublicKey>> getSshPublicKey() {
+        User user = userRepository.getUser();
+        List<UserSshPublicKey> keys = userSshPublicKeyService.getAllSshKeysForUser(user);
+        return ResponseEntity.ok(keys);
+    }
+
+    /**
+     * GET account/ssh-public-key : sets the ssh public key
+     *
+     * @return the ResponseEntity containing the requested public SSH key of a user with status 200 (OK), or with status 400 (Bad Request)
+     */
+    @GetMapping("account/ssh-public-key")
+    @EnforceAtLeastStudent
+    public ResponseEntity<UserSshPublicKey> getSshPublicKey(@RequestParam("keyId") Long keyId) {
+        User user = userRepository.getUser();
+        UserSshPublicKey key = userSshPublicKeyService.getSshKeyForUser(user, keyId);
+        return ResponseEntity.ok(key);
+    }
+
+    /**
+     * PUT account/ssh-public-key : creates a new ssh public key for a user
+     *
+     * @param sshPublicKey the ssh public key to create
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
     @PutMapping("account/ssh-public-key")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> addSshPublicKey(@RequestBody String sshPublicKey) throws GeneralSecurityException, IOException {
+    public ResponseEntity<Void> addSshPublicKey(@RequestBody UserSshPublicKey sshPublicKey) throws GeneralSecurityException, IOException {
 
         User user = userRepository.getUser();
         log.debug("REST request to add SSH key to user {}", user.getLogin());
         // Parse the public key string
         AuthorizedKeyEntry keyEntry;
         try {
-            keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey);
+            keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey.getPublicKey());
         }
         catch (IllegalArgumentException e) {
             throw new BadRequestAlertException("Invalid SSH key format", "SSH key", "invalidKeyFormat", true);
         }
         // Extract the PublicKey object
-        PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
-        String keyHash = HashUtils.getSha512Fingerprint(publicKey);
-        userRepository.updateUserSshPublicKeyHash(user.getId(), keyHash, sshPublicKey);
+        userSshPublicKeyService.createSshKeyForUser(user, keyEntry, sshPublicKey);
         return ResponseEntity.ok().build();
     }
 
     /**
-     * PUT account/ssh-public-key : sets the ssh public key
+     * Delete - account/ssh-public-key : deletes the ssh public key by its keyId
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
     @DeleteMapping("account/ssh-public-key")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteSshPublicKey() {
+    public ResponseEntity<Void> deleteSshPublicKey(@RequestParam("keyId") Long keyId) {
         User user = userRepository.getUser();
         log.debug("REST request to remove SSH key of user {}", user.getLogin());
-        userRepository.updateUserSshPublicKeyHash(user.getId(), null, null);
+        userSshPublicKeyService.deleteUserSshPublicKey(user.getId(), keyId);
 
-        log.debug("Successfully deleted SSH key of user {}", user.getLogin());
+        log.debug("Successfully deleted SSH key with id {} of user {}", keyId, user.getLogin());
         return ResponseEntity.ok().build();
     }
 

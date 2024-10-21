@@ -27,6 +27,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
@@ -51,7 +54,9 @@ import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestReposito
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
+import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
@@ -99,6 +104,9 @@ public class UserTestService {
 
     @Autowired
     private ScienceEventTestRepository scienceEventRepository;
+
+    @Autowired
+    private UserSshPublicKeyRepository userSshPublicKeyRepository;
 
     @Autowired
     private MockMvc mockMvc;
@@ -865,23 +873,99 @@ public class UserTestService {
         assertThat(currentUser.isInternal()).isFalse();
     }
 
+    public void getUserSshPublicKeys() throws Exception {
+        userSshPublicKeyRepository.deleteAll();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        User user = userTestRepository.getUser();
+        var validKey = postNewKeyToServer();
+
+    }
+
+    public void getUserSshPublicKey() throws Exception {
+        userSshPublicKeyRepository.deleteAll();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        User user = userTestRepository.getUser();
+        var validKey = postNewKeyToServer();
+
+    }
+
     // Test
-    public void addAndDeleteSshPublicKey() throws Exception {
+    public void addUserSshPublicKey() throws Exception {
+        userSshPublicKeyRepository.deleteAll();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        User user = userTestRepository.getUser();
+        var validKey = postNewKeyToServer();
+
+        var storedUserKey = userSshPublicKeyRepository.findAllByUserId(user.getId()).getFirst();
+        assertThat(storedUserKey).isNotNull();
+        assertThat(storedUserKey.getPublicKey()).isEqualTo(validKey.getPublicKey());
+    }
+
+    private UserSshPublicKey postNewKeyToServer() throws Exception {
+        User user = userTestRepository.getUser();
+        var validKey = createNewValidSSHKey(user);
+
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String json = ow.writeValueAsString(validKey);
+
+        request.putWithResponseBody("/api/account/ssh-public-key", json, String.class, HttpStatus.OK, true);
+        return validKey;
+    }
+
+    // Test
+    public void failToAddPublicSSHkeyTwice() throws Exception {
+        userSshPublicKeyRepository.deleteAll();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        User user = userTestRepository.getUser();
+
+        var validKey = createNewValidSSHKey(user);
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String json = ow.writeValueAsString(validKey);
+
+        request.putWithResponseBody("/api/account/ssh-public-key", json, String.class, HttpStatus.OK, true);
+        request.putWithResponseBody("/api/account/ssh-public-key", json, String.class, HttpStatus.BAD_REQUEST, true);
+    }
+
+    // Test
+    public void failToAddInvalidPublicSSHkey() throws Exception {
+        userSshPublicKeyRepository.deleteAll();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_PLAIN);
 
-        // adding invalid key should fail
-        String invalidSshKey = "invalid key";
-        request.putWithResponseBody("/api/account/ssh-public-key", invalidSshKey, String.class, HttpStatus.BAD_REQUEST, true);
+        User user = userTestRepository.getUser();
+        var userKey = createNewValidSSHKey(user);
+        userKey.setPublicKey("Invalid Key");
 
-        // adding valid key should work correctly
-        String validSshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i email@abc.de";
-        request.putWithResponseBody("/api/account/ssh-public-key", validSshKey, String.class, HttpStatus.OK, true);
-        assertThat(userTestRepository.getUser().getSshPublicKey()).isEqualTo(validSshKey);
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String json = ow.writeValueAsString(userKey);
 
-        // deleting the key shoul work correctly
-        request.delete("/api/account/ssh-public-key", HttpStatus.OK);
-        assertThat(userTestRepository.getUser().getSshPublicKey()).isEqualTo(null);
+        request.putWithResponseBody("/api/account/ssh-public-key", json, String.class, HttpStatus.BAD_REQUEST, true);
+    }
+
+    // Test
+    public void addAndDeleteSshPublicKey() throws Exception {
+        userSshPublicKeyRepository.deleteAll();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        User user = userTestRepository.getUser();
+
+        var validKey = createNewValidSSHKey(user);
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        String json = ow.writeValueAsString(validKey);
+
+        request.putWithResponseBody("/api/account/ssh-public-key", json, String.class, HttpStatus.OK, true);
+
+        var storedUserKey = userSshPublicKeyRepository.findAllByUserId(user.getId()).getFirst();
+        assertThat(storedUserKey).isNotNull();
+        assertThat(storedUserKey.getPublicKey()).isEqualTo(validKey.getPublicKey());
+
+        // deleting the key should work correctly
+        request.delete("/api/account/ssh-public-key?keyId=" + storedUserKey.getId(), HttpStatus.OK);
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
     }
 
     // Test
@@ -1124,6 +1208,15 @@ public class UserTestService {
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).contains(user2).doesNotContain(user1);
         }
+    }
+
+    public static UserSshPublicKey createNewValidSSHKey(User user) {
+        UserSshPublicKey userSshPublicKey = new UserSshPublicKey();
+        String validKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i email@abc.de";
+        userSshPublicKey.setPublicKey(validKey);
+        userSshPublicKey.setLabel("Key 1");
+        userSshPublicKey.setUserId(user.getId());
+        return userSshPublicKey;
     }
 
     // Test
