@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { LearningPathNavigationDTO, LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
