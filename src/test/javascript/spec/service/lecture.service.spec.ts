@@ -216,7 +216,7 @@ describe('Lecture Service', () => {
 
         it('should fetch ingestion state for a course', () => {
             const courseId = 123;
-            const expectedUrl = `api/public/pyris/courses/${courseId}/lectures/ingestion-state`;
+            const expectedUrl = `api/iris/courses/${courseId}/lectures/ingestion-state`;
             const expectedResponse = { 1: IngestionState.DONE, 2: IngestionState.NOT_STARTED };
 
             service.getIngestionState(courseId).subscribe((resp) => {

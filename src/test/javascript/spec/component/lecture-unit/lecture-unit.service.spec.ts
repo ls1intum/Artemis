@@ -158,7 +158,7 @@ describe('LectureUnitService', () => {
     it('should fetch the ingestion state for lecture units and return an OK response', () => {
         const courseId = 123;
         const lectureId = 456;
-        const expectedUrl = `api/public/pyris/courses/${courseId}/lectures/${lectureId}/lecture-units/ingestion-state`;
+        const expectedUrl = `api/iris//courses/${courseId}/lectures/${lectureId}/lecture-units/ingestion-state`;
 
         const expectedResponse: Record<number, IngestionState> = {
             1: IngestionState.DONE,

@@ -130,12 +130,11 @@ export class LectureService {
         });
     }
     /**
-     * Fetch the ingestion state for a specific lecture
+     * Fetch the ingestion state of all the lectures inside the course specified
      * @param courseId
-     * @param lectureId ID of the lecture
      */
     getIngestionState(courseId: number): Observable<HttpResponse<Record<number, IngestionState>>> {
-        return this.http.get<Record<number, IngestionState>>(`api/public/pyris/courses/${courseId}/lectures/ingestion-state`, { observe: 'response' });
+        return this.http.get<Record<number, IngestionState>>(`api/iris/courses/${courseId}/lectures/ingestion-state`, { observe: 'response' });
     }
     /**
      * Clones and imports the lecture to the course

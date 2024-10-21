@@ -174,7 +174,7 @@ export class LectureUnitService {
      * @returns Observable with the ingestion state
      */
     getIngestionState(courseId: number, lectureId: number): Observable<HttpResponse<Record<number, IngestionState>>> {
-        return this.httpClient.get<Record<number, IngestionState>>(`${this.resourceURL}/public/pyris/courses/${courseId}/lectures/${lectureId}/lecture-units/ingestion-state`, {
+        return this.httpClient.get<Record<number, IngestionState>>(`${this.resourceURL}/iris/courses/${courseId}/lectures/${lectureId}/lecture-units/ingestion-state`, {
             observe: 'response',
         });
     }
