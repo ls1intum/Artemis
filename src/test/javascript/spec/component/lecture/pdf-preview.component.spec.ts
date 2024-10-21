@@ -86,8 +86,8 @@ describe('PdfPreviewComponent', () => {
         routeMock = {
             data: of({
                 course: { id: 1, name: 'Example Course' },
-                attachment: { id: 1, name: 'Example PDF' },
-                attachmentUnit: { id: 1, name: 'Chapter 1' },
+                attachment: { id: 1, name: 'Example PDF', lecture: { id: 1 } },
+                attachmentUnit: { id: 1, name: 'Chapter 1', lecture: { id: 1 } },
             }),
         };
         alertServiceMock = {
