@@ -308,12 +308,6 @@
             "join": "Bearbeiten",
             "joinFailed": "Dem Quiz konnte nicht beigetreten werden.",
             "submitSuccess": "Deine Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse sind verfügbar, nachdem das Quiz beendet ist."
-        },
-        "quizLiveModal": {
-            "title": "Go-Live einer neuen Quiz-Übung",
-            "body": "Das Quiz {{quizName}} für den Kurs {{courseName}} ist nun aktiv! Klick auf den 'Weiter zum Quiz' Button, um zum Quiz zu gelangen.",
-            "cancelButton": "Abbrechen",
-            "goToButton": "Weiter zum Quiz"
         }
     }
 }
