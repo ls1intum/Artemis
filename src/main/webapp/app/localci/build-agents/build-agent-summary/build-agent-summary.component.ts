@@ -77,7 +77,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
     cancelAllBuildJobs(buildAgentName: string) {
         const buildAgent = this.buildAgents.find((agent) => agent.buildAgent?.name === buildAgentName);
-        if (buildAgent && buildAgent.buildAgent?.name) {
+        if (buildAgent?.buildAgent?.name) {
             this.buildQueueService.cancelAllRunningBuildJobsForAgent(buildAgent.buildAgent?.name).subscribe();
         }
     }

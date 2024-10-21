@@ -22,7 +22,7 @@
                 >
                     <ngx-datatable-column prop="buildAgent.displayName" [minWidth]="150">
                         <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildAgent.displayName')">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.name"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('buildAgent.displayName')" />
                             </span>
@@ -35,9 +35,9 @@
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="buildAgent.memberAddress" [minWidth]="150">
                         <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('memberAddress')">
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildAgent.memberAddress')">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.memberAddress"></span>
-                                <fa-icon [icon]="controls.iconForSortPropField('memberAddress')" />
+                                <fa-icon [icon]="controls.iconForSortPropField('buildAgent.memberAddress')" />
                             </span>
                         </ng-template>
                     </ngx-datatable-column>
