@@ -119,6 +119,7 @@ public class PyrisJobService {
 
     /**
      * Get all current jobs.
+     * * @return the all current jobs
      */
     public Collection<PyrisJob> currentJobs() {
         return jobMap.values();
