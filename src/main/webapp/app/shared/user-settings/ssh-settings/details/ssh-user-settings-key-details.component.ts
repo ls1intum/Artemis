@@ -25,10 +25,11 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     sshPublicKey: UserSshPublicKey;
 
     // state change variables
-    inCreateMode = false; // true when editing existing key, false when creating new key
+    isCreateMode = false; // true when editing existing key, false when creating new key
 
     isLoading = true;
     copyInstructions = '';
+    selectedOption: string = 'doNotUseExpiration';
 
     // Key details from input fields
     displayedKeyId?: number = undefined; // undefined when creating a new key
@@ -37,6 +38,12 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     displayedKeyHash = '';
     displayedExpiryDate?: dayjs.Dayjs;
     displayCreationDate: dayjs.Dayjs;
+    displayedLastUsedDate?: dayjs.Dayjs;
+    daysUntilExpiry?: number;
+    minDays = 1;
+    maxDays = 13337;
+
+    currentDate: dayjs.Dayjs;
 
     readonly faEdit = faEdit;
     readonly faSave = faSave;
@@ -54,17 +61,18 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.setMessageBasedOnOS(getOS());
+        this.currentDate = dayjs();
 
         this.subscription = this.route.params
             .pipe(
                 filter((params) => {
                     const keyId = Number(params['keyId']);
                     if (keyId) {
-                        this.inCreateMode = false;
+                        this.isCreateMode = false;
                         return true;
                     } else {
                         this.isLoading = false;
-                        this.inCreateMode = true;
+                        this.isCreateMode = true;
                         return false;
                     }
                 }),
@@ -76,6 +84,8 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
                     this.displayedKeyLabel = publicKey.label;
                     this.displayedKeyHash = publicKey.keyHash;
                     this.displayCreationDate = publicKey.creationDate;
+                    this.displayedExpiryDate = publicKey.expiryDate;
+                    this.displayedLastUsedDate = publicKey.lastUsedDate;
                     this.isLoading = false;
                 }),
             )
@@ -84,6 +94,14 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.subscription.unsubscribe();
+    }
+
+    sendTheNewValue() {
+        if (this.daysUntilExpiry) {
+            this.displayedExpiryDate = this.currentDate.add(this.daysUntilExpiry, 'day');
+        } else {
+            this.displayedExpiryDate = undefined;
+        }
     }
 
     saveSshKey() {
@@ -109,7 +127,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     }
 
     goBack() {
-        if (this.inCreateMode) {
+        if (this.isCreateMode) {
             this.router.navigate(['../'], { relativeTo: this.route });
         } else {
             this.router.navigate(['../../'], { relativeTo: this.route });
@@ -117,7 +135,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     }
 
     editExistingSshKey(key: UserSshPublicKey) {
-        this.inCreateMode = false;
+        this.isCreateMode = false;
         this.displayedKeyId = key.id;
         this.displayedSshKey = key.publicKey;
         this.displayedKeyLabel = key.label;

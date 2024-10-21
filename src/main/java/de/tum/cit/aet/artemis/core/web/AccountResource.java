@@ -163,9 +163,9 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/ssh-public-key : sets the ssh public key
+     * PUT account/ssh-public-key : creates a new ssh public key for a user
      *
-     * @param sshPublicKey the ssh public key to set
+     * @param sshPublicKey the ssh public key to create
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
@@ -189,7 +189,7 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/ssh-public-key : sets the ssh public key
+     * Delete - account/ssh-public-key : deletes the ssh public key by its keyId
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */

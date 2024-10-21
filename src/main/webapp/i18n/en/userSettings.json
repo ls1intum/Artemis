@@ -51,8 +51,19 @@
                 "lastUsed": "Last used",
                 "lastUsedOn": "Last used on",
                 "expiryDate": "Expiry date",
+                "expiresOn": "Expires on",
+                "hasExpiredOn": "Expired on",
                 "leaveEmpty": "If you leave the label empty, the comment from the SSH key will be used.",
-                "fingerprint": "Fingerprint"
+                "fingerprint": "Fingerprint",
+                "commentUsedAsLabel": "If you do not add a label, the key comment will be used as the default label if present.",
+                "expiry": {
+                    "title": "Expiry",
+                    "info": "For added security, you can set this key to automatically expire.",
+                    "doNotExpire": "Do not expire",
+                    "expireAutomatically": "Expire automatically",
+                    "daysUntilExpiry": "Days until expiry",
+                    "keyWillExpireOn": "Key will expire on"
+                }
             },
             "vcsAccessTokensSettingsPage": {
                 "addTokenTitle": "Add personal access token",

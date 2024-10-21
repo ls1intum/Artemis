@@ -1,6 +1,6 @@
-<h1 jhiTranslate="artemisApp.userSettings.sshSettings">
-    <!--SSH Settings-->
-</h1>
+<!-- SSH Settings Title -->
+<h1 jhiTranslate="artemisApp.userSettings.sshSettingsPage.keysTablePageTitle"></h1>
+
 @if (!isLoading && localVCEnabled) {
     <div class="list-group d-block">
         <!-- Initial state: There are no keys -->
@@ -27,14 +27,6 @@
         <!-- Initial state: There are keys -->
         @if (keyCount > 0) {
             <div class="list-group-item">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h4 jhiTranslate="artemisApp.userSettings.sshSettingsPage.keysTablePageTitle"></h4>
-                    <div>
-                        <a class="btn rounded-btn btn-primary btn-sm" [routerLink]="['add']">
-                            <span class="jhi-btn__title" style="font-size: small" jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></span>
-                        </a>
-                    </div>
-                </div>
                 <div class="d-flex flex-wrap mt-4">
                     <p>
                         <span class="mt-4 font-medium" jhiTranslate="artemisApp.userSettings.sshSettingsPage.whatToUseSSHForInfo"> </span>
@@ -54,18 +46,28 @@
                         @for (key of sshPublicKeys; track key; let i = $index) {
                             <tr>
                                 <td class="container" style="max-width: 250px">
-                                    <div>
+                                    <div style="font-size: large">
                                         {{ key.label }}
                                     </div>
                                     <div class="abbreviate-hash">
                                         {{ key.keyHash }}
                                     </div>
-                                    <div class="text-and-date">
-                                        <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.createdOn"></div>
-                                        <div>
-                                            {{ key.creationDate | artemisDate: 'long-date' }}
+                                    @if (key.expiryDate && key.hasExpired) {
+                                        <div class="text-and-date">
+                                            <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.hasExpiredOn"></div>
+                                            <div>
+                                                {{ key.expiryDate | artemisDate: 'long-date' }}
+                                            </div>
                                         </div>
-                                    </div>
+                                    }
+                                    @if (key.expiryDate && !key.hasExpired) {
+                                        <div class="text-and-date">
+                                            <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiresOn"></div>
+                                            <div>
+                                                {{ key.expiryDate | artemisDate: 'long-date' }}
+                                            </div>
+                                        </div>
+                                    }
                                 </td>
 
                                 <td class="container">
@@ -102,71 +104,19 @@
                                             </button>
                                         </div>
                                     </ul>
-
-                                    <!--
-
-                                <div class="vertical-center">
-                                    <div ngbDropdown container="body" class="d-flex">
-
-                                        <fa-icon ngbDropdown [icon]="faEllipsis"></fa-icon>
-
-                                        <div ngbDropdownMenu class="dropdown-menu py-1 ms-n2">
-                                            <button ngbDropdownItem (click)="foobar()"
-                                                    class="d-flex align-items-center py-1 px-2">
-                                                <div
-                                                    class="h6 fw-normal mb-0 course-title text-wrap">{{ "View" }}
-                                                </div>
-                                            </button>
-
-                                            <a ngbDropdownItem class="d-flex align-items-center py-1 px-2"  style="text-decoration: none;" [routerLink]="['view', key.id]">
-                                                <div
-                                                    jhiTranslate="artemisApp.userSettings.sshSettingsPage.viewExistingSshKey"
-                                                    class="h6 fw-normal mb-0 course-title text-wrap">
-                                                </div>
-                                            </a>
-
-                                            <button jhiDeleteButton
-                                                    ngbDropdownItem
-                                                    [renderButtonText]="false"
-                                                    (delete)="deleteSshKey(key)"
-                                                    deleteQuestion="artemisApp.userSettings.sshSettingsPage.deleteSshKeyQuestion"
-                                                    [dialogError]="dialogError$"
-                                                    class="d-flex align-items-center py-1 px-2">
-                                                <div
-                                                    jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey"
-                                                    class="h6 fw-normal mb-0 course-title text-wrap">
-                                                </div>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="dropdown" tabindex="1">
-                                        <i class="db2" tabindex="1"></i>
-                                        <a class="dropbtn">
-                                            <fa-icon [icon]="faEllipsis"></fa-icon>
-                                        </a>
-                                        <div class="dropdown-content">
-                                            <a class="btn dropdown-button" [routerLink]="['view', key.id]">
-                                                <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.viewExistingSshKey"></span>
-                                            </a>
-                                            <button
-                                                jhiDeleteButton
-                                                class="btn dropdown-button dropdown-delete-btn me-2 bottom-border"
-                                                [buttonSize]="ButtonSize.SMALL"
-                                                [renderButtonText]="false"
-                                                (delete)="deleteSshKey(key)"
-                                                deleteQuestion="artemisApp.userSettings.sshSettingsPage.deleteSshKeyQuestion"
-                                                [dialogError]="dialogError$"
-                                            >
-                                                <span class="ms-1" jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey"></span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    -->
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div></div>
+                    <div>
+                        <a class="btn rounded-btn btn-primary btn-sm" [routerLink]="['add']">
+                            <span class="jhi-btn__title" style="font-size: small" jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></span>
+                        </a>
+                    </div>
+                </div>
             </div>
         }
     </div>

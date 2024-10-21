@@ -9,6 +9,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-account-information',
@@ -33,6 +34,7 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
 
     private accountServiceSubscription: Subscription;
     private dialogErrorSource = new Subject<string>();
+    currentDate: dayjs.Dayjs;
     dialogError$ = this.dialogErrorSource.asObservable();
 
     @ViewChild('itemsDrop', { static: true }) itemsDrop: NgbDropdown;
@@ -44,6 +46,7 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
+        this.currentDate = dayjs();
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
@@ -52,6 +55,11 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
             .pipe(
                 tap((publicKeys: UserSshPublicKey[]) => {
                     this.sshPublicKeys = publicKeys;
+                    this.sshPublicKeys.forEach((key) => {
+                        if (key.expiryDate && dayjs().isAfter(dayjs(key.expiryDate))) {
+                            key.hasExpired = true;
+                        }
+                    });
                     this.keyCount = publicKeys.length;
                     this.isLoading = false;
                 }),

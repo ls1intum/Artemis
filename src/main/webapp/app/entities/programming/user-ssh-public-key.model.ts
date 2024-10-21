@@ -9,4 +9,5 @@ export class UserSshPublicKey implements BaseEntity {
     expiryDate?: dayjs.Dayjs;
     lastUsedDate?: dayjs.Dayjs;
     creationDate: dayjs.Dayjs;
+    hasExpired?: boolean;
 }

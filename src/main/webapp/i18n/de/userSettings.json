@@ -51,8 +51,19 @@
                 "lastUsed": "Letzte Verwendung",
                 "lastUsedOn": "Letzte Verwendung am",
                 "expiryDate": "Ablaufdatum",
+                "expiresOn": "Läuft ab am",
+                "hasExpiredOn": "Abgelaufen am",
                 "leaveEmpty": "Wenn du das Label leer lässt, wird der Kommentar aus dem SSH-Schlüssel verwendet.",
-                "fingerprint": "Fingerabdruck"
+                "fingerprint": "Fingerabdruck",
+                "commentUsedAsLabel": "Wenn du kein Label hinzufügst, wird der Schlüsselkommentar (sofern vorhanden) als Label verwendet.",
+                "expiry": {
+                    "title": "Ablauf",
+                    "info": "Für zusätzliche Sicherheit kannst du festlegen, dass dieser Schlüssel automatisch abläuft.",
+                    "doNotExpire": "Kein Abluafsdatum",
+                    "expireAutomatically": "Automatisch ablaufen",
+                    "daysUntilExpiry": "Tage bis zum Ablauf",
+                    "keyWillExpireOn": "Der Schlüssel läuft ab am"
+                }
             },
             "vcsAccessTokensSettingsFingerabdruckPage": {
                 "addTokenTitle": "Neues Zugriffstoken erzeugen",

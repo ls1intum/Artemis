@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 @Service
 public class UserSshPublicKeyService {
 
+    private final String KEY_DEFAULT_LABEL = "Key 1";
+
     private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
     public UserSshPublicKeyService(UserSshPublicKeyRepository userSshPublicKeyRepository) {
@@ -36,18 +38,34 @@ public class UserSshPublicKeyService {
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
 
         if (userSshPublicKeyRepository.findByKeyHash(keyHash).isPresent()) {
-            throw new BadRequestAlertException("Invalid SSH key format", "SSH key", "invalidKeyFormat", true);
+            throw new BadRequestAlertException("Key already exists", "SSH key", "keyAlreadyExists", true);
         }
 
         UserSshPublicKey newUserSshPublicKey = new UserSshPublicKey();
         newUserSshPublicKey.setUserId(user.getId());
-        newUserSshPublicKey.setLabel(sshPublicKey.getLabel());
         newUserSshPublicKey.setPublicKey(sshPublicKey.getPublicKey());
         newUserSshPublicKey.setKeyHash(keyHash);
+        setLabelForKey(newUserSshPublicKey, sshPublicKey.getLabel());
+
         newUserSshPublicKey.setExpiryDate(sshPublicKey.getExpiryDate());
         newUserSshPublicKey.setCreationDate(ZonedDateTime.now());
         newUserSshPublicKey.setExpiryDate(sshPublicKey.getExpiryDate());
         userSshPublicKeyRepository.save(newUserSshPublicKey);
+    }
+
+    public void setLabelForKey(UserSshPublicKey newSshPublicKey, String label) {
+        if (label == null || label.isEmpty()) {
+            String[] parts = newSshPublicKey.getPublicKey().split("\\s+");
+            if (parts.length >= 3) {
+                newSshPublicKey.setLabel(parts[2]);
+            }
+            else {
+                newSshPublicKey.setLabel(KEY_DEFAULT_LABEL);
+            }
+        }
+        else {
+            newSshPublicKey.setLabel(label);
+        }
     }
 
     public UserSshPublicKey getSshKeyForUser(User user, Long keyId) {
