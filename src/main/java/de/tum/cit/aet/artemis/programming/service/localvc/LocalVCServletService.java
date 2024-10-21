@@ -436,10 +436,11 @@ public class LocalVCServletService {
 
         ProgrammingExerciseParticipation participation;
         try {
-            // participation = programmingExerciseParticipationService.retrieveParticipationForRepository(exercise, repositoryTypeOrUserName,
-            // localVCRepositoryUri.isPracticeRepository(), true);
+            participation = programmingExerciseParticipationService.retrieveParticipationForRepository(exercise, repositoryTypeOrUserName,
+                    localVCRepositoryUri.isPracticeRepository(), true);
 
-            participation = programmingExerciseParticipationService.retrieveParticipationForRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
+            // TODO Add this back in when we have figured out what is incorrect in the playwright configuration for (MySQL, Local)
+            // participation = programmingExerciseParticipationService.retrieveParticipationForRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException(
