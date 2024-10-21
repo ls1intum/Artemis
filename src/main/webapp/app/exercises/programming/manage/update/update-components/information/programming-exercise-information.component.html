@@ -68,7 +68,7 @@
                 [isEditMode]="programmingExerciseCreationConfig.isEdit"
                 [programmingExerciseBuildConfig]="programmingExercise().buildConfig"
             />
-            @if (editRepositoryCheckoutPath && isLocal() && !isImport() && !programmingExerciseCreationConfig.isEdit) {
+            @if (editRepositoryCheckoutPath && isLocal() && !isImport() && !programmingExerciseCreationConfig.isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
                 <jhi-programming-exercise-edit-checkout-directories
                     [programmingExercise]="programmingExercise()"
                     [submissionBuildPlanCheckoutRepositories]="submissionBuildPlanCheckoutRepositories"
@@ -80,7 +80,11 @@
             }
             @if (!programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExerciseCreationConfig.auxiliaryRepositoriesSupported) {
                 <div class="form-group">
-                    @if (programmingExercise().auxiliaryRepositories && programmingExercise().auxiliaryRepositories!.length > 0) {
+                    @if (
+                        programmingExercise().auxiliaryRepositories &&
+                        programmingExercise().auxiliaryRepositories!.length > 0 &&
+                        isEditFieldDisplayedRecord().addAuxiliaryRepository
+                    ) {
                         <ngx-datatable
                             id="auxiliaryRepositoryTable"
                             class="bootstrap"
@@ -148,7 +152,7 @@
                             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
                         </ngb-alert>
                     }
-                    @if (isLocal() && !isImport() && !programmingExerciseCreationConfig.isEdit) {
+                    @if (isLocal() && !isImport() && !programmingExerciseCreationConfig.isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
                         <jhi-button
                             [btnType]="ButtonType.WARNING"
                             [btnSize]="ButtonSize.SMALL"
@@ -157,12 +161,14 @@
                             (onClick)="toggleEditRepositoryCheckoutPath()"
                         />
                     }
-                    <jhi-add-auxiliary-repository-button
-                        [programmingExercise]="programmingExercise()"
-                        (onRefresh)="programmingExerciseCreationConfig.refreshAuxiliaryRepositoryChecks()"
-                        class="ml-2"
-                    />
-                    <jhi-help-icon text="artemisApp.programmingExercise.auxiliaryRepository.usageDescription" />
+                    @if (isEditFieldDisplayedRecord().addAuxiliaryRepository) {
+                        <jhi-add-auxiliary-repository-button
+                            [programmingExercise]="programmingExercise()"
+                            (onRefresh)="programmingExerciseCreationConfig.refreshAuxiliaryRepositoryChecks()"
+                            class="ml-2"
+                        />
+                        <jhi-help-icon text="artemisApp.programmingExercise.auxiliaryRepository.usageDescription" />
+                    }
                 </div>
             }
         </div>

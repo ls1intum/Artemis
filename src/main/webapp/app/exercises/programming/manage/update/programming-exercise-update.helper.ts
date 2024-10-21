@@ -3,6 +3,8 @@ export enum ProgrammingExerciseInputField {
     TITLE = 'title',
     CHANNEL_NAME = 'channelName',
     SHORT_NAME = 'shortName',
+    EDIT_REPOSITORIES_CHECKOUT_PATH = 'editRepositoriesCheckoutPath',
+    ADD_AUXILIARY_REPOSITORY = 'addAuxiliaryRepository',
     CATEGORIES = 'categories',
 
     // Mode section
@@ -53,6 +55,8 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: InputFieldEditModeMapping = {
     title: true,
     channelName: false,
     shortName: false,
+    editRepositoriesCheckoutPath: false,
+    addAuxiliaryRepository: false,
     categories: true,
     // Mode section
     difficulty: true,
