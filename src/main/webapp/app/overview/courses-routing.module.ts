@@ -245,6 +245,19 @@ const routes: Routes = [
                         canDeactivate: [PendingChangesGuard],
                         loadChildren: () => import('../exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
                     },
+                    {
+                        path: ':examId/test-exam/:studentExamId',
+                        component: ExamParticipationComponent,
+                        data: {
+                            authorities: [Authority.USER],
+                            pageTitle: 'overview.exams',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        canDeactivate: [PendingChangesGuard],
+                        loadChildren: () => import('../exam/participate/exam-participation.module').then((m) => m.ArtemisExamParticipationModule),
+                    },
                 ],
             },
             {
