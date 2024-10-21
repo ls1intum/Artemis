@@ -236,9 +236,9 @@ async function makeGitExerciseSubmission(
     commitMessage: string,
 ) {
     let repoUrl = await programmingExerciseOverview.getRepoUrl();
-    if (process.env.CI === 'true') {
-        repoUrl = repoUrl.replace('localhost', 'artemis-app');
-    }
+    // if (process.env.CI === 'true') {
+    //     repoUrl = repoUrl.replace('localhost', 'artemis-app');
+    // }
     repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
     repoUrl = repoUrl.replace(`:**********`, ``);
     const urlParts = repoUrl.split('/');
