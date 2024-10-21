@@ -15,7 +15,7 @@ import { MockAccountService } from '../../../../../helpers/mocks/service/mock-ac
 import { EmojiData, EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
-import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { DisplayPriority, UserRole } from 'app/shared/metis/metis.util';
 import { MockTranslateService, TranslatePipeMock } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -24,7 +24,7 @@ import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mo
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
-import { metisCourse, metisPostExerciseUser1, metisUser1, sortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
+import { metisAnnouncement, metisCourse, metisPostExerciseUser1, metisPostInChannel, metisUser1, sortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NotificationService } from 'app/shared/notification/notification.service';
@@ -33,6 +33,8 @@ import { ConversationDTO, ConversationType } from 'app/entities/metis/conversati
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { User } from 'app/core/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
@@ -41,6 +43,9 @@ describe('PostReactionsBarComponent', () => {
     let metisService: MetisService;
     let accountService: AccountService;
     let metisServiceUpdateDisplayPriorityMock: jest.SpyInstance;
+    let metisServiceUserIsAtLeastTutorStub: jest.SpyInstance;
+    let metisServiceUserIsAtLeastInstructorStub: jest.SpyInstance;
+    let metisServiceUserIsAuthorOfPostingStub: jest.SpyInstance;
     let post: Post;
     let reactionToCreate: Reaction;
     let reactionToDelete: Reaction;
@@ -53,7 +58,15 @@ describe('PostReactionsBarComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule), MockDirective(NgbTooltip)],
-            declarations: [PostReactionsBarComponent, TranslatePipeMock, MockPipe(ReactingUsersOnPostingPipe), MockComponent(FaIconComponent), EmojiComponent],
+            declarations: [
+                PostReactionsBarComponent,
+                TranslatePipeMock,
+                MockPipe(ReactingUsersOnPostingPipe),
+                MockComponent(FaIconComponent),
+                MockComponent(PostCreateEditModalComponent),
+                EmojiComponent,
+                MockComponent(ConfirmIconComponent),
+            ],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -75,6 +88,9 @@ describe('PostReactionsBarComponent', () => {
                 debugElement = fixture.debugElement;
                 component = fixture.componentInstance;
                 metisServiceUpdateDisplayPriorityMock = jest.spyOn(metisService, 'updatePostDisplayPriority');
+                metisServiceUserIsAtLeastTutorStub = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
+                metisServiceUserIsAtLeastInstructorStub = jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
+                metisServiceUserIsAuthorOfPostingStub = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting');
                 post = new Post();
                 post.id = 1;
                 post.author = metisUser1;
@@ -95,6 +111,14 @@ describe('PostReactionsBarComponent', () => {
         jest.clearAllMocks();
     });
 
+    function getEditButton(): DebugElement | null {
+        return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.edit'));
+    }
+
+    function getDeleteButton(): DebugElement | null {
+        return debugElement.query(By.css('jhi-confirm-icon'));
+    }
+
     it('should initialize user authority and reactions correctly', () => {
         metisCourse.isAtLeastTutor = false;
         metisService.setCourse(metisCourse);
@@ -112,6 +136,114 @@ describe('PostReactionsBarComponent', () => {
         });
     });
 
+    it('should invoke metis service when delete icon is clicked', () => {
+        component.readOnlyMode = false;
+        component.previewMode = false;
+        jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
+        const deletePostSpy = jest.spyOn(metisService, 'deletePost');
+        component.posting = { id: 1 } as Post;
+
+        component.ngOnInit();
+        fixture.detectChanges();
+        const confirmIconDebugElement = debugElement.query(By.directive(ConfirmIconComponent));
+        expect(confirmIconDebugElement).not.toBeNull();
+
+        confirmIconDebugElement.componentInstance.confirmEvent.emit();
+        fixture.detectChanges();
+
+        expect(deletePostSpy).toHaveBeenCalledOnce();
+        expect(deletePostSpy).toHaveBeenCalledWith(component.posting);
+    });
+
+    it('should display edit and delete options to the author when not in read-only or preview mode', () => {
+        component.readOnlyMode = false;
+        component.previewMode = false;
+        jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
+        component.posting = { id: 1, title: 'Test Post' } as Post;
+
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(getDeleteButton()).not.toBeNull();
+        expect(getEditButton()).not.toBeNull();
+    });
+
+    it('should display edit and delete options to user with channel moderation rights when not the author', () => {
+        component.readOnlyMode = false;
+        component.previewMode = false;
+        component.isEmojiCount = false;
+
+        const channelConversation = {
+            type: ConversationType.CHANNEL,
+            hasChannelModerationRights: true,
+        } as ChannelDTO;
+
+        jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(false);
+        jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
+        jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
+
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(getEditButton()).not.toBeNull();
+        expect(getDeleteButton()).not.toBeNull();
+    });
+
+    it('should not display edit and delete options when user is not the author and lacks permissions', () => {
+        component.readOnlyMode = false;
+        component.previewMode = false;
+        jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(false);
+        jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
+        component.posting = { conversation: { isCourseWide: false } } as Post;
+
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(debugElement.query(By.css('fa-icon[icon="pencil-alt"]'))).toBeNull();
+        expect(debugElement.query(By.directive(ConfirmIconComponent))).toBeNull();
+    });
+
+    it('should not display edit and delete options to tutor if posting is in course-wide channel', () => {
+        metisServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
+        metisServiceUserIsAtLeastTutorStub.mockReturnValue(true);
+        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
+        component.posting = { ...metisPostInChannel };
+        component.posting.authorRole = UserRole.USER;
+        component.ngOnInit();
+        fixture.detectChanges();
+        expect(getEditButton()).toBeNull();
+        expect(getDeleteButton()).toBeNull();
+    });
+
+    it('should not display edit and delete options to tutor if posting is announcement', () => {
+        metisServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
+        component.posting = metisAnnouncement;
+        component.ngOnInit();
+        fixture.detectChanges();
+        expect(getEditButton()).toBeNull();
+        expect(getDeleteButton()).toBeNull();
+    });
+
+    it('should display edit and delete options to instructor if posting is announcement', () => {
+        metisServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
+        component.posting = metisAnnouncement;
+        component.ngOnInit();
+        fixture.detectChanges();
+        expect(getEditButton()).not.toBeNull();
+        expect(getDeleteButton()).not.toBeNull();
+    });
+
+    it('should display edit and delete options to instructor if posting is in course-wide channel from a student', () => {
+        metisServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
+        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
+        component.posting = { ...metisPostInChannel };
+        component.posting.authorRole = UserRole.USER;
+        component.ngOnInit();
+        fixture.detectChanges();
+        expect(getEditButton()).not.toBeNull();
+        expect(getDeleteButton()).not.toBeNull();
+    });
+
     it.each([
         { type: ConversationType.CHANNEL, hasChannelModerationRights: true } as ChannelDTO,
         { type: ConversationType.GROUP_CHAT, creator: { id: 99 } },
@@ -120,11 +252,15 @@ describe('PostReactionsBarComponent', () => {
         component.posting!.author!.id = 99;
         jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(dto);
         jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ id: 99 } as User);
+
+        reactionToDelete.user = { id: 99 } as User;
+        post.reactions = [reactionToDelete];
+        component.posting = post;
+
         component.ngOnInit();
         fixture.detectChanges();
         const reactions = getElements(debugElement, 'jhi-emoji');
-        // emojis to be displayed it the user reaction, the pin, and the show answers toggle emoji
-        expect(reactions).toHaveLength(3);
+        expect(reactions).toHaveLength(2);
         expect(component.reactionMetaDataMap).toEqual({
             smile: {
                 count: 1,
@@ -132,7 +268,6 @@ describe('PostReactionsBarComponent', () => {
                 reactingUsers: [PLACEHOLDER_USER_REACTED],
             },
         });
-        // set correct tooltips for tutor and post that is not pinned and not archived
         expect(component.pinTooltip).toBe('artemisApp.metis.pinPostTooltip');
     });
 
