@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.repository.hestia;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -54,7 +55,7 @@ public interface ProgrammingExerciseTaskRepository extends ArtemisJpaRepository<
      * @throws EntityNotFoundException If the exercise with exerciseId does not exist
      */
     @NotNull
-    default Set<ProgrammingExerciseTask> findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(long exerciseId) throws EntityNotFoundException {
+    default List<ProgrammingExerciseTask> findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(long exerciseId) throws EntityNotFoundException {
         return getArbitraryValueElseThrow(findByExerciseIdWithTestCaseAndSolutionEntries(exerciseId), Long.toString(exerciseId));
     }
 
@@ -72,7 +73,7 @@ public interface ProgrammingExerciseTaskRepository extends ArtemisJpaRepository<
             WHERE t.exercise.id = :exerciseId
                 AND tc.exercise.id = :exerciseId
             """)
-    Optional<Set<ProgrammingExerciseTask>> findByExerciseIdWithTestCaseAndSolutionEntries(@Param("exerciseId") long exerciseId);
+    Optional<List<ProgrammingExerciseTask>> findByExerciseIdWithTestCaseAndSolutionEntries(@Param("exerciseId") long exerciseId);
 
     /**
      * Gets all tasks with its test cases for a programming exercise

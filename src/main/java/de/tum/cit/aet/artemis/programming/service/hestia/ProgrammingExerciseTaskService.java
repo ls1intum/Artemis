@@ -189,8 +189,8 @@ public class ProgrammingExerciseTaskService {
      * @param exerciseId of the programming exercise
      * @return Set of all tasks including one for not manually assigned tests
      */
-    public Set<ProgrammingExerciseTask> getTasksWithUnassignedTestCases(long exerciseId) {
-        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
+    public List<ProgrammingExerciseTask> getTasksWithUnassignedTestCases(long exerciseId) {
+        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
 
         Set<ProgrammingExerciseTestCase> testsWithTasks = tasks.stream().flatMap(task -> task.getTestCases().stream()).collect(Collectors.toSet());
 
