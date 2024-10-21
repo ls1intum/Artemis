@@ -29,9 +29,9 @@ type NavigationDirection = 'next' | 'prev';
     imports: [ArtemisSharedModule],
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {
-    pdfContainer = viewChild<ElementRef<HTMLDivElement>>('pdfContainer');
-    enlargedCanvas = viewChild<ElementRef<HTMLCanvasElement>>('enlargedCanvas');
-    fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+    pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
+    enlargedCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('enlargedCanvas');
+    fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
     attachmentSub: Subscription;
     attachmentUnitSub: Subscription;
@@ -136,7 +136,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @returns A promise that resolves when the PDF is loaded.
      */
     async loadOrAppendPdf(fileUrl: string, append = false): Promise<void> {
-        this.pdfContainer()!
+        this.pdfContainer()
             .nativeElement.querySelectorAll('.pdf-canvas-container')
             .forEach((canvas) => canvas.remove());
         this.totalPages.set(0);
@@ -154,7 +154,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 await page.render({ canvasContext: context!, viewport }).promise;
 
                 const canvasContainer = this.createCanvasContainer(canvas, i);
-                this.pdfContainer()!.nativeElement.appendChild(canvasContainer);
+                this.pdfContainer().nativeElement.appendChild(canvasContainer);
             }
 
             if (append) {
@@ -165,7 +165,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         } finally {
             this.isPdfLoading.set(false);
             if (append) {
-                this.fileInput()!.nativeElement.value = '';
+                this.fileInput().nativeElement.value = '';
             }
         }
     }
@@ -175,11 +175,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     scrollToBottom(): void {
         const scrollOptions: ScrollToOptions = {
-            top: this.pdfContainer()!.nativeElement.scrollHeight,
+            top: this.pdfContainer().nativeElement.scrollHeight,
             left: 0,
             behavior: 'smooth' as ScrollBehavior,
         };
-        this.pdfContainer()!.nativeElement.scrollTo(scrollOptions);
+        this.pdfContainer().nativeElement.scrollTo(scrollOptions);
     }
 
     /**
@@ -272,7 +272,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     adjustCanvasSize = () => {
         if (this.isEnlargedView()) {
-            const canvasElements = this.pdfContainer()!.nativeElement.querySelectorAll('.pdf-canvas-container canvas');
+            const canvasElements = this.pdfContainer().nativeElement.querySelectorAll('.pdf-canvas-container canvas');
             if (this.currentPage() - 1 < canvasElements.length) {
                 const canvas = canvasElements[this.currentPage() - 1] as HTMLCanvasElement;
                 this.updateEnlargedCanvas(canvas);
@@ -288,7 +288,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param isVertical A boolean flag indicating whether to enlarge or reset the container size.
      */
     adjustPdfContainerSize(isVertical: boolean): void {
-        const pdfContainer = this.pdfContainer()!.nativeElement;
+        const pdfContainer = this.pdfContainer().nativeElement;
         if (isVertical) {
             pdfContainer.style.height = `${this.DEFAULT_SLIDE_HEIGHT}px`;
         } else {
@@ -341,8 +341,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @returns The scaling factor used to resize the original canvas to fit within the container dimensions.
      */
     calculateScaleFactor(originalCanvas: HTMLCanvasElement): number {
-        const containerWidth = this.pdfContainer()!.nativeElement.clientWidth;
-        const containerHeight = this.pdfContainer()!.nativeElement.clientHeight;
+        const containerWidth = this.pdfContainer().nativeElement.clientWidth;
+        const containerHeight = this.pdfContainer().nativeElement.clientHeight;
 
         let scaleX, scaleY;
 
@@ -369,7 +369,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param scaleFactor - The factor by which the canvas is resized.
      */
     resizeCanvas(originalCanvas: HTMLCanvasElement, scaleFactor: number): void {
-        const enlargedCanvas = this.enlargedCanvas()!.nativeElement;
+        const enlargedCanvas = this.enlargedCanvas().nativeElement;
         enlargedCanvas.width = originalCanvas.width * scaleFactor;
         enlargedCanvas.height = originalCanvas.height * scaleFactor;
     }
@@ -381,7 +381,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param originalCanvas - The original canvas containing the image to be redrawn.
      */
     redrawCanvas(originalCanvas: HTMLCanvasElement): void {
-        const enlargedCanvas = this.enlargedCanvas()!.nativeElement;
+        const enlargedCanvas = this.enlargedCanvas().nativeElement;
         const context = enlargedCanvas.getContext('2d');
         context!.clearRect(0, 0, enlargedCanvas.width, enlargedCanvas.height);
         context!.drawImage(originalCanvas, 0, 0, enlargedCanvas.width, enlargedCanvas.height);
@@ -393,14 +393,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * and visually appealing layout.
      */
     positionCanvas(): void {
-        const enlargedCanvas = this.enlargedCanvas()!.nativeElement;
-        const containerWidth = this.pdfContainer()!.nativeElement.clientWidth;
-        const containerHeight = this.pdfContainer()!.nativeElement.clientHeight;
+        const enlargedCanvas = this.enlargedCanvas().nativeElement;
+        const containerWidth = this.pdfContainer().nativeElement.clientWidth;
+        const containerHeight = this.pdfContainer().nativeElement.clientHeight;
 
         enlargedCanvas.style.position = 'absolute';
         enlargedCanvas.style.left = `${(containerWidth - enlargedCanvas.width) / 2}px`;
         enlargedCanvas.style.top = `${(containerHeight - enlargedCanvas.height) / 2}px`;
-        enlargedCanvas.parentElement!.style.top = `${this.pdfContainer()!.nativeElement.scrollTop}px`;
+        enlargedCanvas.parentElement!.style.top = `${this.pdfContainer().nativeElement.scrollTop}px`;
     }
 
     /**
@@ -418,7 +418,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param disable A boolean flag indicating whether scrolling should be disabled (`true`) or enabled (`false`).
      */
     toggleBodyScroll(disable: boolean): void {
-        this.pdfContainer()!.nativeElement.style.overflow = disable ? 'hidden' : 'auto';
+        this.pdfContainer().nativeElement.style.overflow = disable ? 'hidden' : 'auto';
     }
 
     /**
@@ -427,7 +427,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     closeIfOutside(event: MouseEvent): void {
         const target = event.target as HTMLElement;
-        const enlargedCanvas = this.enlargedCanvas()!.nativeElement;
+        const enlargedCanvas = this.enlargedCanvas().nativeElement;
 
         if (target.classList.contains('enlarged-container') && target !== enlargedCanvas) {
             this.closeEnlargedView(event);
@@ -452,7 +452,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         const nextPageIndex = direction === 'next' ? this.currentPage() + 1 : this.currentPage() - 1;
         if (nextPageIndex > 0 && nextPageIndex <= this.totalPages()) {
             this.currentPage.set(nextPageIndex);
-            const canvas = this.pdfContainer()!.nativeElement.querySelectorAll('.pdf-canvas-container canvas')[this.currentPage() - 1] as HTMLCanvasElement;
+            const canvas = this.pdfContainer().nativeElement.querySelectorAll('.pdf-canvas-container canvas')[this.currentPage() - 1] as HTMLCanvasElement;
             this.updateEnlargedCanvas(canvas);
         }
     }
@@ -462,20 +462,20 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @returns A Promise that resolves when the deletion process is completed.
      */
     async deleteAttachmentFile() {
-        if (this.attachment) {
+        if (this.attachment()) {
             this.attachmentService.delete(this.attachment()!.id!).subscribe({
                 next: () => {
-                    this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+                    this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
                     this.dialogErrorSource.next('');
                 },
                 error: (error) => {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
                 },
             });
-        } else if (this.attachmentUnit && this.attachmentUnit()!.id && this.attachmentUnit()!.lecture?.id) {
+        } else if (this.attachmentUnit()) {
             this.lectureUnitService.delete(this.attachmentUnit()!.id!, this.attachmentUnit()!.lecture?.id!).subscribe({
                 next: () => {
-                    this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+                    this.router.navigate(['course-management', this.course()!.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
                     this.dialogErrorSource.next('');
                 },
                 error: (error) => {
@@ -522,7 +522,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Triggers the file input to select files.
      */
     triggerFileInput(): void {
-        this.fileInput()!.nativeElement.click();
+        this.fileInput().nativeElement.click();
     }
 
     /**
@@ -561,7 +561,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Updates the IDs of remaining pages after some have been removed.
      */
     updatePageIDs() {
-        const remainingPages = this.pdfContainer()!.nativeElement.querySelectorAll('.pdf-canvas-container');
+        const remainingPages = this.pdfContainer().nativeElement.querySelectorAll('.pdf-canvas-container');
         remainingPages.forEach((container, index) => {
             const pageIndex = index + 1;
             container.id = `pdf-page-${pageIndex}`;
