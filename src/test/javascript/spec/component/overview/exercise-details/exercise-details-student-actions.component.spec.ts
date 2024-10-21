@@ -572,6 +572,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                             assessmentType: AssessmentType.AUTOMATIC_ATHENA,
                             score: 100,
                             submission: submission,
+                            successful: true,
                         },
                     ],
                     submissions: [submission],
