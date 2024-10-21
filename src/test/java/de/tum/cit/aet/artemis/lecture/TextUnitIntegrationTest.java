@@ -109,9 +109,8 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void updateTextUnit_asEditor_shouldUpdateTextUnit() throws Exception {
         textUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, textUnit, 1)));
         persistTextUnitWithLecture();
-        TextUnit textUnitFromRequest = request.get("/api/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.OK, TextUnit.class);
-        textUnitFromRequest.setContent("Changed");
-        TextUnit updatedTextUnit = request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.OK);
+        textUnit.setContent("Changed");
+        TextUnit updatedTextUnit = request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.OK);
         assertThat(updatedTextUnit.getContent()).isEqualTo("Changed");
         verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.of(textUnit)));
     }
@@ -166,10 +165,14 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void persistTextUnitWithLecture() {
-        this.textUnit = textUnitRepository.save(this.textUnit);
+        Set<CompetencyLectureUnitLink> link = textUnit.getCompetencyLinks();
+        textUnit.setCompetencyLinks(null);
+
+        textUnit = textUnitRepository.save(textUnit);
+        textUnit.setCompetencyLinks(link);
         lecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow();
-        lecture.addLectureUnit(this.textUnit);
+        lecture.addLectureUnit(textUnit);
         lecture = lectureRepository.save(lecture);
-        this.textUnit = (TextUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        textUnit = (TextUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
     }
 }

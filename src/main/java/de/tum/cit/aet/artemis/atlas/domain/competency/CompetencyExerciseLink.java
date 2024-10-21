@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -27,17 +28,9 @@ public class CompetencyExerciseLink extends CompetencyLearningObjectLink {
     @JsonIgnore
     protected CompetencyExerciseId id = new CompetencyExerciseId();
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
     @MapsId("exerciseId")
     private Exercise exercise;
-
-    public Exercise getExercise() {
-        return exercise;
-    }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
-    }
 
     public CompetencyExerciseLink(CourseCompetency competency, Exercise exercise, double weight) {
         super(competency, weight);
@@ -48,8 +41,20 @@ public class CompetencyExerciseLink extends CompetencyLearningObjectLink {
         // Empty constructor for Spring
     }
 
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
+
     public CompetencyExerciseId getId() {
         return id;
+    }
+
+    public void setId(CompetencyExerciseId id) {
+        this.id = id;
     }
 
     @Override

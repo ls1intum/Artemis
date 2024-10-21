@@ -312,8 +312,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             final var lectureUnit = lectureUtilService.createTextUnit();
             Competency competency = competencyUtilService.createCompetency(course);
-            lectureUnitService.linkLectureUnitsToCompetency(competencyUtilService.createCompetency(course), Set.of(new CompetencyLectureUnitLink(competency, lectureUnit, 1)),
-                    Set.of());
+            lectureUnitService.linkLectureUnitsToCompetency(competencyUtilService.createCompetency(course), Set.of(new CompetencyLectureUnitLink(competency, lectureUnit, 1)));
 
             final var testLecture = lectureUtilService.createLecture(course, null);
             lectureUtilService.addLectureUnitsToLecture(testLecture, List.of(lectureUnit));

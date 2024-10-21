@@ -4,7 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -28,6 +31,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
+import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
 @Profile(PROFILE_CORE)
 @RestController
@@ -46,12 +50,15 @@ public class TextUnitResource {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final LectureUnitService lectureUnitService;
+
     public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, AuthorizationCheckService authorizationCheckService,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.competencyProgressService = competencyProgressService;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -101,6 +108,7 @@ public class TextUnitResource {
 
         textUnitForm.setId(existingTextUnit.getId());
         textUnitForm.setLecture(existingTextUnit.getLecture());
+        lectureUnitService.reconnectCompetencyLectureUnitLinks(textUnitForm);
         TextUnit result = textUnitRepository.save(textUnitForm);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingTextUnit, Optional.of(textUnitForm));
@@ -133,7 +141,15 @@ public class TextUnitResource {
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         textUnit.setLecture(null);
+        // persist lecture unit before competency links to prevent error
+        Set<CompetencyLectureUnitLink> links = textUnit.getCompetencyLinks();
+        textUnit.setCompetencyLinks(new HashSet<>());
+
         textUnit = textUnitRepository.saveAndFlush(textUnit);
+
+        textUnit.setCompetencyLinks(links);
+        lectureUnitService.reconnectCompetencyLectureUnitLinks(textUnit);
+
         textUnit.setLecture(lecture);
         lecture.addLectureUnit(textUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);

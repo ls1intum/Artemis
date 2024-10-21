@@ -158,10 +158,14 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     }
 
     private void persistVideoUnitWithLecture() {
-        this.videoUnit = videoUnitRepository.save(this.videoUnit);
-        lecture1.addLectureUnit(this.videoUnit);
+        Set<CompetencyLectureUnitLink> link = videoUnit.getCompetencyLinks();
+        videoUnit.setCompetencyLinks(null);
+
+        videoUnit = videoUnitRepository.save(videoUnit);
+        videoUnit.setCompetencyLinks(link);
+        lecture1.addLectureUnit(videoUnit);
         lecture1 = lectureRepository.save(lecture1);
-        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
+        videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits().stream().findFirst().orElseThrow();
     }
 
     @Test

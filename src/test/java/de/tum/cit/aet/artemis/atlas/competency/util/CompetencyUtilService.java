@@ -14,17 +14,15 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyLectureUnitLinkTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 /**
  * Service responsible for initializing the database with specific test data related to competencies for use in integration tests.
@@ -36,22 +34,16 @@ public class CompetencyUtilService {
     private CompetencyRepository competencyRepo;
 
     @Autowired
-    private LectureUnitRepository lectureUnitRepository;
-
-    @Autowired
-    private ExerciseTestRepository exerciseRepository;
-
-    @Autowired
     private CompetencyRelationRepository competencyRelationRepository;
 
     @Autowired
     private CompetencyJolRepository competencyJOLRepository;
 
     @Autowired
-    private CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+    private CompetencyExerciseLinkTestRepository competencyExerciseLinkRepository;
 
     @Autowired
-    private CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
+    private CompetencyLectureUnitLinkTestRepository competencyLectureUnitLinkRepository;
 
     /**
      * Creates and saves a Competency for the given Course.

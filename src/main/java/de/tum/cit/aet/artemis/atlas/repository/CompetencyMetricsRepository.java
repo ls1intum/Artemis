@@ -45,7 +45,8 @@ public interface CompetencyMetricsRepository extends ArtemisJpaRepository<Compet
     @Query("""
             SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong(c.id, e.id)
             FROM Exercise e
-            JOIN e.competencyLinks c
+            JOIN e.competencyLinks cl
+            JOIN cl.competency c
             WHERE c.id IN :competencyIds
             """)
     Set<MapEntryLongLong> findAllExerciseIdsByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);

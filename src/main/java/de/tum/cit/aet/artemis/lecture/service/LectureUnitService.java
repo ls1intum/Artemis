@@ -179,16 +179,14 @@ public class LectureUnitService {
     }
 
     /**
-     * Link the competency to a set of lecture units (and exercises if it includes exercise units)
+     * Link the competency to a set of lecture units
      *
-     * @param competency               The competency to be linked
-     * @param lectureUnitLinksToAdd    A set of lecture unit links to add to the specified competency
-     * @param lectureUnitLinksToRemove A set of lecture unit links to remove from the specified competency
+     * @param competency       The competency to be linked
+     * @param lectureUnitLinks New set of lecture unit links to associate with the competency
      */
-    public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<CompetencyLectureUnitLink> lectureUnitLinksToAdd,
-            Set<CompetencyLectureUnitLink> lectureUnitLinksToRemove) {
-        lectureUnitLinksToAdd.forEach(link -> link.setCompetency(competency));
-        competency.setLectureUnitLinks(lectureUnitLinksToAdd);
+    public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<CompetencyLectureUnitLink> lectureUnitLinks) {
+        lectureUnitLinks.forEach(link -> link.setCompetency(competency));
+        competency.setLectureUnitLinks(lectureUnitLinks);
         courseCompetencyRepository.save(competency);
     }
 
@@ -217,5 +215,28 @@ public class LectureUnitService {
         catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
             throw new BadRequestException();
         }
+    }
+
+    /**
+     * Reconnects the competency exercise links to the exercise after the cycle was broken by the deserialization.
+     *
+     * @param lectureUnit The lecture unit to reconnect the competency links
+     */
+    public void reconnectCompetencyLectureUnitLinks(LectureUnit lectureUnit) {
+        lectureUnit.getCompetencyLinks().forEach(link -> link.setLectureUnit(lectureUnit));
+    }
+
+    /**
+     * Updates the competency lecture unit links of the existing lecture unit with the updated lecture unit.
+     *
+     * @param existingLectureUnit The existing lecture unit
+     * @param updatedLectureUnit  The updated lecture unit
+     */
+    public void updateCompetencyLectureUnitLinks(LectureUnit existingLectureUnit, LectureUnit updatedLectureUnit) {
+        existingLectureUnit.getCompetencyLinks().removeIf(
+                link -> updatedLectureUnit.getCompetencyLinks().stream().noneMatch(updateLink -> updateLink.getCompetency().getId().equals(link.getCompetency().getId())));
+        existingLectureUnit.getCompetencyLinks().addAll(updatedLectureUnit.getCompetencyLinks().stream().filter(
+                link -> existingLectureUnit.getCompetencyLinks().stream().noneMatch(existingLink -> existingLink.getCompetency().getId().equals(link.getCompetency().getId())))
+                .toList());
     }
 }

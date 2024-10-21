@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.domain.competency;
 
 import java.io.Serializable;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
@@ -10,7 +11,7 @@ import jakarta.persistence.MapsId;
 @MappedSuperclass
 public abstract class CompetencyLearningObjectLink implements Serializable {
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
     @MapsId("competencyId")
     protected CourseCompetency competency;
 

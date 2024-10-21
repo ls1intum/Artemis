@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
 /**
  * REST controller for managing {@link Prerequisite Prerequisite} entities.
@@ -71,21 +70,18 @@ public class PrerequisiteResource {
 
     private final PrerequisiteService prerequisiteService;
 
-    private final LectureUnitService lectureUnitService;
-
     private final CourseCompetencyRepository courseCompetencyRepository;
 
     private final CourseCompetencyService courseCompetencyService;
 
     public PrerequisiteResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            PrerequisiteRepository prerequisiteRepository, PrerequisiteService prerequisiteService, LectureUnitService lectureUnitService,
-            CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService) {
+            PrerequisiteRepository prerequisiteRepository, PrerequisiteService prerequisiteService, CourseCompetencyRepository courseCompetencyRepository,
+            CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.prerequisiteRepository = prerequisiteRepository;
         this.prerequisiteService = prerequisiteService;
-        this.lectureUnitService = lectureUnitService;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.courseCompetencyService = courseCompetencyService;
     }

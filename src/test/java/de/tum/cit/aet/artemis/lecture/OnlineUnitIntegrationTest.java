@@ -171,10 +171,14 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     private void persistOnlineUnitWithLecture() {
-        this.onlineUnit = onlineUnitRepository.save(this.onlineUnit);
-        lecture1.addLectureUnit(this.onlineUnit);
+        Set<CompetencyLectureUnitLink> links = onlineUnit.getCompetencyLinks();
+        onlineUnit.setCompetencyLinks(null);
+
+        onlineUnit = onlineUnitRepository.save(onlineUnit);
+        onlineUnit.setCompetencyLinks(links);
+        lecture1.addLectureUnit(onlineUnit);
         lecture1 = lectureRepository.save(lecture1);
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
     }
 
     @Test

@@ -1,14 +1,11 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
+@Repository
 public interface CompetencyExerciseLinkRepository extends ArtemisJpaRepository<CompetencyExerciseLink, Long> {
 
-    @Modifying
-    @Transactional
-    void deleteAllByExerciseId(long exerciseId);
 }

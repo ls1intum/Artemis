@@ -7,7 +7,6 @@ import static org.awaitility.Awaitility.await;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -92,16 +91,17 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         return createExerciseParticipationSubmissionAndResult(exercise, studentParticipation, pointsOfExercise, bonusPointsOfExercise, scoreAwarded, rated, TextSubmission::new, 1);
     }
 
-    private ProgrammingExercise createProgrammingExercise(int i, Set<CourseCompetency> competencies) {
+    private ProgrammingExercise createProgrammingExercise(int i, CourseCompetency competency) {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(null, null, course);
 
         programmingExercise.setMaxPoints(i * 10.0);
-        Set<CompetencyExerciseLink> competencyExerciseLinks = competencies.stream().map(competency -> new CompetencyExerciseLink(competency, programmingExercise, 1))
-                .collect(Collectors.toSet());
-        programmingExercise.setCompetencyLinks(competencyExerciseLinks);
         programmingExercise.setDifficulty(i == 1 ? DifficultyLevel.EASY : i == 2 ? DifficultyLevel.MEDIUM : DifficultyLevel.HARD);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        return programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        CompetencyExerciseLink link = new CompetencyExerciseLink(competency, programmingExercise, 1);
+        programmingExercise = (ProgrammingExercise) competencyExerciseLinkRepository.save(link).getExercise();
+        return programmingExercise;
     }
 
     private Result createProgrammingExerciseParticipationSubmissionAndResult(ProgrammingExercise exercise, Participant participant, long scoreAwarded, boolean rated,
@@ -278,7 +278,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
         @BeforeEach
         void setupTestScenario() {
-            programmingExercises = IntStream.range(1, 4).mapToObj(i -> createProgrammingExercise(i, Set.of(courseCompetency))).toArray(ProgrammingExercise[]::new);
+            programmingExercises = IntStream.range(1, 4).mapToObj(i -> createProgrammingExercise(i, courseCompetency)).toArray(ProgrammingExercise[]::new);
         }
 
         @Test

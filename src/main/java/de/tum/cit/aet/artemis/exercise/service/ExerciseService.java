@@ -794,4 +794,13 @@ public class ExerciseService {
             this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText, instructor);
         }
     }
+
+    /**
+     * Reconnects the competency exercise links to the exercise after the cycle was broken by the deserialization.
+     *
+     * @param exercise exercise to reconnect the links
+     */
+    public void reconnectCompetencyExerciseLinks(Exercise exercise) {
+        exercise.getCompetencyLinks().forEach(link -> link.setExercise(exercise));
+    }
 }

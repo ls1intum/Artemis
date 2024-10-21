@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -27,17 +28,9 @@ public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
     @JsonIgnore
     protected CompetencyLectureUnitId id = new CompetencyLectureUnitId();
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
     @MapsId("lectureUnitId")
     private LectureUnit lectureUnit;
-
-    public LectureUnit getLectureUnit() {
-        return lectureUnit;
-    }
-
-    public void setLectureUnit(LectureUnit lectureUnit) {
-        this.lectureUnit = lectureUnit;
-    }
 
     public CompetencyLectureUnitLink(CourseCompetency competency, LectureUnit lectureUnit, double weight) {
         super(competency, weight);
@@ -48,8 +41,20 @@ public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
         // Empty constructor for Spring
     }
 
+    public LectureUnit getLectureUnit() {
+        return lectureUnit;
+    }
+
+    public void setLectureUnit(LectureUnit lectureUnit) {
+        this.lectureUnit = lectureUnit;
+    }
+
     public CompetencyLectureUnitId getId() {
         return id;
+    }
+
+    public void setId(CompetencyLectureUnitId id) {
+        this.id = id;
     }
 
     @Override
@@ -57,7 +62,7 @@ public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof CompetencyExerciseLink that)) {
+        if (!(o instanceof CompetencyLectureUnitLink that)) {
             return false;
         }
         return Objects.equals(id, that.id);

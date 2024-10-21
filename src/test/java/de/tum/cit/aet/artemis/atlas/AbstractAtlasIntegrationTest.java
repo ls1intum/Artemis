@@ -9,9 +9,7 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.PrerequisiteUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.StandardizedCompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.learningpath.util.LearningPathUtilService;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -21,6 +19,8 @@ import de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyLectureUnitLinkTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyProgressTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.LearningPathTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
@@ -82,10 +82,10 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     protected CompetencyJolRepository competencyJolRepository;
 
     @Autowired
-    protected CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+    protected CompetencyExerciseLinkTestRepository competencyExerciseLinkRepository;
 
     @Autowired
-    protected CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
+    protected CompetencyLectureUnitLinkTestRepository competencyLectureUnitLinkRepository;
 
     // External Repositories
     @Autowired

@@ -226,11 +226,12 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
         var persistedAttachment = persistedAttachmentUnit.getAttachment();
         assertThat(persistedAttachment.getId()).isNotNull();
-        var updatedAttachmentUnit = attachmentUnitRepository.findById(persistedAttachmentUnit.getId()).orElseThrow();
+        var updatedAttachmentUnit = attachmentUnitRepository.findOneWithCompetencyLinksById(persistedAttachmentUnit.getId());
         // Wait for async operation to complete (after attachment unit is saved, the file gets split into slides)
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT));
         assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachment);
         assertThat(updatedAttachmentUnit.getAttachment().getName()).isEqualTo("LoremIpsum");
+        assertThat(updatedAttachmentUnit.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
         verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(updatedAttachmentUnit));
     }
 

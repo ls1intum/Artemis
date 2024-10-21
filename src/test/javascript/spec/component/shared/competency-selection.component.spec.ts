@@ -146,12 +146,12 @@ describe('CompetencySelection', () => {
         component.toggleCompetency(new CompetencyLearningObjectLink(competency3, 1));
 
         expect(component.selectedCompetencyLinks).toHaveLength(3);
-        expect(component.selectedCompetencyLinks).toContain(competency3);
+        expect(component.selectedCompetencyLinks).toContainEqual(new CompetencyLearningObjectLink(competency3, 1));
 
         component.toggleCompetency(new CompetencyLearningObjectLink(competency2, 1));
 
         expect(component.selectedCompetencyLinks).toHaveLength(2);
-        expect(component.selectedCompetencyLinks).not.toContain(competency2);
+        expect(component.selectedCompetencyLinks).not.toContainEqual(new CompetencyLearningObjectLink(competency2, 1));
 
         component.toggleCompetency(new CompetencyLearningObjectLink(competency1, 1));
         component.toggleCompetency(new CompetencyLearningObjectLink(competency3, 1));

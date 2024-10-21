@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -50,9 +51,11 @@ public class AttachmentUnitService {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final LectureUnitService lectureUnitService;
+
     public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<PyrisWebhookService> pyrisWebhookService,
-            Optional<IrisSettingsRepository> irisSettingsRepository, CompetencyProgressService competencyProgressService) {
+            Optional<IrisSettingsRepository> irisSettingsRepository, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -61,6 +64,7 @@ public class AttachmentUnitService {
         this.pyrisWebhookService = pyrisWebhookService;
         this.irisSettingsRepository = irisSettingsRepository;
         this.competencyProgressService = competencyProgressService;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -76,8 +80,14 @@ public class AttachmentUnitService {
     public AttachmentUnit createAttachmentUnit(AttachmentUnit attachmentUnit, Attachment attachment, Lecture lecture, MultipartFile file, boolean keepFilename) {
         // persist lecture unit before lecture to prevent "null index column for collection" error
         attachmentUnit.setLecture(null);
+        // persist lecture unit before competency links to prevent error
+        Set<CompetencyLectureUnitLink> links = attachmentUnit.getCompetencyLinks();
+        attachmentUnit.setCompetencyLinks(new HashSet<>());
+
         AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(attachmentUnit);
         attachmentUnit.setLecture(lecture);
+        savedAttachmentUnit.setCompetencyLinks(links);
+        lectureUnitService.reconnectCompetencyLectureUnitLinks(savedAttachmentUnit);
         lecture.addLectureUnit(savedAttachmentUnit);
 
         handleFile(file, attachment, keepFilename, savedAttachmentUnit.getId());
@@ -106,12 +116,14 @@ public class AttachmentUnitService {
      */
     public AttachmentUnit updateAttachmentUnit(AttachmentUnit existingAttachmentUnit, AttachmentUnit updateUnit, Attachment updateAttachment, MultipartFile updateFile,
             boolean keepFilename) {
-        Set<CompetencyLectureUnitLink> existingCompetencyLinks = existingAttachmentUnit.getCompetencyLinks();
+        Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentUnit.getCompetencyLinks());
 
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
         existingAttachmentUnit.setName(updateUnit.getName());
         existingAttachmentUnit.setReleaseDate(updateUnit.getReleaseDate());
-        existingAttachmentUnit.setCompetencyLinks(updateUnit.getCompetencyLinks());
+
+        lectureUnitService.updateCompetencyLectureUnitLinks(existingAttachmentUnit, updateUnit);
+        lectureUnitService.reconnectCompetencyLectureUnitLinks(existingAttachmentUnit);
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(existingAttachmentUnit);
 

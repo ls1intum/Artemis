@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.persistence.DiscriminatorValue;
@@ -67,12 +68,13 @@ public class ExerciseUnit extends LectureUnit {
     @Override
     @JsonIgnore
     public Set<CompetencyLectureUnitLink> getCompetencyLinks() {
-        throw new UnsupportedOperationException("Create the link in the associated exercise instead");
+        // Set the links in the associated exercise instead
+        return new HashSet<>();
     }
 
     @Override
     public void setCompetencyLinks(Set<CompetencyLectureUnitLink> competencyLinks) {
-        throw new UnsupportedOperationException("Retrieve the link in the associated exercise instead");
+        // Retrieve the link in the associated exercise instead"
     }
 
     /**
