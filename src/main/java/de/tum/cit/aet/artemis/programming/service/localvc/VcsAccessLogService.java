@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service.localvc;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
-
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -20,7 +18,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
-@Profile(PROFILE_LOCALVC)
+@Profile("someNotExistingProfile")
 @Service
 public class VcsAccessLogService {
 

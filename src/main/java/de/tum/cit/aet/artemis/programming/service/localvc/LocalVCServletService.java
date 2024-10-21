@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -453,12 +452,12 @@ public class LocalVCServletService {
         }
 
         // Asynchronously store an VCS access log entry
-        CompletableFuture.runAsync(() -> storeAccessLogAsync(user, participation, repositoryActionType, authenticationMechanism, ipAddress, localVCRepositoryUri))
-                .exceptionally(ex -> {
-                    log.warn("Failed to asynchronously obtain commit hash or store access log for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath(),
-                            ex.getMessage());
-                    return null;
-                });
+        // CompletableFuture.runAsync(() -> storeAccessLogAsync(user, participation, repositoryActionType, authenticationMechanism, ipAddress, localVCRepositoryUri))
+        // .exceptionally(ex -> {
+        // log.warn("Failed to asynchronously obtain commit hash or store access log for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath(),
+        // ex.getMessage());
+        // return null;
+        // });
     }
 
     /**
