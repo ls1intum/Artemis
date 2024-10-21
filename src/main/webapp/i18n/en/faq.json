@@ -4,12 +4,19 @@
             "home": {
                 "title": "FAQ",
                 "createLabel": "Create a new FAQ",
+                "proposeLabel": "Propose a new FAQ",
+                "accept": "Accept FAQ",
+                "reject": "Reject FAQ",
                 "filterLabel": "Filter",
                 "createOrEditLabel": "Create or edit FAQ"
             },
-            "created": "The FAQ was successfully created",
-            "updated": "The FAQ was successfully updated",
+            "created": "The FAQ {{ title }} was successfully created",
+            "updated": "The FAQ {{ title }} was successfully updated",
+            "proposed": "The FAQ {{ title }} was successfully proposed",
+            "proposedChange": "The changes to the FAQ {{ title }} have been successfully proposed",
             "deleted": "The FAQ was successfully deleted",
+            "accepted": "The FAQ {{ title }} was successfully accepted",
+            "rejected": "The FAQ {{ title }} was successfully rejected",
             "delete": {
                 "question": "Are you sure you want to permanently delete the FAQ <strong>{{ title }}</strong>? This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the FAQ to confirm."
@@ -18,7 +25,8 @@
             "table": {
                 "questionTitle": "Question title",
                 "questionAnswer": "Question answer",
-                "categories": "Categories"
+                "categories": "Categories",
+                "state": "State"
             },
             "course": "Course",
             "noExisting": "Currently, there is no FAQ available for this course.",
