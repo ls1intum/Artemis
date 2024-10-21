@@ -694,6 +694,17 @@
                 "pushExercise": "Lade den Aufgaben-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt.",
                 "pushSolution": "Lade den Lösungs-Code in das entsprechende Repository. Es wird nicht ausgecheckt.",
                 "pushTest": "Lade den Test-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt."
+            },
+            "dockerFlags": {
+                "disableNetworkAccess": {
+                    "title": "Internetzugang beim Ausführen der Studierendeneinreichung deaktivieren",
+                    "description": "Aktiviere diese Option, um den Netzwerkzugang für Container zu deaktivieren. Das Netzwerk wird beim Ausführen der Studierendeneinreichung deaktiviert. Die Abhängigkeiten werden jedoch zuvor im Container heruntergeladen und zwischengespeichert."
+                },
+                "envVars": {
+                    "title": "Umgebungsvariablen",
+                    "description": "Füge Umgebungsvariablen zum Docker-Container hinzu. Zum Beispiel: 'API_KEY'=\"ABCD 1234\",API_SECRET='XYZ',\"API_TOKEN\"=1234 (Max 128 characters)",
+                    "invalid": "Ungültiges Format der Umgebungsvariable. Schlüssel und Werte können in einfachen oder doppelten Anführungszeichen stehen. Zum Beispiel: 'API_KEY'=\"ABCD 1234\",API_SECRET='XYZ',\"API_TOKEN\"=1234"
+                }
             }
         },
         "error": {
