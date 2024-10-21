@@ -5,12 +5,16 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.athena.dto.ResponseMetaDTO;
+import de.tum.cit.aet.artemis.athena.dto.ResponseMetaLLMCallDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsage;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRepository;
@@ -30,6 +34,34 @@ public class LLMTokenUsageService {
 
     public LLMTokenUsageService(LLMTokenUsageRepository llmTokenUsageRepository) {
         this.llmTokenUsageRepository = llmTokenUsageRepository;
+    }
+
+    /**
+     * Method saves the token usage for the Athena response meta to the database
+     *
+     * @param courseId              of type Long
+     * @param exerciseId            of type Long
+     * @param userId                of type Long
+     * @param meta                  of type ResponseMetaDTO
+     * @param isPreliminaryFeedback of type Boolean
+     */
+    public void saveAthenaTokenUsage(Long courseId, Long exerciseId, Long userId, ResponseMetaDTO meta, Boolean isPreliminaryFeedback) {
+        String traceId = UUID.randomUUID().toString();
+        LLMServiceType serviceType = isPreliminaryFeedback ? LLMServiceType.ATHENA_PRELIMINARY_FEEDBACK : LLMServiceType.ATHENA_FEEDBACK_SUGGESTION;
+
+        List<LLMTokenUsage> tokenUsages = new ArrayList<>();
+        for (ResponseMetaLLMCallDTO llmCall : meta.llmCalls()) {
+            LLMTokenUsage llmTokenUsage = new LLMTokenUsage();
+            llmTokenUsage.setTraceId(traceId);
+            llmTokenUsage.setCourseId(courseId);
+            llmTokenUsage.setExerciseId(exerciseId);
+            llmTokenUsage.setUserId(userId);
+            llmTokenUsage.setServiceType(serviceType.name());
+            llmTokenUsage.setNumInputTokens(llmCall.inputTokens());
+            llmTokenUsage.setNumOutputTokens(llmCall.outputTokens());
+            llmTokenUsage.setModel(llmCall.modelName());
+        }
+        llmTokenUsageRepository.saveAll(tokenUsages);
     }
 
     /**
