@@ -64,7 +64,7 @@
             "home": {
                 "title": "Users",
                 "createLabel": "Create a new user",
-                "createOrEditLabel": "Create or edit a user"
+                "editLabel": "Edit user"
             },
             "created": "Created new user with identifier {{ param }}",
             "updated": "Updated User with identifier {{ param }}",
@@ -92,7 +92,7 @@
             "deactivated": "Deactivated",
             "profiles": "Profiles",
             "langKey": "Language",
-            "passwordTooltip": "You can only change passwords for internal users.",
+            "passwordTooltip": "This setting can only be changed for new users. Notice, that you can only change passwords for internal users.",
             "internal": "Internal",
             "createdBy": "Created by",
             "createdDate": "Created date",
