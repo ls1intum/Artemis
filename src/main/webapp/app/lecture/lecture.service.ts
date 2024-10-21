@@ -8,6 +8,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;
@@ -127,6 +128,13 @@ export class LectureService {
             params: params,
             observe: 'response',
         });
+    }
+    /**
+     * Fetch the ingestion state of all the lectures inside the course specified
+     * @param courseId
+     */
+    getIngestionState(courseId: number): Observable<HttpResponse<Record<number, IngestionState>>> {
+        return this.http.get<Record<number, IngestionState>>(`api/iris/courses/${courseId}/lectures/ingestion-state`, { observe: 'response' });
     }
     /**
      * Clones and imports the lecture to the course
