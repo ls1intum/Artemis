@@ -278,6 +278,8 @@ public class TextExerciseResource {
 
         channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
 
+        exerciseService.reconnectCompetencyExerciseLinks(textExercise);
+
         TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(textExerciseBeforeUpdate, updatedTextExercise);

@@ -242,6 +242,8 @@ public class ModelingExerciseResource {
 
         channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
 
+        exerciseService.reconnectCompetencyExerciseLinks(modelingExercise);
+
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
