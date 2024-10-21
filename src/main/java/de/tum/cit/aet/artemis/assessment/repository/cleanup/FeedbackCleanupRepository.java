@@ -85,9 +85,9 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
     void deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
-     * Deletes non-rated {@link Feedback} entries where the associated course's start and end dates
+     * Deletes non-rated {@link Feedback} entries that are not the latest non-rated result, where the associated course's start and end dates
      * are between the specified date range.
-     * This query deletes feedback for non-rated results within courses whose end date is before
+     * This query removes old feedback entries that are not part of the latest non-rated result within courses whose end date is before
      * {@code deleteTo} and start date is after {@code deleteFrom}.
      *
      * @param deleteFrom the start date for selecting courses
@@ -103,7 +103,11 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
                     LEFT JOIN r.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
-                WHERE r.rated=false
+                WHERE r.id NOT IN (
+                    SELECT MAX(r2.id)
+                    FROM Result r2
+                    WHERE r2.participation.id = p.id)
+                    AND r.rated=false
                     AND c.endDate < :deleteTo
                     AND c.startDate > :deleteFrom
                 )
