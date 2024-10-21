@@ -18,6 +18,7 @@ import dayjs from 'dayjs/esm';
 export class FormDateTimePickerComponent implements ControlValueAccessor {
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;
     @Input() labelName: string;
+    @Input() hideLabelName: boolean = false;
     @Input() labelTooltip: string;
     @Input() value: any;
     @Input() disabled: boolean;

@@ -300,6 +300,12 @@
                             </a>
                         </li>
                     }
+                    <li>
+                        <a class="dropdown-item" routerLink="/admin/cleanup-service" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="faBroom" [fixedWidth]="true" />
+                            <span jhiTranslate="global.menu.admin.cleanupService"></span>
+                        </a>
+                    </li>
                     <!-- jhipster-needle-add-element-to-admin-menu - JHipster will add entities to the admin menu here -->
                 </ul>
             </li>
