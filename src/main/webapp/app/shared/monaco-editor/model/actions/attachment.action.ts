@@ -13,8 +13,8 @@ interface AttachmentArguments {
 export class AttachmentAction extends TextEditorAction {
     static readonly ID = 'attachment.action';
     static readonly DEFAULT_INSERT_TEXT = '![](https://)';
-    constructor() {
-        super(AttachmentAction.ID, 'artemisApp.multipleChoiceQuestion.editor.imageUpload', faImage, undefined);
+    constructor(hideInEditor = false) {
+        super(AttachmentAction.ID, 'artemisApp.multipleChoiceQuestion.editor.imageUpload', faImage, undefined, hideInEditor);
     }
 
     /**
