@@ -396,6 +396,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.onContentHeightChanged(this.monacoEditor.getContentHeight());
         const editorHeight = this.getEditorHeight();
         this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), editorHeight);
+        this.monacoEditor.layout(); // Prevents an issue with line wraps in the editor
     }
 
     /**
