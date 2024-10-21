@@ -50,9 +50,10 @@ export class LearningPathNavComponent {
     }
 
     async selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDTO, isSuccessor: boolean): Promise<void> {
-        isSuccessor ? this.isLoadingSuccessor.set(true) : this.isLoadingPredecessor.set(true);
+        const loadingSpinner = isSuccessor ? this.isLoadingSuccessor : this.isLoadingPredecessor;
+        loadingSpinner.set(true);
         await this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), selectedLearningObject);
-        isSuccessor ? this.isLoadingSuccessor.set(false) : this.isLoadingPredecessor.set(false);
+        loadingSpinner.set(false);
     }
 
     completeLearningPath(): void {
