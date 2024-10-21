@@ -22,7 +22,6 @@ export abstract class PostingDirective<T extends Posting> implements OnInit {
     }
 
     editPosting() {
-        console.log('buraya girdii');
         this.reactionsBar.editPosting();
         this.showDropdown = false;
     }

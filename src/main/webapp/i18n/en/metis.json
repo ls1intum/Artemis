@@ -123,7 +123,12 @@
                 "exerciseOrLecture": "Exercise / Lecture",
                 "showAllPosts": "Show all messages",
                 "showContent": "Show content",
-                "collapseContent": "Collapse content"
+                "collapseContent": "Collapse content",
+                "addReaction": "Add reaction",
+                "pinMessage": "Pin message",
+                "editMessage": "Edit message",
+                "deleteMessage": "Delete message",
+                "replyMessage": "Reply in thread"
             },
             "answerPost": {
                 "created": "New reply successfully created",

@@ -52,10 +52,22 @@
 
 <!-- Right-Click Dropdown -->
 <div *ngIf="showDropdown" [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition.y, 'left.px': dropdownPosition.x }" class="dropdown-menu show">
-    <button class="dropdown-item d-flex" (click)="addReaction($event)"><fa-icon [icon]="faSmile" class="item-icon"></fa-icon>Add reaction</button>
-    <button class="dropdown-item d-flex" (click)="togglePin()"><fa-icon [icon]="faThumbtack" class="item-icon"></fa-icon>Pin message</button>
-    <button class="dropdown-item d-flex" (click)="editPosting()"><fa-icon [icon]="faPencilAlt" class="item-icon"></fa-icon>Edit message</button>
-    <button class="dropdown-item d-flex" (click)="deletePost()"><fa-icon [icon]="faTrash" class="item-icon"></fa-icon>Delete message</button>
+    <button class="dropdown-item d-flex" (click)="addReaction($event)">
+        <fa-icon [icon]="faSmile" class="item-icon"></fa-icon>
+        <span jhiTranslate="artemisApp.metis.post.addReaction"></span>
+    </button>
+    <button class="dropdown-item d-flex" (click)="togglePin()">
+        <fa-icon [icon]="faThumbtack" class="item-icon"></fa-icon>
+        <span jhiTranslate="artemisApp.metis.post.pinMessage"></span>
+    </button>
+    <button class="dropdown-item d-flex" (click)="editPosting()">
+        <fa-icon [icon]="faPencilAlt" class="item-icon"></fa-icon>
+        <span jhiTranslate="artemisApp.metis.post.editMessage"></span>
+    </button>
+    <button class="dropdown-item d-flex" (click)="deletePost()">
+        <fa-icon [icon]="faTrash" class="item-icon"></fa-icon>
+        <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>
+    </button>
 </div>
 
 <div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin [ngStyle]="{ position: 'fixed', 'top.px': clickPosition.y, 'left.px': clickPosition.x }"></div>
