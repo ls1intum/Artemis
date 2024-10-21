@@ -10,7 +10,12 @@
     [routerLinkActive]="'bg-selected border-selected'"
 >
     <div class="w-75 align-self-center">
-        <jhi-sidebar-card-item [groupKey]="groupKey" [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
+        <jhi-sidebar-card-item
+            [unreadCount]="this.sidebarItem.conversation?.unreadMessagesCount ?? 0"
+            [groupKey]="groupKey"
+            [sidebarType]="sidebarType"
+            [sidebarItem]="sidebarItem"
+        />
     </div>
     @if (sidebarItem.conversation) {
         <div>

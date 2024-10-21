@@ -111,6 +111,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @Value("${artemis.user-management.internal-admin.password}")
     private String localVCPassword;
 
+    @Value("${artemis.version-control.url}")
+    protected String artemisVersionControlUrl;
+
     // ---- Repository handles ----
     private LocalRepository templateRepository;
 
@@ -911,6 +914,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
         practiceParticipation.setPracticeMode(true);
+        practiceParticipation.setRepositoryUri(localVCLocalCITestService.constructLocalVCUrl("", "", projectKey1, practiceRepositorySlug));
+
+        // practiceParticipation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), practiceRepositorySlug));
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 
         // Students should not be able to access, teaching assistants should be able to fetch and push and editors and higher should be able to fetch and push.
@@ -950,6 +956,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 instructor1Login);
         practiceParticipation.setPracticeMode(true);
+        practiceParticipation.setRepositoryUri(localVCLocalCITestService.constructLocalVCUrl("", "", projectKey1, practiceRepositorySlug));
+
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 
         // Students should not be able to access, teaching assistants should be able to fetch, and editors and higher should be able to fetch and push.
