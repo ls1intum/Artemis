@@ -521,27 +521,6 @@ public class ResultService {
         }
     }
 
-    public void fetchAndSetLongFeedbackTexts(List<Feedback> feedbackList) {
-
-        List<Long> feedbackIdsWithLongFeedback = feedbackList.stream().filter(feedback -> feedback.getId() != null && feedback.getHasLongFeedbackText()).map(Feedback::getId)
-                .toList();
-
-        List<LongFeedbackText> longFeedbackTextList = new ArrayList<>();
-        for (Long feedbackId : feedbackIdsWithLongFeedback) {
-            Optional<LongFeedbackText> longFeedbackText = longFeedbackTextRepository.findWithFeedbackAndResultAndParticipationByFeedbackId(feedbackId);
-            longFeedbackText.ifPresent(longFeedbackTextList::add);
-        }
-
-        for (Feedback feedback : feedbackList) {
-            if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
-                longFeedbackTextList.stream().filter(lft -> lft.getFeedback().getId().equals(feedback.getId())).findFirst().ifPresent(longFeedback -> {
-                    feedback.clearLongFeedback();
-                    feedback.setDetailText(longFeedback.getText());
-                });
-            }
-        }
-    }
-
     @NotNull
     private Result shouldSaveResult(@NotNull Result result, boolean shouldSave) {
         if (shouldSave) {
