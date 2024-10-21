@@ -40,7 +40,7 @@
     </button>
 </div>
 <div class="card build-plan-editor">
-    <jhi-code-editor-header [filename]="'artemisApp.programmingExercise.buildplan' | artemisTranslate" [isLoading]="isLoading" (tabSizeChanged)="updateTabSize($event)" />
+    <jhi-code-editor-header [fileName]="'artemisApp.programmingExercise.buildplan' | artemisTranslate" [isLoading]="isLoading" (onValidateTabSize)="updateTabSize($event)" />
     <div class="d-flex card-body build-plan-editor__content">
         <div class="build-plan-editor__content__editor">
             <jhi-monaco-editor
