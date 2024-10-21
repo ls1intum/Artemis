@@ -53,10 +53,6 @@ public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
         return id;
     }
 
-    public void setId(CompetencyLectureUnitId id) {
-        this.id = id;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {

@@ -45,8 +45,8 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -62,7 +62,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
     private AttachmentRepository attachmentRepository;
 
     @Autowired
-    private AttachmentUnitRepository attachmentUnitRepository;
+    private AttachmentUnitTestRepository attachmentUnitRepository;
 
     @Autowired
     private LectureRepository lectureRepository;
