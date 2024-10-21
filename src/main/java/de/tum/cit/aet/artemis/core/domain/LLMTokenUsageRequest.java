@@ -85,7 +85,7 @@ public class LLMTokenUsageRequest extends DomainObject {
         this.numOutputTokens = numOutputTokens;
     }
 
-    public LLMTokenUsageTrace getTraceId() {
+    public LLMTokenUsageTrace getTrace() {
         return trace;
     }
 
