@@ -92,7 +92,7 @@ public class AttachmentResource {
         attachment.setId(null);
 
         Path basePath = FilePathService.getLectureAttachmentFilePath().resolve(attachment.getLecture().getId().toString());
-        Path savePath = fileService.saveFile(file, basePath, false);
+        Path savePath = fileService.saveFile(file, basePath, attachment.getName());
         attachment.setLink(FilePathService.publicPathForActualPath(savePath, attachment.getLecture().getId()).toString());
 
         Attachment result = attachmentRepository.save(attachment);

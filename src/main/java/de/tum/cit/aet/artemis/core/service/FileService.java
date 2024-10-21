@@ -204,6 +204,24 @@ public class FileService implements DisposableBean {
     }
 
     /**
+     * Saves a file to the given path using a generated filename.
+     *
+     * @param file     the file to save
+     * @param basePath the base path to save the file to
+     * @param fileName the name to assign to the saved file
+     * @return the path where the file was saved
+     */
+    @NotNull
+    public Path saveFile(MultipartFile file, Path basePath, String fileName) {
+        String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
+        String fileNameWithExtension = fileName + "." + fileExtension;
+        String sanitizedFilename = checkAndSanitizeFilename(fileNameWithExtension);
+        validateExtension(sanitizedFilename, false);
+        Path savePath = basePath.resolve(sanitizedFilename);
+        return saveFile(file, savePath);
+    }
+
+    /**
      * Saves a file to the given path. If the file already exists, it will be <b>overwritten</b>. Make sure the path is <b>sanitized</b> and does not override files unexpectedly!
      *
      * @param file              the file to save
