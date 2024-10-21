@@ -228,6 +228,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         courseUtilService.enableMessagingForCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember());
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         modelingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, modelingExercise, 1)));
+        modelingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
@@ -475,11 +476,12 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         String uniqueChannelName = "channel-" + UUID.randomUUID().toString().substring(0, 8);
         modelingExerciseToImport.setChannelName(uniqueChannelName);
         modelingExerciseToImport.getCompetencyLinks().add(new CompetencyExerciseLink(competency, modelingExerciseToImport, 1));
+        modelingExerciseToImport.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
         var importedExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExerciseToImport.getId(), modelingExerciseToImport, ModelingExercise.class,
                 HttpStatus.CREATED);
         assertThat(importedExercise).usingRecursiveComparison().ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate",
-                "exampleSolutionPublicationDate", "channelNameTransient", "plagiarismDetectionConfig.id", "competencies").isEqualTo(modelingExerciseToImport);
+                "exampleSolutionPublicationDate", "channelNameTransient", "plagiarismDetectionConfig.id", "competencyLinks").isEqualTo(modelingExerciseToImport);
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);

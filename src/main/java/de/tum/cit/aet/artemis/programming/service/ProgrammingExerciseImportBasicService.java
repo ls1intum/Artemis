@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -77,6 +78,8 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ChannelService channelService;
 
+    private final ExerciseService exerciseService;
+
     public ProgrammingExerciseImportBasicService(ExerciseHintService exerciseHintService, ExerciseHintRepository exerciseHintRepository,
             Optional<VersionControlService> versionControlService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
@@ -84,7 +87,7 @@ public class ProgrammingExerciseImportBasicService {
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, ChannelService channelService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExerciseService exerciseService) {
         this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
@@ -101,6 +104,7 @@ public class ProgrammingExerciseImportBasicService {
         this.solutionEntryRepository = solutionEntryRepository;
         this.channelService = channelService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -142,7 +146,9 @@ public class ProgrammingExerciseImportBasicService {
         final Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(originalProgrammingExercise, newProgrammingExercise);
 
         newProgrammingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newProgrammingExercise.getBuildConfig()));
-        final ProgrammingExercise importedExercise = programmingExerciseRepository.save(newProgrammingExercise);
+
+        final ProgrammingExercise importedExercise = exerciseService.saveWithCompetencyLinks(newProgrammingExercise, programmingExerciseRepository::save);
+        ;
 
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);
         final Map<Long, Long> newTaskIdByOldId = importTasks(originalProgrammingExercise, importedExercise, newTestCaseIdByOldId);

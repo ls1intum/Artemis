@@ -420,6 +420,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exampleSubmissionRepo.save(exampleSubmission);
         textExercise.addExampleSubmission(exampleSubmission);
         textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, textExercise, 1)));
+        textExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
         TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
 
@@ -590,6 +591,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setCourse(course2);
         textExercise.setChannelName("testchannel" + textExercise.getId());
         textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, textExercise, 1)));
+        textExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+
         var newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
         assertThat(channel).isNotNull();
