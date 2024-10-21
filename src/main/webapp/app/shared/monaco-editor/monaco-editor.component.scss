@@ -7,6 +7,11 @@
     .monaco-editor {
         // Disables the focus border around the editor.
         outline: none;
+
+        // Apple devices display a keyboard icon in the bottom right corner of the editor. We disable this as it does not fit our design.
+        .iPadShowKeyboard {
+            display: none;
+        }
     }
 }
 
