@@ -9,6 +9,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
@@ -27,7 +29,10 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -77,6 +82,33 @@ public class BuildJobExecutionService {
         this.buildJobGitService = buildJobGitService;
         this.buildAgentDockerService = buildAgentDockerService;
         this.buildLogsMap = buildLogsMap;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    @Async
+    public void initAsync() {
+        final ZonedDateTime currentTime = ZonedDateTime.now();
+        cleanUpTempDirectoriesAsync(currentTime);
+    }
+
+    private void cleanUpTempDirectoriesAsync(ZonedDateTime currentTime) {
+        log.info("Cleaning up temporary directories in {}", CHECKED_OUT_REPOS_TEMP_DIR);
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Path.of(CHECKED_OUT_REPOS_TEMP_DIR))) {
+            for (Path path : directoryStream) {
+                try {
+                    if (Files.isDirectory(path) && Files.getLastModifiedTime(path).toInstant().isBefore(currentTime.toInstant())) {
+                        FileUtils.deleteDirectory(path.toFile());
+                    }
+                }
+                catch (IOException e) {
+                    log.error("Could not delete temporary directory {}", path, e);
+                }
+            }
+        }
+        catch (IOException e) {
+            log.error("Could not delete temporary directories", e);
+        }
+        log.info("Clean up of temporary directories in {} completed.", CHECKED_OUT_REPOS_TEMP_DIR);
     }
 
     /**
@@ -512,15 +544,16 @@ public class BuildJobExecutionService {
             }
             buildJobGitService.deleteLocalRepository(repository);
         }
+        // Do not throw an exception if deletion fails. If an exception occurs, clean up will happen in the next server start.
         catch (EntityNotFoundException e) {
             msg = "Error while checking out repository";
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
-            throw new LocalCIException(msg, e);
+            log.error("Error while deleting repository with URI {} and Path {}", repositoryUri, repositoryPath, e);
         }
         catch (IOException e) {
             msg = "Error while deleting repository";
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
-            throw new LocalCIException(msg, e);
+            log.error("Error while deleting repository with URI {} and Path {}", repositoryUri, repositoryPath, e);
         }
     }
 
