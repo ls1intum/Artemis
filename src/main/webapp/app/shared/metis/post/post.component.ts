@@ -4,6 +4,7 @@ import {
     ChangeDetectorRef,
     Component,
     EventEmitter,
+    HostListener,
     Input,
     OnChanges,
     OnInit,
@@ -16,7 +17,7 @@ import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBullhorn, faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBullhorn, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
@@ -26,6 +27,9 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
+import { CdkOverlayOrigin } from '@angular/cdk/overlay';
 
 @Component({
     selector: 'jhi-post',
@@ -43,8 +47,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @Input() showAnswers: boolean;
     @Output() openThread = new EventEmitter<void>();
     @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
+    @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
+    @ViewChild(PostReactionsBarComponent) reactionsBar!: PostReactionsBarComponent;
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     @ViewChild('postFooter') postFooterComponent: PostFooterComponent;
+    showReactionSelector = false;
+    @ViewChild('emojiPickerTrigger') emojiPickerTrigger!: CdkOverlayOrigin;
+    static activeDropdownPost: PostComponent | null = null;
 
     displayInlineInput = false;
     routerLink: RouteComponents;
@@ -61,9 +70,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
     // Icons
     readonly faBullhorn = faBullhorn;
+    readonly faComments = faComments;
     readonly faPencilAlt = faPencilAlt;
+    readonly faSmile = faSmile;
     readonly faTrash = faTrash;
+    readonly faThumbtack = faThumbtack;
     @Input() isConsecutive: boolean = false;
+    clickPosition = { x: 0, y: 0 };
 
     constructor(
         private metisService: MetisService,
@@ -73,6 +86,67 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         private router: Router,
     ) {
         super();
+    }
+    showDropdown = false;
+    dropdownPosition = { x: 0, y: 0 };
+
+    onRightClick(event: MouseEvent) {
+        event.preventDefault();
+
+        if (PostComponent.activeDropdownPost && PostComponent.activeDropdownPost !== this) {
+            PostComponent.activeDropdownPost.showDropdown = false;
+            PostComponent.activeDropdownPost.changeDetector.detectChanges();
+        }
+
+        PostComponent.activeDropdownPost = this;
+
+        this.dropdownPosition = {
+            x: event.clientX,
+            y: event.clientY,
+        };
+
+        this.showDropdown = true;
+    }
+
+    editPosting() {
+        this.reactionsBar.editPosting();
+        this.showDropdown = false;
+    }
+
+    togglePin() {
+        this.reactionsBar.togglePin();
+        this.showDropdown = false;
+    }
+
+    deletePost() {
+        this.reactionsBar.deletePosting();
+        this.showDropdown = false;
+    }
+
+    selectReaction(event: any) {
+        this.reactionsBar.selectReaction(event);
+        this.showReactionSelector = false;
+    }
+
+    addReaction(event: MouseEvent) {
+        event.preventDefault();
+        this.showDropdown = false;
+
+        this.clickPosition = {
+            x: event.clientX,
+            y: event.clientY,
+        };
+
+        this.showReactionSelector = true;
+    }
+
+    toggleEmojiSelect() {
+        this.showReactionSelector = !this.showReactionSelector;
+    }
+
+    @HostListener('document:click', ['$event'])
+    onClickOutside() {
+        this.showDropdown = false;
     }
 
     /**

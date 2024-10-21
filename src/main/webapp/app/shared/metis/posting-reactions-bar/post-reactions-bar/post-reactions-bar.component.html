@@ -109,7 +109,7 @@
             <button
                 class="reaction-button clickable px-2 fs-small edit"
                 [disabled]="readOnlyMode"
-                (click)="posting.title !== '' ? createEditModal.open() : isModalOpen.emit()"
+                (click)="editPosting()"
                 [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
             >
                 <fa-icon [icon]="faPencilAlt" cdkOverlayOrigin></fa-icon>

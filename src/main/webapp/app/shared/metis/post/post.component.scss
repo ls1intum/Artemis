@@ -19,6 +19,15 @@
     position: relative;
     border-radius: 5px;
     transition: background-color 0.3s ease;
+
+    &.force-hover {
+        background: var(--metis-selection-option-hover-background);
+
+        .hover-actions {
+            opacity: 1;
+            visibility: visible;
+        }
+    }
 }
 
 .message-content {
@@ -52,4 +61,10 @@
 
 .clickable {
     cursor: pointer;
+}
+
+.item-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 0.2rem;
 }

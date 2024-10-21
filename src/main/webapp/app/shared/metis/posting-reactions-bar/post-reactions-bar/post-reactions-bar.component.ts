@@ -48,6 +48,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     mayEditOrDelete = false;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     @Input() isEmojiCount: boolean = false;
+    @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
 
     constructor(
         metisService: MetisService,
@@ -164,6 +165,14 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
 
     deletePosting(): void {
         this.metisService.deletePost(this.posting);
+    }
+
+    editPosting() {
+        if (this.posting.title != '') {
+            this.createEditModal.open();
+        } else {
+            this.isModalOpen.emit();
+        }
     }
 
     setMayEditOrDelete(): void {
