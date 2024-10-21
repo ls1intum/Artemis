@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -47,14 +48,24 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
     public boolean authenticate(String username, PublicKey publicKey, ServerSession session) {
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
         var userSshPublicKey = userSshPublicKeyRepository.findByKeyHash(keyHash);
-        if (userSshPublicKey.isPresent()) {
-            return authenticateUser(userSshPublicKey.get(), publicKey, session);
-        }
-        else {
-            return authenticateBuildAgent(publicKey, session);
-        }
+        return userSshPublicKey.map(sshPublicKey -> {
+            ZonedDateTime expiryDate = sshPublicKey.getExpiryDate();
+            if (expiryDate == null || expiryDate.isAfter(ZonedDateTime.now())) {
+                return authenticateUser(sshPublicKey, publicKey, session);
+            }
+            return false;
+        }).orElseGet(() -> authenticateBuildAgent(publicKey, session));
     }
 
+    /**
+     * Tries to authenticate a user by the provided key
+     *
+     * @param storedKey   The key stored in the Artemis database
+     * @param providedKey The key provided by the user for authentication
+     * @param session     The SSH server session
+     *
+     * @return true if the authentication succeeds, and false if it doesn't
+     */
     public boolean authenticateUser(UserSshPublicKey storedKey, PublicKey providedKey, ServerSession session) {
         try {
             var user = userRepository.findById(storedKey.getUserId());
@@ -82,6 +93,14 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
         return false;
     }
 
+    /**
+     * Tries to authenticate a build agent by the provided key
+     *
+     * @param providedKey The key provided by the user for authentication
+     * @param session     The SSH server session
+     *
+     * @return true if the authentication succeeds, and false if it doesn't
+     */
     private boolean authenticateBuildAgent(PublicKey providedKey, ServerSession session) {
         if (localCIBuildJobQueueService.isPresent()
                 && localCIBuildJobQueueService.get().getBuildAgentInformation().stream().anyMatch(agent -> checkPublicKeyMatchesBuildAgentPublicKey(agent, providedKey))) {
@@ -93,6 +112,14 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
         return false;
     }
 
+    /**
+     * Checks whether a provided key matches the build agents public key
+     *
+     * @param agent     The build agent which tires to be authenticated by Artemis
+     * @param publicKey The provided public key
+     *
+     * @return true if the build agents has this public key, and false if it doesn't
+     */
     private boolean checkPublicKeyMatchesBuildAgentPublicKey(BuildAgentInformation agent, PublicKey publicKey) {
         if (agent.publicSshKey() == null) {
             return false;
