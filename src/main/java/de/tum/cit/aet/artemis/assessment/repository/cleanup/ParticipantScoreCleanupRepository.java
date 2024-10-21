@@ -47,7 +47,7 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
                     SELECT MAX(r2.id)
                     FROM Result r2
                     WHERE r2.participation.id = p.id
-                        AND r2.rated=true
+                        AND r2.rated = TRUE
                     )
                     AND c.endDate < :deleteTo
                     AND c.startDate > :deleteFrom
