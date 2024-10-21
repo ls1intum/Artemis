@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -13,6 +13,7 @@ import { every } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { ImportOptions } from 'app/types/programming-exercises';
+import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -20,15 +21,19 @@ import { ImportOptions } from 'app/types/programming-exercises';
     styleUrls: ['./programming-exercise-test-schedule-picker.scss'],
 })
 export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
+    protected readonly assessmentType = AssessmentType;
+    protected readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly faCogs = faCogs;
+    protected readonly faUserCheck = faUserCheck;
+    protected readonly faUserSlash = faUserSlash;
+
     @Input() exercise: ProgrammingExercise;
     @Input() isExamMode: boolean;
     @Input() readOnly: boolean;
     @Input() importOptions?: ImportOptions;
+    isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
-
-    readonly assessmentType = AssessmentType;
-    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     formValid: boolean;
     formEmpty: boolean;
@@ -36,11 +41,6 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     inputfieldSubscriptions: (Subscription | undefined)[] = [];
     datePickerChildrenSubscription?: Subscription;
-
-    // Icons
-    faCogs = faCogs;
-    faUserCheck = faUserCheck;
-    faUserSlash = faUserSlash;
 
     isAthenaEnabled$: Observable<boolean> | undefined;
 
@@ -108,8 +108,13 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     calculateFormStatus() {
         const datePickers = this.datePickerComponents.toArray();
-        this.formValid = every(datePickers, (picker) => picker.dateInput.valid);
-        this.formEmpty = !every(datePickers, (picker) => picker.selectedDate);
+        this.formValid = every(datePickers, (picker) => picker?.dateInput?.valid ?? true);
+        this.formEmpty = !every(datePickers, (picker) => {
+            if (picker instanceof ProgrammingExerciseTestScheduleDatePickerComponent) {
+                return picker.selectedDate;
+            }
+            return false;
+        });
         this.formValidChanges.next(this.formValid);
     }
 

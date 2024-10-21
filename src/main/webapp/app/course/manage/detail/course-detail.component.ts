@@ -367,7 +367,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.eventManager.destroy(this.eventSubscriber);
+        this.eventManager?.destroy(this.eventSubscriber);
     }
 
     /**
