@@ -208,7 +208,7 @@ public class SharedQueueManagementService {
      * @param agentName name of the agent
      */
     public void cancelAllRunningBuildJobsForAgent(String agentName) {
-        processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), agentName)).forEach(job -> cancelBuildJob(job.id()));
+        processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentName(), agentName)).forEach(job -> cancelBuildJob(job.id()));
     }
 
     /**

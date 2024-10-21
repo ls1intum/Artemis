@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -144,6 +145,10 @@ public class SharedQueueProcessingService {
                     + " Build agent short name should be changed in the application properties under 'artemis.continuous-integration.build-agent.short-name'.";
             log.error(errorMessage);
             throw new IllegalArgumentException(errorMessage);
+        }
+
+        if (StringUtils.isBlank(buildAgentDisplayName)) {
+            buildAgentDisplayName = buildAgentShortName;
         }
 
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");

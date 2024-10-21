@@ -101,6 +101,7 @@ artemis:
         build-agent:
             # Name of the build agent. Only lowercase letters, numbers and hyphens are allowed. ([a-z0-9-]+)
             short-name: "artemis-build-agent-1"
+            display-name: "Artemis Build Agent 1"
 
 
 
