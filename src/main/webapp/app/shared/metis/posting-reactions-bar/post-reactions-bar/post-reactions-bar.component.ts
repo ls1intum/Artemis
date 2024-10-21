@@ -48,6 +48,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     mayEditOrDelete = false;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     @Input() isEmojiCount: boolean = false;
+    @Input() hoverBar: boolean = true;
     @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
 
     constructor(

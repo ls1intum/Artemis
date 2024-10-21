@@ -32,9 +32,9 @@
             </div>
         }
     } @else {
-        @if (!isEmojiCount && !isThreadSidebar) {
+        @if (!isThreadSidebar) {
             <!-- start discussion -->
-            @if (sortedAnswerPosts.length === 0) {
+            @if (hoverBar && sortedAnswerPosts.length === 0) {
                 <div>
                     <button class="reaction-button clickable reply-btn" (click)="openThread.emit()">
                         <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
