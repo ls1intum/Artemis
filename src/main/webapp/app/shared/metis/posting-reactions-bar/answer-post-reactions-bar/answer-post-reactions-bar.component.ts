@@ -71,7 +71,7 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
         this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
     }
 
-    onEditPosting() {
+    editPosting() {
         this.openPostingCreateEditModal.emit();
     }
 

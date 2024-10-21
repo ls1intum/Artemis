@@ -48,7 +48,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @Output() openThread = new EventEmitter<void>();
     @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
     @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
-    @ViewChild(PostReactionsBarComponent) reactionsBar!: PostReactionsBarComponent;
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     @ViewChild('postFooter') postFooterComponent: PostFooterComponent;
     showReactionSelector = false;
@@ -90,6 +89,14 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     showDropdown = false;
     dropdownPosition = { x: 0, y: 0 };
 
+    @ViewChild(PostReactionsBarComponent)
+    private reactionsBarComponent!: PostReactionsBarComponent;
+
+    // Implement the abstract getter
+    protected get reactionsBar() {
+        return this.reactionsBarComponent;
+    }
+
     onRightClick(event: MouseEvent) {
         event.preventDefault();
 
@@ -106,42 +113,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         };
 
         this.showDropdown = true;
-    }
-
-    editPosting() {
-        this.reactionsBar.editPosting();
-        this.showDropdown = false;
-    }
-
-    togglePin() {
-        this.reactionsBar.togglePin();
-        this.showDropdown = false;
-    }
-
-    deletePost() {
-        this.reactionsBar.deletePosting();
-        this.showDropdown = false;
-    }
-
-    selectReaction(event: any) {
-        this.reactionsBar.selectReaction(event);
-        this.showReactionSelector = false;
-    }
-
-    addReaction(event: MouseEvent) {
-        event.preventDefault();
-        this.showDropdown = false;
-
-        this.clickPosition = {
-            x: event.clientX,
-            y: event.clientY,
-        };
-
-        this.showReactionSelector = true;
-    }
-
-    toggleEmojiSelect() {
-        this.showReactionSelector = !this.showReactionSelector;
     }
 
     @HostListener('document:click', ['$event'])

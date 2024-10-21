@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, HostListener, Input, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import dayjs from 'dayjs/esm';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
+import { faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 
 @Component({
     selector: 'jhi-answer-post',
@@ -23,6 +25,24 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     // ng-container to render answerPostCreateEditModalComponent
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     @Input() isConsecutive: boolean = false;
+    readonly faComments = faComments;
+    readonly faPencilAlt = faPencilAlt;
+    readonly faSmile = faSmile;
+    readonly faTrash = faTrash;
+    readonly faThumbtack = faThumbtack;
+    static activeDropdownPost: AnswerPostComponent | null = null;
+
+    @ViewChild(AnswerPostReactionsBarComponent)
+    private reactionsBarComponent!: AnswerPostReactionsBarComponent;
+
+    constructor(protected changeDetector: ChangeDetectorRef) {
+        super();
+    }
+
+    // Implement the abstract getter
+    protected get reactionsBar() {
+        return this.reactionsBarComponent;
+    }
 
     onPostingUpdated(updatedPosting: Posting) {
         this.posting = updatedPosting;
@@ -30,5 +50,28 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
 
     onReactionsUpdated(updatedReactions: Reaction[]) {
         this.posting = { ...this.posting, reactions: updatedReactions };
+    }
+
+    @HostListener('document:click', ['$event'])
+    onClickOutside() {
+        this.showDropdown = false;
+    }
+
+    onRightClick(event: MouseEvent) {
+        event.preventDefault();
+
+        if (AnswerPostComponent.activeDropdownPost && AnswerPostComponent.activeDropdownPost !== this) {
+            AnswerPostComponent.activeDropdownPost.showDropdown = false;
+            AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
+        }
+
+        AnswerPostComponent.activeDropdownPost = this;
+
+        this.dropdownPosition = {
+            x: event.clientX,
+            y: event.clientY,
+        };
+
+        this.showDropdown = true;
     }
 }
