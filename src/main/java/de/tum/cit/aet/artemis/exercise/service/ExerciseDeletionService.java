@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
@@ -78,11 +80,14 @@ public class ExerciseDeletionService {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final Optional<IrisSettingsService> irisSettingsService;
+
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
             LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
-            ChannelRepository channelRepository, ChannelService channelService, CompetencyProgressService competencyProgressService) {
+            ChannelRepository channelRepository, ChannelService channelService, CompetencyProgressService competencyProgressService,
+            Optional<IrisSettingsService> irisSettingsService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -98,6 +103,7 @@ public class ExerciseDeletionService {
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.competencyProgressService = competencyProgressService;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -167,6 +173,10 @@ public class ExerciseDeletionService {
         List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithCompetenciesBidirectional(exerciseId);
         for (ExerciseUnit exerciseUnit : exerciseUnits) {
             lectureUnitService.removeLectureUnit(exerciseUnit);
+        }
+
+        if (irisSettingsService.isPresent()) {
+            irisSettingsService.get().deleteSettingsFor(exercise);
         }
 
         // delete all plagiarism results belonging to this exercise
