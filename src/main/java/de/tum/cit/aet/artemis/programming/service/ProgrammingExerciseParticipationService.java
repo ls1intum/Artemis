@@ -6,7 +6,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
@@ -526,7 +525,7 @@ public class ProgrammingExerciseParticipationService {
             var all = studentParticipationRepository.findAll();
             var li = all.stream().map(ProgrammingExerciseStudentParticipation::getRepositoryUri).toList();
             String listString = String.join(", ", li);
-            throw new NoSuchElementException(listString + "\nrepori:: " + repositoryURI);
+            throw new EntityNotFoundException(listString + "\nrepori:: " + repositoryURI);
         }
 
         return studentParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
