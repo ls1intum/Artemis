@@ -70,6 +70,8 @@
                 "examChannels": "Klausuren",
                 "createChannel": "Kanal erstellen",
                 "browseChannels": "Kanäle durchsuchen",
+                "createGroupChat": "Gruppenchat erstellen",
+                "createDirectChat": "Direkt-Chat erstellen",
                 "groupChats": "Gruppenchats",
                 "directMessages": "Direktnachrichten",
                 "filterConversationPlaceholder": "Konversationen filtern"
@@ -104,6 +106,7 @@
                 "achievablePoints": "Erreichbare Punktzahl",
                 "applyFilter": "Filter anwenden",
                 "resetFilter": "Filter zurücksetzen",
+                "clearFilter": "Filter entfernen",
                 "noFilterAvailable": "Für die bisherigen Aufgaben gibt es keine unterscheidenden Filteroptionen",
                 "noMoreOptions": "Keine weiteren Auswahlmöglichkeiten"
             },
@@ -136,6 +139,7 @@
                 "notReleased": "Nicht freigegeben",
                 "live": "Live",
                 "shortDueDate": "Bis",
+                "userNotAssignedToTeam": "Du wurdest noch keinem Team zugeteilt.",
                 "userNotStartedExercise": "Du hast mit der Aufgabe noch nicht angefangen.",
                 "exerciseSubmitted": "Bereits abgegeben, Änderungen sind noch möglich.",
                 "exerciseSubmittedWaitingForGrading": "Bereits abgegeben, noch keine Bewertung.",
@@ -148,6 +152,7 @@
                 "userParticipating": "Du nimmst gerade an diesem Quiz teil.",
                 "userSubmitted": "Du hast bereits abgegeben.",
                 "userNotStartedExerciseShort": "Nicht angefangen",
+                "userNotAssignedToTeamShort": "Noch kein Team",
                 "exerciseNotSubmittedShort": "Nicht abgegeben",
                 "exerciseMissedDueDateShort": "Frist abgelaufen",
                 "quizNotStartedShort": "Nicht begonnen",
