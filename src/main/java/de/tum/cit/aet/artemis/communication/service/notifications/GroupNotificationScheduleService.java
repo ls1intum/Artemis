@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.service.notifications;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
@@ -37,7 +38,7 @@ public class GroupNotificationScheduleService {
      * @param exerciseAfterUpdate  is the updated exercise (needed to check potential difference in release date)
      * @param notificationText     holds the custom change message for the notification process
      */
-    public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, String notificationText) {
+    public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, Optional<String> notificationText) {
 
         // send exercise update notification
         groupNotificationService.notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);

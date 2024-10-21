@@ -36,6 +36,7 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -281,7 +282,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
      */
     @Test
     void testNotifyAboutExerciseUpdate_undefinedReleaseDate() {
-        groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        groupNotificationService.notifyAboutExerciseUpdate(exercise, Optional.of(NOTIFICATION_TEXT));
         verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
     }
 
@@ -291,7 +292,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     @Test
     void testNotifyAboutExerciseUpdate_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
-        groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        groupNotificationService.notifyAboutExerciseUpdate(exercise, Optional.of(NOTIFICATION_TEXT));
         verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
     }
 
@@ -301,7 +302,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     @Test
     void testNotifyAboutExerciseUpdate_correctReleaseDate_examExercise() {
         examExercise.setReleaseDate(CURRENT_TIME);
-        groupNotificationService.notifyAboutExerciseUpdate(examExercise, null);
+        groupNotificationService.notifyAboutExerciseUpdate(examExercise, Optional.empty());
         verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
     }
 
@@ -311,9 +312,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     @Test
     void testNotifyAboutExerciseUpdate_correctReleaseDate_courseExercise() {
         exercise.setReleaseDate(CURRENT_TIME);
-        groupNotificationService.notifyAboutExerciseUpdate(exercise, null);
+        groupNotificationService.notifyAboutExerciseUpdate(exercise, Optional.empty());
         verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
-        groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        groupNotificationService.notifyAboutExerciseUpdate(exercise, Optional.of(NOTIFICATION_TEXT));
         verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
     }
 
@@ -361,7 +362,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         updatedExercise.setReleaseDate(dateOfUpdatedExercise);
         updatedExercise.setAssessmentDueDate(dateOfUpdatedExercise);
 
-        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, updatedExercise, NOTIFICATION_TEXT);
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, updatedExercise, Optional.of(NOTIFICATION_TEXT));
 
         verify(groupNotificationService).notifyAboutExerciseUpdate(any(), any());
 

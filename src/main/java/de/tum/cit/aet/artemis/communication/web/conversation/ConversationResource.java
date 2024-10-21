@@ -249,7 +249,7 @@ public class ConversationResource extends ConversationManagementResource {
     @GetMapping("{courseId}/conversations/{conversationId}/members/search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ConversationUserDTO>> searchMembersOfConversation(@PathVariable Long courseId, @PathVariable Long conversationId,
-            @RequestParam("loginOrName") String loginOrName, @RequestParam(value = "filter", required = false) ConversationMemberSearchFilters filter, Pageable pageable) {
+            @RequestParam("loginOrName") String loginOrName, @RequestParam(value = "filter") Optional<ConversationMemberSearchFilters> filter, Pageable pageable) {
         log.debug("REST request to get members of conversation : {} with login or name : {} in course: {}", conversationId, loginOrName, courseId);
         if (pageable.getPageSize() > 20) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The page size must not be greater than 20");
@@ -269,7 +269,7 @@ public class ConversationResource extends ConversationManagementResource {
             }
         }
         var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
-        var originalPage = conversationService.searchMembersOfConversation(course, conversationFromDatabase, pageable, searchTerm, Optional.ofNullable(filter));
+        var originalPage = conversationService.searchMembersOfConversation(course, conversationFromDatabase, pageable, searchTerm, filter);
 
         var resultDTO = new ArrayList<ConversationUserDTO>();
         for (var user : originalPage) {
