@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { BuildAgentInformation } from 'app/entities/programming/build-agent.model';
+import { BuildAgentInformation } from 'app/entities/programming/build-agent-information.model';
 import { catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })

@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { BuildAgentInformation } from 'app/entities/programming/build-agent.model';
+import { BuildAgentInformation } from 'app/entities/programming/build-agent-information.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';

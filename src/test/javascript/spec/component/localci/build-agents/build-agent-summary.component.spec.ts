@@ -10,7 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { BuildAgentInformation, BuildAgentStatus } from 'app/entities/programming/build-agent.model';
+import { BuildAgentInformation, BuildAgentStatus } from '../../../../../../main/webapp/app/entities/programming/build-agent-information.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
@@ -63,7 +63,7 @@ describe('BuildAgentSummaryComponent', () => {
         {
             id: '2',
             name: 'Build Job 2',
-            buildAgentAddress: 'agent2',
+            buildAgent: { name: 'agent2', memberAddress: 'localhost:8080', displayName: 'Agent 2' },
             participationId: 102,
             courseId: 10,
             exerciseId: 100,
@@ -76,7 +76,7 @@ describe('BuildAgentSummaryComponent', () => {
         {
             id: '4',
             name: 'Build Job 4',
-            buildAgentAddress: 'agent4',
+            buildAgent: { name: 'agent4', memberAddress: 'localhost:8080', displayName: 'Agent 4' },
             participationId: 104,
             courseId: 10,
             exerciseId: 100,
@@ -92,7 +92,7 @@ describe('BuildAgentSummaryComponent', () => {
         {
             id: '1',
             name: 'Build Job 1',
-            buildAgentAddress: 'agent1',
+            buildAgent: { name: 'agent1', memberAddress: 'localhost:8080', displayName: 'Agent 1' },
             participationId: 101,
             courseId: 10,
             exerciseId: 100,
@@ -105,7 +105,7 @@ describe('BuildAgentSummaryComponent', () => {
         {
             id: '3',
             name: 'Build Job 3',
-            buildAgentAddress: 'agent3',
+            buildAgent: { name: 'agent3', memberAddress: 'localhost:8080', displayName: 'Agent 3' },
             participationId: 103,
             courseId: 10,
             exerciseId: 100,

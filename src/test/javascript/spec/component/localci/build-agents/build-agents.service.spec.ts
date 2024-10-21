@@ -8,7 +8,7 @@ import { BuildJob } from 'app/entities/programming/build-job.model';
 import dayjs from 'dayjs/esm';
 import { lastValueFrom } from 'rxjs';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
-import { BuildAgentInformation } from 'app/entities/programming/build-agent.model';
+import { BuildAgentInformation } from '../../../../../../main/webapp/app/entities/programming/build-agent-information.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
