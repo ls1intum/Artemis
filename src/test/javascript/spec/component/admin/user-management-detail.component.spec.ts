@@ -1,10 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 
 import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
 import { User } from 'app/core/user/user.model';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('User Management Detail Component', () => {
     let comp: UserManagementDetailComponent;
@@ -21,15 +24,17 @@ describe('User Management Detail Component', () => {
                     provide: ActivatedRoute,
                     useValue: route,
                 },
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
             ],
         })
-            .overrideTemplate(UserManagementDetailComponent, '')
-            .compileComponents();
-    });
-
-    beforeEach(() => {
-        fixture = TestBed.createComponent(UserManagementDetailComponent);
-        comp = fixture.componentInstance;
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(UserManagementDetailComponent);
+                comp = fixture.componentInstance;
+            });
     });
 
     describe('onInit', () => {
@@ -55,5 +60,13 @@ describe('User Management Detail Component', () => {
                 }),
             );
         });
+    });
+
+    it('should show the user authorities and groups', () => {
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        const roles = fixture.debugElement.queryAll(By.css('.bg-info'));
+        expect(roles.map((role) => role.nativeElement.textContent)).toEqual(['ROLE_USER', 'admin']);
     });
 });
