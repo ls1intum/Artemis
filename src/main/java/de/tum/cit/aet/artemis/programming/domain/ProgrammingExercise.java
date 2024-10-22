@@ -39,6 +39,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -812,6 +813,28 @@ public class ProgrammingExercise extends Exercise {
 
         if (this.buildAndTestStudentSubmissionsAfterDueDate != null) {
             throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
+        }
+    }
+
+    /**
+     * Validates the network access feature for the given programming language.
+     * Currently, SWIFT and HASKELL do not support disabling the network access feature.
+     *
+     */
+    public void validateDockerFlags() {
+        ProgrammingExerciseBuildConfig buildConfig = getBuildConfig();
+        DockerRunConfig dockerRunConfig = buildConfig.getDockerRunConfig();
+
+        if (dockerRunConfig == null) {
+            return;
+        }
+
+        if (List.of(ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL).contains(getProgrammingLanguage()) && dockerRunConfig.isNetworkDisabled()) {
+            throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");
+        }
+
+        if (dockerRunConfig.env() != null && dockerRunConfig.env().stream().mapToInt(String::length).sum() > 1000) {
+            throw new BadRequestAlertException("The environment variables are too long. Max 1000chars", "Exercise", "envVariablesTooLong");
         }
     }
 
