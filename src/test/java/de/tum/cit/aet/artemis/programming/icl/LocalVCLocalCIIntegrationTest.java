@@ -982,6 +982,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @Nested
     class BuildJobConfigurationTest {
 
+        @BeforeEach
+        void setup() {
+            queuedJobs.clear();
+            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+        }
+
         @AfterEach
         void tearDown() {
             queuedJobs.clear();
@@ -1035,9 +1041,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         }
 
         private void testPriority(String login, int expectedPriority) throws Exception {
-            queuedJobs.clear();
-            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
-
             log.info("Creating participation");
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
