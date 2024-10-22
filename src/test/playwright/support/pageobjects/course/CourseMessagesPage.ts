@@ -18,15 +18,16 @@ export class CourseMessagesPage {
      * Clicks the button to initiate channel creation.
      */
     async createChannelButton() {
-        await this.page.locator('#plusButton-generalChannels').click();
-        await this.page.locator('.modal-content #createChannel').click();
+        await this.page.click('.square-button > .ng-fa-icon');
+        await this.page.click('text=Create channel');
     }
 
     /**
      * Navigates to the channel overview section.
      */
-    browseChannelsButton(channelGroup: string) {
-        return this.page.locator(`#plusButton-${channelGroup}`);
+    async browseChannelsButton() {
+        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.locator('button', { hasText: 'Browse Channels' }).click();
     }
 
     /**
@@ -288,7 +289,8 @@ export class CourseMessagesPage {
      * Clicks the button to initiate group chat creation.
      */
     async createGroupChatButton() {
-        await this.page.locator('#plusButton-groupChats').click();
+        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.locator('button', { hasText: 'Create Group Chat' }).click();
     }
 
     /**
