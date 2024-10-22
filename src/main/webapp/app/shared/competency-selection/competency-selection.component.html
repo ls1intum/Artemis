@@ -32,6 +32,17 @@
                                 <fa-icon [icon]="getIcon(competencyLink.competency.taxonomy)" [fixedWidth]="true" />
                                 {{ competencyLink.competency.title }}
                             </label>
+                            @if (checkboxStates[competencyLink.competency.id]) {
+                                <select
+                                    [ngModel]="competencyLink.weight < 0.375 ? 0.25 : competencyLink.weight < 0.75 ? 0.5 : 1"
+                                    (ngModelChange)="updateLinkWeight(competencyLink, $event)"
+                                    ngbTooltip="{{ 'artemisApp.competency.link.weightTooltip' | artemisTranslate }}"
+                                >
+                                    <option [ngValue]="0.25" [jhiTranslate]="'artemisApp.competency.link.weightLabels.low'"></option>
+                                    <option [ngValue]="0.5" [jhiTranslate]="'artemisApp.competency.link.weightLabels.medium'"></option>
+                                    <option [ngValue]="1" [jhiTranslate]="'artemisApp.competency.link.weightLabels.high'"></option>
+                                </select>
+                            }
                         </div>
                     }
                 }

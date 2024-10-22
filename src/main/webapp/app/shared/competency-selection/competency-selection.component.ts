@@ -122,7 +122,19 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         }
     }
 
+    updateLinkWeight(link: CompetencyLearningObjectLink, value: number) {
+        link.weight = value;
+
+        this._onChange(this.selectedCompetencyLinks);
+        this.valueChange.emit(this.selectedCompetencyLinks);
+    }
+
     writeValue(value?: CompetencyLearningObjectLink[]): void {
+        this.competencyLinks?.forEach((link) => {
+            const selectedLink = value?.find((value) => value.competency?.id === link.competency?.id);
+            link.weight = selectedLink?.weight ?? 0.5;
+        });
+
         if (value && this.competencyLinks) {
             // Compare the ids of the competencies instead of the whole objects
             const ids = value.map((el) => el.competency?.id);
