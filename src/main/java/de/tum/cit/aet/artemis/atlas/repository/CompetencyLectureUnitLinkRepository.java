@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 public interface CompetencyLectureUnitLinkRepository extends ArtemisJpaRepository<CompetencyLectureUnitLink, Long> {
 
     @Modifying
-    @Transactional
+    @Transactional // ok because of delete
     @Query("""
             DELETE FROM CompetencyLectureUnitLink clul
             WHERE clul.lectureUnit.lecture.id = :lectureId
