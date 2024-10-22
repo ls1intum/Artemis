@@ -485,7 +485,7 @@ public class ResultService {
     private List<Feedback> saveFeedbackWithHibernateWorkaround(@NotNull Result result, List<Feedback> feedbackList) {
         List<Feedback> savedFeedbacks = new ArrayList<>();
 
-        // Fetch long feedback texts associated with feedback that has long feedback
+        // Fetch long feedback texts associated with the provided feedback list
         Map<Long, LongFeedbackText> longFeedbackTextMap = longFeedbackTextRepository
                 .findByFeedbackIds(feedbackList.stream().filter(feedback -> feedback.getId() != null && feedback.getHasLongFeedbackText()).map(Feedback::getId).toList()).stream()
                 .collect(Collectors.toMap(longFeedbackText -> longFeedbackText.getFeedback().getId(), Function.identity()));

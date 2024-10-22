@@ -64,15 +64,18 @@
             }
         </div>
         <div class="row mt-3">
-            <jhi-unreferenced-feedback
-                [(feedbacks)]="unreferencedFeedback"
-                [feedbackSuggestions]="unreferencedFeedbackSuggestions"
-                (feedbacksChange)="validateFeedback()"
-                [readOnly]="readOnly"
-                [highlightDifferences]="highlightDifferences"
-                (onAcceptSuggestion)="removeSuggestion($event)"
-                (onDiscardSuggestion)="removeSuggestion($event)"
-            />
+            @if (result?.id) {
+                <jhi-unreferenced-feedback
+                    [(feedbacks)]="unreferencedFeedback"
+                    [feedbackSuggestions]="unreferencedFeedbackSuggestions"
+                    (feedbacksChange)="validateFeedback()"
+                    [readOnly]="readOnly"
+                    [highlightDifferences]="highlightDifferences"
+                    (onAcceptSuggestion)="removeSuggestion($event)"
+                    (onDiscardSuggestion)="removeSuggestion($event)"
+                    [resultId]="result.id"
+                />
+            }
             @if ((hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate) {
                 <div class="col-md-6">
                     <h4 jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.title"></h4>
@@ -144,12 +147,15 @@
         }
     </div>
     <div class="row mt-3">
-        <jhi-unreferenced-feedback
-            [(feedbacks)]="unreferencedFeedback"
-            (feedbacksChange)="validateFeedback()"
-            [readOnly]="readOnly"
-            [highlightDifferences]="highlightDifferences"
-        />
+        @if (result?.id) {
+            <jhi-unreferenced-feedback
+                [(feedbacks)]="unreferencedFeedback"
+                (feedbacksChange)="validateFeedback()"
+                [readOnly]="readOnly"
+                [highlightDifferences]="highlightDifferences"
+                [resultId]="result.id"
+            />
+        }
         @if ((hasAutomaticFeedback || highlightMissingFeedback) && !result?.completionDate) {
             <div class="col-md-6">
                 <h4 jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.title"></h4>
