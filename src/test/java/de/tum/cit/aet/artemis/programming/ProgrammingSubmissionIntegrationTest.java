@@ -27,8 +27,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -50,52 +48,17 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.Commit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
-class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "programmingsubmission";
-
-    @Value("${artemis.git.name}")
-    private String artemisGitName;
-
-    @Value("${artemis.git.email}")
-    private String artemisGitEmail;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ProgrammingSubmissionTestRepository submissionRepository;
-
-    @Autowired
-    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
-
-    @Autowired
-    private StudentParticipationTestRepository studentParticipationRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private ModelingExerciseUtilService modelingExerciseUtilService;
 
     private ProgrammingExercise exercise;
 
@@ -394,7 +357,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
         submission.setType(SubmissionType.MANUAL);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
-        var optionalParticipation = programmingExerciseStudentParticipationRepository.findById(submission.getParticipation().getId());
+        var optionalParticipation = participationRepository.findById(submission.getParticipation().getId());
         assertThat(optionalParticipation).isPresent();
         final var participation = optionalParticipation.get();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
@@ -446,11 +409,11 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         var submission = new ProgrammingSubmission();
         submission.setType(SubmissionType.MANUAL);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, user.getLogin());
-        var optionalParticipation = programmingExerciseStudentParticipationRepository.findById(submission.getParticipation().getId());
+        var optionalParticipation = participationRepository.findById(submission.getParticipation().getId());
         assertThat(optionalParticipation).isPresent();
         var participation = optionalParticipation.get();
         participation.setBuildPlanId(null);
-        participation = programmingExerciseStudentParticipationRepository.save(participation);
+        participation = participationRepository.save(participation);
         return participation;
     }
 
@@ -842,7 +805,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         else {
             submission.getParticipation().setIndividualDueDate(ZonedDateTime.now().minusDays(1));
         }
-        programmingExerciseStudentParticipationRepository.save((ProgrammingExerciseStudentParticipation) submission.getParticipation());
+        participationRepository.save((ProgrammingExerciseStudentParticipation) submission.getParticipation());
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
 
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
