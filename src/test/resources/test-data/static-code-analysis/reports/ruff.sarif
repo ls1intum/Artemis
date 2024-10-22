@@ -1,0 +1,1190 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "runs": [
+    {
+      "results": [
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/context.py"
+                },
+                "region": {
+                  "endColumn": 1,
+                  "endLine": 1,
+                  "startColumn": 1,
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public module"
+          },
+          "ruleId": "D100"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/context.py"
+                },
+                "region": {
+                  "endColumn": 14,
+                  "endLine": 1,
+                  "startColumn": 7,
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public class"
+          },
+          "ruleId": "D101"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/context.py"
+                },
+                "region": {
+                  "endColumn": 13,
+                  "endLine": 5,
+                  "startColumn": 9,
+                  "startLine": 5
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing return type annotation for public function `sort`"
+          },
+          "ruleId": "ANN201"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/context.py"
+                },
+                "region": {
+                  "endColumn": 13,
+                  "endLine": 5,
+                  "startColumn": 9,
+                  "startLine": 5
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public method"
+          },
+          "ruleId": "D102"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 34,
+                  "endLine": 1,
+                  "startColumn": 1,
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "`from .sorting_algorithms import *` used; unable to detect undefined names"
+          },
+          "ruleId": "F403"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 1,
+                  "endLine": 1,
+                  "startColumn": 1,
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public module"
+          },
+          "ruleId": "D100"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 13,
+                  "endLine": 4,
+                  "startColumn": 7,
+                  "startLine": 4
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public class"
+          },
+          "ruleId": "D101"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 17,
+                  "endLine": 7,
+                  "startColumn": 9,
+                  "startLine": 7
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing return type annotation for special method `__init__`"
+          },
+          "ruleId": "ANN204"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 17,
+                  "endLine": 7,
+                  "startColumn": 9,
+                  "startLine": 7
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in `__init__`"
+          },
+          "ruleId": "D107"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 31,
+                  "endLine": 7,
+                  "startColumn": 24,
+                  "startLine": 7
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing type annotation for function argument `context`"
+          },
+          "ruleId": "ANN001"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 18,
+                  "endLine": 10,
+                  "startColumn": 9,
+                  "startLine": 10
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing return type annotation for public function `configure`"
+          },
+          "ruleId": "ANN201"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 18,
+                  "endLine": 10,
+                  "startColumn": 9,
+                  "startLine": 10
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public method"
+          },
+          "ruleId": "D102"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 42,
+                  "endLine": 11,
+                  "startColumn": 40,
+                  "startLine": 11
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Magic value used in comparison, consider replacing `10` with a constant variable"
+          },
+          "ruleId": "PLR2004"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 18,
+                  "endLine": 12,
+                  "startColumn": 13,
+                  "startLine": 12
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "`print` found"
+          },
+          "ruleId": "T201"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 63,
+                  "endLine": 12,
+                  "startColumn": 19,
+                  "startLine": 12
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Single quotes found but double quotes preferred"
+          },
+          "ruleId": "Q000"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 55,
+                  "endLine": 13,
+                  "startColumn": 46,
+                  "startLine": 13
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "`MergeSort` may be undefined, or defined from star imports"
+          },
+          "ruleId": "F405"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 18,
+                  "endLine": 15,
+                  "startColumn": 13,
+                  "startLine": 15
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "`print` found"
+          },
+          "ruleId": "T201"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 73,
+                  "endLine": 15,
+                  "startColumn": 19,
+                  "startLine": 15
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Single quotes found but double quotes preferred"
+          },
+          "ruleId": "Q000"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/policy.py"
+                },
+                "region": {
+                  "endColumn": 56,
+                  "endLine": 16,
+                  "startColumn": 46,
+                  "startLine": 16
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "`BubbleSort` may be undefined, or defined from star imports"
+          },
+          "ruleId": "F405"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sort_strategy.py"
+                },
+                "region": {
+                  "endColumn": 1,
+                  "endLine": 1,
+                  "startColumn": 1,
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public module"
+          },
+          "ruleId": "D100"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sort_strategy.py"
+                },
+                "region": {
+                  "endColumn": 19,
+                  "endLine": 4,
+                  "startColumn": 7,
+                  "startLine": 4
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public class"
+          },
+          "ruleId": "D101"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sort_strategy.py"
+                },
+                "region": {
+                  "endColumn": 21,
+                  "endLine": 7,
+                  "startColumn": 9,
+                  "startLine": 7
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing return type annotation for public function `perform_sort`"
+          },
+          "ruleId": "ANN201"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sort_strategy.py"
+                },
+                "region": {
+                  "endColumn": 21,
+                  "endLine": 7,
+                  "startColumn": 9,
+                  "startLine": 7
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public method"
+          },
+          "ruleId": "D102"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sort_strategy.py"
+                },
+                "region": {
+                  "endColumn": 33,
+                  "endLine": 7,
+                  "startColumn": 28,
+                  "startLine": 7
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing type annotation for function argument `array`"
+          },
+          "ruleId": "ANN001"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 1,
+                  "endLine": 1,
+                  "startColumn": 1,
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public module"
+          },
+          "ruleId": "D100"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 17,
+                  "endLine": 4,
+                  "startColumn": 7,
+                  "startLine": 4
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public class"
+          },
+          "ruleId": "D101"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 21,
+                  "endLine": 6,
+                  "startColumn": 9,
+                  "startLine": 6
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing return type annotation for public function `perform_sort`"
+          },
+          "ruleId": "ANN201"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 21,
+                  "endLine": 6,
+                  "startColumn": 9,
+                  "startLine": 6
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public method"
+          },
+          "ruleId": "D102"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 31,
+                  "endLine": 6,
+                  "startColumn": 28,
+                  "startLine": 6
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing type annotation for function argument `arr`"
+          },
+          "ruleId": "ANN001"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 16,
+                  "endLine": 16,
+                  "startColumn": 7,
+                  "startLine": 16
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public class"
+          },
+          "ruleId": "D101"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 21,
+                  "endLine": 18,
+                  "startColumn": 9,
+                  "startLine": 18
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing return type annotation for public function `perform_sort`"
+          },
+          "ruleId": "ANN201"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 21,
+                  "endLine": 18,
+                  "startColumn": 9,
+                  "startLine": 18
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing docstring in public method"
+          },
+          "ruleId": "D102"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 31,
+                  "endLine": 18,
+                  "startColumn": 28,
+                  "startLine": 18
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing type annotation for function argument `arr`"
+          },
+          "ruleId": "ANN001"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 21,
+                  "endLine": 21,
+                  "startColumn": 9,
+                  "startLine": 21
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing return type annotation for private function `__merge_sort`"
+          },
+          "ruleId": "ANN202"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 31,
+                  "endLine": 21,
+                  "startColumn": 28,
+                  "startLine": 21
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing type annotation for function argument `arr`"
+          },
+          "ruleId": "ANN001"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 36,
+                  "endLine": 21,
+                  "startColumn": 33,
+                  "startLine": 21
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing type annotation for function argument `low`"
+          },
+          "ruleId": "ANN001"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 42,
+                  "endLine": 21,
+                  "startColumn": 38,
+                  "startLine": 21
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing type annotation for function argument `high`"
+          },
+          "ruleId": "ANN001"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 16,
+                  "endLine": 30,
+                  "startColumn": 9,
+                  "startLine": 30
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing return type annotation for private function `__merge`"
+          },
+          "ruleId": "ANN202"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 26,
+                  "endLine": 30,
+                  "startColumn": 23,
+                  "startLine": 30
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing type annotation for function argument `arr`"
+          },
+          "ruleId": "ANN001"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 31,
+                  "endLine": 30,
+                  "startColumn": 28,
+                  "startLine": 30
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing type annotation for function argument `low`"
+          },
+          "ruleId": "ANN001"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 36,
+                  "endLine": 30,
+                  "startColumn": 33,
+                  "startLine": 30
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing type annotation for function argument `mid`"
+          },
+          "ruleId": "ANN001"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///home/user/src/Artemis/src/main/resources/templates/python/solution/sorting_algorithms.py"
+                },
+                "region": {
+                  "endColumn": 42,
+                  "endLine": 30,
+                  "startColumn": 38,
+                  "startLine": 30
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Missing type annotation for function argument `high`"
+          },
+          "ruleId": "ANN001"
+        }
+      ],
+      "tool": {
+        "driver": {
+          "informationUri": "https://github.com/astral-sh/ruff",
+          "name": "ruff",
+          "rules": [
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks that function arguments have type annotations.\n\n## Why is this bad?\nType annotations are a good way to document the types of function arguments. They also\nhelp catch bugs, when used alongside a type checker, by ensuring that the types of\nany provided arguments match expectation.\n\n## Example\n\n```python\ndef foo(x): ...\n```\n\nUse instead:\n\n```python\ndef foo(x: int): ...\n```\n"
+              },
+              "help": {
+                "text": "Missing type annotation for function argument `{name}`"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/missing-type-function-argument",
+              "id": "ANN001",
+              "properties": {
+                "id": "ANN001",
+                "kind": "flake8-annotations",
+                "name": "missing-type-function-argument",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "Missing type annotation for function argument `{name}`"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks that public functions and methods have return type annotations.\n\n## Why is this bad?\nType annotations are a good way to document the return types of functions. They also\nhelp catch bugs, when used alongside a type checker, by ensuring that the types of\nany returned values, and the types expected by callers, match expectation.\n\n## Example\n```python\ndef add(a, b):\n    return a + b\n```\n\nUse instead:\n```python\ndef add(a: int, b: int) -> int:\n    return a + b\n```\n"
+              },
+              "help": {
+                "text": "Missing return type annotation for public function `{name}`"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function",
+              "id": "ANN201",
+              "properties": {
+                "id": "ANN201",
+                "kind": "flake8-annotations",
+                "name": "missing-return-type-undocumented-public-function",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "Missing return type annotation for public function `{name}`"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks that private functions and methods have return type annotations.\n\n## Why is this bad?\nType annotations are a good way to document the return types of functions. They also\nhelp catch bugs, when used alongside a type checker, by ensuring that the types of\nany returned values, and the types expected by callers, match expectation.\n\n## Example\n```python\ndef _add(a, b):\n    return a + b\n```\n\nUse instead:\n```python\ndef _add(a: int, b: int) -> int:\n    return a + b\n```\n"
+              },
+              "help": {
+                "text": "Missing return type annotation for private function `{name}`"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/missing-return-type-private-function",
+              "id": "ANN202",
+              "properties": {
+                "id": "ANN202",
+                "kind": "flake8-annotations",
+                "name": "missing-return-type-private-function",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "Missing return type annotation for private function `{name}`"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks that \"special\" methods, like `__init__`, `__new__`, and `__call__`, have\nreturn type annotations.\n\n## Why is this bad?\nType annotations are a good way to document the return types of functions. They also\nhelp catch bugs, when used alongside a type checker, by ensuring that the types of\nany returned values, and the types expected by callers, match expectation.\n\nNote that type checkers often allow you to omit the return type annotation for\n`__init__` methods, as long as at least one argument has a type annotation. To\nopt in to this behavior, use the `mypy-init-return` setting in your `pyproject.toml`\nor `ruff.toml` file:\n\n```toml\n[tool.ruff.lint.flake8-annotations]\nmypy-init-return = true\n```\n\n## Example\n```python\nclass Foo:\n    def __init__(self, x: int):\n        self.x = x\n```\n\nUse instead:\n```python\nclass Foo:\n    def __init__(self, x: int) -> None:\n        self.x = x\n```\n"
+              },
+              "help": {
+                "text": "Missing return type annotation for special method `{name}`"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/missing-return-type-special-method",
+              "id": "ANN204",
+              "properties": {
+                "id": "ANN204",
+                "kind": "flake8-annotations",
+                "name": "missing-return-type-special-method",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "Missing return type annotation for special method `{name}`"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for undocumented public module definitions.\n\n## Why is this bad?\nPublic modules should be documented via docstrings to outline their purpose\nand contents.\n\nGenerally, module docstrings should describe the purpose of the module and\nlist the classes, exceptions, functions, and other objects that are exported\nby the module, alongside a one-line summary of each.\n\nIf the module is a script, the docstring should be usable as its \"usage\"\nmessage.\n\nIf the codebase adheres to a standard format for module docstrings, follow\nthat format for consistency.\n\n## Example\n\n```python\nclass FasterThanLightError(ZeroDivisionError): ...\n\n\ndef calculate_speed(distance: float, time: float) -> float: ...\n```\n\nUse instead:\n\n```python\n\"\"\"Utility functions and classes for calculating speed.\n\nThis module provides:\n- FasterThanLightError: exception when FTL speed is calculated;\n- calculate_speed: calculate speed given distance and time.\n\"\"\"\n\n\nclass FasterThanLightError(ZeroDivisionError): ...\n\n\ndef calculate_speed(distance: float, time: float) -> float: ...\n```\n\n## Notebook behavior\nThis rule is ignored for Jupyter Notebooks.\n\n## References\n- [PEP 257 – Docstring Conventions](https://peps.python.org/pep-0257/)\n- [PEP 287 – reStructuredText Docstring Format](https://peps.python.org/pep-0287/)\n- [NumPy Style Guide](https://numpydoc.readthedocs.io/en/latest/format.html)\n- [Google Python Style Guide - Docstrings](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings)\n"
+              },
+              "help": {
+                "text": "Missing docstring in public module"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/undocumented-public-module",
+              "id": "D100",
+              "properties": {
+                "id": "D100",
+                "kind": "pydocstyle",
+                "name": "undocumented-public-module",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "Missing docstring in public module"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for undocumented public class definitions.\n\n## Why is this bad?\nPublic classes should be documented via docstrings to outline their purpose\nand behavior.\n\nGenerally, a class docstring should describe the class's purpose and list\nits public attributes and methods.\n\nIf the codebase adheres to a standard format for class docstrings, follow\nthat format for consistency.\n\n## Example\n```python\nclass Player:\n    def __init__(self, name: str, points: int = 0) -> None:\n        self.name: str = name\n        self.points: int = points\n\n    def add_points(self, points: int) -> None:\n        self.points += points\n```\n\nUse instead (in the NumPy docstring format):\n```python\nclass Player:\n    \"\"\"A player in the game.\n\n    Attributes\n    ----------\n    name : str\n        The name of the player.\n    points : int\n        The number of points the player has.\n\n    Methods\n    -------\n    add_points(points: int) -> None\n        Add points to the player's score.\n    \"\"\"\n\n    def __init__(self, name: str, points: int = 0) -> None:\n        self.name: str = name\n        self.points: int = points\n\n    def add_points(self, points: int) -> None:\n        self.points += points\n```\n\nOr (in the Google docstring format):\n```python\nclass Player:\n    \"\"\"A player in the game.\n\n    Attributes:\n        name: The name of the player.\n        points: The number of points the player has.\n    \"\"\"\n\n    def __init__(self, name: str, points: int = 0) -> None:\n        self.name: str = name\n        self.points: int = points\n\n    def add_points(self, points: int) -> None:\n        self.points += points\n```\n\n## References\n- [PEP 257 – Docstring Conventions](https://peps.python.org/pep-0257/)\n- [PEP 287 – reStructuredText Docstring Format](https://peps.python.org/pep-0287/)\n- [NumPy Style Guide](https://numpydoc.readthedocs.io/en/latest/format.html)\n- [Google Python Style Guide - Docstrings](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings)\n"
+              },
+              "help": {
+                "text": "Missing docstring in public class"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/undocumented-public-class",
+              "id": "D101",
+              "properties": {
+                "id": "D101",
+                "kind": "pydocstyle",
+                "name": "undocumented-public-class",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "Missing docstring in public class"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for undocumented public method definitions.\n\n## Why is this bad?\nPublic methods should be documented via docstrings to outline their purpose\nand behavior.\n\nGenerally, a method docstring should describe the method's behavior,\narguments, side effects, exceptions, return values, and any other\ninformation that may be relevant to the user.\n\nIf the codebase adheres to a standard format for method docstrings, follow\nthat format for consistency.\n\n## Example\n```python\nclass Cat(Animal):\n    def greet(self, happy: bool = True):\n        if happy:\n            print(\"Meow!\")\n        else:\n            raise ValueError(\"Tried to greet an unhappy cat.\")\n```\n\nUse instead (in the NumPy docstring format):\n```python\nclass Cat(Animal):\n    def greet(self, happy: bool = True):\n        \"\"\"Print a greeting from the cat.\n\n        Parameters\n        ----------\n        happy : bool, optional\n            Whether the cat is happy, is True by default.\n\n        Raises\n        ------\n        ValueError\n            If the cat is not happy.\n        \"\"\"\n        if happy:\n            print(\"Meow!\")\n        else:\n            raise ValueError(\"Tried to greet an unhappy cat.\")\n```\n\nOr (in the Google docstring format):\n```python\nclass Cat(Animal):\n    def greet(self, happy: bool = True):\n        \"\"\"Print a greeting from the cat.\n\n        Args:\n            happy: Whether the cat is happy, is True by default.\n\n        Raises:\n            ValueError: If the cat is not happy.\n        \"\"\"\n        if happy:\n            print(\"Meow!\")\n        else:\n            raise ValueError(\"Tried to greet an unhappy cat.\")\n```\n\n## Options\n- `lint.pydocstyle.ignore-decorators`\n\n## References\n- [PEP 257 – Docstring Conventions](https://peps.python.org/pep-0257/)\n- [PEP 287 – reStructuredText Docstring Format](https://peps.python.org/pep-0287/)\n- [NumPy Style Guide](https://numpydoc.readthedocs.io/en/latest/format.html)\n- [Google Python Style Guide - Docstrings](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings)\n"
+              },
+              "help": {
+                "text": "Missing docstring in public method"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/undocumented-public-method",
+              "id": "D102",
+              "properties": {
+                "id": "D102",
+                "kind": "pydocstyle",
+                "name": "undocumented-public-method",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "Missing docstring in public method"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for public `__init__` method definitions that are missing\ndocstrings.\n\n## Why is this bad?\nPublic `__init__` methods are used to initialize objects. `__init__`\nmethods should be documented via docstrings to describe the method's\nbehavior, arguments, side effects, exceptions, and any other information\nthat may be relevant to the user.\n\nIf the codebase adheres to a standard format for `__init__` method docstrings,\nfollow that format for consistency.\n\n## Example\n```python\nclass City:\n    def __init__(self, name: str, population: int) -> None:\n        self.name: str = name\n        self.population: int = population\n```\n\nUse instead:\n```python\nclass City:\n    def __init__(self, name: str, population: int) -> None:\n        \"\"\"Initialize a city with a name and population.\"\"\"\n        self.name: str = name\n        self.population: int = population\n```\n\n## Options\n- `lint.pydocstyle.ignore-decorators`\n\n## References\n- [PEP 257 – Docstring Conventions](https://peps.python.org/pep-0257/)\n- [PEP 287 – reStructuredText Docstring Format](https://peps.python.org/pep-0287/)\n- [NumPy Style Guide](https://numpydoc.readthedocs.io/en/latest/format.html)\n- [Google Style Python Docstrings](https://google.github.io/styleguide/pyguide.html#s3.8-comments-and-docstrings)\n"
+              },
+              "help": {
+                "text": "Missing docstring in `__init__`"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/undocumented-public-init",
+              "id": "D107",
+              "properties": {
+                "id": "D107",
+                "kind": "pydocstyle",
+                "name": "undocumented-public-init",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "Missing docstring in `__init__`"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for the use of wildcard imports.\n\n## Why is this bad?\nWildcard imports (e.g., `from module import *`) make it hard to determine\nwhich symbols are available in the current namespace, and from which module\nthey were imported. They're also discouraged by [PEP 8].\n\n## Example\n```python\nfrom math import *\n\n\ndef area(radius):\n    return pi * radius**2\n```\n\nUse instead:\n```python\nfrom math import pi\n\n\ndef area(radius):\n    return pi * radius**2\n```\n\n[PEP 8]: https://peps.python.org/pep-0008/#imports\n"
+              },
+              "help": {
+                "text": "`from {name} import *` used; unable to detect undefined names"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/undefined-local-with-import-star",
+              "id": "F403",
+              "properties": {
+                "id": "F403",
+                "kind": "Pyflakes",
+                "name": "undefined-local-with-import-star",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "`from {name} import *` used; unable to detect undefined names"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for names that might be undefined, but may also be defined in a\nwildcard import.\n\n## Why is this bad?\nWildcard imports (e.g., `from module import *`) make it hard to determine\nwhich symbols are available in the current namespace. If a module contains\na wildcard import, and a name in the current namespace has not been\nexplicitly defined or imported, then it's unclear whether the name is\nundefined or was imported by the wildcard import.\n\nIf the name _is_ defined in via a wildcard import, that member should be\nimported explicitly to avoid confusion.\n\nIf the name is _not_ defined in a wildcard import, it should be defined or\nimported.\n\n## Example\n```python\nfrom math import *\n\n\ndef area(radius):\n    return pi * radius**2\n```\n\nUse instead:\n```python\nfrom math import pi\n\n\ndef area(radius):\n    return pi * radius**2\n```\n"
+              },
+              "help": {
+                "text": "`{name}` may be undefined, or defined from star imports"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/undefined-local-with-import-star-usage",
+              "id": "F405",
+              "properties": {
+                "id": "F405",
+                "kind": "Pyflakes",
+                "name": "undefined-local-with-import-star-usage",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "`{name}` may be undefined, or defined from star imports"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for the use of unnamed numerical constants (\"magic\") values in\ncomparisons.\n\n## Why is this bad?\nThe use of \"magic\" values can make code harder to read and maintain, as\nreaders will have to infer the meaning of the value from the context.\nSuch values are discouraged by [PEP 8].\n\nFor convenience, this rule excludes a variety of common values from the\n\"magic\" value definition, such as `0`, `1`, `\"\"`, and `\"__main__\"`.\n\n## Example\n```python\ndef apply_discount(price: float) -> float:\n    if price <= 100:\n        return price / 2\n    else:\n        return price\n```\n\nUse instead:\n```python\nMAX_DISCOUNT = 100\n\n\ndef apply_discount(price: float) -> float:\n    if price <= MAX_DISCOUNT:\n        return price / 2\n    else:\n        return price\n```\n\n[PEP 8]: https://peps.python.org/pep-0008/#constants\n"
+              },
+              "help": {
+                "text": "Magic value used in comparison, consider replacing `{value}` with a constant variable"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/magic-value-comparison",
+              "id": "PLR2004",
+              "properties": {
+                "id": "PLR2004",
+                "kind": "Pylint",
+                "name": "magic-value-comparison",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "Magic value used in comparison, consider replacing `{value}` with a constant variable"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for inline strings that use single quotes or double quotes,\ndepending on the value of the [`lint.flake8-quotes.inline-quotes`] option.\n\n## Why is this bad?\nConsistency is good. Use either single or double quotes for inline\nstrings, but be consistent.\n\n## Example\n```python\nfoo = 'bar'\n```\n\nAssuming `inline-quotes` is set to `double`, use instead:\n```python\nfoo = \"bar\"\n```\n\n## Options\n- `lint.flake8-quotes.inline-quotes`\n\n## Formatter compatibility\nWe recommend against using this rule alongside the [formatter]. The\nformatter enforces consistent quotes for inline strings, making the rule\nredundant.\n\n[formatter]: https://docs.astral.sh/ruff/formatter\n"
+              },
+              "help": {
+                "text": "Single quotes found but double quotes preferred"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/bad-quotes-inline-string",
+              "id": "Q000",
+              "properties": {
+                "id": "Q000",
+                "kind": "flake8-quotes",
+                "name": "bad-quotes-inline-string",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "Single quotes found but double quotes preferred"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "## What it does\nChecks for `print` statements.\n\n## Why is this bad?\n`print` statements are useful in some situations (e.g., debugging), but\nshould typically be omitted from production code. `print` statements can\nlead to the accidental inclusion of sensitive information in logs, and are\nnot configurable by clients, unlike `logging` statements.\n\n## Example\n```python\ndef add_numbers(a, b):\n    print(f\"The sum of {a} and {b} is {a + b}\")\n    return a + b\n```\n\nUse instead:\n```python\ndef add_numbers(a, b):\n    return a + b\n```\n\n## Fix safety\nThis rule's fix is marked as unsafe, as it may remove `print` statements\nthat are used beyond debugging purposes.\n"
+              },
+              "help": {
+                "text": "`print` found"
+              },
+              "helpUri": "https://docs.astral.sh/ruff/rules/print",
+              "id": "T201",
+              "properties": {
+                "id": "T201",
+                "kind": "flake8-print",
+                "name": "print",
+                "problem.severity": "error"
+              },
+              "shortDescription": {
+                "text": "`print` found"
+              }
+            }
+          ],
+          "version": "0.6.9"
+        }
+      }
+    }
+  ],
+  "version": "2.1.0"
+}
