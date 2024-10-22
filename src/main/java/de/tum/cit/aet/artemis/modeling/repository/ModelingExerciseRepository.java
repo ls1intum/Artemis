@@ -101,7 +101,8 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @Query("""
             SELECT m
             FROM ModelingExercise m
-                LEFT JOIN FETCH m.competencyLinks
+                LEFT JOIN FETCH m.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
             WHERE m.title = :title
                 AND m.course.id = :courseId
             """)

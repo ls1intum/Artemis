@@ -78,7 +78,8 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     @Query("""
             SELECT q
             FROM QuizExercise q
-                LEFT JOIN FETCH q.competencyLinks
+                LEFT JOIN FETCH q.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
             WHERE q.title = :title
                 AND q.course.id = :courseId
             """)

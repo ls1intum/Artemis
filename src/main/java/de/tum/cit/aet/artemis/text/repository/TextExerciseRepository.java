@@ -82,7 +82,8 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @Query("""
             SELECT t
             FROM TextExercise t
-                LEFT JOIN FETCH t.competencyLinks
+                LEFT JOIN FETCH t.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
             WHERE t.title = :title
                 AND t.course.id = :courseId
             """)
