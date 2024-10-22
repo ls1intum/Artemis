@@ -97,6 +97,9 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to get information on build agent {}", agentName);
         BuildAgentInformation buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream().filter(agent -> agent.buildAgent().name().equals(agentName))
                 .findFirst().orElse(null);
+        if (buildAgentDetails == null) {
+            return ResponseEntity.notFound().build();
+        }
         return ResponseEntity.ok(buildAgentDetails);
     }
 

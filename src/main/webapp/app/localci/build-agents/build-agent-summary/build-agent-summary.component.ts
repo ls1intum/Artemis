@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { Router } from '@angular/router';
+import { BuildAgent } from 'app/entities/programming/build-agent.model';
 
 @Component({
     selector: 'jhi-build-agents',
@@ -75,10 +76,14 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
         this.buildQueueService.cancelBuildJob(buildJobId).subscribe();
     }
 
-    cancelAllBuildJobs(buildAgentName: string) {
-        const buildAgent = this.buildAgents.find((agent) => agent.buildAgent?.name === buildAgentName);
-        if (buildAgent?.buildAgent?.name) {
-            this.buildQueueService.cancelAllRunningBuildJobsForAgent(buildAgent.buildAgent?.name).subscribe();
+    cancelAllBuildJobs(buildAgent?: BuildAgent) {
+        if (!buildAgent?.name) {
+            return;
+        }
+
+        const buildAgentToCancel = this.buildAgents.find((agent) => agent.buildAgent?.name === buildAgent.name);
+        if (buildAgentToCancel?.buildAgent?.name) {
+            this.buildQueueService.cancelAllRunningBuildJobsForAgent(buildAgentToCancel.buildAgent?.name).subscribe();
         }
     }
 }
