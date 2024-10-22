@@ -1,5 +1,5 @@
 <div [id]="'item-' + posting.id" class="row" [ngClass]="isCommunicationPage ? 'module-bg mt-2 rounded-2' : 'answer-post m-1'">
-    @if (!isConsecutive) {
+    @if (!isConsecutive()) {
         <jhi-answer-post-header
             [posting]="posting"
             [isReadOnlyMode]="isReadOnlyMode"

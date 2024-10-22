@@ -11,6 +11,7 @@ import {
     Output,
     ViewChild,
     ViewContainerRef,
+    input,
 } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
@@ -74,8 +75,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;
-    @Input() isConsecutive: boolean = false;
-    clickPosition = { x: 0, y: 0 };
+
+    isConsecutive = input<boolean>(false);
+    dropdownPosition = { x: 0, y: 0 };
+    @ViewChild(PostReactionsBarComponent) private reactionsBarComponent!: PostReactionsBarComponent;
 
     constructor(
         private metisService: MetisService,
@@ -86,13 +89,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     ) {
         super();
     }
-    showDropdown = false;
-    dropdownPosition = { x: 0, y: 0 };
 
-    @ViewChild(PostReactionsBarComponent)
-    private reactionsBarComponent!: PostReactionsBarComponent;
-
-    // Implement the abstract getter
     protected get reactionsBar() {
         return this.reactionsBarComponent;
     }

@@ -1,5 +1,5 @@
 <div class="mb-1" [ngClass]="{ 'mx-0': !isThreadSidebar }">
-    @if (!isConsecutive) {
+    @if (!isConsecutive()) {
         <jhi-post-header
             [previewMode]="previewMode"
             [readOnlyMode]="readOnlyMode"
@@ -135,7 +135,7 @@
     </button>
     <button class="dropdown-item d-flex" (click)="togglePin()">
         <fa-icon [icon]="faThumbtack" class="item-icon"></fa-icon>
-        <span jhiTranslate="artemisApp.metis.post.pinMessage"></span>
+        <span [jhiTranslate]="checkIfPinned() === DisplayPriority.PINNED ? 'artemisApp.metis.post.unpinMessage' : 'artemisApp.metis.post.pinMessage'"></span>
     </button>
     <button class="dropdown-item d-flex" (click)="editPosting()">
         <fa-icon [icon]="faPencilAlt" class="item-icon"></fa-icon>

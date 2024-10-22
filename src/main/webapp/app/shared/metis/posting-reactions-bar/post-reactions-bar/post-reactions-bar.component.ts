@@ -5,7 +5,7 @@ import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reaction
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons';
-import { faArrowRight, faPencilAlt, faSmile, faThumbTack } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
 import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -27,11 +27,10 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     readonly DisplayPriority = DisplayPriority;
 
     // Icons
-    farSmile = faSmile;
+    faSmile = faSmile;
     faArrowRight = faArrowRight;
     faPencilAlt = faPencilAlt;
     faTrash = faTrashAlt;
-    faThumbTack = faThumbTack;
 
     @Input()
     readOnlyMode = false;
@@ -130,6 +129,10 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         }
         this.posting.displayPriority = this.displayPriority;
         this.metisService.updatePostDisplayPriority(this.posting.id!, this.displayPriority).subscribe();
+    }
+
+    checkIfPinned(): DisplayPriority {
+        return this.displayPriority;
     }
 
     /**

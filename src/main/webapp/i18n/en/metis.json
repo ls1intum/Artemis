@@ -126,6 +126,7 @@
                 "collapseContent": "Collapse content",
                 "addReaction": "Add reaction",
                 "pinMessage": "Pin message",
+                "unpinMessage": "Unpin message",
                 "editMessage": "Edit message",
                 "deleteMessage": "Delete message",
                 "replyMessage": "Reply in thread"

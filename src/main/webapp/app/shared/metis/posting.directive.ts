@@ -1,5 +1,6 @@
 import { Posting } from 'app/entities/metis/posting.model';
 import { Directive, Input, OnInit } from '@angular/core';
+import { DisplayPriority } from 'app/shared/metis/metis.util';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit {
@@ -34,6 +35,10 @@ export abstract class PostingDirective<T extends Posting> implements OnInit {
     deletePost() {
         this.reactionsBar.deletePosting();
         this.showDropdown = false;
+    }
+
+    checkIfPinned(): DisplayPriority {
+        return this.reactionsBar.checkIfPinned();
     }
 
     selectReaction(event: any) {

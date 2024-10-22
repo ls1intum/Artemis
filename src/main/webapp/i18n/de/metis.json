@@ -126,6 +126,7 @@
                 "collapseContent": "Inhalt einklappen",
                 "addReaction": "Reaktion hinzufügen",
                 "pinMessage": "Nachricht anheften",
+                "unpinMessage": "Nachricht lösen",
                 "editMessage": "Nachricht bearbeiten",
                 "deleteMessage": "Nachricht löschen",
                 "replyMessage": "Antworten im Thread"

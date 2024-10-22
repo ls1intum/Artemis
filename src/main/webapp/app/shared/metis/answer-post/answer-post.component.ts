@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, HostListener, Input, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, HostListener, Input, Output, ViewChild, ViewContainerRef, input } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import dayjs from 'dayjs/esm';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 
 @Component({
@@ -24,22 +24,18 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     isReadOnlyMode = false;
     // ng-container to render answerPostCreateEditModalComponent
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
-    @Input() isConsecutive: boolean = false;
-    readonly faComments = faComments;
+    isConsecutive = input<boolean>(false);
     readonly faPencilAlt = faPencilAlt;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;
     static activeDropdownPost: AnswerPostComponent | null = null;
-
-    @ViewChild(AnswerPostReactionsBarComponent)
-    private reactionsBarComponent!: AnswerPostReactionsBarComponent;
+    @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
 
     constructor(protected changeDetector: ChangeDetectorRef) {
         super();
     }
 
-    // Implement the abstract getter
     protected get reactionsBar() {
         return this.reactionsBarComponent;
     }
