@@ -64,6 +64,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExerciseIntegrationTestService.addAuxiliaryRepositoryToExercise(programmingExercise);
     }
 
     private static Stream<Arguments> argumentsForGetParticipationResults() {
