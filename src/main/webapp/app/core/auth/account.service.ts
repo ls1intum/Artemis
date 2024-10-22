@@ -342,6 +342,13 @@ export class AccountService implements IAccountService {
     }
 
     /**
+     * Checks if a user has SSH key stored in the database
+     */
+    hasUserSshPublicKeys(): Observable<boolean> {
+        return this.http.get<boolean>('api/account/has-ssh-public-keys');
+    }
+
+    /**
      * Retrieves a specific public SSH keys of a user
      */
     getSshPublicKey(keyId: number): Observable<UserSshPublicKey> {

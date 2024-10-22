@@ -165,6 +165,19 @@ public class AccountResource {
     }
 
     /**
+     * GET account/has-ssh-public-key : sets the ssh public key
+     *
+     * @return the ResponseEntity containing true if the User has SSH keys, and false if it does not, with status 200 (OK), or with status 400 (Bad Request)
+     */
+    @GetMapping("account/has-ssh-public-keys")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> hasUserSSHkeys() {
+        User user = userRepository.getUser();
+        Boolean hasKey = userSshPublicKeyService.hasUserSSHkeys(user.getId());
+        return ResponseEntity.ok(hasKey);
+    }
+
+    /**
      * PUT account/ssh-public-key : creates a new ssh public key for a user
      *
      * @param sshPublicKey the ssh public key to create

@@ -126,4 +126,14 @@ public class UserSshPublicKeyService {
             throw new AccessForbiddenException("SSH key", keyId);
         }
     }
+
+    /**
+     * Returns whether the user of the specified id has stored SSH keys
+     *
+     * @param userId the ID of the user.
+     * @throws AccessForbiddenException if the key does not belong to the user.
+     */
+    public Boolean hasUserSSHkeys(Long userId) {
+        return userSshPublicKeyRepository.existsByUserId(userId);
+    }
 }
