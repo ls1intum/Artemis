@@ -293,8 +293,6 @@ public class CourseCompetencyService {
         competencyToCreate.setCourse(course);
         var persistedCompetency = courseCompetencyRepository.save(competencyToCreate);
 
-        updateLectureUnits(competencyToCreate, persistedCompetency);
-
         if (course.getLearningPathsEnabled()) {
             learningPathService.linkCompetencyToLearningPathsOfCourse(persistedCompetency, course.getId());
         }
@@ -318,8 +316,6 @@ public class CourseCompetencyService {
             var createdCompetency = competencyFunction.apply(competency);
             createdCompetency.setCourse(course);
             createdCompetency = courseCompetencyRepository.save(createdCompetency);
-
-            updateLectureUnits(competency, createdCompetency);
 
             createdCompetencies.add(createdCompetency);
         }
@@ -346,15 +342,8 @@ public class CourseCompetencyService {
         competencyToUpdate.setMasteryThreshold(competency.getMasteryThreshold());
         competencyToUpdate.setTaxonomy(competency.getTaxonomy());
         competencyToUpdate.setOptional(competency.isOptional());
-        final var persistedCompetency = courseCompetencyRepository.save(competencyToUpdate);
 
-        // update competency progress if necessary
-        if (competency.getLectureUnitLinks().size() != competencyToUpdate.getLectureUnitLinks().size()
-                || !competencyToUpdate.getLectureUnitLinks().containsAll(competency.getLectureUnitLinks())) {
-            competencyProgressService.updateProgressByCompetencyAndUsersInCourseAsync(persistedCompetency);
-        }
-
-        return persistedCompetency;
+        return courseCompetencyRepository.save(competencyToUpdate);
     }
 
     /**
@@ -437,15 +426,6 @@ public class CourseCompetencyService {
     public void checkIfCompetencyBelongsToCourse(long competencyId, long courseId) {
         if (!courseCompetencyRepository.existsByIdAndCourseId(competencyId, courseId)) {
             throw new BadRequestAlertException("The competency does not belong to the course", ENTITY_NAME, "competencyWrongCourse");
-        }
-    }
-
-    private void updateLectureUnits(CourseCompetency competency, CourseCompetency createdCompetency) {
-        if (!competency.getLectureUnitLinks().isEmpty()) {
-            competency.getLectureUnitLinks().forEach(link -> link.setCompetency(competency));
-            competency.setLectureUnitLinks(competency.getLectureUnitLinks());
-            courseCompetencyRepository.save(competency);
-            competencyProgressService.updateProgressByCompetencyAndUsersInCourseAsync(createdCompetency);
         }
     }
 }

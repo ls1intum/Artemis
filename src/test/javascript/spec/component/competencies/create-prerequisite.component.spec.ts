@@ -20,7 +20,6 @@ import { CreatePrerequisiteComponent } from 'app/course/competencies/create/crea
 import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
 import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
 import { Prerequisite } from 'app/entities/prerequisite.model';
-import { CompetencyLectureUnitLink } from '../../../../../main/webapp/app/entities/competency.model';
 
 describe('CreatePrerequisite', () => {
     let createPrerequisiteComponentFixture: ComponentFixture<CreatePrerequisiteComponent>;
@@ -118,7 +117,6 @@ describe('CreatePrerequisite', () => {
             title: 'Test',
             description: 'Lorem Ipsum',
             optional: true,
-            lectureUnitLinks: [new CompetencyLectureUnitLink(undefined, textUnit, 1)],
         };
 
         const response: HttpResponse<Prerequisite> = new HttpResponse({
@@ -139,7 +137,6 @@ describe('CreatePrerequisite', () => {
             competency.title = formData.title;
             competency.description = formData.description;
             competency.optional = formData.optional;
-            competency.lectureUnitLinks = formData.lectureUnitLinks;
 
             expect(createSpy).toHaveBeenCalledWith(competency, 1);
             expect(createSpy).toHaveBeenCalledOnce();

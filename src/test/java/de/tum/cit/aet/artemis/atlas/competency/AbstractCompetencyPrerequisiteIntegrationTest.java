@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.atlas.competency;
 
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -13,7 +12,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 
@@ -29,7 +27,6 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -287,15 +284,12 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     void shouldUpdateCompetency() throws Exception {
         LectureUnit textLectureUnit = lectureUnitRepository.findByIdWithCompetenciesBidirectionalElseThrow(textUnitOfLectureOne.getId());
         courseCompetency.setTitle("Updated");
-        courseCompetency.removeLectureUnit(textLectureUnit);
         courseCompetency.setDescription("Updated Description");
 
         CourseCompetency result = updateCall(course.getId(), courseCompetency, HttpStatus.OK);
 
         assertThat(result.getTitle()).isEqualTo("Updated");
         assertThat(result.getDescription()).isEqualTo("Updated Description");
-        assertThat(result.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).map(DomainObject::getId).collect(Collectors.toSet()))
-                .doesNotContain(textLectureUnit.getId());
     }
 
     // Test
@@ -333,14 +327,10 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         newCompetency.setDescription("This is an example of a freshly created competency");
         newCompetency.setCourse(course);
         newCompetency.setMasteryThreshold(42);
-        List<LectureUnit> allLectureUnits = lectureUnitRepository.findAll();
-        Set<CompetencyLectureUnitLink> lectureUnitLinks = allLectureUnits.stream().map(lu -> new CompetencyLectureUnitLink(newCompetency, lu, 1)).collect(Collectors.toSet());
-        newCompetency.setLectureUnitLinks(lectureUnitLinks);
 
         CourseCompetency result = createCall(course.getId(), newCompetency, HttpStatus.CREATED);
 
         assertThat(result.getId()).isNotNull();
-        verify(competencyProgressService).updateProgressByCompetencyAndUsersInCourseAsync(eq(result));
     }
 
     // Test

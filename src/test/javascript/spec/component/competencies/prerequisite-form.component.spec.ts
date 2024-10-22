@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencyLectureUnitLink, CompetencyTaxonomy } from 'app/entities/competency.model';
+import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
@@ -70,8 +70,6 @@ describe('PrerequisiteFormComponent', () => {
 
         prerequisiteFormComponentFixture.detectChanges();
 
-        const commonCourseCompetencyFormComponent = prerequisiteFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
-
         const exampleTitle = 'uniqueName';
         prerequisiteFormComponent.titleControl!.setValue(exampleTitle);
         const exampleDescription = 'lorem ipsum';
@@ -83,11 +81,6 @@ describe('PrerequisiteFormComponent', () => {
         exampleLecture.id = 1;
         exampleLecture.lectureUnits = [exampleLectureUnit];
 
-        commonCourseCompetencyFormComponent.selectLectureInDropdown(exampleLecture);
-        prerequisiteFormComponentFixture.detectChanges();
-        // selecting the lecture unit in the table
-        const lectureUnitRow = prerequisiteFormComponentFixture.debugElement.nativeElement.querySelector('.lectureUnitRow');
-        lectureUnitRow.click();
         prerequisiteFormComponentFixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
         expect(prerequisiteFormComponent.form.valid).toBeTrue();
@@ -114,20 +107,17 @@ describe('PrerequisiteFormComponent', () => {
             title: 'test',
             description: 'lorem ipsum',
             softDueDate: dayjs(),
-            lectureUnitLinks: [new CompetencyLectureUnitLink(undefined, textUnit, 1)],
             taxonomy: CompetencyTaxonomy.ANALYZE,
             optional: true,
         };
         prerequisiteFormComponentFixture.detectChanges();
         prerequisiteFormComponent.formData = formData;
-        prerequisiteFormComponent['onLectureUnitSelectionChange']([new CompetencyLectureUnitLink(undefined, textUnit, 1)]);
         prerequisiteFormComponent.ngOnChanges();
 
         expect(prerequisiteFormComponent.titleControl?.value).toEqual(formData.title);
         expect(prerequisiteFormComponent.descriptionControl?.value).toEqual(formData.description);
         expect(prerequisiteFormComponent.softDueDateControl?.value).toEqual(formData.softDueDate);
         expect(prerequisiteFormComponent.optionalControl?.value).toEqual(formData.optional);
-        expect(prerequisiteFormComponent.selectedLectureUnitLinksInTable).toEqual(formData.lectureUnitLinks);
     });
 
     it('should suggest taxonomy when title changes', () => {
