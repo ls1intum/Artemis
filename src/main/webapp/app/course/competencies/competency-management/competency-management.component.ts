@@ -4,7 +4,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Competency, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/entities/competency.model';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription } from 'rxjs';
-import { faEdit, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCircleQuestion, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -22,6 +22,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CourseCompetenciesRelationModalComponent } from 'app/course/competencies/components/course-competencies-relation-modal/course-competencies-relation-modal.component';
+import { CourseCompetencyExplanationModalComponent } from 'app/course/competencies/components/course-competency-explanation-modal/course-competency-explanation-modal.component';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -49,6 +50,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     protected readonly faTrash = faTrash;
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faRobot = faRobot;
+    protected readonly faCircleQuestion = faCircleQuestion;
 
     // other constants
     readonly getIcon = getIcon;
@@ -70,6 +72,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             await this.loadData();
             this.loadIrisEnabled();
         });
+        const lastVisit = sessionStorage.getItem('lastTimeVisitedCourseCompetencyExplanation');
+        if (!lastVisit) {
+            this.openCourseCompetencyExplanation();
+        }
+        sessionStorage.setItem('lastTimeVisitedCourseCompetencyExplanation', Date.now().toString());
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;
         });
@@ -172,5 +179,13 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         this.competencies = this.competencies.filter((competency) => competency.id !== competencyId);
         this.prerequisites = this.prerequisites.filter((prerequisite) => prerequisite.id !== competencyId);
         this.courseCompetencies = this.competencies.concat(this.prerequisites);
+    }
+
+    openCourseCompetencyExplanation(): void {
+        this.modalService.open(CourseCompetencyExplanationModalComponent, {
+            size: 'xl',
+            backdrop: 'static',
+            windowClass: 'course-competency-explanation-modal',
+        });
     }
 }

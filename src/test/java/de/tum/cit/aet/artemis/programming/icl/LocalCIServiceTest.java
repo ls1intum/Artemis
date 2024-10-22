@@ -80,7 +80,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         processingJobs = hazelcastInstance.getMap("processingJobs");
 
         // remove listener to avoid triggering build job processing
-        sharedQueueProcessingService.removeListener();
+        sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
     }
 
     @AfterEach
