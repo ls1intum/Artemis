@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.exercise.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
@@ -42,7 +43,7 @@ public class UserSshPublicKeyService {
      * @param keyEntry     the {@link AuthorizedKeyEntry} containing the SSH public key details, used to resolve the {@link PublicKey}.
      * @param sshPublicKey the {@link UserSshPublicKey} object containing metadata about the SSH key such as the key itself, label, and expiry date.
      */
-    public void createSshKeyForUser(User user, AuthorizedKeyEntry keyEntry, UserSshPublicKey sshPublicKey) throws GeneralSecurityException, IOException {
+    public void createSshKeyForUser(User user, AuthorizedKeyEntry keyEntry, UserSshPublicKeyDTO sshPublicKey) throws GeneralSecurityException, IOException {
         PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
 
@@ -52,11 +53,11 @@ public class UserSshPublicKeyService {
 
         UserSshPublicKey newUserSshPublicKey = new UserSshPublicKey();
         newUserSshPublicKey.setUserId(user.getId());
-        newUserSshPublicKey.setPublicKey(sshPublicKey.getPublicKey());
+        newUserSshPublicKey.setPublicKey(sshPublicKey.publicKey());
         newUserSshPublicKey.setKeyHash(keyHash);
-        setLabelForKey(newUserSshPublicKey, sshPublicKey.getLabel());
+        setLabelForKey(newUserSshPublicKey, sshPublicKey.label());
         newUserSshPublicKey.setCreationDate(ZonedDateTime.now());
-        newUserSshPublicKey.setExpiryDate(sshPublicKey.getExpiryDate());
+        newUserSshPublicKey.setExpiryDate(sshPublicKey.expiryDate());
         userSshPublicKeyRepository.save(newUserSshPublicKey);
     }
 

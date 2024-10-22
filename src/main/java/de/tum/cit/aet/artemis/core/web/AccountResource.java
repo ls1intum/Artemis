@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
+import de.tum.cit.aet.artemis.exercise.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.service.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService;
@@ -143,9 +144,9 @@ public class AccountResource {
      */
     @GetMapping("account/ssh-public-keys")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<UserSshPublicKey>> getSshPublicKey() {
+    public ResponseEntity<List<UserSshPublicKeyDTO>> getSshPublicKey() {
         User user = userRepository.getUser();
-        List<UserSshPublicKey> keys = userSshPublicKeyService.getAllSshKeysForUser(user);
+        List<UserSshPublicKeyDTO> keys = userSshPublicKeyService.getAllSshKeysForUser(user).stream().map(UserSshPublicKeyDTO::of).toList();
         return ResponseEntity.ok(keys);
     }
 
@@ -158,10 +159,10 @@ public class AccountResource {
      */
     @GetMapping("account/ssh-public-key")
     @EnforceAtLeastStudent
-    public ResponseEntity<UserSshPublicKey> getSshPublicKey(@RequestParam("keyId") Long keyId) {
+    public ResponseEntity<UserSshPublicKeyDTO> getSshPublicKey(@RequestParam("keyId") Long keyId) {
         User user = userRepository.getUser();
         UserSshPublicKey key = userSshPublicKeyService.getSshKeyForUser(user, keyId);
-        return ResponseEntity.ok(key);
+        return ResponseEntity.ok(UserSshPublicKeyDTO.of(key));
     }
 
     /**
@@ -186,14 +187,14 @@ public class AccountResource {
      */
     @PutMapping("account/ssh-public-key")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> addSshPublicKey(@RequestBody UserSshPublicKey sshPublicKey) throws GeneralSecurityException, IOException {
+    public ResponseEntity<Void> addSshPublicKey(@RequestBody UserSshPublicKeyDTO sshPublicKey) throws GeneralSecurityException, IOException {
 
         User user = userRepository.getUser();
         log.debug("REST request to add SSH key to user {}", user.getLogin());
         // Parse the public key string
         AuthorizedKeyEntry keyEntry;
         try {
-            keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey.getPublicKey());
+            keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey.publicKey());
         }
         catch (IllegalArgumentException e) {
             throw new BadRequestAlertException("Invalid SSH key format", "SSH key", "invalidKeyFormat", true);

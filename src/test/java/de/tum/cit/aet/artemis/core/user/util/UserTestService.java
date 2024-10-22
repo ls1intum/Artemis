@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
@@ -961,8 +962,8 @@ public class UserTestService {
         userSshPublicKeyRepository.save(userKey);
 
         request.delete("/api/account/ssh-public-key?keyId=3443", HttpStatus.FORBIDDEN);
-        request.get("/api/account/ssh-public-key?keyId=43443", HttpStatus.NOT_FOUND, UserSshPublicKey.class);
-        request.get("/api/account/ssh-public-key?keyId=" + userKey.getId(), HttpStatus.FORBIDDEN, UserSshPublicKey.class);
+        request.get("/api/account/ssh-public-key?keyId=43443", HttpStatus.NOT_FOUND, UserSshPublicKeyDTO.class);
+        request.get("/api/account/ssh-public-key?keyId=" + userKey.getId(), HttpStatus.FORBIDDEN, UserSshPublicKeyDTO.class);
 
     }
 
