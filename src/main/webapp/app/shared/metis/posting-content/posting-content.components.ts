@@ -108,7 +108,8 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     ReferenceType.MODELING === referenceType ||
                     ReferenceType.QUIZ === referenceType ||
                     ReferenceType.TEXT === referenceType ||
-                    ReferenceType.FILE_UPLOAD === referenceType
+                    ReferenceType.FILE_UPLOAD === referenceType ||
+                    ReferenceType.FAQ == referenceType
                 ) {
                     // reference opening tag: [{referenceType}] (wrapped between 2 characters)
                     // reference closing tag: [/referenceType] (wrapped between 3 characters)
@@ -201,7 +202,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         // Group 9: reference pattern for Users
         // globally searched for, i.e. no return after first match
         const pattern =
-            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])|(?<CHANNEL>\[channel].*?\[\/channel])/g;
+            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])|(?<CHANNEL>\[channel].*?\[\/channel])|(?<FAQ>\[faq].*?\[\/faq])/g;
 
         // array with PatternMatch objects per reference found in the posting content
         const patternMatches: PatternMatch[] = [];

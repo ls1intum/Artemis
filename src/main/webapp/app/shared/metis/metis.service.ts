@@ -6,7 +6,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { Posting } from 'app/entities/metis/posting.model';
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -31,6 +31,8 @@ import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/c
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
+import { FaqService } from 'app/faq/faq.service';
+import { Faq } from 'app/entities/faq.model';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -49,6 +51,8 @@ export class MetisService implements OnDestroy {
     private subscriptionChannel?: string;
 
     private courseWideTopicSubscription: Subscription;
+
+    private faqService = inject(FaqService);
 
     constructor(
         protected postService: PostService,
@@ -142,6 +146,23 @@ export class MetisService implements OnDestroy {
         if (course && (this.courseId === undefined || this.courseId !== course.id)) {
             this.courseId = course.id!;
             this.course = course;
+        }
+    }
+
+    /**
+     * set course property before using metis service
+     * @param {Course} course in which the metis service is used
+     */
+    setFaqs(course: Course | undefined): void {
+        if (course) {
+            this.faqService
+                .findAllByCourseId(this.courseId)
+                .pipe(map((res: HttpResponse<Faq[]>) => res.body))
+                .subscribe({
+                    next: (res: Faq[]) => {
+                        course.faqs = res;
+                    },
+                });
         }
     }
 
@@ -492,6 +513,16 @@ export class MetisService implements OnDestroy {
             default:
                 return undefined;
         }
+    }
+
+    /**
+     * returns the router link required for navigating to the exercise referenced within a faq
+     * @param {string} faqId ID of the faq be navigated to
+     * @return {string} router link of the exercise
+     */
+    getLinkForFaq(faqId: string): string {
+        console.log(faqId);
+        return `/courses/${this.getCourse().id}/faq`;
     }
 
     /**

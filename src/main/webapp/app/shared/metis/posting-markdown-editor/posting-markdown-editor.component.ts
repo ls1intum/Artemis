@@ -30,6 +30,7 @@ import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/c
 import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -84,6 +85,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new CodeBlockAction(),
             ...messagingOnlyActions,
             new ExerciseReferenceAction(this.metisService),
+            new FaqReferenceAction(this.metisService),
         ];
 
         this.lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(this.metisService, this.lectureService);
