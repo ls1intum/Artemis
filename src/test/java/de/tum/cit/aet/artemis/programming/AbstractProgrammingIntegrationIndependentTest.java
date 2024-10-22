@@ -156,6 +156,9 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
 
     // Util Services
     @Autowired
+    protected ProgrammingExerciseIntegrationTestService programmingExerciseIntegrationTestService;
+
+    @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     // External Util Services
