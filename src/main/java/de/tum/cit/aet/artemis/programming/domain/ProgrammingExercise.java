@@ -821,13 +821,20 @@ public class ProgrammingExercise extends Exercise {
      * Currently, SWIFT and HASKELL do not support disabling the network access feature.
      *
      */
-    public void validateBuildPlanNetworkAccessForProgrammingLanguage() {
-        if (List.of(ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL).contains(getProgrammingLanguage())) {
-            ProgrammingExerciseBuildConfig buildConfig = getBuildConfig();
-            DockerRunConfig dockerRunConfig = buildConfig.getDockerRunConfig();
-            if (dockerRunConfig != null && dockerRunConfig.isNetworkDisabled()) {
-                throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");
-            }
+    public void validateDockerFlags() {
+        ProgrammingExerciseBuildConfig buildConfig = getBuildConfig();
+        DockerRunConfig dockerRunConfig = buildConfig.getDockerRunConfig();
+
+        if (dockerRunConfig == null) {
+            return;
+        }
+
+        if (List.of(ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL).contains(getProgrammingLanguage()) && dockerRunConfig.isNetworkDisabled()) {
+            throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");
+        }
+
+        if (dockerRunConfig.env() != null && dockerRunConfig.env().stream().reduce("", String::concat).length() > 1000) {
+            throw new BadRequestAlertException("The environment variables are too long. Max 1000chars", "Exercise", "envVariablesTooLong");
         }
     }
 

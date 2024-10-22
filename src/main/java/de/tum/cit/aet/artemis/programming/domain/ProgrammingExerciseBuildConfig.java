@@ -68,7 +68,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "timeout_seconds")
     private int timeoutSeconds;
 
-    @Column(name = "docker_flags")
+    @Column(name = "docker_flags", columnDefinition = "longtext")
     private String dockerFlags;
 
     @OneToOne(mappedBy = "buildConfig")

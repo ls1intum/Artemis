@@ -364,7 +364,7 @@ public class ProgrammingExerciseService {
         programmingExercise.validateProgrammingSettings();
         programmingExercise.validateSettingsForFeedbackRequest();
         validateCustomCheckoutPaths(programmingExercise);
-        programmingExercise.validateBuildPlanNetworkAccessForProgrammingLanguage();
+        programmingExercise.validateDockerFlags();
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 

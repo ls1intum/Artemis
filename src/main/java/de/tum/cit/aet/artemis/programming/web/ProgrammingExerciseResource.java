@@ -331,7 +331,7 @@ public class ProgrammingExerciseResource {
         programmingExerciseService.validateCheckoutDirectoriesUnchanged(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         // Verify that the programming language supports the selected network access option
-        updatedProgrammingExercise.validateBuildPlanNetworkAccessForProgrammingLanguage();
+        updatedProgrammingExercise.validateDockerFlags();
 
         // Verify that a theia image is provided when the online IDE is enabled
         if (updatedProgrammingExercise.isAllowOnlineIde() && updatedProgrammingExercise.getBuildConfig().getTheiaImage() == null) {

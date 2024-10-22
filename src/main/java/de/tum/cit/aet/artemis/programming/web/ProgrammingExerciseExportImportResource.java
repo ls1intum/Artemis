@@ -199,7 +199,7 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
         newExercise.validateSettingsForFeedbackRequest();
-        newExercise.validateBuildPlanNetworkAccessForProgrammingLanguage();
+        newExercise.validateDockerFlags();
         validateStaticCodeAnalysisSettings(newExercise);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
