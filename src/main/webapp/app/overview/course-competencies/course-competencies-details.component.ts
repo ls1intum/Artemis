@@ -125,7 +125,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                             const exerciseUnit = new ExerciseUnit();
                             exerciseUnit.id = exerciseLink.exercise?.id;
                             exerciseUnit.exercise = exerciseLink.exercise;
-                            return new CompetencyLectureUnitLink(this.competency, exerciseUnit as LectureUnit, 1);
+                            return new CompetencyLectureUnitLink(this.competency, exerciseUnit as LectureUnit, 0.5);
                         }),
                     );
                 }

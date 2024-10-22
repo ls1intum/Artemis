@@ -6,9 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -30,7 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.common.net.InternetDomainName;
 
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.dto.OnlineResourceDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -83,7 +80,7 @@ public class OnlineUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<OnlineUnit> getOnlineUnit(@PathVariable Long onlineUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get onlineUnit : {}", onlineUnitId);
-        var onlineUnit = onlineUnitRepository.findByIdElseThrow(onlineUnitId);
+        var onlineUnit = onlineUnitRepository.findByIdWithCompetenciesElseThrow(onlineUnitId);
         checkOnlineUnitCourseAndLecture(onlineUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(onlineUnit);
@@ -144,14 +141,8 @@ public class OnlineUnitResource {
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         onlineUnit.setLecture(null);
-        // persist lecture unit before competency links to prevent error
-        Set<CompetencyLectureUnitLink> links = onlineUnit.getCompetencyLinks();
-        onlineUnit.setCompetencyLinks(new HashSet<>());
 
-        OnlineUnit persistedOnlineUnit = onlineUnitRepository.saveAndFlush(onlineUnit);
-
-        persistedOnlineUnit.setCompetencyLinks(links);
-        lectureUnitService.reconnectCompetencyLectureUnitLinks(persistedOnlineUnit);
+        OnlineUnit persistedOnlineUnit = lectureUnitService.saveWithCompetencyLinks(onlineUnit, onlineUnitRepository::saveAndFlush);
 
         persistedOnlineUnit.setLecture(lecture);
         lecture.addLectureUnit(persistedOnlineUnit);

@@ -221,6 +221,15 @@ public class LectureUnitService {
     }
 
     /**
+     * Disconnects the competency exercise links from the exercise before the cycle is broken by the deserialization.
+     *
+     * @param lectureUnit The lecture unit to disconnect the competency links
+     */
+    public void disconnectCompetencyLectureUnitLinks(LectureUnit lectureUnit) {
+        lectureUnit.getCompetencyLinks().forEach(link -> link.getCompetency().setLectureUnitLinks(null));
+    }
+
+    /**
      * Reconnects the competency exercise links to the exercise after the cycle was broken by the deserialization.
      *
      * @param lectureUnit The lecture unit to reconnect the competency links

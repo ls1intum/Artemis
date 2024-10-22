@@ -25,7 +25,7 @@ public interface OnlineUnitRepository extends ArtemisJpaRepository<OnlineUnit, L
             SELECT ou
             FROM OnlineUnit ou
                 LEFT JOIN FETCH ou.competencyLinks cl
-                LEFT JOIN FETCH cl.competency c
+                LEFT JOIN FETCH cl.competency
             WHERE ou.id = :onlineUnitId
             """)
     Optional<OnlineUnit> findByIdWithCompetencies(@Param("onlineUnitId") long onlineUnitId);

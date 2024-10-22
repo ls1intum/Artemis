@@ -80,14 +80,10 @@ public class AttachmentUnitService {
     public AttachmentUnit createAttachmentUnit(AttachmentUnit attachmentUnit, Attachment attachment, Lecture lecture, MultipartFile file, boolean keepFilename) {
         // persist lecture unit before lecture to prevent "null index column for collection" error
         attachmentUnit.setLecture(null);
-        // persist lecture unit before competency links to prevent error
-        Set<CompetencyLectureUnitLink> links = attachmentUnit.getCompetencyLinks();
-        attachmentUnit.setCompetencyLinks(new HashSet<>());
 
-        AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(attachmentUnit);
+        AttachmentUnit savedAttachmentUnit = lectureUnitService.saveWithCompetencyLinks(attachmentUnit, attachmentUnitRepository::saveAndFlush);
+
         attachmentUnit.setLecture(lecture);
-        savedAttachmentUnit.setCompetencyLinks(links);
-        lectureUnitService.reconnectCompetencyLectureUnitLinks(savedAttachmentUnit);
         lecture.addLectureUnit(savedAttachmentUnit);
 
         handleFile(file, attachment, keepFilename, savedAttachmentUnit.getId());

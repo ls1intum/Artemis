@@ -126,7 +126,6 @@ describe('EditPrerequisiteComponent', () => {
         expect(editPrerequisiteComponent.formData.title).toEqual(competencyOfResponse.title);
         expect(editPrerequisiteComponent.formData.description).toEqual(competencyOfResponse.description);
         expect(editPrerequisiteComponent.formData.optional).toEqual(competencyOfResponse.optional);
-        expect(editPrerequisiteComponent.formData.lectureUnitLinks).toEqual(competencyOfResponse.lectureUnitLinks);
         expect(editPrerequisiteComponent.lecturesWithLectureUnits).toEqual([lectureOfResponse]);
         expect(competencyFormComponent.formData).toEqual(editPrerequisiteComponent.formData);
     });

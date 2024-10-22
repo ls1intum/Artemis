@@ -23,7 +23,7 @@ public interface TextUnitRepository extends ArtemisJpaRepository<TextUnit, Long>
             SELECT tu
             FROM TextUnit tu
                 LEFT JOIN FETCH tu.competencyLinks cl
-                LEFT JOIN FETCH cl.competency c
+                LEFT JOIN FETCH cl.competency
             WHERE tu.id = :textUnitId
             """)
     Optional<TextUnit> findByIdWithCompetencies(@Param("textUnitId") Long textUnitId);

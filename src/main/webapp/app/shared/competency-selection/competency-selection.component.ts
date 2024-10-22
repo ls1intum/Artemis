@@ -89,7 +89,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             // Remove unnecessary properties
             competency.course = undefined;
             competency.userProgress = undefined;
-            return new CompetencyLearningObjectLink(competency, 1);
+            return new CompetencyLearningObjectLink(competency, 0.5);
         });
         this.checkboxStates = this.competencyLinks.reduce(
             (states, competencyLink) => {

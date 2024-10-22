@@ -30,7 +30,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
-import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * CourseCompetency is an abstract class for all competency types that are part of a course.
@@ -174,21 +173,6 @@ public abstract class CourseCompetency extends BaseCompetency {
 
     public void setLectureUnitLinks(Set<CompetencyLectureUnitLink> lectureUnitLinks) {
         this.lectureUnitLinks = lectureUnitLinks;
-    }
-
-    /**
-     * Removes the lecture unit from the competency (bidirectional)
-     * Note: ExerciseUnits are not accepted, should be set via the connected exercise
-     *
-     * @param lectureUnit The lecture unit to remove
-     */
-    public void removeLectureUnit(LectureUnit lectureUnit) {
-        if (lectureUnit instanceof ExerciseUnit) {
-            // The competencies of ExerciseUnits are taken from the corresponding exercise
-            throw new IllegalArgumentException("ExerciseUnits can not be disconnected from competencies");
-        }
-        this.lectureUnitLinks.removeIf(lul -> lul.getLectureUnit().equals(lectureUnit));
-        lectureUnit.getCompetencyLinks().removeIf(cl -> cl.getCompetency().equals(this));
     }
 
     public Set<CompetencyProgress> getUserProgress() {
