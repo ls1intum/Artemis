@@ -64,7 +64,7 @@
             }
         </div>
         <div class="row mt-3">
-            @if (result?.id) {
+            @if (result && result.id) {
                 <jhi-unreferenced-feedback
                     [(feedbacks)]="unreferencedFeedback"
                     [feedbackSuggestions]="unreferencedFeedbackSuggestions"
@@ -147,7 +147,7 @@
         }
     </div>
     <div class="row mt-3">
-        @if (result?.id) {
+        @if (result && result.id) {
             <jhi-unreferenced-feedback
                 [(feedbacks)]="unreferencedFeedback"
                 (feedbacksChange)="validateFeedback()"

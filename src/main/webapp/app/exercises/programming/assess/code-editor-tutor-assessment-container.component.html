@@ -138,7 +138,7 @@
         </ng-template>
         <ng-template #editorBottom>
             <div class="row mt-3">
-                @if (manualResult?.id) {
+                @if (manualResult && manualResult.id) {
                     <jhi-unreferenced-feedback
                         [(feedbacks)]="unreferencedFeedback"
                         [feedbackSuggestions]="unreferencedFeedbackSuggestions"
@@ -147,7 +147,7 @@
                         [highlightDifferences]="highlightDifferences"
                         (onAcceptSuggestion)="removeSuggestion($event)"
                         (onDiscardSuggestion)="removeSuggestion($event)"
-                        [resultId]="manualResult.id!"
+                        [resultId]="manualResult.id"
                     />
                 }
             </div>

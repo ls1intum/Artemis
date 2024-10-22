@@ -50,14 +50,16 @@
             </jhi-resizeable-container>
         </div>
         <div class="row mt-3">
-            <jhi-unreferenced-feedback
-                [(feedbacks)]="unreferencedFeedback"
-                [highlightDifferences]="highlightDifferences"
-                (feedbacksChange)="validateFeedback()"
-                [readOnly]="readOnly"
-                [useDefaultFeedbackSuggestionBadgeText]="true"
-                [resultId]="resultId"
-            />
+            @if (result && result.id) {
+                <jhi-unreferenced-feedback
+                    [(feedbacks)]="unreferencedFeedback"
+                    [highlightDifferences]="highlightDifferences"
+                    (feedbacksChange)="validateFeedback()"
+                    [readOnly]="readOnly"
+                    [useDefaultFeedbackSuggestionBadgeText]="true"
+                    [resultId]="result.id"
+                />
+            }
         </div>
     } @else {
         @if (!loadingInitialSubmission) {
@@ -102,13 +104,15 @@
         </jhi-resizeable-container>
     </div>
     <div class="row mt-3">
-        <jhi-unreferenced-feedback
-            [(feedbacks)]="unreferencedFeedback"
-            [highlightDifferences]="highlightDifferences"
-            (feedbacksChange)="validateFeedback()"
-            [readOnly]="readOnly"
-            [useDefaultFeedbackSuggestionBadgeText]="true"
-            [resultId]="resultId"
-        />
+        @if (result && result.id) {
+            <jhi-unreferenced-feedback
+                [(feedbacks)]="unreferencedFeedback"
+                [highlightDifferences]="highlightDifferences"
+                (feedbacksChange)="validateFeedback()"
+                [readOnly]="readOnly"
+                [useDefaultFeedbackSuggestionBadgeText]="true"
+                [resultId]="resultId"
+            />
+        }
     </div>
 </ng-template>

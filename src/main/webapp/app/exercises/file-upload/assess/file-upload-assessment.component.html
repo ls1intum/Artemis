@@ -49,13 +49,15 @@
             @if (invalidError) {
                 <div class="col-8 alert alert-danger" role="alert">{{ invalidError | artemisTranslate }}</div>
             }
-            <jhi-unreferenced-feedback
-                [(feedbacks)]="unreferencedFeedback"
-                (feedbacksChange)="validateAssessment()"
-                [readOnly]="readOnly"
-                [highlightDifferences]="highlightDifferences"
-                [resultId]="resultId"
-            />
+            @if (result && result.id) {
+                <jhi-unreferenced-feedback
+                    [(feedbacks)]="unreferencedFeedback"
+                    (feedbacksChange)="validateAssessment()"
+                    [readOnly]="readOnly"
+                    [highlightDifferences]="highlightDifferences"
+                    [resultId]="result.id"
+                />
+            }
         </div>
     } @else {
         @if (!loadingInitialSubmission) {
@@ -97,11 +99,14 @@
         @if (invalidError) {
             <div class="col-8 alert alert-danger" role="alert">{{ invalidError | artemisTranslate }}</div>
         }
-        <jhi-unreferenced-feedback
-            [(feedbacks)]="unreferencedFeedback"
-            (feedbacksChange)="validateAssessment()"
-            [readOnly]="readOnly"
-            [highlightDifferences]="highlightDifferences"
-        />
+        @if (result && result.id) {
+            <jhi-unreferenced-feedback
+                [(feedbacks)]="unreferencedFeedback"
+                (feedbacksChange)="validateAssessment()"
+                [readOnly]="readOnly"
+                [highlightDifferences]="highlightDifferences"
+                [resultId]="result.id"
+            />
+        }
     </div>
 </ng-template>
