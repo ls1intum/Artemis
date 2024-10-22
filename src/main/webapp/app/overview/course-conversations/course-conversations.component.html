@@ -38,6 +38,7 @@
                     [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
                     [collapseState]="DEFAULT_COLLAPSE_STATE"
                     [inCommunication]="true"
+                    [reEmitNonDistinctSidebarEvents]="isMobile"
                 />
             </div>
             @if (course && !activeConversation && isCodeOfConductPresented) {
