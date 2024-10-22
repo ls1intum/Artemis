@@ -520,14 +520,6 @@ public class ProgrammingExerciseParticipationService {
         if (repositoryTypeOrUserName.equals(RepositoryType.AUXILIARY.toString())) {
             throw new EntityNotFoundException("Auxiliary repositories do not have participations.");
         }
-        var opt = studentParticipationRepository.findByRepositoryUri(repositoryURI);
-        if (opt.isEmpty()) {
-            var all = studentParticipationRepository.findAll();
-            var li = all.stream().map(ProgrammingExerciseStudentParticipation::getRepositoryUri).toList();
-            String listString = String.join(", ", li);
-            throw new EntityNotFoundException(listString + "\nrepori:: " + repositoryURI);
-        }
-
         return studentParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
     }
 
