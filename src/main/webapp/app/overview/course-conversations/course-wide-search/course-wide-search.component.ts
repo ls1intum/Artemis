@@ -151,13 +151,8 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         };
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
             this.currentPostContextFilter!.courseWideChannelIds = conversations
-                .map((conversation) => {
-                    if (this.conversationIsAnnouncement(conversation) && this.currentPostContextFilter?.filterToUnresolved) {
-                        return undefined;
-                    }
-                    return conversation.id;
-                })
-                .filter((id) => id !== undefined);
+                .filter((conversation) => !(this.currentPostContextFilter?.filterToUnresolved && this.conversationIsAnnouncement(conversation)))
+                .map((conversation) => conversation.id!);
         });
     }
 
