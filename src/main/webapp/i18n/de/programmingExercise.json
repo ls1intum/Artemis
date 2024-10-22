@@ -535,7 +535,8 @@
                 },
                 "invalidDirectoryName": {
                     "pattern": "Checkout-Verzeichnisse dürfen nur Wörter, '_', '-', und '/' Zeichen beinhalten, aber nicht mit '/' beginnen oder enden."
-                }
+                },
+                "invalidConfigurationPreventsSwitchingEditMode": "Bitte ändere die Hilfs-Repository-Konfiguration zu einer validen Konfiguration um zum Simple Mode zu wechseln."
             },
             "submissionPolicy": {
                 "title": "Abgaberichtlinie",

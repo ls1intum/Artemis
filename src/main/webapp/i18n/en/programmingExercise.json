@@ -535,7 +535,8 @@
                 },
                 "invalidDirectoryName": {
                     "pattern": "Checkout directory paths must only contain words, '_', '-', and '/' characters, but must not start nor end with a '/' character."
-                }
+                },
+                "invalidConfigurationPreventsSwitchingEditMode": "Adjust the auxiliary repository configuration to a valid configuration to switch to the simple mode."
             },
             "submissionPolicy": {
                 "title": "Submission Policy",
