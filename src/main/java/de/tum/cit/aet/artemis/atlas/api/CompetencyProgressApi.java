@@ -61,6 +61,10 @@ public class CompetencyProgressApi extends AbstractAtlasApi {
      * @param activeCourses the active courses
      */
     public void updateProgressForCourses(List<Course> activeCourses) {
+        if (!isActive()) {
+            return;
+        }
+
         CompetencyProgressService competencyProgressService = getOrThrow(this.competencyProgressService);
         CompetencyRepository competencyRepository = getOrThrow(this.competencyRepository);
 

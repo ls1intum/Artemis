@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.config.migration.MigrationEntry;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.ModuleNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 
 public class MigrationEntry20240614_140000 extends MigrationEntry {
@@ -30,6 +31,9 @@ public class MigrationEntry20240614_140000 extends MigrationEntry {
 
         log.info("Updating competency progress for {} active courses", activeCourses.size());
 
+        if (!competencyProgressApi.isActive()) {
+            throw new ModuleNotPresentException("CompetencyProgressApi is not active");
+        }
         competencyProgressApi.updateProgressForCourses(activeCourses);
     }
 

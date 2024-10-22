@@ -20,7 +20,12 @@ public abstract class AbstractApi {
         this.profileName = profileName;
     }
 
-    public boolean isActive(String profileName) {
+    public boolean isActive() {
+        return isActive(profileName);
+    }
+
+    // This method will be removed once we switch to using the profileName
+    private boolean isActive(String profileName) {
         return environment.acceptsProfiles(Profiles.of(profileName));
     }
 
