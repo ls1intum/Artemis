@@ -173,9 +173,8 @@
             "masteryThreshold": "Mastery threshold",
             "manage": {
                 "importAllButton": "Import all of a course",
-                "editRelationsButton": "Edit relations"
-                "helpButton": "Help",
-                "importAllButton": "Import all of a course"
+                "editRelationsButton": "Edit relations",
+                "helpButton": "Help"
             },
             "importSettings": {
                 "importRelationsLabel": "Import relations",
@@ -272,7 +271,8 @@
                         "competency": "This node represents a Competency",
                         "prerequisite": "This node represents a Prerequisite"
                     }
-=======
+                }
+            },
             "featureExplanation": {
                 "title": "Introduction to course competencies",
                 "adaptiveLearning": {

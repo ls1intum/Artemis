@@ -173,9 +173,8 @@
             "masteryThreshold": "Schwellwert zum Erreichen der Kompetenz",
             "manage": {
                 "importAllButton": "Alles eines Kurses importieren",
-                "editRelationsButton": "Beziehungen bearbeiten"
-                "helpButton": "Hilfe",
-                "importAllButton": "Alles eines Kurses importieren"
+                "editRelationsButton": "Beziehungen bearbeiten",
+                "helpButton": "Hilfe"
             },
             "importSettings": {
                 "importRelationsLabel": "Beziehungen importieren",
@@ -272,6 +271,8 @@
                         "competency": "Dieser Knoten repräsentiert eine Kompetenz",
                         "prerequisite": "Dieser Knoten repräsentiert eine Voraussetzung"
                     }
+                }
+            },
             "featureExplanation": {
                 "title": "Einführung in Kurskompetenzen",
                 "adaptiveLearning": {
