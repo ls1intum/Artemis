@@ -13,6 +13,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,6 +77,8 @@ public class BuildJobExecutionService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
+    private static final Duration TEMP_DIR_RETENTION_PERIOD = Duration.ofMinutes(5);
+
     public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, BuildJobGitService buildJobGitService, BuildAgentDockerService buildAgentDockerService,
             BuildLogsMap buildLogsMap) {
         this.buildJobContainerService = buildJobContainerService;
@@ -100,7 +103,8 @@ public class BuildJobExecutionService {
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Path.of(CHECKED_OUT_REPOS_TEMP_DIR))) {
             for (Path path : directoryStream) {
                 try {
-                    if (Files.isDirectory(path) && Files.getLastModifiedTime(path).toInstant().isBefore(currentTime.toInstant())) {
+                    ZonedDateTime lastModifiedTime = ZonedDateTime.ofInstant(Files.getLastModifiedTime(path).toInstant(), currentTime.getZone());
+                    if (Files.isDirectory(path) && lastModifiedTime.isBefore(currentTime.minus(TEMP_DIR_RETENTION_PERIOD))) {
                         FileUtils.deleteDirectory(path.toFile());
                     }
                 }
