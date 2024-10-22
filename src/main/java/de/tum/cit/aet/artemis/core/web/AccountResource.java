@@ -152,6 +152,8 @@ public class AccountResource {
     /**
      * GET account/ssh-public-key : sets the ssh public key
      *
+     * @param keyId The id of the key that should be fetched
+     *
      * @return the ResponseEntity containing the requested public SSH key of a user with status 200 (OK), or with status 400 (Bad Request)
      */
     @GetMapping("account/ssh-public-key")
@@ -190,6 +192,8 @@ public class AccountResource {
 
     /**
      * Delete - account/ssh-public-key : deletes the ssh public key by its keyId
+     *
+     * @param keyId The id of the key that should be deleted
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */

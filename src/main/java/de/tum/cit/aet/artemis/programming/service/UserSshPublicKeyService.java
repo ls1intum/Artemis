@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -72,7 +73,8 @@ public class UserSshPublicKeyService {
         if (label == null || label.isEmpty()) {
             String[] parts = newSshPublicKey.getPublicKey().split("\\s+");
             if (parts.length >= 3) {
-                newSshPublicKey.setLabel(parts[2]);
+                String labelFromParts = String.join(" ", Arrays.copyOfRange(parts, 2, parts.length));
+                newSshPublicKey.setLabel(labelFromParts);
             }
             else {
                 newSshPublicKey.setLabel(KEY_DEFAULT_LABEL);
