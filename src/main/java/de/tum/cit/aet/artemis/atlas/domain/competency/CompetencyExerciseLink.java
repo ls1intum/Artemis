@@ -54,22 +54,6 @@ public class CompetencyExerciseLink extends CompetencyLearningObjectLink {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof CompetencyExerciseLink that)) {
-            return false;
-        }
-        return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(id);
-    }
-
-    @Override
     public String toString() {
         return "CompetencyExerciseLink{" + "exercise=" + exercise + ", id=" + id + ", competency=" + competency + ", weight=" + weight + '}';
     }

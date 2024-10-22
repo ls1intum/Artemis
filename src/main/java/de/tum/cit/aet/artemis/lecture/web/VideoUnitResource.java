@@ -100,8 +100,7 @@ public class VideoUnitResource {
         lectureUnitService.validateUrlStringAndReturnUrl(videoUnit.getSource());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
 
-        lectureUnitService.reconnectCompetencyLectureUnitLinks(videoUnit);
-        VideoUnit result = videoUnitRepository.save(videoUnit);
+        VideoUnit result = lectureUnitService.saveWithCompetencyLinks(videoUnit, videoUnitRepository::save);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingVideoUnit, Optional.of(videoUnit));
 

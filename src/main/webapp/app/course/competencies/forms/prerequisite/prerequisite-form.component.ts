@@ -26,7 +26,6 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
         taxonomy: undefined,
         masteryThreshold: undefined,
         optional: false,
-        lectureUnitLinks: undefined,
     };
     @Input()
     prerequisite: Prerequisite;
@@ -57,7 +56,6 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
 
     submitForm() {
         const competencyFormData: CourseCompetencyFormData = { ...this.form.value };
-        competencyFormData.lectureUnitLinks = this.selectedLectureUnitLinksInTable;
         this.formSubmitted.emit(competencyFormData);
     }
 }

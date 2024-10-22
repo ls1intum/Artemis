@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { CompetencyLectureUnitLink, CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
+import { CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
@@ -47,7 +47,6 @@ export interface CourseCompetencyFormData {
     taxonomy?: CompetencyTaxonomy;
     optional?: boolean;
     masteryThreshold?: number;
-    lectureUnitLinks?: CompetencyLectureUnitLink[];
 }
 
 @Component({ template: '' })
@@ -75,14 +74,10 @@ export abstract class CourseCompetencyFormComponent {
     formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
 
     form: FormGroup;
-    selectedLectureUnitLinksInTable: CompetencyLectureUnitLink[] = [];
 
     // Icons
     protected readonly faTimes = faTimes;
     protected readonly faQuestionCircle = faQuestionCircle;
-
-    // Constants
-    protected readonly competencyTaxonomy = CompetencyTaxonomy;
 
     protected constructor(
         protected fb: FormBuilder,
@@ -136,7 +131,6 @@ export abstract class CourseCompetencyFormComponent {
             masteryThreshold: [DEFAULT_MASTERY_THRESHOLD, [Validators.min(0), Validators.max(100)]],
             optional: [false],
         });
-        this.selectedLectureUnitLinksInTable = [];
     }
 
     cancelForm() {
@@ -145,9 +139,5 @@ export abstract class CourseCompetencyFormComponent {
 
     get isSubmitPossible() {
         return !this.form.invalid;
-    }
-
-    protected onLectureUnitSelectionChange(lectureUnitLinks: CompetencyLectureUnitLink[]) {
-        this.selectedLectureUnitLinksInTable = lectureUnitLinks;
     }
 }

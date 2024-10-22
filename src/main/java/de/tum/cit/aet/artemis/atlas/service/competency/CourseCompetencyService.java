@@ -291,11 +291,8 @@ public class CourseCompetencyService {
      */
     public <C extends CourseCompetency> C createCourseCompetency(C competencyToCreate, Course course) {
         competencyToCreate.setCourse(course);
-        Set<CompetencyLectureUnitLink> lectureUnitLinks = competencyToCreate.getLectureUnitLinks();
-        competencyToCreate.setLectureUnitLinks(new HashSet<>());
         var persistedCompetency = courseCompetencyRepository.save(competencyToCreate);
 
-        persistedCompetency.setLectureUnitLinks(lectureUnitLinks);
         updateLectureUnits(competencyToCreate, persistedCompetency);
 
         if (course.getLearningPathsEnabled()) {
@@ -349,8 +346,6 @@ public class CourseCompetencyService {
         competencyToUpdate.setMasteryThreshold(competency.getMasteryThreshold());
         competencyToUpdate.setTaxonomy(competency.getTaxonomy());
         competencyToUpdate.setOptional(competency.isOptional());
-        competencyToUpdate.getLectureUnitLinks().forEach(link -> link.setCompetency(competency));
-        competencyToUpdate.setLectureUnitLinks(competency.getLectureUnitLinks());
         final var persistedCompetency = courseCompetencyRepository.save(competencyToUpdate);
 
         // update competency progress if necessary

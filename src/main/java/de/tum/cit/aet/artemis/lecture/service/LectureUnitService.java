@@ -8,14 +8,17 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
+import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -227,16 +230,26 @@ public class LectureUnitService {
     }
 
     /**
-     * Updates the competency lecture unit links of the existing lecture unit with the updated lecture unit.
+     * Saves the exercise and links it to the competencies.
      *
-     * @param existingLectureUnit The existing lecture unit
-     * @param updatedLectureUnit  The updated lecture unit
+     * @param lectureUnit  the lecture unit to save
+     * @param saveFunction function to save the exercise
+     * @param <T>          type of the lecture unit
+     * @return saved exercise
      */
-    public void updateCompetencyLectureUnitLinks(LectureUnit existingLectureUnit, LectureUnit updatedLectureUnit) {
-        existingLectureUnit.getCompetencyLinks().removeIf(
-                link -> updatedLectureUnit.getCompetencyLinks().stream().noneMatch(updateLink -> updateLink.getCompetency().getId().equals(link.getCompetency().getId())));
-        existingLectureUnit.getCompetencyLinks().addAll(updatedLectureUnit.getCompetencyLinks().stream().filter(
-                link -> existingLectureUnit.getCompetencyLinks().stream().noneMatch(existingLink -> existingLink.getCompetency().getId().equals(link.getCompetency().getId())))
-                .toList());
+    public <T extends LectureUnit> T saveWithCompetencyLinks(T lectureUnit, Function<T, T> saveFunction) {
+        // persist lecture Unit before linking it to the competency
+        Set<CompetencyLectureUnitLink> links = lectureUnit.getCompetencyLinks();
+        lectureUnit.setCompetencyLinks(new HashSet<>());
+
+        T savedLectureUnit = saveFunction.apply(lectureUnit);
+
+        if (Hibernate.isInitialized(links) && !links.isEmpty()) {
+            savedLectureUnit.setCompetencyLinks(links);
+            reconnectCompetencyLectureUnitLinks(savedLectureUnit);
+            savedLectureUnit.setCompetencyLinks(new HashSet<>(competencyLectureUnitLinkRepository.saveAll(links)));
+        }
+
+        return savedLectureUnit;
     }
 }

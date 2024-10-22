@@ -122,10 +122,7 @@ public class AttachmentUnitService {
         existingAttachmentUnit.setName(updateUnit.getName());
         existingAttachmentUnit.setReleaseDate(updateUnit.getReleaseDate());
 
-        lectureUnitService.updateCompetencyLectureUnitLinks(existingAttachmentUnit, updateUnit);
-        lectureUnitService.reconnectCompetencyLectureUnitLinks(existingAttachmentUnit);
-
-        AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(existingAttachmentUnit);
+        AttachmentUnit savedAttachmentUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentUnit, attachmentUnitRepository::saveAndFlush);
 
         Attachment existingAttachment = existingAttachmentUnit.getAttachment();
         if (existingAttachment == null) {

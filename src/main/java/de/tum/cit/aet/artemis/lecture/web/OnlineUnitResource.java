@@ -111,8 +111,7 @@ public class OnlineUnitResource {
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
 
-        lectureUnitService.reconnectCompetencyLectureUnitLinks(onlineUnit);
-        OnlineUnit result = onlineUnitRepository.save(onlineUnit);
+        OnlineUnit result = lectureUnitService.saveWithCompetencyLinks(onlineUnit, onlineUnitRepository::save);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingOnlineUnit, Optional.of(onlineUnit));
 

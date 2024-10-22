@@ -54,22 +54,6 @@ public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof CompetencyLectureUnitLink that)) {
-            return false;
-        }
-        return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(id);
-    }
-
-    @Override
     public String toString() {
         return "CompetencyLectureUnitLink{" + "lectureUnit=" + lectureUnit + ", id=" + id + ", competency=" + competency + ", weight=" + weight + '}';
     }

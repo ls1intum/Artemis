@@ -25,7 +25,6 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
         taxonomy: undefined,
         masteryThreshold: undefined,
         optional: false,
-        lectureUnitLinks: undefined,
     };
     @Input()
     competency: Competency;
@@ -54,7 +53,6 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
 
     submitForm() {
         const competencyFormData: CourseCompetencyFormData = { ...this.form.value };
-        competencyFormData.lectureUnitLinks = this.selectedLectureUnitLinksInTable;
         this.formSubmitted.emit(competencyFormData);
     }
 }

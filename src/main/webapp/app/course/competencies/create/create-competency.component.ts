@@ -38,7 +38,7 @@ export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {
             return;
         }
 
-        const { title, description, softDueDate, taxonomy, masteryThreshold, optional, lectureUnitLinks } = formData;
+        const { title, description, softDueDate, taxonomy, masteryThreshold, optional } = formData;
 
         this.competencyToCreate.title = title;
         this.competencyToCreate.description = description;
@@ -46,7 +46,6 @@ export class CreateCompetencyComponent extends CreateCourseCompetencyComponent {
         this.competencyToCreate.taxonomy = taxonomy;
         this.competencyToCreate.masteryThreshold = masteryThreshold;
         this.competencyToCreate.optional = optional;
-        this.competencyToCreate.lectureUnitLinks = lectureUnitLinks;
 
         this.isLoading = true;
 

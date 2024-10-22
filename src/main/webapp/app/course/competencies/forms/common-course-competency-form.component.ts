@@ -1,11 +1,9 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { intersection } from 'lodash-es';
-import { CompetencyLectureUnitLink, CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
+import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -53,14 +51,10 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     courseCompetency: CourseCompetency;
 
     @Output()
-    onLectureUnitSelectionChange = new EventEmitter<CompetencyLectureUnitLink[]>();
-    @Output()
     onTitleOrDescriptionChange = new EventEmitter<void>();
 
     protected readonly competencyValidators = CourseCompetencyValidators;
 
-    selectedLectureInDropdown: Lecture;
-    selectedLectureUnitLinksInTable: CompetencyLectureUnitLink[] = [];
     suggestedTaxonomies: string[] = [];
 
     // Icons
@@ -120,40 +114,7 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
 
     private setFormValues(formData: CourseCompetencyFormData) {
         this.form.patchValue(formData);
-        if (formData.lectureUnitLinks) {
-            this.selectedLectureUnitLinksInTable = formData.lectureUnitLinks;
-            this.onLectureUnitSelectionChange.next(this.selectedLectureUnitLinksInTable);
-        }
     }
-
-    selectLectureInDropdown(lecture: Lecture) {
-        this.selectedLectureInDropdown = lecture;
-    }
-
-    selectLectureUnitInTable(lectureUnit: LectureUnit) {
-        if (this.isLectureUnitAlreadySelectedInTable(lectureUnit)) {
-            this.selectedLectureUnitLinksInTable = this.selectedLectureUnitLinksInTable.filter((lectureUnitLink) => lectureUnitLink.lectureUnit?.id !== lectureUnit.id);
-        } else {
-            this.selectedLectureUnitLinksInTable.push(new CompetencyLectureUnitLink(this.courseCompetency, lectureUnit, 1));
-        }
-        this.onLectureUnitSelectionChange.next(this.selectedLectureUnitLinksInTable);
-    }
-
-    isLectureUnitAlreadySelectedInTable(lectureUnit: LectureUnit) {
-        return this.selectedLectureUnitLinksInTable.map((selectedLectureUnitLink) => selectedLectureUnitLink.lectureUnit?.id).includes(lectureUnit.id);
-    }
-
-    getLectureTitleForDropdown(lecture: Lecture) {
-        const noOfSelectedUnitsInLecture = intersection(
-            this.selectedLectureUnitLinksInTable.map((unitLink) => unitLink.lectureUnit?.id),
-            lecture.lectureUnits?.map((unit) => unit.id),
-        ).length;
-        return this.translateService.instant('artemisApp.courseCompetency.create.dropdown', {
-            lectureTitle: lecture.title,
-            noOfConnectedUnits: noOfSelectedUnitsInLecture,
-        });
-    }
-
     /**
      * Suggest some taxonomies based on keywords used in the title or description.
      * Triggered after the user changes the title or description input field.

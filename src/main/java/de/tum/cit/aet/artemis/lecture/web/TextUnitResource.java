@@ -108,8 +108,8 @@ public class TextUnitResource {
 
         textUnitForm.setId(existingTextUnit.getId());
         textUnitForm.setLecture(existingTextUnit.getLecture());
-        lectureUnitService.reconnectCompetencyLectureUnitLinks(textUnitForm);
-        TextUnit result = textUnitRepository.save(textUnitForm);
+
+        TextUnit result = lectureUnitService.saveWithCompetencyLinks(textUnitForm, textUnitRepository::save);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingTextUnit, Optional.of(textUnitForm));
 

@@ -56,10 +56,6 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
                         if (courseProgressResult.body) {
                             this.competency.courseProgress = courseProgressResult.body;
                         }
-                        // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
-                        if (!this.competency.lectureUnitLinks) {
-                            this.competency.lectureUnitLinks = [];
-                        }
                     }
 
                     this.formData = {
@@ -67,7 +63,6 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
                         title: this.competency.title,
                         description: this.competency.description,
                         softDueDate: this.competency.softDueDate,
-                        lectureUnitLinks: this.competency.lectureUnitLinks,
                         taxonomy: this.competency.taxonomy,
                         masteryThreshold: this.competency.masteryThreshold,
                         optional: this.competency.optional,
@@ -78,7 +73,7 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
     }
 
     updateCompetency(formData: CourseCompetencyFormData) {
-        const { title, description, softDueDate, taxonomy, masteryThreshold, optional, lectureUnitLinks } = formData;
+        const { title, description, softDueDate, taxonomy, masteryThreshold, optional } = formData;
 
         this.competency.title = title;
         this.competency.description = description;
@@ -86,7 +81,6 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
         this.competency.taxonomy = taxonomy;
         this.competency.masteryThreshold = masteryThreshold;
         this.competency.optional = optional;
-        this.competency.lectureUnitLinks = lectureUnitLinks;
 
         this.isLoading = true;
 
