@@ -882,6 +882,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
         practiceParticipation.setPracticeMode(true);
+        practiceParticipation.setRepositoryUri(localVCLocalCITestService.constructLocalVCUrl("", "", projectKey1, practiceRepositorySlug));
+
+        // practiceParticipation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), practiceRepositorySlug));
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 
         // Students should not be able to access, teaching assistants should be able to fetch and push and editors and higher should be able to fetch and push.
@@ -921,6 +924,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 instructor1Login);
         practiceParticipation.setPracticeMode(true);
+        practiceParticipation.setRepositoryUri(localVCLocalCITestService.constructLocalVCUrl("", "", projectKey1, practiceRepositorySlug));
+
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 
         // Students should not be able to access, teaching assistants should be able to fetch, and editors and higher should be able to fetch and push.
@@ -943,11 +948,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     @Nested
     class BuildJobPriorityTest {
-
-        @BeforeEach
-        void setUp() {
-            sharedQueueProcessingService.removeListener();
-        }
 
         @AfterEach
         void tearDown() {
@@ -1002,6 +1002,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         }
 
         private void testPriority(String login, int expectedPriority) throws Exception {
+            queuedJobs.clear();
+            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+
             log.info("Creating participation");
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 

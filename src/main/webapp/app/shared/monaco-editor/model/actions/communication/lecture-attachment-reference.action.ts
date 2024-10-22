@@ -109,23 +109,48 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     }
 
     insertLectureReference(editor: TextEditor, lecture: LectureWithDetails): void {
-        this.replaceTextAtCurrentSelection(editor, `[lecture]${lecture.title}(${this.metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
+        this.replaceTextAtCurrentSelection(
+            editor,
+            `[lecture]${this.sanitizeStringForMarkdownEditor(lecture.title)}(${this.metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`,
+        );
     }
 
     insertAttachmentReference(editor: TextEditor, attachment: Attachment): void {
         const shortLink = attachment.link?.split('attachments/')[1];
-        this.replaceTextAtCurrentSelection(editor, `[attachment]${attachment.name}(${shortLink})[/attachment]`);
+        this.replaceTextAtCurrentSelection(editor, `[attachment]${this.sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
     insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide): void {
         const shortLink = slide.slideImagePath?.split('attachments/')[1];
         // Remove the trailing slash and the file name.
         const shortLinkWithoutFileName = shortLink?.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
-        this.replaceTextAtCurrentSelection(editor, `[slide]${attachmentUnit.name} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`);
+        this.replaceTextAtCurrentSelection(
+            editor,
+            `[slide]${this.sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`,
+        );
     }
 
     insertAttachmentUnitReference(editor: TextEditor, attachmentUnit: AttachmentUnit): void {
         const shortLink = attachmentUnit.attachment?.link!.split('attachments/')[1];
-        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${attachmentUnit.name}(${shortLink})[/lecture-unit]`);
+        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${this.sanitizeStringForMarkdownEditor(attachmentUnit.name)}(${shortLink})[/lecture-unit]`);
+    }
+
+    /**
+     * Takes a string and removes any symbols used for syntax in the markdown editor.
+     * @param {string} str - The string for sanitization.
+     */
+    private sanitizeStringForMarkdownEditor(str: string | undefined): string | undefined {
+        if (str === undefined) {
+            return str;
+        }
+
+        const symbolsToRemove = ['(', ')', '[', ']'];
+        let newString = str;
+
+        symbolsToRemove.forEach((symbolToRemove) => {
+            newString = newString.replaceAll(symbolToRemove, '');
+        });
+
+        return newString;
     }
 }

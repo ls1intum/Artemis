@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -67,7 +70,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @BeforeEach
     void createJobs() {
         // temporarily remove listener to avoid triggering build job processing
-        sharedQueueProcessingService.removeListener();
+        sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
 
         JobTimingInfo jobTimingInfo1 = new JobTimingInfo(ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), ZonedDateTime.now().plusMinutes(3));
         JobTimingInfo jobTimingInfo2 = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2));
@@ -79,7 +82,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         job1 = new BuildJobQueueItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
         job2 = new BuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        agent1 = new BuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), false, new ArrayList<>(List.of(job2)), null);
+        agent1 = new BuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, new ArrayList<>(List.of(job2)), null);
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
         BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", "address1", 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo2,
@@ -341,5 +344,15 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         assertThat(response.successfulBuilds()).isEqualTo(1);
         assertThat(response.failedBuilds()).isEqualTo(1);
         assertThat(response.cancelledBuilds()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testPauseBuildAgent() throws Exception {
+        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
+        await().until(() -> buildAgentInformation.get(agent1.name()).status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
+
+        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
+        await().until(() -> buildAgentInformation.get(agent1.name()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
     }
 }
