@@ -17,7 +17,7 @@ import { faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAlt
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
@@ -150,8 +150,23 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             pageSize: 50,
         };
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
-            this.currentPostContextFilter!.courseWideChannelIds = conversations.map((conversation) => conversation!.id!);
+            this.currentPostContextFilter!.courseWideChannelIds = conversations
+                .map((conversation) => {
+                    if (this.conversationIsAnnouncement(conversation) && this.currentPostContextFilter?.filterToUnresolved) {
+                        return undefined;
+                    }
+                    return conversation.id;
+                })
+                .filter((id) => id !== undefined);
         });
+    }
+
+    conversationIsAnnouncement(conversation: ConversationDTO) {
+        if (conversation.type === 'channel') {
+            const channel = conversation as ChannelDTO;
+            return channel.isAnnouncementChannel;
+        }
+        return false;
     }
 
     postsTrackByFn = (index: number, post: Post): number => post.id!;
