@@ -10,15 +10,24 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+/**
+ * LLMTokenUsageRequest represents a single LLM request usage with all its information about the request
+ */
 @Entity
 @Table(name = "llm_token_usage_request")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LLMTokenUsageRequest extends DomainObject {
 
+    /**
+     * LLM model (e.g. gpt-4o)
+     */
     @Column(name = "model")
     private String model;
 
+    /**
+     * pipeline that was called (e.g. IRIS_COURSE_CHAT_PIPELINE)
+     */
     @Column(name = "service_pipeline_id")
     private String servicePipelineId;
 

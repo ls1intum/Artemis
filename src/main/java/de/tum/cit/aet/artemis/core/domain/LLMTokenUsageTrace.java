@@ -19,6 +19,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+/**
+ * This represents a trace that contains one or more requests of type {@link LLMTokenUsageRequest}
+ */
 @Entity
 @Table(name = "llm_token_usage_trace")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

@@ -170,7 +170,13 @@ public class AthenaFeedbackSuggestionsService {
             return;
         }
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        Long userId = ((StudentParticipation) submission.getParticipation()).getStudent().map(User::getId).orElse(null);
+        Long userId;
+        if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
+            userId = studentParticipation.getStudent().map(User::getId).orElse(null);
+        }
+        else {
+            userId = null;
+        }
         List<LLMRequest> llmRequests = meta.llmRequests();
         if (llmRequests == null) {
             return;
