@@ -1,0 +1,70 @@
+<div class="course-competency-relation-form-container row m-0 p-3 align-items-end">
+    <div class="form-group col m-0 ps-0">
+        <label for="head" jhiTranslate="artemisApp.courseCompetency.relations.form.headCourseCompetencyLabel"></label>
+        <select
+            [ngClass]="{ 'border-danger': showCircularDependencyError() }"
+            class="form-select mt-1"
+            id="head"
+            name="head"
+            [ngModel]="headCompetencyId()"
+            (ngModelChange)="selectHeadCourseCompetency($event)"
+        >
+            <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.headCourseCompetencyDefaultOption"></option>
+            @for (courseCompetency of courseCompetencies(); track courseCompetency.id) {
+                <option [ngValue]="courseCompetency.id">{{ courseCompetency.title }}</option>
+            }
+        </select>
+    </div>
+    <div class="form-group col m-0">
+        <label for="type" jhiTranslate="artemisApp.courseCompetency.relations.form.relationTypeLabel"></label>
+        <select [ngClass]="{ 'border-danger': showCircularDependencyError() }" class="form-select mt-1" id="type" name="type" [(ngModel)]="relationType">
+            <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.relationTypeDefaultOption"></option>
+            @for (relationType of competencyRelationType | keyvalue; track relationType) {
+                <option [value]="relationType.value" [jhiTranslate]="'artemisApp.courseCompetency.relations.relationTypes.' + relationType.value"></option>
+            }
+        </select>
+    </div>
+    <div class="form-group col m-0">
+        <label for="tail" jhiTranslate="artemisApp.courseCompetency.relations.form.tailCourseCompetencyLabel"></label>
+        <select
+            [ngClass]="{ 'border-danger': showCircularDependencyError() }"
+            class="form-select mt-1"
+            id="tail"
+            name="tail"
+            [ngModel]="tailCompetencyId()"
+            (ngModelChange)="selectTailCourseCompetency($event)"
+        >
+            <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.tailCourseCompetencyDefaultOption"></option>
+            @for (courseCompetency of courseCompetencies(); track courseCompetency.id) {
+                <option [disabled]="!isCourseCompetencySelectable(courseCompetency.id!)" [ngValue]="courseCompetency.id">{{ courseCompetency.title }}</option>
+            }
+        </select>
+    </div>
+    <div class="col-2 pe-0 d-flex justify-content-end">
+        @if (exactRelationAlreadyExists()) {
+            <button (click)="deleteRelation()" class="btn btn-danger">
+                @if (isLoading()) {
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                }
+                <span jhiTranslate="artemisApp.courseCompetency.relations.form.deleteRelationButtonLabel"></span>
+            </button>
+        } @else if (relationAlreadyExists()) {
+            <button (click)="updateRelation()" class="btn btn-info" [disabled]="showCircularDependencyError()">
+                @if (isLoading()) {
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                }
+                <span jhiTranslate="artemisApp.courseCompetency.relations.form.updateRelationButtonLabel"></span>
+            </button>
+        } @else {
+            <button (click)="createRelation()" [disabled]="showCircularDependencyError() || !tailCompetencyId() || !headCompetencyId() || !relationType()" class="btn btn-primary">
+                @if (isLoading()) {
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                }
+                <span jhiTranslate="artemisApp.courseCompetency.relations.form.createRelationButtonLabel"></span>
+            </button>
+        }
+    </div>
+    @if (showCircularDependencyError()) {
+        <small class="p-0 mt-2 text-danger" jhiTranslate="artemisApp.courseCompetency.relations.form.cyclicDependencyError"></small>
+    }
+</div>
