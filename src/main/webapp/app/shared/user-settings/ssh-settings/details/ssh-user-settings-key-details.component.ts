@@ -26,13 +26,12 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
 
     // state change variables
     isCreateMode = false; // true when editing existing key, false when creating new key
-
     isLoading = true;
+
     copyInstructions = '';
     selectedOption: string = 'doNotUseExpiration';
 
     // Key details from input fields
-    displayedKeyId?: number = undefined; // undefined when creating a new key
     displayedKeyLabel = '';
     displayedSshKey = '';
     displayedKeyHash = '';

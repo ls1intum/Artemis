@@ -1,8 +1,6 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { Subject, Subscription, tap } from 'rxjs';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { Subject, tap } from 'rxjs';
 import { faEdit, faEllipsis, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -16,12 +14,10 @@ import dayjs from 'dayjs/esm';
     templateUrl: './ssh-user-settings.component.html',
     styleUrls: ['../user-settings.scss', './ssh-user-settings.component.scss'],
 })
-export class SshUserSettingsComponent implements OnInit, OnDestroy {
+export class SshUserSettingsComponent implements OnInit {
     readonly documentationType: DocumentationType = 'SshSetup';
 
     sshPublicKeys: UserSshPublicKey[] = [];
-    localVCEnabled = false;
-
     keyCount = 0;
     isLoading = true;
 
@@ -32,7 +28,6 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
 
-    private accountServiceSubscription: Subscription;
     private dialogErrorSource = new Subject<string>();
     currentDate: dayjs.Dayjs;
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -41,16 +36,29 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
 
     constructor(
         private accountService: AccountService,
-        private profileService: ProfileService,
         private alertService: AlertService,
     ) {}
 
     ngOnInit() {
         this.currentDate = dayjs();
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+        this.refreshSshKeys();
+    }
+
+    deleteSshKey(key: UserSshPublicKey) {
+        this.accountService.deleteSshPublicKey(key.id).subscribe({
+            next: () => {
+                this.alertService.success('artemisApp.userSettings.sshSettingsPage.deleteSuccess');
+                this.refreshSshKeys();
+            },
+            error: () => {
+                this.alertService.error('artemisApp.userSettings.sshSettingsPage.deleteFailure');
+            },
         });
-        this.accountServiceSubscription = this.accountService
+        this.dialogErrorSource.next('');
+    }
+
+    private refreshSshKeys() {
+        this.accountService
             .getAllSshPublicKeys()
             .pipe(
                 tap((publicKeys: UserSshPublicKey[]) => {
@@ -70,31 +78,5 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
                     this.alertService.error('artemisApp.userSettings.sshSettingsPage.loadKeyFailure');
                 },
             });
-    }
-
-    ngOnDestroy() {
-        this.accountServiceSubscription.unsubscribe();
-    }
-
-    deleteSshKey(key: UserSshPublicKey) {
-        this.accountService.deleteSshPublicKey(key.id).subscribe({
-            next: () => {
-                this.alertService.success('artemisApp.userSettings.sshSettingsPage.deleteSuccess');
-                this.refreshSshKeys();
-            },
-            error: () => {
-                this.alertService.error('artemisApp.userSettings.sshSettingsPage.deleteFailure');
-            },
-        });
-        this.dialogErrorSource.next('');
-    }
-
-    private refreshSshKeys() {
-        this.isLoading = true;
-        this.accountService.getAllSshPublicKeys().subscribe((publicKeys: UserSshPublicKey[]) => {
-            this.sshPublicKeys = publicKeys;
-            this.keyCount = publicKeys.length;
-            this.isLoading = false;
-        });
     }
 }

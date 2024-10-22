@@ -1,7 +1,7 @@
 <!-- SSH Settings Title -->
 <h1 jhiTranslate="artemisApp.userSettings.sshSettingsPage.keysTablePageTitle"></h1>
 
-@if (!isLoading && localVCEnabled) {
+@if (!isLoading) {
     <div class="list-group d-block">
         <!-- Initial state: There are no keys -->
         @if (keyCount === 0) {
