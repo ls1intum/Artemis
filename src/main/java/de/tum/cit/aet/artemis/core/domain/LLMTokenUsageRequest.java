@@ -11,7 +11,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * LLMTokenUsageRequest represents a single LLM request usage with all its information about the request
+ * Represents the token usage details of a single LLM request, including model, service pipeline, token counts, and costs.
  */
 @Entity
 @Table(name = "llm_token_usage_request")
