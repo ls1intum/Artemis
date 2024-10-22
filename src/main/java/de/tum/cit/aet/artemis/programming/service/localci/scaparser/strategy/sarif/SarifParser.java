@@ -27,10 +27,10 @@ public class SarifParser implements ParserStrategy {
     }
 
     @Override
-    public StaticCodeAnalysisReportDTO parse(String xmlContent) {
+    public StaticCodeAnalysisReportDTO parse(String reportContent) {
         SarifLog sarifLog;
         try {
-            sarifLog = objectMapper.readValue(xmlContent, SarifLog.class);
+            sarifLog = objectMapper.readValue(reportContent, SarifLog.class);
         }
         catch (JsonProcessingException e) {
             throw new RuntimeException(e);
