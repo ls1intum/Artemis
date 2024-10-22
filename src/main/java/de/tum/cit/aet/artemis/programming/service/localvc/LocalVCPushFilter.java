@@ -47,6 +47,7 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
             servletResponse.setStatus(localVCServletService.getHttpStatusForException(e, servletRequest.getRequestURI()));
             return;
         }
+        this.localVCServletService.updateVCSAccessLogForPushHTTPS(servletRequest);
 
         filterChain.doFilter(servletRequest, servletResponse);
 
