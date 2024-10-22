@@ -10,7 +10,7 @@
                     [authorId]="posting.author?.id"
                     [authorName]="posting.author?.name"
                     [imageUrl]="posting.author?.imageUrl"
-                    [isEditable]="currentUser !== undefined && posting.author.id === currentUser.id"
+                    [isEditable]="currentUser !== undefined && posting.author?.id === currentUser.id"
                 >
                 </jhi-profile-picture>
                 <span class="fs-small d-inline-flex flex-column align-items-start">

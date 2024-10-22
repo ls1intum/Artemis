@@ -10,7 +10,7 @@ import { RouterLink } from '@angular/router';
     selector: 'jhi-profile-picture',
     standalone: true,
     templateUrl: './profile-picture.component.html',
-    styleUrl: './profile-picture.component.scss',
+    styleUrls: ['./profile-picture.component.scss'],
     imports: [ArtemisSharedCommonModule, RouterLink, ArtemisSharedPipesModule],
 })
 export class ProfilePictureComponent implements OnInit, OnChanges {
