@@ -139,7 +139,6 @@ public class UserTestService {
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
         this.mockDelegate = mockDelegate;
-
         List<User> users = userUtilService.addUsers(testPrefix, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
         student = userTestRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
@@ -157,6 +156,8 @@ public class UserTestService {
 
     public void tearDown() throws IOException {
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+        this.userSshPublicKeyRepository.deleteAll();
+
     }
 
     public User getStudent() {
@@ -874,7 +875,6 @@ public class UserTestService {
     }
 
     public void getUserSshPublicKeys() throws Exception {
-        userSshPublicKeyRepository.deleteAll();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_PLAIN);
         User user = userTestRepository.getUser();
@@ -883,7 +883,6 @@ public class UserTestService {
     }
 
     public void getUserSshPublicKey() throws Exception {
-        userSshPublicKeyRepository.deleteAll();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_PLAIN);
         User user = userTestRepository.getUser();
@@ -893,7 +892,6 @@ public class UserTestService {
 
     // Test
     public void addUserSshPublicKey() throws Exception {
-        userSshPublicKeyRepository.deleteAll();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_PLAIN);
         User user = userTestRepository.getUser();
@@ -917,7 +915,6 @@ public class UserTestService {
 
     // Test
     public void failToAddPublicSSHkeyTwice() throws Exception {
-        userSshPublicKeyRepository.deleteAll();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_PLAIN);
         User user = userTestRepository.getUser();
@@ -932,7 +929,6 @@ public class UserTestService {
 
     // Test
     public void failToAddInvalidPublicSSHkey() throws Exception {
-        userSshPublicKeyRepository.deleteAll();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_PLAIN);
 
@@ -948,7 +944,6 @@ public class UserTestService {
 
     // Test
     public void addAndDeleteSshPublicKey() throws Exception {
-        userSshPublicKeyRepository.deleteAll();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_PLAIN);
         User user = userTestRepository.getUser();
