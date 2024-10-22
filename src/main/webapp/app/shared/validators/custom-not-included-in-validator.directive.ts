@@ -13,14 +13,15 @@ import { AbstractControl, NG_VALIDATORS, Validator } from '@angular/forms';
     standalone: true,
 })
 export class CustomNotIncludedInValidatorDirective implements Validator {
-    disallowedValues = input.required<unknown[]>();
+    disallowedValues = input.required<Set<unknown>>();
 
     validate(control: AbstractControl): { [key: string]: any } | null {
         if (control == undefined) {
             return null;
         }
 
-        const isValueAlreadyTaken = this.disallowedValues().includes(control.value);
+        console.log(this.disallowedValues());
+        const isValueAlreadyTaken = this.disallowedValues().has(control.value);
         if (isValueAlreadyTaken) {
             return { disallowedValue: true };
         }

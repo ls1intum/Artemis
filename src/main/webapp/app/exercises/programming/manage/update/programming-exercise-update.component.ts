@@ -16,7 +16,17 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { EXERCISE_TITLE_NAME_PATTERN, EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import {
+    APP_NAME_PATTERN_FOR_SWIFT,
+    EXERCISE_TITLE_NAME_PATTERN,
+    EXERCISE_TITLE_NAME_REGEX,
+    INVALID_DIRECTORY_NAME_PATTERN,
+    INVALID_REPOSITORY_NAME_PATTERN,
+    MAX_PENALTY_PATTERN,
+    PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
+    PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
+    PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
+} from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
@@ -47,26 +57,13 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
     protected readonly documentationType: DocumentationType = 'Programming';
-    protected readonly maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
-    // No dots allowed for the blackbox project type, because the folder naming works slightly different here.
-    protected readonly packageNamePatternForJavaBlackbox =
-        '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*$';
-    // Auxiliary Repository names must only include words or '-' characters.
-    protected readonly invalidRepositoryNamePattern = RegExp('^(?!(solution|exercise|tests|auxiliary)\\b)\\b(\\w|-)+$');
-    // Auxiliary Repository checkout directories must be valid directory paths. Those must only include words,
-    // '-' or '/' characters.
-    protected readonly invalidDirectoryNamePattern = RegExp('^[\\w-]+(/[\\w-]+)*$');
-    // length of < 3 is also accepted in order to provide more accurate validation error messages
-    protected readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
-
-    // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
-    // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
-    readonly packageNamePatternForJavaKotlin =
-        '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$';
-    // Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
-    // with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
-    readonly appNamePatternForSwift =
-        '^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][0-9A-Za-z]*$';
+    protected readonly maxPenaltyPattern = MAX_PENALTY_PATTERN;
+    protected readonly packageNamePatternForJavaBlackbox = PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX;
+    protected readonly invalidRepositoryNamePattern = INVALID_REPOSITORY_NAME_PATTERN;
+    protected readonly invalidDirectoryNamePattern = INVALID_DIRECTORY_NAME_PATTERN;
+    protected readonly shortNamePattern = PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN;
+    readonly packageNamePatternForJavaKotlin = PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN;
+    readonly appNamePatternForSwift = APP_NAME_PATTERN_FOR_SWIFT;
 
     @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
     @ViewChild(ProgrammingExerciseModeComponent) exerciseDifficultyComponent?: ProgrammingExerciseModeComponent;

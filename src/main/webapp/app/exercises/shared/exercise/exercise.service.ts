@@ -43,8 +43,8 @@ export type ExerciseDetailsType = {
 };
 
 export type CourseExistingExerciseDetailsType = {
-    exerciseTitles?: string[];
-    shortNames?: string[];
+    exerciseTitles?: Set<string>;
+    shortNames?: Set<string>;
 };
 
 export interface ExerciseServicable<T extends Exercise> {
@@ -257,7 +257,15 @@ export class ExerciseService {
             .get<CourseExistingExerciseDetailsType>(`${this.courseResourceUrl}/${courseId}/existing-exercise-details?exerciseType=${exerciseType}`, {
                 observe: 'response',
             })
-            .pipe(map((response) => response.body!));
+            .pipe(
+                map((response) => {
+                    const details = response.body!;
+                    return {
+                        exerciseTitles: new Set(details.exerciseTitles ?? []),
+                        shortNames: new Set(details.shortNames ?? []),
+                    } as CourseExistingExerciseDetailsType;
+                }),
+            );
     }
 
     isActiveQuiz(exercise: QuizExercise) {

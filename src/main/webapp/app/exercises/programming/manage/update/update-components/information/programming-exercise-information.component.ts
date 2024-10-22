@@ -78,8 +78,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
-    alreadyUsedExerciseNames = signal<string[]>([]);
-    alreadyUsedShortNames = signal<string[]>([]);
+    alreadyUsedExerciseNames = signal<Set<string>>(new Set());
+    alreadyUsedShortNames = signal<Set<string>>(new Set());
 
     exerciseTitle = signal<string | undefined>(undefined);
 
@@ -260,8 +260,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const courseId = this.courseId() ?? this.programmingExercise().course?.id;
         if (courseId) {
             this.exerciseService.getExistingExerciseDetailsInCourse(courseId, ExerciseType.PROGRAMMING).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
-                this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? []);
-                this.alreadyUsedShortNames.set(exerciseDetails.shortNames ?? []);
+                this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? new Set());
+                this.alreadyUsedShortNames.set(exerciseDetails.shortNames ?? new Set());
             });
         }
     }
@@ -305,7 +305,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     private ensureShortNameIsUnique(shortName: string): string {
         let newShortName = shortName;
         let counter = 1;
-        while (this.alreadyUsedShortNames().includes(newShortName)) {
+        while (this.alreadyUsedShortNames().has(newShortName)) {
             if (counter > MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME) {
                 this.alertService.error('artemisApp.error.shortNameGenerationFailed');
                 break;

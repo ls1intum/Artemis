@@ -27,7 +27,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
 
     private readonly exerciseService: ExerciseService = inject(ExerciseService);
 
-    alreadyUsedExerciseNames = signal<string[]>([]);
+    alreadyUsedExerciseNames = signal<Set<string>>(new Set());
 
     hideChannelNameInput = false;
 
@@ -37,7 +37,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
                 const courseId = this.courseId() ?? this.course()?.id;
                 if (courseId && this.exercise.type) {
                     this.exerciseService.getExistingExerciseDetailsInCourse(courseId, this.exercise.type).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
-                        this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? []);
+                        this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? new Set());
                     });
                 }
             }.bind(this),

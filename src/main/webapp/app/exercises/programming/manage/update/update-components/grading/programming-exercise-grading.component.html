@@ -82,10 +82,10 @@
                     #maxPenalty="ngModel"
                 />
             </div>
-            @for (e of maxPenalty.errors! | keyvalue; track e) {
+            @for (error of maxPenalty.errors! | keyvalue; track error) {
                 @if (maxPenalty.invalid && (maxPenalty.dirty || maxPenalty.touched)) {
                     <div class="alert alert-danger">
-                        <div [jhiTranslate]="'artemisApp.exercise.form.maxPenalty' + '.' + e.key"></div>
+                        <div [jhiTranslate]="'artemisApp.exercise.form.maxPenalty' + '.' + error.key"></div>
                     </div>
                 }
             }
