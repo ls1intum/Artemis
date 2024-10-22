@@ -833,7 +833,7 @@ public class ProgrammingExercise extends Exercise {
             throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");
         }
 
-        if (dockerRunConfig.env() != null && dockerRunConfig.env().stream().reduce("", String::concat).length() > 1000) {
+        if (dockerRunConfig.env() != null && dockerRunConfig.env().stream().mapToInt(String::length).sum() > 1000) {
             throw new BadRequestAlertException("The environment variables are too long. Max 1000chars", "Exercise", "envVariablesTooLong");
         }
     }
