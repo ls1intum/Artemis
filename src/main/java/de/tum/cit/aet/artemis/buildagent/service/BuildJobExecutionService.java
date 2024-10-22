@@ -378,18 +378,18 @@ public class BuildJobExecutionService {
             }
 
             // Read the contents of the tar entry as a string.
-            String xmlString = readTarEntryContent(testResultsTarInputStream);
+            String fileString = readTarEntryContent(testResultsTarInputStream);
             // Get the file name of the tar entry.
             String fileName = getFileName(tarEntry);
 
             try {
                 // Check if the file is a static code analysis report file
                 if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
-                    processStaticCodeAnalysisReportFile(fileName, xmlString, staticCodeAnalysisReports, buildJobId);
+                    processStaticCodeAnalysisReportFile(fileName, fileString, staticCodeAnalysisReports, buildJobId);
                 }
                 else {
                     // ugly workaround because in swift result files \n\t breaks the parsing
-                    var testResultFileString = xmlString.replace("\n\t", "");
+                    var testResultFileString = fileString.replace("\n\t", "");
                     if (!testResultFileString.isBlank()) {
                         processTestResultFile(testResultFileString, failedTests, successfulTests);
                     }
@@ -444,12 +444,12 @@ public class BuildJobExecutionService {
      * Processes a static code analysis report file and adds the report to the corresponding list.
      *
      * @param fileName                  the file name of the static code analysis report file
-     * @param xmlString                 the content of the static code analysis report file
+     * @param reportContent             the content of the static code analysis report file
      * @param staticCodeAnalysisReports the list of static code analysis reports
      */
-    private void processStaticCodeAnalysisReportFile(String fileName, String xmlString, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, String buildJobId) {
+    private void processStaticCodeAnalysisReportFile(String fileName, String reportContent, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, String buildJobId) {
         try {
-            staticCodeAnalysisReports.add(ReportParser.getReport(xmlString, fileName));
+            staticCodeAnalysisReports.add(ReportParser.getReport(reportContent, fileName));
         }
         catch (UnsupportedToolException e) {
             String msg = "Failed to parse static code analysis report for " + fileName;
