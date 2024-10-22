@@ -196,9 +196,9 @@ describe('BuildAgentSummaryComponent', () => {
         const spy = jest.spyOn(component, 'cancelAllBuildJobs');
 
         component.ngOnInit();
-        component.cancelAllBuildJobs(buildAgent.buildAgent?.name!);
+        component.cancelAllBuildJobs(buildAgent.buildAgent);
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(buildAgent.buildAgent?.name!);
+        expect(spy).toHaveBeenCalledExactlyOnceWith(buildAgent.buildAgent);
     });
 
     it('should calculate the build capacity and current builds', () => {
