@@ -25,7 +25,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     sshPublicKey: UserSshPublicKey;
 
     // state change variables
-    isCreateMode = false; // true when editing existing key, false when creating new key
+    isCreateMode = false; // true when creating new key, false when viewing existing key
     isLoading = true;
 
     copyInstructions = '';

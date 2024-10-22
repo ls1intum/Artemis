@@ -80,13 +80,13 @@ public class AccountResource {
     private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
 
     public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AccountService accountService, FileService fileService,
-            UserSshPublicKeyService userSSHPublicKeyService) {
+            UserSshPublicKeyService userSshPublicKeyService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.accountService = accountService;
         this.fileService = fileService;
-        this.userSshPublicKeyService = userSSHPublicKeyService;
+        this.userSshPublicKeyService = userSshPublicKeyService;
     }
 
     /**
@@ -138,7 +138,7 @@ public class AccountResource {
     }
 
     /**
-     * GET account/ssh-public-keys : sets the ssh public key
+     * GET account/ssh-public-keys : retrieves all SSH keys of a user
      *
      * @return the ResponseEntity containing all public SSH keys of a user with status 200 (OK), or with status 400 (Bad Request)
      */
@@ -151,7 +151,7 @@ public class AccountResource {
     }
 
     /**
-     * GET account/ssh-public-key : sets the ssh public key
+     * GET account/ssh-public-key : gets the ssh public key
      *
      * @param keyId The id of the key that should be fetched
      *
@@ -166,7 +166,7 @@ public class AccountResource {
     }
 
     /**
-     * GET account/has-ssh-public-key : sets the ssh public key
+     * GET account/has-ssh-public-key : gets the ssh public key
      *
      * @return the ResponseEntity containing true if the User has SSH keys, and false if it does not, with status 200 (OK), or with status 400 (Bad Request)
      */

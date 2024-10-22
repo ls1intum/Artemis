@@ -46,7 +46,6 @@ public class UserSshPublicKey extends DomainObject {
     /**
      * A hash of the public ssh key for fast comparison in the database (with an index)
      */
-    @Nullable
     @Size(max = 100)
     @Column(name = "key_hash")
     private String keyHash;
