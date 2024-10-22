@@ -17,6 +17,7 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-catego
 import { onError } from 'app/shared/util/global.utils';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-course-faq',
@@ -51,6 +52,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
     private faqService = inject(FaqService);
     private alertService = inject(AlertService);
+    private sortService = inject(SortService);
 
     ngOnInit(): void {
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
@@ -78,6 +80,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
                 next: (res: Faq[]) => {
                     this.faqs = res;
                     this.applyFilters();
+                    this.sortFaqs();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -112,5 +115,10 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     refreshFaqList(searchTerm: string) {
         this.applyFilters();
         this.applySearch(searchTerm);
+    }
+
+    sortFaqs() {
+        this.sortService.sortByProperty(this.filteredFaqs, 'id', true);
+        console.log(this.filteredFaqs);
     }
 }
