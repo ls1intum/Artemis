@@ -1,6 +1,13 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, Optional, SimpleChanges } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
+import {
+    MissingResultInformation,
+    ResultTemplateStatus,
+    evaluateTemplateStatus,
+    getResultIconClass,
+    getTextColorClass,
+    isAthenaAIResult,
+} from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -43,6 +50,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
+    protected readonly AssessmentType = AssessmentType;
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
@@ -189,7 +197,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
         } else if (
             this.result &&
-            ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) || Result.isAthenaAIResult(this.result))
+            ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) || isAthenaAIResult(this.result))
         ) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
@@ -229,7 +237,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                 return 'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip';
             } else if (this.templateStatus === ResultTemplateStatus.IS_GENERATING_FEEDBACK) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip';
-            } else if (this.templateStatus === ResultTemplateStatus.HAS_RESULT && Result.isAthenaAIResult(this.result)) {
+            } else if (this.templateStatus === ResultTemplateStatus.HAS_RESULT && isAthenaAIResult(this.result)) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip';
             }
         }

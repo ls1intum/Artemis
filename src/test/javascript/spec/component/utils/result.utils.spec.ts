@@ -12,8 +12,10 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
+import dayjs from 'dayjs/esm';
 
 describe('ResultUtils', () => {
     it('should filter out all non unreferenced feedbacks', () => {
@@ -65,6 +67,16 @@ describe('ResultUtils', () => {
             expected: 'text-secondary',
         },
         { result: { score: undefined, successful: true }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
+        {
+            result: { score: 0, successful: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA },
+            templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
+            expected: 'text-secondary',
+        },
+        {
+            result: { score: 0, successful: true, assessmentType: AssessmentType.AUTOMATIC_ATHENA },
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: 'text-secondary',
+        },
         { result: { score: undefined, successful: false }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-danger' },
         { result: { score: MIN_SCORE_GREEN, testCaseCount: 1 }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-success' },
         { result: { score: MIN_SCORE_ORANGE, testCaseCount: 1 }, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'result-orange' },
@@ -113,6 +125,38 @@ describe('ResultUtils', () => {
         },
         {
             result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'This is a test case' }], testCaseCount: 1 },
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: faTimesCircle,
+        },
+        {
+            result: {
+                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result being generated test case' }],
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+                completionDate: dayjs().add(5, 'minutes'),
+            },
+            templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
+            expected: faCircleNotch,
+        },
+        {
+            result: {
+                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result >= 100' }],
+                participation: { type: ParticipationType.STUDENT, exercise: { type: ExerciseType.TEXT } },
+                successful: true,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                completionDate: dayjs().subtract(5, 'minutes'),
+            } as Result,
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: faCheckCircle,
+        },
+        {
+            result: {
+                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result < 100' }],
+                participation: { type: ParticipationType.STUDENT, exercise: { type: ExerciseType.TEXT } },
+                successful: false,
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                completionDate: dayjs().subtract(5, 'minutes'),
+            } as Result,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: faTimesCircle,
         },

@@ -1,10 +1,9 @@
 import { Location } from '@angular/common';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Data, Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, Data, Router, RouterModule } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
@@ -23,7 +22,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
@@ -62,7 +61,7 @@ describe('ExamDetailComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                RouterTestingModule.withRoutes([
+                RouterModule.forRoot([
                     { path: 'course-management/:courseId/exams/:examId/edit', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/exercise-groups', component: DummyComponent },
                     {
@@ -75,7 +74,6 @@ describe('ExamDetailComponent', () => {
                     { path: 'course-management/:courseId/exams/:examId/students', component: DummyComponent },
                     { path: 'course-management/:courseId/exams', component: DummyComponent },
                 ]),
-                HttpClientTestingModule,
                 ExerciseDetailDirective,
                 MockComponent(NoDataComponent),
             ],
@@ -101,6 +99,8 @@ describe('ExamDetailComponent', () => {
                 MockDirective(ExerciseDetailDirective),
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 {
                     provide: ActivatedRoute,
                     useValue: {

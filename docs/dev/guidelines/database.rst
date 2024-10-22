@@ -295,7 +295,7 @@ Best Practices
         // IrisSubSettings.java
         @Column(name = "allowed_models")
         @Convert(converter = IrisModelListConverter.class)
-        private TreeSet<String> allowedModels = new TreeSet<>();
+        private TreeSet<String> allowedVariants = new TreeSet<>();
 
 
   * **Ordered Collection with duplicates**: When you want to order the collection of (potentially duplicated) objects of the relationship, then always use a ``List``. It is important to note here that there is no inherent order in a database table. One could argue that you can use the ``id`` field for the ordering, but there are edge cases where this can lead to problems. Therefore, for an ordered collection with duplicates, **always** annotate it with ``@OrderColumn``. An order column indicates to Hibernate that we want to order our collection based on a specific column of our data table. By default, the column name it expects is *tablenameS\_order*. For ordered collections, we also recommend that you annotate them with ``cascade = CascadeType.ALL`` and ``orphanRemoval = true``. E.g.:
@@ -352,7 +352,7 @@ Solutions for known issues
 
  There is a problem with the way you save the associated objects. You must follow this procedure:
 
- #. Save the child entity (e.g., `Feedback <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/domain/Feedback.java>`_) without connection to the parent entity (e.g., `Result <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/domain/Result.java>`_)
+ #. Save the child entity (e.g., `Feedback <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/domain/Feedback.java>`_) without connection to the parent entity (e.g., `Result <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/domain/Result.java>`_)
  #. Add back the connection of the child entity to the parent entity.
  #. Save the parent entity.
  #. Always use the returned value after saving the entity, see: ``feedback = feedbackRepository.save(feedback);``

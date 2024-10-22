@@ -12,6 +12,7 @@ import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submi
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
+import { IrisModule } from 'app/iris/iris.module';
 
 @NgModule({
     imports: [
@@ -25,6 +26,7 @@ import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-parti
         RatingModule,
         ArtemisMarkdownModule,
         ArtemisTeamParticipeModule,
+        IrisModule,
     ],
     declarations: [TextEditorComponent, TextResultComponent],
     exports: [TextEditorComponent],

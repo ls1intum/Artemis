@@ -18,7 +18,7 @@
             "detailText": "Detailtext",
             "type": "Type",
             "result": "Ergebnis",
-            "truncatedInfo": "Das Feedback is zu lang, um komplett angezeigt zu werden, und wurde gekürzt.",
+            "truncatedInfo": "Das Feedback ist zu lang, um komplett angezeigt zu werden, und wurde gekürzt.",
             "downloadFullFeedback": "Vollständiges Feedback herunterladen",
             "modal": {
                 "submitted": "Abgegeben",

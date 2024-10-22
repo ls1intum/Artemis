@@ -5,13 +5,18 @@
             "recentlyAccessed": "Recently accessed courses",
             "otherCourses": "Other courses",
             "noCourses": "You are not enrolled in any courses. Enroll manually or contact your course instructor.",
+            "sort": "Sort",
             "exerciseTitle": "Current active exercise in \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Current exercise in \"{{ course }}\":",
             "examTitle": "Current exam in \"{{ course }}\":",
             "cardTitle": "Your overall points:",
             "noStatistics": "No statistics available",
             "cardNoExerciseLabel": "No exercise planned",
-            "cardExerciseLabel": "Next Exercise:",
+            "cardExerciseLabel": "Next Exercise",
+            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Points",
+            "cardScore": "Score",
+            "cardManageCourse": "Manage Course",
+            "noCoursesFound": "No Courses Found",
             "enroll": {
                 "title": "Course Enrollment",
                 "enrollSuccessful": "Enrollment successful",
@@ -65,6 +70,8 @@
                 "examChannels": "Exams",
                 "createChannel": "Create channel",
                 "browseChannels": "Browse channels",
+                "createGroupChat": "Create group chat",
+                "createDirectChat": "Create direct chat",
                 "groupChats": "Group Chats",
                 "directMessages": "Direct Messages",
                 "filterConversationPlaceholder": "Filter conversations"
@@ -88,7 +95,8 @@
                 "testExam": "Test Exam",
                 "communication": "Communication",
                 "plagiarismCases": "Plagiarism Cases",
-                "gradingSystem": "Grading System"
+                "gradingSystem": "Grading System",
+                "faq": "FAQ"
             },
             "exerciseFilter": {
                 "filter": "Filter",
@@ -97,6 +105,7 @@
                 "achievedScore": "Achieved Score",
                 "achievablePoints": "Achievable Points",
                 "applyFilter": "Apply filter",
+                "resetFilter": "Reset filter",
                 "clearFilter": "Clear filter",
                 "noFilterAvailable": "There are no distinguishing filter options for the existing exercises",
                 "noMoreOptions": "No more options"
@@ -297,7 +306,7 @@
                 "assessmentDue": "Assessment due:",
                 "assessmentDueTooltip": "The assessment is due by {{date}}.",
                 "complaintDue": "Complaint due:",
-                "complaintDueTooltip": "You can write a complain until {{date}}.",
+                "complaintDueTooltip": "You can write a complaint until {{date}}.",
                 "complaintPossible": "Complaint possible:",
                 "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint.",
                 "presented": "Presented:",

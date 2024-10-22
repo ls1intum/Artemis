@@ -9,12 +9,12 @@
             "examUsers": {
                 "uploadImage": "Upload images",
                 "uploadImageTooltip": "Upload images for the registered students",
-                "introText": "This dialog can be used to upload pdf file and extract images for registered students.",
+                "introText": "This dialog can be used to upload PDF file and extract images for registered students.",
                 "dialogText": "Each entry in the input file must contain a value for either matriculation number, login or email.\nValues for last and first name are optional.",
                 "pdfExampleText": "Example of a valid PDF file format:",
                 "pdfFile": {
-                    "label": "Select .pdf file",
-                    "tooltip": "Please select a .pdf file containing registered students image and matriculation number."
+                    "label": "Select PDF file",
+                    "tooltip": "Please select a PDF file containing registered students image and matriculation number."
                 },
                 "dialogTitle": "Upload images",
                 "allImagesSaved": "All images were saved successfully.",
@@ -150,6 +150,7 @@
             "falseName": "Entered name is incorrect. Please try again!",
             "notSet": "Not set",
             "startExamToolTip": "Button will be activated 5 minutes before the exam start.",
+            "yourSolution": "Your Solution",
             "cleanup": {
                 "title": "Cleanup",
                 "question": "Are you sure you want to clean up the exam <strong>{{ title }}</strong>? This will delete all student programming exercise repositories in the exam. This action can <strong class='text-danger'>NOT</strong> be undone!"
@@ -211,6 +212,7 @@
         },
         "examScores": {
             "xAxes": "Score in %",
+            "xAxesSuffix": " + {Grade Name}",
             "xAxesSuffixNoBonus": " + {Grade Name}",
             "xAxesSuffixBonus": " + {Bonus Points}",
             "yAxes": "Number of Participants",
@@ -470,6 +472,7 @@
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "exampleSolutionPublicationDateTooltip": "Students can see the example solutions for all exercises in the exam from this time onwards if they participated in the exam. Leave blank to disable.",
+            "studentReviewEnabled": "Student review enabled",
             "maxPoints": {
                 "title": "Maximum number of points for exam",
                 "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value. This also affects all students' grades in the exam!"
@@ -493,7 +496,7 @@
                 "realExam": "Exam",
                 "testExam": "Test Exam",
                 "examMode": "Mode",
-                "examModeTooltip": "Students can start working on a Test Exam once within the working window, the selected working time will be available during the conduction. Students recieve automated feedback after submitting. NOTE: This cannot be changed later on!",
+                "examModeTooltip": "Students can start working on a Test Exam once within the working window, the selected working time will be available during the conduction. Students receive automated feedback after submitting. NOTE: This cannot be changed later on!",
                 "startDate": "Start of working window",
                 "endDate": "End of working window",
                 "workingTimeTooltip": "The working time allowed to the students per run"
@@ -599,7 +602,26 @@
             "quizPool": "Quiz Pool",
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the exam to confirm."
+                "typeNameToConfirm": "Please type in the name of the exam to confirm.",
+                "summary": {
+                    "title": "Exam Summary",
+                    "numberExerciseGroups": "Number of Exercise Groups",
+                    "numberProgrammingExercises": "Number of Programming Exercises",
+                    "numberModelingExercises": "Number of Modeling Exercises",
+                    "numberTextExercises": "Number of Text Exercises",
+                    "numberFileUploadExercises": "Number of File Upload Exercises",
+                    "numberQuizExercises": "Number of Quiz Exercises",
+                    "numberRepositories": "Number of Repositories",
+                    "numberBuilds": "Number of Builds",
+                    "numberRegisteredStudents": "Number of Registered Students",
+                    "numberNotStartedExams": "Number of Exams (not started)",
+                    "numberStartedExams": "Number of Exams",
+                    "numberSubmittedExams": "Number of Exams (submitted)",
+                    "numberCommunicationPosts": "Number of Communication Posts",
+                    "numberAnswerPosts": "Number of Answer Posts",
+                    "isTestExam": "Test Exam",
+                    "isTestCourse": "Test Course"
+                }
             },
             "reset": {
                 "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted. Registered students and the exercise configurations will remain. This action can NOT be undone!",
@@ -641,7 +663,7 @@
                     "suspiciousBehavior": "Check for suspicious behaviour"
                 },
                 "descriptionItem": {
-                    "register": "You can register students for the exam in three different ways: via a .csv file, manually, or by importing all students registered in the course.",
+                    "register": "You can register students for the exam in three different ways: via a CSV file, manually, or by importing all students registered in the course.",
                     "exerciseGroups": "You can create exercise groups with multiple exercise variants to make cheating for students more difficult. The points in all exercises within a given exercise group must be identical, and the number of exercise groups must equal the exam's number of exercises.",
                     "generateStudentExams": "You need to generate exams for all registered students before starting the exam. Their working time can be adjusted individually.\nAdditionally, the commits of the templates in programming exercises will be combined into one commit.",
                     "prepareExerciseStart": "You need to prepare the exercises before the exam starts.",
@@ -652,7 +674,7 @@
                     "examReview": "Make sure to have all dates specified correctly.",
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
-                    "exportResults": "Exports the exam results as a .csv file.",
+                    "exportResults": "Exports the exam results as a CSV file.",
                     "editWorkingTime": "Until one minute before the end of the exam, you can extend its duration.",
                     "createAnnouncement": "To communicate important information to all students working on the exam right now, you can make an announcement. It will be distributed and displayed to all students immediately.",
                     "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."

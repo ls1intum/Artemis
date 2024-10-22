@@ -30,9 +30,9 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
-import { RouterTestingModule } from '@angular/router/testing';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { RouterModule } from '@angular/router';
 
 @Component({
     template: '',
@@ -51,11 +51,11 @@ describe('CourseExerciseRowComponent', () => {
             imports: [
                 ArtemisTestModule,
                 TranslateModule.forRoot(),
-                NgbModule,
-                RouterTestingModule.withRoutes([
+                RouterModule.forRoot([
                     { path: 'courses/:courseId/exercises', component: DummyComponent },
                     { path: 'courses/:courseId/exercises/:exerciseId', component: DummyComponent },
                 ]),
+                NgbModule,
             ],
             declarations: [
                 MockComponent(SubmissionResultStatusComponent),
