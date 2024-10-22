@@ -2,14 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import {
-    Competency,
-    CompetencyLectureUnitLink,
-    CompetencyRelation,
-    CompetencyWithTailRelationDTO,
-    CourseCompetencyProgress,
-    CourseCompetencyType,
-} from 'app/entities/competency.model';
+import { Competency, CompetencyLectureUnitLink, CompetencyWithTailRelationDTO, CourseCompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
 import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -31,7 +24,6 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { CompetencyRelationGraphStubComponent } from './competency-relation-graph-stub.component';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
@@ -49,7 +41,6 @@ describe('CompetencyManagementComponent', () => {
     let modalService: NgbModal;
 
     let getAllForCourseSpy: any;
-    let getCompetencyRelationsSpy: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -57,7 +48,6 @@ describe('CompetencyManagementComponent', () => {
             declarations: [
                 CompetencyManagementComponent,
                 MockHasAnyAuthorityDirective,
-                CompetencyRelationGraphStubComponent,
                 MockComponent(DocumentationButtonComponent),
                 MockComponent(ImportAllCompetenciesComponent),
                 MockComponent(CompetencyManagementTableComponent),
@@ -110,7 +100,6 @@ describe('CompetencyManagementComponent', () => {
                         type: CourseCompetencyType.PREREQUISITE,
                     } as Prerequisite,
                 ]);
-                getCompetencyRelationsSpy = jest.spyOn(courseCompetencyApiService, 'getCourseCompetencyRelations').mockResolvedValue([{ id: 1 } as CompetencyRelation]);
             });
     });
 
@@ -146,7 +135,6 @@ describe('CompetencyManagementComponent', () => {
         await component.loadData();
 
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(getCompetencyRelationsSpy).toHaveBeenCalledOnce();
 
         expect(component.competencies).toHaveLength(2);
         expect(component.prerequisites).toHaveLength(1);
@@ -177,7 +165,6 @@ describe('CompetencyManagementComponent', () => {
         jest.spyOn(courseCompetencyApiService, 'importAllByCourseId').mockResolvedValue(importedCompetencies);
         await component.loadData();
         const existingCompetencies = component.competencies.length;
-        const existingRelations = component.relations.length;
 
         const importButton = fixture.debugElement.query(By.css('#courseCompetencyImportAllButton'));
         importButton.nativeElement.click();
@@ -191,80 +178,5 @@ describe('CompetencyManagementComponent', () => {
         await fixture.whenStable();
 
         expect(component.competencies).toHaveLength(existingCompetencies + 2);
-        expect(component.relations).toHaveLength(existingRelations + 1);
-    });
-
-    it('should handle create relation callback', async () => {
-        const relation: CompetencyRelation = { id: 1 };
-        jest.spyOn(courseCompetencyApiService, 'createCourseCompetencyRelation').mockResolvedValue(relation);
-
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        const existingRelations = component.relations.length;
-
-        const relationGraph: CompetencyRelationGraphStubComponent = fixture.debugElement.query(By.directive(CompetencyRelationGraphStubComponent)).componentInstance;
-        expect(relationGraph).toBeDefined();
-        relationGraph.onCreateRelation.emit(relation);
-
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(component.relations).toHaveLength(existingRelations + 1);
-    });
-
-    it('should handle remove relation callback', () => {
-        const modalRef = {
-            result: Promise.resolve(),
-            componentInstance: {},
-        } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
-
-        fixture.detectChanges();
-
-        const relationGraph: CompetencyRelationGraphStubComponent = fixture.debugElement.query(By.directive(CompetencyRelationGraphStubComponent)).componentInstance;
-        relationGraph.onRemoveRelation.emit(1);
-        fixture.detectChanges();
-
-        expect(modalService.open).toHaveBeenCalledOnce();
-    });
-
-    it('should remove relation', async () => {
-        jest.spyOn(courseCompetencyApiService, 'deleteCourseCompetencyRelation').mockResolvedValue();
-        fixture.detectChanges();
-        component.relations = <CompetencyRelation[]>[{ id: 1, headCompetency: { id: 5 }, tailCompetency: { id: 3 } }];
-
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        expect(component.relations).toHaveLength(1);
-
-        await component['removeRelation'](1);
-
-        expect(component.relations).toHaveLength(0);
-    });
-
-    it('should remove competency and its relation', () => {
-        component.competencies = [
-            { id: 1, type: CourseCompetencyType.COMPETENCY },
-            { id: 2, type: CourseCompetencyType.COMPETENCY },
-        ];
-        component.prerequisites = [{ id: 3, type: CourseCompetencyType.PREREQUISITE }];
-        component.courseCompetencies = component.competencies.concat(component.prerequisites);
-        component.relations = [
-            { id: 1, tailCompetency: component.competencies.first(), headCompetency: component.competencies.last() },
-            { id: 2, tailCompetency: component.competencies.last(), headCompetency: component.prerequisites.first() },
-            { id: 3, tailCompetency: component.prerequisites.first(), headCompetency: component.competencies.first() },
-        ];
-
-        component.onRemoveCompetency(2);
-
-        expect(component.relations).toHaveLength(1);
-        expect(component.relations.first()?.id).toBe(3);
-        expect(component.competencies).toHaveLength(1);
-        expect(component.competencies.first()?.id).toBe(1);
-        expect(component.prerequisites).toHaveLength(1);
-        expect(component.prerequisites.first()?.id).toBe(3);
     });
 });
