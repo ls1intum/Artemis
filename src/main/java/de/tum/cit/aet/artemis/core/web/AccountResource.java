@@ -45,8 +45,8 @@ import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
-import de.tum.cit.aet.artemis.exercise.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
+import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.programming.service.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService;
 

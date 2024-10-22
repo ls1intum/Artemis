@@ -18,8 +18,8 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.exercise.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
+import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 
