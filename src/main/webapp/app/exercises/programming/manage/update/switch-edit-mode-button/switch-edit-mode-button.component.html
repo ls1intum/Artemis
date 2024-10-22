@@ -5,4 +5,5 @@
     [icon]="faHandShakeAngle"
     [title]="isSimpleMode() ? 'artemisApp.programmingExercise.home.switchToAdvancedMode' : 'artemisApp.programmingExercise.home.switchToSimpleMode'"
     (onClick)="toggleEditMode()"
+    [disabled]="disabled()"
 />

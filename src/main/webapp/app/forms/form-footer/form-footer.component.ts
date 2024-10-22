@@ -22,6 +22,7 @@ export class FormFooterComponent {
     isImport = input<boolean>();
     isCreation = input<boolean>();
     isSimpleMode = input<boolean>();
+    areAuxiliaryRepositoriesValid = input<boolean>(true);
 
     @Output() notificationTextChange = new EventEmitter<string>();
     @Output() save = new EventEmitter<void>();

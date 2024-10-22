@@ -1,4 +1,20 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, QueryList, SimpleChanges, ViewChild, ViewChildren, effect, inject, input, signal, viewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    Component,
+    Input,
+    OnChanges,
+    OnDestroy,
+    QueryList,
+    SimpleChanges,
+    ViewChild,
+    ViewChildren,
+    effect,
+    inject,
+    input,
+    model,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -39,6 +55,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     isSimpleMode = input.required<boolean>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
     courseId = input<number>();
+    isAuxiliaryRepositoryInputValid = model.required<boolean>();
 
     exerciseTitleChannelComponent = viewChild<ExerciseTitleChannelNameComponent>('titleChannelNameComponent');
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
@@ -156,15 +173,22 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     areAuxiliaryRepositoriesValid(): boolean {
-        return (
+        const areAuxiliaryRepositoriesValid =
             (every(
                 this.tableEditableFields?.map((field) => field.editingInput.valid),
                 Boolean,
             ) &&
                 !this.programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateDirectories &&
                 !this.programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateNames) ||
-            !this.programmingExercise().auxiliaryRepositories?.length
-        );
+            !this.programmingExercise().auxiliaryRepositories?.length;
+
+        const isAuxRepoEditingPossibleInCurrentEditMode = !this.isSimpleMode() || this.isEditFieldDisplayedRecord().addAuxiliaryRepository;
+        if (isAuxRepoEditingPossibleInCurrentEditMode) {
+            // if editing is not possible the field will not be displayed and validity checks will evaluate to true,
+            // even if the actual current setting is invalid
+            this.isAuxiliaryRepositoryInputValid.set(areAuxiliaryRepositoriesValid);
+        }
+        return areAuxiliaryRepositoriesValid;
     }
 
     isUpdateTemplateFilesValid(): boolean {

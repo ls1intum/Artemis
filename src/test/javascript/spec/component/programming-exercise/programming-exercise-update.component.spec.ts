@@ -910,7 +910,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         });
 
         it('find validation errors for invalid auxiliary repositories', () => {
-            comp.auxiliaryRepositoriesValid = false;
+            comp.auxiliaryRepositoriesValid.set(false);
             expect(comp.getInvalidReasons()).toContainEqual({
                 translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
                 translateValues: {},

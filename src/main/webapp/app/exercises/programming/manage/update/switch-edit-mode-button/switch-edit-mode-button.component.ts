@@ -17,6 +17,7 @@ export class SwitchEditModeButtonComponent {
     switchEditMode = output<void>();
     isSimpleMode = input.required<boolean>();
     buttonSize = input<ButtonSize>(ButtonSize.MEDIUM);
+    disabled = input<boolean>(true);
 
     protected toggleEditMode(): void {
         this.switchEditMode.emit();

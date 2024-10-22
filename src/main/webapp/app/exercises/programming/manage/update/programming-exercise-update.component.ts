@@ -76,6 +76,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     packageNamePattern = '';
     isSimpleMode = signal<boolean>(true);
+    isAuxiliaryRepositoryInputValid = signal<boolean>(true);
 
     isEditFieldDisplayedRecord = computed(() => {
         const inputFieldEditModeMapping = IS_DISPLAYED_IN_SIMPLE_MODE;
@@ -144,7 +145,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public sequentialTestRunsAllowed = false;
     public testwiseCoverageAnalysisSupported = false;
     public auxiliaryRepositoriesSupported = false;
-    public auxiliaryRepositoriesValid = true;
+    auxiliaryRepositoriesValid = signal<boolean>(true);
     public customBuildPlansSupported: string = '';
     public theiaEnabled = false;
 
@@ -260,7 +261,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.auxiliaryRepositoryNamedCorrectly = this.programmingExercise.auxiliaryRepositories!.length === auxReposWithName?.length && !legalNameAndDirs;
 
         // Combining auxiliary variables to one to keep the template readable
-        this.auxiliaryRepositoriesValid = this.auxiliaryRepositoryNamedCorrectly && !this.auxiliaryRepositoryDuplicateNames && !this.auxiliaryRepositoryDuplicateDirectories;
+        this.auxiliaryRepositoriesValid.set(this.auxiliaryRepositoryNamedCorrectly && !this.auxiliaryRepositoryDuplicateNames && !this.auxiliaryRepositoryDuplicateDirectories);
     }
 
     /**
@@ -1122,7 +1123,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExerciseAuxiliaryRepositories(validationErrorReasons: ValidationReason[]): void {
-        if (!this.auxiliaryRepositoriesValid) {
+        if (!this.auxiliaryRepositoriesValid()) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
                 translateValues: {},
