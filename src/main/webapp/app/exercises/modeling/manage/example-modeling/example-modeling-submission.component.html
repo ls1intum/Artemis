@@ -183,13 +183,15 @@
                         <textarea class="form-control" rows="4" maxLength="2000" [(ngModel)]="assessmentExplanation" [disabled]="readOnly"></textarea>
                     }
                     @if (assessmentMode) {
-                        <jhi-unreferenced-feedback
-                            [(feedbacks)]="unreferencedFeedback"
-                            [readOnly]="readOnly"
-                            [addReferenceIdForExampleSubmission]="true"
-                            (feedbacksChange)="onUnReferencedFeedbackChanged($event)"
-                            [resultId]="result.id!"
-                        />
+                        @if (result && result.id) {
+                            <jhi-unreferenced-feedback
+                                [(feedbacks)]="unreferencedFeedback"
+                                [readOnly]="readOnly"
+                                [addReferenceIdForExampleSubmission]="true"
+                                (feedbacksChange)="onUnReferencedFeedbackChanged($event)"
+                                [resultId]="result.id!"
+                            />
+                        }
                     }
                 </div>
                 @if (exercise) {

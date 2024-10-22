@@ -159,13 +159,15 @@
     <!--endregion-->
 </jhi-resizeable-container>
 @if (state.ui === UIStates.ASSESSMENT) {
-    <jhi-unreferenced-feedback
-        [(feedbacks)]="unreferencedFeedback"
-        [readOnly]="readOnly"
-        [addReferenceIdForExampleSubmission]="true"
-        (feedbacksChange)="validateFeedback()"
-        [resultId]="result?.id!"
-    />
+    @if (result && result.id) {
+        <jhi-unreferenced-feedback
+            [(feedbacks)]="unreferencedFeedback"
+            [readOnly]="readOnly"
+            [addReferenceIdForExampleSubmission]="true"
+            (feedbacksChange)="validateFeedback()"
+            [resultId]="result.id"
+        />
+    }
 }
 @if (toComplete) {
     <div class="col-12 text-end pt-2">

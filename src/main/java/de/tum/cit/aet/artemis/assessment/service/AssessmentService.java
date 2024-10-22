@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +14,12 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateBaseDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
@@ -251,6 +254,9 @@ public class AssessmentService {
         return result;
     }
 
+    @Autowired
+    private LongFeedbackTextRepository longFeedbackTextRepository;
+
     /**
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
      * database. If a result with the given id exists, it will be overridden. if not, a new result will be created.
@@ -282,6 +288,17 @@ public class AssessmentService {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userRepository.getUser();
         result.setAssessor(user);
+
+        for (Feedback feedback : feedbackList) {
+            if (feedback.getHasLongFeedbackText()) {
+                Optional<LongFeedbackText> existingLongFeedbackText = longFeedbackTextRepository.findByFeedbackId(feedback.getId());
+                if (existingLongFeedbackText.isPresent()) {
+                    LongFeedbackText longFeedbackText = existingLongFeedbackText.get();
+                    longFeedbackText.setText(feedback.getDetailText());
+                    longFeedbackTextRepository.delete(longFeedbackText);
+                }
+            }
+        }
 
         result.updateAllFeedbackItems(feedbackList, false);
         result.determineAssessmentType();
