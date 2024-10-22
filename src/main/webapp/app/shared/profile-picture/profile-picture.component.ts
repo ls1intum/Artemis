@@ -25,10 +25,10 @@ export class ProfilePictureComponent implements OnInit, OnChanges {
     readonly defaultPictureId = input<string>('');
     readonly isEditable = input<boolean>(false);
 
-    protected profilePictureBackgroundColor: string;
-    protected userProfilePictureInitials: string;
-    protected imageSize: string;
-    protected fontSize: string;
+    profilePictureBackgroundColor: string;
+    userProfilePictureInitials: string;
+    imageSize: string;
+    fontSize: string;
 
     // Icons
     faCog = faCog;
