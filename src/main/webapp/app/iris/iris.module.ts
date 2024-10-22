@@ -22,6 +22,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
 import { ChatStatusBarComponent } from 'app/iris/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.component';
+import { IrisEventSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-event-settings-update/iris-event-settings-update.component';
 
 @NgModule({
     declarations: [
@@ -50,6 +51,7 @@ import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.c
         ArtemisSharedComponentModule,
         RouterModule,
         FeatureToggleModule,
+        IrisEventSettingsUpdateComponent,
     ],
     exports: [IrisExerciseChatbotButtonComponent, IrisEnabledComponent, IrisLogoButtonComponent, IrisBaseChatbotComponent, CourseChatbotComponent],
 })

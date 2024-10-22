@@ -7,6 +7,8 @@ import java.time.ZoneId;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,11 +21,14 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -41,6 +46,8 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 @Profile(PROFILE_IRIS)
 public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
 
+    private static final Logger log = LoggerFactory.getLogger(IrisCourseChatSessionService.class);
+
     private final IrisMessageService irisMessageService;
 
     private final IrisSettingsService irisSettingsService;
@@ -55,11 +62,18 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private final IrisCourseChatSessionRepository irisCourseChatSessionRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     private final PyrisPipelineService pyrisPipelineService;
+
+    private final SubmissionRepository submissionRepository;
+
+    private final double SUCCESS_THRESHOLD = 80.0; // TODO: Retrieve configuration from Iris settings
 
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper) {
+            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper,
+            StudentParticipationRepository studentParticipationRepository, SubmissionRepository submissionRepository) {
         super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -69,6 +83,8 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         this.rateLimitService = rateLimitService;
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.pyrisPipelineService = pyrisPipelineService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -120,10 +136,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         requestAndHandleResponse(session, variant, null);
     }
 
-    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, CompetencyJol competencyJol) {
+    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, Object object) {
         var chatSession = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-
-        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, competencyJol);
+        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, object);
     }
 
     /**
@@ -154,13 +169,13 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     public void onJudgementOfLearningSet(CompetencyJol competencyJol) {
         var course = competencyJol.getCompetency().getCourse();
-        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.CHAT, course)) {
-            return;
-        }
+
+        irisSettingsService.isActivatedForElseThrow(IrisEventType.JOL, course);
+
         var user = competencyJol.getUser();
         user.hasAcceptedIrisElseThrow();
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
-        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "jol", competencyJol));
+        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "default", competencyJol));
     }
 
     /**

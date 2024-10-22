@@ -19,7 +19,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisProactivitySubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisBuildFailedEventSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisJolEventSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisProgressStalledEventSettings;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -62,6 +67,15 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         activateSubSettings(globalSettings.getIrisLectureIngestionSettings());
         activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
         activateSubSettings(globalSettings.getIrisTextExerciseChatSettings());
+        activateProactivitySettings(globalSettings.getIrisProactivitySettings());
+
+        // Active Iris events
+        var eventSettings = globalSettings.getIrisProactivitySettings().getEventSettings();
+
+        activateEventSettingsFor(IrisProgressStalledEventSettings.class, eventSettings);
+        activateEventSettingsFor(IrisBuildFailedEventSettings.class, eventSettings);
+        activateEventSettingsFor(IrisJolEventSettings.class, eventSettings);
+
         irisSettingsRepository.save(globalSettings);
     }
 
@@ -76,6 +90,51 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         settings.setAllowedVariants(new TreeSet<>(Set.of("default")));
     }
 
+    /**
+     * Activates the proactivity settings.
+     *
+     * @param settings the proactivity settings to be activated
+     */
+    private void activateProactivitySettings(IrisProactivitySubSettings settings) {
+        settings.setEnabled(true);
+    }
+
+    /**
+     * Activates the given event settings for the given type of event.
+     *
+     * @param eventSettingsClass the type of event settings
+     * @param settings           the settings to be activated
+     */
+    private <S extends IrisEventSettings> void activateEventSettingsFor(Class<S> eventSettingsClass, Set<IrisEventSettings> settings) {
+        settings.stream().filter(e -> e != null && e.getClass() == eventSettingsClass).forEach(e -> {
+            e.setEnabled(true);
+        });
+    }
+
+    /**
+     * Deactivates the given event settings for the given type of event on the course.
+     *
+     * @param eventSettingsClass the type of event settings
+     * @param course             the course for which the settings should be deactivated
+     */
+    public <S extends IrisEventSettings> void deactivateEventSettingsFor(Class<S> eventSettingsClass, Course course) {
+        var courseSettings = irisSettingsService.getRawIrisSettingsFor(course);
+        var eventSettings = courseSettings.getIrisProactivitySettings().getEventSettings();
+
+        deactivateEventSettingsFor(eventSettingsClass, eventSettings);
+        irisSettingsRepository.save(courseSettings);
+    }
+
+    /**
+     * Deactivates the given event settings for the given type of event.
+     *
+     * @param eventSettingsClass the type of event settings
+     * @param settings           the settings to be deactivated
+     */
+    private <S extends IrisEventSettings> void deactivateEventSettingsFor(Class<S> eventSettingsClass, Set<IrisEventSettings> settings) {
+        settings.stream().filter(e -> e != null && e.getClass() == eventSettingsClass).forEach(e -> e.setEnabled(false));
+    }
+
     protected void activateIrisFor(Course course) {
         var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
 
@@ -86,6 +145,15 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         activateSubSettings(courseSettings.getIrisLectureIngestionSettings());
 
         activateSubSettings(courseSettings.getIrisTextExerciseChatSettings());
+
+        activateProactivitySettings(courseSettings.getIrisProactivitySettings());
+
+        // Active Iris events
+        var eventSettings = courseSettings.getIrisProactivitySettings().getEventSettings();
+
+        activateEventSettingsFor(IrisProgressStalledEventSettings.class, eventSettings);
+        activateEventSettingsFor(IrisBuildFailedEventSettings.class, eventSettings);
+        activateEventSettingsFor(IrisJolEventSettings.class, eventSettings);
 
         irisSettingsRepository.save(courseSettings);
     }

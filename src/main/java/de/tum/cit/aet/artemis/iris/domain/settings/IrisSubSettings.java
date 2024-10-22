@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class IrisSubSettings extends DomainObject {
+public abstract class IrisSubSettings extends DomainObject implements IrisToggleableSetting {
 
     @Column(name = "enabled")
     private boolean enabled = false;
