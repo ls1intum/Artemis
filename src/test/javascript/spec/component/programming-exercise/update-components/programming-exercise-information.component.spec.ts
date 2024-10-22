@@ -142,7 +142,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
 
         it('should derive shortname from title when directly derived shortname is already taken', () => {
             fixture.componentRef.setInput('isSimpleMode', true);
-            comp.alreadyUsedShortNames.set(['TestExercise']);
+            comp.alreadyUsedShortNames.set(new Set(['TestExercise']));
 
             comp.programmingExercise().title = 'Test Exercise';
             fixture.detectChanges();
