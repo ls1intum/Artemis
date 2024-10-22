@@ -28,14 +28,32 @@ class UserAccountLocalVcsIntegrationTest extends AbstractSpringIntegrationLocalC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getUserSshPublicKeys() throws Exception {
+        userTestService.getUserSshPublicKeys();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void addSshPublicKeyForUser() throws Exception {
         userTestService.addUserSshPublicKey();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void addSshPublicKeyForUserWithoutLabel() throws Exception {
+        userTestService.addUserSshPublicKeyWithOutLabel();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void failToAddSameSshPublicKeyTwiceForUser() throws Exception {
         userTestService.failToAddPublicSSHkeyTwice();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void failToAddOrDeleteSshPublicKeyWithInvalidKeyId() throws Exception {
+        userTestService.failToAddOrDeleteWithInvalidKeyId();
     }
 
     @Test

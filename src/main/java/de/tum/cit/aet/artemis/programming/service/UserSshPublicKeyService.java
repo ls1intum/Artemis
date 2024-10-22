@@ -131,6 +131,7 @@ public class UserSshPublicKeyService {
      * Returns whether the user of the specified id has stored SSH keys
      *
      * @param userId the ID of the user.
+     * @return true if the user has SSH keys, false if not
      * @throws AccessForbiddenException if the key does not belong to the user.
      */
     public Boolean hasUserSSHkeys(Long userId) {

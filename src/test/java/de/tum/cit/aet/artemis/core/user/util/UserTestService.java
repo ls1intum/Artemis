@@ -127,6 +127,10 @@ public class UserTestService {
 
     private static final int NUMBER_OF_INSTRUCTORS = 1;
 
+    private static final String sshKey1 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJxKWdvcbNTWl4vBjsijoY5HN5dpjxU40huy1PFpdd2o keyComment1 many comments";
+
+    private static final String sshKey2 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i";
+
     @Autowired
     private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
@@ -878,16 +882,18 @@ public class UserTestService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_PLAIN);
         User user = userTestRepository.getUser();
-        var validKey = postNewKeyToServer();
 
-    }
+        var validKey = createNewValidSSHKey(user, sshKey1);
+        postNewValidKeyToServer(validKey);
 
-    public void getUserSshPublicKey() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-        User user = userTestRepository.getUser();
-        var validKey = postNewKeyToServer();
+        List<UserSshPublicKey> response = request.getList("/api/account/ssh-public-keys", HttpStatus.OK, UserSshPublicKey.class);
+        System.out.println(response);
+        assertThat(response.size()).isEqualTo(1);
+        UserSshPublicKey userKey = response.getFirst();
 
+        request.get("/api/account/ssh-public-key?keyId=" + userKey.getId(), HttpStatus.OK, UserSshPublicKey.class);
+        var hasSSHkeys = request.get("/api/account/has-ssh-public-keys", HttpStatus.OK, Boolean.class);
+        assertThat(hasSSHkeys).isTrue();
     }
 
     // Test
@@ -895,22 +901,37 @@ public class UserTestService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_PLAIN);
         User user = userTestRepository.getUser();
-        var validKey = postNewKeyToServer();
+
+        var validKey = createNewValidSSHKey(user, sshKey1);
+        postNewValidKeyToServer(validKey);
 
         var storedUserKey = userSshPublicKeyRepository.findAllByUserId(user.getId()).getFirst();
         assertThat(storedUserKey).isNotNull();
         assertThat(storedUserKey.getPublicKey()).isEqualTo(validKey.getPublicKey());
     }
 
-    private UserSshPublicKey postNewKeyToServer() throws Exception {
+    // Test
+    public void addUserSshPublicKeyWithOutLabel() throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
         User user = userTestRepository.getUser();
-        var validKey = createNewValidSSHKey(user);
 
+        var validKey = createNewValidSSHKey(user, sshKey1);
+        validKey.setLabel(null);
+        postNewValidKeyToServer(validKey);
+
+        var validKey2 = createNewValidSSHKey(user, sshKey2);
+        validKey.setLabel("");
+        postNewValidKeyToServer(validKey2);
+
+        var storedUserKeys = userSshPublicKeyRepository.findAllByUserId(user.getId());
+        assertThat(storedUserKeys.size()).isEqualTo(2);
+    }
+
+    private void postNewValidKeyToServer(UserSshPublicKey key) throws Exception {
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-        String json = ow.writeValueAsString(validKey);
-
+        String json = ow.writeValueAsString(key);
         request.putWithResponseBody("/api/account/ssh-public-key", json, String.class, HttpStatus.OK, true);
-        return validKey;
     }
 
     // Test
@@ -919,7 +940,7 @@ public class UserTestService {
         headers.setContentType(MediaType.TEXT_PLAIN);
         User user = userTestRepository.getUser();
 
-        var validKey = createNewValidSSHKey(user);
+        var validKey = createNewValidSSHKey(user, sshKey1);
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         String json = ow.writeValueAsString(validKey);
 
@@ -928,12 +949,30 @@ public class UserTestService {
     }
 
     // Test
+    public void failToAddOrDeleteWithInvalidKeyId() throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        User user = userTestRepository.getUser();
+
+        var validKey = createNewValidSSHKey(user, sshKey1);
+        postNewValidKeyToServer(validKey);
+        var userKey = userSshPublicKeyRepository.findAll().getFirst();
+        userKey.setUserId(12L);
+        userSshPublicKeyRepository.save(userKey);
+
+        request.delete("/api/account/ssh-public-key?keyId=3443", HttpStatus.FORBIDDEN);
+        request.get("/api/account/ssh-public-key?keyId=43443", HttpStatus.NOT_FOUND, UserSshPublicKey.class);
+        request.get("/api/account/ssh-public-key?keyId=" + userKey.getId(), HttpStatus.FORBIDDEN, UserSshPublicKey.class);
+
+    }
+
+    // Test
     public void failToAddInvalidPublicSSHkey() throws Exception {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.TEXT_PLAIN);
 
         User user = userTestRepository.getUser();
-        var userKey = createNewValidSSHKey(user);
+        var userKey = createNewValidSSHKey(user, sshKey1);
         userKey.setPublicKey("Invalid Key");
 
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
@@ -948,7 +987,7 @@ public class UserTestService {
         headers.setContentType(MediaType.TEXT_PLAIN);
         User user = userTestRepository.getUser();
 
-        var validKey = createNewValidSSHKey(user);
+        var validKey = createNewValidSSHKey(user, sshKey1);
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         String json = ow.writeValueAsString(validKey);
 
@@ -1205,10 +1244,9 @@ public class UserTestService {
         }
     }
 
-    public static UserSshPublicKey createNewValidSSHKey(User user) {
+    public static UserSshPublicKey createNewValidSSHKey(User user, String keyString) {
         UserSshPublicKey userSshPublicKey = new UserSshPublicKey();
-        String validKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i email@abc.de";
-        userSshPublicKey.setPublicKey(validKey);
+        userSshPublicKey.setPublicKey(keyString);
         userSshPublicKey.setLabel("Key 1");
         userSshPublicKey.setUserId(user.getId());
         return userSshPublicKey;
