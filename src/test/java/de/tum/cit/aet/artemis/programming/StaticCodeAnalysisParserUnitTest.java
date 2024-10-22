@@ -75,6 +75,11 @@ class StaticCodeAnalysisParserUnitTest {
     }
 
     @Test
+    void testRuffParser() throws IOException {
+        testParserWithFile("ruff.sarif", "ruff.json");
+    }
+
+    @Test
     void testParseInvalidXML() throws IOException {
         assertThatCode(() -> testParserWithFileNamed("invalid_xml.xml", "pmd.xml", "invalid_xml.txt")).isInstanceOf(RuntimeException.class);
     }
