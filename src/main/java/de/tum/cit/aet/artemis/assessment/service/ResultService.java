@@ -599,15 +599,9 @@ public class ResultService {
                 pageable);
 
         // 7. Process feedback details
+        // Map to index (+1 for 1-based indexing)
         List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> {
-            String taskIndex = tasks.stream().filter(task -> task.getTaskName().equals(detail.taskNumber())).findFirst().map(task -> String.valueOf(tasks.indexOf(task) + 1)) // Map
-                                                                                                                                                                              // to
-                                                                                                                                                                              // task
-                                                                                                                                                                              // index
-                                                                                                                                                                              // (+1
-                                                                                                                                                                              // for
-                                                                                                                                                                              // 1-based
-                                                                                                                                                                              // indexing)
+            String taskIndex = tasks.stream().filter(task -> task.getTaskName().equals(detail.taskNumber())).findFirst().map(task -> String.valueOf(tasks.indexOf(task) + 1))
                     .orElse("0");
             return new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), taskIndex, "StudentError");
         }).toList();
