@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -34,7 +35,6 @@ import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseCompetencyProgressDTO;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -61,8 +61,6 @@ public class CompetencyProgressService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
-    private final UserRepository userRepository;
-
     private final CourseCompetencyRepository courseCompetencyRepository;
 
     private static final int MIN_EXERCISES_RECENCY_CONFIDENCE = 3;
@@ -75,7 +73,7 @@ public class CompetencyProgressService {
 
     private static final double CONFIDENCE_REASON_DEADZONE = 0.05;
 
-    public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, LearningPathService learningPathService,
+    public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, LearningPathService learningPathService,
             ParticipantScoreService participantScoreService, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             CourseCompetencyRepository courseCompetencyRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
@@ -83,7 +81,6 @@ public class CompetencyProgressService {
         this.participantScoreService = participantScoreService;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
-        this.userRepository = userRepository;
     }
 
     /**
@@ -127,19 +124,6 @@ public class CompetencyProgressService {
         List<CompetencyProgress> existingProgress = competencyProgressRepository.findAllByCompetencyId(competency.getId());
         log.debug("Updating competency progress for {} users.", existingProgress.size());
         existingProgress.stream().map(CompetencyProgress::getUser).forEach(user -> updateCompetencyProgress(competency.getId(), user));
-    }
-
-    /**
-     * Asynchronously update the progress of all users in the course for a specific competency
-     *
-     * @param competency The competency for which to update all existing student progress
-     */
-    @Async
-    public void updateProgressByCompetencyAndUsersInCourseAsync(CourseCompetency competency) {
-        SecurityUtils.setAuthorizationObject(); // Required for async
-        Set<User> users = userRepository.getUsersInCourse(competency.getCourse());
-        log.debug("Updating competency progress for {} users.", users.size());
-        users.forEach(user -> updateCompetencyProgress(competency.getId(), user));
     }
 
     /**
@@ -308,12 +292,15 @@ public class CompetencyProgressService {
         double recencyConfidenceHeuristic = calculateRecencyConfidenceHeuristic(participantScoreInfos);
         double difficultyConfidenceHeuristic = calculateDifficultyConfidenceHeuristic(participantScoreInfos, exerciseInfos);
         double quickSolveConfidenceHeuristic = calculateQuickSolveConfidenceHeuristic(participantScoreInfos);
+        double competencyLinkWeightConfidenceHeuristic = calculateCompetencyLinkWeightConfidenceHeuristic(participantScoreInfos);
 
         // Standard factor of 1 (no change to mastery compared to progress) plus the confidence heuristics
-        double confidence = DEFAULT_CONFIDENCE + recencyConfidenceHeuristic + difficultyConfidenceHeuristic + quickSolveConfidenceHeuristic;
+        double confidence = DEFAULT_CONFIDENCE + recencyConfidenceHeuristic + difficultyConfidenceHeuristic + quickSolveConfidenceHeuristic
+                + competencyLinkWeightConfidenceHeuristic;
+        confidence = Math.clamp(confidence, 0, 2);
 
         competencyProgress.setConfidence(confidence);
-        setConfidenceReason(competencyProgress, recencyConfidenceHeuristic, difficultyConfidenceHeuristic, quickSolveConfidenceHeuristic);
+        setConfidenceReason(competencyProgress, recencyConfidenceHeuristic, difficultyConfidenceHeuristic, quickSolveConfidenceHeuristic, competencyLinkWeightConfidenceHeuristic);
     }
 
     /**
@@ -421,40 +408,79 @@ public class CompetencyProgressService {
         return Math.clamp(quickSolveConfidence, -MAX_CONFIDENCE_HEURISTIC, MAX_CONFIDENCE_HEURISTIC);
     }
 
+    private double calculateCompetencyLinkWeightConfidenceHeuristic(@NotNull Set<CompetencyExerciseMasteryCalculationDTO> participantScores) {
+        if (participantScores.isEmpty()) {
+            return 0;
+        }
+
+        double achievedPoints = participantScores.stream().mapToDouble(CompetencyExerciseMasteryCalculationDTO::lastPoints).sum();
+        double maxPoints = participantScores.stream().mapToDouble(CompetencyExerciseMasteryCalculationDTO::maxPoints).sum();
+        double proportionOfAchievedPoints = achievedPoints / maxPoints;
+
+        if (proportionOfAchievedPoints == 0) {
+            return 0;
+        }
+
+        double weightedAchievedPoints = participantScores.stream().mapToDouble(info -> info.competencyLinkWeight() * info.lastPoints()).sum();
+        double weightedMaxPoints = participantScores.stream().mapToDouble(info -> info.competencyLinkWeight() * info.maxPoints()).sum();
+        double proportionOfWeightedAchievedPoints = weightedAchievedPoints / weightedMaxPoints;
+
+        double competencyLinkWeightConfidence = proportionOfWeightedAchievedPoints / proportionOfAchievedPoints;
+
+        return Math.clamp(competencyLinkWeightConfidence, -MAX_CONFIDENCE_HEURISTIC, MAX_CONFIDENCE_HEURISTIC);
+    }
+
     /**
      * Find most important heuristic that influences the confidence score and set the confidence reason accordingly.
      * If the confidence does not deviate significantly from 1, the reason is set to NO_REASON.
      *
-     * @param competencyProgress   the progress entity add the confidence reason to
-     * @param recencyConfidence    the recency confidence heuristic
-     * @param difficultyConfidence the difficulty confidence heuristic
-     * @param quickSolveConfidence the quick solve confidence heuristic
+     * @param competencyProgress                      the progress entity add the confidence reason to
+     * @param recencyConfidence                       the recency confidence heuristic
+     * @param difficultyConfidence                    the difficulty confidence heuristic
+     * @param quickSolveConfidence                    the quick solve confidence heuristic
+     * @param competencyLinkWeightConfidenceHeuristic the competency link weight confidence heuristic
      */
-    private void setConfidenceReason(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence, double quickSolveConfidence) {
+    private void setConfidenceReason(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence, double quickSolveConfidence,
+            double competencyLinkWeightConfidenceHeuristic) {
         if (competencyProgress.getConfidence() < DEFAULT_CONFIDENCE - CONFIDENCE_REASON_DEADZONE) {
-            double minConfidenceHeuristic = Math.min(recencyConfidence, difficultyConfidence);
-            if (recencyConfidence == minConfidenceHeuristic) {
-                competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_LOWER);
-            }
-            else {
-                // quickSolveConfidence cannot be negative therefore we don't check it here
-                competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.MORE_EASY_POINTS);
-            }
+            setConfidenceReasonLow(competencyProgress, recencyConfidence, difficultyConfidence, competencyLinkWeightConfidenceHeuristic);
         }
         else if (competencyProgress.getConfidence() > DEFAULT_CONFIDENCE + CONFIDENCE_REASON_DEADZONE) {
-            double maxConfidenceHeuristic = Math.max(recencyConfidence, Math.max(difficultyConfidence, quickSolveConfidence));
-            if (recencyConfidence == maxConfidenceHeuristic) {
-                competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_HIGHER);
-            }
-            else if (difficultyConfidence == maxConfidenceHeuristic) {
-                competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.MORE_HARD_POINTS);
-            }
-            else {
-                competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.QUICKLY_SOLVED_EXERCISES);
-            }
+            setConfidenceReasonHigh(competencyProgress, recencyConfidence, difficultyConfidence, quickSolveConfidence, competencyLinkWeightConfidenceHeuristic);
         }
         else {
             competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.NO_REASON);
+        }
+    }
+
+    private void setConfidenceReasonLow(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence,
+            double competencyLinkWeightConfidenceHeuristic) {
+        double minConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, competencyLinkWeightConfidenceHeuristic).min().getAsDouble();
+        if (recencyConfidence == minConfidenceHeuristic) {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_LOWER);
+        }
+        else if (difficultyConfidence == minConfidenceHeuristic) {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.MORE_EASY_POINTS);
+        }
+        else {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.MORE_LOW_WEIGHTED_EXERCISES);
+        }
+    }
+
+    private void setConfidenceReasonHigh(CompetencyProgress competencyProgress, double recencyConfidence, double difficultyConfidence, double quickSolveConfidence,
+            double competencyLinkWeightConfidenceHeuristic) {
+        double maxConfidenceHeuristic = DoubleStream.of(recencyConfidence, difficultyConfidence, quickSolveConfidence, competencyLinkWeightConfidenceHeuristic).max().getAsDouble();
+        if (recencyConfidence == maxConfidenceHeuristic) {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.RECENT_SCORES_HIGHER);
+        }
+        else if (difficultyConfidence == maxConfidenceHeuristic) {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.MORE_HARD_POINTS);
+        }
+        else if (quickSolveConfidence == maxConfidenceHeuristic) {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.QUICKLY_SOLVED_EXERCISES);
+        }
+        else {
+            competencyProgress.setConfidenceReason(CompetencyProgressConfidenceReason.MORE_HIGH_WEIGHTED_EXERCISES);
         }
     }
 

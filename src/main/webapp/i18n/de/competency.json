@@ -25,7 +25,9 @@
                 "RECENT_SCORES_HIGHER": "Da die letzten Bewertungen höher waren als dein Durchschnitt in dieser Kompetenz, ist die Kompetenzbeherrschung höher als der Fortschritt",
                 "MORE_EASY_POINTS": "Da ein größerer Anteil deiner Punkte aus einfachen Aufgaben kommt, ist die Kompetenzbeherrschung niedriger als der Fortschritt",
                 "MORE_HARD_POINTS": "Da ein größerer Anteil deiner Punkte aus schwierigen Aufgaben kommt, ist die Kompetenzbeherrschung höher als der Fortschritt",
-                "QUICKLY_SOLVED_EXERCISES": "Da du Aufgaben schnell gelöst hast, ist die Kompetenzbeherrschung höher als der Fortschritt"
+                "QUICKLY_SOLVED_EXERCISES": "Da du Aufgaben schnell gelöst hast, ist die Kompetenzbeherrschung höher als der Fortschritt",
+                "MORE_LOW_WEIGHTED_EXERCISES": "Da du vorwiegend Aufgaben gelöst hast, die von den Lehrenden als weniger wichtig für diese Kompetenz eingestuft wurden, ist die Kompetenzbeherrschung niedriger als der Fortschritt",
+                "MORE_HIGH_WEIGHTED_EXERCISES": "Da du vorwiegend Aufgaben gelöst hast, die von den Lehrenden als wichtig für diese Kompetenz markiert wurden, ist die Kompetenzbeherrschung höher als der Fortschritt"
             },
             "table": {
                 "panelHeader": "Deine Fortentwicklung"
