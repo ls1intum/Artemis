@@ -65,25 +65,21 @@
                     </label>
                 </div>
 
+                <!-- expiry date date picker -->
                 @if (selectedOption === 'useExpiration') {
                     <div class="mt-4">
-                        <p jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiry.daysUntilExpiry"></p>
-                        <input
-                            type="number"
-                            [min]="minDays"
-                            [max]="maxDays"
-                            class="form-control small-text-area days-input-field"
-                            [(ngModel)]="daysUntilExpiry"
-                            (input)="sendTheNewValue()"
-                        />
-                        @if (displayedExpiryDate) {
-                            <div lass="d-flex flex-wrap smaller-font">
-                                <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiry.keyWillExpireOn"></span>
-                                <span class="smaller-font">
-                                    {{ displayedExpiryDate | artemisDate: 'long-date' }}
-                                </span>
-                            </div>
-                        }
+                        <div class="col-sm-4">
+                            <jhi-date-time-picker
+                                labelName="{{ 'artemisApp.userSettings.sshSettingsPage.expiryDate' | artemisTranslate }}"
+                                [(ngModel)]="displayedExpiryDate"
+                                [shouldDisplayTimeZoneWarning]="false"
+                                [min]="currentDate"
+                                [requiredField]="true"
+                                (valueChange)="validateExpiryDate()"
+                                name="expiryDate"
+                                id="expiryDate"
+                            />
+                        </div>
                     </div>
                 }
             } @else {
@@ -118,11 +114,7 @@
                     <div class="btn-group" role="group" aria-label="Actions">
                         <jhi-button
                             [disabled]="
-                                !(
-                                    displayedSshKey &&
-                                    ((selectedOption === 'useExpiration' && daysUntilExpiry && daysUntilExpiry >= minDays && daysUntilExpiry <= maxDays) ||
-                                        selectedOption !== 'useExpiration')
-                                )
+                                !(displayedSshKey && ((selectedOption === 'useExpiration' && displayedExpiryDate && isExpiryDateValid) || selectedOption !== 'useExpiration'))
                             "
                             [btnType]="ButtonType.PRIMARY"
                             [btnSize]="ButtonSize.SMALL"

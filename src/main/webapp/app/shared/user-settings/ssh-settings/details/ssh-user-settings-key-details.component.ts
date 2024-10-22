@@ -37,12 +37,9 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     displayedSshKey = '';
     displayedKeyHash = '';
     displayedExpiryDate?: dayjs.Dayjs;
+    isExpiryDateValid = false;
     displayCreationDate: dayjs.Dayjs;
     displayedLastUsedDate?: dayjs.Dayjs;
-    daysUntilExpiry?: number;
-    minDays = 1;
-    maxDays = 13337;
-
     currentDate: dayjs.Dayjs;
 
     readonly faEdit = faEdit;
@@ -96,14 +93,6 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
         this.subscription.unsubscribe();
     }
 
-    sendTheNewValue() {
-        if (this.daysUntilExpiry) {
-            this.displayedExpiryDate = this.currentDate.add(this.daysUntilExpiry, 'day');
-        } else {
-            this.displayedExpiryDate = undefined;
-        }
-    }
-
     saveSshKey() {
         const newUserSshKey = {
             label: this.displayedKeyLabel,
@@ -134,13 +123,8 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
-    editExistingSshKey(key: UserSshPublicKey) {
-        this.isCreateMode = false;
-        this.displayedKeyId = key.id;
-        this.displayedSshKey = key.publicKey;
-        this.displayedKeyLabel = key.label;
-        this.displayedKeyHash = key.keyHash;
-        this.displayedExpiryDate = key.expiryDate;
+    validateExpiryDate() {
+        this.isExpiryDateValid = !!this.displayedExpiryDate?.isValid();
     }
 
     private setMessageBasedOnOS(os: string): void {
