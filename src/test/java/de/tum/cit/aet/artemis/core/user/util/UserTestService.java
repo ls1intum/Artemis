@@ -888,7 +888,6 @@ public class UserTestService {
         postNewValidKeyToServer(validKey);
 
         List<UserSshPublicKey> response = request.getList("/api/account/ssh-public-keys", HttpStatus.OK, UserSshPublicKey.class);
-        System.out.println(response);
         assertThat(response.size()).isEqualTo(1);
         UserSshPublicKey userKey = response.getFirst();
 
