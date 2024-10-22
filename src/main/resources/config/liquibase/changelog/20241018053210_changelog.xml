@@ -17,6 +17,18 @@
             <column name="time" type="DATETIME"/>
             <column name="iris_message_id" type="BIGINT"/>
         </createTable>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="llm_token_usage_trace"
+                                 constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_COURSE" referencedColumnNames="id"
+                                 referencedTableName="course" onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="llm_token_usage_trace"
+                                 constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_EXERCISE" referencedColumnNames="id"
+                                 referencedTableName="exercise" onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="llm_token_usage_trace"
+                                 constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_USER" referencedColumnNames="id"
+                                 referencedTableName="jhi_user" onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseColumnNames="iris_message_id" baseTableName="llm_token_usage_trace"
+                                 constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_IRIS_MESSAGE" referencedColumnNames="id"
+                                 referencedTableName="iris_message" onDelete="SET NULL"/>
         <createTable tableName="llm_token_usage_request">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="pk_llm_token_usage_request"/>
