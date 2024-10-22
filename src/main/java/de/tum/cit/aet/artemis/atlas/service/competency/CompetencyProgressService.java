@@ -425,7 +425,7 @@ public class CompetencyProgressService {
         double weightedMaxPoints = participantScores.stream().mapToDouble(info -> info.competencyLinkWeight() * info.maxPoints()).sum();
         double proportionOfWeightedAchievedPoints = weightedAchievedPoints / weightedMaxPoints;
 
-        double competencyLinkWeightConfidence = proportionOfWeightedAchievedPoints / proportionOfAchievedPoints;
+        double competencyLinkWeightConfidence = (proportionOfWeightedAchievedPoints - proportionOfAchievedPoints) / 100;
 
         return Math.clamp(competencyLinkWeightConfidence, -MAX_CONFIDENCE_HEURISTIC, MAX_CONFIDENCE_HEURISTIC);
     }
