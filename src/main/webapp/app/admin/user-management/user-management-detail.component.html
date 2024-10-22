@@ -1,8 +1,8 @@
 @if (user) {
     <div>
         <h2>
-            <span jhiTranslate="artemisApp.userManagement.detail.title"></span>[<b>{{ user.login }}</b
-            >]
+            <span jhiTranslate="artemisApp.userManagement.detail.title"></span>
+            <b>{{ user.login }}</b>
         </h2>
         <dl class="row-md jh-entity-details">
             <dt><span jhiTranslate="artemisApp.userManagement.login"></span></dt>
@@ -45,6 +45,18 @@
                     }
                 </ul>
             </dd>
+            @if (user.groups) {
+                <dt><span jhiTranslate="artemisApp.userManagement.groups"></span></dt>
+                <dd>
+                    <ul class="list-unstyled">
+                        @for (group of user.groups; track group) {
+                            <li>
+                                <span class="badge bg-info">{{ group }}</span>
+                            </li>
+                        }
+                    </ul>
+                </dd>
+            }
             <a [routerLink]="['edit']" class="btn btn-warning">
                 <fa-icon [icon]="faWrench" />
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
