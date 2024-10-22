@@ -19,7 +19,6 @@ export class TextUnitService {
     ) {}
 
     create(textUnit: TextUnit, lectureId: number): Observable<EntityResponseType> {
-        console.log(textUnit);
         return this.httpClient
             .post<TextUnit>(`${this.resourceURL}/lectures/${lectureId}/text-units`, textUnit, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
