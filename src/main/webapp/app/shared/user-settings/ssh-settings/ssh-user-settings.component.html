@@ -71,18 +71,18 @@
                                 </td>
 
                                 <td class="container">
-                                    <ul
+                                    <div
                                         ngbDropdown
                                         container="body"
                                         placement="bottom auto"
                                         style="opacity: 1"
                                         class="navbar-nav justify-content-end flex-grow-1 text-decoration-none pointer"
                                     >
-                                        <li ngbDropdownToggle class="nav-item">
+                                        <div ngbDropdownToggle class="nav-item">
                                             <div class="nav-link px-3">
                                                 <fa-icon style="opacity: 1" [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
                                             </div>
-                                        </li>
+                                        </div>
                                         <div ngbDropdownMenu>
                                             <a ngbDropdownItem class="d-flex align-items-center py-1 px-2" style="text-decoration: none" [routerLink]="['view', key.id]">
                                                 <div
@@ -103,7 +103,7 @@
                                                 <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey" class="h6 fw-normal mb-0 course-title text-wrap"></div>
                                             </button>
                                         </div>
-                                    </ul>
+                                    </div>
                                 </td>
                             </tr>
                         }

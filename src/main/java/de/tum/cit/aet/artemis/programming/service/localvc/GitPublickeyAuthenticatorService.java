@@ -66,7 +66,7 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
      *
      * @return true if the authentication succeeds, and false if it doesn't
      */
-    public boolean authenticateUser(UserSshPublicKey storedKey, PublicKey providedKey, ServerSession session) {
+    private boolean authenticateUser(UserSshPublicKey storedKey, PublicKey providedKey, ServerSession session) {
         try {
             var user = userRepository.findById(storedKey.getUserId());
             if (user.isEmpty()) {

@@ -55,8 +55,6 @@ public class UserSshPublicKeyService {
         newUserSshPublicKey.setPublicKey(sshPublicKey.getPublicKey());
         newUserSshPublicKey.setKeyHash(keyHash);
         setLabelForKey(newUserSshPublicKey, sshPublicKey.getLabel());
-
-        newUserSshPublicKey.setExpiryDate(sshPublicKey.getExpiryDate());
         newUserSshPublicKey.setCreationDate(ZonedDateTime.now());
         newUserSshPublicKey.setExpiryDate(sshPublicKey.getExpiryDate());
         userSshPublicKeyRepository.save(newUserSshPublicKey);
@@ -99,7 +97,7 @@ public class UserSshPublicKeyService {
             return userSshPublicKey;
         }
         else {
-            throw new EntityNotFoundException();
+            throw new AccessForbiddenException("SSH key", keyId);
         }
     }
 
@@ -121,8 +119,7 @@ public class UserSshPublicKeyService {
      * @throws AccessForbiddenException if the key does not belong to the user.
      */
     public void deleteUserSshPublicKey(Long userId, Long keyId) {
-        var keys = userSshPublicKeyRepository.findAllByUserId(userId);
-        if (!keys.isEmpty() && keys.stream().map(UserSshPublicKey::getId).toList().contains(keyId)) {
+        if (userSshPublicKeyRepository.existsByIdAndUserId(keyId, userId)) {
             userSshPublicKeyRepository.deleteById(keyId);
         }
         else {

@@ -39,6 +39,7 @@ public class UserSshPublicKey extends DomainObject {
     /**
      * The actual full public ssh key of a user used to authenticate git clone and git push operations if available
      */
+    @NotNull
     @Column(name = "public_key")
     private String publicKey;
 
@@ -51,13 +52,13 @@ public class UserSshPublicKey extends DomainObject {
     private String keyHash;
 
     /**
-     * The expiry date of the public SSH key
+     * The creation date of the public SSH key
      */
     @Column(name = "creation_date")
     private ZonedDateTime creationDate = null;
 
     /**
-     * The expiry date of the public SSH key
+     * The last used date of the public SSH key
      */
     @Nullable
     @Column(name = "last_used_date")

@@ -55,16 +55,21 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
             .pipe(
                 tap((publicKeys: UserSshPublicKey[]) => {
                     this.sshPublicKeys = publicKeys;
-                    this.sshPublicKeys.forEach((key) => {
-                        if (key.expiryDate && dayjs().isAfter(dayjs(key.expiryDate))) {
-                            key.hasExpired = true;
-                        }
-                    });
+
+                    this.sshPublicKeys = this.sshPublicKeys.map((key) => ({
+                        ...key,
+                        hasExpired: key.expiryDate && dayjs().isAfter(dayjs(key.expiryDate)),
+                    }));
                     this.keyCount = publicKeys.length;
                     this.isLoading = false;
                 }),
             )
-            .subscribe();
+            .subscribe({
+                error: () => {
+                    this.isLoading = false;
+                    this.alertService.error('artemisApp.userSettings.sshSettingsPage.loadKeyFailure');
+                },
+            });
     }
 
     ngOnDestroy() {
@@ -75,17 +80,21 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
         this.accountService.deleteSshPublicKey(key.id).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.userSettings.sshSettingsPage.deleteSuccess');
-                this.keyCount = this.keyCount - 1;
-                const index = this.sshPublicKeys.indexOf(key);
-                if (index >= 0) {
-                    this.sshPublicKeys.splice(index, 1);
-                }
+                this.refreshSshKeys();
             },
-            error: (error) => {
-                console.log(error);
+            error: () => {
                 this.alertService.error('artemisApp.userSettings.sshSettingsPage.deleteFailure');
             },
         });
         this.dialogErrorSource.next('');
+    }
+
+    private refreshSshKeys() {
+        this.isLoading = true;
+        this.accountService.getAllSshPublicKeys().subscribe((publicKeys: UserSshPublicKey[]) => {
+            this.sshPublicKeys = publicKeys;
+            this.keyCount = publicKeys.length;
+            this.isLoading = false;
+        });
     }
 }
