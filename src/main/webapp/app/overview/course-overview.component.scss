@@ -45,6 +45,7 @@ $transition-color-length: 0.2s;
 
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
+        height: calc(100dvh - var(--sidebar-footer-height-prod)) !important;
     }
 
     &.exam-wrapper {
@@ -88,6 +89,7 @@ $transition-color-length: 0.2s;
 
         @media (max-width: 768px) {
             height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
+            height: calc(100dvh - var(--sidebar-footer-height-prod)) !important;
         }
     }
 

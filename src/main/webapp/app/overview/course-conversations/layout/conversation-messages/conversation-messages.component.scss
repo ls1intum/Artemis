@@ -1,3 +1,7 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
 .conversation-messages {
     --message-input-height-prod: 171px;
     --message-input-height-dev: 187px;
@@ -40,11 +44,15 @@
     }
 
     .posting-infinite-scroll-container {
-        max-height: calc(74vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
+        max-height: calc(75vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
         overflow-y: auto;
 
         &.content-height-dev {
-            max-height: calc(74vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+            max-height: calc(75vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+
+            @include media-breakpoint-down(sm) {
+                max-height: calc(90dvh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+            }
         }
     }
 

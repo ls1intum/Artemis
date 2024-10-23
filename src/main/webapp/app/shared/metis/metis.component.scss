@@ -128,6 +128,7 @@ $profile-picture-height: 2.15rem;
 @include media-breakpoint-down(sm) {
     .post-header-author-date {
         flex-direction: column;
+        gap: 0 !important;
     }
 
     .post-content-margin {
@@ -138,7 +139,8 @@ $profile-picture-height: 2.15rem;
         display: none;
     }
 
-    .post-header-date {
+    .post-header-date span {
         color: $secondary;
+        font-size: 0.75rem !important;
     }
 }

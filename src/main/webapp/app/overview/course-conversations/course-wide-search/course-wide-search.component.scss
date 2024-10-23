@@ -47,7 +47,7 @@
         position: absolute;
         top: 10%;
         left: 0;
-        height: 90%;
+        height: 80%;
         width: 100%;
         display: flex;
         align-items: center;
@@ -64,6 +64,7 @@
     }
 
     .coursewide-search .posting-infinite-scroll-container {
-        max-height: calc(73vh - var(--header-height) - var(--search-channel-header-height));
+        max-height: calc(60vh - var(--header-height) - var(--search-channel-header-height));
+        max-height: calc(60dvh - var(--header-height) - var(--search-channel-header-height));
     }
 }

@@ -31,7 +31,7 @@
     }
 
     @media (max-width: 768px) {
-        max-height: calc(100vh - var(--header-height) - var(--message-input-height-prod)) !important;
+        max-height: calc(100dvh - var(--header-height) - var(--message-input-height-prod)) !important;
     }
 }
 
