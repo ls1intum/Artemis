@@ -3,7 +3,7 @@ import {
     CourseCompetencyImportSettings,
     ImportCourseCompetenciesSettingsComponent,
 } from 'app/course/competencies/components/import-course-competencies-settings/import-course-competencies-settings.component';
-import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ImportCourseCompetenciesSettingsComponent', () => {

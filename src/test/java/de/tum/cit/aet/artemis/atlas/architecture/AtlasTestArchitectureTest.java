@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.atlas.architecture;
 
+import java.util.Set;
+
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleTestArchitectureTest;
 
-class AtlasTestArchitectureTest extends AbstractModuleTestArchitectureTest<AbstractAtlasIntegrationTest> {
+class AtlasTestArchitectureTest extends AbstractModuleTestArchitectureTest {
 
     @Override
     public String getModulePackage() {
@@ -11,7 +13,7 @@ class AtlasTestArchitectureTest extends AbstractModuleTestArchitectureTest<Abstr
     }
 
     @Override
-    protected Class<AbstractAtlasIntegrationTest> getAbstractModuleIntegrationTestClass() {
-        return AbstractAtlasIntegrationTest.class;
+    protected Set<Class<?>> getAbstractModuleIntegrationTestClasses() {
+        return Set.of(AbstractAtlasIntegrationTest.class);
     }
 }
