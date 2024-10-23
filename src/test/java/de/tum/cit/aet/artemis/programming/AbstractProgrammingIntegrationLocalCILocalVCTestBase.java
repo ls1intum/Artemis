@@ -1,9 +1,10 @@
-package de.tum.cit.aet.artemis.programming.icl;
+package de.tum.cit.aet.artemis.programming;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.sshd.server.SshServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,23 +19,76 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageFileReportRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageReportEntryRepository;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
+import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
+import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralTestCaseService;
+import de.tum.cit.aet.artemis.programming.service.hestia.structural.StructuralTestCaseService;
+import de.tum.cit.aet.artemis.programming.service.localci.LocalCIResultService;
+import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 
-public abstract class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+/**
+ * This adds upon the {@link AbstractProgrammingIntegrationLocalCILocalVCTest} by providing additional
+ * <ul>
+ * <li>test data on test startup</li>
+ * <li>services and repositories that are needed for the tests.</li>
+ * </ul>
+ */
+public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase extends AbstractProgrammingIntegrationLocalCILocalVCTest {
+
+    // Config
+    @Value("${artemis.version-control.user}")
+    protected String localVCBaseUsername;
+
+    @LocalServerPort
+    protected int port;
 
     @Autowired
-    protected TeamRepository teamRepository;
+    protected SshServer sshServer;
 
+    // Repositories
+    @Autowired
+    protected AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Autowired
+    protected CoverageFileReportRepository coverageFileReportRepository;
+
+    @Autowired
+    protected CoverageReportRepository coverageReportRepository;
+
+    @Autowired
+    protected ProgrammingExerciseGitDiffReportRepository reportRepository;
+
+    @Autowired
+    protected ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    protected ProgrammingSubmissionTestRepository programmingSubmissionRepository;
+
+    @Autowired
+    protected SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
+
+    @Autowired
+    protected TestwiseCoverageReportEntryRepository testwiseCoverageReportEntryRepository;
+
+    // External Repositories
     @Autowired
     protected ExamRepository examRepository;
 
@@ -42,28 +96,49 @@ public abstract class AbstractLocalCILocalVCIntegrationTest extends AbstractSpri
     protected StudentExamTestRepository studentExamRepository;
 
     @Autowired
+    protected TeamRepository teamRepository;
+
+    // Services
+    @Autowired
+    protected BehavioralTestCaseService behavioralTestCaseService;
+
+    @Autowired
+    protected BuildLogEntryService buildLogEntryService;
+
+    @Autowired
+    protected HestiaUtilTestService hestiaUtilTestService;
+
+    @Autowired
+    protected LocalCIResultService localCIResultService;
+
+    @Autowired
+    protected LocalVCServletService localVCServletService;
+
+    @Autowired
+    protected LocalCITriggerService localCITriggerService;
+
+    @Autowired
+    protected ParticipationVcsAccessTokenService participationVcsAccessTokenService;
+
+    @Autowired
+    protected ProgrammingExerciseGitDiffReportService reportService;
+
+    @Autowired
+    protected StructuralTestCaseService structuralTestCaseService;
+
+    @Autowired
+    protected TestwiseCoverageService testwiseCoverageService;
+
+    // External Services
+
+    // Util Services
+
+    // External Util services
+    @Autowired
+    protected ExerciseUtilService exerciseUtilService;
+
+    @Autowired
     protected UserUtilService userUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    protected ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private StaticCodeAnalysisService staticCodeAnalysisService;
-
-    @Autowired
-    protected AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
-    @Autowired
-    private AeolusTemplateService aeolusTemplateService;
-
-    @Value("${artemis.version-control.user}")
-    protected String localVCBaseUsername;
-
-    @LocalServerPort
-    protected int port;
 
     // The error messages returned by JGit contain these Strings that correspond to the HTTP status codes.
     protected static final String NOT_FOUND = "not found";
