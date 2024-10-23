@@ -5,24 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
-import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-class SharedQueueManagementServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
-
-    @Autowired
-    private SharedQueueManagementService sharedQueueManagementService;
-
-    @Autowired
-    @Qualifier("hazelcastInstance")
-    private HazelcastInstance hazelcastInstance;
+class SharedQueueManagementServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     @Test
     void testPushDockerImageCleanupInfo() {

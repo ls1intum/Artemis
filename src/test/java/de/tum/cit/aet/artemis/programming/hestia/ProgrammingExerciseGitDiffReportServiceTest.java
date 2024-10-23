@@ -9,37 +9,21 @@ import java.util.Comparator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffReport;
-import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
-import de.tum.cit.aet.artemis.programming.icl.AbstractLocalCILocalVCIntegrationTest;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 /**
  * Tests for the ProgrammingExerciseGitDiffReportService
  */
-class ProgrammingExerciseGitDiffReportServiceTest extends AbstractLocalCILocalVCIntegrationTest {
+class ProgrammingExerciseGitDiffReportServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "progexgitdiffreportservice";
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     private static final String FILE_NAME = "test.java";
 
@@ -48,15 +32,6 @@ class ProgrammingExerciseGitDiffReportServiceTest extends AbstractLocalCILocalVC
     private final LocalRepository templateRepo = new LocalRepository("main");
 
     private ProgrammingExercise exercise;
-
-    @Autowired
-    private HestiaUtilTestService hestiaUtilTestService;
-
-    @Autowired
-    private ProgrammingExerciseGitDiffReportService reportService;
-
-    @Autowired
-    private ProgrammingExerciseGitDiffReportRepository reportRepository;
 
     @Override
     protected String getTestPrefix() {
