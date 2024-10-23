@@ -108,8 +108,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     ReferenceType.MODELING === referenceType ||
                     ReferenceType.QUIZ === referenceType ||
                     ReferenceType.TEXT === referenceType ||
-                    ReferenceType.FILE_UPLOAD === referenceType ||
-                    ReferenceType.FAQ == referenceType
+                    ReferenceType.FILE_UPLOAD === referenceType
                 ) {
                     // reference opening tag: [{referenceType}] (wrapped between 2 characters)
                     // reference closing tag: [/referenceType] (wrapped between 3 characters)
@@ -117,6 +116,10 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // linkToReference: link to be navigated to on reference click
                     referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
                     linkToReference = [this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex))];
+                } else if (ReferenceType.FAQ == referenceType) {
+                    referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
+                    linkToReference = [this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf('?', patternMatch.startIndex))];
+                    queryParams = { faqId: this.content.substring(this.content.indexOf('=') + 1, this.content.indexOf(')')) } as Params;
                 } else if (ReferenceType.ATTACHMENT === referenceType || ReferenceType.ATTACHMENT_UNITS === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // attachmentToReference: location of attachment to be opened on reference click

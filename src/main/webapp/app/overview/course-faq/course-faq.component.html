@@ -32,7 +32,9 @@
     }
     <div>
         @for (faq of this.filteredFaqs; track faq) {
-            <jhi-course-faq-accordion [faq]="faq"></jhi-course-faq-accordion>
+            <div #faqElement id="faq-{{ faq.id }}">
+                <jhi-course-faq-accordion [faq]="faq"></jhi-course-faq-accordion>
+            </div>
         }
     </div>
     @if (filteredFaqs?.length === 0 && faqs.length > 0) {

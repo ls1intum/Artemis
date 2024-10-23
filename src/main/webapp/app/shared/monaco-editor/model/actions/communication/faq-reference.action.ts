@@ -28,7 +28,6 @@ export class FaqReferenceAction extends TextEditorDomainActionWithOptions {
     register(editor: TextEditor, translateService: TranslateService): void {
         super.register(editor, translateService);
         const faqs = this.metisService.getCourse().faqs ?? [];
-        console.log(this.metisService.getCourse().faqs);
         this.setValues(
             faqs.map((faq) => ({
                 id: faq.id!.toString(),
@@ -44,7 +43,7 @@ export class FaqReferenceAction extends TextEditorDomainActionWithOptions {
                 new TextEditorCompletionItem(
                     `/faq ${item.value}`,
                     item.type,
-                    `[${item.type}]${item.value}(${this.metisService.getLinkForFaq(item.id)})[/${item.type}]`,
+                    `[${item.type}]${item.value}(${this.metisService.getLinkForFaq()}?faqId=${item.id})[/${item.type}]`,
                     TextEditorCompletionItemKind.Default,
                     range,
                 ),

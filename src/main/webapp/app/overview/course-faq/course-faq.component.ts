@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { debounceTime, map } from 'rxjs/operators';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
@@ -27,7 +27,8 @@ import { SortService } from 'app/shared/service/sort.service';
     standalone: true,
     imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, ArtemisMarkdownModule],
 })
-export class CourseFaqComponent implements OnInit, OnDestroy {
+export class CourseFaqComponent implements OnInit, OnDestroy, AfterViewInit {
+    @ViewChildren('faqElement') faqElements!: QueryList<ElementRef>;
     private ngUnsubscribe = new Subject<void>();
     private parentParamSubscription: Subscription;
 
@@ -60,8 +61,15 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
             this.loadFaqs();
             this.loadCourseExerciseCategories(this.courseId);
         });
+
         this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
             this.refreshFaqList(searchTerm);
+        });
+    }
+
+    ngAfterViewInit(): void {
+        this.faqElements.changes.subscribe(() => {
+            this.goToFaq();
         });
     }
 
@@ -119,6 +127,22 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
     sortFaqs() {
         this.sortService.sortByProperty(this.filteredFaqs, 'id', true);
-        console.log(this.filteredFaqs);
+    }
+
+    goToFaq() {
+        this.route.queryParams.subscribe((params) => {
+            const faqId = params['faqId'];
+            if (faqId) {
+                this.scrollToFaq(faqId);
+            }
+        });
+    }
+
+    scrollToFaq(faqId: number): void {
+        const faqElement = this.faqElements.find((faq) => faq.nativeElement.id === 'faq-' + String(faqId));
+        if (faqElement) {
+            faqElement.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            faqElement.nativeElement.focus();
+        }
     }
 }

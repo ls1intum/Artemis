@@ -517,11 +517,9 @@ export class MetisService implements OnDestroy {
 
     /**
      * returns the router link required for navigating to the exercise referenced within a faq
-     * @param {string} faqId ID of the faq be navigated to
-     * @return {string} router link of the exercise
+     * @return {string} router link of the faq
      */
-    getLinkForFaq(faqId: string): string {
-        console.log(faqId);
+    getLinkForFaq(): string {
         return `/courses/${this.getCourse().id}/faq`;
     }
 
