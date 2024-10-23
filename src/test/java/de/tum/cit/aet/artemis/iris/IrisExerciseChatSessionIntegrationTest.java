@@ -90,6 +90,14 @@ class IrisExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest
         assertThat(request.get("/api/iris/status", HttpStatus.OK, IrisStatusDTO.class).active()).isFalse();
     }
 
+    @Test
+    void testDeleteExerciseWithIrisSession() throws Exception {
+        var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisSession.class, HttpStatus.CREATED);
+        assertThat(irisExerciseChatSessionRepository.findByIdElseThrow(irisSession.getId())).isNotNull();
+        request.delete("/api/programming-exercises/" + exercise.getId(), HttpStatus.OK);
+        assertThat(irisExerciseChatSessionRepository.findById(irisSession.getId())).isEmpty();
+    }
+
     private static String exerciseChatUrl(long sessionId) {
         return "/api/iris/exercise-chat/" + sessionId + "/sessions";
     }

@@ -20,6 +20,6 @@
                 referencedTableName="exercise"
                 referencedColumnNames="id"
                 constraintName="fk_iris_session_exercise_id"
-                onDelete="SET NULL"/>
+                onDelete="CASCADE"/>
     </changeSet>
 </databaseChangeLog>
