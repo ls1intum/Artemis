@@ -1485,6 +1485,6 @@ public class CourseResource {
             }
         }));
 
-        return ResponseEntity.ok(new CourseExistingExerciseDetailsDTO(alreadyTakenExerciseNames.toArray(String[]::new), alreadyTakenShortNames.toArray(String[]::new)));
+        return ResponseEntity.ok(new CourseExistingExerciseDetailsDTO(alreadyTakenExerciseNames, alreadyTakenShortNames));
     }
 }
