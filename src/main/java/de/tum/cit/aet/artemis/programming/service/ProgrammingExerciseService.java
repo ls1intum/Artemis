@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -338,6 +339,11 @@ public class ProgrammingExerciseService {
         // Step 12d: Update student competency progress
         competencyProgressService.updateProgressByLearningObjectAsync(savedProgrammingExercise);
 
+        // Step 13: Set Iris settings
+        if (irisSettingsService.isPresent()) {
+            irisSettingsService.get().setEnabledForExerciseByCategories(savedProgrammingExercise, new HashSet<>());
+        }
+
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
 
@@ -618,6 +624,9 @@ public class ProgrammingExerciseService {
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
+
+        irisSettingsService
+                .ifPresent(settingsService -> settingsService.setEnabledForExerciseByCategories(savedProgrammingExercise, programmingExerciseBeforeUpdate.getCategories()));
 
         return savedProgrammingExercise;
     }
