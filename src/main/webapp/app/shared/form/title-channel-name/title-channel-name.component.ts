@@ -21,6 +21,8 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     alreadyUsedTitles = input<Set<string>>(new Set());
 
+    titleOnPageLoad = signal<string | undefined>(undefined);
+
     @ViewChild('field_title') field_title: NgModel;
     field_channel_name = viewChild<NgModel>('field_channel_name');
 
@@ -31,7 +33,6 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     formValid: boolean;
     formValidChanges = new Subject();
 
-    // subscriptions
     fieldTitleSubscription?: Subscription;
     fieldChannelNameSubscription?: Subscription;
 
@@ -44,6 +45,14 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
             this.isEditFieldDisplayedRecord(); // triggers effect
             this.registerChangeListeners();
         });
+
+        effect(
+            function removeInitialTitleInEditFromForbiddenTitles() {
+                if (this.titleOnPageLoad()) {
+                    this.alreadyUsedTitles().delete(this.titleOnPageLoad());
+                }
+            }.bind(this),
+        );
     }
 
     ngAfterViewInit() {
@@ -63,6 +72,8 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
                 this.formatChannelName(this.channelNamePrefix + (this.title ?? ''), false, !!this.title);
             });
         }
+
+        this.titleOnPageLoad.set(this.title);
     }
 
     private registerChangeListeners() {
