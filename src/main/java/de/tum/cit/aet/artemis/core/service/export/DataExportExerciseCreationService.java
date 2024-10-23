@@ -36,10 +36,10 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
@@ -91,10 +91,12 @@ public class DataExportExerciseCreationService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ExerciseDateApi exerciseDateApi;
+
     public DataExportExerciseCreationService(@Value("${artemis.repo-download-clone-path}") Path repoClonePath, FileService fileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService,
             PlagiarismCaseRepository plagiarismCaseRepository, Optional<ApollonConversionService> apollonConversionService, ComplaintRepository complaintRepository,
-            ExerciseRepository exerciseRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+            ExerciseRepository exerciseRepository, ResultService resultService, AuthorizationCheckService authCheckService, ExerciseDateApi exerciseDateApi) {
         this.fileService = fileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
@@ -105,6 +107,7 @@ public class DataExportExerciseCreationService {
         this.repoClonePath = repoClonePath;
         this.resultService = resultService;
         this.authCheckService = authCheckService;
+        this.exerciseDateApi = exerciseDateApi;
     }
 
     /**
@@ -208,7 +211,7 @@ public class DataExportExerciseCreationService {
         // quizzes do not have an assessment due date, so we need to check if they have ended according to their due date
         boolean isInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
         boolean includeResults = (exercise.isExamExercise() && exercise.getExam().resultsPublished())
-                || (exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise) && !(exercise instanceof QuizExercise))
+                || (exercise.isCourseExercise() && exerciseDateApi.isAfterAssessmentDueDate(exercise) && !(exercise instanceof QuizExercise))
                 || (exercise.isCourseExercise() && exercise instanceof QuizExercise quizExercise && quizExercise.isQuizEnded()) || isInstructor;
         for (var participation : exercise.getStudentParticipations()) {
             for (var submission : participation.getSubmissions()) {
@@ -227,7 +230,7 @@ public class DataExportExerciseCreationService {
                 }
                 // for a programming exercise, we want to include the results that are visible before the assessment due date
                 if (includeResults || exercise instanceof ProgrammingExercise) {
-                    boolean programmingExerciseBeforeAssessmentDueDate = exercise instanceof ProgrammingExercise && !ExerciseDateService.isAfterAssessmentDueDate(exercise);
+                    boolean programmingExerciseBeforeAssessmentDueDate = exercise instanceof ProgrammingExercise && !exerciseDateApi.isAfterAssessmentDueDate(exercise);
                     createResultsAndComplaintFiles(submission, exerciseDir, user, programmingExerciseBeforeAssessmentDueDate, isInstructor);
                 }
             }

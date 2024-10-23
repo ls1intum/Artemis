@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -41,7 +42,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -56,18 +56,18 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     private final FileService fileService;
 
-    private final ExerciseDateService exerciseDateService;
+    private final ExerciseDateApi exerciseDateApi;
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, FileService fileService,
-            AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService,
+            AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateApi exerciseDateApi,
             CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
             Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
+                exerciseDateApi, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileService = fileService;
-        this.exerciseDateService = exerciseDateService;
+        this.exerciseDateApi = exerciseDateApi;
     }
 
     /**
@@ -89,13 +89,13 @@ public class FileUploadSubmissionService extends SubmissionService {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
         final var participation = optionalParticipation.get();
-        final var dueDate = ExerciseDateService.getDueDate(participation);
+        final var dueDate = exerciseDateApi.getDueDate(participation);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
-        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
+        if (dueDate.isPresent() && exerciseDateApi.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
             throw new AccessForbiddenException();
         }
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
+        if (exercise.isExamExercise() || exerciseDateApi.isBeforeDueDate(participation)) {
             fileUploadSubmission.setSubmitted(true);
         }
 

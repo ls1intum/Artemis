@@ -43,13 +43,13 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
@@ -84,11 +84,13 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
+    private final ExerciseDateApi exerciseDateApi;
+
     public FileUploadSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
             FileUploadExerciseRepository fileUploadExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
             ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
             StudentParticipationRepository studentParticipationRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
-            SingleUserNotificationService singleUserNotificationService) {
+            SingleUserNotificationService singleUserNotificationService, ExerciseDateApi exerciseDateApi) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, studentParticipationRepository);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
@@ -96,6 +98,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         this.examSubmissionService = examSubmissionService;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.exerciseDateApi = exerciseDateApi;
     }
 
     /**
@@ -333,7 +336,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             // if the assessment is not finished
             boolean assessmentUnfinished = fileUploadSubmission.getLatestResult().getCompletionDate() == null || fileUploadSubmission.getLatestResult().getAssessor() == null;
             // or the assessment due date isn't over yet
-            boolean assessmentDueDateNotOver = !ExerciseDateService.isAfterAssessmentDueDate(fileUploadExercise);
+            boolean assessmentDueDateNotOver = !exerciseDateApi.isAfterAssessmentDueDate(fileUploadExercise);
 
             if (assessmentUnfinished || assessmentDueDateNotOver) {
                 fileUploadSubmission.setResults(Collections.emptyList());

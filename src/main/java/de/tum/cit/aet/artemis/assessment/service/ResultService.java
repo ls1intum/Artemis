@@ -46,12 +46,12 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -90,7 +90,7 @@ public class ResultService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ExerciseDateService exerciseDateService;
+    private final ExerciseDateApi exerciseDateApi;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
@@ -113,7 +113,7 @@ public class ResultService {
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
             FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
-            ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
+            ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateApi exerciseDateApi,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
@@ -130,7 +130,7 @@ public class ResultService {
         this.complaintRepository = complaintRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.authCheckService = authCheckService;
-        this.exerciseDateService = exerciseDateService;
+        this.exerciseDateApi = exerciseDateApi;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -312,8 +312,8 @@ public class ResultService {
     }
 
     private void filterSensitiveFeedbackInCourseExercise(Participation participation, Collection<Result> results, Exercise exercise) {
-        boolean beforeLatestDueDate = exerciseDateService.isBeforeLatestDueDate(exercise);
-        boolean participationBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
+        boolean beforeLatestDueDate = exerciseDateApi.isBeforeLatestDueDate(exercise);
+        boolean participationBeforeDueDate = exerciseDateApi.isBeforeDueDate(participation);
         results.forEach(result -> {
             boolean isBeforeDueDateOrAutomaticAndBeforeLatestDueDate = participationBeforeDueDate
                     || (AssessmentType.AUTOMATIC.equals(result.getAssessmentType()) && beforeLatestDueDate);
@@ -322,7 +322,7 @@ public class ResultService {
             }
 
             boolean assessmentTypeSetAndNonAutomatic = result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC;
-            boolean beforeAssessmentDueDate = !ExerciseDateService.isAfterAssessmentDueDate(exercise);
+            boolean beforeAssessmentDueDate = !exerciseDateApi.isAfterAssessmentDueDate(exercise);
 
             // A tutor is allowed to access all feedback, but filter for a student the manual feedback if the assessment due date is not over yet
             if (assessmentTypeSetAndNonAutomatic && beforeAssessmentDueDate) {

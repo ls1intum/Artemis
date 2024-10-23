@@ -26,12 +26,12 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -67,10 +67,12 @@ public class AssessmentService {
 
     protected final ResultWebsocketService resultWebsocketService;
 
+    private final ExerciseDateApi exerciseDateApi;
+
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, ExamDateService examDateService, UserRepository userRepository, Optional<LtiNewResultService> ltiNewResultService,
-            SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService) {
+            SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService, ExerciseDateApi exerciseDateApi) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -84,6 +86,7 @@ public class AssessmentService {
         this.ltiNewResultService = ltiNewResultService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.resultWebsocketService = resultWebsocketService;
+        this.exerciseDateApi = exerciseDateApi;
     }
 
     /**
@@ -330,7 +333,7 @@ public class AssessmentService {
             singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, optionalStudent.get(), result);
         }
 
-        if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
+        if (exerciseDateApi.isAfterAssessmentDueDate(exercise)) {
             resultWebsocketService.broadcastNewResult(result.getParticipation(), result);
         }
         return result;

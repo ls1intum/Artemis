@@ -711,6 +711,7 @@ public class ProgrammingExercise extends Exercise {
      * @param result The current result
      * @return true if the result is manual and the assessment is over, or it is an automatic result, false otherwise
      */
+    // ToDo: this should not be part of a domain entity
     private boolean checkForAssessedResult(Result result) {
         return result.getCompletionDate() != null && ((result.isManual() && ExerciseDateService.isAfterAssessmentDueDate(this)) || result.isAutomatic() || result.isAthenaBased());
     }

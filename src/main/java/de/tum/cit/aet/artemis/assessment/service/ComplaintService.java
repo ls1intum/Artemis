@@ -31,12 +31,12 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 
 /**
  * Service for managing complaints.
@@ -59,14 +59,17 @@ public class ComplaintService {
 
     private final TeamRepository teamRepository;
 
+    private final ExerciseDateApi exerciseDateApi;
+
     public ComplaintService(ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, ResultRepository resultRepository,
-            ExamRepository examRepository, UserRepository userRepository, TeamRepository teamRepository) {
+            ExamRepository examRepository, UserRepository userRepository, TeamRepository teamRepository, ExerciseDateApi exerciseDateApi) {
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.resultRepository = resultRepository;
         this.examRepository = examRepository;
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
+        this.exerciseDateApi = exerciseDateApi;
     }
 
     /**
@@ -293,8 +296,7 @@ public class ComplaintService {
      * @param course               the course specifying the number of available days for the complaint
      * @param type                 specifies if this is an actual complaint or a more feedback request
      */
-    private static void validateTimeOfComplaintOrRequestMoreFeedback(Result result, Exercise exercise, StudentParticipation studentParticipation, Course course,
-            ComplaintType type) {
+    private void validateTimeOfComplaintOrRequestMoreFeedback(Result result, Exercise exercise, StudentParticipation studentParticipation, Course course, ComplaintType type) {
         int maxDays = switch (type) {
             case COMPLAINT -> course.getMaxComplaintTimeDays();
             case MORE_FEEDBACK -> course.getMaxRequestMoreFeedbackTimeDays();
@@ -334,11 +336,11 @@ public class ComplaintService {
      * @param result               The result which the complaint is about.
      * @return The time from which submitting a complaint is possible.
      */
-    private static ZonedDateTime getComplaintStartDate(final Exercise exercise, final StudentParticipation studentParticipation, final Result result) {
+    private ZonedDateTime getComplaintStartDate(final Exercise exercise, final StudentParticipation studentParticipation, final Result result) {
         final List<ZonedDateTime> possibleComplaintStartDates = new ArrayList<>();
         possibleComplaintStartDates.add(result.getCompletionDate());
 
-        final Optional<ZonedDateTime> relevantDueDate = Optional.ofNullable(studentParticipation).flatMap(ExerciseDateService::getDueDate);
+        final Optional<ZonedDateTime> relevantDueDate = Optional.ofNullable(studentParticipation).flatMap(exerciseDateApi::getDueDate);
         relevantDueDate.ifPresent(possibleComplaintStartDates::add);
 
         if (exercise.getAssessmentDueDate() != null) {

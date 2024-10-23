@@ -68,13 +68,13 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
@@ -154,6 +154,8 @@ public class TextExerciseResource {
 
     private final CompetencyProgressApi competencyProgressApi;
 
+    private final ExerciseDateApi exerciseDateApi;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
@@ -161,7 +163,8 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
-            ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService, CompetencyProgressApi competencyProgressApi) {
+            ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService, CompetencyProgressApi competencyProgressApi,
+            ExerciseDateApi exerciseDateApi) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -187,6 +190,7 @@ public class TextExerciseResource {
         this.channelRepository = channelRepository;
         this.athenaModuleService = athenaModuleService;
         this.competencyProgressApi = competencyProgressApi;
+        this.exerciseDateApi = exerciseDateApi;
     }
 
     /**
@@ -421,7 +425,7 @@ public class TextExerciseResource {
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
 
-            if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
+            if (!exerciseDateApi.isAfterAssessmentDueDate(textExercise)) {
                 // We want to have the preliminary feedback before the assessment due date too
                 List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
                 textSubmission.setResults(athenaResults);

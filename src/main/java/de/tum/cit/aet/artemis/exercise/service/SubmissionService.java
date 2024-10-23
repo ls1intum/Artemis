@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -65,7 +66,9 @@ public class SubmissionService {
 
     private final ExamDateService examDateService;
 
-    private final ExerciseDateService exerciseDateService;
+    // ToDo: Consider if that is a good idea, as SubmissionService and ExerciseDateApi are part of the same module
+    // We could think about exposing a method in SubmissionService
+    protected final ExerciseDateApi exerciseDateApi;
 
     private final CourseRepository courseRepository;
 
@@ -93,7 +96,7 @@ public class SubmissionService {
 
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
+            FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateApi exerciseDateApi, CourseRepository courseRepository,
             ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
             Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
         this.submissionRepository = submissionRepository;
@@ -104,7 +107,7 @@ public class SubmissionService {
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
         this.examDateService = examDateService;
-        this.exerciseDateService = exerciseDateService;
+        this.exerciseDateApi = exerciseDateApi;
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
         this.complaintRepository = complaintRepository;
@@ -698,7 +701,7 @@ public class SubmissionService {
                 }
             }
 
-            if (exerciseDateService.isBeforeEarliestDueDate(exercise).orElse(false)) {
+            if (exerciseDateApi.isBeforeEarliestDueDate(exercise).orElse(false)) {
                 log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }

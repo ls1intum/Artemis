@@ -41,12 +41,12 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -82,10 +82,12 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final PlagiarismService plagiarismService;
 
+    private final ExerciseDateApi exerciseDateApi;
+
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService) {
+            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService, ExerciseDateApi exerciseDateApi) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
@@ -93,6 +95,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         this.examSubmissionService = examSubmissionService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.plagiarismService = plagiarismService;
+        this.exerciseDateApi = exerciseDateApi;
     }
 
     /**
@@ -334,7 +337,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // make sure only the latest submission and latest result is sent to the client
         participation.setSubmissions(null);
-        if (ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
+        if (exerciseDateApi.isAfterAssessmentDueDate(modelingExercise)) {
             participation.setResults(null);
         }
 
@@ -344,7 +347,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             modelingSubmission.setResults(new ArrayList<>());
         }
 
-        if (!ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
+        if (!exerciseDateApi.isAfterAssessmentDueDate(modelingExercise)) {
             // We want to have the preliminary feedback before the assessment due date too
             Set<Result> participationResults = participation.getResults();
             if (participationResults != null) {

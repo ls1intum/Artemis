@@ -31,11 +31,11 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
@@ -52,6 +52,8 @@ public class AuthorizationCheckService {
 
     private final ExamDateService examDateService;
 
+    private final ExerciseDateApi exerciseDateApi;
+
     // TODO: we should move this into some kind of EnrollmentService
     @Deprecated(forRemoval = true) // will be removed in 7.0.0
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
@@ -62,10 +64,12 @@ public class AuthorizationCheckService {
 
     private final TeamRepository teamRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, ExamDateService examDateService, TeamRepository teamRepository) {
+    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository, ExamDateService examDateService, ExerciseDateApi exerciseDateApi,
+            TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examDateService = examDateService;
+        this.exerciseDateApi = exerciseDateApi;
 
         if (allowedCourseEnrollmentUsernamePattern == null) {
             allowedCourseEnrollmentUsernamePattern = allowedCourseRegistrationUsernamePattern;
@@ -862,7 +866,7 @@ public class AuthorizationCheckService {
         }
 
         return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise))
-                && ExerciseDateService.isAfterAssessmentDueDate(exercise) && result.getAssessor() != null && result.getCompletionDate() != null;
+                && exerciseDateApi.isAfterAssessmentDueDate(exercise) && result.getAssessor() != null && result.getCompletionDate() != null;
     }
 
     /**

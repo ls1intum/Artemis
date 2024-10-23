@@ -18,11 +18,11 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
@@ -43,16 +43,16 @@ public class PlagiarismService {
 
     private final UserRepository userRepository;
 
-    private final ExerciseDateService exerciseDateService;
+    private final ExerciseDateApi exerciseDateApi;
 
     public PlagiarismService(PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService, AuthorizationCheckService authCheckService,
-            SubmissionRepository submissionRepository, UserRepository userRepository, ExerciseDateService exerciseDateService) {
+            SubmissionRepository submissionRepository, UserRepository userRepository, ExerciseDateApi exerciseDateApi) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.plagiarismCaseService = plagiarismCaseService;
         this.authCheckService = authCheckService;
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
-        this.exerciseDateService = exerciseDateService;
+        this.exerciseDateApi = exerciseDateApi;
     }
 
     /**
@@ -89,7 +89,7 @@ public class PlagiarismService {
     private boolean isOwnSubmissionOrIsAfterExerciseDueDate(Long submissionId, String userLogin, Set<PlagiarismComparison<?>> comparisons, Participation participation) {
         var isOwnSubmission = comparisons.stream().flatMap(it -> Stream.of(it.getSubmissionA(), it.getSubmissionB())).filter(Objects::nonNull)
                 .filter(it -> it.getSubmissionId() == submissionId).findFirst().map(PlagiarismSubmission::getStudentLogin).filter(isEqual(userLogin)).isPresent();
-        return isOwnSubmission || exerciseDateService.isAfterDueDate(participation);
+        return isOwnSubmission || exerciseDateApi.isAfterDueDate(participation);
     }
 
     /**

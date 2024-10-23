@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -43,7 +44,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -93,7 +93,7 @@ public class ProgrammingSubmissionResource {
 
     private final UserRepository userRepository;
 
-    private final ExerciseDateService exerciseDateService;
+    private final ExerciseDateApi exerciseDateApi;
 
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingTriggerService programmingTriggerService,
             ProgrammingMessagingService programmingMessagingService, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository,
@@ -101,7 +101,7 @@ public class ProgrammingSubmissionResource {
             ParticipationAuthorizationCheckService participationAuthCheckService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GradingCriterionRepository gradingCriterionRepository,
             SubmissionRepository submissionRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository,
-            ExerciseDateService exerciseDateService) {
+            ExerciseDateApi exerciseDateApi) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingMessagingService = programmingMessagingService;
@@ -115,7 +115,7 @@ public class ProgrammingSubmissionResource {
         this.submissionRepository = submissionRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.userRepository = userRepository;
-        this.exerciseDateService = exerciseDateService;
+        this.exerciseDateApi = exerciseDateApi;
     }
 
     /**
@@ -193,7 +193,7 @@ public class ProgrammingSubmissionResource {
                 return ResponseEntity.ok().build();
             }
         }
-        if (lastGraded && submission.getType() != SubmissionType.INSTRUCTOR && submission.getType() != SubmissionType.TEST && exerciseDateService.isAfterDueDate(participation)) {
+        if (lastGraded && submission.getType() != SubmissionType.INSTRUCTOR && submission.getType() != SubmissionType.TEST && exerciseDateApi.isAfterDueDate(participation)) {
             // If the submission is not the latest but the last graded, there is no point in triggering the build again as this would build the most recent VCS commit.
             // This applies only to students submissions after the exercise due date.
             throw new EntityNotFoundException("Cannot trigger failed build. There is a submission after the exercise due date");

@@ -21,10 +21,10 @@ import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNoti
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 
 @Service
 @Profile(PROFILE_SCHEDULING)
@@ -42,15 +42,19 @@ public class NotificationScheduleService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
+    private final ExerciseDateApi exerciseDateApi;
+
     private final TaskScheduler scheduler;
 
     public NotificationScheduleService(ScheduleService scheduleService, ExerciseRepository exerciseRepository, ProfileService profileService,
-            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService, @Qualifier("taskScheduler") TaskScheduler scheduler) {
+            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService, ExerciseDateApi exerciseDateApi,
+            @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.scheduleService = scheduleService;
         this.exerciseRepository = exerciseRepository;
         this.profileService = profileService;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.exerciseDateApi = exerciseDateApi;
         this.scheduler = scheduler;
     }
 
@@ -137,7 +141,7 @@ public class NotificationScheduleService {
      */
     public void updateSchedulingForAssessedExercisesSubmissions(Exercise exercise) {
         checkSecurityUtils();
-        if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
+        if (exerciseDateApi.isAfterAssessmentDueDate(exercise)) {
             // to make sure no wrong notification is sent out the date is checked again in the concrete notification method
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.ASSESSMENT_DUE);
             return;

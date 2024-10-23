@@ -44,12 +44,12 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -100,7 +100,7 @@ public class ProgrammingExerciseGradingService {
 
     private final ResultService resultService;
 
-    private final ExerciseDateService exerciseDateService;
+    private final ExerciseDateApi exerciseDateApi;
 
     private final SubmissionPolicyService submissionPolicyService;
 
@@ -118,7 +118,7 @@ public class ProgrammingExerciseGradingService {
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, Optional<VersionControlService> versionControlService,
             ProgrammingExerciseTestCaseRepository testCaseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
+            AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateApi exerciseDateApi,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
             FeedbackService feedbackService) {
@@ -135,7 +135,7 @@ public class ProgrammingExerciseGradingService {
         this.resultService = resultService;
         this.submissionPolicyService = submissionPolicyService;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.exerciseDateService = exerciseDateService;
+        this.exerciseDateApi = exerciseDateApi;
         this.buildLogService = buildLogService;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.feedbackCreationService = feedbackCreationService;
@@ -546,7 +546,7 @@ public class ProgrammingExerciseGradingService {
             return Optional.empty();
         }
 
-        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
+        boolean isBeforeDueDate = exerciseDateApi.isBeforeDueDate(participation);
         final Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = isBeforeDueDate ? testCasesBeforeDueDate : testCasesAfterDueDate;
 
         calculateScoreForResult(allTestCases, testCasesForCurrentDate, result, exercise, applySubmissionPolicy);
@@ -576,7 +576,7 @@ public class ProgrammingExerciseGradingService {
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
     private Set<ProgrammingExerciseTestCase> filterRelevantTestCasesForStudent(Set<ProgrammingExerciseTestCase> testCases, Result result) {
-        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(result.getParticipation());
+        boolean isBeforeDueDate = exerciseDateApi.isBeforeDueDate(result.getParticipation());
 
         return filterTestCasesForStudents(testCases, isBeforeDueDate);
     }

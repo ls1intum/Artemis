@@ -29,9 +29,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -98,13 +98,13 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
-    private final ExerciseDateService exerciseDateService;
+    private final ExerciseDateApi exerciseDateApi;
 
     public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
+            LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateApi exerciseDateApi,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService) {
         this.hazelcastInstance = hazelcastInstance;
         this.aeolusTemplateService = aeolusTemplateService;
@@ -116,7 +116,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
         this.gitService = gitService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
-        this.exerciseDateService = exerciseDateService;
+        this.exerciseDateApi = exerciseDateApi;
         this.buildScriptProviderService = buildScriptProviderService;
     }
 
@@ -344,7 +344,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
 
         // Submissions after the due date (e.g. practice mode or finished exams) have lowest priority
-        if (exerciseDateService.isAfterDueDate(participation)) {
+        if (exerciseDateApi.isAfterDueDate(participation)) {
             return PRIORITY_PRACTICE;
         }
 

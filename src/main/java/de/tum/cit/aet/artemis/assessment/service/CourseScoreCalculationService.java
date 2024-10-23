@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -41,7 +42,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
@@ -66,12 +66,15 @@ public class CourseScoreCalculationService {
 
     private final PresentationPointsCalculationService presentationPointsCalculationService;
 
+    private final ExerciseDateApi exerciseDateApi;
+
     public CourseScoreCalculationService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository, PresentationPointsCalculationService presentationPointsCalculationService) {
+            PlagiarismCaseRepository plagiarismCaseRepository, PresentationPointsCalculationService presentationPointsCalculationService, ExerciseDateApi exerciseDateApi) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
+        this.exerciseDateApi = exerciseDateApi;
     }
 
     /**
@@ -464,7 +467,7 @@ public class CourseScoreCalculationService {
      * @param exercise the exercise whose assessment state should be determined
      */
     private boolean isAssessmentDone(Exercise exercise) {
-        boolean isNonAutomaticAssessmentDone = !isAssessedAutomatically(exercise) && ExerciseDateService.isAfterAssessmentDueDate(exercise);
+        boolean isNonAutomaticAssessmentDone = !isAssessedAutomatically(exercise) && exerciseDateApi.isAfterAssessmentDueDate(exercise);
         return isNonAutomaticAssessmentDone || isAutomaticAssessmentDone(exercise);
     }
 

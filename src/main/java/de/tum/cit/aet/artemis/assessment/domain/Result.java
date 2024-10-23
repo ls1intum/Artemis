@@ -246,6 +246,7 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.rated = rated;
     }
 
+    // ToDo: This should definitely not be part of a domain object
     private void setRatedIfNotAfterDueDate(@NotNull Participation participation, @NotNull ZonedDateTime submissionDate) {
         var optionalDueDate = ExerciseDateService.getDueDate(participation);
         if (optionalDueDate.isEmpty()) {

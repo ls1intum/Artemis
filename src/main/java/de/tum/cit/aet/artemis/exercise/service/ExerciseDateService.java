@@ -146,6 +146,7 @@ public class ExerciseDateService {
      * @param participation of a student in an exercise.
      * @return the individual due date, or the exercise due date, or nothing.
      */
+    // ToDo: Make non-static?
     public static Optional<ZonedDateTime> getDueDate(ParticipationInterface participation) {
         final Exercise exercise = participation.getExercise();
 
@@ -166,6 +167,7 @@ public class ExerciseDateService {
      * @param exercise to check the assessment due date
      * @return true if the assessment due date is in the past
      */
+    // ToDo: Make non-static?
     public static boolean isAfterAssessmentDueDate(Exercise exercise) {
         if (exercise.isExamExercise()) {
             return exercise.getExam().resultsPublished();

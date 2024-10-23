@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -27,12 +27,12 @@ public class RepositoryAccessService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final ExerciseDateService exerciseDateService;
+    private final ExerciseDateApi exerciseDateApi;
 
-    public RepositoryAccessService(PlagiarismService plagiarismService, AuthorizationCheckService authorizationCheckService, ExerciseDateService exerciseDateService) {
+    public RepositoryAccessService(PlagiarismService plagiarismService, AuthorizationCheckService authorizationCheckService, ExerciseDateApi exerciseDateApi) {
         this.plagiarismService = plagiarismService;
         this.authorizationCheckService = authorizationCheckService;
-        this.exerciseDateService = exerciseDateService;
+        this.exerciseDateApi = exerciseDateApi;
     }
 
     /**
@@ -82,7 +82,7 @@ public class RepositoryAccessService {
      */
     private boolean hasAccessToOwnStudentParticipation(ProgrammingExercise programmingExercise, RepositoryActionType repositoryActionType,
             StudentParticipation studentParticipation, boolean isTeachingAssistant, boolean isLocked) {
-        boolean hasStarted = exerciseDateService.hasExerciseStarted(programmingExercise);
+        boolean hasStarted = exerciseDateApi.hasExerciseStarted(programmingExercise);
 
         if (!hasStarted) {
             // Only teaching assistants have access to the repository before the exercise has started.
@@ -121,7 +121,7 @@ public class RepositoryAccessService {
      * @return True if the user has write or reset permissions, false otherwise.
      */
     private boolean hasWriteOrResetPermissionsForUnlockedParticipation(StudentParticipation studentParticipation) {
-        boolean beforeDueDate = exerciseDateService.isBeforeDueDate(studentParticipation);
+        boolean beforeDueDate = exerciseDateApi.isBeforeDueDate(studentParticipation);
         boolean isPracticeMode = studentParticipation.isPracticeMode();
 
         // The user has write or reset permissions if the due date has not passed yet.

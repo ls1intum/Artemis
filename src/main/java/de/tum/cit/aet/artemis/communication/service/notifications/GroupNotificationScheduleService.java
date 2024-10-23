@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -23,11 +23,14 @@ public class GroupNotificationScheduleService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final ExerciseDateApi exerciseDateApi;
+
     public GroupNotificationScheduleService(SingleUserNotificationService singleUserNotificationService, InstanceMessageSendService instanceMessageSendService,
-            GroupNotificationService groupNotificationService) {
+            GroupNotificationService groupNotificationService, ExerciseDateApi exerciseDateApi) {
         this.singleUserNotificationService = singleUserNotificationService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.groupNotificationService = groupNotificationService;
+        this.exerciseDateApi = exerciseDateApi;
     }
 
     /**
@@ -177,7 +180,7 @@ public class GroupNotificationScheduleService {
      * @param exercise that is created
      */
     private void checkNotificationForAssessmentDueDate(Exercise exercise) {
-        if (exercise.isCourseExercise() && !ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
+        if (exercise.isCourseExercise() && !exerciseDateApi.isAfterAssessmentDueDate(exercise)) {
             instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exercise.getId());
         }
     }

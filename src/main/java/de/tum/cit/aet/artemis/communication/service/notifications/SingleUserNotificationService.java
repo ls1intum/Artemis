@@ -64,11 +64,11 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
@@ -95,10 +95,12 @@ public class SingleUserNotificationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final ExerciseDateApi exerciseDateApi;
+
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
             WebsocketMessagingService websocketMessagingService, GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService,
             StudentParticipationRepository studentParticipationRepository, ConversationMessageRepository conversationMessageRepository, ConversationService conversationService,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, ExerciseDateApi exerciseDateApi) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.userRepository = userRepository;
         this.websocketMessagingService = websocketMessagingService;
@@ -108,6 +110,7 @@ public class SingleUserNotificationService {
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationService = conversationService;
         this.authorizationCheckService = authorizationCheckService;
+        this.exerciseDateApi = exerciseDateApi;
     }
 
     /**
@@ -202,7 +205,7 @@ public class SingleUserNotificationService {
      */
     public void checkNotificationForAssessmentExerciseSubmission(Exercise exercise, User recipient, Result result) {
         // only send the notification now if no assessment due date was set or if it is in the past
-        if (exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
+        if (exercise.isCourseExercise() && exerciseDateApi.isAfterAssessmentDueDate(exercise)) {
             saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(exercise, recipient, result);
             notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
         }

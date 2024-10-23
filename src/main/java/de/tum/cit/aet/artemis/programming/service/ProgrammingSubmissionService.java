@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -47,7 +48,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -111,13 +111,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
             ProgrammingMessagingService programmingMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExamDateService examDateService,
-            ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
+            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateApi exerciseDateApi,
+            CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService,
             FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository, Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
+                exerciseDateApi, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingMessagingService = programmingMessagingService;
@@ -307,7 +307,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     private boolean isAllowedToSubmitForCourseExercise(ProgrammingExerciseStudentParticipation participation, ProgrammingSubmission programmingSubmission) {
-        var dueDate = ExerciseDateService.getDueDate(participation);
+        var dueDate = exerciseDateApi.getDueDate(participation);
         // Without a due date or in the practice mode, the student can always submit
         if (dueDate.isEmpty() || participation.isPracticeMode()) {
             return true;
