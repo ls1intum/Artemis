@@ -10,6 +10,7 @@ import { PostingContentComponent } from 'app/shared/metis/posting-content/postin
 import { metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { DOCUMENT } from '@angular/common';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -18,6 +19,10 @@ describe('AnswerPostComponent', () => {
     let mainContainer: HTMLElement;
 
     beforeEach(async () => {
+        mainContainer = document.createElement('div');
+        mainContainer.classList.add('thread-answer-post');
+        document.body.appendChild(mainContainer);
+
         await TestBed.configureTestingModule({
             imports: [OverlayModule],
             declarations: [
@@ -28,6 +33,7 @@ describe('AnswerPostComponent', () => {
                 MockComponent(AnswerPostCreateEditModalComponent),
                 MockComponent(AnswerPostReactionsBarComponent),
             ],
+            providers: [{ provide: DOCUMENT, useValue: document }],
         }).compileComponents();
     });
 
@@ -35,9 +41,6 @@ describe('AnswerPostComponent', () => {
         fixture = TestBed.createComponent(AnswerPostComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        mainContainer = document.createElement('div');
-        mainContainer.classList.add('thread-answer-post');
-        document.body.appendChild(mainContainer);
     });
 
     it('should contain an answer post header when isConsecutive is false', () => {
@@ -125,12 +128,12 @@ describe('AnswerPostComponent', () => {
     it('should disable body scroll', () => {
         const setStyleSpy = jest.spyOn(component.renderer, 'setStyle');
         (component as any).disableBodyScroll();
-        expect(setStyleSpy).toHaveBeenCalledWith(mainContainer, 'overflow', 'hidden');
+        expect(setStyleSpy).toHaveBeenCalledWith(expect.objectContaining({ className: 'thread-answer-post' }), 'overflow', 'hidden');
     });
 
     it('should enable body scroll', () => {
         const setStyleSpy = jest.spyOn(component.renderer, 'setStyle');
         (component as any).enableBodyScroll();
-        expect(setStyleSpy).toHaveBeenCalledWith(mainContainer, 'overflow-y', 'auto');
+        expect(setStyleSpy).toHaveBeenCalledWith(expect.objectContaining({ className: 'thread-answer-post' }), 'overflow-y', 'auto');
     });
 });

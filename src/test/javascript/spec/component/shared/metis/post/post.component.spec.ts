@@ -34,6 +34,7 @@ import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
+import { DOCUMENT } from '@angular/common';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -47,12 +48,17 @@ describe('PostComponent', () => {
     let mainContainer: HTMLElement;
 
     beforeEach(() => {
+        mainContainer = document.createElement('div');
+        mainContainer.classList.add('posting-infinite-scroll-container');
+        document.body.appendChild(mainContainer);
+
         return TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip), OverlayModule],
             providers: [
                 provideRouter([]),
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: Router, useClass: MockRouter },
+                { provide: DOCUMENT, useValue: document },
                 MockProvider(MetisConversationService),
                 MockProvider(OneToOneChatService),
             ],
@@ -85,10 +91,6 @@ describe('PostComponent', () => {
                     },
                 } as RouterState;
                 router.setRouterState(mockRouterState);
-
-                mainContainer = document.createElement('div');
-                mainContainer.classList.add('posting-infinite-scroll-container');
-                document.body.appendChild(mainContainer);
             });
     });
 
@@ -248,13 +250,13 @@ describe('PostComponent', () => {
     it('should disable body scroll', () => {
         const setStyleSpy = jest.spyOn(component.renderer, 'setStyle');
         (component as any).disableBodyScroll();
-        expect(setStyleSpy).toHaveBeenCalledWith(mainContainer, 'overflow', 'hidden');
+        expect(setStyleSpy).toHaveBeenCalledWith(expect.objectContaining({ className: 'posting-infinite-scroll-container' }), 'overflow', 'hidden');
     });
 
     it('should enable body scroll', () => {
         const setStyleSpy = jest.spyOn(component.renderer, 'setStyle');
         (component as any).enableBodyScroll();
-        expect(setStyleSpy).toHaveBeenCalledWith(mainContainer, 'overflow-y', 'auto');
+        expect(setStyleSpy).toHaveBeenCalledWith(expect.objectContaining({ className: 'posting-infinite-scroll-container' }), 'overflow-y', 'auto');
     });
 
     it('should handle click outside and hide dropdown', () => {
