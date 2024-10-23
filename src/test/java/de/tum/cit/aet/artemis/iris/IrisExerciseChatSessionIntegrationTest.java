@@ -28,7 +28,7 @@ class IrisExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -91,11 +91,13 @@ class IrisExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExerciseWithIrisSession() throws Exception {
         var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisSession.class, HttpStatus.CREATED);
         assertThat(irisExerciseChatSessionRepository.findByIdElseThrow(irisSession.getId())).isNotNull();
-        request.delete("/api/programming-exercises/" + exercise.getId(), HttpStatus.OK);
+        // Set the URL request parameters to prevent an internal server error which is irrelevant for this test
+        var url = "/api/programming-exercises/" + exercise.getId() + "?deleteStudentReposBuildPlans=false&deleteBaseReposBuildPlans=false";
+        request.delete(url, HttpStatus.OK);
         assertThat(irisExerciseChatSessionRepository.findById(irisSession.getId())).isEmpty();
     }
 

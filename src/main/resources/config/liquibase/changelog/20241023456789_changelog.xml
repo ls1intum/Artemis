@@ -13,7 +13,7 @@
                 baseTableName="iris_session"
                 constraintName="fk_iris_session_exercise_id"/>
 
-        <!-- Add the foreign key with ON DELETE SET NULL -->
+        <!-- Add the foreign key with ON DELETE CASCADE -->
         <addForeignKeyConstraint
                 baseTableName="iris_session"
                 baseColumnNames="exercise_id"
