@@ -299,7 +299,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     private getIsShortNameFieldValid() {
-        return this.shortNameField() === undefined || this.shortNameField()?.control?.status === 'VALID';
+        return this.shortNameField() === undefined || this.shortNameField()?.control?.status === 'VALID' || this.shortNameField()?.control?.status === 'DISABLED';
     }
 
     private ensureShortNameIsUnique(shortName: string): string {

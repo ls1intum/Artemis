@@ -20,7 +20,6 @@ export class CustomNotIncludedInValidatorDirective implements Validator {
             return null;
         }
 
-        console.log(this.disallowedValues());
         const isValueAlreadyTaken = this.disallowedValues().has(control.value);
         if (isValueAlreadyTaken) {
             return { disallowedValue: true };
