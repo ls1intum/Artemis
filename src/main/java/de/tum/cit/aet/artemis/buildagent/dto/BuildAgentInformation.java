@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record BuildAgentInformation(BuildAgent buildAgent, int maxNumberOfConcurrentBuildJobs, int numberOfCurrentBuildJobs, List<BuildJobQueueItem> runningBuildJobs,
+public record BuildAgentInformation(BuildAgentDTO buildAgent, int maxNumberOfConcurrentBuildJobs, int numberOfCurrentBuildJobs, List<BuildJobQueueItem> runningBuildJobs,
         BuildAgentStatus status, List<BuildJobQueueItem> recentBuildJobs, String publicSshKey) implements Serializable {
 
     @Serial

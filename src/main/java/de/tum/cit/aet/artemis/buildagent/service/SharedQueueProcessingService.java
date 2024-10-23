@@ -44,7 +44,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
-import de.tum.cit.aet.artemis.buildagent.dto.BuildAgent;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
@@ -171,14 +171,14 @@ public class SharedQueueProcessingService {
 
         ITopic<String> pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
         pauseBuildAgentTopic.addMessageListener(message -> {
-            if (Objects.equals(message.getMessageObject(), buildAgentShortName)) {
+            if (buildAgentShortName.equals(message.getMessageObject())) {
                 pauseBuildAgent();
             }
         });
 
         ITopic<String> resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
         resumeBuildAgentTopic.addMessageListener(message -> {
-            if (Objects.equals(message.getMessageObject(), buildAgentShortName)) {
+            if (buildAgentShortName.equals(message.getMessageObject())) {
                 resumeBuildAgent();
             }
         });
@@ -263,7 +263,7 @@ public class SharedQueueProcessingService {
             if (buildJob != null) {
                 processingJobs.remove(buildJob.id());
 
-                buildJob = new BuildJobQueueItem(buildJob, new BuildAgent("", "", ""));
+                buildJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO("", "", ""));
                 log.info("Adding build job back to the queue: {}", buildJob);
                 queue.add(buildJob);
                 localProcessingJobs.decrementAndGet();
@@ -285,7 +285,7 @@ public class SharedQueueProcessingService {
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
 
-            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, new BuildAgent(buildAgentShortName, hazelcastMemberAddress, buildAgentDisplayName));
+            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO(buildAgentShortName, hazelcastMemberAddress, buildAgentDisplayName));
 
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
@@ -344,7 +344,7 @@ public class SharedQueueProcessingService {
 
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
-        BuildAgent agentInfo = new BuildAgent(buildAgentShortName, memberAddress, buildAgentDisplayName);
+        BuildAgentDTO agentInfo = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
 
         return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs, publicSshKey);
     }

@@ -23,7 +23,7 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
-import de.tum.cit.aet.artemis.buildagent.dto.BuildAgent;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
@@ -106,7 +106,7 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        BuildAgent buildAgent = new BuildAgent("artemis-build-agent-test", memberAddress, "artemis-build-agent-test");
+        BuildAgentDTO buildAgent = new BuildAgentDTO("artemis-build-agent-test", memberAddress, "artemis-build-agent-test");
 
         BuildJobQueueItem job1 = new BuildJobQueueItem("1", "job1", buildAgent, participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
