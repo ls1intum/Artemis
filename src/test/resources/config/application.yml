@@ -74,6 +74,8 @@ artemis:
                     default: "~~invalid~~"
                 c_plus_plus:
                     default: "~~invalid~~"
+                typescript:
+                    default: "~~invalid~~"
     telemetry:
         enabled: false  # setting this to false will disable sending any information to the telemetry service
 
@@ -302,4 +304,3 @@ eureka:
         enabled: false
         service-url:
             defaultZone: http://admin:admin@localhost:8761/eureka/
-
