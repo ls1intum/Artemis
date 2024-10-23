@@ -91,6 +91,7 @@ class IrisExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteExerciseWithIrisSession() throws Exception {
         var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisSession.class, HttpStatus.CREATED);
         assertThat(irisExerciseChatSessionRepository.findByIdElseThrow(irisSession.getId())).isNotNull();
