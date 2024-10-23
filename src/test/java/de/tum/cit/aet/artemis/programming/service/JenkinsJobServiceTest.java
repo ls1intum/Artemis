@@ -21,27 +21,18 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.w3c.dom.Document;
 
 import com.offbytwo.jenkins.model.FolderJob;
 
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils;
-import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
-class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "jenkinsjobservicetest";
-
-    @Autowired
-    private JenkinsJobService jenkinsJobService;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     private static MockedStatic<JenkinsXmlFileUtils> mockedXmlFileUtils;
 
