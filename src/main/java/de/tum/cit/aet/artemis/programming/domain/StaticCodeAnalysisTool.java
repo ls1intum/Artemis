@@ -18,6 +18,7 @@ public enum StaticCodeAnalysisTool {
     PMD_CPD("cpd.xml"),
     SWIFTLINT("swiftlint-result.xml"),
     GCC("gcc.xml"),
+    RUFF("ruff.sarif"),
     OTHER(null),
     ;
     // @formatter:on
@@ -26,7 +27,8 @@ public enum StaticCodeAnalysisTool {
     private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisTool>> TOOLS_OF_PROGRAMMING_LANGUAGE = new EnumMap<>(Map.of(
         ProgrammingLanguage.JAVA, List.of(SPOTBUGS, CHECKSTYLE, PMD, PMD_CPD),
         ProgrammingLanguage.SWIFT, List.of(SWIFTLINT),
-        ProgrammingLanguage.C, List.of(GCC)
+        ProgrammingLanguage.C, List.of(GCC),
+        ProgrammingLanguage.PYTHON, List.of(RUFF)
     ));
     // @formatter:on
 

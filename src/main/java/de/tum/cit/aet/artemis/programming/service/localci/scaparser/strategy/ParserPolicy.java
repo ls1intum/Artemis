@@ -4,6 +4,8 @@ import java.nio.file.Path;
 
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.exception.UnsupportedToolException;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.RuffCategorizer;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif.SarifParser;
 
 /**
  * Policy class for the parser strategies.
@@ -27,7 +29,7 @@ public class ParserPolicy {
             case CHECKSTYLE -> new CheckstyleParser();
             case PMD -> new PMDParser();
             case PMD_CPD -> new PMDCPDParser();
-            // so far, we do not support swiftlint and gcc only SCA for Java
+            case RUFF -> new SarifParser(StaticCodeAnalysisTool.RUFF, new RuffCategorizer());
             default -> throw new UnsupportedToolException("Tool " + tool + " is not supported");
         };
     }
