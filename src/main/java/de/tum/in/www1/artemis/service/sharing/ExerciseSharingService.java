@@ -1,5 +1,13 @@
 package de.tum.in.www1.artemis.service.sharing;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,14 +30,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.ResponseProcessingException;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
-
+import de.tum.in.www1.artemis.service.ProfileService;
 import org.apache.http.client.utils.URIBuilder;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.glassfish.jersey.client.ClientConfig;
@@ -40,14 +41,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.sharing.SharingMultipartZipFile;
 import de.tum.in.www1.artemis.exception.SharingException;
@@ -55,6 +48,13 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.SharingPluginService;
 import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.SharingInfoDTO;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.ResponseProcessingException;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
 
 @Service
 @Profile("sharing")
@@ -68,6 +68,8 @@ public class ExerciseSharingService {
     @Value("${server.url}")
     protected String artemisServerUrl;
 
+    protected ProfileService profileService;
+
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
     private final SharingPluginService sharingPluginService;
@@ -75,10 +77,11 @@ public class ExerciseSharingService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public ExerciseSharingService(ProgrammingExerciseExportService programmingExerciseExportService, SharingPluginService sharingPluginService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProfileService profileService) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.sharingPluginService = sharingPluginService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.profileService = profileService;
     }
 
     LoadingCache<Pair<String, Integer>, File> repositoryCache = CacheBuilder.newBuilder().maximumSize(10000).expireAfterWrite(1, TimeUnit.HOURS).build(new CacheLoader<>() {
@@ -92,22 +95,23 @@ public class ExerciseSharingService {
         ClientConfig restClientConfig = new ClientConfig();
         restClientConfig.register(ShoppingBasket.class);
         try (Client client = ClientBuilder.newClient(restClientConfig)) {
-            WebTarget target = client.target(correctLocalHostInDocker(apiBaseUrl).concat("/basket/").concat(basketToken));
+			WebTarget target = client
+					.target(correctLocalHostInDocker(apiBaseUrl)
+							.concat("/basket/").concat(basketToken));
             String response = target.request().accept(MediaType.APPLICATION_JSON).get(String.class);
 
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            objectMapper.registerModule(new JavaTimeModule());
+                ObjectMapper objectMapper = new ObjectMapper();
+                objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                objectMapper.registerModule(new JavaTimeModule());
 
-            ShoppingBasket shoppingBasket = objectMapper.readValue(response, ShoppingBasket.class);
-            return Optional.ofNullable(shoppingBasket);
+               ShoppingBasket shoppingBasket = objectMapper.readValue(response, ShoppingBasket.class);
+                return Optional.ofNullable(shoppingBasket);
 
         }
         catch (ResponseProcessingException rpe) {
             log.warn("Unrecognized property when importing exercise from Sharing", rpe);
             return Optional.empty();
-        }
-        catch (JsonProcessingException e) {
+        } catch (JsonProcessingException e) {
             log.error("Cannot parse properties: ", e);
         }
         return Optional.empty();
@@ -117,9 +121,9 @@ public class ExerciseSharingService {
         ClientConfig restClientConfig = new ClientConfig();
         restClientConfig.register(ShoppingBasket.class);
 
+
         try (Client client = ClientBuilder.newClient(restClientConfig)) {
-            WebTarget target = client.target(correctLocalHostInDocker(sharingInfo.getApiBaseURL()) + "/basket/" + sharingInfo.getBasketToken() + "/repository/" + itemPosition)
-                    .queryParam("format", "artemis");
+            WebTarget target = client.target( correctLocalHostInDocker(sharingInfo.getApiBaseURL()) + "/basket/" + sharingInfo.getBasketToken() + "/repository/" + itemPosition).queryParam("format", "artemis");
             InputStream zipInput = target.request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
 
             if (zipInput == null) {
@@ -128,8 +132,7 @@ public class ExerciseSharingService {
 
             SharingMultipartZipFile zipFileItem = new SharingMultipartZipFile(getBasketFileName(sharingInfo.getBasketToken(), itemPosition), zipInput);
             return Optional.of(zipFileItem);
-        }
-        catch (WebApplicationException wae) {
+        } catch (WebApplicationException wae) {
             throw new SharingException("Could not retrieve basket item");
         }
     }
@@ -150,12 +153,18 @@ public class ExerciseSharingService {
         return basketItem.orElse(null);
     }
 
+    /**
+     * this is just a weak implementation for local testing (within a docker).
+     * @param url the url to be corrected
+     * @return an url, that points to host.docker.internal if previously directed to localhost.
+     */
     private String correctLocalHostInDocker(String url) {
-        if (url.contains("//localhost")) {
+        if(url.contains("//localhost") && profileService.isProfileActive("docker"))  {
             return url.replace("//localhost", "//host.docker.internal");
         }
         return url;
     }
+
 
     /**
      * Retrieves the Problem-Statement file from a Sharing basket
@@ -169,8 +178,7 @@ public class ExerciseSharingService {
         try {
             String problemStatement = this.getEntryFromBasket(pattern, sharingInfo);
             return Objects.requireNonNullElse(problemStatement, "No Problem Statement found!");
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new NotFoundException("Could not retrieve problem statement from imported exercise");
         }
     }
@@ -180,16 +188,15 @@ public class ExerciseSharingService {
      *
      * @param sharingInfo of the basket to extract the problem statement from
      * @return The content of the Exercise-Details file
-     *
+
      */
-    public String getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo) {
+    public String getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo)  {
         Pattern pattern = Pattern.compile("^Exercise-Details", Pattern.CASE_INSENSITIVE);
 
         try {
             String problemStatement = this.getEntryFromBasket(pattern, sharingInfo);
             return Objects.requireNonNullElse(problemStatement, "No Problem Statement found!");
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new NotFoundException("Could not retrieve exercise details from imported exercise");
         }
     }
@@ -209,7 +216,7 @@ public class ExerciseSharingService {
             repositoryStream = this.getCachedBasketItem(sharingInfo).getInputStream();
         }
         catch (IOException | SharingException e) {
-            log.error("Cannot read input Template for " + sharingInfo.getBasketToken());
+            log.error("Cannot read input Template for " + sharingInfo.getBasketToken(), e);
         }
 
         ZipInputStream zippedRepositoryStream = new ZipInputStream(repositoryStream);
@@ -246,7 +253,7 @@ public class ExerciseSharingService {
             throw new SharingException("No Sharing ApiBaseUrl provided");
         }
         try {
-            Optional<ProgrammingExercise> exercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigAndTeamConfigById(exerciseId);
+            Optional<ProgrammingExercise> exercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigById(exerciseId);
 
             if (exercise.isEmpty()) {
                 throw new SharingException("Could not find exercise to export");
