@@ -17,6 +17,7 @@ public enum StaticCodeAnalysisTool {
     PMD_CPD(ProgrammingLanguage.JAVA, "cpd.xml"),
     SWIFTLINT(ProgrammingLanguage.SWIFT, "swiftlint-result.xml"),
     GCC(ProgrammingLanguage.C, "gcc.xml"),
+    RUFF(ProgrammingLanguage.PYTHON, "ruff.sarif"),
     ;
     // @formatter:on
 
