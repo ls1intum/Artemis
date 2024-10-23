@@ -11,7 +11,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { SshUserSettingsKeyDetailsComponent } from 'app/shared/user-settings/ssh-settings/details/ssh-user-settings-key-details.component';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 
 describe('SshUserSettingsComponent', () => {
