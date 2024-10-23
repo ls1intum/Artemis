@@ -8,8 +8,6 @@
             }
         </div>
     </div>
-    <div>
-        <p class="markdown-preview mb-0" [innerHTML]="faq().questionAnswer | htmlForMarkdown"></p>
-    </div>
+    <div [innerHTML]="faq().questionAnswer | htmlForMarkdown"></div>
     <hr class="mt-0" />
 </div>
