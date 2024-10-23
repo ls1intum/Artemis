@@ -82,6 +82,16 @@ public class LLMTokenUsageService {
     }
 
     /**
+     * Finds an LLMTokenUsageTrace by its ID.
+     *
+     * @param id The ID of the LLMTokenUsageTrace to find.
+     * @return An Optional containing the LLMTokenUsageTrace if found, or an empty Optional otherwise.
+     */
+    public Optional<LLMTokenUsageTrace> findLLMTokenUsageTraceById(Long id) {
+        return llmTokenUsageTraceRepository.findById(id);
+    }
+
+    /**
      * Class LLMTokenUsageBuilder to be used for saveLLMTokenUsage()
      */
     public static class LLMTokenUsageBuilder {

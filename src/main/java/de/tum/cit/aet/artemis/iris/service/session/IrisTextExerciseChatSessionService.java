@@ -116,7 +116,8 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
      * @param job          The job that is updated
      * @param statusUpdate The status update
      */
-    public void handleStatusUpdate(TextExerciseChatJob job, PyrisTextExerciseChatStatusUpdateDTO statusUpdate) {
+    public TextExerciseChatJob handleStatusUpdate(TextExerciseChatJob job, PyrisTextExerciseChatStatusUpdateDTO statusUpdate) {
+        // TODO: LLM Token Tracking - or better, make this class a subclass of AbstractIrisChatSessionService
         var session = (IrisTextExerciseChatSession) irisSessionRepository.findByIdElseThrow(job.sessionId());
         if (statusUpdate.result() != null) {
             var message = session.newMessage();
@@ -127,6 +128,8 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         else {
             irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages());
         }
+
+        return job;
     }
 
     @Override

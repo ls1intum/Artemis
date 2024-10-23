@@ -75,7 +75,7 @@ public class IrisCompetencyGenerationService {
      * @param job          Job related to the status update
      * @param statusUpdate the status update containing the new competency recommendations
      */
-    public void handleStatusUpdate(CompetencyExtractionJob job, PyrisCompetencyStatusUpdateDTO statusUpdate) {
+    public CompetencyExtractionJob handleStatusUpdate(CompetencyExtractionJob job, PyrisCompetencyStatusUpdateDTO statusUpdate) {
         Course course = courseRepository.findByIdForUpdateElseThrow(job.courseId());
         if (statusUpdate.tokens() != null && !statusUpdate.tokens().isEmpty()) {
             llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS, builder -> builder.withCourse(course.getId()).withUser(job.userId()));
@@ -83,6 +83,8 @@ public class IrisCompetencyGenerationService {
 
         var user = userRepository.findById(job.userId()).orElseThrow();
         websocketService.send(user.getLogin(), websocketTopic(job.courseId()), statusUpdate);
+
+        return job;
     }
 
     private static String websocketTopic(long courseId) {
