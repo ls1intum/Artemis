@@ -19,6 +19,8 @@ import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-
 import { Faq } from 'app/entities/faq.model';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { SortService } from 'app/shared/service/sort.service';
+import { ElementRef, QueryList } from '@angular/core';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();
@@ -36,6 +38,7 @@ describe('CourseFaqs', () => {
     let faqService: FaqService;
     let alertServiceStub: jest.SpyInstance;
     let alertService: AlertService;
+    let sortService: SortService;
 
     let faq1: Faq;
     let faq2: Faq;
@@ -104,6 +107,7 @@ describe('CourseFaqs', () => {
 
                 faqService = TestBed.inject(FaqService);
                 alertService = TestBed.inject(AlertService);
+                sortService = TestBed.inject(SortService);
             });
     });
 
@@ -119,7 +123,6 @@ describe('CourseFaqs', () => {
 
     it('should fetch faqs when initialized', () => {
         const findAllSpy = jest.spyOn(faqService, 'findAllByCourseId');
-
         courseFaqComponentFixture.detectChanges();
         expect(findAllSpy).toHaveBeenCalledExactlyOnceWith(1);
         expect(courseFaqComponent.faqs).toHaveLength(3);
@@ -155,5 +158,39 @@ describe('CourseFaqs', () => {
         jest.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         courseFaqComponentFixture.detectChanges();
         expect(alertServiceStub).toHaveBeenCalledOnce();
+    });
+
+    it('should call sortService when sortRows is called', () => {
+        jest.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
+        courseFaqComponent.sortFaqs();
+        expect(sortService.sortByProperty).toHaveBeenCalledOnce();
+    });
+
+    it('should call scrollToFaq when faqId is in query params', () => {
+        const scrollToFaqSpy = jest.spyOn(courseFaqComponent, 'scrollToFaq');
+
+        const route = TestBed.inject(ActivatedRoute);
+        (route.queryParams as any) = of({ faqId: '1' });
+
+        courseFaqComponent.goToFaq();
+
+        expect(scrollToFaqSpy).toHaveBeenCalledOnce();
+        expect(scrollToFaqSpy).toHaveBeenCalledWith('1');
+    });
+
+    it('should scroll and focus on the faq element with given id', () => {
+        const nativeElement = {
+            id: 'faq-1',
+            scrollIntoView: jest.fn(),
+            focus: jest.fn(),
+        };
+        const elementRef = new ElementRef(nativeElement);
+        const queryList = new QueryList<ElementRef>();
+        queryList.reset([elementRef]);
+        courseFaqComponent.faqElements = queryList;
+        courseFaqComponent.scrollToFaq(1);
+
+        expect(nativeElement.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+        expect(nativeElement.focus).toHaveBeenCalled();
     });
 });

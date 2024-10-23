@@ -330,6 +330,11 @@ describe('Metis Service', () => {
         expect(referenceRouterLink).toBe(`/courses/${metisCourse.id}/exams/${metisExam.id!.toString()}`);
     });
 
+    it('should determine the router link required for referencing a faq', () => {
+        const link = metisService.getLinkForFaq();
+        expect(link).toBe(`/courses/${metisCourse.id}/faq`);
+    });
+
     it('should determine the router link required for navigation based on the channel subtype', () => {
         metisService.setCourse(course);
         const channelDTO = new ChannelDTO();
