@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -64,7 +66,10 @@ import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseApi;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -109,6 +114,8 @@ public class ProgrammingExerciseResource {
     private String applicationName;
 
     private final ChannelRepository channelRepository;
+
+    private final ExerciseRepository exerciseRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -156,17 +163,20 @@ public class ProgrammingExerciseResource {
 
     private final Environment environment;
 
-    public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
+    private final ExerciseApi exerciseApi;
+
+    public ProgrammingExerciseResource(ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskService programmingExerciseTaskService,
             StudentParticipationRepository studentParticipationRepository, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService,
-            Environment environment) {
+            Environment environment, ExerciseApi exerciseApi) {
+        this.exerciseRepository = exerciseRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -191,6 +201,7 @@ public class ProgrammingExerciseResource {
         this.channelRepository = channelRepository;
         this.athenaModuleService = athenaModuleService;
         this.environment = environment;
+        this.exerciseApi = exerciseApi;
     }
 
     /**
@@ -426,6 +437,48 @@ public class ProgrammingExerciseResource {
         programmingExerciseTaskService.replaceTestIdsWithNames(updatedProgrammingExercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
                 .body(updatedProgrammingExercise);
+    }
+
+    @GetMapping("programming-exercises/{exerciseId}")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseById(@PathVariable Long exerciseId) {
+        log.debug("REST request to get programming exercise with id: {}", exerciseId);
+
+        Exercise exercise = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exerciseId);
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("Wrong exercise endpoint", "ProgrammingExercise", "useExamEndpoint");
+        }
+
+        if (!exerciseApi.isCorrectExerciseType(exercise, ProgrammingExercise.class)) {
+            throw new BadRequestAlertException("Exercise is not a programming exercise", "ProgrammingExercise", "invalidExerciseType");
+        }
+
+        exerciseApi.setChannelName(exercise);
+        exerciseApi.setGradingCriteria(exercise);
+        exerciseApi.checkExerciseIfStructuredGradingInstructionFeedbackUsed(exercise.getGradingCriteria(), exercise);
+
+        return ResponseEntity.ok((ProgrammingExercise) exercise);
+    }
+
+    @GetMapping("programming-exercises/{exerciseId}/for-students")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseForStudents(@PathVariable Long exerciseId) {
+        log.debug("REST request to get programming exercise with id: {}", exerciseId);
+        Exercise exercise = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exerciseId);
+
+        if (!exerciseApi.isStudentAllowedToSee(exercise)) {
+            throw new AccessForbiddenException();
+        }
+
+        if (!exerciseApi.isCorrectExerciseType(exercise, ProgrammingExercise.class)) {
+            throw new BadRequestAlertException("Exercise is not a programming exercise", "ProgrammingExercise", "invalidExercise");
+        }
+
+        exerciseApi.setGradingCriteria(exercise);
+        exerciseApi.checkExerciseIfStructuredGradingInstructionFeedbackUsed(exercise.getGradingCriteria(), exercise);
+        exerciseApi.filterSensitiveData(exercise);
+
+        return ResponseEntity.ok((ProgrammingExercise) exercise);
     }
 
     /**

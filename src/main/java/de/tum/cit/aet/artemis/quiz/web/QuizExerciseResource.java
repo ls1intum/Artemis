@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
@@ -69,7 +70,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseApi;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -136,8 +137,6 @@ public class QuizExerciseResource {
 
     private final GroupNotificationScheduleService groupNotificationScheduleService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final QuizBatchService quizBatchService;
 
     private final QuizBatchRepository quizBatchRepository;
@@ -150,13 +149,15 @@ public class QuizExerciseResource {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final ExerciseApi exerciseApi;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             ExamDateService examDateService, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
-            GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository,
-            QuizSubmissionService quizSubmissionService, QuizResultService quizResultService, CompetencyProgressService competencyProgressService) {
+            GroupNotificationScheduleService groupNotificationScheduleService, QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository, FileService fileService,
+            ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService, QuizResultService quizResultService,
+            CompetencyProgressService competencyProgressService, ExerciseApi exerciseApi) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -171,7 +172,6 @@ public class QuizExerciseResource {
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
         this.fileService = fileService;
@@ -180,6 +180,7 @@ public class QuizExerciseResource {
         this.quizSubmissionService = quizSubmissionService;
         this.quizResultService = quizResultService;
         this.competencyProgressService = competencyProgressService;
+        this.exerciseApi = exerciseApi;
     }
 
     /**
@@ -368,20 +369,16 @@ public class QuizExerciseResource {
     @GetMapping("quiz-exercises/{quizExerciseId}")
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
-        // TODO: Split this route in two: One for normal and one for exam exercises
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quizExerciseId);
         if (quizExercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
-            studentParticipationRepository.checkTestRunsExist(quizExercise);
+            throw new BadRequestAlertException("Wrong exercise endpoint", "QuizExercise", "useExamEndpoint");
         }
-        if (quizExercise.isCourseExercise()) {
-            Channel channel = channelRepository.findChannelByExerciseId(quizExercise.getId());
-            if (channel != null) {
-                quizExercise.setChannelName(channel.getName());
-            }
-        }
+
+        exerciseApi.setChannelName(quizExercise);
+
+        var user = userRepository.getUserWithGroupsAndAuthorities();
         setQuizBatches(user, quizExercise);
         return ResponseEntity.ok(quizExercise);
     }
@@ -408,15 +405,17 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
-    @GetMapping("quiz-exercises/{quizExerciseId}/for-student")
-    @EnforceAtLeastStudent
-    public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long quizExerciseId) {
+    @GetMapping("quiz-exercises/{quizExerciseId}/for-students")
+    @EnforceAtLeastStudentInExercise(resourceIdFieldName = "quizExerciseId")
+    private QuizExercise getQuizExerciseForStudent(@PathVariable Long quizExerciseId) {
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
+
+        if (!exerciseApi.isStudentAllowedToSee(quizExercise, user)) {
             throw new AccessForbiddenException();
         }
+
         quizExercise.setQuizBatches(null); // remove proxy and load batches only if required
         var batch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
         log.info("Found batch {} for user {}", batch.orElse(null), user.getLogin());
@@ -424,7 +423,9 @@ public class QuizExerciseResource {
         // filter out information depending on quiz state
         quizExercise.applyAppropriateFilterForStudents(batch.orElse(null));
 
-        return ResponseEntity.ok(quizExercise);
+        exerciseApi.filterSensitiveData(quizExercise); // ToDo: Was not invoked before, but we might need it?
+
+        return quizExercise;
     }
 
     /**

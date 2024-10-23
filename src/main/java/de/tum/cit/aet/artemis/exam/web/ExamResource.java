@@ -50,7 +50,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentDashboardService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -178,12 +180,15 @@ public class ExamResource {
 
     private final ExamUserService examUserService;
 
+    private final GradingCriterionRepository gradingCriterionRepository;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
             ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
             AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
-            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService) {
+            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
+            GradingCriterionRepository gradingCriterionRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -206,6 +211,7 @@ public class ExamResource {
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
         this.examUserService = examUserService;
+        this.gradingCriterionRepository = gradingCriterionRepository;
     }
 
     /**
@@ -301,6 +307,46 @@ public class ExamResource {
         }
 
         return ResponseEntity.ok(savedExam);
+    }
+
+    /**
+     * GET /exercises/:exerciseId : get an exam exercise by id.
+     * Users with at least editor rights can always access the exercise.
+     * Users with at least tutor rights can only access the exercise after the it has been finished.
+     * Students cannot see the exercise.
+     *
+     * @param exerciseId the exerciseId of the exercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     */
+    @GetMapping("exam/exercises/{exerciseId}")
+    @EnforceAtLeastEditor
+    public ResponseEntity<Exercise> getExamExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to get Exam Exercise : {}", exerciseId);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Exercise exercise = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exerciseId);
+
+        Exam exam = exercise.getExerciseGroup().getExam();
+        if (authCheckService.isAtLeastEditorForExercise(exercise, user)) {
+            // instructors editors and admins should always be able to see exam exercises
+            // continue
+        }
+        else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            // tutors should only be able to see exam exercises when the exercise has finished
+            ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
+            if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
+                // When there is no due date or the due date is in the future, we return forbidden here
+                throw new AccessForbiddenException();
+            }
+        }
+        else {
+            // Students should never access exercises
+            throw new AccessForbiddenException();
+        }
+
+        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        exercise.setGradingCriteria(gradingCriteria);
+        return ResponseEntity.ok(exercise);
     }
 
     /**
