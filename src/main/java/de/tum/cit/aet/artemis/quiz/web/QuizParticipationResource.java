@@ -96,7 +96,7 @@ public class QuizParticipationResource {
         var result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(new Result());
         if (result.getId() == null) {
             // Load the live submission of the participation
-            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).orElseThrow());
+            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst().orElseThrow());
         }
         else {
             // Load the actual submission of the result
