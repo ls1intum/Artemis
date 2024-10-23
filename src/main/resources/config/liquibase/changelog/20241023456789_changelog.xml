@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20241023456789" author="michaeldyer">
+        <preConditions onFail="MARK_RAN">
+            <!-- Check if the foreign key exists before modifying -->
+            <foreignKeyConstraintExists foreignKeyName="fk_iris_session_exercise_id"/>
+        </preConditions>
+
+        <!-- Drop the existing foreign key -->
+        <dropForeignKeyConstraint
+                baseTableName="iris_session"
+                constraintName="fk_iris_session_exercise_id"/>
+
+        <!-- Add the foreign key with ON DELETE SET NULL -->
+        <addForeignKeyConstraint
+                baseTableName="iris_session"
+                baseColumnNames="exercise_id"
+                referencedTableName="exercise"
+                referencedColumnNames="id"
+                constraintName="fk_iris_session_exercise_id"
+                onDelete="SET NULL"/>
+    </changeSet>
+</databaseChangeLog>
