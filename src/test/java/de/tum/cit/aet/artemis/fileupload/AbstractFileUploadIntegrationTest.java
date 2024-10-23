@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-public class AbstractFileUploadIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+public abstract class AbstractFileUploadIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     // Repositories
     @Autowired
