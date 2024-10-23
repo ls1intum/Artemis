@@ -74,6 +74,7 @@ public class IrisCompetencyGenerationService {
      *
      * @param job          Job related to the status update
      * @param statusUpdate the status update containing the new competency recommendations
+     * @return the same job that was passed in
      */
     public CompetencyExtractionJob handleStatusUpdate(CompetencyExtractionJob job, PyrisCompetencyStatusUpdateDTO statusUpdate) {
         Course course = courseRepository.findByIdForUpdateElseThrow(job.courseId());

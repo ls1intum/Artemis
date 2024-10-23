@@ -115,6 +115,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
      *
      * @param job          The job that is updated
      * @param statusUpdate The status update
+     * @return The same job that was passed in
      */
     public TextExerciseChatJob handleStatusUpdate(TextExerciseChatJob job, PyrisTextExerciseChatStatusUpdateDTO statusUpdate) {
         // TODO: LLM Token Tracking - or better, make this class a subclass of AbstractIrisChatSessionService
