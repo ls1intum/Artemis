@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +15,8 @@ import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 
 @Service
 public class ScienceUtilService {
+
+    private final static Logger log = LoggerFactory.getLogger(ScienceUtilService.class);
 
     @Autowired
     private ScienceEventTestRepository scienceEventRepository;
@@ -31,7 +35,12 @@ public class ScienceUtilService {
         event.setTimestamp(timestamp);
         event.setType(type);
         event.setResourceId(resourceId);
-        return scienceEventRepository.save(event);
+        ScienceEvent saved = scienceEventRepository.save(event);
+        if (saved.getId() == null || saved.getId() == 0) {
+            log.error("Failed to save science event: " + saved);
+            return null;
+        }
+        return saved;
     }
 
     /**
