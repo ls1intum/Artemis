@@ -166,18 +166,6 @@ describe('CourseFaqs', () => {
         expect(sortService.sortByProperty).toHaveBeenCalledOnce();
     });
 
-    it('should call scrollToFaq when faqId is in query params', () => {
-        const scrollToFaqSpy = jest.spyOn(courseFaqComponent, 'scrollToFaq');
-
-        const route = TestBed.inject(ActivatedRoute);
-        (route.queryParams as any) = of({ faqId: '1' });
-
-        courseFaqComponent.goToFaq();
-
-        expect(scrollToFaqSpy).toHaveBeenCalledOnce();
-        expect(scrollToFaqSpy).toHaveBeenCalledWith('1');
-    });
-
     it('should scroll and focus on the faq element with given id', () => {
         const nativeElement = {
             id: 'faq-1',
