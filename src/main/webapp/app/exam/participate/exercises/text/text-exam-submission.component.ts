@@ -10,7 +10,6 @@ import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
-import { ExamParticipationService } from '../../exam-participation.service';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -36,7 +35,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     answer: string;
     problemStatementHtml: string;
     private textEditorInput = new Subject<string>();
-    submission?: Submission;
 
     // Icons
     readonly farListAlt = faListAlt;
@@ -44,7 +42,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     constructor(
         private textService: TextEditorService,
         private stringCountService: StringCountService,
-        private examParticipationService: ExamParticipationService,
         changeDetectorReference: ChangeDetectorRef,
     ) {
         super(changeDetectorReference);
@@ -54,7 +51,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         // show submission answers in UI
         this.problemStatementHtml = htmlForMarkdown(this.exercise?.problemStatement);
         this.updateViewFromSubmission();
-        this.submission = ExamParticipationService.getSubmissionForExercise(this.exercise);
     }
 
     getExerciseId(): number | undefined {
