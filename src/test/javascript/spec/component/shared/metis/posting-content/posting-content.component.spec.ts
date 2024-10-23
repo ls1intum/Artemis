@@ -492,6 +492,22 @@ describe('PostingContentComponent', () => {
             ]);
         }));
 
+        it('should compute parts when referencing a faq', fakeAsync(() => {
+            component.content = `I want to reference [faq]faq(/courses/1/faq?faqId=45)[/faq].`;
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts).toEqual([
+                {
+                    contentBeforeReference: 'I want to reference ',
+                    linkToReference: ['/courses/1/faq'],
+                    referenceStr: `faq`,
+                    referenceType: ReferenceType.FAQ,
+                    contentAfterReference: '.',
+                    queryParams: { faqId: '45' },
+                } as PostingContentPart,
+            ]);
+        }));
+
         it('should compute parts when referencing a channel', fakeAsync(() => {
             component.content = `This topic belongs to [channel]test(1)[/channel].`;
             const matches = component.getPatternMatches();
