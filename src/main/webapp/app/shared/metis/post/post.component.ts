@@ -5,10 +5,12 @@ import {
     Component,
     EventEmitter,
     HostListener,
+    Inject,
     Input,
     OnChanges,
     OnInit,
     Output,
+    Renderer2,
     ViewChild,
     ViewContainerRef,
     input,
@@ -31,6 +33,7 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-cre
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { DOCUMENT } from '@angular/common';
 
 @Component({
     selector: 'jhi-post',
@@ -86,6 +89,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         private oneToOneChatService: OneToOneChatService,
         private metisConversationService: MetisConversationService,
         private router: Router,
+        private renderer: Renderer2,
+        @Inject(DOCUMENT) private document: Document,
     ) {
         super();
     }
@@ -99,6 +104,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
         if (PostComponent.activeDropdownPost && PostComponent.activeDropdownPost !== this) {
             PostComponent.activeDropdownPost.showDropdown = false;
+            PostComponent.activeDropdownPost.enableBodyScroll();
             PostComponent.activeDropdownPost.changeDetector.detectChanges();
         }
 
@@ -110,11 +116,27 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         };
 
         this.showDropdown = true;
+        this.disableBodyScroll();
+    }
+
+    private disableBodyScroll() {
+        const mainContainer = this.document.querySelector('.posting-infinite-scroll-container');
+        if (mainContainer) {
+            this.renderer.setStyle(mainContainer, 'overflow', 'hidden');
+        }
+    }
+
+    private enableBodyScroll() {
+        const mainContainer = this.document.querySelector('.posting-infinite-scroll-container');
+        if (mainContainer) {
+            this.renderer.setStyle(mainContainer, 'overflow-y', 'auto');
+        }
     }
 
     @HostListener('document:click', ['$event'])
     onClickOutside() {
         this.showDropdown = false;
+        this.enableBodyScroll();
     }
 
     /**

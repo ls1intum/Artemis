@@ -1,10 +1,24 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, HostListener, Input, Output, ViewChild, ViewContainerRef, input } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    HostListener,
+    Inject,
+    Input,
+    Output,
+    Renderer2,
+    ViewChild,
+    ViewContainerRef,
+    input,
+} from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import dayjs from 'dayjs/esm';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { DOCUMENT } from '@angular/common';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 
 @Component({
@@ -32,7 +46,11 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     static activeDropdownPost: AnswerPostComponent | null = null;
     @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
 
-    constructor(protected changeDetector: ChangeDetectorRef) {
+    constructor(
+        protected changeDetector: ChangeDetectorRef,
+        private renderer: Renderer2,
+        @Inject(DOCUMENT) private document: Document,
+    ) {
         super();
     }
 
@@ -51,6 +69,24 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @HostListener('document:click', ['$event'])
     onClickOutside() {
         this.showDropdown = false;
+        this.enableBodyScroll();
+    }
+
+    private disableBodyScroll() {
+        console.log('disabledasınn');
+        const mainContainer = this.document.querySelector('.thread-answer-post');
+        console.log(mainContainer);
+        if (mainContainer) {
+            console.log("main container'ı bulduu");
+            this.renderer.setStyle(mainContainer, 'overflow', 'hidden');
+        }
+    }
+
+    private enableBodyScroll() {
+        const mainContainer = this.document.querySelector('.thread-answer-post');
+        if (mainContainer) {
+            this.renderer.setStyle(mainContainer, 'overflow-y', 'auto');
+        }
     }
 
     onRightClick(event: MouseEvent) {
@@ -58,6 +94,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
 
         if (AnswerPostComponent.activeDropdownPost && AnswerPostComponent.activeDropdownPost !== this) {
             AnswerPostComponent.activeDropdownPost.showDropdown = false;
+            AnswerPostComponent.activeDropdownPost.enableBodyScroll();
             AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
         }
 
@@ -69,5 +106,6 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
         };
 
         this.showDropdown = true;
+        this.disableBodyScroll();
     }
 }

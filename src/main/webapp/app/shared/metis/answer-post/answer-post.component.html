@@ -9,8 +9,8 @@
         />
     }
     @if (!createAnswerPostModal.isInputOpen) {
-        <div class="answer-post-content-margin message-container" [class.force-hover]="showDropdown" (contextmenu)="onRightClick($event)">
-            <div class="message-content">
+        <div class="answer-post-content-margin" (contextmenu)="onRightClick($event)">
+            <div class="message-content" [class.force-hover]="showDropdown">
                 <jhi-posting-content
                     [content]="posting.content"
                     [isEdited]="!!posting.updatedDate"
@@ -55,10 +55,6 @@
     <button class="dropdown-item d-flex" (click)="addReaction($event)">
         <fa-icon [icon]="faSmile" class="item-icon"></fa-icon>
         <span jhiTranslate="artemisApp.metis.post.addReaction"></span>
-    </button>
-    <button class="dropdown-item d-flex" (click)="togglePin()">
-        <fa-icon [icon]="faThumbtack" class="item-icon"></fa-icon>
-        <span jhiTranslate="artemisApp.metis.post.pinMessage"></span>
     </button>
     <button class="dropdown-item d-flex" (click)="editPosting()">
         <fa-icon [icon]="faPencilAlt" class="item-icon"></fa-icon>
