@@ -153,7 +153,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private setupMetis() {
         this.metisService.setPageType(PageType.OVERVIEW);
         this.metisService.setCourse(this.course!);
-        this.metisService.setFaqs(this.course);
     }
 
     ngOnInit(): void {

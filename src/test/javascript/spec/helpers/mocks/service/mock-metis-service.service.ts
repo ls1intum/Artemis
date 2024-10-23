@@ -130,6 +130,4 @@ export class MockMetisService {
     }
 
     setCourse(course: Course | undefined): void {}
-
-    setFaqs(course: Course | undefined): void {}
 }

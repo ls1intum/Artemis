@@ -12,6 +12,7 @@ import {
     ViewChild,
     ViewChildren,
     ViewContainerRef,
+    inject,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -67,6 +68,8 @@ import { CourseConversationsComponent } from 'app/overview/course-conversations/
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 import { LtiService } from 'app/shared/service/lti.service';
+import { Faq } from 'app/entities/faq.model';
+import { FaqService } from 'app/faq/faq.service';
 
 interface CourseActionItem {
     title: string;
@@ -185,6 +188,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly isCommunicationEnabled = isCommunicationEnabled;
+
+    private faqService = inject(FaqService);
 
     constructor(
         private courseService: CourseManagementService,
@@ -695,6 +700,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.course = res.body;
+                    this.setFaqs(this.course);
                 }
 
                 if (refresh) {
@@ -731,6 +737,23 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.loadCourseSubscription = observable.subscribe();
         }
         return observable;
+    }
+
+    /**
+     * set course property before using metis service
+     * @param {Course} course in which the metis service is used
+     */
+    setFaqs(course: Course | undefined): void {
+        if (course) {
+            this.faqService
+                .findAllByCourseId(this.courseId)
+                .pipe(map((res: HttpResponse<Faq[]>) => res.body))
+                .subscribe({
+                    next: (res: Faq[]) => {
+                        course.faqs = res;
+                    },
+                });
+        }
     }
 
     ngOnDestroy() {
