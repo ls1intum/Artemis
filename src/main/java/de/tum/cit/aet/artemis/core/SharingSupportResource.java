@@ -61,7 +61,7 @@ public class SharingSupportResource {
     public ResponseEntity<SharingPluginConfig> getConfig(@RequestHeader("Authorization") Optional<String> sharingApiKey, @RequestParam String apiBaseUrl,
             @RequestParam String installationName) {
         if (sharingApiKey.isPresent() && sharingPluginService.validate(sharingApiKey.get())) {
-            log.debug("Received new Sharing Config request");
+            log.info("Delivered Sharing Config ");
             URL apiBaseUrl1;
             try {
                 apiBaseUrl1 = URI.create(apiBaseUrl).toURL();
@@ -71,7 +71,7 @@ public class SharingSupportResource {
             }
             return ResponseEntity.ok(sharingPluginService.getPluginConfig(apiBaseUrl1, installationName));
         }
-        log.debug("Received wrong or missing api key");
+        log.warn("Received wrong or missing api key");
         return ResponseEntity.status(401).body(null);
     }
 
