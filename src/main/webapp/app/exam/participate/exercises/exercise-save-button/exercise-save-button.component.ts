@@ -12,12 +12,11 @@ import { Submission } from 'app/entities/submission.model';
     imports: [FaIconComponent],
 })
 export class ExerciseSaveButtonComponent {
-    submission = input<Submission>();
-    save = output<void>();
-
-    //Icons
     protected readonly faFloppyDisk = faFloppyDisk;
     protected readonly facSaveSuccess = facSaveSuccess;
+
+    submission = input<Submission>();
+    save = output<void>();
 
     onSave() {
         this.save.emit();

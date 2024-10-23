@@ -79,6 +79,7 @@
                                                     <jhi-modeling-submission-exam
                                                         [exercise]="exercise"
                                                         [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
+                                                        [isSubmissionSynced]="exercise.studentParticipations[0].submissions![0].isSynced"
                                                         (saveCurrentExercise)="triggerSave(false)"
                                                     />
                                                 }

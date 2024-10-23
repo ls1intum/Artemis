@@ -288,6 +288,9 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.updateViewFromSubmissionVersion();
     }
 
+    /**
+     * Trigger save action in exam participation component
+     */
     notifyTriggerSave() {
         this.saveCurrentExercise.emit();
     }
