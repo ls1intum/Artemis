@@ -13,36 +13,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
-import de.tum.cit.aet.artemis.core.util.CourseTestService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
-class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "courseegitlabjenkins";
-
-    @Autowired
-    private CourseTestService courseTestService;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @BeforeEach
     void setup() {
