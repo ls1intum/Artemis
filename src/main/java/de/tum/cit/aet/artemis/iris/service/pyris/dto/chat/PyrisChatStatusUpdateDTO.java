@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisChatStatusUpdateDTO(
         String result, // TODO: Wrap in Optional for API clarity
-        List<PyrisStageDTO> stages, // TODO: Wrap in Optional for API clarity
+        List<PyrisStageDTO> stages,
         List<String> suggestions
 ) {}
 // @formatter:on
