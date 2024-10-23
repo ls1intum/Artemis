@@ -26,6 +26,7 @@ export enum ProgrammingLanguage {
     R = 'R',
     RUST = 'RUST',
     SWIFT = 'SWIFT',
+    TYPESCRIPT = 'TYPESCRIPT',
     VHDL = 'VHDL',
 }
 

@@ -10,45 +10,20 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ProgrammingExerciseTaskIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "progextask";
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
-
-    @Autowired
-    private ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository;
-
-    @Autowired
-    private ProgrammingExerciseTaskService programmingExerciseTaskService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -60,7 +35,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationIn
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        this.testCases = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId());
+        this.testCases = testCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId());
         for (ProgrammingExerciseTestCase testCase : testCases) {
             var solutionEntry = new ProgrammingExerciseSolutionEntry();
             solutionEntry.setTestCase(testCase);
@@ -102,10 +77,10 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationIn
         task.setExercise(programmingExercise);
         task.setTaskName("Task");
         task.setTestCases(new HashSet<>(testCases));
-        programmingExerciseTaskRepository.save(task);
+        taskRepository.save(task);
 
         request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.NO_CONTENT);
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
         assertThat(programmingExerciseSolutionEntryRepository.findAllById(solutionEntryIdsBeforeDeleting)).isEmpty();
     }
 
@@ -139,7 +114,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationIn
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.OK, Set.class);
-        Set<ProgrammingExerciseTask> extractedTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(programmingExercise.getId());
+        Set<ProgrammingExerciseTask> extractedTasks = taskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(programmingExercise.getId());
         Optional<ProgrammingExerciseTask> task1Optional = extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName1)).findFirst();
         Optional<ProgrammingExerciseTask> task2Optional = extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName2)).findFirst();
         assertThat(task1Optional).isPresent();
@@ -164,7 +139,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationIn
 
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.OK, Set.class);
 
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
+        assertThat(taskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }
 
     @Test
