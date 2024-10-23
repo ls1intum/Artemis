@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -77,11 +79,13 @@ public class CourseCompetencyService {
 
     private final LearningObjectImportService learningObjectImportService;
 
+    private final CourseRepository courseRepository;
+
     public CourseCompetencyService(CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, LearningPathService learningPathService, AuthorizationCheckService authCheckService,
             StandardizedCompetencyRepository standardizedCompetencyRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            LearningObjectImportService learningObjectImportService) {
+            LearningObjectImportService learningObjectImportService, CourseRepository courseRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -93,6 +97,7 @@ public class CourseCompetencyService {
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.learningObjectImportService = learningObjectImportService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -121,6 +126,28 @@ public class CourseCompetencyService {
     public List<CourseCompetency> findCourseCompetenciesWithProgressForUserByCourseId(Long courseId, Long userId) {
         List<CourseCompetency> competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
         return findProgressForCompetenciesAndUser(competencies, userId);
+    }
+
+    /**
+     * Updates the type of a course competency relation.
+     *
+     * @param courseId                          The id of the course for which to fetch the competencies
+     * @param courseCompetencyRelationId        The id of the course competency relation to update
+     * @param updateCourseCompetencyRelationDTO The DTO containing the new relation type
+     *
+     */
+    public void updateCourseCompetencyRelation(long courseId, long courseCompetencyRelationId, UpdateCourseCompetencyRelationDTO updateCourseCompetencyRelationDTO) {
+        var relation = competencyRelationRepository.findByIdElseThrow(courseCompetencyRelationId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var headCompetency = relation.getHeadCompetency();
+        var tailCompetency = relation.getTailCompetency();
+
+        if (!course.getId().equals(headCompetency.getCourse().getId()) || !course.getId().equals(tailCompetency.getCourse().getId())) {
+            throw new BadRequestAlertException("The relation does not belong to the course", ENTITY_NAME, "relationWrongCourse");
+        }
+
+        relation.setType(updateCourseCompetencyRelationDTO.newRelationType());
+        competencyRelationRepository.save(relation);
     }
 
     /**

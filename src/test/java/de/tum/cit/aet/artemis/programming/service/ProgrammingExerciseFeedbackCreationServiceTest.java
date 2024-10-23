@@ -10,14 +10,13 @@ import jakarta.validation.constraints.NotNull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -27,32 +26,9 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestC
 import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringIntegrationIndependentTest {
-
-    @Autowired
-    private ProgrammingExerciseFeedbackCreationService feedbackCreationService;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExamUtilService examUtilService;
+class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private ProgrammingExercise programmingExercise;
 
