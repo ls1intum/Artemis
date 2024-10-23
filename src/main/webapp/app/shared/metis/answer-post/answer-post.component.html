@@ -9,7 +9,7 @@
         />
     }
     @if (!createAnswerPostModal.isInputOpen) {
-        <div class="answer-post-content-margin" (contextmenu)="onRightClick($event)">
+        <div class="answer-post-content-margin message-container" (contextmenu)="onRightClick($event)">
             <div class="message-content" [class.force-hover]="showDropdown">
                 <jhi-posting-content
                     [content]="posting.content"

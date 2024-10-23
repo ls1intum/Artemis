@@ -117,7 +117,7 @@
         }
         <jhi-post-create-edit-modal #createEditModal [posting]="posting" [isCommunicationPage]="isCommunicationPage" (isModalOpen)="isModalOpen.emit()" />
         @if (!isEmojiCount && mayEditOrDelete) {
-            <button class="reaction-button clickable px-2 fs-small">
+            <button class="reaction-button clickable fs-small">
                 <jhi-confirm-icon
                     iconSize="sm"
                     (confirmEvent)="deletePosting()"
