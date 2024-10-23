@@ -47,8 +47,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
 
     constructor(
-        protected changeDetector: ChangeDetectorRef,
-        private renderer: Renderer2,
+        public changeDetector: ChangeDetectorRef,
+        public renderer: Renderer2,
         @Inject(DOCUMENT) private document: Document,
     ) {
         super();
@@ -73,16 +73,13 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     }
 
     private disableBodyScroll() {
-        console.log('disabledasınn');
         const mainContainer = this.document.querySelector('.thread-answer-post');
-        console.log(mainContainer);
         if (mainContainer) {
-            console.log("main container'ı bulduu");
             this.renderer.setStyle(mainContainer, 'overflow', 'hidden');
         }
     }
 
-    private enableBodyScroll() {
+    enableBodyScroll() {
         const mainContainer = this.document.querySelector('.thread-answer-post');
         if (mainContainer) {
             this.renderer.setStyle(mainContainer, 'overflow-y', 'auto');

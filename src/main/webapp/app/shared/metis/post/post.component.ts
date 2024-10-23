@@ -85,11 +85,11 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
     constructor(
         private metisService: MetisService,
-        protected changeDetector: ChangeDetectorRef,
+        public changeDetector: ChangeDetectorRef,
         private oneToOneChatService: OneToOneChatService,
         private metisConversationService: MetisConversationService,
         private router: Router,
-        private renderer: Renderer2,
+        public renderer: Renderer2,
         @Inject(DOCUMENT) private document: Document,
     ) {
         super();
@@ -97,6 +97,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
     protected get reactionsBar() {
         return this.reactionsBarComponent;
+    }
+
+    isPinned(): boolean {
+        return this.posting.displayPriority === DisplayPriority.PINNED;
     }
 
     onRightClick(event: MouseEvent) {
@@ -119,14 +123,14 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.disableBodyScroll();
     }
 
-    private disableBodyScroll() {
+    disableBodyScroll() {
         const mainContainer = this.document.querySelector('.posting-infinite-scroll-container');
         if (mainContainer) {
             this.renderer.setStyle(mainContainer, 'overflow', 'hidden');
         }
     }
 
-    private enableBodyScroll() {
+    enableBodyScroll() {
         const mainContainer = this.document.querySelector('.posting-infinite-scroll-container');
         if (mainContainer) {
             this.renderer.setStyle(mainContainer, 'overflow-y', 'auto');

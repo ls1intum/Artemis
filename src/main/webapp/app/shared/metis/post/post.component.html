@@ -1,4 +1,4 @@
-<div class="mb-1" [ngClass]="{ 'mx-0': !isThreadSidebar }">
+<div class="mb-1" [ngClass]="{ 'mx-0': !isThreadSidebar, 'pinned-message': isPinned() }">
     @if (!isConsecutive()) {
         <jhi-post-header
             [previewMode]="previewMode"
