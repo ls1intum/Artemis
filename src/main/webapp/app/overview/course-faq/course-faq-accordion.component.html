@@ -1,6 +1,6 @@
 <div>
     <div class="faq-container">
-        <h2 class="markdown-preview">{{ faq().questionTitle }}</h2>
+        <h5 class="markdown-preview mb-0">{{ faq().questionTitle }}</h5>
 
         <div class="badge-container">
             @for (category of faq().categories; track category) {
@@ -8,8 +8,8 @@
             }
         </div>
     </div>
-    <div class="faq-container mb-0">
-        <h4 class="markdown-preview" [innerHTML]="faq().questionAnswer | htmlForMarkdown"></h4>
+    <div>
+        <p class="markdown-preview mb-0" [innerHTML]="faq().questionAnswer | htmlForMarkdown"></p>
     </div>
     <hr class="mt-0" />
 </div>
