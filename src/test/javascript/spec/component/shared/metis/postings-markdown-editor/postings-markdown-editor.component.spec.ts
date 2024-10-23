@@ -24,6 +24,7 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -90,6 +91,45 @@ describe('PostingsMarkdownEditor', () => {
             new CodeAction(),
             new CodeBlockAction(),
             new ExerciseReferenceAction(metisService),
+        ]);
+
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
+    });
+
+    it('should have set the correct default commands on init if faq is disabled', () => {
+        jest.spyOn(CourseModel, 'isFaqEnabled').mockReturnValueOnce(false);
+        component.ngOnInit();
+
+        expect(component.defaultActions).toEqual([
+            new BoldAction(),
+            new ItalicAction(),
+            new UnderlineAction(),
+            new QuoteAction(),
+            new CodeAction(),
+            new CodeBlockAction(),
+            new UserMentionAction(courseManagementService, metisService),
+            new ChannelReferenceAction(metisService, channelService),
+            new ExerciseReferenceAction(metisService),
+        ]);
+
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
+    });
+
+    it('should have set the correct default commands on init if faq is enabled', () => {
+        jest.spyOn(CourseModel, 'isFaqEnabled').mockReturnValueOnce(true);
+        component.ngOnInit();
+
+        expect(component.defaultActions).toEqual([
+            new BoldAction(),
+            new ItalicAction(),
+            new UnderlineAction(),
+            new QuoteAction(),
+            new CodeAction(),
+            new CodeBlockAction(),
+            new UserMentionAction(courseManagementService, metisService),
+            new ChannelReferenceAction(metisService, channelService),
+            new ExerciseReferenceAction(metisService),
+            new FaqReferenceAction(metisService),
         ]);
 
         expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));

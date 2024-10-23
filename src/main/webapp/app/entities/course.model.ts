@@ -32,6 +32,13 @@ export function isCommunicationEnabled(course: Course | undefined) {
 /**
  * Note: Keep in sync with method in CourseRepository.java
  */
+export function isFaqEnabled(course: Course | undefined) {
+    return course?.faqEnabled;
+}
+
+/**
+ * Note: Keep in sync with method in CourseRepository.java
+ */
 export function isMessagingEnabled(course: Course | undefined) {
     const config = course?.courseInformationSharingConfiguration;
     return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
