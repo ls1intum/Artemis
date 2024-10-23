@@ -69,6 +69,8 @@ public class QuizParticipationResource {
 
     /**
      * POST /quiz-exercises/{exerciseId}/start-participation : start the quiz exercise participation
+     * TODO: This endpoint is also called when viewing the result of a quiz exercise.
+     * TODO: This does not make any sense, as the participation is already started.
      *
      * @param exerciseId the id of the quiz exercise
      * @return The created participation
