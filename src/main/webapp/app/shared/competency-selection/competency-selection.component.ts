@@ -40,6 +40,12 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (value: any) => {};
 
+    protected readonly HIGH_LINK_WEIGHT = 1;
+    protected readonly MEDIUM_LINK_WEIGHT = 0.5;
+    protected readonly LOW_LINK_WEIGHT = 0.25;
+    protected readonly LOW_LINK_WEIGHT_CUT_OFF = 0.375; // halfway between low and medium
+    protected readonly MEDIUM_LINK_WEIGHT_CUT_OFF = 0.75; // halfway between medium and high
+
     constructor(
         private route: ActivatedRoute,
         private courseStorageService: CourseStorageService,
@@ -122,7 +128,19 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         }
     }
 
+    updateLinkWeight(link: CompetencyLearningObjectLink, value: number) {
+        link.weight = value;
+
+        this._onChange(this.selectedCompetencyLinks);
+        this.valueChange.emit(this.selectedCompetencyLinks);
+    }
+
     writeValue(value?: CompetencyLearningObjectLink[]): void {
+        this.competencyLinks?.forEach((link) => {
+            const selectedLink = value?.find((value) => value.competency?.id === link.competency?.id);
+            link.weight = selectedLink?.weight ?? this.MEDIUM_LINK_WEIGHT;
+        });
+
         if (value && this.competencyLinks) {
             // Compare the ids of the competencies instead of the whole objects
             const ids = value.map((el) => el.competency?.id);

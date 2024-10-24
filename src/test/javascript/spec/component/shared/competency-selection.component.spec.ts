@@ -14,6 +14,7 @@ import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { Prerequisite } from 'app/entities/prerequisite.model';
 
 describe('CompetencySelection', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;
@@ -120,6 +121,22 @@ describe('CompetencySelection', () => {
         component.writeValue([new CompetencyLearningObjectLink({ id: 1, title: 'other' } as Competency, 1)]);
         expect(component.selectedCompetencyLinks).toBeArrayOfSize(1);
         expect(component.selectedCompetencyLinks?.first()?.competency?.title).toBe('test');
+    });
+
+    it('should update link weight when value is written', () => {
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
+            competencies: [{ id: 1, title: 'test' } as Competency, { id: 2, title: 'testAgain' } as Prerequisite, { id: 3, title: 'testMore' } as Competency],
+        });
+
+        fixture.detectChanges();
+
+        component.writeValue([
+            new CompetencyLearningObjectLink({ id: 1, title: 'other' } as Competency, 0.5),
+            new CompetencyLearningObjectLink({ id: 3, title: 'otherMore' } as Competency, 1),
+        ]);
+        expect(component.selectedCompetencyLinks).toBeArrayOfSize(2);
+        expect(component.selectedCompetencyLinks?.first()?.weight).toBe(0.5);
+        expect(component.selectedCompetencyLinks?.last()?.weight).toBe(1);
     });
 
     it('should trigger change detection after loading competencies', () => {

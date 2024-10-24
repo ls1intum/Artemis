@@ -117,7 +117,13 @@
             "link": {
                 "title": "Verbundene Kompetenzen",
                 "lectureUnit": "Verbinde diese Vorlesungseinheit wahlweise mit einer oder mehreren Kompetenzen.",
-                "exercise": "Verbinde diese Übung wahlweise mit einer oder mehreren Kompetenzen."
+                "exercise": "Verbinde diese Übung wahlweise mit einer oder mehreren Kompetenzen.",
+                "weightTooltip": "Die Relevanz dieses Lernobjektes für die Kompetenz.",
+                "weightLabels": {
+                    "low": "Niedrig",
+                    "medium": "Mittel",
+                    "high": "Hoch"
+                }
             },
             "competencyCard": {
                 "connectedLectureUnits": "Verbundene Vorlesungseinheiten",
