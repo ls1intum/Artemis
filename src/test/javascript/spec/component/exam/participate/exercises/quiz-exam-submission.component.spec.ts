@@ -25,6 +25,7 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { provideRouter } from '@angular/router';
+import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
 
 describe('QuizExamSubmissionComponent', () => {
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
@@ -55,6 +56,7 @@ describe('QuizExamSubmissionComponent', () => {
                 MockComponent(MultipleChoiceQuestionComponent),
                 MockComponent(DragAndDropQuestionComponent),
                 MockComponent(ShortAnswerQuestionComponent),
+                MockComponent(ExerciseSaveButtonComponent),
             ],
             providers: [provideRouter([]), MockProvider(ArtemisQuizService)],
         })

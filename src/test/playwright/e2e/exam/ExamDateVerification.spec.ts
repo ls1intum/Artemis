@@ -92,7 +92,7 @@ test.describe('Exam date verification', () => {
             await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
 
             await page.hover('.fa-save-success');
-            await expect(page.getByText('Exercise saved')).toBeVisible();
+            await expect(page.getByText('Exercise saved', { exact: true })).toBeVisible();
         });
 
         test('Exam ends after end time', async ({ page, login, examAPIRequests, exerciseAPIRequests, examStartEnd, examNavigation, textExerciseEditor, examParticipation }) => {

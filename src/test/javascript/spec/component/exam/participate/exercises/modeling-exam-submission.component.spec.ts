@@ -17,6 +17,7 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
 
 describe('ModelingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;
@@ -49,6 +50,7 @@ describe('ModelingExamSubmissionComponent', () => {
                 MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
+                MockComponent(ExerciseSaveButtonComponent),
             ],
             providers: [MockProvider(ChangeDetectorRef)],
         })
