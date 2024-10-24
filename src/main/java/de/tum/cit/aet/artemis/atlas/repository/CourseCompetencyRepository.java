@@ -103,6 +103,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                 e.maxPoints,
                 e.difficulty,
                 CASE WHEN TYPE(e) = ProgrammingExercise THEN TRUE ELSE FALSE END,
+                cl.weight,
                 COALESCE(sS.lastScore, tS.lastScore),
                 COALESCE(sS.lastPoints, tS.lastPoints),
                 COALESCE(sS.lastModifiedDate, tS.lastModifiedDate),
@@ -111,6 +112,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             FROM CourseCompetency c
                 LEFT JOIN c.exerciseLinks el
                 LEFT JOIN el.exercise e
+                LEFT JOIN e.competencyLinks cl ON cl.competency = c
                 LEFT JOIN e.studentParticipations sp ON sp.student = :user OR :user MEMBER OF sp.team.students
                 LEFT JOIN sp.submissions s
                 LEFT JOIN StudentScore sS ON sS.exercise = e AND sS.user = :user
