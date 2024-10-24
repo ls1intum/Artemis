@@ -91,8 +91,8 @@
                         </div>
                     }
 
-                    @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation)) {
-                        <div class="d-block d-sm-none">
+                    @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && isMobile) {
+                        <div>
                             @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
                                 <div class="pt-2">
                                     <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
@@ -109,7 +109,7 @@
                         </div>
                     }
                 </div>
-                @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation)) {
+                @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && !isMobile) {
                     <div class="d-none d-sm-block">
                         @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
                             <div class="pt-2">
