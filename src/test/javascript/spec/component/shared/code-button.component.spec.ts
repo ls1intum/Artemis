@@ -1,5 +1,5 @@
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
@@ -41,6 +41,7 @@ describe('CodeButtonComponent', () => {
     let localStorageUseSshObserveStubSubject: Subject<boolean | undefined>;
     let localStorageUseSshStoreStub: jest.SpyInstance;
     let getVcsAccessTokenSpy: jest.SpyInstance;
+    let hasSshKeySpy: jest.SpyInstance;
     let createVcsAccessTokenSpy: jest.SpyInstance;
 
     const vcsToken: string = 'vcpat-xlhBs26D4F2CGlkCM59KVU8aaV9bYdX5Mg4IK6T8W3aT';
@@ -122,6 +123,7 @@ describe('CodeButtonComponent', () => {
         localStorageUseSshObserveStub = jest.spyOn(localStorageMock, 'observe');
         localStorageUseSshStoreStub = jest.spyOn(localStorageMock, 'store');
         getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken');
+        hasSshKeySpy = jest.spyOn(accountService, 'hasUserSshPublicKeys');
         createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken');
 
         localStorageUseSshObserveStubSubject = new Subject();
@@ -138,6 +140,7 @@ describe('CodeButtonComponent', () => {
         createVcsAccessTokenSpy = jest
             .spyOn(accountService, 'createVcsAccessToken')
             .mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400, statusText: 'Bad Request' })));
+        hasSshKeySpy.mockReturnValue(of(true));
     });
 
     afterEach(() => {
@@ -145,50 +148,52 @@ describe('CodeButtonComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', async () => {
         stubServices();
 
         component.ngOnInit();
-        tick();
+
+        await fixture.whenStable();
+        fixture.detectChanges();
         expect(component.sshSettingsUrl).toBe(`${window.location.origin}/user-settings/ssh`);
         expect(component.sshTemplateUrl).toBe(info.sshCloneURLTemplate);
         expect(component.sshEnabled).toBe(!!info.sshCloneURLTemplate);
         expect(component.versionControlUrl).toBe(info.versionControlUrl);
-    }));
+    });
 
-    it('should create new vcsAccessToken when it does not exist', fakeAsync(() => {
+    it('should create new vcsAccessToken when it does not exist', async () => {
         createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken').mockReturnValue(of(new HttpResponse({ body: vcsToken })));
         getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not found' })));
         stubServices();
         participation.id = 1;
         component.useParticipationVcsAccessToken = true;
         component.participations = [participation];
+        await component.ngOnInit();
+        await fixture.whenStable();
         component.ngOnChanges();
-        tick();
-        component.ngOnInit();
-        tick();
+        await fixture.whenStable();
 
         expect(component.accessTokensEnabled).toBeTrue();
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).toHaveBeenCalled();
         expect(createVcsAccessTokenSpy).toHaveBeenCalled();
-    }));
+    });
 
-    it('should not create new vcsAccessToken when it exists', fakeAsync(() => {
+    it('should not create new vcsAccessToken when it exists', async () => {
         participation.id = 1;
         component.participations = [participation];
         component.useParticipationVcsAccessToken = true;
         stubServices();
+        await component.ngOnInit();
+        await fixture.whenStable();
         component.ngOnChanges();
-        tick();
-        component.ngOnInit();
-        tick();
+        await fixture.whenStable();
 
         expect(component.accessTokensEnabled).toBeTrue();
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
         expect(getVcsAccessTokenSpy).toHaveBeenCalled();
         expect(createVcsAccessTokenSpy).not.toHaveBeenCalled();
-    }));
+    });
 
     it('should get ssh url (same url for team and individual participation)', () => {
         participation.repositoryUri = 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git';
@@ -358,47 +363,43 @@ describe('CodeButtonComponent', () => {
         expect(component.wasCopied).toBeFalse();
     });
 
-    it('should fetch and store ssh preference', fakeAsync(() => {
+    it('should fetch and store ssh preference', async () => {
         stubServices();
+        hasSshKeySpy.mockReturnValue(of(false));
 
         participation.repositoryUri = `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         component.participations = [participation];
         component.activeParticipation = participation;
         component.sshEnabled = true;
-
+        await component.ngOnInit();
+        await fixture.whenStable();
         fixture.detectChanges();
-        tick();
 
         expect(localStorageUseSshRetrieveStub).toHaveBeenNthCalledWith(1, 'useSsh');
         expect(localStorageUseSshObserveStub).toHaveBeenNthCalledWith(1, 'useSsh');
         expect(component.useSsh).toBeFalse();
 
         fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
-        tick();
         fixture.debugElement.query(By.css('#useSSHButton')).nativeElement.click();
-        tick();
+
         expect(localStorageUseSshStoreStub).toHaveBeenNthCalledWith(1, 'useSsh', true);
         expect(component.useSsh).toBeTrue();
 
         fixture.debugElement.query(By.css('#useHTTPSButton')).nativeElement.click();
-        tick();
         expect(localStorageUseSshStoreStub).toHaveBeenCalledWith('useSsh', false);
         expect(component.useSsh).toBeFalse();
 
         fixture.debugElement.query(By.css('#useHTTPSWithTokenButton')).nativeElement.click();
-        tick();
         expect(localStorageUseSshStoreStub).toHaveBeenCalledWith('useSsh', false);
         expect(component.useSsh).toBeFalse();
         expect(component.useToken).toBeTrue();
 
         localStorageUseSshObserveStubSubject.next(true);
-        tick();
         expect(component.useSsh).toBeTrue();
 
         localStorageUseSshObserveStubSubject.next(false);
-        tick();
         expect(component.useSsh).toBeFalse();
-    }));
+    });
 
     it.each([
         [

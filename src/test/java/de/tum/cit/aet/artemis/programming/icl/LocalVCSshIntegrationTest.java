@@ -25,13 +25,11 @@ import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceW
 import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
-import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.localvc.SshGitCommandFactoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
@@ -40,9 +38,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     private static final String TEST_PREFIX = "localvcsshint";
-
-    @Autowired
-    private UserSshPublicKeyRepository userSshPublicKeyRepository;
 
     @Override
     protected String getTestPrefix() {

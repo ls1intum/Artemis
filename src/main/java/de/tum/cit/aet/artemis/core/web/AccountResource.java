@@ -145,7 +145,7 @@ public class AccountResource {
      */
     @GetMapping("account/ssh-public-keys")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<UserSshPublicKeyDTO>> getSshPublicKey() {
+    public ResponseEntity<List<UserSshPublicKeyDTO>> getSshPublicKeys() {
         User user = userRepository.getUser();
         List<UserSshPublicKeyDTO> keys = userSshPublicKeyService.getAllSshKeysForUser(user).stream().map(UserSshPublicKeyDTO::of).toList();
         return ResponseEntity.ok(keys);

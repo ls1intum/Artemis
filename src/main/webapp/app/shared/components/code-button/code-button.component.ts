@@ -95,7 +95,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
         this.copyEnabled = true;
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
-        console.log(this.useSsh);
+        // console.log(this.useSsh);
         this.useToken = this.localStorage.retrieve('useToken') || false;
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
         this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));

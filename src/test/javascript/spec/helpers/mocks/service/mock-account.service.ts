@@ -43,4 +43,5 @@ export class MockAccountService implements IAccountService {
     getVcsAccessToken = (participationId: number) => of();
     createVcsAccessToken = (participationId: number) => of();
     addNewSshPublicKey = (userSshPublicKey: UserSshPublicKey) => of();
+    hasUserSshPublicKeys = () => of();
 }
