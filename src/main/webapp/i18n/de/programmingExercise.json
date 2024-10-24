@@ -351,7 +351,23 @@
                     "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
                     "totalItems": "Insgesamt {{count}} Elemente",
-                    "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten."
+                    "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten.",
+                    "search": "Suche ...",
+                    "filter": "Filter",
+                    "feedbackModal": {
+                        "header": "Fehlerdetails",
+                        "feedbackTitle": "Feedback zu Testfällen",
+                        "ok": "Ok"
+                    },
+                    "filterModal": {
+                        "modalTitle": "Filteroptionen",
+                        "task": "Tasks",
+                        "testcase": "Testfälle",
+                        "occurrence": "Häufigkeit",
+                        "clear": "Filter zurücksetzen",
+                        "cancel": "Abbrechen",
+                        "apply": "Filter anwenden"
+                    }
                 },
                 "help": {
                     "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",

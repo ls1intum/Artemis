@@ -486,8 +486,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPauseAndResumeBuildAgent() {
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
-        hazelcastInstance.getTopic("pauseBuildAgentTopic").publish(memberAddress);
+        String buildAgentName = "artemis-build-agent-test";
+        hazelcastInstance.getTopic("pauseBuildAgentTopic").publish(buildAgentName);
 
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
@@ -500,7 +500,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             return buildJobQueueItem != null && buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash) && !buildJobMap.containsKey(buildJobQueueItem.id());
         });
 
-        hazelcastInstance.getTopic("resumeBuildAgentTopic").publish(memberAddress);
+        hazelcastInstance.getTopic("resumeBuildAgentTopic").publish(buildAgentName);
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
     }
 }
