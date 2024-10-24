@@ -51,8 +51,14 @@
             max-height: calc(75vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
 
             @include media-breakpoint-down(sm) {
+                max-height: calc(90vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
                 max-height: calc(90dvh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
             }
+        }
+
+        @include media-breakpoint-down(sm) {
+            max-height: calc(90vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
+            max-height: calc(90dvh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
         }
     }
 

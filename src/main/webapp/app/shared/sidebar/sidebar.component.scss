@@ -13,6 +13,7 @@
         height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height) - var(--search-height));
     }
     @media (max-width: 768px) {
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height) - var(--search-height)) !important;
         height: calc(100dvh - var(--sidebar-footer-height-prod) - var(--header-height) - var(--search-height)) !important;
     }
 }
