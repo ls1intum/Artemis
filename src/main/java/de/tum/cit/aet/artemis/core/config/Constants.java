@@ -109,6 +109,9 @@ public final class Constants {
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
     // Note: The values in input.constants.ts (client) need to be the same
+    public static final long MAX_FILE_SIZE_COMMUNICATION = 5 * 1024 * 1024; // 5 MB
+
+    // Note: The values in input.constants.ts (client) need to be the same
     public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
 
     // Note: The values in input.constants.ts (client) need to be the same

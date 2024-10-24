@@ -39,7 +39,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -52,6 +54,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -161,6 +164,31 @@ public class FileResource {
         String responseBody = "{\"path\":\"" + responsePath + "\"}";
 
         return ResponseEntity.created(new URI(responsePath)).body(responseBody);
+    }
+
+    @PostMapping("files/courses/{courseId}/conversations/{conversationId}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<String> saveMarkdownFileForConversation(@RequestParam(value = "file") MultipartFile file, @PathVariable Long courseId, @PathVariable Long conversationId)
+            throws URISyntaxException {
+        log.debug("REST request to upload file for markdown in conversation: {} for conversation {} in course {}", file.getOriginalFilename(), conversationId, courseId);
+        if (file.getSize() > Constants.MAX_FILE_SIZE_COMMUNICATION) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
+        }
+        String responsePath = fileService.handleSaveFileInConversation(file, courseId, conversationId).toString();
+
+        // return path for getting the file
+        String responseBody = "{\"path\":\"" + responsePath + "\"}";
+
+        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
+    }
+
+    @GetMapping("files/courses/{courseId}/conversations/{conversationId}/{filename}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<byte[]> getMarkdownFileForConversation(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable String filename) {
+        // TODO: access check
+        log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
+        sanitizeFilenameElseThrow(filename);
+        return buildFileResponse(FilePathService.getMarkdownFilePathForConversation(courseId, conversationId), filename);
     }
 
     /**

@@ -186,6 +186,24 @@ public class FileService implements DisposableBean {
         return URI.create(markdown ? MARKDOWN_FILE_SUBPATH : DEFAULT_FILE_SUBPATH).resolve(currentFilename);
     }
 
+    public URI handleSaveFileInConversation(MultipartFile file, Long courseId, Long conversationId) {
+        // TODO: access check? course is already checked, but the user might not be a member of the conversation
+        String filename = checkAndSanitizeFilename(file.getOriginalFilename());
+
+        validateExtension(filename, true);
+
+        final String filenamePrefix = "Markdown_";
+        final Path path = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
+
+        String fileName = generateFilename(filenamePrefix, filename, false); // TODO: keep?
+        Path filePath = path.resolve(fileName);
+
+        copyFile(file, filePath);
+
+        String currentFilename = filePath.getFileName().toString();
+        return URI.create("/api/files/courses/" + courseId + "/conversations/" + conversationId + "/").resolve(currentFilename);
+    }
+
     /**
      * Saves a file to the given path using a generated filename.
      *
