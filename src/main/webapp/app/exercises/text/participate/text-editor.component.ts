@@ -204,6 +204,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private updateParticipation(participation: StudentParticipation, submissionId: number | undefined = undefined) {
         if (participation) {
             this.participation = participation;
+        } else {
+            return;
         }
         this.textExercise = this.participation.exercise as TextExercise;
         this.examMode = !!this.textExercise.exerciseGroup;
@@ -212,35 +214,35 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.isAfterAssessmentDueDate = !!this.textExercise.course && (!this.textExercise.assessmentDueDate || dayjs().isAfter(this.textExercise.assessmentDueDate));
         this.isAfterPublishDate = !!this.textExercise.exerciseGroup?.exam?.publishResultsDate && dayjs().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
         this.course = getCourseFromExercise(this.textExercise);
-        if (participation.results?.length) {
-            participation.results = participation.results.map((result) => {
-                result.participation = participation;
+        if (this.participation.results?.length) {
+            this.participation.results = this.participation.results.map((result) => {
+                result.participation = this.participation;
                 return result;
             });
-            this.sortedHistoryResults = participation.results.sort(this.resultSortFunction);
+            this.sortedHistoryResults = this.participation.results.sort(this.resultSortFunction);
         }
 
-        if (participation.submissions?.length) {
+        if (this.participation.submissions?.length) {
             if (submissionId) {
-                const foundSubmission = participation.submissions.find((sub) => sub.id === submissionId)!;
+                const foundSubmission = this.participation.submissions.find((sub) => sub.id === submissionId)!;
                 if (foundSubmission) {
                     this.submission = foundSubmission;
                 } else {
-                    this.submission = participation.submissions.sort(this.submissionSortFunction).last() as TextSubmission;
+                    this.submission = this.participation.submissions.sort(this.submissionSortFunction).last() as TextSubmission;
                 }
             } else {
-                this.submission = participation.submissions.sort(this.submissionSortFunction).last() as TextSubmission;
+                this.submission = this.participation.submissions.sort(this.submissionSortFunction).last() as TextSubmission;
             }
 
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
-            if (participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate || isAthenaAIResult(this.submission.latestResult!))) {
+            if (this.participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate || isAthenaAIResult(this.submission.latestResult!))) {
                 if (!this.submission?.results) {
                     this.result = this.sortedHistoryResults.last()!;
                 } else {
                     this.result = this.submission.latestResult!;
+                    this.hasAthenaResultForLatestSubmission = this.submission.latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
                 }
-                this.result.participation = participation;
-                this.hasAthenaResultForLatestSubmission = this.submission.latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+                this.result.participation = this.participation;
             }
             // if one of the submissions results has a complaint, we get it
             this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
