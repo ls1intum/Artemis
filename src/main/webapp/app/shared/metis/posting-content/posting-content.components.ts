@@ -118,7 +118,9 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     linkToReference = [this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex))];
                 } else if (ReferenceType.FAQ === referenceType) {
                     referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
-                    linkToReference = [this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf('?', patternMatch.startIndex))];
+                    linkToReference = [
+                        this.content.substring(this.content.indexOf('(/courses', patternMatch.startIndex)! + 1, this.content.indexOf('?faqId', patternMatch.startIndex)),
+                    ];
                     queryParams = { faqId: this.content.substring(this.content.indexOf('=') + 1, this.content.indexOf(')')) } as Params;
                 } else if (ReferenceType.ATTACHMENT === referenceType || ReferenceType.ATTACHMENT_UNITS === referenceType) {
                     // referenceStr: string to be displayed for the reference
