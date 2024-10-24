@@ -337,7 +337,9 @@
                 "noActionRequired": "Artemis does not require any further action and this window can be closed.",
                 "followExamProtocol": "Be sure to follow your instructor's exam protocol.",
                 "button": "Show exam summary{{countdown}}"
-            }
+            },
+            "saveExercise": "Save Exercise",
+            "exerciseSaved": "Exercise Saved"
         },
         "exerciseGroup": {
             "created": "New exercise group created",

@@ -336,7 +336,9 @@
                 "noActionRequired": "Artemis erfordert keine weitere Aktion, das Fenster kann geschlossen werden.",
                 "followExamProtocol": "Halte dich an die Klausuranweisungen deiner Lehrenden.",
                 "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
-            }
+            },
+            "saveExercise": "Aufgabe speichern",
+            "exerciseSaved": "Aufgabe gespeichert"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
