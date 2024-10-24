@@ -29,7 +29,7 @@ import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unor
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { faAngleDown, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
 import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
@@ -451,7 +451,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     onFileUpload(event: any): void {
         if (event.target.files.length >= 1) {
-            this.embedFiles(Array.from(event.target.files));
+            this.embedFiles(Array.from(event.target.files), event.target);
         }
     }
 
@@ -469,40 +469,51 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     /**
      * Embed the given files into the editor by uploading them and inserting the appropriate markdown.
      * For PDFs, a link to the file is inserted. For other files, the file is embedded as an image.
-     * @param files
+     * @param files The files to embed.
+     * @param inputElement The input element that contains the files. If provided, the input element will be reset.
      */
-    embedFiles(files: File[]): void {
+    embedFiles(files: File[], inputElement?: HTMLInputElement): void {
         files.forEach((file) => {
             (this.useCommunicationForFileUpload()
                 ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(file, this.metisService?.getCourse()?.id, this.metisService?.getCurrentConversation()?.id)
                 : this.fileUploaderService.uploadMarkdownFile(file)
-            ).then(
-                (response) => {
-                    const extension = file.name.split('.').last()?.toLocaleLowerCase();
-
-                    const attachmentAction: AttachmentAction | undefined = this.defaultActions.find((action) => action instanceof AttachmentAction);
-                    const urlAction: UrlAction | undefined = this.defaultActions.find((action) => action instanceof UrlAction);
-                    if (!attachmentAction || !urlAction || !response.path) {
-                        throw new Error('Cannot process file upload.');
-                    }
-                    const payload = { text: file.name, url: response.path };
-                    if (extension !== 'pdf') {
-                        // Embedded image
-                        attachmentAction?.executeInCurrentEditor(payload);
-                    } else {
-                        // For PDFs, just link to the file
-                        urlAction?.executeInCurrentEditor(payload);
-                    }
-                },
-                (error) => {
-                    this.alertService.addAlert({
-                        type: AlertType.DANGER,
-                        message: error.message,
-                        disableTranslation: true,
-                    });
-                },
-            );
+            )
+                .then(
+                    (response) => this.processFileUploadResponse(response, file),
+                    (error) => {
+                        this.alertService.addAlert({
+                            type: AlertType.DANGER,
+                            message: error.message,
+                            disableTranslation: true,
+                        });
+                    },
+                )
+                .then(() => this.resetInputElement(inputElement));
         });
+    }
+
+    private processFileUploadResponse(response: FileUploadResponse, file: File): void {
+        const extension = file.name.split('.').last()?.toLocaleLowerCase();
+
+        const attachmentAction: AttachmentAction | undefined = this.defaultActions.find((action) => action instanceof AttachmentAction);
+        const urlAction: UrlAction | undefined = this.defaultActions.find((action) => action instanceof UrlAction);
+        if (!attachmentAction || !urlAction || !response.path) {
+            throw new Error('Cannot process file upload.');
+        }
+        const payload = { text: file.name, url: response.path };
+        if (extension !== 'pdf') {
+            // Embedded image
+            attachmentAction?.executeInCurrentEditor(payload);
+        } else {
+            // For PDFs, just link to the file
+            urlAction?.executeInCurrentEditor(payload);
+        }
+    }
+
+    private resetInputElement(inputElement?: HTMLInputElement): void {
+        if (inputElement) {
+            inputElement.value = '';
+        }
     }
 
     /**

@@ -40,7 +40,7 @@ export class FileUploaderService {
     /**
      * Validates the file extension.
      * @param file The file to validate
-     * @return True if the file extension is valid, false otherwise
+     * @return true if the file extension is valid, false otherwise
      */
     private validateFileExtension(file: File): boolean {
         const fileExtension = file.name.split('.').pop()!.toLocaleLowerCase();
