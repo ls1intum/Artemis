@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewEncapsulation, effect, inject, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { debounceTime, map } from 'rxjs/operators';
+import { debounceTime, map, takeUntil } from 'rxjs/operators';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -60,7 +60,9 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
     constructor() {
         effect(() => {
-            this.scrollToFaq(this.faqId);
+            if (this.faqId) {
+                this.scrollToFaq(this.faqId);
+            }
         });
     }
 
@@ -71,7 +73,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
             this.loadCourseExerciseCategories(this.courseId);
         });
 
-        this.route.queryParams.subscribe((params) => {
+        this.route.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((params) => {
             this.faqId = params['faqId'];
         });
 
