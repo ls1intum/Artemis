@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -98,7 +99,6 @@ import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
-import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -268,6 +268,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ParticipationTestRepository participationTestRepository;
 
     public Course course;
 
@@ -1964,7 +1967,7 @@ public class ProgrammingExerciseTestService {
         }
 
         final var course = courseUtilService.addEmptyCourse();
-        var exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
+        Exam exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register users
@@ -1990,6 +1993,11 @@ public class ProgrammingExerciseTestService {
         assertThat(studentExams).hasSize(exam.getExamUsers().size());
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
 
+        // Exercises are started asynchronously when student exams are generated. We need to wait for the process to complete.
+        Long examId = exam.getId();
+        int numberOfParticipations = registeredStudents.size() * exam.getExerciseGroups().size();
+        await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(examId).size() == numberOfParticipations);
+
         // start exercises
         Set<Long> peIds = exam.getExerciseGroups().get(6).getExercises().stream().map(Exercise::getId).collect(Collectors.toSet());
         List<ProgrammingExercise> programmingExercises = programmingExerciseTestRepository.findAllWithTemplateAndSolutionParticipationByIdIn(peIds);
@@ -2010,9 +2018,6 @@ public class ProgrammingExerciseTestService {
                 mockDelegate.mockConnectorRequestsForStartParticipation(programmingExercise, user.getParticipantIdentifier(), Set.of(user), true);
             }
         }
-
-        int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
-        assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
 
         mockDelegate.resetMockProvider();
 
