@@ -1,7 +1,8 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
-import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -11,21 +12,26 @@ import java.util.Optional;
 public enum StaticCodeAnalysisTool {
 
     // @formatter:off
-    SPOTBUGS(ProgrammingLanguage.JAVA, "spotbugsXml.xml"),
-    CHECKSTYLE(ProgrammingLanguage.JAVA, "checkstyle-result.xml"),
-    PMD(ProgrammingLanguage.JAVA, "pmd.xml"),
-    PMD_CPD(ProgrammingLanguage.JAVA, "cpd.xml"),
-    SWIFTLINT(ProgrammingLanguage.SWIFT, "swiftlint-result.xml"),
-    GCC(ProgrammingLanguage.C, "gcc.xml"),
+    SPOTBUGS("spotbugsXml.xml"),
+    CHECKSTYLE("checkstyle-result.xml"),
+    PMD("pmd.xml"),
+    PMD_CPD("cpd.xml"),
+    SWIFTLINT("swiftlint-result.xml"),
+    GCC("gcc.xml"),
     ;
     // @formatter:on
 
-    private final ProgrammingLanguage language;
+    // @formatter:off
+    private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisTool>> TOOLS_OF_PROGRAMMING_LANGUAGE = new EnumMap<>(Map.of(
+        ProgrammingLanguage.JAVA, List.of(SPOTBUGS, CHECKSTYLE, PMD, PMD_CPD),
+        ProgrammingLanguage.SWIFT, List.of(SWIFTLINT),
+        ProgrammingLanguage.C, List.of(GCC)
+    ));
+    // @formatter:on
 
     private final String fileName;
 
-    StaticCodeAnalysisTool(ProgrammingLanguage language, String fileName) {
-        this.language = language;
+    StaticCodeAnalysisTool(String fileName) {
         this.fileName = fileName;
     }
 
@@ -36,13 +42,7 @@ public enum StaticCodeAnalysisTool {
      * @return List of static code analysis
      */
     public static List<StaticCodeAnalysisTool> getToolsForProgrammingLanguage(ProgrammingLanguage language) {
-        List<StaticCodeAnalysisTool> tools = new ArrayList<>();
-        for (var tool : StaticCodeAnalysisTool.values()) {
-            if (tool.language == language) {
-                tools.add(tool);
-            }
-        }
-        return tools;
+        return TOOLS_OF_PROGRAMMING_LANGUAGE.getOrDefault(language, List.of());
     }
 
     /**
