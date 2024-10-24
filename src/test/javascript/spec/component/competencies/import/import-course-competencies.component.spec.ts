@@ -181,16 +181,15 @@ describe('ImportCourseCompetenciesComponent', () => {
         expect(component.disabledIds).toHaveLength(3);
     });
 
-    it('should not unload with pending changes', () => {
-        const deactivateWarningSpy = jest.spyOn(component, 'canDeactivateWarning', 'get');
-
+    it('should not deactivate with pending changes', () => {
+        let canDeactivate;
         component['isSubmitted'] = true;
         component.selectedCourseCompetencies = { resultsOnPage: [{ id: 1 }], numberOfPages: 0 };
-        component['unloadNotification']({ returnValue: '' });
-        expect(deactivateWarningSpy).not.toHaveBeenCalled();
+        canDeactivate = component.canDeactivate();
+        expect(canDeactivate).toBeTrue();
 
         component['isSubmitted'] = false;
-        component['unloadNotification']({ returnValue: '' });
-        expect(deactivateWarningSpy).toHaveBeenCalled();
+        canDeactivate = component.canDeactivate();
+        expect(canDeactivate).toBeFalse();
     });
 });
