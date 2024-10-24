@@ -331,6 +331,7 @@ describe('Metis Service', () => {
     });
 
     it('should determine the router link required for referencing a faq', () => {
+        metisService.setCourse(course);
         const link = metisService.getLinkForFaq();
         expect(link).toBe(`/courses/${metisCourse.id}/faq`);
     });
