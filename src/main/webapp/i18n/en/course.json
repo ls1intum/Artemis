@@ -34,6 +34,14 @@
                     "isTestCourse": "Test Course"
                 }
             },
+            "archive": {
+                "title": "Archive",
+                "sort": "Sort",
+                "tip": "The archive enables you to view all your past courses, organized by semester. Click on a semester to expand and see the courses you were enrolled in during that period.",
+                "noCoursesPreviousSemester": "No courses found from previous semesters",
+                "winterSemester": "Winter semester 20{{ param }}",
+                "summerSemester": "Summer semester 20{{ param }}"
+            },
             "showActive": "Show only active courses",
             "totalScore": "Total Score:",
             "title": "Title",
