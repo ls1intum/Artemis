@@ -310,7 +310,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
 
     /**
-     * Select the test repository and navigate to it
+     * Select the auxiliary repository and navigate to it
      */
     selectAuxiliaryRepository(repositoryId: number) {
         this.router.navigate([this.up(), 'auxiliary', repositoryId], { relativeTo: this.route });
