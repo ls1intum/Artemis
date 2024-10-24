@@ -355,6 +355,7 @@
         "statistics": "Course statistics",
         "exams": "Exams",
         "communication": "Communication",
+        "archive": "Course archive",
         "faq": "FAQ"
     },
     "connectionStatus": {

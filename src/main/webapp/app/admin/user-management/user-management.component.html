@@ -27,13 +27,13 @@
                                     name="searchTerm"
                                     id="field_searchTerm"
                                     formControlName="searchControl"
-                                    [(ngModel)]="searchTerm"
-                                    (focusout)="loadAll()"
+                                    (blur)="loadAll()"
+                                    (keydown)="onKeydown($event)"
                                 />
                                 <button class="btn btn-primary ms-3" (click)="loadAll()">
                                     <span jhiTranslate="artemisApp.userManagement.search"></span>
                                 </button>
-                                @if (searchControl.invalid && (searchControl.dirty || searchControl.touched)) {
+                                @if (searchInvalid) {
                                     <div class="alert alert-danger ms-3 mb-0">
                                         <div jhiTranslate="artemisApp.userManagement.searchError"></div>
                                     </div>
@@ -91,6 +91,9 @@
                             <span jhiTranslate="global.field.id"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.userManagement.profilePicture"></span>
+                        </th>
                         <th jhiSortBy="login">
                             <span jhiTranslate="artemisApp.userManagement.login"></span>
                             <fa-icon [icon]="faSort" />
@@ -146,6 +149,18 @@
                                 </td>
                                 <td>
                                     <a [routerLink]="['./', user.login]">{{ user.id }}</a>
+                                </td>
+                                <td>
+                                    <jhi-profile-picture
+                                        imageSizeInRem="1.5"
+                                        fontSizeInRem="0.6"
+                                        imageId="user-profile-picture"
+                                        defaultPictureId="user-default-profile-picture"
+                                        [authorId]="user.id"
+                                        [authorName]="user.name"
+                                        [imageUrl]="user.imageUrl"
+                                    >
+                                    </jhi-profile-picture>
                                 </td>
                                 <td>
                                     <ngb-highlight [result]="user.login" [term]="searchTerm" />

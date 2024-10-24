@@ -95,6 +95,17 @@ artemis:
                     default: "ghcr.io/ls1intum/artemis-r-docker:v1.0.0"
                 c_plus_plus:
                     default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.0.0"
+                typescript:
+                  default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
+
+        # The following properties are used to configure the Artemis build agent.
+        # The build agent is responsible for executing the buildJob to test student submissions.
+        build-agent:
+            # Name of the build agent. Only lowercase letters, numbers and hyphens are allowed. ([a-z0-9-]+)
+            short-name: "artemis-build-agent-1"
+            display-name: "Artemis Build Agent 1"
+
+
 
 management:
     endpoints:
