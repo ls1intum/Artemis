@@ -84,7 +84,7 @@ describe('ComplaintsFormComponent', () => {
 
     it('should submit after complaint creation', () => {
         const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(of({} as EntityResponseType));
-        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
         component.createComplaint();
         expect(createMock).toHaveBeenCalledOnce();
         expect(submitSpy).toHaveBeenCalledOnce();
@@ -93,7 +93,7 @@ describe('ComplaintsFormComponent', () => {
 
     it('should throw unknown error after complaint creation', () => {
         const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(() => ({ status: 400 })));
-        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
         const errorSpy = jest.spyOn(alertService, 'error');
         component.createComplaint();
         expect(createMock).toHaveBeenCalledOnce();
@@ -104,7 +104,7 @@ describe('ComplaintsFormComponent', () => {
     it('should throw known error after complaint creation', () => {
         const error = { error: { errorKey: 'tooManyComplaints' } } as HttpErrorResponse;
         const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(() => error));
-        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
         const errorSpy = jest.spyOn(alertService, 'error');
         const numberOfComplaints = 42;
         component.maxComplaintsPerCourse = numberOfComplaints;
@@ -120,7 +120,7 @@ describe('ComplaintsFormComponent', () => {
         component.exercise = courseExercise;
         component.ngOnInit();
 
-        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
         const errorSpy = jest.spyOn(alertService, 'error');
         // 26 characters
         component.complaintText = 'abcdefghijklmnopqrstuvwxyz';

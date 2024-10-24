@@ -220,7 +220,7 @@
         [isImport]="isImport"
         [isSaving]="isSaving"
         [isDisabled]="!!(editForm.form.invalid || textExercise.dueDateError || textExercise.assessmentDueDateError || textExercise.exampleSolutionPublicationDateError)"
-        (cancel)="previousState()"
+        (onCancel)="previousState()"
         (save)="save()"
         [(notificationText)]="notificationText"
     />

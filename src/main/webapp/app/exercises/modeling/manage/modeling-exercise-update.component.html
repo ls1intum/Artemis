@@ -275,7 +275,7 @@
         [isCreation]="!modelingExercise.id"
         [isSaving]="isSaving"
         [isDisabled]="!!(editForm.form.invalid || modelingExercise.dueDateError || modelingExercise.assessmentDueDateError || modelingExercise.exampleSolutionPublicationDateError)"
-        (cancel)="previousState()"
+        (onCancel)="previousState()"
         (save)="save()"
         [(notificationText)]="notificationText"
     />

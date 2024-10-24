@@ -19,8 +19,7 @@ export class ComplaintsFormComponent implements OnInit {
     @Input() examId?: number;
     @Input() complaintType: ComplaintType;
     @Input() isCurrentUserSubmissionAuthor = false;
-    // eslint-disable-next-line @angular-eslint/no-output-native
-    @Output() submit: EventEmitter<void> = new EventEmitter();
+    @Output() onSubmit: EventEmitter<void> = new EventEmitter();
     maxComplaintsPerCourse = 1;
     maxComplaintTextLimit: number;
     complaintText?: string;
@@ -63,7 +62,7 @@ export class ComplaintsFormComponent implements OnInit {
 
         this.complaintService.create(complaintRequest).subscribe({
             next: () => {
-                this.submit.emit();
+                this.onSubmit.emit();
             },
             error: (err: HttpErrorResponse) => {
                 if (err?.error?.errorKey === 'tooManyComplaints') {
