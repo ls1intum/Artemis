@@ -49,7 +49,7 @@
 }
 
 @if (postingContentPart.imageToReference) {
-    <div [style.max-width.px]="400">
+    <div [style.user-select]="'none'" [style.max-width.px]="400">
         @if (postingContentPart.imageToReference && !imageNotFound) {
             <a class="reference" (click)="enlargeImage(postingContentPart.imageToReference)">
                 <img
