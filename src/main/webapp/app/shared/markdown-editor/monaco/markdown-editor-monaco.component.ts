@@ -91,7 +91,7 @@ const BORDER_HEIGHT_OFFSET = 2;
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     private readonly alertService = inject(AlertService);
     // We inject the MetisService here to avoid a NullInjectorError in the FileUploaderService.
-    private readonly metisService = inject(MetisService);
+    private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
 
@@ -473,7 +473,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     embedFiles(files: File[]): void {
         files.forEach((file) => {
             (this.useCommunicationForFileUpload()
-                ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(file, this.metisService.getCourse().id, this.metisService.getCurrentConversation()?.id)
+                ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(file, this.metisService?.getCourse()?.id, this.metisService?.getCurrentConversation()?.id)
                 : this.fileUploaderService.uploadMarkdownFile(file)
             ).then(
                 (response) => {
