@@ -12,6 +12,7 @@ import {
     ViewChild,
     ViewChildren,
     ViewContainerRef,
+    inject,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -190,6 +191,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly isCommunicationEnabled = isCommunicationEnabled;
 
+    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
+
     constructor(
         private courseService: CourseManagementService,
         private courseExerciseService: CourseExerciseService,
@@ -206,7 +209,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private profileService: ProfileService,
         private modalService: NgbModal,
         private examParticipationService: ExamParticipationService,
-        private courseSidebarService: CourseSidebarService,
         private ltiService: LtiService,
     ) {}
 

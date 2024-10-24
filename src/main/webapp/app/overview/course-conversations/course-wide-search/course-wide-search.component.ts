@@ -12,6 +12,7 @@ import {
     ViewChild,
     ViewChildren,
     ViewEncapsulation,
+    inject,
 } from '@angular/core';
 import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup } from '@angular/forms';
@@ -71,12 +72,13 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     getAsChannel = getAsChannelDTO;
 
+    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
+
     constructor(
         public metisService: MetisService, // instance from course-conversations.component
         public metisConversationService: MetisConversationService, // instance from course-conversations.component
         private formBuilder: FormBuilder,
         public cdr: ChangeDetectorRef,
-        private courseSidebarService: CourseSidebarService,
     ) {}
 
     ngOnInit() {

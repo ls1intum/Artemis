@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { faChevronLeft, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -45,13 +45,14 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     faSearch = faSearch;
     faChevronLeft = faChevronLeft;
 
+    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
+
     constructor(
         private modalService: NgbModal,
         // instantiated at course-conversation.component.ts
         public metisConversationService: MetisConversationService,
         public conversationService: ConversationService,
         private metisService: MetisService,
-        private courseSidebarService: CourseSidebarService,
     ) {}
 
     getAsGroupChat = getAsGroupChatDTO;

@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -138,6 +138,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     createChannelFn?: (channel: ChannelDTO) => Observable<never>;
     channelActions$ = new EventEmitter<ChannelAction>();
 
+    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
+    private layoutService: LayoutService = inject(LayoutService);
+
     constructor(
         private router: Router,
         private activatedRoute: ActivatedRoute,
@@ -146,8 +149,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         private courseOverviewService: CourseOverviewService,
         private modalService: NgbModal,
         private profileService: ProfileService,
-        private courseSidebarService: CourseSidebarService,
-        private layoutService: LayoutService,
     ) {}
 
     getAsChannel = getAsChannelDTO;
