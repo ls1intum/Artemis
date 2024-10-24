@@ -21,6 +21,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() textBlock: TextBlock = new TextBlock();
     @Input() feedback: Feedback = new Feedback();
     @Output() feedbackChange = new EventEmitter<Feedback>();
+    // eslint-disable-next-line @angular-eslint/no-output-native
     @Output() close = new EventEmitter<void>();
     @Output() onFocus = new EventEmitter<void>();
     @ViewChild('detailText') textareaRef: ElementRef;
