@@ -46,7 +46,8 @@
                 "exercise": "Aufgabe",
                 "lecture": "Vortrag",
                 "channel": "Kanal",
-                "user": "Benutzer"
+                "user": "Benutzer",
+                "faq": "FAQ"
             },
             "channel": {
                 "noChannel": "Es ist kein Kanal verfügbar.",

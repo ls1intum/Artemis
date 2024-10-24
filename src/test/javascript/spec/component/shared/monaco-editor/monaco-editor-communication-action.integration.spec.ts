@@ -28,6 +28,8 @@ import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ReferenceType } from 'app/shared/metis/metis.util';
 import { Attachment } from 'app/entities/attachment.model';
 import dayjs from 'dayjs/esm';
+import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
+import { Faq } from 'app/entities/faq.model';
 
 describe('MonacoEditorCommunicationActionIntegration', () => {
     let comp: MonacoEditorComponent;
@@ -42,6 +44,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
     let channelReferenceAction: ChannelReferenceAction;
     let userMentionAction: UserMentionAction;
     let exerciseReferenceAction: ExerciseReferenceAction;
+    let faqReferenceAction: FaqReferenceAction;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -69,6 +72,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 channelReferenceAction = new ChannelReferenceAction(metisService, channelService);
                 userMentionAction = new UserMentionAction(courseManagementService, metisService);
                 exerciseReferenceAction = new ExerciseReferenceAction(metisService);
+                faqReferenceAction = new FaqReferenceAction(metisService);
             });
     });
 
@@ -92,11 +96,13 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         { actionId: ChannelReferenceAction.ID, defaultInsertText: '#', triggerCharacter: '#' },
         { actionId: UserMentionAction.ID, defaultInsertText: '@', triggerCharacter: '@' },
         { actionId: ExerciseReferenceAction.ID, defaultInsertText: '/exercise', triggerCharacter: '/' },
+        { actionId: FaqReferenceAction.ID, defaultInsertText: '/faq', triggerCharacter: '/' },
     ])('Suggestions and default behavior for $actionId', ({ actionId, defaultInsertText, triggerCharacter }) => {
-        let action: ChannelReferenceAction | UserMentionAction | ExerciseReferenceAction;
+        let action: ChannelReferenceAction | UserMentionAction | ExerciseReferenceAction | FaqReferenceAction;
         let channels: ChannelIdAndNameDTO[];
         let users: User[];
         let exercises: Exercise[];
+        let faqs: Faq[];
 
         beforeEach(() => {
             fixture.detectChanges();
@@ -106,6 +112,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             users = [metisUser1, metisUser2, metisTutor];
             jest.spyOn(courseManagementService, 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: users, status: 200 })));
             exercises = metisService.getCourse().exercises!;
+            faqs = metisService.getCourse().faqs!;
 
             switch (actionId) {
                 case ChannelReferenceAction.ID:
@@ -116,6 +123,9 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                     break;
                 case ExerciseReferenceAction.ID:
                     action = exerciseReferenceAction;
+                    break;
+                case FaqReferenceAction.ID:
+                    action = faqReferenceAction;
                     break;
             }
         });
@@ -173,6 +183,15 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             });
         };
 
+        const checkFaqSuggestions = (suggestions: monaco.languages.CompletionItem[], faqs: Faq[]) => {
+            expect(suggestions).toHaveLength(faqs.length);
+            suggestions.forEach((suggestion, index) => {
+                expect(suggestion.label).toBe(`/faq ${faqs[index].questionTitle}`);
+                expect(suggestion.insertText).toBe(`[faq]${faqs[index].questionTitle}(${metisService.getLinkForFaq()}?faqId=${faqs[index].id})[/faq]`);
+                expect(suggestion.detail).toBe('faq');
+            });
+        };
+
         it.each(['', 'ex'])('should suggest the correct values if the user is typing a reference (suffix "%s")', async (referenceSuffix: string) => {
             const reference = triggerCharacter + referenceSuffix;
             comp.setText(reference);
@@ -191,6 +210,9 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                     break;
                 case ExerciseReferenceAction.ID:
                     checkExerciseSuggestions(suggestions, exercises);
+                    break;
+                case FaqReferenceAction.ID:
+                    checkFaqSuggestions(suggestions, faqs);
                     break;
             }
         });
@@ -231,6 +253,23 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             fixture.detectChanges();
             comp.registerAction(exerciseReferenceAction);
             expect(exerciseReferenceAction.getValues()).toEqual([]);
+        });
+
+        it('should insert / for faq references', () => {
+            fixture.detectChanges();
+            comp.registerAction(faqReferenceAction);
+            faqReferenceAction.executeInCurrentEditor();
+            expect(comp.getText()).toBe('/faq');
+        });
+    });
+
+    describe('FaqReferenceAction (', () => {
+        it('should initialize with empty values if faqs are not available', () => {
+            jest.spyOn(metisService, 'getCourse').mockReturnValue({ faqs: undefined } as any);
+
+            fixture.detectChanges();
+            comp.registerAction(faqReferenceAction);
+            expect(faqReferenceAction.getValues()).toEqual([]);
         });
     });
 

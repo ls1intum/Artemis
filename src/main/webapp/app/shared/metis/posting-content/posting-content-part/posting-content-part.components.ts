@@ -15,6 +15,7 @@ import {
     faMessage,
     faPaperclip,
     faProjectDiagram,
+    faQuestion,
 } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image.component';
@@ -43,6 +44,7 @@ export class PostingContentPartComponent {
     protected readonly faBan = faBan;
     protected readonly faAt = faAt;
     protected readonly faHashtag = faHashtag;
+    protected readonly faQuestion = faQuestion;
 
     protected readonly ReferenceType = ReferenceType;
 
@@ -98,6 +100,8 @@ export class PostingContentPartComponent {
                 return faFileUpload;
             case ReferenceType.SLIDE:
                 return faFile;
+            case ReferenceType.FAQ:
+                return faQuestion;
             default:
                 return faPaperclip;
         }
