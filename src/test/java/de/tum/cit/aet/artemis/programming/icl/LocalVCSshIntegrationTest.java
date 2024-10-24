@@ -25,6 +25,7 @@ import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceW
 import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.test.context.support.WithMockUser;
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, tap } from 'rxjs';
 import { faEdit, faEllipsis, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -14,7 +14,7 @@ import dayjs from 'dayjs/esm';
     templateUrl: './ssh-user-settings.component.html',
     styleUrls: ['../user-settings.scss', './ssh-user-settings.component.scss'],
 })
-export class SshUserSettingsComponent implements OnInit {
+export class SshUserSettingsComponent implements OnInit, OnDestroy {
     readonly documentationType: DocumentationType = 'SshSetup';
 
     sshPublicKeys: UserSshPublicKey[] = [];
@@ -42,6 +42,10 @@ export class SshUserSettingsComponent implements OnInit {
     ngOnInit() {
         this.currentDate = dayjs();
         this.refreshSshKeys();
+    }
+
+    ngOnDestroy() {
+        this.dialogErrorSource.complete();
     }
 
     deleteSshKey(key: UserSshPublicKey) {

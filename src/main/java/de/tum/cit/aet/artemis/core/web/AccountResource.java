@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -157,9 +158,9 @@ public class AccountResource {
      *
      * @return the ResponseEntity containing the requested public SSH key of a user with status 200 (OK), or with status 400 (Bad Request)
      */
-    @GetMapping("account/ssh-public-key")
+    @GetMapping("account/ssh-public-key/{keyId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<UserSshPublicKeyDTO> getSshPublicKey(@RequestParam("keyId") Long keyId) {
+    public ResponseEntity<UserSshPublicKeyDTO> getSshPublicKey(@PathVariable Long keyId) {
         User user = userRepository.getUser();
         UserSshPublicKey key = userSshPublicKeyService.getSshKeyForUser(user, keyId);
         return ResponseEntity.ok(UserSshPublicKeyDTO.of(key));
@@ -179,13 +180,13 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/ssh-public-key : creates a new ssh public key for a user
+     * POST account/ssh-public-key : creates a new ssh public key for a user
      *
      * @param sshPublicKey the ssh public key to create
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
-    @PutMapping("account/ssh-public-key")
+    @PostMapping("account/ssh-public-key")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> addSshPublicKey(@RequestBody UserSshPublicKeyDTO sshPublicKey) throws GeneralSecurityException, IOException {
 
@@ -211,9 +212,9 @@ public class AccountResource {
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
-    @DeleteMapping("account/ssh-public-key")
+    @DeleteMapping("account/ssh-public-key/{keyId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteSshPublicKey(@RequestParam("keyId") Long keyId) {
+    public ResponseEntity<Void> deleteSshPublicKey(@PathVariable Long keyId) {
         User user = userRepository.getUser();
         log.debug("REST request to remove SSH key of user {}", user.getLogin());
         userSshPublicKeyService.deleteUserSshPublicKey(user.getId(), keyId);

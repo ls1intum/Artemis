@@ -52,17 +52,9 @@
                                     <div class="abbreviate-hash">
                                         {{ key.keyHash }}
                                     </div>
-                                    @if (key.expiryDate && key.hasExpired) {
+                                    @if (key.expiryDate) {
                                         <div class="text-and-date">
-                                            <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.hasExpiredOn"></div>
-                                            <div>
-                                                {{ key.expiryDate | artemisDate: 'long-date' }}
-                                            </div>
-                                        </div>
-                                    }
-                                    @if (key.expiryDate && !key.hasExpired) {
-                                        <div class="text-and-date">
-                                            <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiresOn"></div>
+                                            <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.{{ key.hasExpired ? 'hasExpiredOn' : 'expiresOn' }}"></div>
                                             <div>
                                                 {{ key.expiryDate | artemisDate: 'long-date' }}
                                             </div>

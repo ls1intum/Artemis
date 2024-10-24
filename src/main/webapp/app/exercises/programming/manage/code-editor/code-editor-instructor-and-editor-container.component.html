@@ -79,6 +79,14 @@
                         [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
                         jhiTranslate="artemisApp.editor.repoSelect.testRepo"
                     ></button>
+                    <button
+                        [disabled]="!exercise"
+                        (click)="selectTestRepository()"
+                        ngbDropdownItem
+                        [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
+                    >
+                        {{ 'Aux Repo 1' }}
+                    </button>
                 </div>
             </div>
             <!-- action buttons -->

@@ -331,7 +331,7 @@ export class AccountService implements IAccountService {
      * @param userSshPublicKey
      */
     addNewSshPublicKey(userSshPublicKey: UserSshPublicKey): Observable<HttpResponse<UserSshPublicKey>> {
-        return this.http.put<UserSshPublicKey>('api/account/ssh-public-key', userSshPublicKey, { observe: 'response' });
+        return this.http.post<UserSshPublicKey>('api/account/ssh-public-key', userSshPublicKey, { observe: 'response' });
     }
 
     /**
@@ -352,16 +352,14 @@ export class AccountService implements IAccountService {
      * Retrieves a specific public SSH keys of a user
      */
     getSshPublicKey(keyId: number): Observable<UserSshPublicKey> {
-        const params = new HttpParams().set('keyId', keyId);
-        return this.http.get<UserSshPublicKey>('api/account/ssh-public-key', { params });
+        return this.http.get<UserSshPublicKey>(`api/account/ssh-public-key/${keyId}`);
     }
 
     /**
      * Sends a request to the server to delete the user's current SSH key
      */
     deleteSshPublicKey(keyId: number): Observable<void> {
-        const params = new HttpParams().set('keyId', keyId);
-        return this.http.delete<void>('api/account/ssh-public-key', { params });
+        return this.http.delete<void>(`api/account/ssh-public-key/${keyId}`);
     }
 
     /**
