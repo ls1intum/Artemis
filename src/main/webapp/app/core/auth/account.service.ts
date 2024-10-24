@@ -13,6 +13,7 @@ import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/complaints/complaint.service';
+import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
@@ -30,7 +31,7 @@ export interface IAccountService {
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;
     getImageUrl: () => string | undefined;
-    addSshPublicKey: (sshPublicKey: string) => Observable<void>;
+    addNewSshPublicKey: (userSshPublicKey: UserSshPublicKey) => Observable<HttpResponse<UserSshPublicKey>>;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -328,23 +329,38 @@ export class AccountService implements IAccountService {
     /**
      * Sends the added SSH key to the server
      *
-     * @param sshPublicKey
+     * @param userSshPublicKey
      */
-    addSshPublicKey(sshPublicKey: string): Observable<void> {
-        if (this.userIdentity) {
-            this.userIdentity.sshPublicKey = sshPublicKey;
-        }
-        return this.http.put<void>('api/account/ssh-public-key', sshPublicKey);
+    addNewSshPublicKey(userSshPublicKey: UserSshPublicKey): Observable<HttpResponse<UserSshPublicKey>> {
+        return this.http.post<UserSshPublicKey>('api/account/ssh-public-key', userSshPublicKey, { observe: 'response' });
+    }
+
+    /**
+     * Retrieves all public SSH keys of a user
+     */
+    getAllSshPublicKeys(): Observable<UserSshPublicKey[]> {
+        return this.http.get<UserSshPublicKey[]>('api/account/ssh-public-keys');
+    }
+
+    /**
+     * Checks if a user has SSH key stored in the database
+     */
+    hasUserSshPublicKeys(): Observable<boolean> {
+        return this.http.get<boolean>('api/account/has-ssh-public-keys');
+    }
+
+    /**
+     * Retrieves a specific public SSH keys of a user
+     */
+    getSshPublicKey(keyId: number): Observable<UserSshPublicKey> {
+        return this.http.get<UserSshPublicKey>(`api/account/ssh-public-key/${keyId}`);
     }
 
     /**
      * Sends a request to the server to delete the user's current SSH key
      */
-    deleteSshPublicKey(): Observable<void> {
-        if (this.userIdentity) {
-            this.userIdentity.sshPublicKey = undefined;
-        }
-        return this.http.delete<void>('api/account/ssh-public-key');
+    deleteSshPublicKey(keyId: number): Observable<void> {
+        return this.http.delete<void>(`api/account/ssh-public-key/${keyId}`);
     }
 
     /**
