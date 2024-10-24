@@ -14,7 +14,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
-import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateBaseDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
@@ -288,18 +287,6 @@ public class AssessmentService {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userRepository.getUser();
         result.setAssessor(user);
-
-        for (Feedback feedback : feedbackList) {
-            if (feedback.getHasLongFeedbackText()) {
-                Optional<LongFeedbackText> existingLongFeedbackText = longFeedbackTextRepository.findByFeedbackId(feedback.getId());
-                if (existingLongFeedbackText.isPresent()) {
-                    LongFeedbackText longFeedbackText = existingLongFeedbackText.get();
-                    longFeedbackText.setText(feedback.getDetailText());
-                    longFeedbackTextRepository.delete(longFeedbackText);
-                }
-            }
-        }
-
         result.updateAllFeedbackItems(feedbackList, false);
         result.determineAssessmentType();
 
