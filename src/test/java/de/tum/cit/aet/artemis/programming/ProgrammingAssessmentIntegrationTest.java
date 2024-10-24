@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
-import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -546,16 +545,12 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         assertThat(savedAutomaticLongFeedback).isNotNull();
 
-        // Retrieve long feedback text with id.
-        String longFeedbackText = request.get(String.format("/api/results/%d/feedbacks/%d/long-feedback", response.getId(), savedAutomaticLongFeedback.getId()), HttpStatus.OK,
-                String.class);
-
         assertThat(response.getScore()).isEqualTo(2);
         assertThat(response.getFeedbacks()).anySatisfy(feedback -> {
             assertThat(feedback.getHasLongFeedbackText()).isTrue();
             assertThat(feedback.getType()).isEqualTo(FeedbackType.MANUAL_UNREFERENCED);
         });
-        assertThat(longFeedbackText).isEqualTo(manualLongFeedback.getLongFeedback().map(LongFeedbackText::getText).orElse(""));
+        assertThat(savedAutomaticLongFeedback.getDetailText()).isEqualTo(manualLongFeedback.getDetailText());
     }
 
     @Test
@@ -583,16 +578,12 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         assertThat(savedAutomaticLongFeedback).isNotNull();
 
-        // Retrieve long feedback text with id.
-        String longFeedbackText = request.get(String.format("/api/results/%d/feedbacks/%d/long-feedback", response.getId(), savedAutomaticLongFeedback.getId()), HttpStatus.OK,
-                String.class);
-
         assertThat(response.getScore()).isEqualTo(2);
         assertThat(response.getFeedbacks()).anySatisfy(feedback -> {
             assertThat(feedback.getType()).isEqualTo(FeedbackType.AUTOMATIC);
             assertThat(feedback.getHasLongFeedbackText()).isTrue();
         });
-        assertThat(longFeedbackText).isEqualTo(automaticLongFeedback.getLongFeedback().map(LongFeedbackText::getText).orElse(""));
+        assertThat(savedAutomaticLongFeedback.getDetailText()).isEqualTo(automaticLongFeedback.getDetailText());
     }
 
     private Result setUpManualResultForUpdate(List<Feedback> feedbacks) {

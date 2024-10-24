@@ -644,6 +644,9 @@ public class ResultService {
      *                         Only feedback items that have long feedback texts and a non-null ID will be processed.
      */
     public void deleteLongFeedback(List<Feedback> feedbackList) {
+        if (feedbackList == null) {
+            return;
+        }
         for (Feedback feedback : feedbackList) {
             if (feedback.getHasLongFeedbackText() && feedback.getId() != null) {
                 Optional<LongFeedbackText> longFeedbackTextOpt = longFeedbackTextRepository.findByFeedbackId(feedback.getId());
