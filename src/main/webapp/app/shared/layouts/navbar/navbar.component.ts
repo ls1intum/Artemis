@@ -384,6 +384,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         live: 'artemisApp.submission.detail.title',
         courses: 'artemisApp.course.home.title',
         enroll: 'artemisApp.studentDashboard.enroll.title',
+        archive: 'artemisApp.course.archive.title',
     };
 
     /**
