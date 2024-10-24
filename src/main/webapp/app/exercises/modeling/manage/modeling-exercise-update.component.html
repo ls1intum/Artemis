@@ -275,8 +275,8 @@
         [isCreation]="!modelingExercise.id"
         [isSaving]="isSaving"
         [isDisabled]="!!(editForm.form.invalid || modelingExercise.dueDateError || modelingExercise.assessmentDueDateError || modelingExercise.exampleSolutionPublicationDateError)"
-        (cancel)="previousState()"
-        (save)="save()"
+        (cancelAction)="previousState()"
+        (saveAction)="save()"
         [(notificationText)]="notificationText"
     />
 </form>

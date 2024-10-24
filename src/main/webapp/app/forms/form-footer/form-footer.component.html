@@ -40,7 +40,7 @@
                 <span class="d-none d-md-inline">({{ invalidReasons.length }})</span>
             </div>
         }
-        <button type="button" id="cancel-save" class="btn btn-sm btn-secondary" (click)="cancel.next()">
+        <button type="button" id="cancel-save" class="btn btn-sm btn-secondary" (click)="cancelAction.next()">
             <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
             <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
         </button>
@@ -51,7 +51,7 @@
             [isLoading]="isSaving"
             [icon]="faSave"
             [title]="saveTitle()"
-            (onClick)="save.next()"
+            (onClick)="saveAction.next()"
             [btnSize]="ButtonSize.SMALL"
         />
     </div>

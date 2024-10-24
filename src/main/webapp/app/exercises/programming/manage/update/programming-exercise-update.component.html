@@ -68,8 +68,8 @@
                 [switchEditMode]="switchEditMode"
                 [areAuxiliaryRepositoriesValid]="isAuxiliaryRepositoryInputValid()"
                 [invalidReasons]="getInvalidReasons()"
-                (save)="save()"
-                (cancel)="previousState()"
+                (saveAction)="save()"
+                (cancelAction)="previousState()"
             />
         </div>
     </form>

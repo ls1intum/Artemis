@@ -25,8 +25,8 @@ export class FormFooterComponent {
     areAuxiliaryRepositoriesValid = input<boolean>(true);
 
     @Output() notificationTextChange = new EventEmitter<string>();
-    @Output() save = new EventEmitter<void>();
-    @Output() cancel = new EventEmitter<void>();
+    @Output() saveAction = new EventEmitter<void>();
+    @Output() cancelAction = new EventEmitter<void>();
 
     saveTitle = computed<string>(() => (this.isImport() ? 'entity.action.import' : this.isCreation() ? 'entity.action.generate' : 'entity.action.save'));
 }
