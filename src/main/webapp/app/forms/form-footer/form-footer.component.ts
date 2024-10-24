@@ -9,7 +9,6 @@ import { ButtonSize } from 'app/shared/components/button.component';
     styleUrls: ['form-footer.component.scss'],
 })
 export class FormFooterComponent {
-    // test
     @Output() save = new EventEmitter<void>();
 
     @Output() cancel = new EventEmitter<void>();
