@@ -121,7 +121,7 @@ public class ProgrammingExerciseImportBasicService {
      * @param newProgrammingExercise      The new exercise already containing values which should not get copied, i.e. overwritten
      * @return The newly created exercise
      */
-    @Transactional // TODO: apply the transaction on a smaller scope
+    @Transactional // TODO: NOT OK --> apply the transaction on a smaller scope
     // IMPORTANT: the transactional context only works if you invoke this method from another class
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise originalProgrammingExercise, final ProgrammingExercise newProgrammingExercise) {
         prepareBasicExerciseInformation(originalProgrammingExercise, newProgrammingExercise);

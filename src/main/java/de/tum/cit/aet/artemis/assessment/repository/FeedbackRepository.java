@@ -31,9 +31,10 @@ public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long>
     List<Feedback> findByReferenceInAndResult_Submission_Participation_Exercise(List<String> references, Exercise exercise);
 
     @Query("""
+
             SELECT feedback
-            FROM Feedback feedback
-            WHERE feedback.gradingInstruction.id IN :gradingInstructionsIds
+                FROM Feedback feedback
+                WHERE feedback.gradingInstruction.id IN :gradingInstructionsIds
             """)
     List<Feedback> findFeedbackByGradingInstructionIds(@Param("gradingInstructionsIds") List<Long> gradingInstructionsIds);
 
