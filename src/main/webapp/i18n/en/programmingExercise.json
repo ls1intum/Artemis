@@ -352,7 +352,23 @@
                     "testcase": "Test Case",
                     "errorCategory": "Error Category",
                     "totalItems": "In total {{count}} items",
-                    "error": "An error occurred while loading the feedback."
+                    "error": "An error occurred while loading the feedback.",
+                    "search": "Search ...",
+                    "filter": "Filters",
+                    "feedbackModal": {
+                        "header": "Error Details",
+                        "feedbackTitle": "Test Case Feedback",
+                        "ok": "Ok"
+                    },
+                    "filterModal": {
+                        "modalTitle": "Filter Options",
+                        "task": "Tasks",
+                        "testcase": "Test Cases",
+                        "occurrence": "Occurrence",
+                        "clear": "Clear Filter",
+                        "cancel": "Cancel",
+                        "apply": "Apply Filter"
+                    }
                 },
                 "help": {
                     "name": "Task names are written in bold whereas Test names are normal. Task or test name depending on whether the row is a task or test.",
