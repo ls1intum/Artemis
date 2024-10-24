@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -41,15 +41,15 @@ public class ModelingExerciseImportService extends ExerciseImportService {
 
     private final ChannelService channelService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     public ModelingExerciseImportService(ModelingExerciseRepository modelingExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressApi competencyProgressApi) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.channelService = channelService;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     /**
@@ -73,7 +73,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         channelService.createExerciseChannel(newModelingExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newModelingExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
 
-        competencyProgressService.updateProgressByLearningObjectAsync(newModelingExercise);
+        competencyProgressApi.updateProgressByLearningObjectAsync(newModelingExercise);
 
         return newModelingExercise;
     }

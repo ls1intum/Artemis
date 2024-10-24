@@ -240,8 +240,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(returnedModelingExercise.getGradingCriteria()).hasSameSizeAs(gradingCriteria);
         verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise, notificationText);
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(eq(returnedModelingExercise), eq(notificationText), any());
-        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(createdModelingExercise),
-                eq(Optional.of(createdModelingExercise)));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(createdModelingExercise), eq(Optional.of(createdModelingExercise)));
     }
 
     @Test
@@ -412,7 +411,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
 
-        verify(competencyProgressService).updateProgressByCompetencyAsync(eq(competency));
+        verify(competencyProgressApi).updateProgressByCompetencyAsync(eq(competency));
     }
 
     @Test
@@ -482,7 +481,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(importedExercise));
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
     }
 
     @Test

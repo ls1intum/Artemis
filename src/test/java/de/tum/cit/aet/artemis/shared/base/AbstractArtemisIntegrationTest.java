@@ -29,6 +29,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.ConversationNotificationService;
@@ -170,6 +171,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @SpyBean
     protected CompetencyProgressService competencyProgressService;
 
+    @SpyBean
+    protected CompetencyProgressApi competencyProgressApi;
+
     @Autowired
     protected RequestUtilService request;
 
@@ -223,7 +227,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected void resetSpyBeans() {
         Mockito.reset(gitService, groupNotificationService, conversationNotificationService, tutorialGroupNotificationService, singleUserNotificationService,
                 websocketMessagingService, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
-                uriService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService, competencyProgressService);
+                uriService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService, competencyProgressService,
+                competencyProgressApi);
     }
 
     @Override
