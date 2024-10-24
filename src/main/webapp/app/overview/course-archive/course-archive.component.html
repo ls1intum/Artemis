@@ -1,0 +1,70 @@
+@if (courses) {
+    <div class="module-bg p-3 rounded-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-start gap-1">
+                <h3 class="fw-medium mb-0" jhiTranslate="artemisApp.course.archive.title"></h3>
+                <fa-icon
+                    [icon]="faQuestionCircle"
+                    [size]="iconSize"
+                    class="text-secondary align-self-center"
+                    ngbTooltip="{{ 'artemisApp.course.archive.tip' | artemisTranslate }}"
+                />
+            </div>
+            @if (courses.length) {
+                <div class="d-flex justify-content-between gap-3 align-items-center ms-1">
+                    <div class="text-primary d-inline-flex">
+                        <a id="sort-test" (click)="onSort()" class="d-inline-flex align-items-center">
+                            <fa-icon id="icon-test-down" [icon]="isSortAscending ? faArrowDown19 : faArrowUp19" />
+                            <span class="ms-1" jhiTranslate="artemisApp.course.archive.sort"></span>
+                        </a>
+                    </div>
+                    <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="my-0" />
+                </div>
+            }
+        </div>
+    </div>
+    <div class="module-bg py-3 rounded-3">
+        @if (courses.length) {
+            <div class="mb-0">
+                @for (semester of semesters; track semester; let last = $last; let i = $index) {
+                    <div
+                        class="d-flex justify-content-between align-items-center px-3"
+                        (click)="isCourseFoundInSemester(semester) && toggleCollapseState(semester)"
+                        tabindex="0"
+                        role="button"
+                        id="semester-group-{{ i }}"
+                        [ngClass]="{ 'text-secondary': !(coursesBySemester[semester] | searchFilter: ['title'] : searchCourseText).length }"
+                    >
+                        <span class="fw-bold" jhiTranslate="{{ fullFormOfSemesterStrings[semester] }}" [translateValues]="{ param: semester.slice(2) }"></span>
+                        <fa-icon [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp" />
+                    </div>
+                    @if (!semesterCollapsed[semester]) {
+                        <div class="container-fluid mt-2">
+                            <div class="course-grid justify-content-center align-items-center">
+                                @for (course of coursesBySemester[semester] | searchFilter: ['title'] : searchCourseText; track course) {
+                                    <div class="course-card-wrapper p-0">
+                                        <jhi-course-card-header
+                                            class="col-2"
+                                            [courseId]="course.id"
+                                            [courseTitle]="course.title"
+                                            [courseIcon]="course.icon"
+                                            [courseColor]="course.color"
+                                            [archiveMode]="true"
+                                        />
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if (!last) {
+                        <hr class="mx-3" />
+                    }
+                }
+            </div>
+        } @else {
+            <div class="d-flex justify-content-center">
+                <h4 class="text-secondary text-center mb-0" jhiTranslate="artemisApp.course.archive.noCoursesPreviousSemester"></h4>
+            </div>
+        }
+    </div>
+}
