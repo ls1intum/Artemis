@@ -212,25 +212,23 @@ public class ExamUtilService {
         for (final var exercise : exercises) {
             testRun.addExercise(exercise);
             assertThat(exercise.isExamExercise()).isTrue();
-            Submission submission = null;
-            if (exercise instanceof ModelingExercise modelingExercise) {
-                submission = modelingExerciseUtilService.addModelingSubmission(modelingExercise, ParticipationFactory.generateModelingSubmission("", false), instructor.getLogin());
-            }
-            else if (exercise instanceof TextExercise textExercise) {
-                submission = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("", null, false), instructor.getLogin());
-            }
-            else if (exercise instanceof QuizExercise quizExercise) {
-                submission = quizExerciseUtilService.saveQuizSubmission(quizExercise, ParticipationFactory.generateQuizSubmission(false), instructor.getLogin());
-            }
-            else if (exercise instanceof ProgrammingExercise programmingExercise) {
-                submission = new ProgrammingSubmission().submitted(true);
-                programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, (ProgrammingSubmission) submission, instructor.getLogin());
-                submission = submissionRepository.save(submission);
-            }
-            else if (exercise instanceof FileUploadExercise fileUploadExercise) {
-                submission = fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise, ParticipationFactory.generateFileUploadSubmission(false),
-                        instructor.getLogin());
-            }
+            Submission submission = switch (exercise) {
+                case ModelingExercise modelingExercise ->
+                    modelingExerciseUtilService.addModelingSubmission(modelingExercise, ParticipationFactory.generateModelingSubmission("", false), instructor.getLogin());
+                case TextExercise textExercise ->
+                    textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("", null, false), instructor.getLogin());
+                case QuizExercise quizExercise ->
+                    quizExerciseUtilService.saveQuizSubmission(quizExercise, ParticipationFactory.generateQuizSubmission(false), instructor.getLogin());
+                case ProgrammingExercise programmingExercise -> {
+                    submission = new ProgrammingSubmission().submitted(true);
+                    programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, (ProgrammingSubmission) submission, instructor.getLogin());
+                    yield submissionRepository.save(submission);
+                }
+                case FileUploadExercise fileUploadExercise ->
+                    fileUploadExerciseUtilService.saveFileUploadSubmission(fileUploadExercise, ParticipationFactory.generateFileUploadSubmission(false), instructor.getLogin());
+                default -> null;
+            };
+
             var studentParticipation = (StudentParticipation) submission.getParticipation();
             studentParticipation.setTestRun(true);
             studentParticipationRepo.save(studentParticipation);

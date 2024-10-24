@@ -337,36 +337,36 @@ public class ComplaintResource {
         }
 
         Submission originalSubmission = complaint.getResult().getSubmission();
-        if (originalSubmission != null) {
-            Submission submissionWithOnlyId;
-            switch (originalSubmission) {
-                case TextSubmission ignored -> submissionWithOnlyId = new TextSubmission();
-                case ModelingSubmission ignored -> submissionWithOnlyId = new ModelingSubmission();
-                case FileUploadSubmission ignored -> submissionWithOnlyId = new FileUploadSubmission();
-                case ProgrammingSubmission ignored -> submissionWithOnlyId = new ProgrammingSubmission();
-                default -> {
-                    return;
-                }
-            }
-            submissionWithOnlyId.setId(originalSubmission.getId());
-            complaint.getResult().setSubmission(submissionWithOnlyId);
+        if (originalSubmission == null) {
+            return;
         }
+
+        Submission submissionWithOnlyId = switch (originalSubmission) {
+            case TextSubmission ignored -> new TextSubmission();
+            case ModelingSubmission ignored -> new ModelingSubmission();
+            case FileUploadSubmission ignored -> new FileUploadSubmission();
+            case ProgrammingSubmission ignored -> new ProgrammingSubmission();
+            default -> null;
+        };
+
+        if (submissionWithOnlyId == null) {
+            return;
+        }
+
+        submissionWithOnlyId.setId(originalSubmission.getId());
+        complaint.getResult().setSubmission(submissionWithOnlyId);
     }
 
     private static Exercise getExercise(StudentParticipation originalParticipation) {
         Exercise exerciseWithOnlyTitle = originalParticipation.getExercise();
-        if (exerciseWithOnlyTitle instanceof TextExercise) {
-            exerciseWithOnlyTitle = new TextExercise();
+        switch (exerciseWithOnlyTitle) {
+            case TextExercise ignored -> exerciseWithOnlyTitle = new TextExercise();
+            case ModelingExercise ignored -> exerciseWithOnlyTitle = new ModelingExercise();
+            case FileUploadExercise ignored -> exerciseWithOnlyTitle = new FileUploadExercise();
+            case ProgrammingExercise ignored -> exerciseWithOnlyTitle = new ProgrammingExercise();
+            case null, default -> log.error("Invalid exercise {} passed", exerciseWithOnlyTitle.getType());
         }
-        else if (exerciseWithOnlyTitle instanceof ModelingExercise) {
-            exerciseWithOnlyTitle = new ModelingExercise();
-        }
-        else if (exerciseWithOnlyTitle instanceof FileUploadExercise) {
-            exerciseWithOnlyTitle = new FileUploadExercise();
-        }
-        else if (exerciseWithOnlyTitle instanceof ProgrammingExercise) {
-            exerciseWithOnlyTitle = new ProgrammingExercise();
-        }
+
         exerciseWithOnlyTitle.setTitle(originalParticipation.getExercise().getTitle());
         exerciseWithOnlyTitle.setId(originalParticipation.getExercise().getId());
         return exerciseWithOnlyTitle;

@@ -79,25 +79,25 @@ public class SubmissionVersionService {
     }
 
     private String getSubmissionContent(Submission submission) {
-        if (submission instanceof ModelingSubmission modelingSubmission) {
-            return ("Model: " + modelingSubmission.getModel() + "; Explanation: " + modelingSubmission.getExplanationText());
-        }
-        else if (submission instanceof TextSubmission textSubmission) {
-            return textSubmission.getText();
-        }
-        else if (submission instanceof QuizSubmission quizSubmission) {
-            try {
-                // TODO: it might be nice to remove some question parameters (i.e. SubmittedAnswer -> QuizQuestion) to reduce the json size as those are not really necessary,
-                // however directly manipulating the object is dangerous because it will be returned to the client.
-                return objectMapper.writeValueAsString(quizSubmission.getSubmittedAnswers());
+        switch (submission) {
+            case ModelingSubmission modelingSubmission -> {
+                return ("Model: " + modelingSubmission.getModel() + "; Explanation: " + modelingSubmission.getExplanationText());
             }
-            catch (JsonProcessingException e) {
-                log.error("Error when writing quiz submission {} to json value. Will fall back to string representation", submission, e);
-                return submission.toString();
+            case TextSubmission textSubmission -> {
+                return textSubmission.getText();
             }
-        }
-        else {
-            throw new IllegalArgumentException("Versioning for this submission type not supported: " + submission.getType());
+            case QuizSubmission quizSubmission -> {
+                try {
+                    // TODO: it might be nice to remove some question parameters (i.e. SubmittedAnswer -> QuizQuestion) to reduce the json size as those are not really necessary,
+                    // however directly manipulating the object is dangerous because it will be returned to the client.
+                    return objectMapper.writeValueAsString(quizSubmission.getSubmittedAnswers());
+                }
+                catch (JsonProcessingException e) {
+                    log.error("Error when writing quiz submission {} to json value. Will fall back to string representation", submission, e);
+                    return submission.toString();
+                }
+            }
+            case null, default -> throw new IllegalArgumentException("Versioning for this submission type not supported: " + submission.getType());
         }
     }
 }
