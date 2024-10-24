@@ -10,7 +10,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit {
 
     @Input() hasChannelModerationRights = false;
     @Input() isThreadSidebar: boolean;
-    protected abstract get reactionsBar(): any;
+    abstract get reactionsBar(): any;
     showDropdown = false;
     dropdownPosition = { x: 0, y: 0 };
     showReactionSelector = false;
