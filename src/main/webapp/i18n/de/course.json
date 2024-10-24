@@ -231,7 +231,8 @@
                 "email": "E-Mail",
                 "removeFromGroup": {
                     "modalQuestion": "Soll der Login <strong>{{ title }}</strong> wirklich aus dieser Kursgruppe entfernt werden?"
-                }
+                },
+                "profilePicture": "Profilbild"
             },
             "averageScore": "Durchschnittliche Punktzahl",
             "releasedSoon": "Bald veröffentlicht",
