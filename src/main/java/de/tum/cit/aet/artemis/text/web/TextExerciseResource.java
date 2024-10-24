@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.jplag.exceptions.ExitException;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -41,7 +40,6 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -60,6 +58,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -68,10 +68,12 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exercise.api.ExerciseApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -146,6 +148,8 @@ public class TextExerciseResource {
 
     private final CourseRepository courseRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
@@ -154,6 +158,8 @@ public class TextExerciseResource {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final ExerciseApi exerciseApi;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
@@ -161,8 +167,8 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
-            ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService,
-            CompetencyProgressService competencyProgressService) {
+            ExerciseRepository exerciseRepository, ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService,
+            CompetencyProgressService competencyProgressService, ExerciseApi exerciseApi) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -184,10 +190,12 @@ public class TextExerciseResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.plagiarismDetectionService = plagiarismDetectionService;
         this.courseRepository = courseRepository;
+        this.exerciseRepository = exerciseRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.athenaModuleService = athenaModuleService;
         this.competencyProgressService = competencyProgressService;
+        this.exerciseApi = exerciseApi;
     }
 
     /**
@@ -332,33 +340,42 @@ public class TextExerciseResource {
      *         status 404 (Not Found)
      */
     @GetMapping("text-exercises/{exerciseId}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
         var textExercise = findTextExercise(exerciseId, withPlagiarismDetectionConfig).orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
 
-        // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it
         if (textExercise.isExamExercise()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
-        }
-        else {
-            // in courses, also tutors can access the exercise
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
-        }
-        if (textExercise.isCourseExercise()) {
-            Channel channel = channelRepository.findChannelByExerciseId(textExercise.getId());
-            if (channel != null) {
-                textExercise.setChannelName(channel.getName());
-            }
+            throw new BadRequestAlertException("Wrong exercise endpoint", "TextExercise", "useExamEndpoint");
         }
 
-        Set<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
-        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        textExercise.setGradingCriteria(gradingCriteria);
-        textExercise.setExampleSubmissions(exampleSubmissions);
+        exerciseApi.setChannelName(textExercise);
+        exerciseApi.setGradingCriteria(textExercise);
+        exerciseApi.setExampleSubmissions(textExercise);
+        exerciseApi.checkExerciseIfStructuredGradingInstructionFeedbackUsed(textExercise.getGradingCriteria(), textExercise);
 
-        exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, textExercise);
         return ResponseEntity.ok().body(textExercise);
+    }
+
+    @GetMapping("text-exercises/{exerciseId}/for-students")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<TextExercise> getTextExerciseForStudent(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+        log.debug("REST request to get TextExercise as student : {}", exerciseId);
+        var textExercise = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exerciseId);
+
+        if (!exerciseApi.isStudentAllowedToSee(textExercise)) {
+            throw new AccessForbiddenException();
+        }
+
+        if (exerciseApi.isCorrectExerciseType(textExercise, TextExercise.class)) {
+            throw new BadRequestAlertException("Exercise is not a text exercise", "TextExercise", "invalidExerciseType");
+        }
+
+        exerciseApi.setGradingCriteria(textExercise);
+        exerciseApi.checkExerciseIfStructuredGradingInstructionFeedbackUsed(textExercise.getGradingCriteria(), textExercise);
+        exerciseApi.filterSensitiveData(textExercise);
+
+        return ResponseEntity.ok().body((TextExercise) textExercise);
     }
 
     /**

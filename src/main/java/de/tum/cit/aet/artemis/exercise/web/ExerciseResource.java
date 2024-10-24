@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
@@ -9,6 +10,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +44,9 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
@@ -86,8 +91,6 @@ public class ExerciseResource {
 
     private final TutorParticipationService tutorParticipationService;
 
-    private final ExamDateService examDateService;
-
     private final GradingCriterionRepository gradingCriterionRepository;
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
@@ -107,7 +110,7 @@ public class ExerciseResource {
     private final ExerciseHintService exerciseHintService;
 
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
-            UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            UserRepository userRepository, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
             ParticipationRepository participationRepository, ExamAccessService examAccessService, Optional<IrisSettingsService> irisSettingsService,
@@ -120,7 +123,6 @@ public class ExerciseResource {
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.examDateService = examDateService;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizBatchService = quizBatchService;
@@ -138,47 +140,19 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("exercises/{exerciseId}")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId) {
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<Exercise> getExercise(@PathVariable Long exerciseId, HttpServletRequest request, HttpServletResponse response) {
 
-        log.debug("REST request to get Exercise : {}", exerciseId);
-
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Exercise exercise = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exerciseId);
+        log.debug("REST request to get generic Exercise : {}", exerciseId);
 
         // Exam exercise
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         if (exercise.isExamExercise()) {
-            Exam exam = exercise.getExerciseGroup().getExam();
-            if (authCheckService.isAtLeastEditorForExercise(exercise, user)) {
-                // instructors editors and admins should always be able to see exam exercises
-                // continue
-            }
-            else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-                // tutors should only be able to see exam exercises when the exercise has finished
-                ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
-                if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
-                    // When there is no due date or the due date is in the future, we return forbidden here
-                    throw new AccessForbiddenException();
-                }
-            }
-            else {
-                // Students should never access exercises
-                throw new AccessForbiddenException();
-            }
-        }
-        // Normal exercise
-        else {
-            if (!authCheckService.isAllowedToSeeExercise(exercise, user)) {
-                throw new AccessForbiddenException();
-            }
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-                exercise.filterSensitiveInformation();
-            }
+            return forwardToExamExerciseURL(request, response, exerciseId);
         }
 
-        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        exercise.setGradingCriteria(gradingCriteria);
-        return ResponseEntity.ok(exercise);
+        // Regular exercise
+        return forwardToExerciseURL(request, response, exercise);
     }
 
     /**
@@ -386,5 +360,49 @@ public class ExerciseResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, null);
         return ResponseEntity.ok(participationRepository.findLatestIndividualDueDate(exerciseId).orElse(exercise.getDueDate()));
+    }
+
+    private ResponseEntity<Exercise> forwardToExamExerciseURL(HttpServletRequest request, HttpServletResponse response, Long exerciseId) {
+        String url = String.format("/api/exams/exercises/%s", exerciseId);
+        return forwardToUrl(request, response, url);
+    }
+
+    /**
+     * Handles the forwarding to the correct exercise URL based on the exercise type.
+     * ToDo: Consider already throwing an error here, if a module is not present. Otherwise, it produces a 404
+     */
+    private ResponseEntity<Exercise> forwardToExerciseURL(HttpServletRequest request, HttpServletResponse response, Exercise exercise) {
+        Long exerciseId = exercise.getId();
+        String url = switch (exercise.getExerciseType()) {
+            case PROGRAMMING -> "/api/programming-exercises/" + exerciseId;
+            case QUIZ -> "/api/quiz-exercises/" + exerciseId;
+            case MODELING -> "/api/modeling-exercises/" + exerciseId;
+            case TEXT -> "/api/text-exercises/" + exerciseId;
+            case FILE_UPLOAD -> "/api/file-upload-exercises/" + exerciseId;
+        };
+
+        // For students, call a separate endpoint
+        if (!authCheckService.isAtLeastTeachingAssistantInExercise(exerciseId)) {
+            url += "/for-students";
+        }
+
+        return forwardToUrl(request, response, url);
+    }
+
+    // ToDo: Move to common class
+    // ToDo: Consider using redirects (302) instead of internal forwards. An exercise with the same ID won't change its type
+    private <T> ResponseEntity<T> forwardToUrl(HttpServletRequest request, HttpServletResponse response, String url) {
+        RequestDispatcher dispatcher = request.getRequestDispatcher(url);
+        try {
+            dispatcher.forward(request, response);
+        }
+        catch (ServletException e) {
+            throw new RuntimeException(e); // ToDo: Handle gracefully
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e); // ToDo: Handle gracefully
+        }
+
+        return null; // Will be overridden by response
     }
 }
