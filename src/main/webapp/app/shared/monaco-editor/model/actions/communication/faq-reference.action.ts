@@ -52,7 +52,7 @@ export class FaqReferenceAction extends TextEditorDomainActionWithOptions {
     }
 
     /**
-     * Inserts the text '/faq' into the editor and focuses it. This method will trigger the completion provider to show the available exercises.
+     * Inserts the text '/faq' into the editor and focuses it. This method will trigger the completion provider to show the available faqs.
      * @param editor The editor to insert the text into.
      */
     run(editor: TextEditor): void {
