@@ -50,7 +50,7 @@ import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS 
 import { MetisService } from 'app/shared/metis/metis.service';
 
 export enum MarkdownEditorHeight {
-    INLINE = 100,
+    INLINE = 125,
     SMALL = 300,
     MEDIUM = 500,
     LARGE = 1000,
