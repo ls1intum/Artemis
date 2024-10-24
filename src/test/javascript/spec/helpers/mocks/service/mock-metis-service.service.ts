@@ -94,7 +94,7 @@ export class MockMetisService {
         return '/courses/' + metisCourse.id + '/exams/' + examId;
     }
 
-    getLinkForFaq(examId: string): string {
+    getLinkForFaq(): string {
         return `/courses/${this.getCourse().id}/faq`;
     }
 
