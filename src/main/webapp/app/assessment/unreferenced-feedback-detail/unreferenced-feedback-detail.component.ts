@@ -1,17 +1,19 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { faCheck, faExclamation, faExclamationTriangle, faQuestionCircle, faTrash, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject } from 'rxjs';
+import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
 
 @Component({
     selector: 'jhi-unreferenced-feedback-detail',
     templateUrl: './unreferenced-feedback-detail.component.html',
     styleUrls: ['./unreferenced-feedback-detail.component.scss'],
 })
-export class UnreferencedFeedbackDetailComponent {
+export class UnreferencedFeedbackDetailComponent implements OnInit {
     @Input() public feedback: Feedback;
+    @Input() resultId: number;
     @Input() isSuggestion: boolean;
     @Input() public readOnly: boolean;
     @Input() highlightDifferences: boolean;
@@ -21,6 +23,7 @@ export class UnreferencedFeedbackDetailComponent {
     @Output() public onFeedbackDelete = new EventEmitter<Feedback>();
     @Output() onAcceptSuggestion = new EventEmitter<Feedback>();
     @Output() onDiscardSuggestion = new EventEmitter<Feedback>();
+    private feedbackService = inject(FeedbackService);
 
     // Icons
     faTrashAlt = faTrashAlt;
@@ -38,6 +41,20 @@ export class UnreferencedFeedbackDetailComponent {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
+
+    ngOnInit() {
+        this.loadLongFeedback();
+    }
+
+    /**
+     * Call this method to load long feedback if needed
+     */
+    public async loadLongFeedback() {
+        if (this.feedback.hasLongFeedbackText) {
+            this.feedback.detailText = await this.feedbackService.getLongFeedbackText(this.resultId, this.feedback.id!);
+            this.onFeedbackChange.emit(this.feedback);
+        }
+    }
 
     /**
      * Emits assessment changes to parent component
