@@ -32,5 +32,9 @@ artemis:
             expiry-days: 2
             # Time of cleanup (cron expression)
             cleanup-schedule-time: 0 0 3 * * *
+        instructor-build-timeout-options-seconds:
+            min-option: 10
+            default-option: 120
+            max-option: 240
 
 
