@@ -68,19 +68,27 @@
                         </div>
                     </div>
                     <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
-                        @if (lecture.course?.id && showCompetencies) {
-                            <jhi-competencies-popover [courseId]="lecture.course!.id!" [competencies]="lectureUnit.competencies || []" [navigateTo]="'competencyManagement'" />
-                        }
-                        @if (viewButtonAvailable[lectureUnit.id!]) {
-                            <a
-                                type="button"
-                                class="btn btn-primary btn-sm flex-grow-1"
-                                [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', lectureUnit.id, 'view']"
-                                [ngbTooltip]="'entity.action.view' | artemisTranslate"
-                            >
-                                <fa-icon [icon]="faEye" />
-                            </a>
-                        }
+                        <div class="d-flex gap-1 w-100">
+                            @if (lecture.course?.id && showCompetencies) {
+                                <jhi-competencies-popover
+                                    class="flex-grow-1"
+                                    [courseId]="lecture.course!.id!"
+                                    [competencies]="lectureUnit.competencies || []"
+                                    [navigateTo]="'competencyManagement'"
+                                />
+                            }
+                            @if (viewButtonAvailable[lectureUnit.id!]) {
+                                <a
+                                    type="button"
+                                    class="btn btn-primary btn-sm flex-grow-1"
+                                    [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', lectureUnit.id, 'view']"
+                                    [ngbTooltip]="'entity.action.view' | artemisTranslate"
+                                >
+                                    <fa-icon [icon]="faEye" />
+                                </a>
+                            }
+                        </div>
+
                         <div class="d-flex gap-1 w-100">
                             @if (this.emitEditEvents) {
                                 @if (editButtonAvailable(lectureUnit)) {
