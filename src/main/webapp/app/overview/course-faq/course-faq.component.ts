@@ -141,8 +141,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     scrollToFaq(faqId: number): void {
         const faqElement = this.faqElements().find((faq) => faq.nativeElement.id === 'faq-' + String(faqId));
         if (faqElement) {
-            this.renderer.selectRootElement(faqElement.nativeElement).scrollIntoView({ behavior: 'smooth', block: 'start' });
-            this.renderer.selectRootElement(faqElement.nativeElement).focus();
+            this.renderer.selectRootElement(faqElement.nativeElement, true).scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
 }
