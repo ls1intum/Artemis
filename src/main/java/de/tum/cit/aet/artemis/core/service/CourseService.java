@@ -693,6 +693,18 @@ public class CourseService {
     }
 
     /**
+     * Retrieves all inactive courses from non-null semesters that the current user is enrolled in
+     * for the course archive.
+     *
+     * @return A list of courses for the course archive.
+     */
+    public Set<Course> getAllCoursesForCourseArchive() {
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isAdmin = authCheckService.isAdmin(user);
+        return courseRepository.findInactiveCoursesForUserRolesWithNonNullSemester(user.getId(), isAdmin, ZonedDateTime.now());
+    }
+
+    /**
      * Get the active students for these particular exercise ids
      *
      * @param exerciseIds the ids to get the active students for

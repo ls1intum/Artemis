@@ -13,7 +13,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
-import { CourseCardComponent } from 'app/overview/course-card.component';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
@@ -186,7 +185,6 @@ describe('CourseOverviewComponent', () => {
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(CourseExercisesComponent),
                 MockComponent(CourseRegistrationComponent),
-                MockComponent(CourseCardComponent),
                 MockComponent(SecuredImageComponent),
             ],
             providers: [
