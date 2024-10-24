@@ -9,6 +9,9 @@
                 @if (!courseWideSearchConfig.searchTerm) {
                     <span jhiTranslate="artemisApp.metis.overview.allPublicMessages"></span>
                 } @else {
+                    <button class="btn btn-sm btn-outline-secondary d-inline-block d-sm-none me-2" (click)="openSidebar()">
+                        <fa-icon [icon]="faChevronLeft" />
+                    </button>
                     <span jhiTranslate="artemisApp.metis.overview.searchResults" [translateValues]="{ search: courseWideSearchConfig.searchTerm }"></span>
                 }
             </h4>

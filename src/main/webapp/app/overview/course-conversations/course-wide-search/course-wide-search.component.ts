@@ -13,7 +13,7 @@ import {
     ViewChildren,
     ViewEncapsulation,
 } from '@angular/core';
-import { faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
@@ -55,6 +55,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     faTimes = faTimes;
     faEnvelope = faEnvelope;
     faCircleNotch = faCircleNotch;
+    faChevronLeft = faChevronLeft;
 
     readonly SortDirection = SortDirection;
     sortingOrder = SortDirection.ASCENDING;
