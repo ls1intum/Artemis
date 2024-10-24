@@ -54,29 +54,35 @@
                                 @if (exercise && exercise.studentParticipations && exercise.studentParticipations[0]) {
                                     @if (pageComponentVisited[i]) {
                                         <div [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
-                                            @if (exercise.studentParticipations[0] && exercise.studentParticipations[0].submissions) {
-                                                @switch (exercise.type) {
-                                                    @case (QUIZ) {
+                                            @switch (exercise.type) {
+                                                @case (QUIZ) {
+                                                    @if (exercise.studentParticipations[0].submissions) {
                                                         <jhi-quiz-submission-exam
                                                             [quizConfiguration]="exercise"
                                                             [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
                                                             (saveCurrentExercise)="triggerSave(false)"
                                                         />
                                                     }
-                                                    @case (FILEUPLOAD) {
+                                                }
+                                                @case (FILEUPLOAD) {
+                                                    @if (exercise.studentParticipations[0].submissions) {
                                                         <jhi-file-upload-submission-exam
                                                             [exercise]="exercise"
                                                             [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
                                                         />
                                                     }
-                                                    @case (TEXT) {
+                                                }
+                                                @case (TEXT) {
+                                                    @if (exercise.studentParticipations[0].submissions) {
                                                         <jhi-text-editor-exam
                                                             [exercise]="exercise"
                                                             [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
                                                             (saveCurrentExercise)="triggerSave(false)"
                                                         />
                                                     }
-                                                    @case (MODELING) {
+                                                }
+                                                @case (MODELING) {
+                                                    @if (exercise.studentParticipations[0].submissions) {
                                                         <jhi-modeling-submission-exam
                                                             [exercise]="exercise"
                                                             [studentSubmission]="exercise.studentParticipations[0].submissions[0]"
@@ -84,13 +90,13 @@
                                                             (saveCurrentExercise)="triggerSave(false)"
                                                         />
                                                     }
-                                                    @case (PROGRAMMING) {
-                                                        <jhi-programming-submission-exam
-                                                            [exercise]="exercise"
-                                                            [studentParticipation]="exercise.studentParticipations[0]"
-                                                            [courseId]="courseId"
-                                                        />
-                                                    }
+                                                }
+                                                @case (PROGRAMMING) {
+                                                    <jhi-programming-submission-exam
+                                                        [exercise]="exercise"
+                                                        [studentParticipation]="exercise.studentParticipations[0]"
+                                                        [courseId]="courseId"
+                                                    />
                                                 }
                                             }
                                         </div>
