@@ -95,7 +95,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         super();
     }
 
-    protected get reactionsBar() {
+    get reactionsBar() {
         return this.reactionsBarComponent;
     }
 

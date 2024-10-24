@@ -54,7 +54,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
         super();
     }
 
-    protected get reactionsBar() {
+    get reactionsBar() {
         return this.reactionsBarComponent;
     }
 
