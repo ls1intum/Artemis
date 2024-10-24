@@ -21,8 +21,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() textBlock: TextBlock = new TextBlock();
     @Input() feedback: Feedback = new Feedback();
     @Output() feedbackChange = new EventEmitter<Feedback>();
-    // eslint-disable-next-line @angular-eslint/no-output-native
-    @Output() close = new EventEmitter<void>();
+    @Output() onClose = new EventEmitter<void>();
     @Output() onFocus = new EventEmitter<void>();
     @ViewChild('detailText') textareaRef: ElementRef;
     @ViewChild(ConfirmIconComponent) confirmIconComponent: ConfirmIconComponent;
@@ -96,7 +95,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      * Dismiss changes in feedback editor
      */
     dismiss(): void {
-        this.close.emit();
+        this.onClose.emit();
         this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, this.feedback.type, this.textBlock.type);
     }
 
