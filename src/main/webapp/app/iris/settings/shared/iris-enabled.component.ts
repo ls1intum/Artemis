@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
@@ -8,6 +8,8 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 @Component({
     selector: 'jhi-iris-enabled',
     templateUrl: './iris-enabled.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false,
 })
 export class IrisEnabledComponent implements OnInit {
     @Input() exercise?: Exercise;

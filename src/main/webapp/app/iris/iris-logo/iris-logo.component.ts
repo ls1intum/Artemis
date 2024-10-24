@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 
 export enum IrisLogoSize {
     FLUID = 'fluid',
@@ -16,6 +16,8 @@ export enum IrisLogoLookDirection {
     selector: 'jhi-iris-logo',
     templateUrl: './iris-logo.component.html',
     styleUrls: ['./iris-logo.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
 })
 export class IrisLogoComponent implements OnInit {
     @Input()
