@@ -13,6 +13,7 @@ import { RatingModule } from 'app/exercises/shared/rating/rating.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
 import { IrisModule } from 'app/iris/iris.module';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
 
 @NgModule({
     imports: [
@@ -27,6 +28,7 @@ import { IrisModule } from 'app/iris/iris.module';
         ArtemisMarkdownModule,
         ArtemisTeamParticipeModule,
         IrisModule,
+        IrisExerciseChatbotButtonComponent,
     ],
     declarations: [TextEditorComponent, TextResultComponent],
     exports: [TextEditorComponent],

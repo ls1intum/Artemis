@@ -12,7 +12,6 @@ import { IrisGlobalSettingsUpdateComponent } from './settings/iris-global-settin
 import { IrisCommonSubSettingsUpdateComponent } from './settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { IrisExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update.component';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
@@ -25,7 +24,6 @@ import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.comp
     declarations: [
         IrisBaseChatbotComponent,
         IrisChatbotWidgetComponent,
-        IrisExerciseChatbotButtonComponent,
         IrisSettingsUpdateComponent,
         IrisGlobalSettingsUpdateComponent,
         IrisCourseSettingsUpdateComponent,
@@ -47,6 +45,6 @@ import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.comp
         ChatStatusBarComponent,
         IrisLogoComponent,
     ],
-    exports: [IrisExerciseChatbotButtonComponent, IrisBaseChatbotComponent, CourseChatbotComponent, IrisEnabledComponent],
+    exports: [IrisBaseChatbotComponent, CourseChatbotComponent, IrisLogoComponent, IrisEnabledComponent],
 })
 export class IrisModule {}

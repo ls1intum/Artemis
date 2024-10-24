@@ -7,11 +7,16 @@ import { Subscription } from 'rxjs';
 import { faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
+import { IrisModule } from 'app/iris/iris.module';
+import { CommonModule } from '@angular/common';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
     templateUrl: './exercise-chatbot-button.component.html',
     styleUrls: ['./exercise-chatbot-button.component.scss'],
+    standalone: true,
+    imports: [IrisModule, CommonModule, FontAwesomeModule],
 })
 export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     @Input()

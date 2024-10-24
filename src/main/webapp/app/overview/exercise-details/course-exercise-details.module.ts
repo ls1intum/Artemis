@@ -31,6 +31,7 @@ import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.mo
 import { ArtemisExerciseInfoModule } from 'app/exercises/shared/exercise-info/exercise-info.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { IrisExerciseChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-chatbot-button.component';
 
 const routes: Routes = [
     {
@@ -71,6 +72,7 @@ const routes: Routes = [
         ArtemisExerciseInfoModule,
         IrisModule,
         DiscussionSectionComponent,
+        IrisExerciseChatbotButtonComponent,
     ],
     declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent, ProblemStatementComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, ProblemStatementComponent],
