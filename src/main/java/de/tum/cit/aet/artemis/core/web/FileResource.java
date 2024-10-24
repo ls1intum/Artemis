@@ -188,7 +188,7 @@ public class FileResource {
         // TODO: access check
         log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
-        return buildFileResponse(FilePathService.getMarkdownFilePathForConversation(courseId, conversationId), filename);
+        return buildFileResponse(FilePathService.getMarkdownFilePathForConversation(courseId, conversationId), filename, true);
     }
 
     /**
