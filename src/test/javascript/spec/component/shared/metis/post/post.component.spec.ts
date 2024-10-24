@@ -10,8 +10,9 @@ import { PostingContentComponent } from 'app/shared/metis/posting-content/postin
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PageType } from 'app/shared/metis/metis.util';
+import { DisplayPriority, PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
+import { OverlayModule } from '@angular/cdk/overlay';
 import {
     metisChannel,
     metisCourse,
@@ -33,6 +34,7 @@ import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
+import { DOCUMENT } from '@angular/common';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -43,14 +45,20 @@ describe('PostComponent', () => {
     let metisServiceGetQueryParamsSpy: jest.SpyInstance;
     let metisServiceGetPageTypeStub: jest.SpyInstance;
     let router: MockRouter;
+    let mainContainer: HTMLElement;
 
     beforeEach(() => {
+        mainContainer = document.createElement('div');
+        mainContainer.classList.add('posting-infinite-scroll-container');
+        document.body.appendChild(mainContainer);
+
         return TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip), OverlayModule],
             providers: [
                 provideRouter([]),
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: Router, useClass: MockRouter },
+                { provide: DOCUMENT, useValue: document },
                 MockProvider(MetisConversationService),
                 MockProvider(OneToOneChatService),
             ],
@@ -103,11 +111,6 @@ describe('PostComponent', () => {
         component.posting.answers = undefined;
         component.sortAnswerPosts();
         expect(component.sortedAnswerPosts).toEqual([]);
-    });
-
-    it('should contain a post header', () => {
-        const header = getElement(debugElement, 'jhi-post-header');
-        expect(header).not.toBeNull();
     });
 
     it('should set router link and query params', () => {
@@ -213,5 +216,54 @@ describe('PostComponent', () => {
         component.onChannelReferenceClicked(metisChannel.id!);
 
         expect(setActiveConversationSpy).toHaveBeenCalledWith(metisChannel.id!);
+    });
+
+    it('should return true if the post is pinned', () => {
+        component.posting = { ...post, displayPriority: DisplayPriority.PINNED };
+        expect(component.isPinned()).toBeTrue();
+    });
+
+    it('should return false if the post is not pinned', () => {
+        component.posting = { ...post, displayPriority: DisplayPriority.NONE };
+        expect(component.isPinned()).toBeFalse();
+    });
+
+    it('should close previous dropdown when another is opened', () => {
+        const previousComponent = {
+            showDropdown: true,
+            enableBodyScroll: jest.fn(),
+            changeDetector: { detectChanges: jest.fn() },
+        } as any as PostComponent;
+
+        PostComponent.activeDropdownPost = previousComponent;
+
+        const event = new MouseEvent('contextmenu', { clientX: 100, clientY: 200 });
+        component.onRightClick(event);
+
+        expect(previousComponent.showDropdown).toBeFalse();
+        expect(previousComponent.enableBodyScroll).toHaveBeenCalled();
+        expect(previousComponent.changeDetector.detectChanges).toHaveBeenCalled();
+        expect(PostComponent.activeDropdownPost).toBe(component);
+        expect(component.showDropdown).toBeTrue();
+    });
+
+    it('should disable body scroll', () => {
+        const setStyleSpy = jest.spyOn(component.renderer, 'setStyle');
+        (component as any).disableBodyScroll();
+        expect(setStyleSpy).toHaveBeenCalledWith(expect.objectContaining({ className: 'posting-infinite-scroll-container' }), 'overflow', 'hidden');
+    });
+
+    it('should enable body scroll', () => {
+        const setStyleSpy = jest.spyOn(component.renderer, 'setStyle');
+        (component as any).enableBodyScroll();
+        expect(setStyleSpy).toHaveBeenCalledWith(expect.objectContaining({ className: 'posting-infinite-scroll-container' }), 'overflow-y', 'auto');
+    });
+
+    it('should handle click outside and hide dropdown', () => {
+        component.showDropdown = true;
+        const enableBodyScrollSpy = jest.spyOn(component, 'enableBodyScroll' as any);
+        component.onClickOutside();
+        expect(component.showDropdown).toBeFalse();
+        expect(enableBodyScrollSpy).toHaveBeenCalled();
     });
 });

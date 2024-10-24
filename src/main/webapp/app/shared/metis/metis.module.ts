@@ -12,7 +12,6 @@ import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answe
 import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { AnswerPostFooterComponent } from 'app/shared/metis/posting-footer/answer-post-footer/answer-post-footer.component';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -74,7 +73,6 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         PostTagSelectorComponent,
         PostFooterComponent,
         AnswerPostCreateEditModalComponent,
-        AnswerPostFooterComponent,
         PostingButtonComponent,
         PostingMarkdownEditorComponent,
         PostComponent,
@@ -101,7 +99,6 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         PostTagSelectorComponent,
         AnswerPostCreateEditModalComponent,
         PostFooterComponent,
-        AnswerPostFooterComponent,
         PostingButtonComponent,
         PostingMarkdownEditorComponent,
         PostComponent,
