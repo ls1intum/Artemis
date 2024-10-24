@@ -137,7 +137,7 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildAgentInformation> getBuildAgentInformationWithoutRecentBuildJobs() {
-        return buildAgentInformation.values().stream().map(agent -> new BuildAgentInformation(agent.name(), agent.maxNumberOfConcurrentBuildJobs(),
+        return buildAgentInformation.values().stream().map(agent -> new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(),
                 agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(), agent.status(), null, null)).toList();
     }
 
@@ -208,7 +208,7 @@ public class SharedQueueManagementService {
      * @param agentName name of the agent
      */
     public void cancelAllRunningBuildJobsForAgent(String agentName) {
-        processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), agentName)).forEach(job -> cancelBuildJob(job.id()));
+        processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgent().name(), agentName)).forEach(job -> cancelBuildJob(job.id()));
     }
 
     /**

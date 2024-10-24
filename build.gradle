@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.6.2"
+version = "7.6.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
