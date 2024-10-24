@@ -115,21 +115,22 @@ public class ExerciseDeletionService {
         }
 
         // Cleanup in parallel to speedup the process
-        var threadPool = Executors.newFixedThreadPool(10);
-        var futures = exercise.getStudentParticipations().stream().map(participation -> CompletableFuture.runAsync(() -> {
-            try {
-                participationService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
-                if (!deleteRepositories) {
-                    return; // in this case, we are done with the participation
+        try (var threadPool = Executors.newFixedThreadPool(10)) {
+            var futures = exercise.getStudentParticipations().stream().map(participation -> CompletableFuture.runAsync(() -> {
+                try {
+                    participationService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
+                    if (!deleteRepositories) {
+                        return; // in this case, we are done with the participation
+                    }
+                    participationService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
                 }
-                participationService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
-            }
-            catch (Exception exception) {
-                log.error("Failed to clean the student participation {} for programming exercise {}", participation.getId(), exerciseId);
-            }
-        }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
-        // wait until all operations finish before returning
-        CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
+                catch (Exception exception) {
+                    log.error("Failed to clean the student participation {} for programming exercise {}", participation.getId(), exerciseId);
+                }
+            }, threadPool).toCompletableFuture()).toArray(CompletableFuture[]::new);
+            // wait until all operations finish before returning
+            CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).join();
+        }
     }
 
     /**
