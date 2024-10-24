@@ -69,6 +69,8 @@ public class QuizParticipationResource {
 
     /**
      * POST /quiz-exercises/{exerciseId}/start-participation : start the quiz exercise participation
+     * TODO: This endpoint is also called when viewing the result of a quiz exercise.
+     * TODO: This does not make any sense, as the participation is already started.
      *
      * @param exerciseId the id of the quiz exercise
      * @return The created participation
@@ -92,7 +94,14 @@ public class QuizParticipationResource {
 
         // NOTE: starting exercise prevents that two participation will exist, but ensures that a submission is created
         var result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(new Result());
-        result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).orElseThrow());
+        if (result.getId() == null) {
+            // Load the live submission of the participation
+            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst().orElseThrow());
+        }
+        else {
+            // Load the actual submission of the result
+            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow());
+        }
 
         participation.setResults(Set.of(result));
         participation.setExercise(exercise);
