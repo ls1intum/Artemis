@@ -536,6 +536,10 @@ public class ResultService {
     @NotNull
     private Result shouldSaveResult(@NotNull Result result, boolean shouldSave) {
         if (shouldSave) {
+            // we do this to avoid problems of editing longFeedbackTexts in manual Assesements
+            deleteLongFeedback(result.getFeedbacks());
+            List<Feedback> feedbacks = new ArrayList<>(result.getFeedbacks());
+            result.updateAllFeedbackItems(feedbacks, true);
             // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
             return resultRepository.save(result);
         }
@@ -625,5 +629,26 @@ public class ResultService {
      */
     public long getMaxCountForExercise(long exerciseId) {
         return studentParticipationRepository.findMaxCountForExercise(exerciseId);
+    }
+
+    /**
+     * Deletes long feedback texts for the provided list of feedback items.
+     * <br>
+     * This method iterates over the provided list of feedback and checks if each feedback has an associated long feedback text.
+     * If the feedback has a long feedback text and its ID is not null, the method fetches the corresponding {@link LongFeedbackText}
+     * from the repository and deletes it.
+     * <p>
+     * This is useful in cases where long feedback texts need to be removed, such as during feedback cleanup operations.
+     *
+     * @param feedbackList The list of {@link Feedback} objects for which the long feedback texts are to be deleted.
+     *                         Only feedback items that have long feedback texts and a non-null ID will be processed.
+     */
+    public void deleteLongFeedback(List<Feedback> feedbackList) {
+        for (Feedback feedback : feedbackList) {
+            if (feedback.getHasLongFeedbackText() && feedback.getId() != null) {
+                Optional<LongFeedbackText> longFeedbackTextOpt = longFeedbackTextRepository.findByFeedbackId(feedback.getId());
+                longFeedbackTextOpt.ifPresent(longFeedbackTextRepository::delete);
+            }
+        }
     }
 }

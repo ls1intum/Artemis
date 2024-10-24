@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateBaseDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
@@ -67,10 +68,12 @@ public class AssessmentService {
 
     protected final ResultWebsocketService resultWebsocketService;
 
+    private final LongFeedbackTextRepository longFeedbackTextRepository;
+
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, ExamDateService examDateService, UserRepository userRepository, Optional<LtiNewResultService> ltiNewResultService,
-            SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService) {
+            SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService, LongFeedbackTextRepository longFeedbackTextRepository) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -84,6 +87,7 @@ public class AssessmentService {
         this.ltiNewResultService = ltiNewResultService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.resultWebsocketService = resultWebsocketService;
+        this.longFeedbackTextRepository = longFeedbackTextRepository;
     }
 
     /**
@@ -282,6 +286,10 @@ public class AssessmentService {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userRepository.getUser();
         result.setAssessor(user);
+
+        // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with resultRepository.save(result)
+        resultService.deleteLongFeedback(feedbackList);
+
         result.updateAllFeedbackItems(feedbackList, false);
         result.determineAssessmentType();
 
