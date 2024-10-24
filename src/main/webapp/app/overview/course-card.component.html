@@ -1,25 +1,5 @@
 <div class="card rounded-4 flex-grow-1" [class.guided-tour]="hasGuidedTour">
-    <div id="course-{{ course.id }}-header" class="card-header text-white px-3" [routerLink]="['/courses', course.id!]" [ngStyle]="{ '--background-color-for-hover': courseColor }">
-        <div class="d-flex align-items-center justify-content-between gap-1">
-            @if (course.courseIcon) {
-                <div class="col-auto">
-                    <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon" />
-                </div>
-            } @else {
-                <div class="course-circle d-flex align-items-center justify-content-center">
-                    <span class="fs-4">{{ course.title | slice: 0 : 1 }}</span>
-                </div>
-            }
-            <div class="text-center px-2">
-                <h5 class="card-title">
-                    {{ course.title }}
-                </h5>
-            </div>
-            <div>
-                <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
-            </div>
-        </div>
-    </div>
+    <jhi-course-card-header [courseId]="course.id!" [courseTitle]="course.title!" [courseIcon]="course.courseIcon!" [courseColor]="course.color!" [archiveMode]="false" />
     <div class="card-body rounded-bottom-4 border-lightgrey pt-3">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="d-flex flex-column justify-content-between gap-1">

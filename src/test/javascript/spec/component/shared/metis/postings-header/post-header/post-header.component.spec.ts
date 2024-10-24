@@ -19,6 +19,7 @@ import { UserRole } from 'app/shared/metis/metis.util';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 describe('PostHeaderComponent', () => {
     let component: PostHeaderComponent;
@@ -37,6 +38,7 @@ describe('PostHeaderComponent', () => {
                 MockComponent(PostingMarkdownEditorComponent),
                 MockComponent(PostingButtonComponent),
                 MockComponent(ConfirmIconComponent),
+                MockComponent(ProfilePictureComponent),
             ],
         })
             .compileComponents()
@@ -56,11 +58,6 @@ describe('PostHeaderComponent', () => {
     it('should set date information correctly for post of today', () => {
         fixture.detectChanges();
         expect(getElement(debugElement, '#today-flag')).toBeDefined();
-    });
-
-    it('should display default profile picture', () => {
-        fixture.detectChanges();
-        expect(getElement(debugElement, '#post-default-profile-picture')).not.toBeNull();
     });
 
     it('should display resolved icon on resolved post header', () => {
