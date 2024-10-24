@@ -15,6 +15,7 @@ import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unrefere
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { QuotePipe } from 'app/shared/pipes/quote.pipe';
 import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
+import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
 
 describe('Unreferenced Feedback Detail Component', () => {
     let comp: UnreferencedFeedbackDetailComponent;
@@ -36,7 +37,7 @@ describe('Unreferenced Feedback Detail Component', () => {
                 MockDirective(DeleteButtonDirective),
                 MockComponent(AssessmentCorrectionRoundBadgeComponent),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService), MockProvider(FeedbackService)],
         })
             .compileComponents()
             .then(() => {
