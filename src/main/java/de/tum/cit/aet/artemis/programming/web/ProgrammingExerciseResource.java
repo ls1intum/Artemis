@@ -57,7 +57,9 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
@@ -71,6 +73,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO;
@@ -78,6 +81,7 @@ import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -113,6 +117,8 @@ public class ProgrammingExerciseResource {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private final UserRepository userRepository;
 
@@ -157,9 +163,9 @@ public class ProgrammingExerciseResource {
     private final Environment environment;
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskService programmingExerciseTaskService,
             StudentParticipationRepository studentParticipationRepository, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
@@ -170,6 +176,7 @@ public class ProgrammingExerciseResource {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
@@ -496,6 +503,21 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * GET /programming-exercises/:exerciseId/build-config : get the build config of "exerciseId" programmingExercise.
+     *
+     * @param exerciseId the id of the programmingExercise to retrieve the config for
+     * @return the ResponseEntity with status 200 (OK) and with body the programmingExerciseBuildConfig, or with status 404 (Not Found)
+     */
+    @GetMapping("programming-exercises/{exerciseId}/build-config")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<ProgrammingExerciseBuildConfig> getBuildConfig(@PathVariable long exerciseId) {
+        log.debug("REST request to get build config of ProgrammingExercise : {}", exerciseId);
+        var buildConfig = programmingExerciseBuildConfigRepository.findByExerciseIdElseThrow(exerciseId);
+
+        return ResponseEntity.ok().body(buildConfig);
+    }
+
+    /**
      * GET /programming-exercises/:exerciseId/with-participations/ : get the "exerciseId" programmingExercise.
      *
      * @param exerciseId the id of the programmingExercise to retrieve
@@ -547,6 +569,20 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get programming exercise with auxiliary repositories: {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExerciseWithAuxiliaryRepositories(exerciseId);
         return ResponseEntity.ok(programmingExercise);
+    }
+
+    /**
+     * GET /programming-exercises : Queries a programming exercise by its project key.
+     *
+     * @return the ProgrammingExercise of this project key in an ResponseEntity or 404 Not Found if no exercise exists
+     */
+    @GetMapping("programming-exercises/project-key/{projectKey}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ProgrammingExercise> getExerciseByProjectKey(@PathVariable String projectKey) {
+        final ProgrammingExercise exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
+        authCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.STUDENT, exercise.getId());
+
+        return ResponseEntity.ok(exercise);
     }
 
     /**
