@@ -62,13 +62,13 @@
         <ng-template *ngTemplateOutlet="courseCardTemplate; context: { $implicit: regularCourses }" />
     }
 </div>
-@if (coursesLoaded) {
-    <div class="d-flex justify-content-center mt-3">
-        <div jhiTranslate="artemisApp.studentDashboard.archive.oldCourses"></div>
-        <div>&nbsp;</div>
-        <a [routerLink]="['/courses/archive']" jhiTranslate="artemisApp.studentDashboard.archive.here"></a>
-    </div>
-}
+<!--@if (coursesLoaded) {-->
+<!--    <div class="d-flex justify-content-center mt-3">-->
+<!--        <div jhiTranslate="artemisApp.studentDashboard.archive.oldCourses"></div>-->
+<!--        <div>&nbsp;</div>-->
+<!--        <a [routerLink]="['/courses/archive']" jhiTranslate="artemisApp.studentDashboard.archive.here"></a>-->
+<!--    </div>-->
+<!--}-->
 
 <ng-template #courseCardTemplate let-courses>
     @if ((courses | searchFilter: ['title'] : searchCourseText).length > 0) {
