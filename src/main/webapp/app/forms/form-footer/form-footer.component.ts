@@ -11,7 +11,9 @@ import { ButtonSize } from 'app/shared/components/button.component';
 export class FormFooterComponent {
     @Output() save = new EventEmitter<void>();
 
+    // eslint-disable @angular-eslint/no-output-native -- Necessary to avoid conflicts with native DOM events
     @Output() cancel = new EventEmitter<void>();
+    // eslint-enable @angular-eslint/no-output-native
 
     @Input() isSaving: boolean = false;
     @Input() isDisabled: boolean = false;
