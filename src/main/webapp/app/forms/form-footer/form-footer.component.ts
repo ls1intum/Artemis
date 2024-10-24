@@ -9,8 +9,9 @@ import { ButtonSize } from 'app/shared/components/button.component';
     styleUrls: ['form-footer.component.scss'],
 })
 export class FormFooterComponent {
+    // test
     @Output() save = new EventEmitter<void>();
-    // eslint-disable-next-line @angular-eslint/no-output-native
+
     @Output() cancel = new EventEmitter<void>();
 
     @Input() isSaving: boolean = false;
