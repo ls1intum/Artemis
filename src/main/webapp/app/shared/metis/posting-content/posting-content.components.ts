@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, signal } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
@@ -27,7 +27,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
 
     showContent = false;
     currentlyLoadedPosts: Post[];
-    postingContentParts: PostingContentPart[];
+    postingContentParts = signal<PostingContentPart[]>([]);
 
     private postsSubscription: Subscription;
 
@@ -77,7 +77,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
      * computes an array of PostingContentPart objects by splitting up the posting content by post references (denoted by #{PostId}).
      */
     computePostingContentParts(patternMatches: PatternMatch[]): void {
-        this.postingContentParts = [];
+        this.postingContentParts.set([]);
         // if there are references found in the posting content, we need to create a PostingContentPart per reference match
         if (patternMatches && patternMatches.length > 0) {
             patternMatches.forEach((patternMatch: PatternMatch, index: number) => {
@@ -146,6 +146,8 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                         channelId: isNaN(channelId) ? undefined : channelId,
                     } as Params;
                 } else if (ReferenceType.IMAGE === referenceType) {
+                    // get filename of the image
+                    referenceStr = this.content.substring(this.content.indexOf('![') + 2, this.content.indexOf('](', patternMatch.startIndex));
                     imageToReference = this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex));
                 }
 
@@ -173,7 +175,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     imageToReference,
                     contentAfterReference: this.content.substring(patternMatch.endIndex, endIndexOfContentAfterReference),
                 };
-                this.postingContentParts.push(contentPart);
+                this.postingContentParts.set([...this.postingContentParts(), contentPart]);
             });
             // if there are no post references in the content, the whole content is represented by a single PostingContentPart,
             // with contentBeforeReferenced represents the post content
@@ -186,7 +188,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                 referenceType: undefined,
                 contentAfterReference: undefined,
             };
-            this.postingContentParts.push(contentLink);
+            this.postingContentParts.set([...this.postingContentParts(), contentLink]);
         }
     }
 
