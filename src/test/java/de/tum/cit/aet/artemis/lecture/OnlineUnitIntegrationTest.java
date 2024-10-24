@@ -30,6 +30,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.dto.OnlineResourceDTO;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -108,7 +109,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createOnlineUnit_asInstructor_shouldCreateOnlineUnit() throws Exception {
-        onlineUnit.setCompetencies(Set.of(competency));
+        onlineUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, onlineUnit, 1)));
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         var persistedOnlineUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.CREATED);
         assertThat(persistedOnlineUnit.getId()).isNotNull();
@@ -139,7 +140,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateOnlineUnit_asInstructor_shouldUpdateOnlineUnit() throws Exception {
-        onlineUnit.setCompetencies(Set.of(competency));
+        onlineUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, onlineUnit, 1)));
         persistOnlineUnitWithLecture();
 
         this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
@@ -170,10 +171,14 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     private void persistOnlineUnitWithLecture() {
-        this.onlineUnit = onlineUnitRepository.save(this.onlineUnit);
-        lecture1.addLectureUnit(this.onlineUnit);
+        Set<CompetencyLectureUnitLink> links = onlineUnit.getCompetencyLinks();
+        onlineUnit.setCompetencyLinks(null);
+
+        onlineUnit = onlineUnitRepository.save(onlineUnit);
+        onlineUnit.setCompetencyLinks(links);
+        lecture1.addLectureUnit(onlineUnit);
         lecture1 = lectureRepository.save(lecture1);
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
+        onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();
     }
 
     @Test
@@ -257,7 +262,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteOnlineUnit_correctId_shouldDeleteOnlineUnit() throws Exception {
-        onlineUnit.setCompetencies(Set.of(competency));
+        onlineUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, onlineUnit, 1)));
         persistOnlineUnitWithLecture();
 
         this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().orElseThrow();

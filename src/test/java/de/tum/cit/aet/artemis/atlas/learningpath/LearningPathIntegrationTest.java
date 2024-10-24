@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.learningpath;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -144,7 +142,6 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var competencyToCreate = new Competency();
         competencyToCreate.setTitle("CompetencyToCreateTitle");
         competencyToCreate.setCourse(course);
-        competencyToCreate.setLectureUnits(Set.of(textUnit));
         competencyToCreate.setMasteryThreshold(42);
         return request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies", competencyToCreate, Competency.class, HttpStatus.CREATED);
     }
@@ -371,8 +368,6 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         var learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         assertThat(learningPath.getProgress()).as("contains no completed competency").isEqualTo(0);
-
-        verify(competencyProgressService).updateProgressByCompetencyAndUsersInCourseAsync(eq(createdCompetency));
     }
 
     /**
@@ -662,7 +657,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
-        textExercise.setCompetencies(Set.of());
+        textExercise.setCompetencyLinks(Set.of());
         textExercise = exerciseRepository.save(textExercise);
 
         TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[2], false);
@@ -687,7 +682,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
-        textExercise.setCompetencies(Set.of());
+        textExercise.setCompetencyLinks(Set.of());
         textExercise = exerciseRepository.save(textExercise);
 
         TextUnit secondTextUnit = createAndLinkTextUnit(student, competencies[1], false);

@@ -89,7 +89,6 @@ describe('EditCompetencyComponent', () => {
         competencyOfResponse.title = 'test';
         competencyOfResponse.description = 'lorem ipsum';
         competencyOfResponse.optional = true;
-        competencyOfResponse.lectureUnits = [lectureUnit];
 
         const competencyResponse: HttpResponse<Competency> = new HttpResponse({
             body: competencyOfResponse,
@@ -125,7 +124,6 @@ describe('EditCompetencyComponent', () => {
         expect(editCompetencyComponent.formData.title).toEqual(competencyOfResponse.title);
         expect(editCompetencyComponent.formData.description).toEqual(competencyOfResponse.description);
         expect(editCompetencyComponent.formData.optional).toEqual(competencyOfResponse.optional);
-        expect(editCompetencyComponent.formData.connectedLectureUnits).toEqual(competencyOfResponse.lectureUnits);
         expect(editCompetencyComponent.lecturesWithLectureUnits).toEqual([lectureOfResponse]);
         expect(competencyFormComponent.formData).toEqual(editCompetencyComponent.formData);
     });
@@ -143,7 +141,6 @@ describe('EditCompetencyComponent', () => {
         competencyDatabase.title = 'test';
         competencyDatabase.description = 'lorem ipsum';
         competencyDatabase.optional = true;
-        competencyDatabase.lectureUnits = [textUnit];
 
         const findByIdResponse: HttpResponse<Competency> = new HttpResponse({
             body: competencyDatabase,
@@ -188,7 +185,7 @@ describe('EditCompetencyComponent', () => {
             title: changedUnit.title,
             description: changedUnit.description,
             optional: changedUnit.optional,
-            connectedLectureUnits: changedUnit.lectureUnits,
+            lectureUnitLinks: changedUnit.lectureUnitLinks,
         });
 
         expect(updatedSpy).toHaveBeenCalledOnce();

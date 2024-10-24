@@ -112,7 +112,6 @@ describe('CreateCompetency', () => {
             title: 'Test',
             description: 'Lorem Ipsum',
             optional: true,
-            connectedLectureUnits: [textUnit],
         };
 
         const response: HttpResponse<Competency> = new HttpResponse({
@@ -133,7 +132,6 @@ describe('CreateCompetency', () => {
             competency.title = formData.title;
             competency.description = formData.description;
             competency.optional = formData.optional;
-            competency.lectureUnits = formData.connectedLectureUnits;
 
             expect(createSpy).toHaveBeenCalledWith(competency, 1);
             expect(createSpy).toHaveBeenCalledOnce();

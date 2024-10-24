@@ -10,8 +10,7 @@
                     [lecturesOfCourseWithLectureUnits]="lecturesOfCourseWithLectureUnits"
                     [averageStudentScore]="averageStudentScore"
                     [form]="form"
-                    [competencyType]="CourseCompetencyType.COMPETENCY"
-                    (onLectureUnitSelectionChange)="onLectureUnitSelectionChange($event)"
+                    [courseCompetency]="competency"
                 />
                 <div>
                     <button id="submitButton" class="btn btn-primary me-2" type="submit" [disabled]="!isSubmitPossible">

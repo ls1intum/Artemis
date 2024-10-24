@@ -80,7 +80,7 @@ public class OnlineUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<OnlineUnit> getOnlineUnit(@PathVariable Long onlineUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get onlineUnit : {}", onlineUnitId);
-        var onlineUnit = onlineUnitRepository.findByIdElseThrow(onlineUnitId);
+        var onlineUnit = onlineUnitRepository.findByIdWithCompetenciesElseThrow(onlineUnitId);
         checkOnlineUnitCourseAndLecture(onlineUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(onlineUnit);
@@ -108,7 +108,7 @@ public class OnlineUnitResource {
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
 
-        OnlineUnit result = onlineUnitRepository.save(onlineUnit);
+        OnlineUnit result = lectureUnitService.saveWithCompetencyLinks(onlineUnit, onlineUnitRepository::save);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingOnlineUnit, Optional.of(onlineUnit));
 
@@ -141,7 +141,8 @@ public class OnlineUnitResource {
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         onlineUnit.setLecture(null);
-        OnlineUnit persistedOnlineUnit = onlineUnitRepository.saveAndFlush(onlineUnit);
+
+        OnlineUnit persistedOnlineUnit = lectureUnitService.saveWithCompetencyLinks(onlineUnit, onlineUnitRepository::saveAndFlush);
 
         persistedOnlineUnit.setLecture(lecture);
         lecture.addLectureUnit(persistedOnlineUnit);

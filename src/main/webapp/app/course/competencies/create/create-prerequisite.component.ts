@@ -37,7 +37,7 @@ export class CreatePrerequisiteComponent extends CreateCourseCompetencyComponent
             return;
         }
 
-        const { title, description, softDueDate, taxonomy, masteryThreshold, optional, connectedLectureUnits } = formData;
+        const { title, description, softDueDate, taxonomy, masteryThreshold, optional } = formData;
 
         this.prerequisiteToCreate.title = title;
         this.prerequisiteToCreate.description = description;
@@ -45,12 +45,11 @@ export class CreatePrerequisiteComponent extends CreateCourseCompetencyComponent
         this.prerequisiteToCreate.taxonomy = taxonomy;
         this.prerequisiteToCreate.masteryThreshold = masteryThreshold;
         this.prerequisiteToCreate.optional = optional;
-        this.prerequisiteToCreate.lectureUnits = connectedLectureUnits;
 
         this.isLoading = true;
 
         this.prerequisiteService
-            .create(this.prerequisiteToCreate!, this.courseId)
+            .create(this.prerequisiteToCreate, this.courseId)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

@@ -70,7 +70,7 @@ public class VideoUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<VideoUnit> getVideoUnit(@PathVariable Long videoUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get VideoUnit : {}", videoUnitId);
-        var videoUnit = videoUnitRepository.findByIdElseThrow(videoUnitId);
+        var videoUnit = videoUnitRepository.findByIdWithCompetenciesElseThrow(videoUnitId);
         checkVideoUnitCourseAndLecture(videoUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(videoUnit);
@@ -97,7 +97,7 @@ public class VideoUnitResource {
         lectureUnitService.validateUrlStringAndReturnUrl(videoUnit.getSource());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
 
-        VideoUnit result = videoUnitRepository.save(videoUnit);
+        VideoUnit result = lectureUnitService.saveWithCompetencyLinks(videoUnit, videoUnitRepository::save);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingVideoUnit, Optional.of(videoUnit));
 
@@ -131,7 +131,9 @@ public class VideoUnitResource {
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         videoUnit.setLecture(null);
-        videoUnit = videoUnitRepository.saveAndFlush(videoUnit);
+
+        videoUnit = lectureUnitService.saveWithCompetencyLinks(videoUnit, videoUnitRepository::saveAndFlush);
+
         videoUnit.setLecture(lecture);
         lecture.addLectureUnit(videoUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
@@ -139,6 +141,7 @@ public class VideoUnitResource {
 
         competencyProgressService.updateProgressByLearningObjectAsync(persistedVideoUnit);
 
+        lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedVideoUnit);
         return ResponseEntity.created(new URI("/api/video-units/" + persistedVideoUnit.getId())).body(persistedVideoUnit);
     }
 

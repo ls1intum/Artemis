@@ -51,26 +51,28 @@
         <div class="row mt-2">
             <div class="col-lg-9 col-md-8">
                 <div class="row">
-                    @for (lectureUnit of competency.lectureUnits; track lectureUnit) {
-                        <div class="col-12 col-lg-11 mt-3">
-                            @switch (lectureUnit.type) {
-                                @case (LectureUnitType.EXERCISE) {
-                                    <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="competency!.course!" />
+                    @for (lectureUnitLink of competency.lectureUnitLinks; track lectureUnitLink) {
+                        @if (lectureUnitLink.lectureUnit; as lectureUnit) {
+                            <div class="col-12 col-lg-11 mt-3">
+                                @switch (lectureUnit.type) {
+                                    @case (LectureUnitType.EXERCISE) {
+                                        <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="competency!.course!" />
+                                    }
+                                    @case (LectureUnitType.ATTACHMENT) {
+                                        <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @case (LectureUnitType.VIDEO) {
+                                        <jhi-video-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @case (LectureUnitType.TEXT) {
+                                        <jhi-text-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @case (LectureUnitType.ONLINE) {
+                                        <jhi-online-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
                                 }
-                                @case (LectureUnitType.ATTACHMENT) {
-                                    <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
-                                }
-                                @case (LectureUnitType.VIDEO) {
-                                    <jhi-video-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
-                                }
-                                @case (LectureUnitType.TEXT) {
-                                    <jhi-text-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
-                                }
-                                @case (LectureUnitType.ONLINE) {
-                                    <jhi-online-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
-                                }
-                            }
-                        </div>
+                            </div>
+                        }
                     }
                 </div>
             </div>

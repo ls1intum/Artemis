@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 public interface LearningObject {
@@ -19,7 +19,7 @@ public interface LearningObject {
 
     Long getId();
 
-    Set<CourseCompetency> getCompetencies();
+    Set<? extends CompetencyLearningObjectLink> getCompetencyLinks();
 
     boolean isVisibleToStudents();
 }
