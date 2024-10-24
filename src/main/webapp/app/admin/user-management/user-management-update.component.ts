@@ -16,7 +16,6 @@ import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { AdminUserService } from 'app/core/user/admin-user.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
@@ -59,7 +58,6 @@ export class UserManagementUpdateComponent implements OnInit {
     constructor(
         private languageHelper: JhiLanguageHelper,
         private userService: AdminUserService,
-        private courseManagementService: CourseManagementService,
         private courseAdminService: CourseAdminService,
         private route: ActivatedRoute,
         private organizationService: OrganizationManagementService,
@@ -232,11 +230,17 @@ export class UserManagementUpdateComponent implements OnInit {
             passwordInput: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
             emailInput: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
             registrationNumberInput: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
-            activatedInput: ['', []],
+            activatedInput: [{ value: this.user.activated }],
             langKeyInput: ['', []],
             authorityInput: ['', []],
-            internalInput: [{ value: this.user.internal, disabled: true }],
+            internalInput: [{ value: this.user.internal, disabled: true }], // initially disabled, will be enabled if user.id is undefined
         });
+        // Conditionally enable or disable 'internalInput' based on user.id
+        if (this.user.id !== undefined) {
+            this.editForm.get('internalInput')?.disable(); // Artemis does not support to edit the internal flag for existing users
+        } else {
+            this.editForm.get('internalInput')?.enable(); // New users can either be internal or external
+        }
     }
 
     /**

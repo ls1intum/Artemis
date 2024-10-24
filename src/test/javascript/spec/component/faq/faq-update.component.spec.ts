@@ -11,7 +11,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTestModule } from '../../test.module';
 import { FaqUpdateComponent } from 'app/faq/faq-update.component';
 import { FaqService } from 'app/faq/faq.service';
-import { Faq, FaqState } from 'app/entities/faq.model';
+import { Faq } from 'app/entities/faq.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AlertService } from 'app/core/util/alert.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
@@ -93,6 +93,7 @@ describe('FaqUpdateComponent', () => {
 
     it('should create faq', fakeAsync(() => {
         faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
+        faqUpdateComponent.isAtLeastInstructor = true;
         const createSpy = jest.spyOn(faqService, 'create').mockReturnValue(
             of(
                 new HttpResponse({
@@ -111,13 +112,38 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponent.save();
         tick();
 
-        expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { faqState: FaqState.ACCEPTED, questionTitle: 'test1' });
+        expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { questionTitle: 'test1', faqState: 'ACCEPTED' });
+        expect(faqUpdateComponent.isSaving).toBeFalse();
+    }));
+
+    it('should propose faq', fakeAsync(() => {
+        faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
+        faqUpdateComponent.isAtLeastInstructor = false;
+        const createSpy = jest.spyOn(faqService, 'create').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {
+                        id: 3,
+                        questionTitle: 'test1',
+                        course: {
+                            id: 1,
+                        },
+                    } as Faq,
+                }),
+            ),
+        );
+
+        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponent.save();
+        tick();
+
+        expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { questionTitle: 'test1', faqState: 'PROPOSED' });
         expect(faqUpdateComponent.isSaving).toBeFalse();
     }));
 
     it('should edit a faq', fakeAsync(() => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6 } });
-
+        faqUpdateComponent.isAtLeastInstructor = true;
         faqUpdateComponentFixture.detectChanges();
         faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as Faq;
 
@@ -139,8 +165,34 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponent.save();
         tick();
         faqUpdateComponentFixture.detectChanges();
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated', faqState: 'ACCEPTED' });
+    }));
 
-        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated' });
+    it('should propose to edit a faq', fakeAsync(() => {
+        activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6 } });
+        faqUpdateComponent.isAtLeastInstructor = false;
+        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as Faq;
+
+        const updateSpy = jest.spyOn(faqService, 'update').mockReturnValue(
+            of<HttpResponse<Faq>>(
+                new HttpResponse({
+                    body: {
+                        id: 6,
+                        questionTitle: 'test1Updated',
+                        questionAnswer: 'answer',
+                        course: {
+                            id: 1,
+                        },
+                    } as Faq,
+                }),
+            ),
+        );
+
+        faqUpdateComponent.save();
+        tick();
+        faqUpdateComponentFixture.detectChanges();
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated', faqState: 'PROPOSED' });
     }));
 
     it('should navigate to previous state', fakeAsync(() => {

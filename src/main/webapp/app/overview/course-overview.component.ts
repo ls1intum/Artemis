@@ -225,16 +225,20 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
-        this.courseAccessStorageService.onCourseAccessed(
-            this.courseId,
-            CourseAccessStorageService.STORAGE_KEY,
-            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
-        );
-        this.courseAccessStorageService.onCourseAccessed(
-            this.courseId,
-            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
-            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
-        );
+        // If course is not active, it means that it is accessed from course archive, which should not
+        // be stored in local storage and therefore displayed in recently accessed
+        if (this.course && this.isCourseActive(this.course)) {
+            this.courseAccessStorageService.onCourseAccessed(
+                this.courseId,
+                CourseAccessStorageService.STORAGE_KEY,
+                CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
+            );
+            this.courseAccessStorageService.onCourseAccessed(
+                this.courseId,
+                CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
+                CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
+            );
+        }
 
         await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
@@ -849,5 +853,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     toggleCollapseState() {
         this.isNavbarCollapsed = !this.isNavbarCollapsed;
         localStorage.setItem('navbar.collapseState', JSON.stringify(this.isNavbarCollapsed));
+    }
+
+    /**
+     * A course is active if the end date is after the current date or
+     * end date is not set at all
+     *
+     * @param course The given course to be checked if it is active
+     * @returns true if the course is active, otherwise false
+     */
+    isCourseActive(course: Course): boolean {
+        return course.endDate ? dayjs(course.endDate).isAfter(dayjs()) : true;
     }
 }
