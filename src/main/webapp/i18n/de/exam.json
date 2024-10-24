@@ -337,8 +337,8 @@
                 "followExamProtocol": "Halte dich an die Klausuranweisungen deiner Lehrenden.",
                 "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
             },
-            "saveExercise": "Aufgabe speichern",
-            "exerciseSaved": "Aufgabe gespeichert"
+            "saveExercise": "Aufgabe Speichern",
+            "exerciseSaved": "Aufgabe Gespeichert"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",
