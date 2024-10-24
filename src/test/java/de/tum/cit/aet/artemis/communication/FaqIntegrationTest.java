@@ -180,8 +180,24 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getFaq_shouldGetFaqByCourseId() throws Exception {
-        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(this.course1.getId(), FaqState.PROPOSED);
+    void getFaq_InstructorsShouldGetAllFaqByCourseId() throws Exception {
+        Set<Faq> faqs = faqRepository.findAllByCourseId(this.course1.getId());
+        Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
+        assertThat(returnedFaqs).hasSize(faqs.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getFaq_StudentsShouldOnlyGetAcceptedFaqByCourseId() throws Exception {
+        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(this.course1.getId(), FaqState.ACCEPTED);
+        Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
+        assertThat(returnedFaqs).hasSize(faqs.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getFaq_ShouldGetFaqByCourseId() throws Exception {
+        Set<Faq> faqs = faqRepository.findAllByCourseId(this.course1.getId());
         Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
     }
@@ -191,6 +207,23 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void getFaq_shouldGetFaqByCourseIdAndState() throws Exception {
         Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(this.course1.getId(), FaqState.PROPOSED);
         Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faq-state/" + "PROPOSED", HttpStatus.OK, Set.class);
+        assertThat(returnedFaqs).hasSize(faqs.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getFaqs_StudentShouldOnlyGetAcceptedFaqByCourse() throws Exception {
+        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(course1.getId(), FaqState.ACCEPTED);
+        Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
+        assertThat(returnedFaqs).hasSize(faqs.size());
+        assertThat(returnedFaqs.size()).isEqualTo(faqs.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getFaqs_InstructorShouldGetALLFaqByCourse() throws Exception {
+        Set<Faq> faqs = faqRepository.findAllByCourseId(course1.getId());
+        Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
     }
 

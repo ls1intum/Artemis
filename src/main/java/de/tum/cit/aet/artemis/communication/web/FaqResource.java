@@ -80,7 +80,7 @@ public class FaqResource {
         if (faq.getId() != null) {
             throw new BadRequestAlertException("A new faq cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        checkPriviledgeForAcceptedElseThrow(faq, courseId);
+        checkRoleForCourse(faq.getFaqState(), courseId, Role.INSTRUCTOR);
         if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
         }
@@ -105,28 +105,20 @@ public class FaqResource {
         if (faqId == null || !faqId.equals(faq.getId())) {
             throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
         }
-        checkPriviledgeForAcceptedElseThrow(faq, courseId);
+        if (faq.getFaqState() == FaqState.ACCEPTED) {
+            checkRoleForCourse(faq.getFaqState(), courseId, Role.INSTRUCTOR);
+        }
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
-        checkPriviledgeForAcceptedElseThrow(existingFaq, courseId);
+        if (existingFaq.getFaqState() == FaqState.ACCEPTED) {
+            checkRoleForCourse(existingFaq.getFaqState(), courseId, Role.INSTRUCTOR);
+        }
+        checkRoleForCourse(existingFaq.getFaqState(), courseId, Role.INSTRUCTOR);
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
         Faq updatedFaq = faqRepository.save(faq);
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);
-    }
-
-    /**
-     * @param faq      the faq to be checked *
-     * @param courseId the id of the course the faq belongs to
-     * @throws AccessForbiddenException if the user is not an instructor
-     *
-     */
-    private void checkPriviledgeForAcceptedElseThrow(Faq faq, Long courseId) {
-        if (faq.getFaqState() == FaqState.ACCEPTED) {
-            Course course = courseRepository.findByIdElseThrow(courseId);
-            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        }
     }
 
     /**
@@ -144,6 +136,7 @@ public class FaqResource {
         if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
         }
+        checkShouldAccessNotAccepted(faq.getFaqState(), courseId);
         FaqDTO dto = new FaqDTO(faq);
         return ResponseEntity.ok(dto);
     }
@@ -176,9 +169,10 @@ public class FaqResource {
      */
     @GetMapping("courses/{courseId}/faqs")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Set<FaqDTO>> getFaqForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<FaqDTO>> getFaqsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faqs for the course with id : {}", courseId);
-        Set<Faq> faqs = faqRepository.findAllByCourseId(courseId);
+        Set<Faq> faqs = authCheckService.isAtLeastTeachingAssistantInCourse(courseId) ? faqRepository.findAllByCourseId(courseId)
+                : faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED);
         Set<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).collect(Collectors.toSet());
         return ResponseEntity.ok().body(faqDTOS);
     }
@@ -194,6 +188,7 @@ public class FaqResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<FaqDTO>> getAllFaqsForCourseByStatus(@PathVariable Long courseId, @PathVariable FaqState faqState) {
         log.debug("REST request to get all Faqs for the course with id : " + courseId + "and status " + faqState, courseId);
+        checkShouldAccessNotAccepted(faqState, courseId);
         Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(courseId, faqState);
         Set<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).collect(Collectors.toSet());
         return ResponseEntity.ok().body(faqDTOS);
@@ -210,7 +205,34 @@ public class FaqResource {
     public ResponseEntity<Set<String>> getFaqCategoriesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faq Categories for the course with id : {}", courseId);
         Set<String> faqs = faqRepository.findAllCategoriesByCourseId(courseId);
-
         return ResponseEntity.ok().body(faqs);
     }
+
+    @GetMapping("courses/{courseId}/faq-categories/{faqState}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<String>> getFaqCategoriesForCourseByState(@PathVariable Long courseId, @PathVariable FaqState faqState) {
+        log.debug("REST request to get all Faq Categories for the course with id : {} and the state {}", courseId, faqState);
+        checkShouldAccessNotAccepted(faqState, courseId);
+        Set<String> faqs = faqRepository.findAllCategoriesByCourseIdAndState(courseId, faqState);
+        return ResponseEntity.ok().body(faqs);
+    }
+
+    /**
+     * @param faqState the faqState to be checked *
+     * @param courseId the id of the course the faq belongs to
+     * @param role     the required role of the user
+     * @throws AccessForbiddenException if the user is not atleast role
+     *
+     */
+    private void checkRoleForCourse(FaqState faqState, Long courseId, Role role) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
+    }
+
+    private void checkShouldAccessNotAccepted(FaqState faqState, Long courseId) {
+        if (faqState != FaqState.ACCEPTED) {
+            checkRoleForCourse(faqState, courseId, Role.TEACHING_ASSISTANT);
+        }
+    }
+
 }
