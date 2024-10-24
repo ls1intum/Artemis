@@ -76,6 +76,8 @@ artemis:
                     default: "~~invalid~~"
                 typescript:
                     default: "~~invalid~~"
+        build-agent:
+            short-name: "artemis-build-agent-test"
 
 spring:
     application:
