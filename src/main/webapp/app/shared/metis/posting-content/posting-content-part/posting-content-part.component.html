@@ -47,3 +47,25 @@
 @if (postingContentPart.contentAfterReference) {
     <span class="markdown-preview" [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown: false : allowedHtmlTags : allowedHtmlAttributes"></span>
 }
+
+@if (postingContentPart.imageToReference) {
+    <div [style.max-width.px]="400">
+        <a class="reference" (click)="enlargeImage(postingContentPart.imageToReference)">
+            @if (postingContentPart.imageToReference && !imageNotFound) {
+                <img
+                    class="img-fluid rounded-sm border mt-1 mb-1"
+                    [src]="postingContentPart.imageToReference"
+                    [alt]="postingContentPart.referenceStr"
+                    [title]="postingContentPart.referenceStr"
+                    (error)="toggleImageNotFound()"
+                    height="auto"
+                    width="100%"
+                />
+            } @else if (imageNotFound) {
+                <div class="card">
+                    <h5 class="card-body"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.imageNotFound"></span></h5>
+                </div>
+            }
+        </a>
+    </div>
+}
