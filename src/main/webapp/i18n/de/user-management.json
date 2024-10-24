@@ -64,7 +64,7 @@
             "home": {
                 "title": "Nutzer:in",
                 "createLabel": "Nutzer:in erstellen",
-                "createOrEditLabel": "Nutzer:in erstellen oder bearbeiten"
+                "editLabel": "Nutzer:in bearbeiten"
             },
             "created": "Nutzer:in wurde mit ID {{ param }} erstellt",
             "updated": "Nutzer:in mit ID {{ param }} wurde geändert",
@@ -93,7 +93,7 @@
             "profiles": "Profile",
             "langKey": "Sprache",
             "internal": "Intern",
-            "passwordTooltip": "Du kannst nur Passwörter für interne Nutzer:innen ändern.",
+            "passwordTooltip": "Du kannst diese Einstellung nur für neue Nutzer:innen ändern. Bitte beachte, dass du nur Passwörter für interne Nutzer:innen ändern kannst.",
             "createdBy": "Erstellt von",
             "createdDate": "Erstellt am",
             "lastModifiedBy": "Bearbeitet von",
