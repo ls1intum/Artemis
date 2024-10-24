@@ -18,6 +18,7 @@ public enum StaticCodeAnalysisTool {
     PMD_CPD("cpd.xml"),
     SWIFTLINT("swiftlint-result.xml"),
     GCC("gcc.xml"),
+    OTHER(null),
     ;
     // @formatter:on
 
