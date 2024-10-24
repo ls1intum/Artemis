@@ -18,7 +18,7 @@ import { Team } from 'app/entities/team.model';
 import { SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 
 describe('AccountService', () => {
     let accountService: AccountService;
