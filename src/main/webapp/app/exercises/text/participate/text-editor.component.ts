@@ -234,11 +234,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
             if (
-                this.submission?.results &&
+                // this.submission?.results &&
                 participation.results &&
                 (this.isAfterAssessmentDueDate || this.isAfterPublishDate || isAthenaAIResult(this.submission.latestResult!))
             ) {
-                this.result = this.submission.latestResult!;
+                this.result = this.sortedHistoryResults.last();
                 this.result.participation = participation;
                 this.hasAthenaResultForLatestSubmission = this.submission.latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
             }
