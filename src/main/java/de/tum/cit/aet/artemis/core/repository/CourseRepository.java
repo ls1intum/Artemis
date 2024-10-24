@@ -557,10 +557,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             SELECT new de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO(c.id, c.title, c.semester, c.color, c.courseIcon)
             FROM Course c
             WHERE (:isAdmin = TRUE
-                   OR c.studentGroupName in :groups
-                   OR c.teachingAssistantGroupName in :groups
-                   OR c.editorGroupName in :groups
-                   OR c.instructorGroupName in :groups
+                   OR c.studentGroupName IN :groups
+                   OR c.teachingAssistantGroupName IN :groups
+                   OR c.editorGroupName IN :groups
+                   OR c.instructorGroupName IN :groups
                    )
                 AND c.semester IS NOT NULL
                 AND c.endDate IS NOT NULL
