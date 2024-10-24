@@ -59,7 +59,7 @@
                 "expiry": {
                     "title": "Ablauf",
                     "info": "Für zusätzliche Sicherheit kannst du festlegen, dass dieser Schlüssel automatisch abläuft.",
-                    "doNotExpire": "Kein Abluafsdatum",
+                    "doNotExpire": "Kein Ablaufdatum",
                     "expireAutomatically": "Automatisch ablaufen",
                     "daysUntilExpiry": "Tage bis zum Ablauf",
                     "keyWillExpireOn": "Der Schlüssel läuft ab am"
