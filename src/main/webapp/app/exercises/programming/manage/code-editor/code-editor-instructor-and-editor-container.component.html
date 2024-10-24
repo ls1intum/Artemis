@@ -36,9 +36,10 @@
                 [solutionParticipation]="exercise?.solutionParticipation!"
             />
             <!-- repository select -->
-            <span class="bbbb"> {{ 'RED ' }}</span>
             <div ngbDropdown class="d-inline-block me-2">
-                <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
+                <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
+                    {{ selectedRepository === REPOSITORY.AUXILIARY ? selectedAuxiliaryRepositoryName : selectedRepository }}
+                </button>
                 <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                     <button
                         [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUri"
@@ -81,13 +82,14 @@
                         jhiTranslate="artemisApp.editor.repoSelect.testRepo"
                     ></button>
                     @for (auxiliaryRepository of exercise.auxiliaryRepositories; track exercise.auxiliaryRepositories; let i = $index) {
-                        {{ auxiliaryRepository }}
                         @if (auxiliaryRepository.id) {
                             <button
                                 [disabled]="!exercise"
                                 (click)="selectAuxiliaryRepository(auxiliaryRepository.id)"
                                 ngbDropdownItem
-                                [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
+                                [style.background-color]="
+                                    selectedRepository === REPOSITORY.AUXILIARY && selectedRepositoryId === auxiliaryRepository.id ? '#3e8acc' : 'transparent'
+                                "
                             >
                                 {{ auxiliaryRepository.name }}
                             </button>

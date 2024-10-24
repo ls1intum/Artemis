@@ -776,8 +776,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 programmingExerciseId);
         ProgrammingExercise programmingExerciseWithSolution = getValueElseThrow(findWithSolutionParticipationLatestResultFeedbackTestCasesById(programmingExerciseId),
                 programmingExerciseId);
+        ProgrammingExercise programmingExerciseWithAuxiliaryRepositories = findByIdWithAuxiliaryRepositoriesElseThrow(programmingExerciseId);
 
         programmingExerciseWithTemplate.setSolutionParticipation(programmingExerciseWithSolution.getSolutionParticipation());
+        programmingExerciseWithTemplate.setAuxiliaryRepositories(programmingExerciseWithAuxiliaryRepositories.getAuxiliaryRepositories());
 
         return programmingExerciseWithTemplate;
     }

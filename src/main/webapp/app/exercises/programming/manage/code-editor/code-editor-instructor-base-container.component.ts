@@ -28,6 +28,7 @@ export enum REPOSITORY {
     TEMPLATE = 'TEMPLATE',
     SOLUTION = 'SOLUTION',
     TEST = 'TEST',
+    AUXILIARY = 'AUXILIARY',
 }
 
 /**
@@ -64,6 +65,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     // Stores which repository is selected atm.
     // Needs to be set additionally to selectedParticipation as the test repository does not have a participation
     selectedRepository: REPOSITORY;
+    selectedRepositoryId: number;
+    selectedAuxiliaryRepositoryName?: string;
 
     // Fires when the selected domain changes.
     // This can either be a participation (solution, template, assignment) or the test repository.
@@ -95,6 +98,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         this.paramSub = this.route!.params.subscribe((params) => {
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
+            const repositoryId = Number(params['repositoryId']);
             this.loadingState = LOADING_STATE.INITIALIZING;
             this.loadExercise(exerciseId)
                 .pipe(
@@ -107,6 +111,12 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                     tap(() => {
                         if (this.router.url.endsWith('/test')) {
                             this.saveChangesAndSelectDomain([DomainType.TEST_REPOSITORY, this.exercise]);
+                        } else if (this.router.url.indexOf('auxiliary') >= 0) {
+                            const auxiliaryRepo = this.exercise.auxiliaryRepositories?.find((repo) => repo.id === repositoryId);
+                            if (auxiliaryRepo) {
+                                this.selectedAuxiliaryRepositoryName = auxiliaryRepo.name;
+                                this.saveChangesAndSelectDomain([DomainType.AUXILIARY_REPOSITORY, auxiliaryRepo]);
+                            }
                         } else {
                             const nextAvailableParticipation = this.getNextAvailableParticipation(participationId);
                             if (nextAvailableParticipation) {
@@ -190,7 +200,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.codeEditorContainer != undefined) {
             this.codeEditorContainer.initializeProperties();
         }
-        if (domainType === DomainType.PARTICIPATION) {
+        if (domainType === DomainType.AUXILIARY_REPOSITORY) {
+            this.selectedRepository = REPOSITORY.AUXILIARY;
+            this.selectedRepositoryId = domainValue.id;
+        } else if (domainType === DomainType.PARTICIPATION) {
             this.setSelectedParticipation(domainValue.id);
         } else {
             this.selectedParticipation = this.exercise.templateParticipation!;
@@ -272,35 +285,42 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Select the template participation repository and navigate to it
      */
     selectTemplateParticipation() {
-        this.router.navigate(['..', this.exercise.templateParticipation!.id], { relativeTo: this.route });
+        this.router.navigate([this.up(), this.exercise.templateParticipation!.id], { relativeTo: this.route });
     }
 
     /**
      * Select the solution participation repository and navigate to it
      */
     selectSolutionParticipation() {
-        this.router.navigate(['..', this.exercise.solutionParticipation!.id], { relativeTo: this.route });
+        this.router.navigate([this.up(), this.exercise.solutionParticipation!.id], { relativeTo: this.route });
     }
 
     /**
      * Select the assignment participation repository and navigate to it
      */
     selectAssignmentParticipation() {
-        this.router.navigate(['..', this.exercise.studentParticipations![0].id], { relativeTo: this.route });
+        this.router.navigate([this.up(), this.exercise.studentParticipations![0].id], { relativeTo: this.route });
     }
 
     /**
      * Select the test repository and navigate to it
      */
     selectTestRepository() {
-        this.router.navigate(['..', 'test'], { relativeTo: this.route });
+        this.router.navigate([this.up(), 'test'], { relativeTo: this.route });
     }
 
     /**
      * Select the test repository and navigate to it
      */
     selectAuxiliaryRepository(repositoryId: number) {
-        this.router.navigate(['..', 'auxiliary', repositoryId], { relativeTo: this.route });
+        this.router.navigate([this.up(), 'auxiliary', repositoryId], { relativeTo: this.route });
+    }
+
+    /**
+     * Go two folders up if the current view is an auxiliary repository, and one otherwise
+     */
+    up() {
+        return this.selectedRepository === REPOSITORY.AUXILIARY ? '../..' : '..';
     }
 
     /**
