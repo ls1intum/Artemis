@@ -68,7 +68,7 @@ import { CourseConversationsComponent } from 'app/overview/course-conversations/
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 import { LtiService } from 'app/shared/service/lti.service';
-import { Faq } from 'app/entities/faq.model';
+import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqService } from 'app/faq/faq.service';
 
 interface CourseActionItem {
@@ -750,7 +750,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     setFaqs(course: Course | undefined): void {
         if (course) {
             this.faqService
-                .findAllByCourseId(this.courseId)
+                .findAllByCourseIdAndState(this.courseId, FaqState.ACCEPTED)
                 .pipe(map((res: HttpResponse<Faq[]>) => res.body))
                 .subscribe({
                     next: (res: Faq[]) => {
