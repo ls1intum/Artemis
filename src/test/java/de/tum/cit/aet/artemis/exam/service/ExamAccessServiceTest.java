@@ -349,7 +349,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckAndGetCourseAndExamAccessForConduction_notRegisteredUser() {
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam2.getId())).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course2.getId(), exam2.getId())).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
@@ -395,7 +395,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCheckAndGetCourseAndExamAccessForConduction_examIsVisible() {
+    void testCheckAndGetCourseAndExamAccessForConduction_testExamIsVisible() {
         testExam1.setVisibleDate(ZonedDateTime.now().plusMinutes(5));
         examRepository.save(testExam1);
         assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
@@ -412,10 +412,26 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetExamInCourseElseThrow_notVisible() {
+    void testGetExamInCourseElseThrow_testExamNotVisible() {
         testExam1.setVisibleDate(ZonedDateTime.now().plusHours(5));
         examRepository.save(testExam1);
         assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExamInCourseElseThrow_testExamEnded() {
+        testExam1.setEndDate(ZonedDateTime.now().minusHours(5));
+        examRepository.save(testExam1);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExamInCourseElseThrow_multipleUnfinishedStudentExams() {
+        User user = studentExamForTestExam1.getUser();
+        examUtilService.addStudentExamForTestExam(testExam1, user);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

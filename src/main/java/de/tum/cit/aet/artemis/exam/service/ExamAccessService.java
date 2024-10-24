@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exam.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
@@ -48,8 +49,11 @@ public class ExamAccessService {
 
     private final StudentExamService studentExamService;
 
+    private final ExamDateService examDateService;
+
     public ExamAccessService(ExamRepository examRepository, StudentExamRepository studentExamRepository, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, CourseRepository courseRepository, ExamRegistrationService examRegistrationService, StudentExamService studentExamService) {
+            UserRepository userRepository, CourseRepository courseRepository, ExamRegistrationService examRegistrationService, StudentExamService studentExamService,
+            ExamDateService examDateService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -57,6 +61,7 @@ public class ExamAccessService {
         this.courseRepository = courseRepository;
         this.examRegistrationService = examRegistrationService;
         this.studentExamService = studentExamService;
+        this.examDateService = examDateService;
     }
 
     /**
@@ -67,47 +72,14 @@ public class ExamAccessService {
      * @param examId   The id of the exam
      * @return a ResponseEntity with the exam
      */
+
     public StudentExam getExamInCourseElseThrow(Long courseId, Long examId) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-
-        // TODO: we should distinguish the whole method between test exam and real exam to improve the readability of the code
         // Check that the current user is at least student in the course.
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
 
-        // Check that the student exam exists
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId());
-
-        StudentExam studentExam;
-        // If an studentExam can be fund, we can proceed
-        if (optionalStudentExam.isPresent()) {
-            studentExam = optionalStudentExam.get();
-        }
-        else {
-            Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-            // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
-            boolean canExamBeStarted = ZonedDateTime.now().isAfter(ExamDateService.getExamProgrammingExerciseUnlockDate(examWithExerciseGroupsAndExercises));
-            boolean isExamEnded = ZonedDateTime.now().isAfter(examWithExerciseGroupsAndExercises.getEndDate());
-            // Generate a student exam if the following conditions are met:
-            // 1. The exam has not ended.
-            // 2. The exam is either a test exam, OR it is a normal exam where the user is registered and can click the start button.
-            // Allowing student exams to be generated only when students can click the start button prevents inconsistencies.
-            // For example, this avoids a scenario where a student generates an exam and an instructor adds an exercise group afterward.
-            if (!isExamEnded
-                    && (examWithExerciseGroupsAndExercises.isTestExam() || (examRegistrationService.isUserRegisteredForExam(examId, currentUser.getId()) && canExamBeStarted))) {
-                studentExam = studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, currentUser);
-                // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
-                studentExam.setExercises(null);
-
-            }
-            else {
-                // We skip the alert since this can happen when a tutor sees the exam card or the user did not participate yet is registered for the exam
-                throw new BadRequestAlertException("Cannot generate student exam for exam ID " + examId + ".", ENTITY_NAME, "cannotGenerateStudentExam", true);
-            }
-        }
-
-        Exam exam = studentExam.getExam();
-
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         checkExamBelongsToCourseElseThrow(courseId, exam);
 
         if (!examId.equals(exam.getId())) {
@@ -120,12 +92,88 @@ public class ExamAccessService {
         }
 
         if (exam.isTestExam()) {
-            // Check that the current user is registered for the test exam. Otherwise, the student can self-register
-            examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
+            return getOrGenerateTestExam(exam, course, currentUser);
+        }
+        else {
+            return getOrGenerateNormalExam(examId, currentUser);
         }
         // NOTE: the check examRepository.isUserRegisteredForExam is not necessary because we already checked before that there is a student exam in this case for the current user
+    }
 
+    /**
+     * Fetches an unfinished StudentExam for a test exam if one exists. If no unfinished StudentExam exists, generates a new one.
+     *
+     * @param exam        The exam which StudentExam belongs to
+     * @param course      The course which the exam belongs to
+     * @param currentUser The current user
+     * @return the StudentExam
+     * @throws BadRequestAlertException If the exam had already ended
+     * @throws IllegalStateException    If the user has more than one unfinished student exam
+     */
+    private StudentExam getOrGenerateTestExam(Exam exam, Course course, User currentUser) {
+        StudentExam studentExam;
+
+        if (this.examDateService.isExamOver(exam)) {
+            throw new BadRequestAlertException("Test exam has already ended", ENTITY_NAME, "examHasAlreadyEnded", true);
+        }
+
+        List<StudentExam> unfinishedStudentExams = studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(currentUser.getId(), exam.getId()).stream()
+                .filter(attempt -> !attempt.isFinished()).toList();
+
+        if (unfinishedStudentExams.isEmpty()) {
+            studentExam = studentExamService.generateIndividualStudentExam(exam, currentUser);
+            // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
+            studentExam.setExercises(null);
+        }
+        else if (unfinishedStudentExams.size() == 1) {
+            studentExam = unfinishedStudentExams.getFirst();
+        }
+        else {
+            throw new IllegalStateException(
+                    "User " + currentUser.getId() + " has " + unfinishedStudentExams.size() + " unfinished test exams for exam " + exam.getId() + " in course " + course.getId());
+        }
+        // Check that the current user is registered for the test exam. Otherwise, the student can self-register
+        examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
         return studentExam;
+    }
+
+    /**
+     * Fetches a real exam for the given examId and userId.
+     *
+     * @param examId      the id of the Exam
+     * @param currentUser The current user
+     * @return the StudentExam
+     */
+    private StudentExam getOrGenerateNormalExam(Long examId, User currentUser) {
+        // Check that the student exam exists
+        Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId());
+        // If an studentExam can be found, we can proceed
+        if (optionalStudentExam.isPresent()) {
+            return optionalStudentExam.get();
+        }
+        else {
+            Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+            // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
+            boolean canExamBeStarted = ZonedDateTime.now().isAfter(ExamDateService.getExamProgrammingExerciseUnlockDate(examWithExerciseGroupsAndExercises));
+            boolean isExamEnded = ZonedDateTime.now().isAfter(examWithExerciseGroupsAndExercises.getEndDate());
+            // Generate a student exam if the following conditions are met:
+            // 1. The exam has not ended.
+            // 2. User is registered for the exam
+            // 3. User can click the start button.
+            // Allowing student exams to be generated only when students can click the start button prevents inconsistencies.
+            // For example, this avoids a scenario where a student generates an exam and an instructor adds an exercise group afterward.
+            if (!isExamEnded && examRegistrationService.isUserRegisteredForExam(examId, currentUser.getId()) && canExamBeStarted) {
+                StudentExam studentExam = studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, currentUser);
+                // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
+                studentExam.setExercises(null);
+                return studentExam;
+
+            }
+            else {
+                // We skip the alert since this can happen when a tutor sees the exam card or the user did not participate yet is registered for the exam
+                throw new BadRequestAlertException("Cannot generate student exam for exam ID " + examId + ".", ENTITY_NAME, "cannotGenerateStudentExam", true);
+            }
+        }
     }
 
     /**

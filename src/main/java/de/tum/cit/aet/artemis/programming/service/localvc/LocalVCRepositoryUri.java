@@ -208,7 +208,8 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
      * @return The normalized repository type or username, free of the project key prefix and "practice-" designation.
      */
     private String getRepositoryTypeOrUserName(String repositorySlug, String projectKey) {
-        String repositoryTypeOrUserNameWithPracticePrefix = repositorySlug.toLowerCase().replace(projectKey.toLowerCase() + "-", "");
+        String pattern = projectKey.toLowerCase() + "\\d*-";
+        String repositoryTypeOrUserNameWithPracticePrefix = repositorySlug.toLowerCase().replaceAll(pattern, "");
         return repositoryTypeOrUserNameWithPracticePrefix.replace("practice-", "");
     }
 
