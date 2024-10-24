@@ -172,8 +172,9 @@
             "softDueDate": "Recommended until",
             "masteryThreshold": "Mastery threshold",
             "manage": {
-                "helpButton": "Help",
-                "importAllButton": "Import all of a course"
+                "importAllButton": "Import all of a course",
+                "editRelationsButton": "Edit relations",
+                "helpButton": "Help"
             },
             "importSettings": {
                 "importRelationsLabel": "Import relations",
@@ -241,6 +242,36 @@
                 "ANALYZE": "differentiate, examine, experiment, question, relate, test, break down, contrast, distinguish",
                 "EVALUATE": "appraise, argue, choose, defend, judge, select, support, value, critique",
                 "CREATE": "design, formulate, hypothesize, invent, plan, propose, write, assemble, construct, develop"
+            },
+            "relations": {
+                "modalTitle": "Course competency relations",
+                "relationTypes": {
+                    "ASSUMES": "Assumes",
+                    "EXTENDS": "Extends",
+                    "MATCHES": "Matches"
+                },
+                "form": {
+                    "headCourseCompetencyLabel": "Head course competency",
+                    "headCourseCompetencyDefaultOption": "Select head course competency",
+                    "tailCourseCompetencyLabel": "Tail course competency",
+                    "tailCourseCompetencyDefaultOption": "Select tail course competency",
+                    "relationTypeLabel": "Relation Type",
+                    "relationTypeDefaultOption": "Select relation type",
+                    "deleteRelationButtonLabel": "Delete Relation",
+                    "updateRelationButtonLabel": "Update Relation",
+                    "createRelationButtonLabel": "Create Relation",
+                    "cyclicDependencyError": "You cannot create a cyclic dependency between course competencies."
+                },
+                "graph": {
+                    "nodeTypes": {
+                        "competency": "C",
+                        "prerequisite": "P"
+                    },
+                    "tooltips": {
+                        "competency": "This node represents a Competency",
+                        "prerequisite": "This node represents a Prerequisite"
+                    }
+                }
             },
             "featureExplanation": {
                 "title": "Introduction to course competencies",

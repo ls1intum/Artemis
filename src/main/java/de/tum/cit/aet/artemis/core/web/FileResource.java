@@ -506,7 +506,7 @@ public class FileResource {
     }
 
     /**
-     * GET files/attachments/slides/attachment-unit/:attachmentUnitId/slide/:slideNumber : Get the lecture unit attachment slide by slide number
+     * GET files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideNumber} : Get the lecture unit attachment slide by slide number
      *
      * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
      * @param slideNumber      the slideNumber of the file
