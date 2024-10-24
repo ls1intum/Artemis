@@ -11,6 +11,8 @@ import {
     Signal,
     ViewChild,
     computed,
+    inject,
+    input,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
@@ -45,6 +47,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
@@ -86,6 +89,12 @@ const BORDER_HEIGHT_OFFSET = 2;
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
+    private readonly alertService = inject(AlertService);
+    // We inject the MetisService here to avoid a NullInjectorError in the FileUploaderService.
+    private readonly metisService = inject(MetisService);
+    private readonly fileUploaderService = inject(FileUploaderService);
+    private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
@@ -175,6 +184,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
+    readonly useCommunicationForFileUpload = input<boolean>(false);
+
     @Output()
     markdownChange = new EventEmitter<string>();
 
@@ -245,11 +256,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly TAB_PREVIEW = MarkdownEditorMonacoComponent.TAB_PREVIEW;
     protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
 
-    constructor(
-        private alertService: AlertService,
-        private fileUploaderService: FileUploaderService,
-        private artemisMarkdown: ArtemisMarkdownService,
-    ) {
+    constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
     }
 
@@ -396,6 +403,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.onContentHeightChanged(this.monacoEditor.getContentHeight());
         const editorHeight = this.getEditorHeight();
         this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), editorHeight);
+        // Prevents an issue with line wraps in the editor
+        this.monacoEditor.layout();
     }
 
     /**
@@ -463,7 +472,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     embedFiles(files: File[]): void {
         files.forEach((file) => {
-            this.fileUploaderService.uploadMarkdownFile(file).then(
+            (this.useCommunicationForFileUpload()
+                ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(file, this.metisService.getCourse().id, this.metisService.getCurrentConversation()?.id)
+                : this.fileUploaderService.uploadMarkdownFile(file)
+            ).then(
                 (response) => {
                     const extension = file.name.split('.').last()?.toLocaleLowerCase();
 
