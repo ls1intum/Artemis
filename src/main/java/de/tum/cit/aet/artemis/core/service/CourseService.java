@@ -72,6 +72,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
 import de.tum.cit.aet.artemis.core.dto.CourseDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -698,10 +699,10 @@ public class CourseService {
      *
      * @return A list of courses for the course archive.
      */
-    public Set<Course> getAllCoursesForCourseArchive() {
+    public Set<CourseForArchiveDTO> getAllCoursesForCourseArchive() {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         boolean isAdmin = authCheckService.isAdmin(user);
-        return courseRepository.findInactiveCoursesForUserRolesWithNonNullSemester(user.getId(), isAdmin, ZonedDateTime.now());
+        return courseRepository.findInactiveCoursesForUserRolesWithNonNullSemester(isAdmin, user.getGroups(), ZonedDateTime.now());
     }
 
     /**
