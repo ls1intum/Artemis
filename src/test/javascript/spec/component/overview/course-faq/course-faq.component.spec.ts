@@ -108,6 +108,7 @@ describe('CourseFaqs', () => {
 
                 faqService = TestBed.inject(FaqService);
                 alertService = TestBed.inject(AlertService);
+                sortService = TestBed.inject(SortService);
             });
     });
 
