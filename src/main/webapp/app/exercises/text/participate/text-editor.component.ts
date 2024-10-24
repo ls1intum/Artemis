@@ -238,7 +238,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 participation.results &&
                 (this.isAfterAssessmentDueDate || this.isAfterPublishDate || isAthenaAIResult(this.submission.latestResult!))
             ) {
-                this.result = this.sortedHistoryResults.last();
+                this.result = this.sortedHistoryResults.last()!;
                 this.result.participation = participation;
                 this.hasAthenaResultForLatestSubmission = this.submission.latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
             }
