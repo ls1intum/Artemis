@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -547,25 +548,25 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * or if they are an admin. Filters out any courses that do not belong to
      * a specific semester (i.e., have a null semester).
      *
-     * @param userId  The id of the user whose courses are being retrieved
      * @param isAdmin A boolean flag indicating whether the user is an admin
+     * @param groups  A set of groups that the user belongs to
      * @param now     The current time to check if the course is still active
      * @return A set of courses that the user has access to and belong to a specific semester
      */
     @Query("""
-            SELECT DISTINCT c
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO(c.id, c.title, c.semester, c.color, c.courseIcon)
             FROM Course c
-            LEFT JOIN UserGroup ug ON ug.group IN (
-                c.studentGroupName,
-                c.teachingAssistantGroupName,
-                c.editorGroupName,
-                c.instructorGroupName
-            )
-            WHERE (:isAdmin = TRUE OR ug.userId = :userId)
-            AND c.semester IS NOT NULL
-            AND c.endDate IS NOT NULL
-            AND c.endDate < :now
+            WHERE (:isAdmin = TRUE
+                   OR c.studentGroupName in :groups
+                   OR c.teachingAssistantGroupName in :groups
+                   OR c.editorGroupName in :groups
+                   OR c.instructorGroupName in :groups
+                   )
+                AND c.semester IS NOT NULL
+                AND c.endDate IS NOT NULL
+                AND c.endDate < :now
             """)
-    Set<Course> findInactiveCoursesForUserRolesWithNonNullSemester(@Param("userId") long userId, @Param("isAdmin") boolean isAdmin, @Param("now") ZonedDateTime now);
+    Set<CourseForArchiveDTO> findInactiveCoursesForUserRolesWithNonNullSemester(@Param("isAdmin") boolean isAdmin, @Param("groups") Set<String> groups,
+            @Param("now") ZonedDateTime now);
 
 }

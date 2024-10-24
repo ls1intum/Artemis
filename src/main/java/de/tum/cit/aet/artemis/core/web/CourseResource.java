@@ -568,15 +568,11 @@ public class CourseResource {
         long start = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all inactive courses from previous semesters user {} has access to", user.getLogin());
-        Set<Course> courses = courseService.getAllCoursesForCourseArchive();
+        Set<CourseForArchiveDTO> courses = courseService.getAllCoursesForCourseArchive();
         log.debug("courseService.getAllCoursesForCourseArchive done");
 
-        final Set<CourseForArchiveDTO> dto = courses.stream()
-                .map(course -> new CourseForArchiveDTO(course.getId(), course.getTitle(), course.getSemester(), course.getColor(), course.getCourseIcon()))
-                .collect(Collectors.toSet());
-
-        log.debug("GET /courses/for-archive took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
-        return ResponseEntity.ok(dto);
+        log.info("GET /courses/for-archive took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
+        return ResponseEntity.ok(courses);
     }
 
     /**
