@@ -1,0 +1,18 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+
+.learning-paths-state-container {
+    border-left: 2px solid $info;
+
+    &.danger-state {
+        border-left-color: $danger;
+    }
+
+    &.warning-state {
+        border-left-color: $warning;
+    }
+
+    &.info-state {
+        border-left-color: $info;
+    }
+}

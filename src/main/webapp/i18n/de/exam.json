@@ -213,6 +213,7 @@
         "examScores": {
             "xAxes": "Ergebnis in %",
             "xAxesSuffix": " + {Notenname}",
+            "xAxesSuffixNoBonus": " + {Notenname}",
             "xAxesSuffixBonus": " + {Bonuspunkte}",
             "yAxes": "Anzahl Teilnehmende",
             "highlightPassedMedian": "Hebe Median aller bestandenen Klausuren im Diagramm hervor: {{ median }}%",
@@ -319,6 +320,7 @@
             "notSynced": "Aufgabe nicht gespeichert",
             "notStarted": "Aufgabe nicht gestartet",
             "submitted": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst die Aufgabe weiter bearbeiten und erneut abgeben.",
+            "submittedSubmissionLimitReached": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst keine Lösungen mehr einreichen, weil du das Limit erreicht hast.",
             "notSubmitted": "Aufgabe nicht eingereicht",
             "notSavedOrSubmitted": "Du hast Änderungen, die nicht abgesendet sind.",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",

@@ -72,6 +72,8 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String STUDENT2_OF_COURSE = TEST_PREFIX + "student2";
 
+    private static final String SECOND_STUDENT_OF_COURSE = TEST_PREFIX + "student2";
+
     private static final String TUTOR_OF_COURSE = TEST_PREFIX + "tutor1";
 
     private static final String EDITOR_OF_COURSE = TEST_PREFIX + "editor1";
@@ -131,6 +133,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.FORBIDDEN, LearningPath.class, pageableSearchUtilService.searchMapping(search));
         request.get("/api/courses/" + course.getId() + "/learning-path-health", HttpStatus.FORBIDDEN, LearningPathHealthDTO.class);
+        request.get("/api/courses/" + course.getId() + "/learning-path/competency-instructor-graph", HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
     }
 
     private void enableLearningPathsRESTCall(Course course) throws Exception {
@@ -376,7 +379,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
      * This only tests if the end point successfully retrieves the health status. The correctness of the health status is tested in LearningPathServiceTest.
      *
      * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.service.LearningPathServiceTest
+     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
      */
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
@@ -397,7 +400,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathOfOtherUser() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var otherStudent = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        final var otherStudent = userTestRepository.findOneByLogin(SECOND_STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), otherStudent.getId());
         request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
     }
@@ -406,7 +409,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathCompetencyGraphOfOtherUser() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var otherStudent = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        final var otherStudent = userTestRepository.findOneByLogin(SECOND_STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), otherStudent.getId());
         request.get("/api/learning-path/" + learningPath.getId() + "/competency-graph", HttpStatus.FORBIDDEN, LearningPathCompetencyGraphDTO.class);
     }
@@ -453,7 +456,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    @WithMockUser(username = SECOND_STUDENT_OF_COURSE, roles = "USER")
     void testGetLearningPathNgxForOtherStudent(LearningPathResource.NgxRequestType type) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
@@ -465,7 +468,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
      * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
      *
      * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.service.LearningPathServiceTest
+     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
@@ -481,7 +484,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
      * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
      *
      * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.service.LearningPathServiceTest
+     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
@@ -497,7 +500,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
      * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
      *
      * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.service.LearningPathServiceTest
+     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
@@ -513,7 +516,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
      * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
      *
      * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.service.LearningPathServiceTest
+     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
@@ -617,7 +620,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    @WithMockUser(username = SECOND_STUDENT_OF_COURSE, roles = "USER")
     void testGetCompetencyProgressForLearningPathByOtherStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();

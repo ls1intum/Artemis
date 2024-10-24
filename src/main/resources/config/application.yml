@@ -93,6 +93,10 @@ artemis:
                     default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
                 r:
                     default: "ghcr.io/ls1intum/artemis-r-docker:v1.0.0"
+                c_plus_plus:
+                    default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.0.0"
+                typescript:
+                  default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
 
 management:
     endpoints:
