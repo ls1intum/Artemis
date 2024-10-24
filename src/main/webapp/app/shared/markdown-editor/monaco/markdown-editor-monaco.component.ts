@@ -363,7 +363,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param newContentHeight The new height of the content in the editor.
      */
     onContentHeightChanged(newContentHeight: number | undefined): void {
-        if (this.linkEditorHeightToContentHeight) {
+        // Upon switching back from the preview tab, the file upload footer will briefly have a height of 0. We ignore this case to avoid an incorrect height.
+        if (this.linkEditorHeightToContentHeight && !(this.enableFileUpload && this.getElementClientHeight(this.fileUploadFooter) === 0)) {
             const totalHeight = (newContentHeight ?? 0) + this.getElementClientHeight(this.fileUploadFooter) + this.getElementClientHeight(this.actionPalette);
             // Clamp the height so it is between the minimum and maximum height.
             this.targetWrapperHeight = Math.max(this.resizableMinHeight, Math.min(this.resizableMaxHeight, totalHeight));
