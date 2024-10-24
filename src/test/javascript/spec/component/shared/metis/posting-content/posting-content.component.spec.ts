@@ -492,7 +492,7 @@ describe('PostingContentComponent', () => {
             ]);
         }));
 
-        it('should compute parts when referencing a faq', fakeAsync(() => {
+        it('should compute parts when referencing a faq', () => {
             component.content = `I want to reference [faq]faq(/courses/1/faq?faqId=45)[/faq].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
@@ -506,7 +506,7 @@ describe('PostingContentComponent', () => {
                     queryParams: { faqId: '45' },
                 } as PostingContentPart,
             ]);
-        }));
+        });
 
         it('should compute parts when referencing a channel', fakeAsync(() => {
             component.content = `This topic belongs to [channel]test(1)[/channel].`;

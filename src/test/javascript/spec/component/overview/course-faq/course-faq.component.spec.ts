@@ -20,7 +20,7 @@ import { Faq } from 'app/entities/faq.model';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { SortService } from 'app/shared/service/sort.service';
-import { ElementRef, QueryList } from '@angular/core';
+import { ElementRef, signal } from '@angular/core';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();
@@ -69,6 +69,7 @@ describe('CourseFaqs', () => {
                         parent: {
                             params: of({ courseId: '1' }),
                         },
+                        queryParams: of({ faqId: '1' }),
                     },
                 },
                 MockProvider(FaqService, {
@@ -167,18 +168,16 @@ describe('CourseFaqs', () => {
     });
 
     it('should scroll and focus on the faq element with given id', () => {
-        const nativeElement = {
-            id: 'faq-1',
-            scrollIntoView: jest.fn(),
-            focus: jest.fn(),
-        };
-        const elementRef = new ElementRef(nativeElement);
-        const queryList = new QueryList<ElementRef>();
-        queryList.reset([elementRef]);
-        courseFaqComponent.faqElements = queryList;
+        const nativeElement1 = { id: 'faq-1', scrollIntoView: jest.fn(), focus: jest.fn() };
+        const nativeElement2 = { id: 'faq-2', scrollIntoView: jest.fn(), focus: jest.fn() };
+
+        const elementRef1 = new ElementRef(nativeElement1);
+        const elementRef2 = new ElementRef(nativeElement2);
+
+        courseFaqComponent.faqElements = signal([elementRef1, elementRef2]);
+
         courseFaqComponent.scrollToFaq(1);
 
-        expect(nativeElement.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
-        expect(nativeElement.focus).toHaveBeenCalled();
+        expect(nativeElement1.scrollIntoView).toHaveBeenCalledExactlyOnceWith({ behavior: 'smooth', block: 'start' });
     });
 });

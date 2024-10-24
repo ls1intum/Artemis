@@ -94,6 +94,10 @@ export class MockMetisService {
         return '/courses/' + metisCourse.id + '/exams/' + examId;
     }
 
+    getLinkForFaq(examId: string): string {
+        return `/courses/${this.getCourse().id}/faq`;
+    }
+
     getLinkForChannelSubType(channel?: ChannelDTO): string | undefined {
         const referenceId = channel?.subTypeReferenceId?.toString();
         if (!referenceId) {

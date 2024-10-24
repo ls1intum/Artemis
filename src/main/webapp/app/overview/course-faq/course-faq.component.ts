@@ -1,6 +1,6 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, ViewEncapsulation, inject } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewEncapsulation, effect, inject, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { debounceTime, map, takeUntil } from 'rxjs/operators';
+import { debounceTime, map } from 'rxjs/operators';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -28,8 +28,8 @@ import { Renderer2 } from '@angular/core';
     standalone: true,
     imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, ArtemisMarkdownModule],
 })
-export class CourseFaqComponent implements OnInit, OnDestroy, AfterViewInit {
-    @ViewChildren('faqElement') faqElements!: QueryList<ElementRef>;
+export class CourseFaqComponent implements OnInit, OnDestroy {
+    faqElements = viewChildren<ElementRef>('faqElement');
     private ngUnsubscribe = new Subject<void>();
     private parentParamSubscription: Subscription;
 
@@ -58,6 +58,12 @@ export class CourseFaqComponent implements OnInit, OnDestroy, AfterViewInit {
     private sortService = inject(SortService);
     private renderer = inject(Renderer2);
 
+    constructor() {
+        effect(() => {
+            this.scrollToFaq(this.faqId);
+        });
+    }
+
     ngOnInit(): void {
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = Number(params.courseId);
@@ -71,13 +77,6 @@ export class CourseFaqComponent implements OnInit, OnDestroy, AfterViewInit {
 
         this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
             this.refreshFaqList(searchTerm);
-        });
-    }
-    ngAfterViewInit(): void {
-        this.faqElements.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
-            if (this.faqId) {
-                this.scrollToFaq(this.faqId);
-            }
         });
     }
 
@@ -138,7 +137,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     scrollToFaq(faqId: number): void {
-        const faqElement = this.faqElements.find((faq) => faq.nativeElement.id === 'faq-' + String(faqId));
+        const faqElement = this.faqElements().find((faq) => faq.nativeElement.id === 'faq-' + String(faqId));
         if (faqElement) {
             this.renderer.selectRootElement(faqElement.nativeElement).scrollIntoView({ behavior: 'smooth', block: 'start' });
             this.renderer.selectRootElement(faqElement.nativeElement).focus();
