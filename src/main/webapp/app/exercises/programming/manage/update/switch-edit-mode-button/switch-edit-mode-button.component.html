@@ -1,0 +1,9 @@
+<jhi-button
+    id="switch-edit-mode-button"
+    [btnType]="ButtonType.PRIMARY"
+    [btnSize]="buttonSize()"
+    [icon]="faHandShakeAngle"
+    [title]="isSimpleMode() ? 'artemisApp.programmingExercise.home.switchToAdvancedMode' : 'artemisApp.programmingExercise.home.switchToSimpleMode'"
+    (onClick)="toggleEditMode()"
+    [disabled]="disabled()"
+/>

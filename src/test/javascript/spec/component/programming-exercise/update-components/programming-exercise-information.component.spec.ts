@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
+import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { DefaultValueAccessor, NgModel } from '@angular/forms';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -17,6 +17,11 @@ import { TableEditableFieldComponent } from 'app/shared/table/table-editable-fie
 import { QueryList } from '@angular/core';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
+import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
+import { CustomNotIncludedInValidatorDirective } from '../../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
+import { ExerciseService } from '../../../../../../main/webapp/app/exercises/shared/exercise/exercise.service';
+import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
+import { AlertService } from '../../../../../../main/webapp/app/core/util/alert.service';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
@@ -37,11 +42,18 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 MockComponent(AddAuxiliaryRepositoryButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(RemoveKeysPipe),
+                MockModule(ArtemisProgrammingExerciseUpdateModule),
+                MockDirective(CustomNotIncludedInValidatorDirective),
             ],
             providers: [
+                MockProvider(AlertService),
                 {
                     provide: ActivatedRoute,
                     useValue: { queryParams: of({}) },
+                },
+                {
+                    provide: ExerciseService,
+                    useValue: MockExerciseService,
                 },
             ],
             schemas: [],
@@ -53,8 +65,16 @@ describe('ProgrammingExerciseInformationComponent', () => {
 
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
 
-                comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
-                comp.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
+                fixture.componentRef.setInput('programmingExercise', new ProgrammingExercise(undefined, undefined));
+                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+                    shortName: true,
+                    categories: true,
+                });
+                fixture.componentRef.setInput('isSimpleMode', false);
+                fixture.componentRef.setInput('isExamMode', false);
+                fixture.componentRef.setInput('isImport', false);
+
+                comp.programmingExercise().buildConfig = new ProgrammingExerciseBuildConfig();
             });
     });
 
@@ -69,9 +89,12 @@ describe('ProgrammingExerciseInformationComponent', () => {
 
     it('should should calculate Form Sections correctly', () => {
         const calculateFormValidSpy = jest.spyOn(comp, 'calculateFormValid');
-        const editableField = { editingInput: { valueChanges: new Subject(), valid: true } } as any as TableEditableFieldComponent;
-        comp.exerciseTitleChannelComponent = { titleChannelNameComponent: { formValidChanges: new Subject(), formValid: true } } as ExerciseTitleChannelNameComponent;
-        comp.shortNameField = { valueChanges: new Subject(), valid: true } as any as NgModel;
+        const editableField = {
+            editingInput: {
+                valueChanges: new Subject(),
+                valid: true,
+            },
+        } as unknown as TableEditableFieldComponent;
         comp.checkoutSolutionRepositoryField = { valueChanges: new Subject(), valid: true } as any as NgModel;
         comp.recreateBuildPlansField = { valueChanges: new Subject(), valid: true } as any as NgModel;
         comp.updateTemplateFilesField = { valueChanges: new Subject(), valid: true } as any as NgModel;
@@ -79,22 +102,52 @@ describe('ProgrammingExerciseInformationComponent', () => {
         comp.programmingExerciseEditCheckoutDirectories = { formValidChanges: new Subject() } as ProgrammingExerciseEditCheckoutDirectoriesComponent;
         comp.ngAfterViewInit();
         (comp.tableEditableFields.changes as Subject<any>).next({ toArray: () => [editableField] } as any as QueryList<TableEditableFieldComponent>);
-        comp.exerciseTitleChannelComponent.titleChannelNameComponent.formValidChanges.next(false);
-        (comp.shortNameField.valueChanges as Subject<boolean>).next(false);
         (comp.checkoutSolutionRepositoryField.valueChanges as Subject<boolean>).next(false);
         (comp.recreateBuildPlansField.valueChanges as Subject<boolean>).next(false);
         (comp.updateTemplateFilesField.valueChanges as Subject<boolean>).next(false);
         (editableField.editingInput.valueChanges as Subject<boolean>).next(false);
         comp.programmingExerciseEditCheckoutDirectories.formValidChanges.next(false);
-        expect(calculateFormValidSpy).toHaveBeenCalledTimes(7);
+        expect(calculateFormValidSpy).toHaveBeenCalledTimes(5);
     });
 
     it('should update checkout directories', () => {
         comp.onTestRepositoryCheckoutPathChange('test');
-        expect(comp.programmingExercise.buildConfig?.testCheckoutPath).toBe('test');
+        expect(comp.programmingExercise().buildConfig?.testCheckoutPath).toBe('test');
         comp.onSolutionRepositoryCheckoutPathChange('solution');
-        expect(comp.programmingExercise.buildConfig?.solutionCheckoutPath).toBe('solution');
+        expect(comp.programmingExercise().buildConfig?.solutionCheckoutPath).toBe('solution');
         comp.onAssigmentRepositoryCheckoutPathChange('assignment');
-        expect(comp.programmingExercise.buildConfig?.assignmentCheckoutPath).toBe('assignment');
+        expect(comp.programmingExercise().buildConfig?.assignmentCheckoutPath).toBe('assignment');
+    });
+
+    describe('shortName generation effect', () => {
+        it('should use name from import', () => {
+            comp.programmingExercise().shortName = 'l01e01';
+            fixture.componentRef.setInput('isSimpleMode', false);
+            fixture.componentRef.setInput('isImport', true);
+
+            comp.programmingExercise().title = 'Test Exercise';
+            fixture.detectChanges();
+
+            expect(comp.programmingExercise().shortName).toBe('l01e01');
+        });
+
+        it('should derive shortname from title', () => {
+            fixture.componentRef.setInput('isSimpleMode', true);
+
+            comp.programmingExercise().title = 'Test Exercise';
+            fixture.detectChanges();
+
+            expect(comp.programmingExercise().shortName).toMatch('TestExercise');
+        });
+
+        it('should derive shortname from title when directly derived shortname is already taken', () => {
+            fixture.componentRef.setInput('isSimpleMode', true);
+            comp.alreadyUsedShortNames.set(new Set(['TestExercise']));
+
+            comp.programmingExercise().title = 'Test Exercise';
+            fixture.detectChanges();
+
+            expect(comp.programmingExercise().shortName).toMatch('TestExercise1');
+        });
     });
 });
