@@ -21,7 +21,7 @@ describe('SshUserSettingsComponent', () => {
             keyHash: 'Key hash',
         } as UserSshPublicKey,
         {
-            id: 3,
+            id: 4,
             publicKey: mockKey,
             label: 'Key label',
             keyHash: 'Key hash 2',
@@ -72,6 +72,8 @@ describe('SshUserSettingsComponent', () => {
         accountServiceMock.getAllSshPublicKeys.mockReturnValue(of(mockedUserSshKeys as UserSshPublicKey[]));
         comp.ngOnInit();
         expect(accountServiceMock.getAllSshPublicKeys).toHaveBeenCalled();
+        expect(comp.sshPublicKeys).toHaveLength(2);
+        expect(comp.sshPublicKeys[0].publicKey).toEqual(mockKey);
         expect(comp.keyCount).toBe(2);
     });
 
