@@ -37,7 +37,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     private textEditorInput = new Subject<string>();
 
     // Icons
-    readonly farListAlt = faListAlt;
+    protected readonly faListAlt = faListAlt;
 
     constructor(
         private textService: TextEditorService,

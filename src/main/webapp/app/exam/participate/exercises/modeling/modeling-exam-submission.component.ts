@@ -44,7 +44,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     // Icons
-    farListAlt = faListAlt;
+    protected readonly faListAlt = faListAlt;
 
     constructor(changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);
