@@ -1,0 +1,25 @@
+<div class="profile-picture-wrap rounded-3" [ngStyle]="{ width: imageSize, height: imageSize }">
+    @if (imageUrl() === undefined) {
+        <strong
+            [id]="defaultPictureId()"
+            class="profile-picture rounded-3"
+            [ngStyle]="{ 'background-color': profilePictureBackgroundColor, 'font-size': fontSize }"
+            [ngClass]="defaultPictureClass()"
+            >{{ userProfilePictureInitials }}</strong
+        >
+    } @else {
+        <img
+            [id]="imageId()"
+            [alt]="authorName()"
+            class="profile-picture rounded-3"
+            [src]="imageUrl()"
+            [ngStyle]="{ 'background-color': profilePictureBackgroundColor }"
+            [ngClass]="imageClass()"
+        />
+    }
+    @if (isEditable()) {
+        <a class="edit-profile-picture-overlay rounded-3 d-flex align-items-center justify-content-center" [routerLink]="['/user-settings']" routerLinkActive="active">
+            <fa-icon class="text-white" [icon]="faCog" />
+        </a>
+    }
+</div>
