@@ -76,7 +76,7 @@ public class FilePathService {
     }
 
     public static Path getMarkdownFilePathForConversation(long courseId, long conversationId) {
-        return getMarkdownFilePath().resolve("communication").resolve(String.valueOf(courseId)).resolve(String.valueOf(conversationId));
+        return getMarkdownFilePath().resolve("communication").resolve(String.valueOf(courseId)).resolve(String.valueOf(conversationId)); // TODO: different paths?
     }
 
     /**
@@ -140,6 +140,7 @@ public class FilePathService {
         if (uriPath.startsWith("/api/files/file-upload-exercises")) {
             return actualPathForPublicFileUploadExercisesFilePath(publicPath, filename);
         }
+        // TODO: map communication paths ?
 
         return null;
     }
@@ -239,6 +240,7 @@ public class FilePathService {
         if (path.startsWith(getFileUploadExercisesFilePath())) {
             return publicPathForActualFileUploadExercisesFilePath(path, filename, id);
         }
+        // TODO: map communication paths ?
 
         return null;
     }
