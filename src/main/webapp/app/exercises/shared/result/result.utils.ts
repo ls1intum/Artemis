@@ -179,6 +179,8 @@ export const evaluateTemplateStatus = (
                 // the assessment due date has passed (or there was none) (or it is not manual feedback)
                 if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === undefined) {
                     return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+                } else if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === false) {
+                    return ResultTemplateStatus.FEEDBACK_GENERATION_FAILED;
                 }
                 return ResultTemplateStatus.HAS_RESULT;
             } else {
@@ -306,8 +308,17 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faQuestionCircle;
     }
 
-    if (isAIResultAndProcessed(result)) {
-        return faCheckCircle;
+    if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+        // result loading
+        if (result.successful === undefined) {
+            return faCircleNotch;
+        }
+        // result done successfuly
+        if (result.successful) {
+            return faCheckCircle;
+        }
+        // generating failed
+        return faTimesCircle;
     }
 
     if (isBuildFailedAndResultIsAutomatic(result) || isAIResultAndFailed(result)) {

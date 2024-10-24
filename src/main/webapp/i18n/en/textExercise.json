@@ -45,7 +45,9 @@
                 "forMinutes": "corrected for {{ interval }} minutes",
                 "medianOfSubmissions": "Median # of assessed submissions: {{ median }}",
                 "numberOfTutorsInvolved": "Number of tutors involved"
-            }
+            },
+            "allowPreliminaryAthenaFeedbackRequests": "Allow automatic AI preliminary feedback requests",
+            "allowPreliminaryAthenaFeedbackRequestsTooltip": "Students can request feedback before the due date. The requests will be processed by Athena."
         }
     }
 }

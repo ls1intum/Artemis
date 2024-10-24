@@ -1,5 +1,4 @@
 import { Page } from 'playwright';
-import { BASE_API } from '../../constants';
 import { expect } from '@playwright/test';
 import { Commands } from '../../commands';
 
@@ -30,9 +29,7 @@ export class ExerciseResultPage {
     }
 
     async clickOpenExercise(exerciseId: number) {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/results/*/rating`);
         await this.page.locator(`#open-exercise-${exerciseId}`).click();
-        await responsePromise;
     }
 
     async clickOpenCodeEditor(exerciseId: number) {

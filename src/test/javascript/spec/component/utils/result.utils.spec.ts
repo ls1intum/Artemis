@@ -151,7 +151,7 @@ describe('ResultUtils', () => {
         },
         {
             result: {
-                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result < 100' }],
+                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result failed to generate' }],
                 participation: { type: ParticipationType.STUDENT, exercise: { type: ExerciseType.TEXT } },
                 successful: false,
                 assessmentType: AssessmentType.AUTOMATIC_ATHENA,
