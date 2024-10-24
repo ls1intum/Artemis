@@ -40,11 +40,11 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (value: any) => {};
 
-    protected readonly highLinkWeight = 1;
-    protected readonly mediumLinkWeight = 0.5;
-    protected readonly lowLinkWeight = 0.25;
-    protected readonly lowLinkWeightCutOff = 0.375; // halfway between low and medium
-    protected readonly mediumLinkWeightCutOff = 0.75; // halfway between medium and high
+    protected readonly HIGH_LINK_WEIGHT = 1;
+    protected readonly MEDIUM_LINK_WEIGHT = 0.5;
+    protected readonly LOW_LINK_WEIGHT = 0.25;
+    protected readonly LOW_LINK_WEIGHT_CUT_OFF = 0.375; // halfway between low and medium
+    protected readonly MEDIUM_LINK_WEIGHT_CUT_OFF = 0.75; // halfway between medium and high
 
     constructor(
         private route: ActivatedRoute,
@@ -138,7 +138,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     writeValue(value?: CompetencyLearningObjectLink[]): void {
         this.competencyLinks?.forEach((link) => {
             const selectedLink = value?.find((value) => value.competency?.id === link.competency?.id);
-            link.weight = selectedLink?.weight ?? this.mediumLinkWeight;
+            link.weight = selectedLink?.weight ?? this.MEDIUM_LINK_WEIGHT;
         });
 
         if (value && this.competencyLinks) {
