@@ -192,6 +192,8 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(this.course1.getId(), FaqState.ACCEPTED);
         Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
+        assertThat(returnedFaqs).noneMatch(faq -> faq.faqState() == FaqState.PROPOSED);
+        assertThat(returnedFaqs).noneMatch(faq -> faq.faqState() == FaqState.REJECTED);
     }
 
     @Test
@@ -217,14 +219,6 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
         assertThat(returnedFaqs.size()).isEqualTo(faqs.size());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getFaqs_InstructorShouldGetALLFaqByCourse() throws Exception {
-        Set<Faq> faqs = faqRepository.findAllByCourseId(course1.getId());
-        Set<FaqDTO> returnedFaqs = request.get("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
-        assertThat(returnedFaqs).hasSize(faqs.size());
     }
 
 }

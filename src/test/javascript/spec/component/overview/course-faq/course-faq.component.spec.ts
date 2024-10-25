@@ -152,7 +152,7 @@ describe('CourseFaqs', () => {
     it('should catch error if no categories are found', () => {
         alertServiceStub = jest.spyOn(alertService, 'error');
         const error = { status: 404 };
-        jest.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        jest.spyOn(faqService, 'findAllCategoriesByCourseIdAndCategory').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         courseFaqComponentFixture.detectChanges();
         expect(alertServiceStub).toHaveBeenCalledOnce();
     });

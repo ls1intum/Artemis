@@ -80,7 +80,9 @@ public class FaqResource {
         if (faq.getId() != null) {
             throw new BadRequestAlertException("A new faq cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        checkRoleForCourse(faq.getFaqState(), courseId, Role.INSTRUCTOR);
+        if (faq.getFaqState() == FaqState.ACCEPTED) {
+            checkRoleForCourse(courseId, Role.INSTRUCTOR);
+        }
         if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
         }
@@ -106,13 +108,12 @@ public class FaqResource {
             throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
         }
         if (faq.getFaqState() == FaqState.ACCEPTED) {
-            checkRoleForCourse(faq.getFaqState(), courseId, Role.INSTRUCTOR);
+            checkRoleForCourse(courseId, Role.INSTRUCTOR);
         }
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
         if (existingFaq.getFaqState() == FaqState.ACCEPTED) {
-            checkRoleForCourse(existingFaq.getFaqState(), courseId, Role.INSTRUCTOR);
+            checkRoleForCourse(courseId, Role.INSTRUCTOR);
         }
-        checkRoleForCourse(existingFaq.getFaqState(), courseId, Role.INSTRUCTOR);
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
@@ -218,20 +219,19 @@ public class FaqResource {
     }
 
     /**
-     * @param faqState the faqState to be checked *
      * @param courseId the id of the course the faq belongs to
      * @param role     the required role of the user
-     * @throws AccessForbiddenException if the user is not atleast role
+     * @throws AccessForbiddenException if the user does not have at least role
      *
      */
-    private void checkRoleForCourse(FaqState faqState, Long courseId, Role role) {
+    private void checkRoleForCourse(Long courseId, Role role) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
     }
 
     private void checkShouldAccessNotAccepted(FaqState faqState, Long courseId) {
         if (faqState != FaqState.ACCEPTED) {
-            checkRoleForCourse(faqState, courseId, Role.TEACHING_ASSISTANT);
+            checkRoleForCourse(courseId, Role.TEACHING_ASSISTANT);
         }
     }
 
