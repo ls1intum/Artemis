@@ -53,7 +53,7 @@
                         [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUri"
                         (click)="selectSolutionParticipation()"
                         ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? '#3e8acc' : 'transparent'"
+                        [style.background-color]="selectedRepository === REPOSITORY.SOLUTION ? 'var(--link-color)' : 'transparent'"
                         jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"
                     >
                         <span jhiTranslate="artemisApp.editor.repoSelect.solutionRepo"></span>
@@ -69,7 +69,7 @@
                         "
                         (click)="selectAssignmentParticipation()"
                         ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.ASSIGNMENT ? '#3e8acc' : 'transparent'"
+                        [style.background-color]="selectedRepository === REPOSITORY.ASSIGNMENT ? 'var(--link-color)' : 'transparent'"
                         jhiTranslate="artemisApp.editor.repoSelect.assignmentRepo"
                     >
                         Assignment Participation
@@ -78,7 +78,7 @@
                         [disabled]="!exercise"
                         (click)="selectTestRepository()"
                         ngbDropdownItem
-                        [style.background-color]="selectedRepository === REPOSITORY.TEST ? '#3e8acc' : 'transparent'"
+                        [style.background-color]="selectedRepository === REPOSITORY.TEST ? 'var(--link-color)' : 'transparent'"
                         jhiTranslate="artemisApp.editor.repoSelect.testRepo"
                     ></button>
                     @for (auxiliaryRepository of exercise.auxiliaryRepositories; track exercise.auxiliaryRepositories; let i = $index) {
@@ -88,7 +88,7 @@
                                 (click)="selectAuxiliaryRepository(auxiliaryRepository.id)"
                                 ngbDropdownItem
                                 [style.background-color]="
-                                    selectedRepository === REPOSITORY.AUXILIARY && selectedRepositoryId === auxiliaryRepository.id ? '#3e8acc' : 'transparent'
+                                    selectedRepository === REPOSITORY.AUXILIARY && selectedRepositoryId === auxiliaryRepository.id ? 'var(--link-color)' : 'transparent'
                                 "
                             >
                                 {{ auxiliaryRepository.name }}
