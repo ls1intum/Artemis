@@ -26,8 +26,8 @@
                 "MORE_EASY_POINTS": "Since you mostly scored your points in easy exercises, the mastery is lower than the progress",
                 "MORE_HARD_POINTS": "Since you mostly scored your points in hard exercises, the mastery is higher than the progress",
                 "QUICKLY_SOLVED_EXERCISES": "Since you solved some exercises quickly, the mastery is higher than the progress",
-                "MORE_LOW_WEIGHTED_EXERCISES": "Since you solved exercises that are marked by the instructor as less important for this competency, the mastery is lower than the progress",
-                "MORE_HIGH_WEIGHTED_EXERCISES": "Since you solved exercises that are marked by the instructor as more important for this competency, the mastery is higher than the progress"
+                "MORE_LOW_WEIGHTED_EXERCISES": "Since you solved exercises or completed lecture units that are marked by the instructor as less important for this competency, the mastery is lower than the progress",
+                "MORE_HIGH_WEIGHTED_EXERCISES": "Since you solved exercises or completed lecture units that are marked by the instructor as more important for this competency, the mastery is higher than the progress"
             },
             "table": {
                 "panelHeader": "Your advancement"
