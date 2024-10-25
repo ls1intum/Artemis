@@ -7,7 +7,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
-import { faAngleRight, faEdit, faExclamation, faExclamationTriangle, faLightbulb, faQuestionCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faAngleRight, faEdit, faExclamationTriangle, faQuestionCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 
 @Component({
@@ -21,7 +21,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     @Input() textBlock: TextBlock = new TextBlock();
     @Input() feedback: Feedback = new Feedback();
     @Output() feedbackChange = new EventEmitter<Feedback>();
-    // eslint-disable-next-line @angular-eslint/no-output-native
     @Output() close = new EventEmitter<void>();
     @Output() onFocus = new EventEmitter<void>();
     @ViewChild('detailText') textareaRef: ElementRef;
@@ -52,8 +51,6 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     faEdit = faEdit;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
-    faLightbulb = faLightbulb;
-    faExclamation = faExclamation;
     faTimes = faTimes;
     faTrash = faTrash;
     faAngleRight = faAngleRight;
