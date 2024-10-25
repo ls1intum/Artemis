@@ -1,10 +1,9 @@
 <h1 jhiTranslate="artemisApp.userSettings.categories.IDE_PREFERENCES"></h1>
 <div class="list-group d-block">
     <div class="list-group-item pb-3">
-        <dt>
-            <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.description"></span>
-            <jhi-help-icon placement="right auto" text="artemisApp.userSettings.idePreferencesPage.jetbrainsHelp" />
-        </dt>
+        <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.description"></span>
+        <br />
+        <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.jetbrainsHelp"></span>
         <h5 class="py-2" jhiTranslate="artemisApp.userSettings.idePreferencesPage.default"></h5>
         <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: ProgrammingLanguage.EMPTY }"></ng-container>
     </div>
