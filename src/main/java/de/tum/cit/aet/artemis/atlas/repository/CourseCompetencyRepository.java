@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyLectureUnitMasteryCalculationDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -100,10 +101,11 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalculationDTO(
+                e.id,
                 e.maxPoints,
                 e.difficulty,
                 CASE WHEN TYPE(e) = ProgrammingExercise THEN TRUE ELSE FALSE END,
-                cl.weight,
+                el.weight,
                 COALESCE(sS.lastScore, tS.lastScore),
                 COALESCE(sS.lastPoints, tS.lastPoints),
                 COALESCE(sS.lastModifiedDate, tS.lastModifiedDate),
@@ -112,16 +114,40 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             FROM CourseCompetency c
                 LEFT JOIN c.exerciseLinks el
                 LEFT JOIN el.exercise e
-                LEFT JOIN e.competencyLinks cl ON cl.competency = c
                 LEFT JOIN e.studentParticipations sp ON sp.student = :user OR :user MEMBER OF sp.team.students
                 LEFT JOIN sp.submissions s
                 LEFT JOIN StudentScore sS ON sS.exercise = e AND sS.user = :user
                 LEFT JOIN TeamScore tS ON tS.exercise = e AND :user MEMBER OF tS.team.students
             WHERE c.id = :competencyId
                 AND e IS NOT NULL
-            GROUP BY e.maxPoints, e.difficulty, TYPE(e), sS.lastScore, tS.lastScore, sS.lastPoints, tS.lastPoints, sS.lastModifiedDate, tS.lastModifiedDate
+            GROUP BY e.id, e.maxPoints, e.difficulty, TYPE(e), sS.lastScore, tS.lastScore, sS.lastPoints, tS.lastPoints, sS.lastModifiedDate, tS.lastModifiedDate
             """)
-    Set<CompetencyExerciseMasteryCalculationDTO> findAllExerciseInfoByCompetencyId(@Param("competencyId") long competencyId, @Param("user") User user);
+    Set<CompetencyExerciseMasteryCalculationDTO> findAllExerciseInfoByCompetencyIdAndUser(@Param("competencyId") long competencyId, @Param("user") User user);
+
+    /**
+     * Fetches all information related to the calculation of the mastery for lecture units in a competency.
+     * The complex grouping by is necessary for postgres
+     *
+     * @param competencyId the id of the competency for which to fetch the lecture unit information
+     * @param user         the user for which to fetch the lecture unit information
+     * @return the lecture unit information for the calculation of the mastery in the competency
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyLectureUnitMasteryCalculationDTO(
+               lu.id,
+               CASE WHEN u IS NOT NULL THEN TRUE ELSE FALSE END,
+               lul.weight
+            )
+            FROM CourseCompetency c
+                LEFT JOIN c.lectureUnitLinks lul
+                LEFT JOIN lul.lectureUnit lu
+                LEFT JOIN lu.completedUsers cu
+                LEFT JOIN cu.user u ON u = :user
+            WHERE c.id = :competencyId
+                AND lu IS NOT NULL
+            GROUP BY lu.id, u, lul.weight, u
+            """)
+    Set<CompetencyLectureUnitMasteryCalculationDTO> findAllLectureUnitInfoByCompetencyIdAndUser(@Param("competencyId") long competencyId, @Param("user") User user);
 
     @Query("""
             SELECT c
