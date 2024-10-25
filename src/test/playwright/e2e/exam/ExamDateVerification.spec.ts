@@ -92,7 +92,8 @@ test.describe('Exam date verification', () => {
             await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
 
             await page.hover('.fa-save-success');
-            await expect(page.getByText('Exercise saved', { exact: true })).toBeVisible();
+            // nth(0) is the button, nth(1) is the ngtooltip, which is tested
+            await expect(page.getByText('Exercise saved').nth(1)).toBeVisible();
         });
 
         test('Exam ends after end time', async ({ page, login, examAPIRequests, exerciseAPIRequests, examStartEnd, examNavigation, textExerciseEditor, examParticipation }) => {
