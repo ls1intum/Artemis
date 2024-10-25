@@ -187,6 +187,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
     readonly useCommunicationForFileUpload = input<boolean>(false);
+    readonly fallbackConversationId = input<number>();
 
     @Output()
     markdownChange = new EventEmitter<string>();
@@ -478,7 +479,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     embedFiles(files: File[], inputElement?: HTMLInputElement): void {
         files.forEach((file) => {
             (this.useCommunicationForFileUpload()
-                ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(file, this.metisService?.getCourse()?.id, this.metisService?.getCurrentConversation()?.id)
+                ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(
+                      file,
+                      this.metisService?.getCourse()?.id,
+                      this.metisService?.getCurrentConversation()?.id ?? this.fallbackConversationId(),
+                  )
                 : this.fileUploaderService.uploadMarkdownFile(file)
             )
                 .then(
