@@ -43,7 +43,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.stubbing.Answer;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -54,25 +53,17 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -81,65 +72,20 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
-import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class RepositoryIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "repositoryintegration";
 
     private final String studentRepoBaseUrl = "/api/repository/";
 
     private final String filesContentBaseUrl = "/api/repository-files-content/";
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private StudentParticipationTestRepository studentParticipationRepository;
-
-    @Autowired
-    private ExamRepository examRepository;
-
-    @Autowired
-    private StudentExamTestRepository studentExamRepository;
-
-    @Autowired
-    private PlagiarismComparisonRepository plagiarismComparisonRepository;
-
-    @Autowired
-    private PlagiarismCaseRepository plagiarismCaseRepository;
-
-    @Autowired
-    private PostTestRepository postRepository;
-
-    @Autowired
-    private BuildLogEntryService buildLogEntryService;
-
-    @Autowired
-    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private ExamUtilService examUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -1081,7 +1027,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
-        this.programmingExerciseStudentParticipationRepository.updateLockedById(participation.getId(), true);
+        participationRepository.updateLockedById(participation.getId(), true);
 
         // Committing is not allowed
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -1104,7 +1050,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTe
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
-        this.programmingExerciseStudentParticipationRepository.updateLockedById(participation.getId(), true);
+        participationRepository.updateLockedById(participation.getId(), true);
 
         assertUnchangedRepositoryStatusForForbiddenReset();
     }

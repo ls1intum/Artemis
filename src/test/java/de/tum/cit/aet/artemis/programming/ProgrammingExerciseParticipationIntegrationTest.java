@@ -25,7 +25,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -37,9 +36,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
-import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -49,44 +45,14 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
-import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "programmingexerciseparticipation";
 
     private final String participationsBaseUrl = "/api/programming-exercise-participations/";
 
     private final String exercisesBaseUrl = "/api/programming-exercises/";
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private StudentParticipationTestRepository studentParticipationRepository;
-
-    @Autowired
-    private ParticipationTestRepository participationRepository;
-
-    @Autowired
-    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
-    // TODO remove again after refactoring and cleanup
-    @Autowired
-    private ProgrammingExerciseIntegrationTestService programmingExerciseIntegrationTestService;
 
     private ProgrammingExercise programmingExercise;
 

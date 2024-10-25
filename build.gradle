@@ -13,19 +13,19 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "io.spring.dependency-management" version "1.1.6"
-    id "com.google.cloud.tools.jib" version "3.4.3"
+    id "com.google.cloud.tools.jib" version "3.4.4"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.diffplug.spotless" version "6.25.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
-    id "org.owasp.dependencycheck" version "10.0.4"
+    id "org.owasp.dependencycheck" version "11.0.0"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.6.1"
+version = "7.6.4"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -257,13 +257,14 @@ dependencies {
     implementation "de.jplag:rust:${jplag_version}"
     implementation "de.jplag:swift:${jplag_version}"
     implementation "de.jplag:text:${jplag_version}"
+    implementation "de.jplag:typescript:${jplag_version}"
 
     // those are transitive dependencies of JPlag Text --> Stanford NLP
     // Note: ideally we would exclude them, but for some reason this does not work
     implementation "org.apache.lucene:lucene-queryparser:${lucene_version}"
     implementation "org.apache.lucene:lucene-core:${lucene_version}"
     implementation "org.apache.lucene:lucene-analyzers-common:${lucene_version}"
-    implementation "com.google.protobuf:protobuf-java:4.28.2"
+    implementation "com.google.protobuf:protobuf-java:4.28.3"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -412,7 +413,7 @@ dependencies {
     implementation "io.netty:netty-all:4.1.114.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.23"
     implementation "org.springframework:spring-messaging:6.1.14"
-    implementation "org.springframework.retry:spring-retry:2.0.9"
+    implementation "org.springframework.retry:spring-retry:2.0.10"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -451,7 +452,7 @@ dependencies {
     implementation "org.apache.maven:maven-model:3.9.9"
     implementation "org.apache.pdfbox:pdfbox:3.0.3"
     implementation "org.apache.commons:commons-csv:1.12.0"
-    implementation "org.commonmark:commonmark:0.23.0"
+    implementation "org.commonmark:commonmark:0.24.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
@@ -467,7 +468,7 @@ dependencies {
     implementation "com.google.code.gson:gson:2.11.0"
 
 
-    implementation "com.google.errorprone:error_prone_annotations:2.33.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.34.0"
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") {
