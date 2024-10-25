@@ -278,7 +278,7 @@ describe('LectureUnitManagementComponent', () => {
         lectureUnitManagementComponent.onIngestButtonClicked(lectureUnitId);
 
         expect(lectureUnitService.ingestLectureUnitInPyris).toHaveBeenCalledWith(lectureUnitId, lectureUnitManagementComponent.lecture.id);
-        expect(console.error).toHaveBeenCalledWith('Failed to send Ingestion request', error);
+        expect(console.error).toHaveBeenCalledWith('Failed to send lecture unit ingestion request', error);
     });
 
     describe('isViewButtonAvailable', () => {

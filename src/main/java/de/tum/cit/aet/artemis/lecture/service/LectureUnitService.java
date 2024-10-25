@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 @Service
 public class LectureUnitService {
 
-    private final Logger log = LoggerFactory.getLogger(LectureUnitService.class);
+    private static final Logger log = LoggerFactory.getLogger(LectureUnitService.class);
 
     private final LectureUnitRepository lectureUnitRepository;
 
