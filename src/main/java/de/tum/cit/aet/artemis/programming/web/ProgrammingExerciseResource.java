@@ -535,6 +535,9 @@ public class ProgrammingExerciseResource {
     /**
      * GET /programming-exercises : Queries a programming exercise by its project key.
      *
+     *
+     * @param projectKey the project key of the programming exercise
+     *
      * @return the ProgrammingExercise of this project key in an ResponseEntity or 404 Not Found if no exercise exists
      */
     @GetMapping("programming-exercises/project-key/{projectKey}")
