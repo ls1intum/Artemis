@@ -53,7 +53,6 @@
                 "expiryDate": "Ablaufdatum",
                 "expiresOn": "Läuft ab am",
                 "hasExpiredOn": "Abgelaufen am",
-                "leaveEmpty": "Wenn du das Label leer lässt, wird der Kommentar aus dem SSH-Schlüssel verwendet.",
                 "fingerprint": "Fingerabdruck",
                 "commentUsedAsLabel": "Wenn du kein Label hinzufügst, wird der Schlüsselkommentar (sofern vorhanden) als Label verwendet.",
                 "expiry": {
