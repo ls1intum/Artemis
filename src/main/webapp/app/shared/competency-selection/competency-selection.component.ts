@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { CompetencyLearningObjectLink, CourseCompetency, getIcon } from 'app/entities/competency.model';
+import { CompetencyLearningObjectLink, CourseCompetency, MEDIUM_COMPETENCY_LINK_WEIGHT, getIcon } from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { finalize } from 'rxjs';
@@ -95,7 +95,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             // Remove unnecessary properties
             competency.course = undefined;
             competency.userProgress = undefined;
-            return new CompetencyLearningObjectLink(competency, 0.5);
+            return new CompetencyLearningObjectLink(competency, MEDIUM_COMPETENCY_LINK_WEIGHT);
         });
         this.checkboxStates = this.competencyLinks.reduce(
             (states, competencyLink) => {
