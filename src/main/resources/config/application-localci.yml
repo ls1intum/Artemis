@@ -14,7 +14,6 @@ artemis:
         # If true, the CI jobs will be executed asynchronously. If false, the CI jobs will be executed synchronously (e.g. for debugging and tests).
         asynchronous: true
         # The maximum number of seconds that a CI job is allowed to run. If the job exceeds this time, it will be terminated.
-        timeout-seconds: 120
         # The number of builds that can be in the local CI queue at the same time. Choosing a small value can prevent the CI system from being overloaded on slow machines. Jobs that are submitted when the queue is already full, will be discarded.
         queue-size-limit: 100
         # The prefix that is used for the Docker containers that are created by the local CI system.
@@ -32,9 +31,9 @@ artemis:
             expiry-days: 2
             # Time of cleanup (cron expression)
             cleanup-schedule-time: 0 0 3 * * *
-        instructor-build-timeout-options-seconds:
-            min-option: 10
-            default-option: 120
-            max-option: 240
+        build-timeout-seconds:
+            min: 10
+            default: 120
+            max: 240
 
 

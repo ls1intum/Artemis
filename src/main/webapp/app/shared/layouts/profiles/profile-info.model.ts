@@ -37,9 +37,9 @@ export class ProfileInfo {
     public useVersionControlAccessToken?: boolean;
     public showCloneUrlWithoutToken?: boolean;
     public continuousIntegrationName?: string;
-    public instructorBuildTimeoutMinOption?: number;
-    public instructorBuildTimeoutMaxOption?: number;
-    public instructorBuildTimeoutDefaultOption?: number;
+    public buildTimeoutMin?: number;
+    public buildTimeoutMax?: number;
+    public buildTimeoutDefault?: number;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
     public saml2?: Saml2Config;
     public textAssessmentAnalyticsEnabled?: boolean;

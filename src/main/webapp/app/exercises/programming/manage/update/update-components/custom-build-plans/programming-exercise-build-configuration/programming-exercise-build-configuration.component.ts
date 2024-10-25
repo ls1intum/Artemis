@@ -29,9 +29,9 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
-                this.timeoutMinValue = profileInfo.instructorBuildTimeoutMinOption ?? 10;
-                this.timeoutMaxValue = profileInfo.instructorBuildTimeoutMaxOption ?? 240;
-                this.timeoutDefaultValue = profileInfo.instructorBuildTimeoutDefaultOption ?? 120;
+                this.timeoutMinValue = profileInfo.buildTimeoutMin ?? 10;
+                this.timeoutMaxValue = profileInfo.buildTimeoutMax ?? 240;
+                this.timeoutDefaultValue = profileInfo.buildTimeoutDefault ?? 120;
 
                 if (!this.timeout) {
                     this.timeoutChange.emit(this.timeoutDefaultValue);

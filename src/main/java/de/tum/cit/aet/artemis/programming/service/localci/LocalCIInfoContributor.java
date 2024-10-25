@@ -14,13 +14,13 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 @Profile(PROFILE_LOCALCI)
 public class LocalCIInfoContributor implements InfoContributor {
 
-    @Value("${artemis.continuous-integration.instructor-build-timeout-options-seconds.min-option:10}")
+    @Value("${artemis.continuous-integration.build-timeout-seconds.min:10}")
     private int minInstructorBuildTimeoutOption;
 
-    @Value("${artemis.continuous-integration.instructor-build-timeout-options-seconds.max-option:240}")
+    @Value("${artemis.continuous-integration.build-timeout-seconds.max:240}")
     private int maxInstructorBuildTimeoutOption;
 
-    @Value("${artemis.continuous-integration.instructor-build-timeout-options-seconds.default-option:120}")
+    @Value("${artemis.continuous-integration.build-timeout-seconds.default:120}")
     private int defaultInstructorBuildTimeoutOption;
 
     @Override

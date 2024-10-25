@@ -272,11 +272,11 @@ public final class Constants {
 
     public static final String CONTINUOUS_INTEGRATION_NAME = "continuousIntegrationName";
 
-    public static final String INSTRUCTOR_BUILD_TIMEOUT_MIN_OPTION = "instructorBuildTimeoutMinOption";
+    public static final String INSTRUCTOR_BUILD_TIMEOUT_MIN_OPTION = "buildTimeoutMin";
 
-    public static final String INSTRUCTOR_BUILD_TIMEOUT_MAX_OPTION = "instructorBuildTimeoutMaxOption";
+    public static final String INSTRUCTOR_BUILD_TIMEOUT_MAX_OPTION = "buildTimeoutMax";
 
-    public static final String INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION = "instructorBuildTimeoutDefaultOption";
+    public static final String INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION = "buildTimeoutDefault";
 
     public static final String USE_EXTERNAL = "useExternal";
 
