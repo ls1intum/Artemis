@@ -24,6 +24,13 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     @Query("""
             SELECT lu
             FROM LectureUnit lu
+            WHERE lu.id = :lectureUnitId
+            """)
+    Optional<LectureUnit> findById(@Param("lectureUnitId") long lectureUnitId);
+
+    @Query("""
+            SELECT lu
+            FROM LectureUnit lu
                 LEFT JOIN FETCH lu.competencies
                 LEFT JOIN FETCH lu.exercise exercise
                 LEFT JOIN FETCH exercise.competencies
@@ -93,6 +100,10 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
 
     default LectureUnit findByIdWithCompetenciesAndSlidesElseThrow(long lectureUnitId) {
         return getValueElseThrow(findWithCompetenciesAndSlidesById(lectureUnitId), lectureUnitId);
+    }
+
+    default LectureUnit findByIdElseThrow(long lectureUnitId) {
+        return getValueElseThrow(findById(lectureUnitId), lectureUnitId);
     }
 
 }

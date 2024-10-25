@@ -118,13 +118,12 @@ export class LectureService {
      * @param courseId Course containing the lecture(s)
      * @param lectureId The lecture to be ingested in pyris
      */
-    ingestLecturesInPyris(courseId: number, lectureId?: number): Observable<HttpResponse<boolean>> {
+    ingestLecturesInPyris(courseId: number, lectureId?: number): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         if (lectureId !== undefined) {
             params = params.set('lectureId', lectureId.toString());
         }
-
-        return this.http.post<boolean>(`api/courses/${courseId}/ingest`, null, {
+        return this.http.post<void>(`api/courses/${courseId}/ingest`, null, {
             params: params,
             observe: 'response',
         });

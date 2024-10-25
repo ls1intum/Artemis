@@ -128,38 +128,29 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created
      */
     public String deleteLectureFromPyrisDB(List<AttachmentUnit> attachmentUnits) {
-        try {
-            List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
-            attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf"))
-                    .forEach(unit -> {
-                        toUpdateAttachmentUnits.add(processAttachmentForDeletion(unit));
-                    });
-            if (!toUpdateAttachmentUnits.isEmpty()) {
-                return executeLectureDeletionWebhook(toUpdateAttachmentUnits);
-            }
-        }
-        catch (Exception e) {
-            log.error(e.getMessage());
+        List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
+        attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf"))
+                .forEach(unit -> {
+                    toUpdateAttachmentUnits.add(processAttachmentForDeletion(unit));
+                });
+        if (!toUpdateAttachmentUnits.isEmpty()) {
+            return executeLectureDeletionWebhook(toUpdateAttachmentUnits);
         }
         return null;
     }
 
     /**
-     * adds the lectures to the vector database on pyris
+     * adds the lectures to the vector database in Pyris
      *
-     * @param attachmentUnit The attachmentUnit that got Updated / erased
-     * @return jobToken if the job was created
+     * @param attachmentUnit The attachmentUnit that got Updated
+     * @return jobToken if the job was created else null
      */
     public String addLectureUnitToPyrisDB(AttachmentUnit attachmentUnit) {
         if (lectureIngestionEnabled(attachmentUnit.getLecture().getCourse())) {
-            try {
-                if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentUnit.getAttachment().getLink().endsWith(".pdf")) {
-                    return executeLectureAdditionWebhook(processAttachmentForUpdate(attachmentUnit));
-                }
+            if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentUnit.getAttachment().getLink().endsWith(".pdf")) {
+                return executeLectureAdditionWebhook(processAttachmentForUpdate(attachmentUnit));
             }
-            catch (Exception e) {
-                log.error("Error occurred while sending lecture unit {} to Pyris", attachmentUnit.getId(), e);
-            }
+            log.error("Attachment {} is not a file or is not of type pdf thus it will not be sent to Pyris", attachmentUnit.getId());
         }
         return null;
     }
@@ -243,7 +234,7 @@ public class PyrisWebhookService {
      * @return The ingestion state of the lecture Unit
      */
     public Map<Long, IngestionState> getLectureUnitsIngestionState(long courseId, long lectureId) {
-        List<LectureUnit> lectureunits = lectureRepository.findByIdWithLectureUnits(lectureId).get().getLectureUnits();
+        List<LectureUnit> lectureunits = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId).getLectureUnits();
         return lectureunits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
                 .collect(Collectors.toMap(DomainObject::getId, unit -> pyrisConnectorService.getLectureUnitIngestionState(courseId, lectureId, unit.getId())));
     }

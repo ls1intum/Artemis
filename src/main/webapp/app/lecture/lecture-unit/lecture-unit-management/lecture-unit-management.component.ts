@@ -282,6 +282,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             },
             error: (err: HttpErrorResponse) => {
                 console.error(`Error fetching ingestion states for lecture ${this.lecture.id}`, err);
+                this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
             },
         });
     }
@@ -294,7 +295,17 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             this.lectureUnits[unitIndex] = unit;
         }
         this.lectureUnitService.ingestLectureUnitInPyris(lectureUnitId, this.lecture.id!).subscribe({
-            error: (error) => console.error('Failed to send Ingestion request', error),
+            next: () => this.alertService.success('artemisApp.iris.ingestionAlert.lectureUnitSuccess'),
+            error: (error) => {
+                if (error.status === 400) {
+                    this.alertService.error('artemisApp.iris.ingestionAlert.lectureUnitError');
+                } else if (error.status === 503) {
+                    this.alertService.error('artemisApp.iris.ingestionAlert.pyrisUnavailable');
+                } else {
+                    this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
+                }
+                console.error('Failed to send lecture unit ingestion request', error);
+            },
         });
     }
 

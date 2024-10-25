@@ -217,7 +217,11 @@ export class LectureComponent implements OnInit, OnDestroy {
     ingestLecturesInPyris() {
         if (this.lectures.first()) {
             this.lectureService.ingestLecturesInPyris(this.lectures.first()!.course!.id!).subscribe({
-                error: (error) => console.error('Failed to send Ingestion request', error),
+                next: () => this.alertService.success('artemisApp.iris.ingestionAlert.allLecturesSuccess'),
+                error: (error) => {
+                    this.alertService.error('artemisApp.iris.ingestionAlert.allLecturesError');
+                    console.error('Failed to send Lectures Ingestion request', error);
+                },
             });
         }
     }
@@ -240,7 +244,10 @@ export class LectureComponent implements OnInit, OnDestroy {
                     });
                 }
             },
-            error: (err: HttpErrorResponse) => console.error(`Error fetching ingestion state for lecture in course ${this.courseId}`, err),
+            error: (err: HttpErrorResponse) => {
+                console.error(`Error fetching ingestion state for lecture in course ${this.courseId}`, err);
+                this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
+            },
         });
     }
 }

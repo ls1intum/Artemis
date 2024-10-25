@@ -88,6 +88,17 @@
                 "done": "Done",
                 "error": "Error",
                 "partiallyIngested": "Partially ingested"
+            },
+            "ingestionAlert": {
+                "lectureUnitSuccess": "Lecture unit ingestion in Pyris started successfully",
+                "lectureUnitError": "Error while sending lecture unit to Pyris",
+                "lectureSuccess": "Lecture ingestion in Pyris started successfully",
+                "lectureError": "Error while sending lecture to Pyris",
+                "allLecturesSuccess": "All lectures ingestion in Pyris started successfully",
+                "allLecturesError": "Error while sending all lectures to Pyris",
+                "lectureNotFound": "Could not send lecture to Iris, no lecture found with the provided id.",
+                "pyrisUnavailable": "Pyris is currently unavailable.",
+                "pyrisError": "An error occurred while getting ingestion state from Pyris."
             }
         }
     }

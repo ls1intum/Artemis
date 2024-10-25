@@ -6,7 +6,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
+import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
@@ -126,7 +126,7 @@ public class PyrisConnectorService {
     }
 
     /**
-     * uses send an api call to get the ingestion state in Pyris
+     * Retrieves the ingestion state of the lecture unit specified by retrieving the ingestion state from the vector database in Pyris.
      *
      * @param courseId      id of the course
      * @param lectureId     id of the lecture
@@ -137,11 +137,9 @@ public class PyrisConnectorService {
     IngestionState getLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId) {
         try {
             String encodedBaseUrl = URLEncoder.encode(artemisBaseUrl, StandardCharsets.UTF_8);
-            String url = String.format("%s/api/v1/courses/%d/lectures/%d/lectureUnits/%d/ingestion-state?base_url=%s", pyrisUrl, courseId, lectureId, lectureUnitId,
-                    encodedBaseUrl);
-            Map<String, String> response = restTemplate.getForObject(url, Map.class);
-            String stateString = response.get("state");
-            IngestionState state = IngestionState.valueOf(stateString);
+            String url = pyrisUrl + "/api/v1/courses/" + courseId + "/lectures/" + lectureId + "/lectureUnits/" + lectureUnitId + "/ingestion-state?base_url=" + encodedBaseUrl;
+            IngestionStateResponseDTO response = restTemplate.getForObject(url, IngestionStateResponseDTO.class);
+            IngestionState state = response.state();
             if (state != IngestionState.DONE) {
                 if (pyrisJobService.currentJobs().stream().filter(job -> job instanceof IngestionWebhookJob).map(job -> (IngestionWebhookJob) job)
                         .anyMatch(ingestionJob -> ingestionJob.courseId() == courseId && ingestionJob.lectureId() == lectureId && ingestionJob.lectureUnitId() == lectureUnitId)) {
@@ -150,9 +148,9 @@ public class PyrisConnectorService {
             }
             return state;
         }
-        catch (RestClientException e) {
-            log.error("Error fetching ingestion state for lecture {}, lecture unit {}, baseUrl {}", lectureId, lectureUnitId, pyrisUrl, e);
-            return IngestionState.ERROR;
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Error fetching ingestion state for lecture {}, lecture unit {}", lectureId, lectureUnitId, e);
+            throw new PyrisConnectorException("Error fetching ingestion state for lecture unit" + lectureUnitId);
         }
     }
 

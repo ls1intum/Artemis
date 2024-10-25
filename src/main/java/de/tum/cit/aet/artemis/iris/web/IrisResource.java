@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -27,6 +25,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.dto.IrisStatusDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 
@@ -94,13 +93,9 @@ public class IrisResource {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
             return ResponseEntity.ok(pyrisWebhookService.getLecturesIngestionState(courseId));
         }
-        catch (EntityNotFoundException e) {
-            log.error("Error finding course while fetching ingestion state: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-        catch (AccessForbiddenException e) {
-            log.error("Error checking role while fetching ingestion state: ", e);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        catch (PyrisConnectorException e) {
+            log.error("Error fetching ingestion state for course {}", courseId, e);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
     }
 
@@ -126,13 +121,9 @@ public class IrisResource {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
             return ResponseEntity.ok(pyrisWebhookService.getLectureUnitsIngestionState(courseId, lectureId));
         }
-        catch (EntityNotFoundException e) {
-            log.error("Error finding course while fetching ingestion state: ", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-        catch (AccessForbiddenException e) {
-            log.error("Error checking role while fetching ingestion state: ", e);
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        catch (PyrisConnectorException e) {
+            log.error("Error fetching ingestion state for lecture {}", lectureId, e);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
     }
 

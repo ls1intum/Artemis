@@ -177,6 +177,11 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     String getLectureTitle(@Param("lectureId") Long lectureId);
 
     @NotNull
+    default Lecture findByIdWithLectureUnitsElseThrow(Long lectureId) {
+        return getValueElseThrow(findByIdWithLectureUnits(lectureId), lectureId);
+    }
+
+    @NotNull
     default Lecture findByIdWithLectureUnitsAndCompetenciesElseThrow(Long lectureId) {
         return getValueElseThrow(findByIdWithLectureUnitsAndCompetencies(lectureId), lectureId);
     }

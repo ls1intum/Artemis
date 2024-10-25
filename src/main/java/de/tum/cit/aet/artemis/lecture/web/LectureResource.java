@@ -87,9 +87,11 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository) {
+            ChannelRepository channelRepository, AuthorizationCheckService authorizationCheckService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -99,6 +101,7 @@ public class LectureResource {
         this.exerciseService = exerciseService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -272,9 +275,9 @@ public class LectureResource {
     @Profile(PROFILE_IRIS)
     @PostMapping("courses/{courseId}/ingest")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Boolean> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
-        log.debug("REST request to ingest lectures of course : {}", courseId);
+    public ResponseEntity<Void> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
         Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (lectureId.isPresent()) {
             Optional<Lecture> lectureToIngest = course.getLectures().stream().filter(lecture -> lecture.getId().equals(lectureId.get())).findFirst();
             if (lectureToIngest.isPresent()) {
@@ -283,9 +286,7 @@ public class LectureResource {
                 lectureService.ingestLecturesInPyris(lecturesToIngest);
                 return ResponseEntity.ok().build();
             }
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "Could not send lecture to Iris, no lecture found with the provided id.", "idExists")).body(null);
-
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.allLecturesError", "idExists")).body(null);
         }
         lectureService.ingestLecturesInPyris(course.getLectures());
         return ResponseEntity.ok().build();

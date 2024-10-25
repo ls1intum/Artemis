@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.Valid;
 
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -209,17 +211,26 @@ public class LectureUnitResource {
     }
 
     /**
-     * POST lectures/{lectureId}/lecture-units/{lectureUnitId}/ingest
-     * This endpooint is for starting the ingestion of one lecture unit.
+     * This endpoint triggers the ingestion process for a specified lecture unit into Pyris.
      *
-     * @param lectureUnitId The Id of the Lecture Unit that is <going to be ingested
-     * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
+     * @param lectureId     the ID of the lecture to which the lecture unit belongs
+     * @param lectureUnitId the ID of the lecture unit to be ingested
+     * @return ResponseEntity<Void> with the status of the ingestion operation.
+     *         Returns 200 OK if the ingestion is successfully started.
+     *         Returns 400 BAD_REQUEST if the lecture unit cannot be ingested.
+     *         Returns SERVICE_UNAVAILABLE if the Pyris service is unavailable or
+     *         ingestion fails for another reason.
      */
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/ingest")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> ingestLectureUnit(@PathVariable long lectureUnitId) {
-        LectureUnit lectureUnit = this.lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnitId);
-        lectureUnitService.ingestLectureUnitInPyris(lectureUnit);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<Void> ingestLectureUnit(@PathVariable long lectureId, @PathVariable long lectureUnitId) {
+        Lecture lecture = this.lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        Optional<LectureUnit> lectureUnitOptional = lecture.getLectureUnits().stream().filter(lu -> lu.getId() == lectureUnitId).findFirst();
+        if (lectureUnitOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        LectureUnit lectureUnit = lectureUnitOptional.get();
+        authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.INSTRUCTOR, lectureUnit.getLecture(), null);
+        return lectureUnitService.ingestLectureUnitInPyris(lectureUnit);
     }
 }

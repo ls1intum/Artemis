@@ -17,8 +17,12 @@ import java.util.stream.Collectors;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -44,6 +48,8 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 @Profile(PROFILE_CORE)
 @Service
 public class LectureUnitService {
+
+    private final Logger log = LoggerFactory.getLogger(LectureUnitService.class);
 
     private final LectureUnitRepository lectureUnitRepository;
 
@@ -245,13 +251,26 @@ public class LectureUnitService {
     }
 
     /**
-     * Ingest the lectureUnit when triggered by the ingest lectureUnit button
+     * This method is responsible for ingesting a specific `LectureUnit` into Pyris, but only if it is an instance of
+     * `AttachmentUnit`. If the Pyris webhook service is available, it attempts to add the `LectureUnit` to the Pyris
+     * database.
+     * The method responds with different HTTP status codes based on the result:
+     * Returns {OK} if the ingestion is successful.
+     * Returns {SERVICE_UNAVAILABLE} if the Pyris webhook service is unavailable or if the ingestion fails.
+     * Returns {400 BAD_REQUEST} if the provided lecture unit is not of type {AttachmentUnit}.
      *
-     * @param lectureUnit lectureUnit to be ingested
+     * @param lectureUnit the lecture unit to be ingested, which must be an instance of AttachmentUnit.
+     * @return ResponseEntity<Void> representing the outcome of the operation with the appropriate HTTP status.
      */
-    public void ingestLectureUnitInPyris(LectureUnit lectureUnit) {
-        if (lectureUnit instanceof AttachmentUnit && pyrisWebhookService.isPresent()) {
-            pyrisWebhookService.get().addLectureUnitToPyrisDB((AttachmentUnit) lectureUnit);
+    public ResponseEntity<Void> ingestLectureUnitInPyris(LectureUnit lectureUnit) {
+        if (!(lectureUnit instanceof AttachmentUnit)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
+        if (pyrisWebhookService.isEmpty()) {
+            log.error("Could not send Lecture Unit to Pyris: Pyris webhook service is not available, check if IRIS is enabled.");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+        boolean isIngested = pyrisWebhookService.get().addLectureUnitToPyrisDB((AttachmentUnit) lectureUnit) != null;
+        return ResponseEntity.status(isIngested ? HttpStatus.OK : HttpStatus.BAD_REQUEST).build();
     }
 }
