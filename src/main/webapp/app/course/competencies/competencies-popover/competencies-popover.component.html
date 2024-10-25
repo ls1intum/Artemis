@@ -5,7 +5,9 @@
             <small jhiTranslate="artemisApp.competency.competencyPopover.explanation"></small>
             <ul class="list-group">
                 @for (competencyLink of competencyLinks; track competencyLink) {
-                    <a class="list-group-item" [routerLink]="navigationArray">{{ competencyLink.competency?.title }}</a>
+                    @if (competencyLink.competency?.title) {
+                        <a class="list-group-item" [routerLink]="navigationArray">{{ competencyLink.competency!.title }}</a>
+                    }
                 }
             </ul>
         </div>

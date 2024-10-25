@@ -46,6 +46,8 @@ export enum CourseCompetencyType {
 
 export const DEFAULT_MASTERY_THRESHOLD = 100;
 
+export const MEDIUM_COMPETENCY_LINK_WEIGHT = 0.5;
+
 export abstract class BaseCompetency implements BaseEntity {
     id?: number;
     title?: string;
