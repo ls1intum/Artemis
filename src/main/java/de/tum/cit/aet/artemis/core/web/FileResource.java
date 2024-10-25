@@ -166,6 +166,15 @@ public class FileResource {
         return ResponseEntity.created(new URI(responsePath)).body(responseBody);
     }
 
+    /**
+     * POST /files/courses/{courseId}/conversations/{conversationId} : Upload a new file for use in a conversation.
+     *
+     * @param file           The file to save. The size must not exceed Constants.MAX_FILE_SIZE_COMMUNICATION.
+     * @param courseId       The ID of the course the conversation belongs to.
+     * @param conversationId The ID of the conversation the file is used in.
+     * @return The path of the file.
+     * @throws URISyntaxException If the response path can't be converted into a URI.
+     */
     @PostMapping("files/courses/{courseId}/conversations/{conversationId}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<String> saveMarkdownFileForConversation(@RequestParam(value = "file") MultipartFile file, @PathVariable Long courseId, @PathVariable Long conversationId)
@@ -182,10 +191,18 @@ public class FileResource {
         return ResponseEntity.created(new URI(responsePath)).body(responseBody);
     }
 
+    /**
+     * GET /files/courses/{courseId}/conversations/{conversationId}/{filename} : Get the markdown file with the given filename for the given conversation.
+     *
+     * @param courseId       The ID of the course the conversation belongs to.
+     * @param conversationId The ID of the conversation the file is used in.
+     * @param filename       The filename of the file to get.
+     * @return The requested file, or 404 if the file doesn't exist. The response will enable caching.
+     */
     @GetMapping("files/courses/{courseId}/conversations/{conversationId}/{filename}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<byte[]> getMarkdownFileForConversation(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable String filename) {
-        // TODO: access check
+        // TODO: Improve the access check
         log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
         return buildFileResponse(FilePathService.getMarkdownFilePathForConversation(courseId, conversationId), filename, true);

@@ -60,7 +60,6 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
                 .setCacheControl(defaultCacheControl);
 
         registry.addResourceHandler("/drag-and-drop/**").addResourceLocations("file:" + fileUploadPath + "/images/drag-and-drop/").setCacheControl(defaultCacheControl);
-        // TODO: cache communication images?
 
         // e.g. public/videos/course-competencies/create-competencies.gif
         addResourceHandlerForPath(registry, "videos", "course-competencies").setCacheControl(defaultCacheControl);

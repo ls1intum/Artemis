@@ -186,8 +186,16 @@ public class FileService implements DisposableBean {
         return URI.create(markdown ? MARKDOWN_FILE_SUBPATH : DEFAULT_FILE_SUBPATH).resolve(currentFilename);
     }
 
+    /**
+     * Handles the saving of a file in a conversation.
+     *
+     * @param file           The file to be uploaded.
+     * @param courseId       The ID of the course.
+     * @param conversationId The ID of the conversation.
+     * @return The URI of the saved file.
+     */
     public URI handleSaveFileInConversation(MultipartFile file, Long courseId, Long conversationId) {
-        // TODO: access check? course is already checked, but the user might not be a member of the conversation
+        // TODO: Improve the access check. The course is already checked, but the user might not be a member of the conversation. The course may not belong to the conversation
         String filename = checkAndSanitizeFilename(file.getOriginalFilename());
 
         validateExtension(filename, true);
