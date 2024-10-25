@@ -49,6 +49,7 @@ export class AssessmentHeaderComponent {
     @Output() save = new EventEmitter<void>();
     // eslint-disable-next-line @angular-eslint/no-output-native
     @Output() submit = new EventEmitter<void>();
+
     @Output() cancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();

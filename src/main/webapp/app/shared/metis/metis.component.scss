@@ -1,3 +1,7 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
 .post-result-information {
     font-size: small;
     font-style: italic;
@@ -73,4 +77,24 @@
 
 .card {
     border-radius: 1em;
+}
+
+@include media-breakpoint-down(sm) {
+    .post-header-author-date {
+        flex-direction: column;
+        gap: 0 !important;
+    }
+
+    .post-content-margin {
+        margin-left: 0;
+    }
+
+    .post-header-date-separator {
+        display: none;
+    }
+
+    .post-header-date span {
+        color: $secondary;
+        font-size: 0.75rem !important;
+    }
 }
