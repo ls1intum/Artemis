@@ -283,17 +283,14 @@ info:
 jhipster:
     clientApp:
         name: 'artemisApp'
-    # CORS is needed for the VSCode plugin
-    cors:
-        allowed-methods: "*"
-        allowed-headers: "*"
-        exposed-headers: "Authorization,Link,X-Total-Count,Set-Cookie"
-        allow-credentials: true
-        max-age: 1800
-        allowed-origins:
-          - "vscode-file://vscode-app"
-          - "vscode-webview://*"
-
+    # By default CORS is disabled. Uncomment to enable.
+    #cors:
+        #allowed-origin-patterns: "*"
+        #allowed-methods: "*"
+        #allowed-headers: "*"
+        #exposed-headers: "Authorization,Link,X-Total-Count"
+        #allow-credentials: true
+        #max-age: 1800
     mail:
         from: artemis@localhost
     registry:
