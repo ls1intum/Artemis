@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
@@ -17,19 +17,19 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
     imports: [CommonModule, FontAwesomeModule, IrisLogoComponent, ArtemisSharedModule, NgbTooltipMocksModule, FeatureToggleModule],
 })
 export class IrisLogoButtonComponent {
-    @Input() btnType = ButtonType.PRIMARY;
-    @Input() btnSize = ButtonSize.MEDIUM;
+    btnType = input<ButtonType>(ButtonType.PRIMARY);
+    btnSize = input<ButtonSize>(ButtonSize.MEDIUM);
     // Translation placeholders, will be translated in the component.
-    @Input() title: string;
-    @Input() tooltip: string;
+    title = input.required<string>();
+    tooltip = input.required<string>();
 
-    @Input() disabled = false;
-    @Input() isLoading = false;
-    @Input() featureToggle: FeatureToggle | FeatureToggle[]; // Disable by feature toggle.
+    disabled = input<boolean>(false);
+    isLoading = input<boolean>(false);
+    featureToggle = input<FeatureToggle | FeatureToggle[]>([]); // Disable by feature toggle.
 
-    @Input() shouldSubmit = true;
+    shouldSubmit = input<boolean>(true);
 
-    @Output() onClick = new EventEmitter<MouseEvent>();
+    onClick = output<MouseEvent>();
 
     // Icons
     faCircleNotch = faCircleNotch;

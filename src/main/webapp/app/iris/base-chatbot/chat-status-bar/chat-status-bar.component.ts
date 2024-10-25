@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnChanges, input } from '@angular/core';
 import { faArrowsRotate, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CommonModule } from '@angular/common';
@@ -21,7 +21,7 @@ export class ChatStatusBarComponent implements OnChanges {
     displayedSubText?: string;
     style?: string;
 
-    @Input() stages?: IrisStageDTO[] = [];
+    stages = input<IrisStageDTO[]>();
 
     faArrowsRotate = faArrowsRotate;
     faCircleXmark = faCircleXmark;
@@ -33,8 +33,8 @@ export class ChatStatusBarComponent implements OnChanges {
 
     ngOnChanges() {
         // Lower case state for scss classes, avoid function calling in template
-        this.stages?.forEach((stage) => (stage.lowerCaseState = stage.state?.toLowerCase()));
-        const firstUnfinished = this.stages?.find((stage) => !this.isStageFinished(stage));
+        this.stages()?.forEach((stage) => (stage.lowerCaseState = stage.state?.toLowerCase()));
+        const firstUnfinished = this.stages()?.find((stage) => !this.isStageFinished(stage));
         if (firstUnfinished) {
             clearTimeout(this.openTimeout);
             clearTimeout(this.styleTimeout);

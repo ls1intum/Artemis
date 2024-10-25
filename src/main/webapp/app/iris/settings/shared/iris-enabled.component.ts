@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, input } from '@angular/core';
 import { IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
@@ -12,24 +12,24 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
     standalone: false,
 })
 export class IrisEnabledComponent implements OnInit {
-    @Input() exercise?: Exercise;
-    @Input() course?: Course;
-    @Input() irisSubSettingsType: IrisSubSettingsType;
-    @Input() disabled? = false;
+    exercise = input<Exercise>();
+    course = input<Course>();
+    irisSubSettingsType = input.required<IrisSubSettingsType>();
+    disabled = input<boolean>(false);
 
     irisSettings?: IrisSettings;
     irisSubSettings?: IrisSubSettings;
 
-    constructor(private irisSettingsService: IrisSettingsService) {}
+    private irisSettingsService = inject(IrisSettingsService);
 
     ngOnInit(): void {
         if (this.exercise) {
-            this.irisSettingsService.getUncombinedExerciseSettings(this.exercise.id!).subscribe((settings) => {
+            this.irisSettingsService.getUncombinedExerciseSettings(this.exercise()!.id!).subscribe((settings) => {
                 this.irisSettings = settings;
                 this.setSubSettings();
             });
         } else if (this.course) {
-            this.irisSettingsService.getUncombinedCourseSettings(this.course.id!).subscribe((settings) => {
+            this.irisSettingsService.getUncombinedCourseSettings(this.course()!.id!).subscribe((settings) => {
                 this.irisSettings = settings;
                 this.setSubSettings();
             });
@@ -40,12 +40,12 @@ export class IrisEnabledComponent implements OnInit {
         if (!this.disabled && this.irisSubSettings) {
             this.irisSubSettings.enabled = enabled;
             if (this.exercise) {
-                this.irisSettingsService.setExerciseSettings(this.exercise.id!, this.irisSettings!).subscribe((response) => {
+                this.irisSettingsService.setExerciseSettings(this.exercise()!.id!, this.irisSettings!).subscribe((response) => {
                     this.irisSettings = response.body ?? this.irisSettings;
                     this.setSubSettings();
                 });
             } else if (this.course) {
-                this.irisSettingsService.setCourseSettings(this.course.id!, this.irisSettings!).subscribe((response) => {
+                this.irisSettingsService.setCourseSettings(this.course()!.id!, this.irisSettings!).subscribe((response) => {
                     this.irisSettings = response.body ?? this.irisSettings;
                     this.setSubSettings();
                 });
@@ -54,7 +54,7 @@ export class IrisEnabledComponent implements OnInit {
     }
 
     private setSubSettings() {
-        switch (this.irisSubSettingsType) {
+        switch (this.irisSubSettingsType()) {
             case IrisSubSettingsType.CHAT:
                 this.irisSubSettings = this.irisSettings?.irisChatSettings;
                 break;
