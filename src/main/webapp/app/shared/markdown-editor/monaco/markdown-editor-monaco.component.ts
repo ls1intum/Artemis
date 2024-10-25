@@ -45,6 +45,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
+import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
@@ -277,6 +278,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     filterDisplayedAction<T extends TextEditorAction>(action?: T): T | undefined {
         return action?.hideInEditor ? undefined : action;
+    }
+
+    handleActionClick(event: MouseEvent, action: TextEditorAction): void {
+        const x = event.clientX;
+        const y = event.clientY;
+        if (action instanceof EmojiAction) {
+            action.setPoint({ x, y });
+        }
+
+        action.executeInCurrentEditor();
     }
 
     ngAfterViewInit(): void {

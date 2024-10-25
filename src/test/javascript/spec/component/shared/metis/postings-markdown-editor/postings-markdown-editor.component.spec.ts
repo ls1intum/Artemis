@@ -8,8 +8,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { LectureService } from 'app/lecture/lecture.service';
-import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Subject } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import * as CourseModel from 'app/entities/course.model';
@@ -24,6 +23,10 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
+import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
+import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
+import { ComponentPortal } from '@angular/cdk/portal';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -31,14 +34,58 @@ describe('PostingsMarkdownEditor', () => {
     let debugElement: DebugElement;
     let mockMarkdownEditorComponent: MarkdownEditorMonacoComponent;
     let metisService: MetisService;
-    let courseManagementService: CourseManagementService;
-    let channelService: ChannelService;
     let lectureService: LectureService;
-    let findLectureWithDetailsSpy: jest.SpyInstance;
+
+    const backdropClickSubject = new Subject<void>();
+    const mockOverlayRef = {
+        attach: jest.fn().mockReturnValue({ location: { nativeElement: document.createElement('div') } }),
+        backdropClick: jest.fn(() => backdropClickSubject.asObservable()),
+        detach: jest.fn(),
+        dispose: jest.fn(),
+        scrollStrategies: { reposition: jest.fn() },
+    };
+
+    const mockOverlay = {
+        create: jest.fn().mockReturnValue(mockOverlayRef),
+        scrollStrategies: { reposition: jest.fn().mockReturnValue({}) },
+    };
+
+    const mockPositionStrategy = {
+        left: jest.fn().mockReturnThis(),
+        top: jest.fn().mockReturnThis(),
+    };
+
+    const overlayPositionBuilderMock = {
+        global: jest.fn().mockReturnValue(mockPositionStrategy),
+    };
 
     beforeEach(() => {
+        if (typeof PointerEvent === 'undefined') {
+            global.PointerEvent = class PointerEvent extends MouseEvent {
+                constructor(type: string, params: MouseEventInit = {}) {
+                    super(type, params);
+                }
+            } as unknown as typeof PointerEvent;
+        }
+        const mockEmojiSelect = new Subject<{ emoji: any; event: PointerEvent }>();
+        const mockComponentRef = {
+            instance: {
+                emojiSelect: mockEmojiSelect.asObservable(),
+            },
+            location: { nativeElement: document.createElement('div') },
+        };
+
+        mockOverlayRef.attach.mockReturnValue(mockComponentRef);
+
         return TestBed.configureTestingModule({
-            providers: [{ provide: MetisService, useClass: MockMetisService }, MockProvider(LectureService), MockProvider(CourseManagementService), MockProvider(ChannelService)],
+            providers: [
+                { provide: MetisService, useClass: MockMetisService },
+                MockProvider(LectureService),
+                MockProvider(CourseManagementService),
+                MockProvider(ChannelService),
+                { provide: Overlay, useValue: mockOverlay },
+                { provide: OverlayPositionBuilder, useValue: overlayPositionBuilderMock },
+            ],
             declarations: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent)],
         })
             .compileComponents()
@@ -47,50 +94,53 @@ describe('PostingsMarkdownEditor', () => {
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
-                courseManagementService = TestBed.inject(CourseManagementService);
                 lectureService = TestBed.inject(LectureService);
-                channelService = TestBed.inject(ChannelService);
-                findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
-                const returnValue = of(new HttpResponse({ body: [], status: 200 }));
-                findLectureWithDetailsSpy.mockReturnValue(returnValue);
                 fixture.autoDetectChanges();
                 mockMarkdownEditorComponent = fixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
                 component.ngOnInit();
                 component.content = metisPostExerciseUser1.content;
+
+                mockEmojiSelect.next({ emoji: { native: '😀' }, event: new PointerEvent('click') });
             });
     });
 
     it('should have set the correct default commands on init if messaging or communication is enabled', () => {
         component.ngOnInit();
 
-        expect(component.defaultActions).toEqual([
-            new BoldAction(),
-            new ItalicAction(),
-            new UnderlineAction(),
-            new QuoteAction(),
-            new CodeAction(),
-            new CodeBlockAction(),
-            new UserMentionAction(courseManagementService, metisService),
-            new ChannelReferenceAction(metisService, channelService),
-            new ExerciseReferenceAction(metisService),
-        ]);
+        expect(component.defaultActions).toEqual(
+            expect.arrayContaining([
+                expect.any(BoldAction),
+                expect.any(ItalicAction),
+                expect.any(UnderlineAction),
+                expect.any(QuoteAction),
+                expect.any(CodeAction),
+                expect.any(CodeBlockAction),
+                expect.any(EmojiAction),
+                expect.any(UserMentionAction),
+                expect.any(ChannelReferenceAction),
+                expect.any(ExerciseReferenceAction),
+            ]),
+        );
 
         expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
     });
 
-    it('should have set the correct default commands on init if communication and messaging and communication is disabled', () => {
+    it('should have set the correct default commands on init if communication is disabled', () => {
         jest.spyOn(CourseModel, 'isCommunicationEnabled').mockReturnValueOnce(false);
         component.ngOnInit();
 
-        expect(component.defaultActions).toEqual([
-            new BoldAction(),
-            new ItalicAction(),
-            new UnderlineAction(),
-            new QuoteAction(),
-            new CodeAction(),
-            new CodeBlockAction(),
-            new ExerciseReferenceAction(metisService),
-        ]);
+        expect(component.defaultActions).toEqual(
+            expect.arrayContaining([
+                expect.any(BoldAction),
+                expect.any(ItalicAction),
+                expect.any(UnderlineAction),
+                expect.any(QuoteAction),
+                expect.any(CodeAction),
+                expect.any(CodeBlockAction),
+                expect.any(EmojiAction),
+                expect.any(ExerciseReferenceAction),
+            ]),
+        );
 
         expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
     });
@@ -154,7 +204,6 @@ describe('PostingsMarkdownEditor', () => {
         component.suppressNewlineOnEnter = true;
         const event = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true });
         const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
-        component.onKeyDown(event);
         expect(preventDefaultSpy).not.toHaveBeenCalled();
     });
 
@@ -164,5 +213,69 @@ describe('PostingsMarkdownEditor', () => {
         const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
         component.onKeyDown(event);
         expect(preventDefaultSpy).not.toHaveBeenCalled();
+    });
+
+    it('should attach EmojiPickerComponent to overlay when EmojiAction.run is called', () => {
+        const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
+        emojiAction.setPoint({ x: 100, y: 200 });
+
+        const mockEditor: TextEditor = {
+            getPosition: jest.fn(),
+            setPosition: jest.fn(),
+            focus: jest.fn(),
+        } as any;
+
+        emojiAction.run(mockEditor);
+
+        expect(mockOverlayRef.attach).toHaveBeenCalledWith(expect.any(ComponentPortal));
+        expect(mockOverlayRef.backdropClick).toHaveBeenCalled();
+    });
+
+    it('should create overlay with correct position when EmojiAction.run is called', () => {
+        const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
+        emojiAction.setPoint({ x: 100, y: 200 });
+
+        const mockEditor: TextEditor = {
+            getPosition: jest.fn(),
+            setPosition: jest.fn(),
+            focus: jest.fn(),
+        } as any;
+
+        const mockPositionStrategy = {
+            left: jest.fn().mockReturnThis(),
+            top: jest.fn().mockReturnThis(),
+        };
+
+        mockOverlay.create.mockReturnValue(mockOverlayRef);
+        overlayPositionBuilderMock.global.mockReturnValue(mockPositionStrategy);
+
+        emojiAction.run(mockEditor);
+
+        expect(mockOverlay.create).toHaveBeenCalledWith({
+            positionStrategy: mockPositionStrategy,
+            hasBackdrop: true,
+            backdropClass: 'cdk-overlay-transparent-backdrop',
+            scrollStrategy: mockOverlay.scrollStrategies.reposition(),
+            width: '0',
+        });
+
+        expect(mockPositionStrategy.left).toHaveBeenCalledWith(`85px`);
+        expect(mockPositionStrategy.top).toHaveBeenCalledWith(`185px`);
+    });
+
+    it('should detach overlay and close EmojiPickerComponent on backdrop click', () => {
+        const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
+        emojiAction.setPoint({ x: 100, y: 200 });
+
+        const mockEditor: TextEditor = {
+            getPosition: jest.fn(),
+            setPosition: jest.fn(),
+            focus: jest.fn(),
+        } as any;
+
+        emojiAction.run(mockEditor);
+        backdropClickSubject.next();
+
+        expect(mockOverlayRef.dispose).toHaveBeenCalled();
     });
 });

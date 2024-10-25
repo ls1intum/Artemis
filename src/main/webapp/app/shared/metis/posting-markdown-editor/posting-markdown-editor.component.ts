@@ -12,6 +12,7 @@ import {
     ViewEncapsulation,
     forwardRef,
 } from '@angular/core';
+import { ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -30,6 +31,8 @@ import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/c
 import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
+import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -65,6 +68,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         private courseManagementService: CourseManagementService,
         private lectureService: LectureService,
         private channelService: ChannelService,
+        public viewContainerRef: ViewContainerRef,
+        private overlay: Overlay,
+        private positionBuilder: OverlayPositionBuilder,
     ) {}
 
     /**
@@ -79,6 +85,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new BoldAction(),
             new ItalicAction(),
             new UnderlineAction(),
+            new EmojiAction(this.viewContainerRef, this.overlay, this.positionBuilder),
             new QuoteAction(),
             new CodeAction(),
             new CodeBlockAction(),
