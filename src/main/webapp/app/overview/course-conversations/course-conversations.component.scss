@@ -1,3 +1,7 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
 .second-layer-modal-bg {
     background-color: var(--secondary);
 }
@@ -28,10 +32,76 @@
 
     @media (max-width: 768px) {
         max-height: calc(100vh - var(--header-height) - var(--message-input-height-prod)) !important;
+        max-height: calc(100dvh - var(--header-height) - var(--message-input-height-prod)) !important;
     }
 }
 
 .message-input {
     border-top: 1px solid;
     border-color: var(--bs-card-border-color);
+}
+
+.communication-message-wrap {
+    min-width: 200px;
+}
+
+.communication-answer-message-wrap {
+    max-width: min-content;
+    display: flex;
+}
+
+@include media-breakpoint-down(sm) {
+    .communication-content-sidebar {
+        position: absolute;
+        width: 100%;
+        z-index: 2;
+        pointer-events: none;
+
+        & .sidebar-wrap,
+        .communication-content-sidebar .sidebar-width {
+            max-width: 0;
+        }
+
+        &.sidebar-collapsed {
+            pointer-events: all;
+        }
+
+        &.sidebar-collapsed .sidebar-wrap,
+        &.sidebar-collapsed .sidebar-width {
+            max-width: 100%;
+        }
+
+        &.sidebar-collapsed .sidebar-width {
+            width: 100%;
+        }
+
+        .sidebar-content {
+            opacity: 0;
+        }
+
+        &.sidebar-collapsed .sidebar-content {
+            opacity: 1;
+        }
+
+        .sidebar-wrap {
+            margin-right: 0;
+        }
+    }
+
+    .communication-message-wrap.is-answer-thread-open {
+        display: none;
+    }
+
+    .communication-answer-message-wrap {
+        max-width: 100%;
+        display: none;
+    }
+
+    .communication-answer-message-wrap.is-answer-thread-open {
+        display: flex;
+    }
+
+    .communication-message-wrap {
+        max-width: 100%;
+    }
 }
