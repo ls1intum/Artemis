@@ -35,18 +35,18 @@
                             @if (checkboxStates[competencyLink.competency.id]) {
                                 <select
                                     [ngModel]="
-                                        competencyLink.weight < LOW_LINK_WEIGHT_CUT_OFF
-                                            ? LOW_LINK_WEIGHT
-                                            : competencyLink.weight < MEDIUM_LINK_WEIGHT_CUT_OFF
-                                              ? MEDIUM_LINK_WEIGHT
-                                              : HIGH_LINK_WEIGHT
+                                        competencyLink.weight < LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF
+                                            ? LOW_COMPETENCY_LINK_WEIGHT
+                                            : competencyLink.weight < MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF
+                                              ? MEDIUM_COMPETENCY_LINK_WEIGHT
+                                              : HIGH_COMPETENCY_LINK_WEIGHT
                                     "
                                     (ngModelChange)="updateLinkWeight(competencyLink, $event)"
                                     ngbTooltip="{{ 'artemisApp.competency.link.weightTooltip' | artemisTranslate }}"
                                 >
-                                    <option [ngValue]="LOW_LINK_WEIGHT" [jhiTranslate]="'artemisApp.competency.link.weightLabels.low'"></option>
-                                    <option [ngValue]="MEDIUM_LINK_WEIGHT" [jhiTranslate]="'artemisApp.competency.link.weightLabels.medium'"></option>
-                                    <option [ngValue]="HIGH_LINK_WEIGHT" [jhiTranslate]="'artemisApp.competency.link.weightLabels.high'"></option>
+                                    <option [ngValue]="LOW_COMPETENCY_LINK_WEIGHT" [jhiTranslate]="'artemisApp.competency.link.weightLabels.low'"></option>
+                                    <option [ngValue]="MEDIUM_COMPETENCY_LINK_WEIGHT" [jhiTranslate]="'artemisApp.competency.link.weightLabels.medium'"></option>
+                                    <option [ngValue]="HIGH_COMPETENCY_LINK_WEIGHT" [jhiTranslate]="'artemisApp.competency.link.weightLabels.high'"></option>
                                 </select>
                             }
                         </div>
