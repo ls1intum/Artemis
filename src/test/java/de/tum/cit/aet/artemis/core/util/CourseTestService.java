@@ -3400,9 +3400,7 @@ public class CourseTestService {
         expectedOldCourses.get(2).setEndDate(ZonedDateTime.now().minusDays(10));
         expectedOldCourses.get(3).setSemester(null); // will be filtered out
 
-        for (Course oldCourse : expectedOldCourses) {
-            courseRepo.save(oldCourse);
-        }
+        courseRepo.saveAll(expectedOldCourses);
 
         final Set<CourseForArchiveDTO> actualOldCourses = request.getSet("/api/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
         assertThat(actualOldCourses).as("Course archive has 3 courses").hasSize(3);
