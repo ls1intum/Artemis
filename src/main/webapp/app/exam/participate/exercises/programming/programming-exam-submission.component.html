@@ -2,14 +2,14 @@
     <span>
         {{ exercise.exerciseGroup?.title }}
     </span>
-    <!-- prettier-ignore -->
-    <span left-header>&nbsp;({{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
-        <span
-        >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
-        }) @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-        <jhi-included-in-score-badge
-        [includedInOverallScore]="exercise.includedInOverallScore" />
-      }</span>
+    <span
+        [jhiTranslate]="exercise.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
+        [translateValues]="{ points: exercise.maxPoints, bonusPoints: exercise.bonusPoints }"
+    >
+    </span>
+    @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+    }
 </h3>
 <hr />
 <!-- ngIf online-code-editor -->

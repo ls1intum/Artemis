@@ -3,12 +3,10 @@
         <span>
             {{ quizConfiguration.exerciseGroup?.title }}
         </span>
-        <span
-            >({{ quizConfiguration.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }})
-            @if (quizConfiguration.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                <jhi-included-in-score-badge [includedInOverallScore]="quizConfiguration.includedInOverallScore" />
-            }
-        </span>
+        <span jhiTranslate="artemisApp.examParticipation.points" [translateValues]="{ points: quizConfiguration.maxPoints }"></span>
+        @if (quizConfiguration.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            <jhi-included-in-score-badge [includedInOverallScore]="quizConfiguration.includedInOverallScore" />
+        }
     </h3>
     <jhi-exercise-save-button [submission]="studentSubmission" (save)="notifyTriggerSave()" />
 </div>

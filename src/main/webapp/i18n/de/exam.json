@@ -314,8 +314,8 @@
             "preparingParticipation": "Aufgabe wird vorbereitet. Dies kann ein paar Sekunden dauern.",
             "generateParticipationFailed": "Das Vorbereiten der Aufgabe ist fehlgeschlagen.",
             "generateParticipationRetry": "Erneut versuchen",
-            "points": "Punkte",
-            "bonus": "Bonuspunkte",
+            "points": "({{ points }} Punkte)",
+            "bonus": "({{ points }} Punkte, {{ bonusPoints }} Bonuspunkte)",
             "synced": "Aufgabe gespeichert",
             "notSynced": "Aufgabe nicht gespeichert",
             "notStarted": "Aufgabe nicht gestartet",
@@ -339,8 +339,8 @@
                 "followExamProtocol": "Halte dich an die Klausuranweisungen deiner Lehrenden.",
                 "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
             },
-            "saveExercise": "Aufgabe Speichern",
-            "exerciseSaved": "Aufgabe Gespeichert"
+            "saveExercise": "Aufgabe speichern",
+            "exerciseSaved": "Aufgabe gespeichert"
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",

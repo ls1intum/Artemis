@@ -314,8 +314,8 @@
             "preparingParticipation": "Preparing exercise. This may take a few seconds.",
             "generateParticipationFailed": "The preparation of the exercise failed.",
             "generateParticipationRetry": "Retry",
-            "points": "Points",
-            "bonus": "Bonus Points",
+            "points": "({{ points }} Points)",
+            "bonus": "({{ points }} Points, {{ bonusPoints }} Bonus Points)",
             "synced": "Exercise saved",
             "notSynced": "Exercise not saved",
             "notStarted": "Exercise not started",
@@ -339,8 +339,8 @@
                 "followExamProtocol": "Be sure to follow your instructor's exam protocol.",
                 "button": "Show exam summary{{countdown}}"
             },
-            "saveExercise": "Save Exercise",
-            "exerciseSaved": "Exercise Saved"
+            "saveExercise": "Save exercise",
+            "exerciseSaved": "Exercise saved"
         },
         "exerciseGroup": {
             "created": "New exercise group created",
