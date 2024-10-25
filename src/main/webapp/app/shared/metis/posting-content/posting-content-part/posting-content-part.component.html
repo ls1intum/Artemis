@@ -44,9 +44,6 @@
         }
     </div>
 }
-@if (postingContentPart.contentAfterReference) {
-    <span class="markdown-preview" [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown: false : allowedHtmlTags : allowedHtmlAttributes"></span>
-}
 
 @if (postingContentPart.imageToReference) {
     <div [style.user-select]="'none'" [style.max-width.px]="400">
@@ -68,4 +65,8 @@
             </div>
         }
     </div>
+}
+
+@if (postingContentPart.contentAfterReference) {
+    <span class="markdown-preview" [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown: false : allowedHtmlTags : allowedHtmlAttributes"></span>
 }
