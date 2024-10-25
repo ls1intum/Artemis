@@ -79,14 +79,14 @@ public class PyrisJobService {
 
     public String addExerciseChatJob(Long courseId, Long exerciseId, Long sessionId) {
         var token = generateJobIdToken();
-        var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId);
+        var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId, null);
         jobMap.put(token, job);
         return token;
     }
 
     public String addCourseChatJob(Long courseId, Long sessionId) {
         var token = generateJobIdToken();
-        var job = new CourseChatJob(token, courseId, sessionId);
+        var job = new CourseChatJob(token, courseId, sessionId, null);
         jobMap.put(token, job);
         return token;
     }
@@ -111,10 +111,19 @@ public class PyrisJobService {
     /**
      * Remove a job from the job map.
      *
-     * @param token the token
+     * @param job the job to remove
      */
-    public void removeJob(String token) {
-        jobMap.remove(token);
+    public void removeJob(PyrisJob job) {
+        jobMap.remove(job.jobId());
+    }
+
+    /**
+     * Store a job in the job map.
+     *
+     * @param job the job to store
+     */
+    public void updateJob(PyrisJob job) {
+        jobMap.put(job.jobId(), job);
     }
 
     /**

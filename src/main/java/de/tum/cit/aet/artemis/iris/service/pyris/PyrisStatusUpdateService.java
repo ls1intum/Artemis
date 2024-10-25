@@ -20,7 +20,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
@@ -52,15 +54,16 @@ public class PyrisStatusUpdateService {
     }
 
     /**
-     * Handles the status update of a exercise chat job and forwards it to {@link IrisExerciseChatSessionService#handleStatusUpdate(ExerciseChatJob, PyrisChatStatusUpdateDTO)}
+     * Handles the status update of a exercise chat job and forwards it to
+     * {@link IrisExerciseChatSessionService#handleStatusUpdate(TrackedSessionBasedPyrisJob, PyrisChatStatusUpdateDTO)}
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        irisExerciseChatSessionService.handleStatusUpdate(job, statusUpdate);
+        var updatedJob = irisExerciseChatSessionService.handleStatusUpdate(job, statusUpdate);
 
-        removeJobIfTerminated(statusUpdate.stages(), job.jobId());
+        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
     }
 
     /**
@@ -71,51 +74,54 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(TextExerciseChatJob job, PyrisTextExerciseChatStatusUpdateDTO statusUpdate) {
-        irisTextExerciseChatSessionService.handleStatusUpdate(job, statusUpdate);
+        var updatedJob = irisTextExerciseChatSessionService.handleStatusUpdate(job, statusUpdate);
 
-        removeJobIfTerminated(statusUpdate.stages(), job.jobId());
+        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
     }
 
     /**
      * Handles the status update of a course chat job and forwards it to
-     * {@link de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService#handleStatusUpdate(CourseChatJob, PyrisChatStatusUpdateDTO)}
+     * {@link de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService#handleStatusUpdate(TrackedSessionBasedPyrisJob, PyrisChatStatusUpdateDTO)}
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(CourseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        courseChatSessionService.handleStatusUpdate(job, statusUpdate);
+        var updatedJob = courseChatSessionService.handleStatusUpdate(job, statusUpdate);
 
-        removeJobIfTerminated(statusUpdate.stages(), job.jobId());
+        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
     }
 
     /**
      * Handles the status update of a competency extraction job and forwards it to
-     * {@link de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService#handleStatusUpdate(String, long, PyrisCompetencyStatusUpdateDTO)}
+     * {@link IrisCompetencyGenerationService#handleStatusUpdate(CompetencyExtractionJob, PyrisCompetencyStatusUpdateDTO)}
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(CompetencyExtractionJob job, PyrisCompetencyStatusUpdateDTO statusUpdate) {
-        competencyGenerationService.handleStatusUpdate(job.userLogin(), job.courseId(), statusUpdate);
+        var updatedJob = competencyGenerationService.handleStatusUpdate(job, statusUpdate);
 
-        removeJobIfTerminated(statusUpdate.stages(), job.jobId());
+        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
     }
 
     /**
-     * Removes the job from the job service if the status update indicates that the job is terminated.
-     * This is the case if all stages are in a terminal state.
+     * Removes the job from the job service if the status update indicates that the job is terminated; updates it to distribute changes otherwise.
+     * A job is terminated if all stages are in a terminal state.
      * <p>
      *
      * @see PyrisStageState#isTerminal()
      *
      * @param stages the stages of the status update
-     * @param job    the job to remove
+     * @param job    the job to remove or to update
      */
-    private void removeJobIfTerminated(List<PyrisStageDTO> stages, String job) {
+    private void removeJobIfTerminatedElseUpdate(List<PyrisStageDTO> stages, PyrisJob job) {
         var isDone = stages.stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
         if (isDone) {
             pyrisJobService.removeJob(job);
+        }
+        else {
+            pyrisJobService.updateJob(job);
         }
     }
 
@@ -126,6 +132,6 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(IngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
-        removeJobIfTerminated(statusUpdate.stages(), job.jobId());
+        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
     }
 }

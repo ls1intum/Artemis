@@ -50,6 +50,7 @@ public enum ProgrammingLanguage {
         R,
         RUST,
         SWIFT,
+        TYPESCRIPT,
         VHDL,
         EMPTY
     );
