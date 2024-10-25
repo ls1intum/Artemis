@@ -15,7 +15,7 @@ import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
@@ -26,6 +26,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { provideRouter } from '@angular/router';
 import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
+import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
 
 describe('QuizExamSubmissionComponent', () => {
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
@@ -57,6 +58,7 @@ describe('QuizExamSubmissionComponent', () => {
                 MockComponent(DragAndDropQuestionComponent),
                 MockComponent(ShortAnswerQuestionComponent),
                 MockComponent(ExerciseSaveButtonComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [provideRouter([]), MockProvider(ArtemisQuizService)],
         })
