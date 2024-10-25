@@ -13,6 +13,7 @@ import {
     computed,
     inject,
     input,
+    signal,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
@@ -48,6 +49,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -238,6 +240,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     ]);
 
     colorSignal: Signal<string[]> = computed(() => [...this.colorToClassMap.keys()]);
+    allowedFileExtensions = signal<string>(UPLOAD_MARKDOWN_FILE_EXTENSIONS.map((ext) => `.${ext}`).join(', ')).asReadonly();
 
     static readonly TAB_EDIT = 'editor_edit';
     static readonly TAB_PREVIEW = 'editor_preview';
