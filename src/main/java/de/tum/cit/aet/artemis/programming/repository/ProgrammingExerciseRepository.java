@@ -770,7 +770,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId)
+            throws EntityNotFoundException {
         // TODO: This is a dark hack. Move this into a service where we properly load only the solution participation in the second step
         ProgrammingExercise programmingExerciseWithTemplate = getValueElseThrow(findWithTemplateParticipationLatestResultFeedbackTestCasesById(programmingExerciseId),
                 programmingExerciseId);
