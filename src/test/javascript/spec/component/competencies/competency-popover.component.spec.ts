@@ -54,33 +54,24 @@ describe('CompetencyPopoverComponent', () => {
         expect(competencyPopoverComponent).toBeDefined();
     });
 
-    it('should navigate to course competencies', fakeAsync(() => {
-        const location: Location = TestBed.inject(Location);
-        competencyPopoverComponent.navigateTo = 'courseCompetencies';
-        competencyPopoverComponent.competencyLinks = [{ weight: 1 }];
-        competencyPopoverComponent.courseId = 1;
-        competencyPopoverComponentFixture.detectChanges();
-        const popoverButton = competencyPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
-        popoverButton.click();
-        tick();
-        const anchor = competencyPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
-        anchor.click();
-        tick();
-        expect(location.path()).toBe('/courses/1/competencies');
-    }));
-
-    it('should navigate to competency management', fakeAsync(() => {
-        const location: Location = TestBed.inject(Location);
-        competencyPopoverComponent.navigateTo = 'competencyManagement';
-        competencyPopoverComponent.competencyLinks = [{ weight: 1 }];
-        competencyPopoverComponent.courseId = 1;
-        competencyPopoverComponentFixture.detectChanges();
-        const popoverButton = competencyPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
-        popoverButton.click();
-        tick();
-        const anchor = competencyPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
-        anchor.click();
-        tick();
-        expect(location.path()).toBe('/course-management/1/competency-management');
-    }));
+    it.each([
+        ['courseCompetencies', '/courses/1/competencies'],
+        ['competencyManagement', '/course-management/1/competency-management'],
+    ])(
+        'should navigate',
+        fakeAsync((navigateTo: 'competencyManagement' | 'courseCompetencies', expectedPath: string) => {
+            const location: Location = TestBed.inject(Location);
+            competencyPopoverComponent.navigateTo = navigateTo;
+            competencyPopoverComponent.competencyLinks = [{ competency: { id: 1, title: 'competency' }, weight: 1 }];
+            competencyPopoverComponent.courseId = 1;
+            competencyPopoverComponentFixture.detectChanges();
+            const popoverButton = competencyPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
+            popoverButton.click();
+            tick();
+            const anchor = competencyPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
+            anchor.click();
+            tick();
+            expect(location.path()).toBe(expectedPath);
+        }),
+    );
 });
