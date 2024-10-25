@@ -153,4 +153,10 @@ export class FaqService {
         const faqText = `${faq.questionTitle ?? ''} ${faq.questionAnswer ?? ''}`.toLowerCase();
         return tokens.every((token) => faqText.includes(token));
     }
+
+    findAllCategoriesByCourseIdAndCategory(courseId: number, faqState: FaqState) {
+        return this.http.get<string[]>(`${this.resourceUrl}/${courseId}/faq-categories/${faqState}`, {
+            observe: 'response',
+        });
+    }
 }
