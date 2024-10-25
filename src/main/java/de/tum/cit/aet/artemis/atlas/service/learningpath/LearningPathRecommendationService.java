@@ -468,6 +468,7 @@ public class LearningPathRecommendationService {
 
     /**
      * Analyzes the current progress within the learning path and generates a recommended ordering of uncompleted learning objects in a competency.
+     * The ordering is based on the competency link weights in decreasing order
      *
      * @param user                    the user that should be analyzed
      * @param competency              the competency
@@ -489,8 +490,8 @@ public class LearningPathRecommendationService {
 
         final var numberOfRequiredExercisePointsToMaster = calculateNumberOfExercisePointsRequiredToMaster(user, competency, weightedConfidence);
 
-        final var pendingExercises = competency.getExerciseLinks().stream().sorted(Comparator.comparingDouble(CompetencyExerciseLink::getWeight).reversed())
-                .map(CompetencyExerciseLink::getExercise).filter(exercise -> !learningObjectService.isCompletedByUser(exercise, user)).toList();
+        final var pendingExercises = competency.getExerciseLinks().stream().filter(link -> !learningObjectService.isCompletedByUser(link.getExercise(), user))
+                .sorted(Comparator.comparingDouble(CompetencyExerciseLink::getWeight).reversed()).map(CompetencyExerciseLink::getExercise).toList();
         final var pendingExercisePoints = pendingExercises.stream().mapToDouble(BaseExercise::getMaxPoints).sum();
 
         Map<DifficultyLevel, List<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(pendingExercises);

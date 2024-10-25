@@ -67,7 +67,9 @@ public class CompetencyProgressService {
 
     private static final int MAX_SUBMISSIONS_FOR_QUICK_SOLVE_HEURISTIC = 3;
 
-    private static final double DEFAULT_CONFIDENCE = 1.0;
+    private static final double DEFAULT_CONFIDENCE = 1;
+
+    private static final double MAX_CONFIDENCE = 2;
 
     private static final double MAX_CONFIDENCE_HEURISTIC = 0.25;
 
@@ -297,7 +299,8 @@ public class CompetencyProgressService {
         // Standard factor of 1 (no change to mastery compared to progress) plus the confidence heuristics
         double confidence = DEFAULT_CONFIDENCE + recencyConfidenceHeuristic + difficultyConfidenceHeuristic + quickSolveConfidenceHeuristic
                 + competencyLinkWeightConfidenceHeuristic;
-        confidence = Math.clamp(confidence, 0, 2);
+        // Prevent extreme confidence values
+        confidence = Math.clamp(confidence, 0, MAX_CONFIDENCE);
 
         competencyProgress.setConfidence(confidence);
         setConfidenceReason(competencyProgress, recencyConfidenceHeuristic, difficultyConfidenceHeuristic, quickSolveConfidenceHeuristic, competencyLinkWeightConfidenceHeuristic);
