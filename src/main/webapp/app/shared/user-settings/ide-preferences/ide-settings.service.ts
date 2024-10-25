@@ -1,66 +1,62 @@
 import { Injectable } from '@angular/core';
 import { map } from 'rxjs/operators';
-import { Observable, lastValueFrom } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Ide, IdeMappingDTO } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class IdeSettingsService {
-    public readonly ideSettingsUrl = 'api/ide-settings';
+    public ideSettingsUrl = 'api/ide-settings';
+    public static readonly fallbackIde: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
+    private predefinedIdes: Ide[] = [IdeSettingsService.fallbackIde];
+    private idePreferencesSubject: BehaviorSubject<Map<ProgrammingLanguage, Ide>> = new BehaviorSubject<Map<ProgrammingLanguage, Ide>>(
+        new Map([[ProgrammingLanguage.EMPTY, IdeSettingsService.fallbackIde]]),
+    );
+    error?: string;
 
-    // cached value of the ide preferences to avoid unnecessary requests to the server
-    private idePreferences?: Map<ProgrammingLanguage, Ide>;
+    constructor(private http: HttpClient) {
+        // initially load predefined ides and ide preferences
+        this.loadPredefinedIdes().subscribe();
+        this.loadIdePreferences().subscribe();
+    }
 
-    constructor(private http: HttpClient) {}
+    public getPredefinedIdes(): Ide[] {
+        return this.predefinedIdes;
+    }
 
     /**
      * GET call to the server to receive the stored ide preferences of the current user
      * @return the saved ide preference which were found in the database or error
      */
     public loadPredefinedIdes(): Observable<Ide[]> {
-        return this.http.get<Ide[]>(this.ideSettingsUrl + '/predefined');
+        return this.http.get<Ide[]>(this.ideSettingsUrl + '/predefined').pipe(
+            map((ides) => {
+                this.predefinedIdes = ides;
+                return ides;
+            }),
+        );
     }
 
-    private ongoingRequest: Promise<Map<ProgrammingLanguage, Ide>> | undefined = undefined;
-    private cacheTimestamp: number | undefined = undefined; // To store the timestamp when the preferences were loaded
-    private readonly cacheDuration = 60 * 1000; // 1 minute in milliseconds
+    public getIdePreferences(): Observable<Map<ProgrammingLanguage, Ide>> {
+        return this.idePreferencesSubject.asObservable();
+    }
 
     /**
      * GET call to the server to receive the stored ide preferences of the current user
-     * Prevent concurrent requests by caching the ongoing request and the timestamp when the preferences were loaded
-     * Load the settings again after 1min in case they have changed
-     * @param force if true, the cache will be ignored and a new request will be made
      * @return the saved ide preference which were found in the database or error
      */
-    public loadIdePreferences(force?: boolean): Promise<Map<ProgrammingLanguage, Ide>> {
-        const currentTime = new Date().getTime();
-
-        // If preferences are already loaded and the cache is valid, return them immediately
-        if (this.idePreferences && !force && this.cacheTimestamp && currentTime - this.cacheTimestamp < this.cacheDuration) {
-            return Promise.resolve(this.idePreferences);
-        }
-
-        // If there's already an ongoing request, return that promise to prevent multiple calls
-        if (this.ongoingRequest) {
-            return this.ongoingRequest;
-        }
-
-        // Make the REST call and cache the ongoing request
-        this.ongoingRequest = lastValueFrom(
-            this.http.get<IdeMappingDTO[]>(this.ideSettingsUrl).pipe(
-                map((data) => {
-                    this.idePreferences = new Map<ProgrammingLanguage, Ide>(data.map((x) => [x.programmingLanguage, x.ide]));
-                    this.cacheTimestamp = new Date().getTime(); // Update the timestamp when the data is cached
-                    return this.idePreferences;
-                }),
-            ),
-        ).finally(() => {
-            // Clear the ongoingRequest once the promise resolves
-            this.ongoingRequest = undefined;
-        });
-
-        return this.ongoingRequest;
+    public loadIdePreferences(): Observable<Map<ProgrammingLanguage, Ide>> {
+        return this.http.get<IdeMappingDTO[]>(this.ideSettingsUrl).pipe(
+            map((data) => {
+                const idePreferences = new Map<ProgrammingLanguage, Ide>(data.map((x) => [x.programmingLanguage, x.ide]));
+                if (!idePreferences.has(ProgrammingLanguage.EMPTY)) {
+                    idePreferences.set(ProgrammingLanguage.EMPTY, this.predefinedIdes[0]);
+                }
+                this.idePreferencesSubject.next(idePreferences);
+                return idePreferences;
+            }),
+        );
     }
 
     /**
@@ -73,6 +69,9 @@ export class IdeSettingsService {
         const params = new HttpParams().set('programmingLanguage', programmingLanguage);
         return this.http.put<IdeMappingDTO>(this.ideSettingsUrl, ide, { params }).pipe(
             map((res) => {
+                const prev = new Map(this.idePreferencesSubject.getValue());
+                prev.set(programmingLanguage, res.ide);
+                this.idePreferencesSubject.next(prev);
                 return res.ide;
             }),
         );
@@ -85,6 +84,13 @@ export class IdeSettingsService {
      */
     public deleteIdePreference(programmingLanguage: ProgrammingLanguage): Observable<HttpResponse<void>> {
         const params = new HttpParams().set('programmingLanguage', programmingLanguage);
-        return this.http.delete<void>(this.ideSettingsUrl, { params, observe: 'response' });
+        return this.http.delete<void>(this.ideSettingsUrl, { params, observe: 'response' }).pipe(
+            map((response) => {
+                const prev = new Map(this.idePreferencesSubject.getValue());
+                prev.delete(programmingLanguage);
+                this.idePreferencesSubject.next(prev);
+                return response;
+            }),
+        );
     }
 }

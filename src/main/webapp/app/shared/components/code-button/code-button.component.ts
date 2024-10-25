@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
@@ -16,13 +16,14 @@ import { isPracticeMode } from 'app/entities/participation/student-participation
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-code-button',
     templateUrl: './code-button.component.html',
     styleUrls: ['./code-button.component.scss'],
 })
-export class CodeButtonComponent implements OnInit, OnChanges {
+export class CodeButtonComponent implements OnInit, OnChanges, OnDestroy {
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
 
@@ -61,8 +62,9 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     activeParticipation?: ProgrammingExerciseStudentParticipation;
     isPracticeMode: boolean | undefined;
 
-    vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
-    programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
+    programmingLanguageToIde: Map<ProgrammingLanguage, Ide>;
+
+    subscription: Subscription = new Subscription();
 
     // Icons
     readonly faCode = faCode;
@@ -126,13 +128,14 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
         });
 
-        this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
+        const idePreferencesSubscription = this.ideSettingsService.getIdePreferences().subscribe((programmingLanguageToIde) => {
             if (programmingLanguageToIde.size) {
                 this.programmingLanguageToIde = programmingLanguageToIde;
             }
 
             this.ideName = this.getIde().name;
         });
+        this.subscription.add(idePreferencesSubscription);
     }
 
     ngOnChanges() {
@@ -147,6 +150,14 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
         this.loadParticipationVcsAccessTokens();
+    }
+
+    ngOnDestroy() {
+        this.subscription.unsubscribe();
+    }
+
+    public onShow() {
+        this.ideSettingsService.loadIdePreferences().subscribe();
     }
 
     public useSshUrl() {
@@ -328,7 +339,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         return (
             this.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
             this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
-            this.vscodeFallback
+            IdeSettingsService.fallbackIde
         );
     }
 

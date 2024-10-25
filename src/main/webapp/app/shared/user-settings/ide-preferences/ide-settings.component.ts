@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, WritableSignal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, WritableSignal, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { Ide, ideEquals } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -10,30 +11,32 @@ import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide
     styleUrls: ['./ide-settings.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class IdeSettingsComponent implements OnInit {
+export class IdeSettingsComponent implements OnInit, OnDestroy {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
-    PREDEFINED_IDE: Ide[] = [{ name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' }];
+    PREDEFINED_IDE: Ide[];
 
-    programmingLanguageToIde: WritableSignal<Map<ProgrammingLanguage, Ide>> = signal(new Map([[ProgrammingLanguage.EMPTY, this.PREDEFINED_IDE[0]]]));
+    programmingLanguageToIde: WritableSignal<Map<ProgrammingLanguage, Ide>>;
 
     assignedProgrammingLanguages: ProgrammingLanguage[] = [];
     // languages that have no IDE assigned yet
     remainingProgrammingLanguages: ProgrammingLanguage[] = Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.EMPTY);
 
-    constructor(private ideSettingsService: IdeSettingsService) {}
+    private subscription: Subscription = new Subscription();
+
+    constructor(private ideSettingsService: IdeSettingsService) {
+        this.PREDEFINED_IDE = this.ideSettingsService.getPredefinedIdes();
+        this.programmingLanguageToIde = signal(new Map([[ProgrammingLanguage.EMPTY, this.PREDEFINED_IDE[0]]]));
+    }
 
     ngOnInit() {
-        this.ideSettingsService.loadPredefinedIdes().subscribe((predefinedIde) => {
-            this.PREDEFINED_IDE = predefinedIde;
+        const predefinedIdesSubscription = this.ideSettingsService.loadPredefinedIdes().subscribe((ides) => {
+            this.PREDEFINED_IDE = ides;
         });
+        this.subscription.add(predefinedIdesSubscription);
 
-        this.ideSettingsService.loadIdePreferences(true).then((programmingLanguageToIdeMap) => {
-            if (!programmingLanguageToIdeMap.has(ProgrammingLanguage.EMPTY)) {
-                programmingLanguageToIdeMap.set(ProgrammingLanguage.EMPTY, this.PREDEFINED_IDE[0]);
-            }
-
+        const idePreferencesSubscription = this.ideSettingsService.getIdePreferences().subscribe((programmingLanguageToIdeMap) => {
             this.programmingLanguageToIde.set(programmingLanguageToIdeMap);
 
             // initialize assigned programming languages
@@ -44,33 +47,23 @@ export class IdeSettingsComponent implements OnInit {
                 Object.values(ProgrammingLanguage).filter((x) => !this.assignedProgrammingLanguages.includes(x) && x !== ProgrammingLanguage.EMPTY),
             );
         });
+        this.subscription.add(idePreferencesSubscription);
+    }
+
+    ngOnDestroy() {
+        this.subscription.unsubscribe();
     }
 
     addProgrammingLanguage(programmingLanguage: ProgrammingLanguage) {
-        this.ideSettingsService.saveIdePreference(programmingLanguage, this.PREDEFINED_IDE[0]).subscribe((ide) => {
-            this.programmingLanguageToIde.update((map) => new Map(map.set(programmingLanguage, ide)));
-
-            this.assignedProgrammingLanguages.push(programmingLanguage);
-            this.remainingProgrammingLanguages = this.remainingProgrammingLanguages.filter((x) => x !== programmingLanguage);
-        });
+        this.ideSettingsService.saveIdePreference(programmingLanguage, this.PREDEFINED_IDE[0]).subscribe();
     }
 
     changeIde(programmingLanguage: ProgrammingLanguage, ide: Ide) {
-        this.ideSettingsService.saveIdePreference(programmingLanguage, ide).subscribe((ide) => {
-            this.programmingLanguageToIde.update((map) => new Map(map.set(programmingLanguage, ide)));
-        });
+        this.ideSettingsService.saveIdePreference(programmingLanguage, ide).subscribe();
     }
 
     removeProgrammingLanguage(programmingLanguage: ProgrammingLanguage) {
-        this.ideSettingsService.deleteIdePreference(programmingLanguage).subscribe(() => {
-            const programmingLanguageToIdeMap: Map<ProgrammingLanguage, Ide> = new Map(this.programmingLanguageToIde());
-            programmingLanguageToIdeMap.delete(programmingLanguage);
-
-            this.programmingLanguageToIde.set(programmingLanguageToIdeMap);
-
-            this.remainingProgrammingLanguages.push(programmingLanguage);
-            this.assignedProgrammingLanguages = this.assignedProgrammingLanguages.filter((x) => x !== programmingLanguage);
-        });
+        this.ideSettingsService.deleteIdePreference(programmingLanguage).subscribe();
     }
 
     isIdeOfProgrammingLanguage(programmingLanguage: ProgrammingLanguage, ide: Ide): boolean {

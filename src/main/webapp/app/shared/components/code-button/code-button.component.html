@@ -12,6 +12,7 @@
         [autoClose]="'outside'"
         placement="right auto"
         container="body"
+        (shown)="onShow()"
     ></button>
     <ng-template #popContent>
         @if (useSsh && !copyEnabled) {
