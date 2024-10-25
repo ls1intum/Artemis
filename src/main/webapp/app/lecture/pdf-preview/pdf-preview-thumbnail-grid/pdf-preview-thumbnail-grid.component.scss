@@ -1,0 +1,22 @@
+.pdf-container {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 10px;
+    height: 60vh;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    margin: 10px 0;
+    width: 100%;
+    box-shadow: 0 2px 5px var(--pdf-preview-pdf-container-shadow);
+    z-index: 0;
+
+    @media (max-width: 800px) {
+        grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    }
+
+    @media (max-width: 500px) {
+        grid-template-columns: 1fr;
+    }
+}

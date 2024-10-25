@@ -26,34 +26,22 @@
                     [deleteQuestion]="allPagesSelected() ? 'artemisApp.attachment.pdfPreview.deleteAllPagesQuestion' : 'artemisApp.attachment.pdfPreview.deletePagesQuestion'"
                     (delete)="allPagesSelected() ? deleteAttachmentFile() : deleteSelectedSlides()"
                     [dialogError]="dialogError$"
-                    [disabled]="isPdfLoading() || selectedPages().size === 0"
+                    [disabled]="selectedPages()!.size === 0"
                     aria-label="Delete selected pages"
                 >
                     <fa-icon [icon]="faTrash" />
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.removePageButton"></span>
                 </button>
-                <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" [disabled]="isPdfLoading()" />
+                <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" />
                 <button (click)="triggerFileInput()" class="btn btn-primary text-truncate" aria-label="Append PDF file">
                     <fa-icon [icon]="faFileImport" />
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.appendPDFButton"></span>
                 </button>
             </div>
         </div>
-        <div class="pdf-container" #pdfContainer>
-            @if (isEnlargedView()) {
-                <div class="enlarged-container" (click)="closeIfOutside($event)">
-                    <canvas #enlargedCanvas></canvas>
-                    <button class="btn btn-close" (click)="closeEnlargedView($event)"></button>
-                    @if (currentPage() !== 1) {
-                        <button class="btn btn-secondary nav-button left" (click)="handleNavigation('prev', $event)" aria-label="Previous page">←</button>
-                    }
-                    @if (currentPage() !== totalPages()) {
-                        <button class="btn btn-secondary nav-button right" (click)="handleNavigation('next', $event)" aria-label="Next page">→</button>
-                    }
-                    <div class="page-number-display">{{ currentPage() }}</div>
-                </div>
-            }
-        </div>
+        @if (currentPdfUrl()) {
+            <jhi-pdf-preview-thumbnail-grid-component [currentPdfUrl]="currentPdfUrl()" (isPdfLoading)="receiveIsPdfLoading($event)" />
+        }
         <div class="d-flex justify-content-between">
             <div>
                 <a
@@ -71,7 +59,7 @@
                 </a>
             </div>
             <div>
-                <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="isPdfLoading() || totalPages() === 0 || !isFileChanged()">
+                <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="isPdfLoading() || totalPages() === 0">
                     <fa-icon [icon]="faSave" [ngbTooltip]="'entity.action.save' | artemisTranslate"></fa-icon>
                     <span jhiTranslate="entity.action.save"></span>
                 </button>
