@@ -1,3 +1,7 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
 .answer-post {
     background-color: var(--metis-answer-post-background-color);
     border-radius: 7px;
@@ -5,6 +9,12 @@
 
 .answer-post-content-margin {
     padding-left: 3.2rem;
+}
+
+@include media-breakpoint-down(sm) {
+    .answer-post-content-margin {
+        padding-left: 0.5rem;
+    }
 }
 
 .message-container {

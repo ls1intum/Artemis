@@ -11,6 +11,7 @@ import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-
 import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
+import { getOS } from 'app/shared/util/os-detector.util';
 
 export const MAX_TAB_SIZE = 8;
 
@@ -121,7 +122,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
             // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
             // See https://github.com/microsoft/monaco-editor/issues/307
-            if (document.activeElement && 'blur' in document.activeElement && typeof document.activeElement.blur === 'function') {
+            if (getOS() === 'iOS' && document.activeElement && 'blur' in document.activeElement && typeof document.activeElement.blur === 'function') {
                 document.activeElement.blur();
             }
             this.onBlurEditor.emit();

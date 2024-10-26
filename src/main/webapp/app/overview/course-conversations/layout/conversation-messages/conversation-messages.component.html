@@ -95,9 +95,27 @@
                             }
                         </div>
                     }
+
+                    @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && isMobile) {
+                        <div>
+                            @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
+                                <div class="pt-2">
+                                    <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
+                                    <jhi-post-create-edit-modal
+                                        #createEditModal
+                                        [posting]="newPost!"
+                                        [isCommunicationPage]="true"
+                                        (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"
+                                    />
+                                </div>
+                            } @else {
+                                <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="createEmptyPost(); scrollToBottomOfMessages()" />
+                            }
+                        </div>
+                    }
                 </div>
-                @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation)) {
-                    <div>
+                @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && !isMobile) {
+                    <div class="d-none d-sm-block">
                         @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
                             <div class="pt-2">
                                 <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
