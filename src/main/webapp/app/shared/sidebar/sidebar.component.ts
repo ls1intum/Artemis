@@ -1,9 +1,9 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
-import { faFilter, faFilterCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, effect, input, output } from '@angular/core';
+import { faFilter, faFilterCircleXmark, faHashtag, faPlusCircle, faSearch, faUser, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
-import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarTypes } from 'app/types/sidebar';
+import { ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarItemShowAlways, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from './sidebar-event.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash-es';
@@ -24,7 +24,10 @@ import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercis
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Output() onSelectConversation = new EventEmitter<number>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
-    @Output() onPlusPressed = new EventEmitter<string>();
+    onDirectChatPressed = output<void>();
+    onGroupChatPressed = output<void>();
+    onBrowsePressed = output<void>();
+    onCreateChannelPressed = output<void>();
     @Input() searchFieldEnabled: boolean = true;
     @Input() sidebarData: SidebarData;
     @Input() courseId?: number;
@@ -32,17 +35,18 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Input() showAddOption?: ChannelAccordionShowAdd;
     @Input() channelTypeIcon?: ChannelTypeIcons;
     @Input() collapseState: CollapseState;
+    sidebarItemAlwaysShow = input.required<SidebarItemShowAlways>();
     @Input() showFilter: boolean = false;
-
+    inCommunication = input<boolean>(false);
     searchValue = '';
     isCollapsed: boolean = false;
+    readonly reEmitNonDistinctSidebarEvents = input<boolean>(false);
 
     exerciseId: string;
 
     paramSubscription?: Subscription;
     profileSubscription?: Subscription;
     sidebarEventSubscription?: Subscription;
-    sidebarAccordionEventSubscription?: Subscription;
 
     routeParams: Params;
     isProduction = true;
@@ -52,6 +56,11 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
 
     readonly faFilter = faFilter;
     readonly faFilterCurrentlyApplied = faFilterCircleXmark;
+    readonly faUser = faUser;
+    readonly faUsers = faUsers;
+    readonly faPlusCircle = faPlusCircle;
+    readonly faSearch = faSearch;
+    readonly faHashtag = faHashtag;
 
     sidebarDataBeforeFiltering: SidebarData;
 
@@ -63,41 +72,60 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         private profileService: ProfileService,
         private sidebarEventService: SidebarEventService,
         private modalService: NgbModal,
-    ) {}
+    ) {
+        effect(() => {
+            this.subscribeToSidebarEvents();
+        });
+    }
+
+    createNewChannel() {
+        this.onCreateChannelPressed.emit();
+    }
+
+    browseChannels() {
+        this.onBrowsePressed.emit();
+    }
+
+    createDirectChat() {
+        this.onDirectChatPressed.emit();
+    }
+
+    createGroupChat() {
+        this.onGroupChatPressed.emit();
+    }
 
     ngOnInit(): void {
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo?.testServer ?? false;
         });
-        this.sidebarEventSubscription = this.sidebarEventService
-            .sidebarCardEventListener()
-            .pipe(
-                distinctUntilChanged(), // This ensures the function is only called when the actual value changes
-            )
-            .subscribe((itemId) => {
-                if (itemId) {
-                    this.storeLastSelectedItem(itemId);
-                    if (this.sidebarData.sidebarType == 'conversation') {
-                        this.onSelectConversation.emit(+itemId);
-                        this.onUpdateSidebar.emit();
-                    }
-                }
-            });
+    }
 
-        this.sidebarAccordionEventSubscription = this.sidebarEventService
-            .sidebarAccordionPlusClickedEventListener()
-            .pipe(
-                distinctUntilChanged(), // This ensures the function is only called when the actual value changes
-            )
-            .subscribe((groupKey) => {
-                if (groupKey) {
-                    this.onPlusPressed.emit(groupKey);
+    private subscribeToSidebarEvents() {
+        this.sidebarEventSubscription?.unsubscribe();
+        const listener = this.sidebarEventService.sidebarCardEventListener();
+        let pipe;
+        if (this.reEmitNonDistinctSidebarEvents()) {
+            pipe = listener;
+        } else {
+            pipe = listener.pipe(
+                distinctUntilChanged(),
+                // switchMap(sidebarCardEvent => sidebarCardEvent.onEvent),
+            );
+        }
+        this.sidebarEventSubscription = pipe.subscribe((itemId) => {
+            if (itemId) {
+                this.storeLastSelectedItem(itemId);
+                if (this.sidebarData.sidebarType == 'conversation') {
+                    this.onSelectConversation.emit(+itemId);
+                    this.onUpdateSidebar.emit();
                 }
-            });
+            }
+        });
     }
 
     ngOnChanges() {
+        this.paramSubscription?.unsubscribe();
         this.paramSubscription = this.route.params?.subscribe((params) => {
             this.routeParams = params;
         });

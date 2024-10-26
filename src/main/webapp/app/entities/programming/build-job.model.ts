@@ -4,11 +4,12 @@ import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
+import { BuildAgent } from 'app/entities/programming/build-agent.model';
 
 export class BuildJob implements StringBaseEntity {
     public id?: string;
     public name?: string;
-    public buildAgentAddress?: string;
+    public buildAgent?: BuildAgent;
     public participationId?: number;
     public courseId?: number;
     public exerciseId?: number;

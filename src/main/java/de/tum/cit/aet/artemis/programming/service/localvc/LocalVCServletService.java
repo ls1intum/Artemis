@@ -16,10 +16,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.sshd.server.session.ServerSession;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
@@ -32,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -66,6 +69,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -126,6 +130,8 @@ public class LocalVCServletService {
      * Name of the header containing the authorization information.
      */
     public static final String AUTHORIZATION_HEADER = "Authorization";
+
+    public static final String BUILD_USER_NAME = "buildjob_user";
 
     // Cache the retrieved repositories for quicker access.
     // The resolveRepository method is called multiple times per request.
@@ -207,7 +213,8 @@ public class LocalVCServletService {
      * @throws LocalVCForbiddenException If the user is not allowed to access the repository, e.g. because offline IDE usage is not allowed or the due date has passed.
      * @throws LocalVCInternalException  If an internal error occurs, e.g. because the LocalVCRepositoryUri could not be created.
      */
-    public void authenticateAndAuthorizeGitRequest(HttpServletRequest request, RepositoryActionType repositoryAction) throws LocalVCAuthException, LocalVCForbiddenException {
+    public void authenticateAndAuthorizeGitRequest(HttpServletRequest request, RepositoryActionType repositoryAction)
+            throws LocalVCAuthException, LocalVCForbiddenException, AuthenticationException {
 
         long timeNanoStart = System.nanoTime();
 
@@ -274,7 +281,8 @@ public class LocalVCServletService {
         return AuthenticationMechanism.PARTICIPATION_VCS_ACCESS_TOKEN;
     }
 
-    private User authenticateUser(String authorizationHeader, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri) throws LocalVCAuthException {
+    private User authenticateUser(String authorizationHeader, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri)
+            throws LocalVCAuthException, AuthenticationException {
 
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
 
@@ -428,8 +436,11 @@ public class LocalVCServletService {
 
         ProgrammingExerciseParticipation participation;
         try {
-            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUri.isPracticeRepository(),
-                    false);
+            participation = programmingExerciseParticipationService.retrieveParticipationForRepository(exercise, repositoryTypeOrUserName,
+                    localVCRepositoryUri.isPracticeRepository(), true);
+
+            // TODO Add this back in when we have figured out what is incorrect in the playwright configuration for (MySQL, Local)
+            // participation = programmingExerciseParticipationService.retrieveParticipationForRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException(
@@ -442,20 +453,40 @@ public class LocalVCServletService {
         catch (AccessForbiddenException e) {
             throw new LocalVCForbiddenException(e);
         }
-        // TODO: retrieving the git commit hash should be done ASYNC together with storing the log in the database to avoid long waiting times during permission check
-        String commitHash = null;
+
+        // Asynchronously store an VCS access log entry
+        CompletableFuture.runAsync(() -> storeAccessLogAsync(user, participation, repositoryActionType, authenticationMechanism, ipAddress, localVCRepositoryUri))
+                .exceptionally(ex -> {
+                    log.warn("Failed to asynchronously obtain commit hash or store access log for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath(),
+                            ex.getMessage());
+                    return null;
+                });
+    }
+
+    /**
+     * Asynchronously retrieves the latest commit hash from the specified repository and logs the access to the repository.
+     * This method runs without blocking the user during repository access checks.
+     *
+     * @param user                    the user accessing the repository
+     * @param participation           the participation associated with the repository
+     * @param repositoryActionType    the action performed on the repository (READ or WRITE)
+     * @param authenticationMechanism the mechanism used for authentication (e.g., token, basic auth)
+     * @param ipAddress               the IP address of the user accessing the repository
+     * @param localVCRepositoryUri    the URI of the localVC repository
+     */
+    private void storeAccessLogAsync(User user, ProgrammingExerciseParticipation participation, RepositoryActionType repositoryActionType,
+            AuthenticationMechanism authenticationMechanism, String ipAddress, LocalVCRepositoryUri localVCRepositoryUri) {
         try {
-            if (repositoryActionType == RepositoryActionType.READ) {
-                String relativeRepositoryPath = localVCRepositoryUri.getRelativeRepositoryPath().toString();
-                try (Repository repository = resolveRepository(relativeRepositoryPath)) {
-                    commitHash = getLatestCommitHash(repository);
-                }
+            String commitHash;
+            String relativeRepositoryPath = localVCRepositoryUri.getRelativeRepositoryPath().toString();
+            try (Repository repository = resolveRepository(relativeRepositoryPath)) {
+                commitHash = getLatestCommitHash(repository);
             }
-            // Write a access log entry to the database
-            String finalCommitHash = commitHash;
-            vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, repositoryActionType, authenticationMechanism, finalCommitHash, ipAddress));
+
+            RepositoryActionType finalRepositoryActionType = repositoryActionType == RepositoryActionType.READ ? RepositoryActionType.PULL : RepositoryActionType.PUSH;
+            vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, finalRepositoryActionType, authenticationMechanism, commitHash, ipAddress));
+
         }
-        // NOTE: we intentionally catch all issues here to avoid that the user is blocked from accessing the repository
         catch (Exception e) {
             log.warn("Failed to obtain commit hash or store access log for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(), e.getMessage());
         }
@@ -526,16 +557,9 @@ public class LocalVCServletService {
             // Process push to any repository other than the test repository.
             processNewPushToRepository(participation, commit);
 
-            try {
-                // For push the correct commitHash is only available here, therefore the preliminary null value is overwritten
-                String finalCommitHash = commitHash;
-                vcsAccessLogService.ifPresent(service -> service.updateCommitHash(participation, finalCommitHash));
-            }
-            // NOTE: we intentionally catch all issues here to avoid that the user is blocked from accessing the repository
-            catch (Exception e) {
-                log.warn("Failed to obtain commit hash or store access log for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(),
-                        e.getMessage());
-            }
+            // For push the correct commitHash is only available here, therefore the preliminary null value is overwritten
+            String finalCommitHash = commitHash;
+            vcsAccessLogService.ifPresent(service -> service.updateCommitHash(participation, finalCommitHash));
         }
         catch (GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
@@ -552,8 +576,8 @@ public class LocalVCServletService {
             ProgrammingExercise exercise) {
         ProgrammingExerciseParticipation participation;
         try {
-            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUri.isPracticeRepository(),
-                    true);
+            participation = programmingExerciseParticipationService.retrieveParticipationForRepository(exercise, repositoryTypeOrUserName,
+                    localVCRepositoryUri.isPracticeRepository(), true);
         }
         catch (EntityNotFoundException e) {
             throw new VersionControlException("Could not find participation for repository " + repositoryTypeOrUserName + " of exercise " + exercise, e);
@@ -705,6 +729,29 @@ public class LocalVCServletService {
     }
 
     /**
+     * Retrieves the participation for a programming exercise based on the repository URI.
+     *
+     * @param localVCRepositoryUri the {@link LocalVCRepositoryUri} containing details about the repository.
+     * @return the {@link ProgrammingExerciseParticipation} corresponding to the repository URI.
+     */
+    private ProgrammingExerciseParticipation retrieveParticipationFromLocalVCRepositoryUri(LocalVCRepositoryUri localVCRepositoryUri) {
+        String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
+        var repositoryURL = localVCRepositoryUri.toString().replace("/git-upload-pack", "").replace("/git-receive-pack", "");
+        return programmingExerciseParticipationService.retrieveParticipationForRepository(repositoryTypeOrUserName, repositoryURL);
+    }
+
+    /**
+     * Retrieves the participation for a programming exercise based on the HTTP request.
+     *
+     * @param request the {@link HttpServletRequest} containing the repository URI.
+     * @return the {@link ProgrammingExerciseParticipation} corresponding to the repository details in the request.
+     */
+    private ProgrammingExerciseParticipation getExerciseParticipationFromRequest(HttpServletRequest request) {
+        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
+        return retrieveParticipationFromLocalVCRepositoryUri(localVCRepositoryUri);
+    }
+
+    /**
      * Determine the default branch of the given repository.
      *
      * @param repository the repository for which the default branch should be determined.
@@ -713,6 +760,127 @@ public class LocalVCServletService {
     public static String getDefaultBranchOfRepository(Repository repository) {
         Path repositoryFolderPath = repository.getDirectory().toPath();
         return LocalVCService.getDefaultBranchOfRepository(repositoryFolderPath.toString());
+    }
+
+    /**
+     * Updates the VCS (Version Control System) access log for clone and pull actions using HTTPS.
+     * <p>
+     * This method logs the access information based on the incoming HTTP request. It checks if the action
+     * is performed by a build job user and, if not, records the user's repository action (clone or pull).
+     * The action type is determined based on the number of offers (`clientOffered`).
+     *
+     * @param request       the {@link HttpServletRequest} containing the HTTP request data, including headers.
+     * @param clientOffered the number of objects offered by the client in the operation, used to determine
+     *                          if the action is a clone (if 0) or a pull (if greater than 0).
+     */
+    @Async
+    public void updateVCSAccessLogForCloneAndPullHTTPS(HttpServletRequest request, int clientOffered) {
+        try {
+            String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+            UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+            String userName = usernameAndPassword.username();
+            if (userName.equals(BUILD_USER_NAME)) {
+                return;
+            }
+            RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
+            var participation = getExerciseParticipationFromRequest(request);
+
+            vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(participation, repositoryActionType));
+        }
+        catch (Exception ignored) {
+        }
+    }
+
+    /**
+     * Updates the VCS access log for a push action using HTTPS.
+     * <p>
+     * This method logs the access information if the HTTP request is a POST request and the action
+     * is not performed by a build job user. The repository action type is set as a push action.
+     *
+     * This method is asynchronous.
+     *
+     * @param request the {@link HttpServletRequest} containing the HTTP request data, including headers.
+     */
+    @Async
+    public void updateVCSAccessLogForPushHTTPS(HttpServletRequest request) {
+        if (!request.getMethod().equals("POST")) {
+            return;
+        }
+        try {
+            String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+            UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+            String userName = usernameAndPassword.username();
+            if (userName.equals(BUILD_USER_NAME)) {
+                return;
+            }
+            RepositoryActionType repositoryActionType = RepositoryActionType.PUSH;
+            var participation = getExerciseParticipationFromRequest(request);
+
+            vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(participation, repositoryActionType));
+        }
+        catch (Exception ignored) {
+        }
+    }
+
+    /**
+     * Updates the VCS access log for clone and pull actions performed over SSH.
+     * <p>
+     * This method logs access information based on the SSH session and the root directory of the repository.
+     * It determines the repository action (clone or pull) based on the number of offers (`clientOffered`) and
+     * fetches participation details from the local VC repository URI.
+     *
+     * @param session       the {@link ServerSession} representing the SSH session.
+     * @param rootDir       the {@link Path} to the root directory of the repository.
+     * @param clientOffered the number of objects offered by the client in the operation, used to determine
+     *                          if the action is a clone (if 0) or a pull (if greater than 0).
+     */
+    @Async
+    public void updateVCSAccessLogForCloneAndPullSSH(ServerSession session, Path rootDir, int clientOffered) {
+        try {
+            if (session.getAttribute(SshConstants.USER_KEY).getName().equals(BUILD_USER_NAME)) {
+                return;
+            }
+            RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
+            var participation = retrieveParticipationFromLocalVCRepositoryUri(getLocalVCRepositoryUri(rootDir));
+            vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(participation, repositoryActionType));
+        }
+        catch (Exception ignored) {
+        }
+    }
+
+    /**
+     * Adds a failed VCS access attempt to the log.
+     * <p>
+     * This method logs a failed clone attempt, associating it with the user and participation retrieved
+     * from the incoming HTTP request. It assumes that the failed attempt used password authentication.
+     *
+     * @param servletRequest the {@link HttpServletRequest} containing the HTTP request data.
+     */
+    public void createVCSAccessLogForFailedAuthenticationAttempt(HttpServletRequest servletRequest) {
+        try {
+            String authorizationHeader = servletRequest.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+            UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+            User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
+            AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;
+            var participation = getExerciseParticipationFromRequest(servletRequest);
+            var ipAddress = servletRequest.getRemoteAddr();
+            vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
+        }
+        catch (LocalVCAuthException ignored) {
+        }
+    }
+
+    /**
+     * Determines the repository action type for read operations (clone or pull).
+     * <p>
+     * This method returns a {@link RepositoryActionType} based on the number of objects offered.
+     * If no objects are offered (0), it is considered a clone; otherwise, it is a pull action.
+     *
+     * @param clientOffered the number of objects offered to the client in the operation.
+     * @return the {@link RepositoryActionType} based on the number of objects offered (clone if 0, pull if greater than 0).
+     */
+    private RepositoryActionType getRepositoryActionReadType(int clientOffered) {
+        return clientOffered == 0 ? RepositoryActionType.CLONE : RepositoryActionType.PULL;
     }
 
     record UsernameAndPassword(String username, String password) {
