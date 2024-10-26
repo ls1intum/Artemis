@@ -104,6 +104,14 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(directiveInstance.translateValues).toEqual({ points: maxScore, bonusPoints: bonusPoints });
         });
 
+        it('should call triggerSave if save exercise button is clicked', () => {
+            fixture.detectChanges();
+            const saveExerciseSpy = jest.spyOn(comp, 'notifyTriggerSave');
+            const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
+            saveButton.triggerEventHandler('save', null);
+            expect(saveExerciseSpy).toHaveBeenCalledOnce();
+        });
+
         it('should show modeling editor with correct props when there is submission and exercise', () => {
             fixture.detectChanges();
             const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
