@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener, Inject, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnDestroy, inject } from '@angular/core';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
@@ -26,8 +26,9 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
 
     protected navigationSubscription: Subscription;
 
+    private document = inject(DOCUMENT);
+
     constructor(
-        @Inject(DOCUMENT) private document: Document,
         private router: Router,
         private dialog: MatDialog,
     ) {
