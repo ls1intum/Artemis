@@ -25,6 +25,7 @@
     overflow-y: auto;
     overflow-x: hidden;
     max-height: calc(100vh - var(--header-height) - var(--message-input-height-prod));
+    flex-wrap: wrap;
 
     &.content-height-dev {
         max-height: calc(100vh - var(--header-height) - var(--message-input-height-dev));
@@ -43,11 +44,6 @@
 
 .communication-message-wrap {
     min-width: 200px;
-}
-
-.communication-answer-message-wrap {
-    max-width: min-content;
-    display: flex;
 }
 
 @include media-breakpoint-down(sm) {
