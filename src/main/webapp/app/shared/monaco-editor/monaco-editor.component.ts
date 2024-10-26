@@ -13,7 +13,7 @@ import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/
 import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
 import { getOS } from 'app/shared/util/os-detector.util';
 
-import EmojiConvertor from 'emoji-js'; /* @vite-ignore */
+import EmojiConvertor from 'emoji-js';
 
 export const MAX_TAB_SIZE = 8;
 
