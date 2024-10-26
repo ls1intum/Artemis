@@ -274,4 +274,26 @@ describe('CoursesComponent', () => {
         expect(component.courses).toEqual([course1, course2, course6]);
         expect(component.nextRelevantExams).toEqual([]);
     }));
+
+    it('should initialize search course text correctly', () => {
+        const searchedCourse = 'Test Course';
+        component.setSearchValue('Test Course');
+        expect(searchedCourse).toBe(component.searchCourseText);
+    });
+
+    it('should adjust sort direction by clicking on sort icon', () => {
+        const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
+        findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: coursesDashboard, headers: new HttpHeaders() })));
+        component.ngOnInit();
+
+        expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
+        expect(component.courses).toEqual(courses);
+        expect(component.isSortAscending).toBeTrue();
+
+        const onSortSpy = jest.spyOn(component, 'onSort');
+        const button = fixture.debugElement.nativeElement.querySelector('#test-sort');
+        button.click();
+        expect(onSortSpy).toHaveBeenCalledOnce();
+        expect(component.isSortAscending).toBeFalse();
+    });
 });

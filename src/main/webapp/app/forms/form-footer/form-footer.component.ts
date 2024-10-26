@@ -10,6 +10,7 @@ import { ButtonSize } from 'app/shared/components/button.component';
 })
 export class FormFooterComponent {
     @Output() save = new EventEmitter<void>();
+
     @Output() cancel = new EventEmitter<void>();
 
     @Input() isSaving: boolean = false;

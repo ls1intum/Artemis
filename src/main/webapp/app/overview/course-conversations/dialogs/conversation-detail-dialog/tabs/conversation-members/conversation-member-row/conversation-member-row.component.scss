@@ -1,5 +1,3 @@
-$profile-picture-height: 2rem;
-
 .conversation-member-row {
     min-height: 3rem;
 
@@ -15,22 +13,5 @@ $profile-picture-height: 2rem;
 
     .dropdown-toggle::after {
         content: none;
-    }
-
-    .conversation-member-row-default-profile-picture {
-        font-size: 0.8rem;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .conversation-member-row-profile-picture,
-    .conversation-member-row-default-profile-picture {
-        width: $profile-picture-height;
-        height: $profile-picture-height;
-        max-width: $profile-picture-height;
-        max-height: $profile-picture-height;
-        background-color: var(--gray-400);
-        color: var(--white);
     }
 }
