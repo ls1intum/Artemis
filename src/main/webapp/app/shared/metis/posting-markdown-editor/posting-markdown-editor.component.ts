@@ -10,7 +10,9 @@ import {
     Output,
     ViewChild,
     ViewEncapsulation,
+    computed,
     forwardRef,
+    input,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -31,6 +33,9 @@ import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/commun
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
+import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
+import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -52,11 +57,17 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
     @Input() isInputLengthDisplayed = true;
     @Input() suppressNewlineOnEnter = true;
+    /**
+     * For AnswerPosts, the MetisService may not always have an active conversation (e.g. when in the 'all messages' view).
+     * In this case, file uploads have to rely on the parent post to determine the course.
+     */
+    readonly activeConversation = input<ConversationDTO>();
     @Output() valueChange = new EventEmitter();
     lectureAttachmentReferenceAction: LectureAttachmentReferenceAction;
     defaultActions: TextEditorAction[];
     content?: string;
     previewMode = false;
+    fallbackConversationId = computed<number | undefined>(() => this.activeConversation()?.id);
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
@@ -85,6 +96,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new QuoteAction(),
             new CodeAction(),
             new CodeBlockAction(),
+            new UrlAction(),
+            new AttachmentAction(),
             ...messagingOnlyActions,
             new ExerciseReferenceAction(this.metisService),
             ...faqAction,
