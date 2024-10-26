@@ -96,7 +96,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
     assureConditionsSatisfied(): boolean {
-        if (this.exercise().type === ExerciseType.PROGRAMMING || this.exercise().type === ExerciseType.MODELLING || !this.hasAthenaResultForLatestSubmission()) {
+        if (this.exercise().type === ExerciseType.PROGRAMMING || this.exercise().type === ExerciseType.MODELING || !this.hasAthenaResultForLatestSubmission()) {
             return true;
         }
         const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
