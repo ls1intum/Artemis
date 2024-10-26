@@ -108,7 +108,6 @@ export enum ReferenceType {
     CHANNEL = 'CHANNEL',
     FAQ = 'FAQ',
     IMAGE = 'IMAGE',
-
 }
 
 export enum UserRole {
