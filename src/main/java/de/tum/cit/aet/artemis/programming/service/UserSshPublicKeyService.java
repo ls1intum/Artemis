@@ -93,16 +93,18 @@ public class UserSshPublicKeyService {
      * @param user  the {@link User} to whom the SSH key belongs.
      * @param keyId the ID of the SSH key.
      * @return the {@link UserSshPublicKey} if found and belongs to the user.
-     * @throws EntityNotFoundException if the key does not belong to the user.
+     * @throws AccessForbiddenException if the key does not belong to the user, or does not exist
      */
     public UserSshPublicKey getSshKeyForUser(User user, Long keyId) {
-        var userSshPublicKey = userSshPublicKeyRepository.findByIdElseThrow(keyId);
-        if (Objects.equals(userSshPublicKey.getUserId(), user.getId())) {
-            return userSshPublicKey;
+        try {
+            var userSshPublicKey = userSshPublicKeyRepository.findByIdElseThrow(keyId);
+            if (Objects.equals(userSshPublicKey.getUserId(), user.getId())) {
+                return userSshPublicKey;
+            }
         }
-        else {
-            throw new AccessForbiddenException("SSH key", keyId);
+        catch (EntityNotFoundException ignored) {
         }
+        throw new AccessForbiddenException("SSH key", keyId);
     }
 
     /**
