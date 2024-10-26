@@ -1,6 +1,7 @@
 import { Page } from 'playwright';
 import { expect } from '@playwright/test';
 import { Commands } from '../../commands';
+import { BASE_API } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the exercise result page.
