@@ -5,11 +5,14 @@ import { MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ButtonType } from 'app/shared/components/button.component';
+import { IrisModule } from 'app/iris/iris.module';
 
 @Component({
     selector: 'jhi-chatbot-widget',
     templateUrl: './chatbot-widget.component.html',
     styleUrls: ['./chatbot-widget.component.scss'],
+    standalone: true,
+    imports: [IrisModule],
 })
 export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     // User preferences
