@@ -24,6 +24,7 @@
                 "saveSshKey": "Save",
                 "invalidKeyFormat": "Failed to save SSH key. Make sure the key is in a valid and supported format.",
                 "keyAlreadyExists": "Failed to save SSH key. You already use the provided key.",
+                "keyLabelTooLong": "Failed to save SSH key. The key label is limited to 50 characters.",
                 "loadKeyFailure": "Failed to load SSH keys.",
                 "saveFailure": "Failed to save SSH key.",
                 "saveSuccess": "Successfully save SSH key.",

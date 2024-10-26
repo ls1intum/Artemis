@@ -67,20 +67,23 @@ public class UserSshPublicKeyService {
      *
      * @param newSshPublicKey the {@link UserSshPublicKey} for which the label is being set.
      * @param label           the label to assign to the SSH key, or null/empty to use the default logic.
+     * @throws BadRequestAlertException if the key label is longer than 50 characters
      */
     public void setLabelForKey(UserSshPublicKey newSshPublicKey, String label) {
         if (label == null || label.isEmpty()) {
             String[] parts = newSshPublicKey.getPublicKey().split("\\s+");
             if (parts.length >= 3) {
-                String labelFromParts = String.join(" ", Arrays.copyOfRange(parts, 2, parts.length));
-                newSshPublicKey.setLabel(labelFromParts);
+                label = String.join(" ", Arrays.copyOfRange(parts, 2, parts.length));
             }
             else {
-                newSshPublicKey.setLabel(KEY_DEFAULT_LABEL);
+                label = KEY_DEFAULT_LABEL;
             }
         }
-        else {
+        if (label.length() <= 50) {
             newSshPublicKey.setLabel(label);
+        }
+        else {
+            throw new BadRequestAlertException("Key label is too long", "SSH key", "keyLabelTooLong", true);
         }
     }
 

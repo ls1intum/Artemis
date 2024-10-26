@@ -185,7 +185,8 @@ public class AccountResource {
      *
      * @param sshPublicKey the ssh public key to create
      *
-     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) when the SSH key is malformed, or when a key with the same hash already exists
+     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) when the SSH key is malformed, the label is too long, or when a key with the same hash
+     *         already exists
      */
     @PostMapping("account/ssh-public-key")
     @EnforceAtLeastStudent

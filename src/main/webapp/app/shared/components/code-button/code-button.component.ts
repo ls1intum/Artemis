@@ -49,7 +49,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     gitlabVCEnabled = false;
     showCloneUrlWithoutToken = true;
     copyEnabled? = true;
-    doesUserHavSSHkeys = false;
+    doesUserHaveSSHkeys = false;
 
     sshKeyMissingTip: string;
     tokenMissingTip: string;
@@ -86,7 +86,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
         this.copyEnabled = true;
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
-        // console.log(this.useSsh);
         this.useToken = this.localStorage.retrieve('useToken') || false;
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
         this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
@@ -98,7 +97,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
         this.accountService.hasUserSshPublicKeys().subscribe({
             next: (res: boolean) => {
-                this.doesUserHavSSHkeys = res;
+                this.doesUserHaveSSHkeys = res;
                 if (this.useSsh) {
                     this.useSshUrl();
                 }
@@ -156,7 +155,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     public useSshUrl() {
         this.useSsh = true;
         this.useToken = false;
-        this.copyEnabled = this.doesUserHavSSHkeys || this.gitlabVCEnabled;
+        this.copyEnabled = this.doesUserHaveSSHkeys || this.gitlabVCEnabled;
         this.storeToLocalStorage();
     }
 
