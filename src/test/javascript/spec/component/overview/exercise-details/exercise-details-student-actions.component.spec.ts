@@ -14,7 +14,6 @@ import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Team } from 'app/entities/team.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
@@ -33,9 +32,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { AssessmentType } from 'app/entities/assessment-type.model';
 import { PROFILE_THEIA } from 'app/app.constants';
-import { Submission } from 'app/entities/submission.model';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -503,145 +500,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             }
         }),
     );
-
-    it('assureConditionsSatisfied should alert and return false if the feedback request has already been sent', () => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'warning');
-        comp.exercise = {
-            type: ExerciseType.PROGRAMMING,
-            dueDate: dayjs().add(5, 'minutes'),
-            studentParticipations: [
-                {
-                    id: 2,
-                    individualDueDate: dayjs().subtract(5, 'days'),
-                    results: [
-                        {
-                            assessmentType: AssessmentType.AUTOMATIC,
-                            score: 100,
-                        },
-                    ],
-                },
-            ] as StudentParticipation[],
-        } as ProgrammingExercise;
-
-        const result = comp.assureConditionsSatisfied();
-
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAlreadySent');
-        expect(result).toBeFalse();
-    });
-
-    it('assureConditionsSatisfied should alert and return false if the request is made after the due date', () => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'warning');
-        comp.exercise = {
-            type: ExerciseType.PROGRAMMING,
-            dueDate: dayjs().subtract(5, 'minutes'),
-            studentParticipations: [
-                {
-                    id: 2,
-                    results: [
-                        {
-                            assessmentType: AssessmentType.AUTOMATIC,
-                            score: 100,
-                        },
-                    ],
-                },
-            ] as StudentParticipation[],
-        } as ProgrammingExercise;
-
-        const result = comp.assureConditionsSatisfied();
-
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAfterDueDate');
-        expect(result).toBeFalse();
-    });
-
-    it('assureConditionsSatisfied should alert and return false if the latest submission already has athena result', () => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'warning');
-        const submission: Submission = { id: 42 };
-        comp.exercise = {
-            type: ExerciseType.TEXT,
-            dueDate: dayjs().add(5, 'minutes'),
-            studentParticipations: [
-                {
-                    id: 2,
-                    results: [
-                        {
-                            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
-                            score: 100,
-                            submission: submission,
-                            successful: true,
-                        },
-                    ],
-                    submissions: [submission],
-                },
-            ] as StudentParticipation[],
-        } as TextExercise;
-
-        const result = comp.assureConditionsSatisfied();
-
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.submissionAlreadyHasAthenaResult');
-        expect(result).toBeFalse();
-    });
-
-    it('assureConditionsSatisfied should return true if all conditions are satisfied', () => {
-        comp.exercise = {
-            type: ExerciseType.PROGRAMMING,
-            dueDate: dayjs().add(5, 'minutes'),
-            studentParticipations: [
-                {
-                    id: 2,
-                    results: [
-                        {
-                            assessmentType: AssessmentType.AUTOMATIC,
-                            score: 100,
-                        },
-                    ],
-                },
-            ] as StudentParticipation[],
-        } as ProgrammingExercise;
-
-        const result = comp.assureConditionsSatisfied();
-
-        expect(result).toBeTrue();
-    });
-
-    it('assureConditionsSatisfied should alert and return false if the maximum number of successful Athena results is reached', () => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'warning');
-        const numResults = 20;
-        const results: Array<{ assessmentType: AssessmentType; successful: boolean }> = [];
-
-        for (let i = 0; i < numResults; i++) {
-            results.push({ assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true });
-        }
-
-        comp.exercise = {
-            type: ExerciseType.PROGRAMMING,
-            dueDate: dayjs().add(5, 'minutes'),
-            studentParticipations: [
-                {
-                    id: 2,
-                    individualDueDate: undefined,
-                    results: [
-                        {
-                            assessmentType: AssessmentType.AUTOMATIC,
-                            score: 100,
-                        },
-                        ...results,
-                    ],
-                },
-            ] as StudentParticipation[],
-        } as ProgrammingExercise;
-
-        const result = comp.assureConditionsSatisfied();
-
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(result).toBeFalse();
-    });
 
     it.each([
         [

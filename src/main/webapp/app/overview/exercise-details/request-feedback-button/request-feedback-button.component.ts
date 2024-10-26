@@ -108,8 +108,11 @@ export class RequestFeedbackButtonComponent implements OnInit {
         if (this.participation?.submissions && this.participation?.results) {
             // submissions.results is always undefined so this is neccessary
             return (
-                this.participation.submissions?.last()?.id ===
-                this.participation.results?.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA).first()?.submission?.id
+                this.participation.submissions?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0)).last()?.id ===
+                this.participation.results
+                    ?.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA)
+                    .sort((a, b) => (a.id ?? 0) - (b.id ?? 0))
+                    .last()?.submission?.id
             );
         }
         return false;

@@ -230,15 +230,7 @@
                         [routerLink]="['/courses', courseId, 'exercises', exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                     ></button>
                     @if (exercise.allowFeedbackRequests && athenaEnabled && (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && beforeDueDate) {
-                        <jhi-button
-                            [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
-                            [icon]="faPenSquare"
-                            (onClick)="requestFeedback()"
-                            [disabled]="!gradedParticipation?.submissions?.last()?.submitted || isGeneratingFeedback"
-                            [btnType]="ButtonType.PRIMARY"
-                            [isLoading]="isGeneratingFeedback"
-                            [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
-                        />
+                        <jhi-request-feedback-button [exercise]="exercise" [smallButtons]="smallButtons"></jhi-request-feedback-button>
                     }
                 }
             </div>

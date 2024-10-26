@@ -260,30 +260,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
     }
 
-    // TODO remove this method once support of the button component is implemented for text and modeling exercises
-    requestFeedback() {
-        if (!this.assureConditionsSatisfied()) return;
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
-            if (!window.confirm(confirmLockRepository)) {
-                return;
-            }
-        }
-
-        this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
-            next: (participation: StudentParticipation) => {
-                if (participation) {
-                    this.generatingFeedback.emit();
-                    this.feedbackSent = true;
-                    this.alertService.success('artemisApp.exercise.feedbackRequestSent');
-                }
-            },
-            error: (error) => {
-                this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
-            },
-        });
-    }
-
     get isBeforeStartDateAndStudent(): boolean {
         return !this.exercise.isAtLeastTutor && !!this.exercise.startDate && dayjs().isBefore(this.exercise.startDate);
     }
@@ -335,69 +311,5 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
     buildPlanUrl(participation: StudentParticipation) {
         return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
-    }
-
-    /**
-     * Checks if the conditions for requesting automatic non-graded feedback are satisfied.
-     * The student can request automatic non-graded feedback under the following conditions:
-     * 1. They have a graded submission.
-     * 2. The deadline for the exercise has not been exceeded.
-     * 3. There is no already pending feedback request.
-     * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
-     */
-    // TODO remove this method once support of the button component is implemented for text and modeling exercises
-    assureConditionsSatisfied(): boolean {
-        this.updateParticipations();
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
-            const someHiddenTestsPassed = latestResult?.score !== undefined;
-            const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.notEnoughPoints');
-            if (!someHiddenTestsPassed) {
-                window.alert(testsNotPassedWarning);
-                return false;
-            }
-        }
-
-        const afterDueDate = !!this.exercise.dueDate && dayjs().isSameOrAfter(this.exercise.dueDate);
-        const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
-        if (afterDueDate) {
-            this.alertService.warning(dueDateWarning);
-            return false;
-        }
-
-        const requestAlreadySent = (this.gradedParticipation?.individualDueDate && this.gradedParticipation.individualDueDate.isBefore(Date.now())) ?? false;
-        const requestAlreadySentWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAlreadySent');
-        if (requestAlreadySent) {
-            this.alertService.warning(requestAlreadySentWarning);
-            return false;
-        }
-
-        if (this.gradedParticipation?.results) {
-            const athenaResults = this.gradedParticipation.results.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA');
-            const countOfSuccessfulRequests = athenaResults.length;
-
-            if (countOfSuccessfulRequests >= 10) {
-                const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
-                this.alertService.warning(rateLimitExceededWarning);
-                return false;
-            }
-        }
-
-        if (this.hasAthenaResultForLatestSubmission()) {
-            const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
-            this.alertService.warning(submitFirstWarning);
-            return false;
-        }
-        return true;
-    }
-
-    hasAthenaResultForLatestSubmission(): boolean {
-        if (this.gradedParticipation?.submissions && this.gradedParticipation?.results) {
-            return (
-                this.gradedParticipation.submissions.last()?.id ===
-                this.gradedParticipation?.results.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && !!result.successful).first()?.submission?.id
-            );
-        }
-        return false;
     }
 }
