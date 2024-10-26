@@ -90,6 +90,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
@@ -126,7 +127,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
@@ -175,7 +176,7 @@ public class CourseTestService {
     private CourseTestRepository courseRepo;
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
+    private ExerciseTestRepository exerciseRepo;
 
     @Autowired
     private LectureRepository lectureRepo;
@@ -1954,7 +1955,7 @@ public class CourseTestService {
         Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
         ModelingExercise classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
 
-        List<Submission> lockedSubmissions = request.getList("/api/courses/" + course.getId() + "/lockedSubmissions", HttpStatus.OK, Submission.class);
+        List<Submission> lockedSubmissions = request.getList("/api/courses/" + course.getId() + "/locked-submissions", HttpStatus.OK, Submission.class);
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
         assertThat(lockedSubmissions).as("Locked Submissions length is 0").isEmpty();
 
@@ -1969,14 +1970,14 @@ public class CourseTestService {
         submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, userPrefix + "student3", userPrefix + "tutor1");
 
-        lockedSubmissions = request.getList("/api/courses/" + course.getId() + "/lockedSubmissions", HttpStatus.OK, Submission.class);
+        lockedSubmissions = request.getList("/api/courses/" + course.getId() + "/locked-submissions", HttpStatus.OK, Submission.class);
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
         assertThat(lockedSubmissions).as("Locked Submissions length is 3").hasSize(3);
     }
 
     // Test
     public void testGetLockedSubmissionsForCourseAsStudent() throws Exception {
-        List<Submission> lockedSubmissions = request.getList("/api/courses/1/lockedSubmissions", HttpStatus.FORBIDDEN, Submission.class);
+        List<Submission> lockedSubmissions = request.getList("/api/courses/1/locked-submissions", HttpStatus.FORBIDDEN, Submission.class);
         assertThat(lockedSubmissions).as("Locked Submissions is null").isNull();
     }
 
@@ -3303,8 +3304,7 @@ public class CourseTestService {
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(course.getCourseIcon()).as("Course icon got stored").isNotNull();
-        var imgResult = request.performMvcRequest(get(course.getCourseIcon())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
-                .andReturn();
+        var imgResult = request.performMvcRequest(get(course.getCourseIcon())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.IMAGE_PNG)).andReturn();
         assertThat(imgResult.getResponse().getContentAsByteArray()).isNotEmpty();
 
         var createdCourse = courseRepo.findByIdElseThrow(course.getId());
@@ -3338,7 +3338,7 @@ public class CourseTestService {
     }
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {
-        return "/api/courses/" + courseId + "/onlineCourseConfiguration";
+        return "/api/courses/" + courseId + "/online-course-configuration";
     }
 
     // Test
@@ -3384,4 +3384,56 @@ public class CourseTestService {
             assertThat(found).as("Course is available").isPresent();
         }
     }
+
+    // Test
+    public void testGetAllCoursesForCourseArchiveWithNonNullSemestersAndEndDate() throws Exception {
+        List<Course> expectedOldCourses = new ArrayList<>();
+        for (int i = 1; i <= 4; i++) {
+            expectedOldCourses.add(courseUtilService.createCourse((long) i));
+        }
+
+        expectedOldCourses.get(0).setSemester("SS20");
+        expectedOldCourses.get(0).setEndDate(ZonedDateTime.now().minusDays(10));
+        expectedOldCourses.get(1).setSemester("SS21");
+        expectedOldCourses.get(1).setEndDate(ZonedDateTime.now().minusDays(10));
+        expectedOldCourses.get(2).setSemester("WS21/22");
+        expectedOldCourses.get(2).setEndDate(ZonedDateTime.now().minusDays(10));
+        expectedOldCourses.get(3).setSemester(null); // will be filtered out
+
+        courseRepo.saveAll(expectedOldCourses);
+
+        final Set<CourseForArchiveDTO> actualOldCourses = request.getSet("/api/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
+        assertThat(actualOldCourses).as("Course archive has 3 courses").hasSize(3);
+        assertThat(actualOldCourses).as("Course archive has the correct semesters").extracting("semester").containsExactlyInAnyOrder(expectedOldCourses.get(0).getSemester(),
+                expectedOldCourses.get(1).getSemester(), expectedOldCourses.get(2).getSemester());
+        assertThat(actualOldCourses).as("Course archive got the correct courses").extracting("id").containsExactlyInAnyOrder(expectedOldCourses.get(0).getId(),
+                expectedOldCourses.get(1).getId(), expectedOldCourses.get(2).getId());
+        Optional<CourseForArchiveDTO> notFound = actualOldCourses.stream().filter(c -> Objects.equals(c.id(), expectedOldCourses.get(3).getId())).findFirst();
+        assertThat(notFound).as("Course archive did not fetch the last course").isNotPresent();
+    }
+
+    // Test
+    public void testGetAllCoursesForCourseArchiveForUnenrolledStudent() throws Exception {
+        Course course1 = courseUtilService.createCourse((long) 1);
+        course1.setSemester("SS20");
+        course1.setEndDate(ZonedDateTime.now().minusDays(10));
+        courseRepo.save(course1);
+
+        Course course2 = courseUtilService.createCourse((long) 2);
+        course2.setSemester("SS21");
+        course2.setEndDate(ZonedDateTime.now().minusDays(10));
+        courseRepo.save(course2);
+
+        Course course3 = courseUtilService.createCourse((long) 3);
+        course3.setSemester("WS21/22");
+        course3.setEndDate(ZonedDateTime.now().minusDays(10));
+        courseRepo.save(course3);
+
+        // remove student from all courses
+        removeAllGroupsFromStudent1();
+
+        final Set<CourseForArchiveDTO> actualCoursesForStudent = request.getSet("/api/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
+        assertThat(actualCoursesForStudent).as("Course archive does not show any courses to the user removed from these courses").hasSize(0);
+    }
+
 }

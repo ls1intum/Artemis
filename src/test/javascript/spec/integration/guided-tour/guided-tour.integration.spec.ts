@@ -9,7 +9,6 @@ import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { RouterTestingModule } from '@angular/router/testing';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { CoursesComponent } from 'app/overview/courses.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -21,6 +20,7 @@ import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { User } from 'app/core/user/user.model';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { CourseCardComponent } from 'app/overview/course-card.component';
+import { CourseCardHeaderComponent } from 'app/overview/course-card-header/course-card-header.component';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -43,6 +43,7 @@ import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/con
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { RouterModule } from '@angular/router';
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;
@@ -61,7 +62,7 @@ describe('Guided tour integration', () => {
         TestBed.configureTestingModule({
             imports: [
                 ArtemisTestModule,
-                RouterTestingModule.withRoutes([
+                RouterModule.forRoot([
                     {
                         path: 'courses',
                         component: MockComponent(CoursesComponent),
@@ -79,6 +80,7 @@ describe('Guided tour integration', () => {
                 FooterComponent,
                 NotificationSidebarComponent,
                 MockHasAnyAuthorityDirective,
+                MockComponent(CourseCardHeaderComponent),
                 MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(LoadingNotificationComponent),

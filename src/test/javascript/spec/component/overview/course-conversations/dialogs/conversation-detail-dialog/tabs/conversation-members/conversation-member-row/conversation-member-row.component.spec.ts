@@ -22,6 +22,7 @@ import { of } from 'rxjs';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { By } from '@angular/platform-browser';
 import { NgbDropdownMocksModule } from '../../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 const memberTemplate = {
     id: 1,
@@ -59,7 +60,7 @@ examples.forEach((activeConversation) => {
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
                 imports: [NgbTooltipModule, NgbDropdownMocksModule],
-                declarations: [ConversationMemberRowComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+                declarations: [ConversationMemberRowComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockComponent(ProfilePictureComponent)],
                 providers: [
                     MockProvider(AccountService),
                     MockProvider(NgbModal),

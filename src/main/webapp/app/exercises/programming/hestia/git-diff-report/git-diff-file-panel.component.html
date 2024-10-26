@@ -1,13 +1,13 @@
 <div ngbAccordion [destroyOnHide]="false" class="git-diff-file-panel">
     <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="false">
         <div ngbAccordionHeader class="d-flex align-items-center justify-content-between">
-            <jhi-git-diff-file-panel-title [filePath]="filePath" [previousFilePath]="previousFilePath" />
+            <jhi-git-diff-file-panel-title [modifiedFilePath]="modifiedFilePath()" [originalFilePath]="originalFilePath()" />
             <div>
                 <jhi-git-diff-line-stat
-                    [addedLineCount]="addedLineCount"
-                    [removedLineCount]="removedLineCount"
+                    [addedLineCount]="addedLineCount()"
+                    [removedLineCount]="removedLineCount()"
                     ngbTooltip="{{
-                        (diffForTemplateAndSolution
+                        (diffForTemplateAndSolution()
                             ? 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport'
                             : 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReportExamTimeline'
                         ) | artemisTranslate
@@ -21,11 +21,13 @@
         <div ngbAccordionCollapse>
             <div ngbAccordionBody>
                 <jhi-git-diff-file
-                    [allowSplitView]="allowSplitView"
-                    [diffForTemplateAndSolution]="diffForTemplateAndSolution"
-                    [diffEntries]="diffEntries"
-                    [originalFileContent]="templateFileContent"
-                    [modifiedFileContent]="solutionFileContent"
+                    [allowSplitView]="allowSplitView()"
+                    [diffForTemplateAndSolution]="diffForTemplateAndSolution()"
+                    [diffEntries]="diffEntries()"
+                    [originalFileContent]="originalFileContent()"
+                    [originalFilePath]="originalFilePath()"
+                    [modifiedFileContent]="modifiedFileContent()"
+                    [modifiedFilePath]="modifiedFilePath()"
                     (onDiffReady)="onDiffReady.emit($event)"
                 />
             </div>

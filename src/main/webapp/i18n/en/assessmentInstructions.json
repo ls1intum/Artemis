@@ -21,7 +21,7 @@
             "usageCount": "Usage Count",
             "trainingEvaluationCriteria": {
                 "title": "Assessment Training Evaluation Criteria",
-                "description": "In order to successfully complete the training, your assessment should match all of the following criteria:<br>&nbsp;1. The number of feedback that you provide should be the same as the instructor's.<br>&nbsp;2. Every feedback should have the same usage of assessment instructions and score.<br>&nbsp;3. A reason should be provided for feedback with a negative score."
+                "description": "In order to successfully complete the training, your assessment should match all the following criteria:<br>&nbsp;1. The number of feedback that you provide should be the same as the instructor's.<br>&nbsp;2. Every feedback should have the same usage of assessment instructions and score.<br>&nbsp;3. A reason should be provided for feedback with a negative score."
             }
         }
     }

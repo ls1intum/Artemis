@@ -167,6 +167,10 @@ public class Post extends Posting {
         this.tags.add(tag);
     }
 
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
     public Conversation getConversation() {
         return conversation;
     }

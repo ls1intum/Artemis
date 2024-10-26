@@ -4,7 +4,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { Annotation, CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MockComponent } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -46,32 +45,29 @@ describe('CodeEditorMonacoComponent', () => {
         },
     ];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorModule],
-            declarations: [
-                CodeEditorMonacoComponent,
-                MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
-                MockComponent(CodeEditorHeaderComponent),
-                MonacoEditorComponent,
-            ],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, MonacoEditorComponent],
+            declarations: [MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent), MockComponent(CodeEditorHeaderComponent)],
             providers: [
                 CodeEditorFileService,
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CodeEditorMonacoComponent);
-                comp = fixture.componentInstance;
-                codeEditorRepositoryFileService = fixture.debugElement.injector.get(CodeEditorRepositoryFileService);
-                loadFileFromRepositoryStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
-                getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(CodeEditorMonacoComponent);
+        comp = fixture.componentInstance;
+        codeEditorRepositoryFileService = fixture.debugElement.injector.get(CodeEditorRepositoryFileService);
+        loadFileFromRepositoryStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
+        getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
+        fixture.componentRef.setInput('sessionId', 'test');
+        fixture.componentRef.setInput('commitState', CommitState.CLEAN);
+        fixture.componentRef.setInput('editorState', EditorState.CLEAN);
     });
 
     afterEach(() => {
@@ -79,7 +75,6 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should hide the editor if no file is selected', () => {
-        comp.sessionId = 'test';
         fixture.detectChanges();
         const element = document.getElementById('monaco-editor-test');
         expect(element).not.toBeNull();
@@ -87,7 +82,7 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should not try to load a file if none is selected', async () => {
-        const editorChangeModelSpy = jest.spyOn(comp.editor, 'changeModel');
+        const editorChangeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
         fixture.detectChanges();
         await comp.selectFileInEditor(undefined);
         expect(editorChangeModelSpy).not.toHaveBeenCalled();
@@ -95,10 +90,9 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should hide the editor if a file is being loaded', () => {
-        comp.sessionId = 'test';
-        comp.selectedFile = 'file';
+        fixture.componentRef.setInput('selectedFile', 'file');
         fixture.detectChanges();
-        comp.loadingCount = 1;
+        comp.loadingCount.set(1);
         fixture.detectChanges();
         const element = document.getElementById('monaco-editor-test');
         expect(element).not.toBeNull();
@@ -106,49 +100,48 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should display the usable editor when a file is selected', () => {
-        comp.sessionId = 'test';
-        comp.selectedFile = 'file';
-        comp.loadingCount = 0;
-        comp.isTutorAssessment = false;
+        // Prevent loading the file
+        jest.spyOn(comp, 'selectFileInEditor').mockImplementation().mockResolvedValue(undefined);
+        fixture.componentRef.setInput('selectedFile', 'file');
+        fixture.componentRef.setInput('isTutorAssessment', false);
         fixture.detectChanges();
         const element = document.getElementById('monaco-editor-test');
         expect(element).not.toBeNull();
         expect(element!.hidden).toBeFalse();
-        expect(comp.editor.isReadOnly()).toBeFalse();
+        expect(comp.editor().isReadOnly()).toBeFalse();
     });
 
     it.each([
         [() => {}, false],
-        [() => (comp.isTutorAssessment = true), true],
-        [() => (comp.disableActions = true), true],
-        [() => (comp.commitState = CommitState.CONFLICT), true],
-        [() => (comp.selectedFile = undefined), true],
-        [() => (comp.fileSession['file'].loadingError = true), true],
+        [() => fixture.componentRef.setInput('isTutorAssessment', true), true],
+        [() => fixture.componentRef.setInput('disableActions', true), true],
+        [() => fixture.componentRef.setInput('commitState', CommitState.CONFLICT), true],
+        [() => fixture.componentRef.setInput('selectedFile', undefined), true],
+        [() => comp.fileSession.set({ ['file']: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: true } }), true], // TODO: convert to signal
     ])('should correctly lock the editor on changes', (setup: () => void, shouldLock: boolean) => {
-        comp.selectedFile = 'file';
-        comp.fileSession = {
-            [comp.selectedFile]: { code: 'some code', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
-        };
+        fixture.componentRef.setInput('selectedFile', 'file');
+        comp.fileSession.set({
+            [comp.selectedFile()!]: { code: 'some code', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
+        });
         fixture.detectChanges();
         setup();
-        comp.ngOnChanges({});
-        expect(comp.editorLocked).toBe(shouldLock);
+        expect(comp.editorLocked()).toBe(shouldLock);
     });
 
     it('should update the file session and notify when the file content changes', () => {
         const selectedFile = 'file';
         const fileSession = {
-            [selectedFile]: { code: 'some unchanged code', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
+            [selectedFile]: { code: 'some unchanged code', cursor: { lineNumber: 1, column: 1 }, loadingError: false },
         };
         const newCode = 'some new code';
         const valueCallbackStub = jest.fn();
         comp.onFileContentChange.subscribe(valueCallbackStub);
         fixture.detectChanges();
-        comp.fileSession = fileSession;
-        comp.selectedFile = selectedFile;
+        comp.fileSession.set(fileSession);
+        fixture.componentRef.setInput('selectedFile', selectedFile);
         comp.onFileTextChanged(newCode);
         expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith({ file: selectedFile, fileContent: newCode });
-        expect(comp.fileSession).toEqual({
+        expect(comp.fileSession()).toEqual({
             [selectedFile]: { ...fileSession[selectedFile], code: newCode },
         });
     });
@@ -157,20 +150,20 @@ describe('CodeEditorMonacoComponent', () => {
         const fileToLoad = { fileName: 'file-to-load', fileContent: 'some code' };
         const loadedFileSubject = new BehaviorSubject(fileToLoad);
         loadFileFromRepositoryStub.mockReturnValue(loadedFileSubject);
-        const setPositionStub = jest.spyOn(comp.editor, 'setPosition').mockImplementation();
-        const changeModelStub = jest.spyOn(comp.editor, 'changeModel').mockImplementation();
+        const setPositionStub = jest.spyOn(comp.editor(), 'setPosition').mockImplementation();
+        const changeModelStub = jest.spyOn(comp.editor(), 'changeModel').mockImplementation();
         const presentFileName = 'present-file';
         const presentFileSession = {
             [presentFileName]: { code: 'code\ncode', cursor: { lineNumber: 1, column: 2 }, loadingError: false },
         };
         fixture.detectChanges();
-        comp.fileSession = presentFileSession;
-        comp.selectedFile = fileToLoad.fileName;
+        comp.fileSession.set(presentFileSession);
+        fixture.componentRef.setInput('selectedFile', fileToLoad.fileName);
         await comp.selectFileInEditor(fileToLoad.fileName);
-        comp.selectedFile = presentFileName;
+        fixture.componentRef.setInput('selectedFile', presentFileName);
         await comp.selectFileInEditor(presentFileName);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledExactlyOnceWith(fileToLoad.fileName);
-        expect(comp.fileSession).toEqual({
+        expect(comp.fileSession()).toEqual({
             ...presentFileSession,
             [fileToLoad.fileName]: { code: fileToLoad.fileContent, cursor: { column: 0, lineNumber: 0 }, loadingError: false },
         });
@@ -184,25 +177,25 @@ describe('CodeEditorMonacoComponent', () => {
         const fileSession = { [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 } } };
         const loadedFileSubject = new BehaviorSubject(fileToLoad);
         loadFileFromRepositoryStub.mockReturnValue(loadedFileSubject);
-        comp.fileSession = fileSession;
-        comp.selectedFile = fileToLoad.fileName;
+        comp.fileSession.set(fileSession);
+        fixture.componentRef.setInput('selectedFile', fileToLoad.fileName);
         fixture.detectChanges();
-        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, fileToLoad, false) });
+        await new Promise(process.nextTick);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
-        expect(comp.fileSession).toEqual({ [fileToLoad.fileName]: { code: fileToLoad.fileContent, loadingError: false, cursor: { lineNumber: 0, column: 0 } } });
+        expect(comp.fileSession()).toEqual({ [fileToLoad.fileName]: { code: fileToLoad.fileContent, loadingError: false, cursor: { lineNumber: 0, column: 0 } } });
     });
 
     it('should not load binaries into the editor', async () => {
-        const changeModelSpy = jest.spyOn(comp.editor, 'changeModel');
+        const changeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
         const fileName = 'file-to-load';
-        comp.fileSession = {
+        comp.fileSession.set({
             [fileName]: { code: '\0\0\0\0 (binary content)', loadingError: false, cursor: { lineNumber: 0, column: 0 } },
-        };
+        });
         fixture.detectChanges();
-        comp.selectedFile = fileName;
+        fixture.componentRef.setInput('selectedFile', fileName);
         await comp.selectFileInEditor(fileName);
         expect(changeModelSpy).not.toHaveBeenCalled();
-        expect(comp.binaryFileSelected).toBeTrue();
+        expect(comp.binaryFileSelected()).toBeTrue();
     });
 
     it.each([
@@ -214,46 +207,45 @@ describe('CodeEditorMonacoComponent', () => {
         const loadFileSubject = new BehaviorSubject(fileToLoad);
         loadFileFromRepositoryStub.mockReturnValue(loadFileSubject);
         loadFileSubject.error(error);
-        comp.fileSession = {};
-        comp.selectedFile = fileToLoad.fileName;
+        comp.fileSession.set({});
+        fixture.componentRef.setInput('selectedFile', fileToLoad.fileName);
         comp.onError.subscribe(errorCallbackStub);
         fixture.detectChanges();
-        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, fileToLoad.fileName, false) });
+        await new Promise(process.nextTick);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
         expect(errorCallbackStub).toHaveBeenCalledExactlyOnceWith(errorCode);
-        expect(comp.fileSession).toEqual({ [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 } } });
+        expect(comp.fileSession()).toEqual({ [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 } } });
     });
 
     it('should discard local changes when the editor is refreshed', async () => {
         const fileToReload = { fileName: 'file-to-reload', fileContent: 'some remote code' };
-        const editorResetStub = jest.spyOn(comp.editor, 'reset').mockImplementation();
+        const editorResetStub = jest.spyOn(comp.editor(), 'reset').mockImplementation();
         const reloadedFileSubject = new BehaviorSubject(fileToReload);
         loadFileFromRepositoryStub.mockReturnValue(reloadedFileSubject);
-        comp.selectedFile = fileToReload.fileName;
-        comp.fileSession = {
+        fixture.componentRef.setInput('selectedFile', fileToReload.fileName);
+        comp.fileSession.set({
             [fileToReload.fileName]: { code: 'some local undiscarded changes', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
-        };
-        comp.editorState = EditorState.CLEAN;
-        fixture.detectChanges();
+        });
+        fixture.componentRef.setInput('editorState', EditorState.CLEAN);
         // Simulate a refresh of the editor.
         await comp.ngOnChanges({ editorState: new SimpleChange(EditorState.REFRESHING, EditorState.CLEAN, false) });
-        expect(comp.fileSession).toEqual({
+        expect(comp.fileSession()).toEqual({
             [fileToReload.fileName]: { code: fileToReload.fileContent, cursor: { lineNumber: 0, column: 0 }, loadingError: false },
         });
         expect(editorResetStub).toHaveBeenCalledOnce();
     });
 
     it('should only load the currently selected file', async () => {
-        const changeModelSpy = jest.spyOn(comp.editor, 'changeModel');
+        const changeModelSpy = jest.spyOn(comp.editor(), 'changeModel');
         // Occurs when the first file load takes a while, but the user has already selected another file.
-        comp.fileSession = { ['file2']: { code: 'code2', cursor: { lineNumber: 0, column: 0 }, loadingError: false } };
+        comp.fileSession.set({ ['file2']: { code: 'code2', cursor: { lineNumber: 0, column: 0 }, loadingError: false } });
         fixture.detectChanges();
-        comp.selectedFile = 'file1';
+        fixture.componentRef.setInput('selectedFile', 'file1');
         const longLoadingFileSubject = new Subject();
         loadFileFromRepositoryStub.mockReturnValue(longLoadingFileSubject);
         // We do not await the promise here, as we want to simulate the user selecting another file while the first one is still loading.
         const firstFileChange = comp.selectFileInEditor('file1');
-        comp.selectedFile = 'file2';
+        fixture.componentRef.setInput('selectedFile', 'file2');
         await comp.selectFileInEditor('file2');
         longLoadingFileSubject.next({ fileName: 'file1', fileContent: 'some code that took a while to retrieve' });
         await firstFileChange;
@@ -261,22 +253,22 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should use the code and cursor position of the selected file', async () => {
-        const setPositionStub = jest.spyOn(comp.editor, 'setPosition').mockImplementation();
-        const changeModelStub = jest.spyOn(comp.editor, 'changeModel').mockImplementation();
+        const setPositionStub = jest.spyOn(comp.editor(), 'setPosition').mockImplementation();
+        const changeModelStub = jest.spyOn(comp.editor(), 'changeModel').mockImplementation();
         fixture.detectChanges();
         const selectedFile = 'file1';
         const fileSession = {
             [selectedFile]: { code: 'code\ncode', cursor: { lineNumber: 1, column: 2 }, loadingError: false },
         };
-        comp.fileSession = fileSession;
-        comp.selectedFile = selectedFile;
+        comp.fileSession.set(fileSession);
+        fixture.componentRef.setInput('selectedFile', selectedFile);
         await comp.selectFileInEditor(selectedFile);
         expect(setPositionStub).toHaveBeenCalledExactlyOnceWith(fileSession[selectedFile].cursor);
         expect(changeModelStub).toHaveBeenCalledExactlyOnceWith(selectedFile, fileSession[selectedFile].code);
     });
 
     it('should display build annotations for the current file', async () => {
-        const setAnnotationsStub = jest.spyOn(comp.editor, 'setAnnotations').mockImplementation();
+        const setAnnotationsStub = jest.spyOn(comp.editor(), 'setAnnotations').mockImplementation();
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
         const buildAnnotations: Annotation[] = [
             {
@@ -298,25 +290,28 @@ describe('CodeEditorMonacoComponent', () => {
                 column: 1,
             },
         ];
-        comp.annotationsArray = buildAnnotations;
-        comp.selectedFile = 'file1';
+        fixture.componentRef.setInput('buildAnnotations', buildAnnotations);
+        fixture.componentRef.setInput('selectedFile', 'file1');
         fixture.detectChanges();
-        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) });
-        comp.selectedFile = 'file2';
+        await new Promise(process.nextTick);
+        fixture.componentRef.setInput('selectedFile', 'file2');
         fixture.detectChanges();
-        await comp.ngOnChanges({ selectedFile: new SimpleChange('file1', 'file2', false) });
-        expect(setAnnotationsStub).toHaveBeenCalledTimes(2);
+        await new Promise(process.nextTick); // TODO: make this reusable
+        // 3 calls: construction (effect), file1, file2
+        expect(setAnnotationsStub).toHaveBeenCalledTimes(3);
         expect(selectFileInEditorStub).toHaveBeenCalledTimes(2);
         expect(setAnnotationsStub).toHaveBeenNthCalledWith(1, [buildAnnotations[0]], false);
-        expect(setAnnotationsStub).toHaveBeenNthCalledWith(2, [buildAnnotations[1]], false);
+        expect(setAnnotationsStub).toHaveBeenNthCalledWith(2, [buildAnnotations[0]], false);
+        expect(setAnnotationsStub).toHaveBeenNthCalledWith(3, [buildAnnotations[1]], false);
     });
 
     it('should display feedback when viewing a tutor assessment', fakeAsync(() => {
-        const addLineWidgetStub = jest.spyOn(comp.editor, 'addLineWidget').mockImplementation();
+        const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
-        comp.isTutorAssessment = true;
-        comp.selectedFile = 'file1.java';
-        comp.feedbacks = exampleFeedbacks;
+        fixture.componentRef.setInput('isTutorAssessment', true);
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('feedbacks', exampleFeedbacks);
+        TestBed.flushEffects();
         fixture.detectChanges();
         // Use .then() here instead of await so fakeAsync does not break.
         comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) }).then(() => {
@@ -334,14 +329,14 @@ describe('CodeEditorMonacoComponent', () => {
         // Feedback is stored as 0-based line numbers, but the editor requires 1-based line numbers.
         const feedbackLineOneBased = 3;
         const feedbackLineZeroBased = feedbackLineOneBased - 1;
-        const addLineWidgetStub = jest.spyOn(comp.editor, 'addLineWidget').mockImplementation();
+        const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const element = document.createElement('div');
         getInlineFeedbackNodeStub.mockReturnValue(undefined);
         fixture.detectChanges();
         // Simulate adding the element
         comp.addNewFeedback(feedbackLineOneBased);
         getInlineFeedbackNodeStub.mockReturnValue(element);
-        expect(comp.newFeedbackLines).toEqual([feedbackLineZeroBased]);
+        expect(comp.newFeedbackLines()).toEqual([feedbackLineZeroBased]);
         tick(1);
         expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased, `feedback-new-${feedbackLineZeroBased}`, element);
     }));
@@ -351,19 +346,19 @@ describe('CodeEditorMonacoComponent', () => {
         const remainingFeedbacks = exampleFeedbacks.slice(1);
         const updateFeedbackCallbackStub = jest.fn();
         comp.onUpdateFeedback.subscribe(updateFeedbackCallbackStub);
-        comp.feedbacks = [...exampleFeedbacks];
+        fixture.componentRef.setInput('feedbacks', [...exampleFeedbacks]);
         fixture.detectChanges();
         comp.deleteFeedback(feedbackToDelete);
-        expect(comp.feedbacks).toEqual(remainingFeedbacks);
+        expect(comp.feedbackInternal()).toEqual(remainingFeedbacks);
         expect(updateFeedbackCallbackStub).toHaveBeenCalledExactlyOnceWith(remainingFeedbacks);
     });
 
     it('should delete unsaved feedback', () => {
         const feedbackLine = 1;
-        comp.newFeedbackLines = [feedbackLine, 2, 3];
+        comp.newFeedbackLines.set([feedbackLine, 2, 3]);
         fixture.detectChanges();
         comp.cancelFeedback(feedbackLine);
-        expect(comp.newFeedbackLines).toEqual([2, 3]);
+        expect(comp.newFeedbackLines()).toEqual([2, 3]);
     });
 
     it('should update existing feedback and notify', () => {
@@ -372,12 +367,13 @@ describe('CodeEditorMonacoComponent', () => {
         const updateFeedbackCallbackStub = jest.fn();
         comp.onUpdateFeedback.subscribe(updateFeedbackCallbackStub);
         // Copy the original example feedback in to ensure changes here do not affect the component.
-        comp.feedbacks = [...exampleFeedbacks];
+        fixture.componentRef.setInput('feedbacks', [...exampleFeedbacks]);
+        TestBed.flushEffects();
         fixture.detectChanges();
         feedbackToUpdate.text = 'some other text';
         comp.updateFeedback(feedbackToUpdate);
         const expectedFeedbacks = [feedbackToUpdate, ...remainingFeedbacks];
-        expect(comp.feedbacks).toEqual(expectedFeedbacks);
+        expect(comp.feedbackInternal()).toEqual(expectedFeedbacks);
         expect(updateFeedbackCallbackStub).toHaveBeenCalledExactlyOnceWith(expectedFeedbacks);
     });
 
@@ -387,14 +383,15 @@ describe('CodeEditorMonacoComponent', () => {
         const newFeedbackLine = 1;
         const updateFeedbackCallbackStub = jest.fn();
         comp.onUpdateFeedback.subscribe(updateFeedbackCallbackStub);
-        comp.newFeedbackLines = [newFeedbackLine];
-        comp.feedbacks = [...remainingFeedbacks];
+        comp.newFeedbackLines.set([newFeedbackLine]);
+        fixture.componentRef.setInput('feedbacks', [...remainingFeedbacks]);
+        TestBed.flushEffects();
         fixture.detectChanges();
         comp.updateFeedback(feedbackToSave);
         const expectedFeedbacks = [...remainingFeedbacks, feedbackToSave];
-        expect(comp.feedbacks).toEqual(expectedFeedbacks);
+        expect(comp.feedbackInternal()).toEqual(expectedFeedbacks);
         // The feedback has been saved -> no longer new
-        expect(comp.newFeedbackLines).toHaveLength(0);
+        expect(comp.newFeedbackLines()).toHaveLength(0);
         expect(updateFeedbackCallbackStub).toHaveBeenCalledExactlyOnceWith(expectedFeedbacks);
     });
 
@@ -402,11 +399,12 @@ describe('CodeEditorMonacoComponent', () => {
         const updateFeedbackStub = jest.spyOn(comp, 'updateFeedback').mockImplementation();
         const acceptSuggestionCallbackStub = jest.fn();
         const suggestionToAccept: Feedback = exampleFeedbacks[0];
-        comp.feedbackSuggestions = [suggestionToAccept];
+        fixture.componentRef.setInput('feedbackSuggestions', [suggestionToAccept]);
+        TestBed.flushEffects();
         comp.onAcceptSuggestion.subscribe(acceptSuggestionCallbackStub);
         fixture.detectChanges();
         comp.acceptSuggestion(suggestionToAccept);
-        expect(comp.feedbackSuggestions).toHaveLength(0);
+        expect(comp.feedbackSuggestionsInternal()).toHaveLength(0);
         expect(updateFeedbackStub).toHaveBeenCalledExactlyOnceWith(suggestionToAccept);
         expect(acceptSuggestionCallbackStub).toHaveBeenCalledExactlyOnceWith(suggestionToAccept);
     });
@@ -414,11 +412,12 @@ describe('CodeEditorMonacoComponent', () => {
     it('should correctly discard a suggestion and notify', () => {
         const discardSuggestionCallbackStub = jest.fn();
         const suggestionToDiscard = exampleFeedbacks[0];
-        comp.feedbackSuggestions = [suggestionToDiscard];
+        fixture.componentRef.setInput('feedbackSuggestions', [suggestionToDiscard]);
+        TestBed.flushEffects();
         comp.onDiscardSuggestion.subscribe(discardSuggestionCallbackStub);
         fixture.detectChanges();
         comp.discardSuggestion(suggestionToDiscard);
-        expect(comp.feedbackSuggestions).toHaveLength(0);
+        expect(comp.feedbackSuggestionsInternal()).toHaveLength(0);
         expect(discardSuggestionCallbackStub).toHaveBeenCalledExactlyOnceWith(suggestionToDiscard);
     });
 
@@ -431,10 +430,10 @@ describe('CodeEditorMonacoComponent', () => {
             [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
         };
         fixture.detectChanges();
-        comp.fileSession = { ...fileSession };
+        comp.fileSession.set({ ...fileSession });
         const renameFileChange = new RenameFileChange(FileType.FILE, oldFileName, newFileName);
         await comp.onFileChange(renameFileChange);
-        expect(comp.fileSession).toEqual({
+        expect(comp.fileSession()).toEqual({
             [newFileName]: fileSession[oldFileName],
             [otherFileName]: fileSession[otherFileName],
         });
@@ -448,10 +447,10 @@ describe('CodeEditorMonacoComponent', () => {
             [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
         };
         fixture.detectChanges();
-        comp.fileSession = { ...fileSession };
+        comp.fileSession.set({ ...fileSession });
         const deleteFileChange = new DeleteFileChange(FileType.FILE, fileToDeleteName);
         await comp.onFileChange(deleteFileChange);
-        expect(comp.fileSession).toEqual({
+        expect(comp.fileSession()).toEqual({
             [otherFileName]: fileSession[otherFileName],
         });
     });
@@ -463,17 +462,17 @@ describe('CodeEditorMonacoComponent', () => {
             [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
         };
         fixture.detectChanges();
-        comp.fileSession = { ...fileSession };
+        comp.fileSession.set({ ...fileSession });
         const createFileChange = new CreateFileChange(FileType.FILE, fileToCreateName);
         await comp.onFileChange(createFileChange);
-        expect(comp.fileSession).toEqual({
+        expect(comp.fileSession()).toEqual({
             [otherFileName]: fileSession[otherFileName],
             [fileToCreateName]: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
         });
     });
 
     it('should use the correct class to highlight lines', () => {
-        const highlightStub = jest.spyOn(comp.editor, 'highlightLines').mockImplementation();
+        const highlightStub = jest.spyOn(comp.editor(), 'highlightLines').mockImplementation();
         fixture.detectChanges();
         comp.highlightLines(1, 2);
         expect(highlightStub).toHaveBeenCalledExactlyOnceWith(1, 2, CodeEditorMonacoComponent.CLASS_DIFF_LINE_HIGHLIGHT);

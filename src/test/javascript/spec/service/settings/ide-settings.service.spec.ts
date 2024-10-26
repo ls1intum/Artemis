@@ -1,8 +1,9 @@
-import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide, IdeMappingDTO } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('IdeSettingsService', () => {
     let service: IdeSettingsService;
@@ -10,8 +11,8 @@ describe('IdeSettingsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [IdeSettingsService],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), IdeSettingsService],
         });
         service = TestBed.inject(IdeSettingsService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -33,20 +34,22 @@ describe('IdeSettingsService', () => {
         req.flush(mockIdes);
     });
 
-    it('should load IDE preferences', () => {
+    it('should load IDE preferences', fakeAsync(() => {
         const mockIdeMappingDTO: IdeMappingDTO[] = [
             { programmingLanguage: ProgrammingLanguage.JAVA, ide: { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' } },
         ];
         const expectedMap = new Map<ProgrammingLanguage, Ide>([[ProgrammingLanguage.JAVA, { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' }]]);
 
-        service.loadIdePreferences().subscribe((ideMap) => {
+        service.loadIdePreferences().then((ideMap) => {
             expect(ideMap).toEqual(expectedMap);
         });
+
+        tick();
 
         const req = httpMock.expectOne(service.ideSettingsUrl);
         expect(req.request.method).toBe('GET');
         req.flush(mockIdeMappingDTO);
-    });
+    }));
 
     it('should save IDE preference', () => {
         const programmingLanguage = ProgrammingLanguage.JAVA;

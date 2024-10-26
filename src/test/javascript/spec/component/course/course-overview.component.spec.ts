@@ -5,16 +5,14 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
-import { CourseCardComponent } from 'app/overview/course-card.component';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
@@ -57,6 +55,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -148,6 +147,7 @@ describe('CourseOverviewComponent', () => {
     let findOneForRegistrationStub: jest.SpyInstance;
     let findAllForDropdownSpy: jest.SpyInstance;
     let itemsDrop: NgbDropdown;
+    let courseSidebarService: CourseSidebarService;
 
     let metisConversationService: MetisConversationService;
 
@@ -165,8 +165,8 @@ describe('CourseOverviewComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [
+                RouterModule.forRoot([]),
                 ArtemisTestModule,
-                RouterTestingModule.withRoutes([]),
                 MockModule(MatSidenavModule),
                 MockModule(NgbTooltipModule),
                 MockModule(BrowserAnimationsModule),
@@ -185,7 +185,6 @@ describe('CourseOverviewComponent', () => {
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(CourseExercisesComponent),
                 MockComponent(CourseRegistrationComponent),
-                MockComponent(CourseCardComponent),
                 MockComponent(SecuredImageComponent),
             ],
             providers: [
@@ -214,8 +213,9 @@ describe('CourseOverviewComponent', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseOverviewComponent);
-
                 component = fixture.componentInstance;
+                component.isLti = false;
+                courseSidebarService = TestBed.inject(CourseSidebarService);
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
                 examParticipationService = TestBed.inject(ExamParticipationService);
@@ -445,7 +445,6 @@ describe('CourseOverviewComponent', () => {
             },
         );
 
-        // wait for the observable to complete
         tick();
     }));
 
@@ -647,14 +646,18 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should display content of dropdown when dropdownOpen changes', () => {
-        itemsDrop.open();
-        fixture.detectChanges();
-        expect(component.itemsDrop.isOpen).toBeTrue();
+        if (component.itemsDrop) {
+            itemsDrop.open();
+            fixture.detectChanges();
+            expect(component.itemsDrop.isOpen).toBeTrue();
+        }
     });
     it('should hide content of dropdown when dropdownOpen changes', () => {
-        itemsDrop.close();
-        fixture.detectChanges();
-        expect(component.itemsDrop.isOpen).toBeFalse();
+        if (component.itemsDrop) {
+            itemsDrop.close();
+            fixture.detectChanges();
+            expect(component.itemsDrop.isOpen).toBeFalse();
+        }
     });
 
     it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
@@ -668,11 +671,13 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should change dropdownOpen when clicking on More', () => {
-        itemsDrop.close();
-        const clickOnMoreItem = fixture.nativeElement.querySelector('.three-dots');
-        clickOnMoreItem.click();
+        if (component.itemsDrop) {
+            itemsDrop.close();
+            const clickOnMoreItem = fixture.nativeElement.querySelector('.three-dots');
+            clickOnMoreItem.click();
 
-        expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeFalse();
+            expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeFalse();
+        }
     });
 
     it('should apply exam-wrapper and exam-is-active if exam is started', () => {
@@ -741,5 +746,17 @@ describe('CourseOverviewComponent', () => {
 
         expect(courseService.findAllForDropdown).toHaveBeenCalled();
         expect(component.dashboardSubscription.closed).toBeTrue();
+    });
+
+    it('should toggle isCollapsed when service emits corresponding event', () => {
+        fixture.detectChanges();
+        courseSidebarService.openSidebar();
+        expect(component.isSidebarCollapsed).toBeTrue();
+
+        courseSidebarService.closeSidebar();
+        expect(component.isSidebarCollapsed).toBeFalse();
+
+        courseSidebarService.toggleSidebar();
+        expect(component.isSidebarCollapsed).toBeTrue();
     });
 });

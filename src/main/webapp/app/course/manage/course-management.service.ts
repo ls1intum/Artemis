@@ -27,6 +27,7 @@ import { ScoresStorageService } from 'app/course/course-scores/scores-storage.se
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
+import { CourseForArchiveDTO } from './course-for-archive-dto';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -40,6 +41,9 @@ export class CourseManagementService {
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 
     private fetchingCoursesForNotifications = false;
+
+    private courseOverviewSubject = new BehaviorSubject<boolean>(false);
+    isCourseOverview$ = this.courseOverviewSubject.asObservable();
 
     constructor(
         private http: HttpClient,
@@ -77,7 +81,7 @@ export class CourseManagementService {
      * @param onlineCourseConfiguration - the updates to the online course configuration
      */
     updateOnlineCourseConfiguration(courseId: number, onlineCourseConfiguration: OnlineCourseConfiguration): Observable<EntityResponseType> {
-        return this.http.put<OnlineCourseConfiguration>(`${this.resourceUrl}/${courseId}/onlineCourseConfiguration`, onlineCourseConfiguration, { observe: 'response' });
+        return this.http.put<OnlineCourseConfiguration>(`${this.resourceUrl}/${courseId}/online-course-configuration`, onlineCourseConfiguration, { observe: 'response' });
     }
 
     findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
@@ -341,6 +345,13 @@ export class CourseManagementService {
     }
 
     /**
+     * Find all courses for the archive using a GET request
+     */
+    getCoursesForArchive(): Observable<HttpResponse<CourseForArchiveDTO[]>> {
+        return this.http.get<CourseForArchiveDTO[]>(`${this.resourceUrl}/for-archive`, { observe: 'response' });
+    }
+
+    /**
      * returns the exercise details of the courses for the courses' management dashboard
      * @param onlyActive - if true, only active courses will be considered in the result
      */
@@ -442,7 +453,7 @@ export class CourseManagementService {
      * @param {number} courseId - The id of the course to be searched for
      */
     findAllLockedSubmissionsOfCourse(courseId: number): Observable<HttpResponse<Submission[]>> {
-        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/lockedSubmissions`, { observe: 'response' }).pipe(
+        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/locked-submissions`, { observe: 'response' }).pipe(
             filter((res) => !!res.body),
             tap((res) => reconnectSubmissions(res.body!)),
         );
@@ -691,5 +702,22 @@ export class CourseManagementService {
     getNumberOfAllowedComplaintsInCourse(courseId: number, teamMode = false): Observable<number> {
         // Note: 0 is the default value in case the server returns something that does not make sense
         return this.http.get<number>(`${this.resourceUrl}/${courseId}/allowed-complaints?teamMode=${teamMode}`) ?? 0;
+    }
+
+    enableCourseOverviewBackground() {
+        this.courseOverviewSubject.next(true);
+    }
+
+    disableCourseOverviewBackground() {
+        this.courseOverviewSubject.next(false);
+    }
+
+    getSemesterCollapseStateFromStorage(storageId: string): boolean {
+        const storedCollapseState: string | null = localStorage.getItem('semester.collapseState.' + storageId);
+        return storedCollapseState ? JSON.parse(storedCollapseState) : false;
+    }
+
+    setSemesterCollapseState(storageId: string, isCollapsed: boolean) {
+        localStorage.setItem('semester.collapseState.' + storageId, JSON.stringify(isCollapsed));
     }
 }

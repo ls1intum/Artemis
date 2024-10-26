@@ -1,8 +1,7 @@
-import { HttpClientModule, HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { ThemeService } from 'app/core/theme/theme.service';
@@ -56,6 +55,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import * as ExamUtils from 'app/exam/participate/exam.utils';
 import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -172,7 +172,7 @@ const gradeInfo: StudentExamWithGradeDTO = {
 function sharedSetup(url: string[]) {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), HttpClientModule, NgbCollapseMocksModule],
+            imports: [NgbCollapseMocksModule],
             declarations: [
                 ExamResultSummaryComponent,
                 MockComponent(TestRunRibbonComponent),
@@ -197,6 +197,9 @@ function sharedSetup(url: string[]) {
                 MockComponent(CollapsibleCardComponent),
             ],
             providers: [
+                provideRouter([]),
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 {
                     provide: ActivatedRoute,
                     useValue: {

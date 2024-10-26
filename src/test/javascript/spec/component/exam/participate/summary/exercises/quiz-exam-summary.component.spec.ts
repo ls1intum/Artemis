@@ -1,4 +1,5 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -77,9 +78,9 @@ describe('QuizExamSummaryComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, MockModule(ArtemisQuizQuestionTypesModule)],
+            imports: [MockModule(ArtemisQuizQuestionTypesModule)],
             declarations: [QuizExamSummaryComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(TranslateService), MockProvider(QuizExerciseService), MockProvider(ArtemisServerDateService)],
+            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(TranslateService), MockProvider(QuizExerciseService), MockProvider(ArtemisServerDateService)],
         })
             .compileComponents()
             .then(() => {

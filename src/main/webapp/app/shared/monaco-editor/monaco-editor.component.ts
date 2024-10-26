@@ -1,7 +1,5 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import * as monaco from 'monaco-editor';
-import { Subscription } from 'rxjs';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
 import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
@@ -12,106 +10,98 @@ import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
+import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
+import { getOS } from 'app/shared/util/os-detector.util';
 
 export const MAX_TAB_SIZE = 8;
 
 @Component({
     selector: 'jhi-monaco-editor',
     template: '',
+    standalone: true,
     styleUrls: ['monaco-editor.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
 })
 export class MonacoEditorComponent implements OnInit, OnDestroy {
-    private _editor: monaco.editor.IStandaloneCodeEditor;
-    private textEditorAdapter: MonacoTextEditorAdapter;
-    private monacoEditorContainerElement: HTMLElement;
-    themeSubscription?: Subscription;
-    models: MonacoEditorTextModel[] = [];
-    lineWidgets: MonacoEditorLineWidget[] = [];
-    editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
-    lineHighlights: MonacoEditorLineHighlight[] = [];
-    actions: TextEditorAction[] = [];
-    lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
-
     /**
      * The default width of the line decoration button in the editor. We use the ch unit to avoid fixed pixel sizes.
      * @private
      */
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
+    private static readonly SHRINK_TO_FIT_CLASS = 'monaco-shrink-to-fit';
 
-    constructor(
-        private readonly themeService: ThemeService,
-        elementRef: ElementRef,
-        private readonly renderer: Renderer2,
-        private readonly translateService: TranslateService,
-    ) {
+    private readonly _editor: monaco.editor.IStandaloneCodeEditor;
+    private readonly textEditorAdapter: MonacoTextEditorAdapter;
+    private readonly monacoEditorContainerElement: HTMLElement;
+
+    /*
+     * Elements, models, and actions of the editor.
+     */
+    models: MonacoEditorTextModel[] = [];
+    lineWidgets: MonacoEditorLineWidget[] = [];
+    buildAnnotations: MonacoEditorBuildAnnotation[] = [];
+    lineHighlights: MonacoEditorLineHighlight[] = [];
+    actions: TextEditorAction[] = [];
+    lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
+
+    /*
+     * Inputs and outputs.
+     */
+    textChangedEmitDelay = input<number | undefined>();
+    shrinkToFit = input<boolean>(true);
+    stickyScroll = input<boolean>(false);
+    readOnly = input<boolean>(false);
+
+    textChanged = output<string>();
+    contentHeightChanged = output<number>();
+    onBlurEditor = output<void>();
+
+    /*
+     * Disposable listeners, subscriptions, and timeouts.
+     */
+    private contentHeightListener?: Disposable;
+    private textChangedListener?: Disposable;
+    private blurEditorWidgetListener?: Disposable;
+    private textChangedEmitTimeout?: NodeJS.Timeout;
+
+    /*
+     * Injected services and elements.
+     */
+    private readonly renderer = inject(Renderer2);
+    private readonly translateService = inject(TranslateService);
+    private readonly elementRef = inject(ElementRef);
+    private readonly monacoEditorService = inject(MonacoEditorService);
+
+    constructor() {
         /*
          * The constructor injects the editor along with its container into the empty template of this component.
          * This makes the editor available immediately (not just after ngOnInit), preventing errors when the methods
          * of this component are called.
          */
-        this.monacoEditorContainerElement = renderer.createElement('div');
-        renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
-        renderer.addClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
-        this._editor = monaco.editor.create(this.monacoEditorContainerElement, {
-            value: '',
-            glyphMargin: true,
-            minimap: { enabled: false },
-            readOnly: this._readOnly,
-            lineNumbersMinChars: 4,
-            scrollBeyondLastLine: false,
-            scrollbar: {
-                alwaysConsumeMouseWheel: false, // Prevents the editor from consuming the mouse wheel event, allowing the parent element to scroll.
-            },
-        });
-        this._editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
+        this.monacoEditorContainerElement = this.renderer.createElement('div');
+        this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
+        this.renderer.addClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
+        this._editor = this.monacoEditorService.createStandaloneCodeEditor(this.monacoEditorContainerElement);
         this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
-        renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
-    }
+        this.renderer.appendChild(this.elementRef.nativeElement, this.monacoEditorContainerElement);
 
-    @Input()
-    textChangedEmitDelay?: number;
+        effect(() => {
+            // TODO: The CSS class below allows the editor to shrink in the CodeEditorContainerComponent. We should eventually remove this class and handle the editor size differently in the code editor grid.
+            if (this.shrinkToFit()) {
+                this.renderer.addClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
+            } else {
+                this.renderer.removeClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
+            }
+        });
 
-    // TODO: The CSS class below allows the editor to shrink in the CodeEditorContainerComponent. We should eventually remove this class and handle the editor size differently in the code editor grid.
-    @Input()
-    set shrinkToFit(value: boolean) {
-        if (value) {
-            this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
-        } else {
-            this.renderer.removeClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
-        }
-    }
-
-    @Input()
-    set stickyScroll(value: boolean) {
-        this._editor.updateOptions({
-            stickyScroll: { enabled: value },
+        effect(() => {
+            this._editor.updateOptions({
+                stickyScroll: { enabled: this.stickyScroll() },
+                readOnly: this.readOnly(),
+            });
         });
     }
-
-    @Input()
-    set readOnly(value: boolean) {
-        this._readOnly = value;
-        this._editor.updateOptions({
-            readOnly: value,
-        });
-    }
-
-    private _readOnly: boolean = false;
-
-    @Output()
-    textChanged = new EventEmitter<string>();
-
-    @Output()
-    contentHeightChanged = new EventEmitter<number>();
-
-    @Output()
-    onBlurEditor = new EventEmitter<void>();
-
-    private contentHeightListener?: Disposable;
-    private textChangedListener?: Disposable;
-    private blurEditorWidgetListener?: Disposable;
-    private textChangedEmitTimeout?: NodeJS.Timeout;
 
     ngOnInit(): void {
         const resizeObserver = new ResizeObserver(() => {
@@ -130,16 +120,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
 
         this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
+            // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
+            // See https://github.com/microsoft/monaco-editor/issues/307
+            if (getOS() === 'iOS' && document.activeElement && 'blur' in document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
             this.onBlurEditor.emit();
         });
-
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
 
     ngOnDestroy() {
         this.reset();
         this._editor.dispose();
-        this.themeSubscription?.unsubscribe();
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
@@ -147,7 +139,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     private emitTextChangeEvent() {
         const newValue = this.getText();
-        if (!this.textChangedEmitDelay) {
+        const delay = this.textChangedEmitDelay();
+        if (!delay) {
             this.textChanged.emit(newValue);
         } else {
             if (this.textChangedEmitTimeout) {
@@ -156,7 +149,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             }
             this.textChangedEmitTimeout = setTimeout(() => {
                 this.textChanged.emit(newValue);
-            }, this.textChangedEmitDelay);
+            }, delay);
         }
     }
 
@@ -268,10 +261,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     disposeAnnotations() {
-        this.editorBuildAnnotations.forEach((o) => {
+        this.buildAnnotations.forEach((o) => {
             o.dispose();
         });
-        this.editorBuildAnnotations = [];
+        this.buildAnnotations = [];
     }
 
     disposeLineHighlights(): void {
@@ -286,10 +279,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             a.dispose();
         });
         this.actions = [];
-    }
-
-    changeTheme(artemisTheme: Theme): void {
-        monaco.editor.setTheme(artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light');
     }
 
     layout(): void {
@@ -325,7 +314,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             );
             editorBuildAnnotation.addToEditor();
             editorBuildAnnotation.setOutdatedAndUpdate(outdated);
-            this.editorBuildAnnotations.push(editorBuildAnnotation);
+            this.buildAnnotations.push(editorBuildAnnotation);
         }
     }
 

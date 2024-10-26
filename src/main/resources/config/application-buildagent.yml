@@ -18,7 +18,7 @@ artemis:
         specify-concurrent-builds: false
         concurrent-build-size: 1
         asynchronous: true
-        timeout-seconds: 240
+        timeout-seconds: 120
         build-container-prefix: local-ci-
         proxies:
             use-system-proxy: false
@@ -33,6 +33,7 @@ artemis:
         container-cleanup:
             expiry-minutes: 5
             cleanup-schedule-minutes: 60
+        pause-grace-period-seconds: 60
     git:
         name: Artemis
         email: artemis@xcit.tum.de

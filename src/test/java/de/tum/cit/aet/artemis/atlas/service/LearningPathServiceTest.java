@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -81,9 +80,6 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     private CompetencyProgressUtilService competencyProgressUtilService;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
     private StudentScoreUtilService studentScoreUtilService;
 
     @Autowired
@@ -112,24 +108,6 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>(), TEST_PREFIX + "tumuser",
                     TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
             course = courseRepository.save(course);
-        }
-
-        @Test
-        void testHealthStatusDisabled() {
-            var healthStatus = learningPathService.getHealthStatusForCourse(course);
-            assertThat(healthStatus.status()).containsExactly(LearningPathHealthDTO.HealthStatus.DISABLED);
-            assertThat(healthStatus.missingLearningPaths()).isNull();
-        }
-
-        @Test
-        void testHealthStatusOK() {
-            final var competency1 = competencyUtilService.createCompetency(course);
-            final var competency2 = competencyUtilService.createCompetency(course);
-            competencyUtilService.addRelation(competency1, RelationType.MATCHES, competency2);
-            course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-            var healthStatus = learningPathService.getHealthStatusForCourse(course);
-            assertThat(healthStatus.status()).containsExactly(LearningPathHealthDTO.HealthStatus.OK);
-            assertThat(healthStatus.missingLearningPaths()).isNull();
         }
 
         @Test

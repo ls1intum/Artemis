@@ -1,5 +1,5 @@
 import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { faChalkboardTeacher, faEllipsis, faUser, faUserCheck, faUserGear } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -56,6 +56,9 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     canBeRevokedChannelModeratorRole = false;
 
     userLabel: string;
+    userName: string | undefined;
+    userId: number | undefined;
+    userImageUrl: string | undefined;
     // icons
     userIcon: IconProp = faUser;
     userTooltip = '';
@@ -88,6 +91,9 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
                     this.isCreator = true;
                 }
 
+                this.userImageUrl = this.conversationMember.imageUrl;
+                this.userId = this.conversationMember.id;
+                this.userName = this.conversationMember.name;
                 this.userLabel = getUserLabel(this.conversationMember);
                 this.setUserAuthorityIconAndTooltip();
                 // the creator of a channel can not be removed from the channel
@@ -242,7 +248,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
         // highest authority is displayed
         if (this.conversationMember.isInstructor) {
-            this.userIcon = faChalkboardTeacher;
+            this.userIcon = faUserGraduate;
             this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'instructor');
         } else if (this.conversationMember.isEditor || this.conversationMember.isTeachingAssistant) {
             this.userIcon = faUserCheck;

@@ -12,6 +12,7 @@ import { CourseTutorialGroupDetailComponent } from './tutorial-group-details/cou
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { CourseDashboardGuard } from 'app/overview/course-dashboard/course-dashboard-guard.service';
+import { CourseArchiveComponent } from './course-archive/course-archive.component';
 
 const routes: Routes = [
     {
@@ -26,6 +27,15 @@ const routes: Routes = [
     {
         path: 'enroll',
         loadChildren: () => import('./course-registration/course-registration.module').then((m) => m.CourseRegistrationModule),
+    },
+    {
+        path: 'archive',
+        component: CourseArchiveComponent,
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'overview.archive',
+        },
+        canActivate: [UserRouteAccessService],
     },
     // /courses/:courseId/register is special,
     // because we won't have access to the course object before the user is registered,
@@ -253,6 +263,16 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.plagiarismCases',
+                },
+            },
+            {
+                path: 'faq',
+                loadComponent: () => import('../overview/course-faq/course-faq.component').then((m) => m.CourseFaqComponent),
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.faq',
+                    hasSidebar: false,
+                    showRefreshButton: true,
                 },
             },
             {

@@ -130,6 +130,14 @@ describe('SidebarComponent', () => {
         expect(size).toBe('M');
     });
 
+    it('should update sidebar event subscription on re emit input event change', () => {
+        fixture.detectChanges();
+        const prevSubscription = component.sidebarEventSubscription;
+        fixture.componentRef.setInput('reEmitNonDistinctSidebarEvents', true);
+        fixture.detectChanges();
+        expect(component.sidebarEventSubscription).not.toBe(prevSubscription);
+    });
+
     describe('openFilterExercisesLink', () => {
         const FILTER_LINK_SELECTOR = '.text-primary a';
 
@@ -170,6 +178,44 @@ describe('SidebarComponent', () => {
             expect(initFilterOptionsSpy).toHaveBeenCalledOnce();
             expect(openFilterExercisesDialogSpy).toHaveBeenCalledOnce();
             expect(openModalSpy).toHaveBeenCalledWith(ExerciseFilterModalComponent, { animation: true, backdrop: 'static', size: 'lg' });
+        });
+    });
+
+    describe('Chat and Channel Creation Methods', () => {
+        beforeEach(() => {
+            fixture.detectChanges();
+        });
+
+        it('should emit onDirectChatPressed and set showChatDropdown to false when createDirectChat is called', () => {
+            jest.spyOn(component.onDirectChatPressed, 'emit');
+
+            component.createDirectChat();
+
+            expect(component.onDirectChatPressed.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should emit onGroupChatPressed and set showChatDropdown to false when createGroupChat is called', () => {
+            jest.spyOn(component.onGroupChatPressed, 'emit');
+
+            component.createGroupChat();
+
+            expect(component.onGroupChatPressed.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should emit onBrowsePressed and set showChannelDropdown to false when browseChannels is called', () => {
+            jest.spyOn(component.onBrowsePressed, 'emit');
+
+            component.browseChannels();
+
+            expect(component.onBrowsePressed.emit).toHaveBeenCalledOnce();
+        });
+
+        it('should emit onCreateChannelPressed and set showChannelDropdown to false when createNewChannel is called', () => {
+            jest.spyOn(component.onCreateChannelPressed, 'emit');
+
+            component.createNewChannel();
+
+            expect(component.onCreateChannelPressed.emit).toHaveBeenCalledOnce();
         });
     });
 

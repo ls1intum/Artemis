@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -482,7 +483,7 @@ public class FileResource {
     }
 
     /**
-     * GET files/attachments/slides/attachment-unit/:attachmentUnitId/slide/:slideNumber : Get the lecture unit attachment slide by slide number
+     * GET files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideNumber} : Get the lecture unit attachment slide by slide number
      *
      * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
      * @param slideNumber      the slideNumber of the file
@@ -646,7 +647,8 @@ public class FileResource {
             if (file == null) {
                 return ResponseEntity.notFound().build();
             }
-            return ResponseEntity.ok(file);
+            return ResponseEntity.ok().cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS)) // Cache for 30 days;
+                    .contentType(getMediaTypeFromFilename(filePath.getFileName().toString())).body(file);
         }
         catch (IOException e) {
             log.error("Failed to return requested file with path {}", filePath, e);

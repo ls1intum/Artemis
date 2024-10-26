@@ -13,19 +13,19 @@ plugins {
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "io.spring.dependency-management" version "1.1.6"
-    id "com.google.cloud.tools.jib" version "3.4.3"
+    id "com.google.cloud.tools.jib" version "3.4.4"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.diffplug.spotless" version "6.25.0"
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
-    id "org.owasp.dependencycheck" version "10.0.4"
+    id "org.owasp.dependencycheck" version "11.0.0"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.5.6"
+version = "7.6.4"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -243,23 +243,28 @@ dependencies {
         exclude module: "jaxb-api"
     }
 
-    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.5"
+    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.6"
 
     implementation "de.jplag:jplag:${jplag_version}"
-    implementation "de.jplag:java:${jplag_version}"
-    implementation "de.jplag:kotlin:${jplag_version}"
+
     implementation "de.jplag:c:${jplag_version}"
-    implementation "de.jplag:swift:${jplag_version}"
+    implementation "de.jplag:cpp:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
+    implementation "de.jplag:javascript:${jplag_version}"
+    implementation "de.jplag:kotlin:${jplag_version}"
     implementation "de.jplag:python-3:${jplag_version}"
+    implementation "de.jplag:rlang:${jplag_version}"
+    implementation "de.jplag:rust:${jplag_version}"
+    implementation "de.jplag:swift:${jplag_version}"
     implementation "de.jplag:text:${jplag_version}"
+    implementation "de.jplag:typescript:${jplag_version}"
 
     // those are transitive dependencies of JPlag Text --> Stanford NLP
     // Note: ideally we would exclude them, but for some reason this does not work
     implementation "org.apache.lucene:lucene-queryparser:${lucene_version}"
     implementation "org.apache.lucene:lucene-core:${lucene_version}"
     implementation "org.apache.lucene:lucene-analyzers-common:${lucene_version}"
-    implementation "com.google.protobuf:protobuf-java:4.28.2"
+    implementation "com.google.protobuf:protobuf-java:4.28.3"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -270,7 +275,7 @@ dependencies {
         }
     }
 
-    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.24.0"
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.24.1"
 
     // Note: spring-security-lti13 does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
     // implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.11"
@@ -326,7 +331,7 @@ dependencies {
 //    implementation "org.springdoc:springdoc-openapi-ui:1.8.0"
 
     // use the latest version to avoid security vulnerabilities
-    implementation "org.springframework:spring-webmvc:6.1.13"
+    implementation "org.springframework:spring-webmvc:6.1.14"
 
     implementation "com.vdurmont:semver4j:3.1.0"
 
@@ -342,7 +347,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.13.4"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.13.6"
     implementation "net.logstash.logback:logstash-logback-encoder:8.0"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
@@ -394,8 +399,8 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:3.2.6"
-    implementation "org.springframework.data:spring-data-ldap:3.3.4"
+    implementation "org.springframework.ldap:spring-ldap-core:3.2.7"
+    implementation "org.springframework.data:spring-data-ldap:3.3.5"
 
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.3") {
         // NOTE: these modules contain security vulnerabilities and are not needed
@@ -405,10 +410,10 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.3"
     implementation "org.springframework.cloud:spring-cloud-commons:4.1.4"
 
-    implementation "io.netty:netty-all:4.1.113.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.1.22"
-    implementation "org.springframework:spring-messaging:6.1.13"
-    implementation "org.springframework.retry:spring-retry:2.0.9"
+    implementation "io.netty:netty-all:4.1.114.Final"
+    implementation "io.projectreactor.netty:reactor-netty:1.1.23"
+    implementation "org.springframework:spring-messaging:6.1.14"
+    implementation "org.springframework.retry:spring-retry:2.0.10"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -416,7 +421,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:9.41.1"
+    implementation "com.nimbusds:nimbus-jose-jwt:9.41.2"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -437,7 +442,7 @@ dependencies {
     implementation "org.bouncycastle:bcpkix-jdk18on:1.78.1"
     implementation "org.bouncycastle:bcprov-jdk18on:1.78.1"
 
-    implementation "com.mysql:mysql-connector-j:9.0.0"
+    implementation "com.mysql:mysql-connector-j:9.1.0"
     implementation "org.postgresql:postgresql:42.7.4"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
@@ -445,10 +450,9 @@ dependencies {
     implementation "com.ibm.icu:icu4j-charset:75.1"
     implementation "com.github.seancfoley:ipaddress:5.5.1"
     implementation "org.apache.maven:maven-model:3.9.9"
-    // NOTE: 3.0.2 is broken for splitting lecture specific PDFs
-    implementation "org.apache.pdfbox:pdfbox:3.0.1"
+    implementation "org.apache.pdfbox:pdfbox:3.0.3"
     implementation "org.apache.commons:commons-csv:1.12.0"
-    implementation "org.commonmark:commonmark:0.23.0"
+    implementation "org.commonmark:commonmark:0.24.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
@@ -464,7 +468,7 @@ dependencies {
     implementation "com.google.code.gson:gson:2.11.0"
 
 
-    implementation "com.google.errorprone:error_prone_annotations:2.32.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.34.0"
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") {
@@ -528,11 +532,11 @@ dependencies {
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.176"
+    testImplementation "io.github.classgraph:classgraph:4.8.177"
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:8.10.2"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.0"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.1"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
         exclude group: "org.testcontainers", module: "mariadb"

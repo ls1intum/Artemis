@@ -13,9 +13,11 @@ import { TutorialGroupUtilizationIndicatorComponent } from './tutorial-group-uti
 import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
 import { MeetingPatternPipe } from 'app/course/tutorial-groups/shared/meeting-pattern.pipe';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
+import { IconCardComponent } from 'app/shared/icon-card/icon-card.component';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule, ArtemisSidePanelModule, VerticalProgressBarModule, DetailModule],
+    imports: [ArtemisSharedModule, RouterModule, ArtemisSidePanelModule, VerticalProgressBarModule, DetailModule, IconCardComponent, ProfilePictureComponent],
     declarations: [
         TutorialGroupsTableComponent,
         TutorialGroupDetailComponent,

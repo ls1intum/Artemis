@@ -7,19 +7,21 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -90,16 +92,28 @@ public class LocalCIResultProcessingService {
     /**
      * Initializes the result queue, build agent information map and the locks.
      */
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void init() {
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.listenerId = resultQueue.addItemListener(new ResultQueueListener(), true);
     }
 
+    /**
+     * Removes the item listener from the Hazelcast result queue if the instance is active.
+     * Logs an error if Hazelcast is not running.
+     */
     @PreDestroy
     public void removeListener() {
-        this.resultQueue.removeItemListener(this.listenerId);
+        // check if Hazelcast is still active, before invoking this
+        try {
+            if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
+                this.resultQueue.removeItemListener(this.listenerId);
+            }
+        }
+        catch (HazelcastInstanceNotActiveException e) {
+            log.error("Could not remove listener as hazelcast instance is not active.");
+        }
     }
 
     /**
@@ -113,7 +127,9 @@ public class LocalCIResultProcessingService {
         if (resultQueueItem == null) {
             return;
         }
-        log.info("Processing build job result");
+        log.info("Processing build job result with id {}", resultQueueItem.buildJobQueueItem().id());
+        log.debug("Build jobs waiting in queue: {}", resultQueue.size());
+        log.debug("Queued build jobs: {}", resultQueue.stream().map(i -> i.buildJobQueueItem().id()).toList());
 
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
@@ -209,8 +225,8 @@ public class LocalCIResultProcessingService {
      */
     private void addResultToBuildAgentsRecentBuildJobs(BuildJobQueueItem buildJob, Result result) {
         try {
-            buildAgentInformation.lock(buildJob.buildAgentAddress());
-            BuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
+            buildAgentInformation.lock(buildJob.buildAgent().memberAddress());
+            BuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgent().memberAddress());
             if (buildAgent != null) {
                 List<BuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
                 for (int i = 0; i < recentBuildJobs.size(); i++) {
@@ -219,11 +235,11 @@ public class LocalCIResultProcessingService {
                         break;
                     }
                 }
-                buildAgentInformation.put(buildJob.buildAgentAddress(), new BuildAgentInformation(buildAgent, recentBuildJobs));
+                buildAgentInformation.put(buildJob.buildAgent().memberAddress(), new BuildAgentInformation(buildAgent, recentBuildJobs));
             }
         }
         finally {
-            buildAgentInformation.unlock(buildJob.buildAgentAddress());
+            buildAgentInformation.unlock(buildJob.buildAgent().memberAddress());
         }
 
     }

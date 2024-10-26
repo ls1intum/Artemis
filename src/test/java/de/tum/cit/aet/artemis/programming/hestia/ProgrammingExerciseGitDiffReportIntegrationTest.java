@@ -7,24 +7,21 @@ import java.time.ZonedDateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffReport;
-import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
-import de.tum.cit.aet.artemis.programming.localvcci.AbstractLocalCILocalVCIntegrationTest;
-import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 /**
  * Tests for the ProgrammingExerciseGitDiffReportResource
  */
-class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
+class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "progexgitdiffreport";
 
@@ -40,17 +37,16 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractLocalCILoc
 
     private ProgrammingExercise exercise;
 
-    @Autowired
-    private HestiaUtilTestService hestiaUtilTestService;
-
-    @Autowired
-    private ProgrammingExerciseGitDiffReportService reportService;
-
     @BeforeEach
     void initTestCase() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+    }
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
     }
 
     @AfterEach

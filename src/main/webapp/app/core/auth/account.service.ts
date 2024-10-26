@@ -41,6 +41,7 @@ export class AccountService implements IAccountService {
     private websocketService = inject(JhiWebsocketService);
     private featureToggleService = inject(FeatureToggleService);
 
+    // cached value of the user to avoid unnecessary requests to the server
     private userIdentityValue?: User;
     private authenticated = false;
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
@@ -222,6 +223,10 @@ export class AccountService implements IAccountService {
 
     isAdmin(): boolean {
         return this.hasAnyAuthorityDirect([Authority.ADMIN]);
+    }
+
+    isAtLeastTutor(): boolean {
+        return this.hasAnyAuthorityDirect([Authority.ADMIN, Authority.EDITOR, Authority.INSTRUCTOR, Authority.TA]);
     }
 
     isAuthenticated(): boolean {

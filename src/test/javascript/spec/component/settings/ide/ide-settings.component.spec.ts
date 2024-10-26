@@ -1,10 +1,11 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { of } from 'rxjs';
 import { IdeSettingsComponent } from 'app/shared/user-settings/ide-preferences/ide-settings.component';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('IdeSettingsComponent', () => {
     let component: IdeSettingsComponent;
@@ -19,9 +20,9 @@ describe('IdeSettingsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             declarations: [IdeSettingsComponent],
-            providers: [{ provide: IdeSettingsService, useValue: mockIdeSettingsService }],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: IdeSettingsService, useValue: mockIdeSettingsService }],
             schemas: [CUSTOM_ELEMENTS_SCHEMA],
         }).compileComponents();
 
@@ -33,27 +34,33 @@ describe('IdeSettingsComponent', () => {
         jest.resetAllMocks();
     });
 
-    it('should load predefined IDEs and IDE preferences on init', () => {
+    it('should load predefined IDEs and IDE preferences on init', fakeAsync(() => {
         const predefinedIdes = [
             { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' },
             { name: 'IntelliJ', deepLink: 'jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo={cloneUrl}' },
         ];
         const idePreferences = new Map([[ProgrammingLanguage.JAVA, predefinedIdes[0]]]);
+        const loadedIdePreferences = new Map([
+            [ProgrammingLanguage.JAVA, predefinedIdes[0]],
+            [ProgrammingLanguage.EMPTY, predefinedIdes[0]],
+        ]);
 
         mockIdeSettingsService.loadPredefinedIdes.mockReturnValue(of(predefinedIdes));
-        mockIdeSettingsService.loadIdePreferences.mockReturnValue(of(idePreferences));
+        mockIdeSettingsService.loadIdePreferences.mockReturnValue(Promise.resolve(idePreferences));
 
         component.ngOnInit();
+
+        tick();
 
         expect(mockIdeSettingsService.loadPredefinedIdes).toHaveBeenCalledOnce();
         expect(mockIdeSettingsService.loadIdePreferences).toHaveBeenCalledOnce();
         expect(component.PREDEFINED_IDE).toEqual(predefinedIdes);
-        expect(component.programmingLanguageToIde()).toEqual(idePreferences);
+        expect(component.programmingLanguageToIde()).toEqual(loadedIdePreferences);
         expect(component.assignedProgrammingLanguages).toEqual([ProgrammingLanguage.JAVA]);
         expect(component.remainingProgrammingLanguages).toEqual(
             Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.JAVA && x !== ProgrammingLanguage.EMPTY),
         );
-    });
+    }));
 
     it('should add a programming language and update the lists', () => {
         const programmingLanguage = ProgrammingLanguage.JAVA;

@@ -72,6 +72,7 @@ import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
@@ -364,14 +365,14 @@ public class CourseResource {
     }
 
     /**
-     * PUT courses/:courseId/onlineCourseConfiguration : Updates the onlineCourseConfiguration for the given course.
+     * PUT courses/:courseId/online-course-configuration : Updates the onlineCourseConfiguration for the given course.
      *
      * @param courseId                  the id of the course to update
      * @param onlineCourseConfiguration the online course configuration to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated online course configuration
      */
     // TODO: move into LTIResource
-    @PutMapping("courses/{courseId}/onlineCourseConfiguration")
+    @PutMapping("courses/{courseId}/online-course-configuration")
     @EnforceAtLeastInstructor
     @Profile(PROFILE_LTI)
     public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
@@ -553,6 +554,25 @@ public class CourseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<List<Course>> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         return ResponseEntity.ok(courseService.getAllCoursesForManagementOverview(onlyActive));
+    }
+
+    /**
+     * GET /courses/for-archive : get all courses for course archive
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body containing
+     *         a set of DTOs, which contain the courses with id, title, semester, color, icon
+     */
+    @GetMapping("courses/for-archive")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<CourseForArchiveDTO>> getCoursesForArchive() {
+        long start = System.nanoTime();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get all inactive courses from previous semesters user {} has access to", user.getLogin());
+        Set<CourseForArchiveDTO> courses = courseService.getAllCoursesForCourseArchive();
+        log.debug("courseService.getAllCoursesForCourseArchive done");
+
+        log.info("GET /courses/for-archive took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
+        return ResponseEntity.ok(courses);
     }
 
     /**
@@ -821,12 +841,12 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId/lockedSubmissions Get locked submissions for course for user
+     * GET /courses/:courseId/locked-submissions Get locked submissions for course for user
      *
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("courses/{courseId}/lockedSubmissions")
+    @GetMapping("courses/{courseId}/locked-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Submission>> getLockedSubmissionsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);

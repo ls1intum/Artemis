@@ -5,6 +5,7 @@
             "summary": "Build Agents Summary",
             "details": "Build Agents Details",
             "name": "Name",
+            "memberAddress": "Member Address",
             "maxNumberOfConcurrentBuildJobs": "Max # of concurrent build jobs",
             "numberOfCurrentBuildJobs": "# of current build jobs",
             "runningBuildJobs": "Running build jobs",
@@ -12,9 +13,19 @@
             "recentBuildJobs": "Recent build jobs",
             "running": "Running",
             "idle": "Idle",
+            "paused": "Paused",
             "onlineAgents": "online agent(s)",
             "of": "of",
-            "buildJobsRunning": "build jobs running"
+            "buildJobsRunning": "build jobs running",
+            "alerts": {
+                "buildAgentPaused": "Build agent pause request sent successfully. The agent will not accept new build jobs and will gracefully finish the current build jobs or will cancel them after a configurable seconds.",
+                "buildAgentResumed": "Build agent resume request sent successfully. The agent will start accepting new build jobs.",
+                "buildAgentPauseFailed": "Failed to pause the build agent.",
+                "buildAgentResumeFailed": "Failed to resume the build agent.",
+                "buildAgentWithoutName": "Build agent name is required."
+            },
+            "pause": "Pause",
+            "resume": "Resume"
         }
     }
 }

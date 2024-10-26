@@ -11,8 +11,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record BuildAgentInformation(String name, int maxNumberOfConcurrentBuildJobs, int numberOfCurrentBuildJobs, List<BuildJobQueueItem> runningBuildJobs, boolean status,
-        List<BuildJobQueueItem> recentBuildJobs, String publicSshKey) implements Serializable {
+public record BuildAgentInformation(BuildAgentDTO buildAgent, int maxNumberOfConcurrentBuildJobs, int numberOfCurrentBuildJobs, List<BuildJobQueueItem> runningBuildJobs,
+        BuildAgentStatus status, List<BuildJobQueueItem> recentBuildJobs, String publicSshKey) implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -24,7 +24,11 @@ public record BuildAgentInformation(String name, int maxNumberOfConcurrentBuildJ
      * @param recentBuildJobs  The list of recent build jobs
      */
     public BuildAgentInformation(BuildAgentInformation agentInformation, List<BuildJobQueueItem> recentBuildJobs) {
-        this(agentInformation.name(), agentInformation.maxNumberOfConcurrentBuildJobs(), agentInformation.numberOfCurrentBuildJobs(), agentInformation.runningBuildJobs,
+        this(agentInformation.buildAgent(), agentInformation.maxNumberOfConcurrentBuildJobs(), agentInformation.numberOfCurrentBuildJobs(), agentInformation.runningBuildJobs,
                 agentInformation.status(), recentBuildJobs, agentInformation.publicSshKey());
+    }
+
+    public enum BuildAgentStatus {
+        ACTIVE, IDLE, PAUSED
     }
 }

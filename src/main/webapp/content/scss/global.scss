@@ -139,7 +139,6 @@ a.btn {
 .form-control-sm,
 .form-select,
 .form-check-input,
-.form-control:not(.ace_editor):hover,
 .form-control:focus,
 .form-control:focus-visible,
 textarea {
@@ -307,6 +306,7 @@ Generic styles
     background-color: var(--bs-body-bg);
     padding-bottom: var(--footer-height-prod);
     @media (max-width: 768px) {
+        height: 100dvh;
         padding-bottom: var(--footer-height-prod) !important;
     }
     &.footer-height-dev {
@@ -827,14 +827,12 @@ Course Info Bar
     }
 }
 
-.warning-modal-window .modal-dialog {
-    width: 50%;
+.diff-view-modal .modal-dialog {
+    max-width: 80vw;
 }
 
-/* additional style to overwrite form-control style from parent components */
-.form-control.ace_editor {
-    font-size: 12px;
-    line-height: normal;
+.warning-modal-window .modal-dialog {
+    width: 50%;
 }
 
 .connection-status {
@@ -1089,11 +1087,51 @@ body.transparent-background {
     }
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
+        height: calc(100dvh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
     }
 }
 
-.sidebar-collapsed {
+.sidebar-collapsed-course-overview {
     display: none;
+}
+
+$transition-sidebar-content-opacity-length: 0.1s;
+$transition-sidebar-width-length: 0.1s;
+$transition-in-between-delay: 0.05s;
+
+.sidebar-content {
+    opacity: 1;
+
+    transition: opacity $transition-sidebar-content-opacity-length 0s ease-in-out;
+}
+
+.sidebar-collapsed .sidebar-content {
+    opacity: 0;
+
+    transition: opacity $transition-sidebar-content-opacity-length 0s ease-in-out;
+}
+
+.sidebar-wrap {
+    overflow: hidden;
+    max-width: $sidebar-width;
+    margin-right: $spacer;
+
+    transition:
+        max-width $transition-sidebar-width-length 0s ease-in-out,
+        margin-right $transition-sidebar-width-length 0s ease-in-out;
+}
+
+.sidebar-collapsed .sidebar-wrap {
+    max-width: 0;
+    margin-right: 0;
+
+    transition:
+        max-width $transition-sidebar-width-length 0s ease-in-out,
+        margin-right $transition-sidebar-width-length 0s ease-in-out;
+}
+
+.sidebar-width {
+    width: $sidebar-width;
 }
 
 .fs-xx-small {

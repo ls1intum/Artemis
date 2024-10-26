@@ -10,7 +10,7 @@
             (keyup.enter)="onSearch()"
             placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
         />
-        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="courseWideSearchTerm = ''" />
+        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="hideSearchTerm()" />
         <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSearch()" />
     </div>
     <!-- only display after isCodeOfConductAccepted is loaded and set to false -->
@@ -22,17 +22,23 @@
     }
     @if (isCodeOfConductAccepted && isServiceSetUp && course) {
         <div class="d-flex justify-content-between">
-            <div class="me-3" [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+            <div class="communication-content-sidebar" [ngClass]="{ 'sidebar-collapsed': isCollapsed, 'is-not-in-active-conversation': !activeConversation }">
                 <jhi-sidebar
                     (onSelectConversation)="onConversationSelected($event)"
                     (onUpdateSidebar)="prepareSidebarData()"
                     [itemSelected]="conversationSelected"
                     [courseId]="course.id"
                     [sidebarData]="sidebarData"
-                    (onPlusPressed)="onAccordionPlusButtonPressed($event)"
+                    (onCreateChannelPressed)="openCreateChannelDialog()"
+                    (onBrowsePressed)="openChannelOverviewDialog()"
+                    (onDirectChatPressed)="openCreateOneToOneChatDialog()"
+                    (onGroupChatPressed)="openCreateGroupChatDialog()"
                     [showAddOption]="CHANNEL_TYPE_SHOW_ADD_OPTION"
                     [channelTypeIcon]="CHANNEL_TYPE_ICON"
+                    [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
                     [collapseState]="DEFAULT_COLLAPSE_STATE"
+                    [inCommunication]="true"
+                    [reEmitNonDistinctSidebarEvents]="isMobile"
                 />
             </div>
             @if (course && !activeConversation && isCodeOfConductPresented) {
@@ -40,7 +46,10 @@
                     <jhi-course-conversations-code-of-conduct [course]="course!" />
                 </div>
             }
-            <div class="col flex-grow-1 module-bg rounded-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }" style="min-width: 200px">
+            <div
+                class="communication-message-wrap col flex-grow-1 module-bg rounded-3 scrollable-content"
+                [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'is-answer-thread-open': !!postInThread }"
+            >
                 @if (activeConversation) {
                     <jhi-conversation-header (collapseSearch)="toggleChannelSearch()" (onUpdateSidebar)="prepareSidebarData()" />
                     <jhi-conversation-messages
@@ -54,9 +63,8 @@
                 }
             </div>
             <div
-                class="col d-flex flex-grow-1 justify-end px-0 scrollable-content"
-                [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
-                style="max-width: min-content"
+                class="communication-answer-message-wrap col flex-grow-1 justify-end px-0 scrollable-content"
+                [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'is-answer-thread-open': !!postInThread }"
             >
                 @if (!!postInThread) {
                     <jhi-conversation-thread-sidebar

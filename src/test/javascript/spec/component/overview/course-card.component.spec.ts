@@ -15,6 +15,7 @@ import { PieChartModule } from '@swimlane/ngx-charts';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseScores } from 'app/course/course-scores/course-scores';
+import { CourseCardHeaderComponent } from 'app/overview/course-card-header/course-card-header.component';
 
 describe('CourseCardComponent', () => {
     let fixture: ComponentFixture<CourseCardComponent>;
@@ -40,6 +41,7 @@ describe('CourseCardComponent', () => {
                 MockPipe(ArtemisTimeAgoPipe),
                 MockRouterLinkDirective,
                 MockComponent(SecuredImageComponent),
+                MockComponent(CourseCardHeaderComponent),
                 MockDirective(TranslateDirective),
             ],
         })

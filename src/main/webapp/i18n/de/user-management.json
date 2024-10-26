@@ -11,7 +11,7 @@
             },
             "notEnrolled": {
                 "delete": {
-                    "cancel": "Keine nicht eingeschriebenen Nutzer:innen zum löschen gefunden.",
+                    "cancel": "Keine nicht eingeschriebenen Nutzer:innen zum Löschen gefunden.",
                     "caption": "Nicht eingeschriebene Nutzer:innen löschen",
                     "question": "Sollen diese Nutzer:innen wirklich dauerhaft gelöscht werden? <br> {{ users }} <br> Das sind <strong>{{ title }}</strong> Nutzer:innen! Diese Aktion kann NICHT rückgängig gemacht werden!"
                 }
@@ -24,7 +24,7 @@
                 },
                 "authority": {
                     "title": "Rolle ({{ num }})",
-                    "tooltip": "Filter die Nutzer:innen anhand ihrere Berechtigungen",
+                    "tooltip": "Filter die Nutzer:innen anhand ihrer Berechtigungen",
                     "admin": "Administrator",
                     "instructor": "Lehrende",
                     "editor": "Editor:in",
@@ -64,7 +64,7 @@
             "home": {
                 "title": "Nutzer:in",
                 "createLabel": "Nutzer:in erstellen",
-                "createOrEditLabel": "Nutzer:in erstellen oder bearbeiten"
+                "editLabel": "Nutzer:in bearbeiten"
             },
             "created": "Nutzer:in wurde mit ID {{ param }} erstellt",
             "updated": "Nutzer:in mit ID {{ param }} wurde geändert",
@@ -93,7 +93,7 @@
             "profiles": "Profile",
             "langKey": "Sprache",
             "internal": "Intern",
-            "passwordTooltip": "Du kannst nur Passwörter für interne Nutzer:innen ändern.",
+            "passwordTooltip": "Du kannst diese Einstellung nur für neue Nutzer:innen ändern. Bitte beachte, dass du nur Passwörter für interne Nutzer:innen ändern kannst.",
             "createdBy": "Erstellt von",
             "createdDate": "Erstellt am",
             "lastModifiedBy": "Bearbeitet von",
@@ -102,7 +102,8 @@
             "search": "Suche",
             "loading": "Laden...",
             "searchError": "Der Suchbegriff muss leer oder mindestens 3 Zeichen lang sein.",
-            "jenkinsChange": "Die Änderung des Benutzernamens wird für dein aktuelles Setup (Jenkins) nicht unterstützt. Möglicherweise musst du den Benutzernamen in Jenkins manuell ändern.\nDu hast den Benutzer <i>{{ oldLogin }}</i> auf <i>{{ newLogin }}</i> aktualisiert."
+            "jenkinsChange": "Die Änderung des Benutzernamens wird für dein aktuelles Setup (Jenkins) nicht unterstützt. Möglicherweise musst du den Benutzernamen in Jenkins manuell ändern.\nDu hast den Benutzer <i>{{ oldLogin }}</i> auf <i>{{ newLogin }}</i> aktualisiert.",
+            "profilePicture": "Profilbild"
         }
     }
 }

@@ -25,6 +25,9 @@ export type CollapseState = {
 } & (Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<ExamGroupCategory, boolean> | Record<TutorialGroupCategory, boolean>);
 export type ChannelAccordionShowAdd = Record<ChannelGroupCategory, boolean>;
 export type ChannelTypeIcons = Record<ChannelGroupCategory, IconProp>;
+export type SidebarItemShowAlways = {
+    [key: string]: boolean;
+} & (Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<ExamGroupCategory, boolean> | Record<TutorialGroupCategory, boolean>);
 
 export interface SidebarData {
     groupByCategory: boolean;
@@ -32,8 +35,8 @@ export interface SidebarData {
     groupedData?: AccordionGroups;
     ungroupedData?: SidebarCardElement[];
     storageId?: string;
-    showAccordionAddOption?: boolean;
     showAccordionLeadingIcon?: boolean;
+    messagingEnabled?: boolean;
 }
 
 export interface SidebarCardElement {
