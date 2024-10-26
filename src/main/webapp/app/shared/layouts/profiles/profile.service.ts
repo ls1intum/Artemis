@@ -88,6 +88,10 @@ export class ProfileService {
 
                         profileInfo.theiaPortalURL = data.theiaPortalURL ?? '';
 
+                        profileInfo.buildTimeoutMin = data.buildTimeoutMin;
+                        profileInfo.buildTimeoutMax = data.buildTimeoutMax;
+                        profileInfo.buildTimeoutDefault = data.buildTimeoutDefault;
+
                         return profileInfo;
                     }),
                 )
