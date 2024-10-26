@@ -19,12 +19,12 @@
                 <div class="col-12 col-lg-6 col-xl-6">
                     <jhi-unreferenced-feedback-detail
                         [feedback]="feedback"
+                        [resultId]="resultId"
                         (onFeedbackChange)="updateFeedback(feedback)"
                         (onFeedbackDelete)="deleteFeedback(feedback)"
                         [readOnly]="readOnly"
                         [highlightDifferences]="highlightDifferences"
                         [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText"
-                        [resultId]="resultId"
                     />
                 </div>
             }
@@ -32,12 +32,12 @@
                 <div class="col-12 col-lg-6 col-xl-6">
                     <jhi-unreferenced-feedback-detail
                         [feedback]="suggestion"
+                        [resultId]="resultId"
                         [isSuggestion]="true"
                         [readOnly]="true"
                         (onAcceptSuggestion)="acceptSuggestion($event)"
                         (onDiscardSuggestion)="discardSuggestion($event)"
                         [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText"
-                        [resultId]="resultId"
                     />
                 </div>
             }

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -91,10 +90,8 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * @return the new saved result
      */
     public Result saveAndSubmitManualAssessment(StudentParticipation participation, Result newManualResult, Result existingManualResult, User assessor, boolean submit) {
-        // we do this to avoid problems of editing longFeedbackTexts in manual Assesements
-        resultService.deleteLongFeedback(newManualResult.getFeedbacks());
-        List<Feedback> feedbacks = new ArrayList<>(newManualResult.getFeedbacks());
-        newManualResult.updateAllFeedbackItems(feedbacks, true);
+        // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with {@link resultRepository.save}
+        resultService.deleteLongFeedback(newManualResult.getFeedbacks(), newManualResult);
         // make sure that the submission cannot be manipulated on the client side
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
         ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();

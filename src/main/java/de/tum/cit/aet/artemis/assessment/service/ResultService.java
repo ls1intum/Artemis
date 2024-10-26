@@ -536,10 +536,8 @@ public class ResultService {
     @NotNull
     private Result shouldSaveResult(@NotNull Result result, boolean shouldSave) {
         if (shouldSave) {
-            // we do this to avoid problems of editing longFeedbackTexts in manual Assesements
-            deleteLongFeedback(result.getFeedbacks());
-            List<Feedback> feedbacks = new ArrayList<>(result.getFeedbacks());
-            result.updateAllFeedbackItems(feedbacks, true);
+            // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with {@link resultRepository.save}
+            deleteLongFeedback(result.getFeedbacks(), result);
             // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
             return resultRepository.save(result);
         }
@@ -643,10 +641,12 @@ public class ResultService {
      * @param feedbackList The list of {@link Feedback} objects for which the long feedback texts are to be deleted.
      *                         Only feedback items that have long feedback texts and a non-null ID will be processed.
      */
-    public void deleteLongFeedback(List<Feedback> feedbackList) {
+    public void deleteLongFeedback(List<Feedback> feedbackList, Result result) {
         if (feedbackList == null) {
             return;
         }
+        List<Feedback> feedbacks = new ArrayList<>(feedbackList);
+        result.updateAllFeedbackItems(feedbacks, true);
         for (Feedback feedback : feedbackList) {
             if (feedback.getHasLongFeedbackText() && feedback.getId() != null) {
                 Optional<LongFeedbackText> longFeedbackTextOpt = longFeedbackTextRepository.findByFeedbackId(feedback.getId());

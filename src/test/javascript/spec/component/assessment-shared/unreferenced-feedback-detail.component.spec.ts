@@ -47,6 +47,14 @@ describe('Unreferenced Feedback Detail Component', () => {
             });
     });
 
+    it('should call loadLongFeedback on init if feedback has long text', () => {
+        comp.feedback = { id: 42, hasLongFeedbackText: true } as Feedback;
+        const loadLongFeedbackSpy = jest.spyOn(comp, 'loadLongFeedback');
+        comp.ngOnInit();
+        fixture.detectChanges();
+        expect(loadLongFeedbackSpy).toHaveBeenCalledOnce();
+    });
+
     it('should update feedback with SGI and emit to parent', () => {
         const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
         comp.feedback = {

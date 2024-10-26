@@ -287,8 +287,8 @@ public class AssessmentService {
         User user = userRepository.getUser();
         result.setAssessor(user);
 
-        // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with resultRepository.save(result)
-        resultService.deleteLongFeedback(feedbackList);
+        // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with {@link resultRepository.save}
+        resultService.deleteLongFeedback(feedbackList, result);
 
         result.updateAllFeedbackItems(feedbackList, false);
         result.determineAssessmentType();

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject, input } from '@angular/core';
 import { faCheck, faExclamation, faExclamationTriangle, faQuestionCircle, faTrash, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
@@ -13,7 +13,7 @@ import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service'
 })
 export class UnreferencedFeedbackDetailComponent implements OnInit {
     @Input() public feedback: Feedback;
-    @Input() resultId: number;
+    resultId = input.required<number>;
     @Input() isSuggestion: boolean;
     @Input() public readOnly: boolean;
     @Input() highlightDifferences: boolean;
@@ -51,7 +51,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
      */
     public async loadLongFeedback() {
         if (this.feedback.hasLongFeedbackText) {
-            this.feedback.detailText = await this.feedbackService.getLongFeedbackText(this.resultId, this.feedback.id!);
+            this.feedback.detailText = await this.feedbackService.getLongFeedbackText(this.resultId(), this.feedback.id!);
             this.onFeedbackChange.emit(this.feedback);
         }
     }
