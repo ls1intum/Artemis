@@ -69,7 +69,7 @@ public class UserSshPublicKeyService {
      * @param label           the label to assign to the SSH key, or null/empty to use the default logic.
      * @throws BadRequestAlertException if the key label is longer than 50 characters
      */
-    public void setLabelForKey(UserSshPublicKey newSshPublicKey, String label) {
+    private void setLabelForKey(UserSshPublicKey newSshPublicKey, String label) {
         if (label == null || label.isEmpty()) {
             String[] parts = newSshPublicKey.getPublicKey().split("\\s+");
             if (parts.length >= 3) {
@@ -113,8 +113,8 @@ public class UserSshPublicKeyService {
      * @param user the {@link User} whose SSH keys are to be retrieved.
      * @return a list of {@link UserSshPublicKey} objects for the user.
      */
-    public List<UserSshPublicKey> getAllSshKeysForUser(User user) {
-        return userSshPublicKeyRepository.findAllByUserId(user.getId());
+    public List<UserSshPublicKeyDTO> getAllSshKeysForUser(User user) {
+        return userSshPublicKeyRepository.findAllByUserId(user.getId()).stream().map(UserSshPublicKeyDTO::of).toList();
     }
 
     /**

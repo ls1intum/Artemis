@@ -147,7 +147,7 @@ public class AccountResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<UserSshPublicKeyDTO>> getSshPublicKeys() {
         User user = userRepository.getUser();
-        List<UserSshPublicKeyDTO> keys = userSshPublicKeyService.getAllSshKeysForUser(user).stream().map(UserSshPublicKeyDTO::of).toList();
+        List<UserSshPublicKeyDTO> keys = userSshPublicKeyService.getAllSshKeysForUser(user);
         return ResponseEntity.ok(keys);
     }
 
@@ -176,8 +176,8 @@ public class AccountResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> hasUserSSHkeys() {
         User user = userRepository.getUser();
-        boolean hasKey = userSshPublicKeyService.hasUserSSHkeys(user.getId());
-        return ResponseEntity.ok(hasKey);
+        boolean hasKeys = userSshPublicKeyService.hasUserSSHkeys(user.getId());
+        return ResponseEntity.ok(hasKeys);
     }
 
     /**
