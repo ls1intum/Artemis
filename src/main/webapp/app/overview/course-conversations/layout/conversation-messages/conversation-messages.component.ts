@@ -12,6 +12,7 @@ import {
     ViewChild,
     ViewChildren,
     ViewEncapsulation,
+    inject,
 } from '@angular/core';
 import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
@@ -27,6 +28,8 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { OneToOneChat, isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { canCreateNewMessageInConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { LayoutService } from 'app/shared/breakpoints/layout.service';
+import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 
 @Component({
     selector: 'jhi-conversation-messages',
@@ -77,6 +80,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     faSearch = faSearch;
     faEnvelope = faEnvelope;
     faCircleNotch = faCircleNotch;
+    isMobile = false;
+
+    private layoutService: LayoutService = inject(LayoutService);
 
     constructor(
         public metisService: MetisService, // instance from course-conversations.component
@@ -88,6 +94,14 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.subscribeToSearch();
         this.subscribeToMetis();
         this.subscribeToActiveConversation();
+        this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
+
+        this.layoutService
+            .subscribeToLayoutChanges()
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe(() => {
+                this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
+            });
         this.cdr.detectChanges();
     }
 
