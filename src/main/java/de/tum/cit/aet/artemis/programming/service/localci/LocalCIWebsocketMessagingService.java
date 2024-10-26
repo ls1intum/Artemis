@@ -100,7 +100,7 @@ public class LocalCIWebsocketMessagingService {
     }
 
     public void sendBuildAgentDetails(BuildAgentInformation buildAgentDetails) {
-        String channel = "/topic/admin/build-agent/" + buildAgentDetails.name();
+        String channel = "/topic/admin/build-agent/" + buildAgentDetails.buildAgent().name();
         log.debug("Sending message on topic {}: {}", channel, buildAgentDetails);
         websocketMessagingService.sendMessage(channel, buildAgentDetails);
     }

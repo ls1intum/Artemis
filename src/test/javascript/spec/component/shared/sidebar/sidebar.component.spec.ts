@@ -130,6 +130,14 @@ describe('SidebarComponent', () => {
         expect(size).toBe('M');
     });
 
+    it('should update sidebar event subscription on re emit input event change', () => {
+        fixture.detectChanges();
+        const prevSubscription = component.sidebarEventSubscription;
+        fixture.componentRef.setInput('reEmitNonDistinctSidebarEvents', true);
+        fixture.detectChanges();
+        expect(component.sidebarEventSubscription).not.toBe(prevSubscription);
+    });
+
     describe('openFilterExercisesLink', () => {
         const FILTER_LINK_SELECTOR = '.text-primary a';
 
