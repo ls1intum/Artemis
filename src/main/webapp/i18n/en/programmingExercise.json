@@ -714,7 +714,7 @@
                 "disableNetworkAccess": {
                     "title": "Disable internet access when executing the student submission",
                     "description": "Activate this option to disable network access for containers. The network will be disabled when executing the student submission. The dependencies will still be downloaded and cached in the container before that.",
-                    "warning": "When internet access is disabled, a script that downloads dependencies and cache them in the container will be executed. "
+                    "warning": "When internet access is disabled, a script that downloads dependencies and cache them in the container will be executed before the student submission is built and tested."
                 },
                 "envVars": {
                     "title": "Environment Variables",
