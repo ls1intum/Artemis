@@ -55,11 +55,15 @@ idea {
 }
 
 spotless {
+
     // allows to execute the code formatting commands ./gradlew spotlessApply and ./gradlew spotlessCheck
     java {
         target {
             fileTree(rootDir) {
-                include "**/*.java"
+                include (
+                    "src/main/java/**/*.java",
+                    "src/test/java/**/*.java",
+                )
                 exclude(
                         "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
                         "**/node_modules/**",
@@ -71,7 +75,6 @@ spotless {
                         "**/src/main/resources/templates/**",
                         "/docker/**",
                         "checked-out-repos/**",
-                        "**/src/main/java/org/eclipse/**",
                         "supporting_scripts/**"
                 )
             }
