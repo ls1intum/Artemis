@@ -77,7 +77,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
         this.courseExerciseService.requestFeedback(this.exercise().id!).subscribe({
             next: (participation: StudentParticipation) => {
                 if (participation) {
-                    this.generatingFeedback.emit();
+                    // this.generatingFeedback.emit();
                     this.alertService.success('artemisApp.exercise.feedbackRequestSent');
                 }
             },

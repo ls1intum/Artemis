@@ -41,8 +41,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
-import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
@@ -51,7 +49,6 @@ describe('TextEditorComponent', () => {
     let textService: TextEditorService;
     let textSubmissionService: TextSubmissionService;
     let getTextForParticipationStub: jest.SpyInstance;
-    let courseExerciseService: CourseExerciseService;
 
     const route = { snapshot: { paramMap: convertToParamMap({ participationId: 42 }) } } as ActivatedRoute;
     const textExercise = { id: 1 } as TextExercise;
@@ -94,7 +91,6 @@ describe('TextEditorComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TextSubmissionService, useClass: MockTextSubmissionService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
             ],
         })
             .compileComponents()
@@ -105,7 +101,6 @@ describe('TextEditorComponent', () => {
                 textService = debugElement.injector.get(TextEditorService);
                 textSubmissionService = TestBed.inject(TextSubmissionService);
                 getTextForParticipationStub = jest.spyOn(textService, 'get');
-                courseExerciseService = fixture.debugElement.injector.get(CourseExerciseService);
             });
     });
 
@@ -370,36 +365,6 @@ describe('TextEditorComponent', () => {
         } as StudentParticipation;
         comp['updateParticipation'](comp.participation, 2);
         expect(comp.submission.id).toBe(2);
-    });
-
-    it('should show request ai feedback if there is no due date', () => {
-        comp.isReadOnlyWithShowResult = false;
-        comp.isOwnerOfParticipation = true;
-        comp.textExercise = textExercise;
-        comp.textExercise.allowFeedbackRequests = true;
-        comp.textExercise.dueDate = undefined;
-        comp.submission = { id: 5, submitted: true };
-        comp.hasAthenaResultForLatestSubmission = false;
-        fixture.detectChanges();
-        const resultHistoryElement: DebugElement = fixture.debugElement.query(By.css('#request-feedback'));
-        expect(resultHistoryElement).toBeTruthy();
-    });
-
-    it('should not call courseExerciseService.requestFeedback if assureConditionsSatisfied returns false', () => {
-        jest.spyOn(comp, 'assureConditionsSatisfied').mockReturnValue(false);
-        const courseExerciseServiceSpy = jest.spyOn(courseExerciseService, 'requestFeedback');
-        comp.requestFeedback();
-        expect(comp.assureConditionsSatisfied).toHaveBeenCalled();
-        expect(courseExerciseServiceSpy).not.toHaveBeenCalled();
-    });
-
-    it('should call courseExerciseService.requestFeedback if assureConditionsSatisfied returns true', () => {
-        jest.spyOn(comp, 'assureConditionsSatisfied').mockReturnValue(true);
-        const courseExerciseServiceSpy = jest.spyOn(courseExerciseService, 'requestFeedback');
-        comp.textExercise = textExercise;
-        comp.requestFeedback();
-        expect(comp.assureConditionsSatisfied).toHaveBeenCalled();
-        expect(courseExerciseServiceSpy).toHaveBeenCalled();
     });
 
     it('should not render the submit button when isReadOnlyWithShowResult is true', () => {

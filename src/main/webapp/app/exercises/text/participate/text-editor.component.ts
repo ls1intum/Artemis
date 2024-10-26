@@ -26,7 +26,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { faChevronDown, faCircleNotch, faEye, faPenSquare, faTimeline } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { ChatServiceMode } from 'app/iris/iris-chat.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
@@ -86,7 +86,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     isReadOnlyWithShowResult: boolean = false;
     // Icon
     farListAlt = faListAlt;
-    faPenSquare = faPenSquare;
     faChevronDown = faChevronDown;
     faCircleNotch = faCircleNotch;
     faTimeline = faTimeline;
