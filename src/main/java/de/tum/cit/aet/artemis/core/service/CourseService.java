@@ -72,6 +72,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
 import de.tum.cit.aet.artemis.core.dto.CourseDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -690,6 +691,18 @@ public class CourseService {
         }
 
         return courseRepository.findAllCoursesByManagementGroupNames(userGroups);
+    }
+
+    /**
+     * Retrieves all inactive courses from non-null semesters that the current user is enrolled in
+     * for the course archive.
+     *
+     * @return A list of courses for the course archive.
+     */
+    public Set<CourseForArchiveDTO> getAllCoursesForCourseArchive() {
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isAdmin = authCheckService.isAdmin(user);
+        return courseRepository.findInactiveCoursesForUserRolesWithNonNullSemester(isAdmin, user.getGroups(), ZonedDateTime.now());
     }
 
     /**
