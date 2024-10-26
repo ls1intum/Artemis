@@ -142,4 +142,15 @@ describe('TextExamSubmissionComponent', () => {
         expect(component.answer).toBe('submission version');
         expect(component.submissionVersion).toBe(submissionVersion);
     });
+
+    it('should call triggerSave if save exercise button is clicked', () => {
+        component.exercise = exercise;
+        textSubmission.text = 'Hello World';
+        component.studentSubmission = textSubmission;
+        fixture.detectChanges();
+        const saveExerciseSpy = jest.spyOn(component, 'notifyTriggerSave');
+        const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
+        saveButton.triggerEventHandler('save', null);
+        expect(saveExerciseSpy).toHaveBeenCalledOnce();
+    });
 });

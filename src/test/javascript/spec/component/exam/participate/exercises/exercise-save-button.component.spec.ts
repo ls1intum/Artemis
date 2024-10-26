@@ -79,7 +79,7 @@ describe('ExerciseSaveButtonComponent', () => {
         expect(icon.componentInstance.icon).toBe(faFloppyDisk);
     });
 
-    it('should emit call onSave when the button is clicked and submission is not synced', () => {
+    it('should call onSave when the button is clicked and submission is not synced', () => {
         TestBed.runInInjectionContext(() => {
             component.submission = input({ isSynced: false, submitted: false } as Submission);
         });
