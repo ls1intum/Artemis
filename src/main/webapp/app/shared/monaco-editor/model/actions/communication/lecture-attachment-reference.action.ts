@@ -8,6 +8,7 @@ import { Attachment } from 'app/entities/attachment.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
+import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
 
 interface LectureWithDetails {
     id: number;
@@ -111,13 +112,13 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     insertLectureReference(editor: TextEditor, lecture: LectureWithDetails): void {
         this.replaceTextAtCurrentSelection(
             editor,
-            `[lecture]${this.sanitizeStringForMarkdownEditor(lecture.title)}(${this.metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`,
+            `[lecture]${sanitizeStringForMarkdownEditor(lecture.title)}(${this.metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`,
         );
     }
 
     insertAttachmentReference(editor: TextEditor, attachment: Attachment): void {
         const shortLink = attachment.link?.split('attachments/')[1];
-        this.replaceTextAtCurrentSelection(editor, `[attachment]${this.sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
+        this.replaceTextAtCurrentSelection(editor, `[attachment]${sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
     insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide): void {
@@ -126,31 +127,12 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         const shortLinkWithoutFileName = shortLink?.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
         this.replaceTextAtCurrentSelection(
             editor,
-            `[slide]${this.sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`,
+            `[slide]${sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`,
         );
     }
 
     insertAttachmentUnitReference(editor: TextEditor, attachmentUnit: AttachmentUnit): void {
         const shortLink = attachmentUnit.attachment?.link!.split('attachments/')[1];
-        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${this.sanitizeStringForMarkdownEditor(attachmentUnit.name)}(${shortLink})[/lecture-unit]`);
-    }
-
-    /**
-     * Takes a string and removes any symbols used for syntax in the markdown editor.
-     * @param {string} str - The string for sanitization.
-     */
-    private sanitizeStringForMarkdownEditor(str: string | undefined): string | undefined {
-        if (str === undefined) {
-            return str;
-        }
-
-        const symbolsToRemove = ['(', ')', '[', ']'];
-        let newString = str;
-
-        symbolsToRemove.forEach((symbolToRemove) => {
-            newString = newString.replaceAll(symbolToRemove, '');
-        });
-
-        return newString;
+        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentUnit.name)}(${shortLink})[/lecture-unit]`);
     }
 }

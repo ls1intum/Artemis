@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.web.hestia;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -74,13 +75,13 @@ public class ProgrammingExerciseTaskResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/tasks-with-unassigned-test-cases")
     @EnforceAtLeastTutor
-    public ResponseEntity<Set<ProgrammingExerciseTask>> getTasksWithUnassignedTask(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<ProgrammingExerciseTask>> getTasksWithUnassignedTask(@PathVariable Long exerciseId) {
         log.debug("REST request to retrieve ProgrammingExerciseTasks for ProgrammingExercise with id : {}", exerciseId);
         // Reload the exercise from the database as we can't trust data from the client
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
-        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
+        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
         return ResponseEntity.ok(tasks);
     }
 }
