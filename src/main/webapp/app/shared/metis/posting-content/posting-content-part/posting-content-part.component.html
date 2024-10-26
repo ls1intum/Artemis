@@ -44,6 +44,29 @@
         }
     </div>
 }
+
+@if (postingContentPart.imageToReference) {
+    <div [style.user-select]="'none'" [style.max-width.px]="400">
+        @if (postingContentPart.imageToReference && !imageNotFound) {
+            <a class="reference" (click)="enlargeImage(postingContentPart.imageToReference)">
+                <img
+                    class="img-fluid rounded-sm border mt-1 mb-1"
+                    [src]="postingContentPart.imageToReference"
+                    [alt]="postingContentPart.referenceStr"
+                    [title]="postingContentPart.referenceStr"
+                    (error)="toggleImageNotFound()"
+                    height="auto"
+                    width="100%"
+                />
+            </a>
+        } @else if (imageNotFound) {
+            <div class="card">
+                <h5 class="card-body"><fa-icon class="px-1" [icon]="faBan" /><span jhiTranslate="artemisApp.markdownEditor.preview.imageNotFound"></span></h5>
+            </div>
+        }
+    </div>
+}
+
 @if (postingContentPart.contentAfterReference) {
     <span class="markdown-preview" [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown: false : allowedHtmlTags : allowedHtmlAttributes"></span>
 }
