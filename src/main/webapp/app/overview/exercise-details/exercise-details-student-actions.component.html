@@ -230,7 +230,12 @@
                         [routerLink]="['/courses', courseId, 'exercises', exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                     ></button>
                     @if (exercise.allowFeedbackRequests && athenaEnabled && (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && beforeDueDate) {
-                        <jhi-request-feedback-button [exercise]="exercise" [smallButtons]="smallButtons"></jhi-request-feedback-button>
+                        <jhi-request-feedback-button
+                            [exercise]="exercise"
+                            [smallButtons]="smallButtons"
+                            [isGeneratingFeedback]="isGeneratingFeedback"
+                            (generatingFeedback)="this.isGeneratingFeedback = true"
+                        ></jhi-request-feedback-button>
                     }
                 }
             </div>

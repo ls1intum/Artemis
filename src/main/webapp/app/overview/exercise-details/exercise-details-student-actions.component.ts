@@ -1,4 +1,4 @@
-import { Component, ContentChild, HostBinding, Input, OnChanges, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
@@ -41,6 +41,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Input() courseId: number;
     @Input() smallButtons: boolean;
     @Input() examMode: boolean;
+    @Input() isGeneratingFeedback: boolean;
+
+    @Output() generatingFeedback: EventEmitter<void> = new EventEmitter<void>();
 
     // extension points, see shared/extension-point
     @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
