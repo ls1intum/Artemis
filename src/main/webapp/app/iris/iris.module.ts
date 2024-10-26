@@ -14,7 +14,6 @@ import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course
 import { IrisExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
-import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.component';
 import { ChatStatusBarComponent } from 'app/iris/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
 import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
@@ -27,7 +26,6 @@ import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.comp
         IrisExerciseSettingsUpdateComponent,
         IrisCommonSubSettingsUpdateComponent,
         IrisEnabledComponent,
-        CourseChatbotComponent,
     ],
     imports: [
         CommonModule,
@@ -43,6 +41,6 @@ import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.comp
         IrisLogoComponent,
         IrisBaseChatbotComponent,
     ],
-    exports: [CourseChatbotComponent, IrisLogoComponent, IrisEnabledComponent],
+    exports: [IrisLogoComponent, IrisEnabledComponent],
 })
 export class IrisModule {}

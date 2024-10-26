@@ -16,6 +16,7 @@ import { LineChartModule } from '@swimlane/ngx-charts';
 import { IrisModule } from 'app/iris/iris.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
+import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.component';
 
 const routes: Routes = [
     {
@@ -46,6 +47,8 @@ const routes: Routes = [
         IrisModule,
         FeatureToggleModule,
         ArtemisCompetenciesModule,
+        CourseChatbotComponent,
+        CourseChatbotComponent,
     ],
 })
 export class CourseDashboardModule {}
