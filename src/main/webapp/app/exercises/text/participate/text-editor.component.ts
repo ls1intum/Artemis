@@ -47,6 +47,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     protected readonly Result = Result;
     protected readonly hasExerciseDueDatePassed = hasExerciseDueDatePassed;
     readonly ChatServiceMode = ChatServiceMode;
+    protected readonly isAthenaAIResult = isAthenaAIResult;
 
     @Input() participationId?: number;
     @Input() displayHeader: boolean = true;
@@ -219,7 +220,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 result.participation = this.participation;
                 return result;
             });
-            this.sortedHistoryResults = this.participation.results.sort(this.resultSortFunction);
+            this.sortedHistoryResults = this.participation.results.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
         }
 
         if (this.participation.submissions?.length) {
@@ -228,10 +229,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 if (foundSubmission) {
                     this.submission = foundSubmission;
                 } else {
-                    this.submission = this.participation.submissions.sort(this.submissionSortFunction).last() as TextSubmission;
+                    this.submission = this.participation.submissions.sort((a, b) => (a.id ?? 0) - (b.id ?? 0)).last() as TextSubmission;
                 }
             } else {
-                this.submission = this.participation.submissions.sort(this.submissionSortFunction).last() as TextSubmission;
+                this.submission = this.participation.submissions.sort((a, b) => (a.id ?? 0) - (b.id ?? 0)).last() as TextSubmission;
             }
 
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
@@ -434,72 +435,4 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     onTextEditorInput(event: Event) {
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
     }
-
-    requestFeedback() {
-        if (!this.assureConditionsSatisfied()) return;
-
-        this.courseExerciseService.requestFeedback(this.textExercise.id!).subscribe({
-            next: (participation: StudentParticipation) => {
-                if (participation) {
-                    this.isGeneratingFeedback = true;
-                }
-            },
-            error: (error) => {
-                this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
-            },
-        });
-    }
-
-    /**
-     * Checks if the conditions for requesting automatic non-graded feedback are satisfied.
-     * The student can request automatic feedback under the following conditions:
-     * 1. They have a graded submission.
-     * 2. The deadline for the exercise has not been exceeded.
-     * 3. There is no other ai feedback for the given submission.
-     * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
-     */
-    assureConditionsSatisfied(): boolean {
-        const afterDueDate = !!this.textExercise.dueDate && dayjs().isSameOrAfter(this.textExercise.dueDate);
-        const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
-        if (afterDueDate) {
-            this.alertService.warning(dueDateWarning);
-            return false;
-        }
-
-        if (this.submission.text !== this.answer) {
-            const pendingChangesMessage = this.translateService.instant('artemisApp.exercise.feedbackRequestPendingChanges');
-            this.alertService.warning(pendingChangesMessage);
-            return false;
-        }
-
-        if (this.participation.results) {
-            const athenaResults = this.participation.results.filter((result) => isAthenaAIResult(result));
-            const countOfSuccessfulRequests = athenaResults.length;
-            if (countOfSuccessfulRequests >= 10) {
-                const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
-                this.alertService.warning(rateLimitExceededWarning);
-                return false;
-            }
-        }
-
-        if (this.hasAthenaResultForLatestSubmission) {
-            const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
-            this.alertService.warning(submitFirstWarning);
-            return false;
-        }
-        return true;
-    }
-
-    private resultSortFunction = (a: Result, b: Result) => {
-        const aValue = dayjs(a.completionDate!).valueOf();
-        const bValue = dayjs(b.completionDate!).valueOf();
-        return aValue - bValue;
-    };
-
-    private submissionSortFunction = (a: TextSubmission, b: TextSubmission) => {
-        const aValue = dayjs(a.submissionDate!).valueOf();
-        const bValue = dayjs(b.submissionDate!).valueOf();
-        return aValue - bValue;
-    };
-    protected readonly isAthenaAIResult = isAthenaAIResult;
 }

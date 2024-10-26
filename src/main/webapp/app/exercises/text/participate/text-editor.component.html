@@ -25,16 +25,7 @@
                         }
                     } @else {
                         @if (textExercise.allowFeedbackRequests && (!this.textExercise.dueDate || !hasExerciseDueDatePassed(this.textExercise, this.participation))) {
-                            <jhi-button
-                                id="request-feedback"
-                                [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
-                                [icon]="faPenSquare"
-                                (onClick)="requestFeedback()"
-                                [disabled]="!submission.submitted || isGeneratingFeedback || hasAthenaResultForLatestSubmission || (answer?.trim()?.length ?? 0) < 1"
-                                [btnType]="ButtonType.PRIMARY"
-                                [isLoading]="isGeneratingFeedback"
-                                [tooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip'"
-                            />
+                            <jhi-request-feedback-button [exercise]="textExercise"></jhi-request-feedback-button>
                         }
                     }
                     @if (!this.isReadOnlyWithShowResult) {
