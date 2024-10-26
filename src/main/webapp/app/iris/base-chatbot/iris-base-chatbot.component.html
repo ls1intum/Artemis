@@ -22,9 +22,9 @@
                 </button>
             }
 
-            @if (fullSize !== undefined) {
-                <button (click)="fullSizeToggle.next()" class="header-icon">
-                    @if (!fullSize) {
+            @if (fullSize() !== undefined) {
+                <button (click)="fullSizeToggle.emit()" class="header-icon">
+                    @if (!fullSize()) {
                         <fa-icon [icon]="faExpand" />
                     } @else {
                         <fa-icon [icon]="faCompress" />
@@ -32,7 +32,7 @@
                 </button>
             }
 
-            @if (showCloseButton) {
+            @if (showCloseButton()) {
                 <button (click)="closeChat()" class="header-icon">
                     <fa-icon [icon]="faXmark" />
                 </button>

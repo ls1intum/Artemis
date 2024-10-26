@@ -1,14 +1,12 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, input } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute } from '@angular/router';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 import { Subscription } from 'rxjs';
 import { faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
-import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
+import { IrisLogoComponent, IrisLogoLookDirection, IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
-import { IrisModule } from 'app/iris/iris.module';
-import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @Component({
@@ -16,11 +14,10 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     templateUrl: './exercise-chatbot-button.component.html',
     styleUrls: ['./exercise-chatbot-button.component.scss'],
     standalone: true,
-    imports: [IrisModule, CommonModule, FontAwesomeModule],
+    imports: [FontAwesomeModule, IrisLogoComponent],
 })
 export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
-    @Input()
-    mode: ChatServiceMode;
+    mode = input.required<ChatServiceMode>();
 
     dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | null = null;
     chatOpen = false;
@@ -46,7 +43,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
         // Subscribes to route params and gets the exerciseId from the route
         this.paramsSubscription = this.route.params.subscribe((params) => {
             const exerciseId = parseInt(params['exerciseId'], 10);
-            this.chatService.switchTo(this.mode, exerciseId);
+            this.chatService.switchTo(this.mode(), exerciseId);
         });
 
         // Subscribes to check for new messages

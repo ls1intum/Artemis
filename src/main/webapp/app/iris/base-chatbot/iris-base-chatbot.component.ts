@@ -1,12 +1,12 @@
 import { faArrowDown, faCircle, faCircleInfo, faCompress, faExpand, faPaperPlane, faRedo, faThumbsDown, faThumbsUp, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, input, output, viewChild } from '@angular/core';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { Subscription } from 'rxjs';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { TranslateService } from '@ngx-translate/core';
-import { IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
 import { IrisStatusService } from 'app/iris/iris-status.service';
@@ -15,11 +15,16 @@ import { AccountService } from 'app/core/auth/account.service';
 import { animate, group, style, transition, trigger } from '@angular/animations';
 import { IrisChatService } from 'app/iris/iris-chat.service';
 import * as _ from 'lodash-es';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ChatStatusBarComponent } from 'app/iris/base-chatbot/chat-status-bar/chat-status-bar.component';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
     templateUrl: './iris-base-chatbot.component.html',
     styleUrls: ['./iris-base-chatbot.component.scss'],
+    standalone: true,
     animations: [
         trigger('messageAnimation', [
             transition(':enter', [
@@ -70,6 +75,7 @@ import * as _ from 'lodash-es';
             ]),
         ]),
     ],
+    imports: [ArtemisSharedComponentModule, ChatStatusBarComponent, IrisLogoComponent, ArtemisMarkdownModule, ArtemisSharedModule],
 })
 export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewInit {
     // Icons
@@ -114,16 +120,16 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     resendAnimationActive: boolean;
     public ButtonType = ButtonType;
 
-    @Input() fullSize: boolean | undefined;
-    @Input() showCloseButton: boolean = false;
-    @Output() fullSizeToggle = new EventEmitter<void>();
-    @Output() closeClicked = new EventEmitter<void>();
+    fullSize = input<boolean>();
+    showCloseButton = input<boolean>(false);
+    fullSizeToggle = output<void>();
+    closeClicked = output<void>();
 
-    // ViewChilds
-    @ViewChild('messagesElement') messagesElement!: ElementRef;
-    @ViewChild('scrollArrow') scrollArrow!: ElementRef;
-    @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
-    @ViewChild('acceptButton') acceptButton: ElementRef<HTMLButtonElement>;
+    // ViewChildren
+    messagesElement = viewChild<ElementRef>('messagesElement');
+    scrollArrow = viewChild<ElementRef>('scrollArrow');
+    messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
+    acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -182,10 +188,11 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
         // Focus on message textarea
         setTimeout(() => {
-            if (this.messageTextarea) {
-                this.messageTextarea.nativeElement.focus();
+            const textarea = this.messageTextarea()?.nativeElement;
+            if (textarea) {
+                textarea.focus();
             } else {
-                this.acceptButton.nativeElement.focus();
+                this.acceptButton()?.nativeElement.focus();
             }
         }, 150);
     }
@@ -273,8 +280,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      */
     scrollToBottom(behavior: ScrollBehavior) {
         setTimeout(() => {
-            const messagesElement: HTMLElement = this.messagesElement.nativeElement;
-            messagesElement.scrollTo({
+            const messagesElement: HTMLElement | undefined = this.messagesElement()?.nativeElement;
+            messagesElement?.scrollTo({
                 top: 0,
                 behavior: behavior,
             });
@@ -353,7 +360,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * Adjusts the height of the message textarea based on its content.
      */
     adjustTextareaRows() {
-        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
+        const textarea: HTMLTextAreaElement | undefined = this.messageTextarea()?.nativeElement;
+        if (!textarea) return;
+
         textarea.style.height = 'auto'; // Reset the height to auto
         const bufferForSpaceBetweenLines = 4;
         const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + bufferForSpaceBetweenLines;
@@ -369,7 +378,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * Handles the row change event in the message textarea.
      */
     onModelChange() {
-        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
+        const textarea: HTMLTextAreaElement | undefined = this.messageTextarea()?.nativeElement;
+        if (!textarea) return;
+
         const newRows = textarea.value.split('\n').length;
         if (newRows != this.rows) {
             if (newRows <= 3) {
@@ -385,8 +396,10 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * @param newRows - The new number of rows.
      */
     adjustScrollButtonPosition(newRows: number) {
-        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
-        const scrollArrow: HTMLElement = this.scrollArrow.nativeElement;
+        const textarea: HTMLTextAreaElement | undefined = this.messageTextarea()?.nativeElement;
+        const scrollArrow: HTMLElement | undefined = this.scrollArrow()?.nativeElement;
+        if (!textarea || !scrollArrow) return;
+
         const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
         const rowHeight = lineHeight * newRows - lineHeight;
         setTimeout(() => {
@@ -398,15 +411,19 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
      * Resets the height of the chat body.
      */
     resetChatBodyHeight() {
-        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
-        const scrollArrow: HTMLElement = this.scrollArrow.nativeElement;
+        const textarea: HTMLTextAreaElement | undefined = this.messageTextarea()?.nativeElement;
+        const scrollArrow: HTMLElement | undefined = this.scrollArrow()?.nativeElement;
+        if (!textarea || !scrollArrow) return;
+
         textarea.rows = 1;
         textarea.style.height = '';
         scrollArrow.style.bottom = '';
     }
 
     checkChatScroll() {
-        const messagesElement = this.messagesElement.nativeElement;
+        const messagesElement: HTMLElement | undefined = this.messagesElement()?.nativeElement;
+        if (!messagesElement) return;
+
         const scrollTop = messagesElement.scrollTop;
         this.isScrolledToBottom = scrollTop < 50;
     }

@@ -21,7 +21,6 @@ import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.comp
 
 @NgModule({
     declarations: [
-        IrisBaseChatbotComponent,
         IrisSettingsUpdateComponent,
         IrisGlobalSettingsUpdateComponent,
         IrisCourseSettingsUpdateComponent,
@@ -42,7 +41,8 @@ import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.comp
         FeatureToggleModule,
         ChatStatusBarComponent,
         IrisLogoComponent,
+        IrisBaseChatbotComponent,
     ],
-    exports: [IrisBaseChatbotComponent, CourseChatbotComponent, IrisLogoComponent, IrisEnabledComponent],
+    exports: [CourseChatbotComponent, IrisLogoComponent, IrisEnabledComponent],
 })
 export class IrisModule {}
