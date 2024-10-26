@@ -2,35 +2,17 @@
     <div id="header-author-date" class="post-header-author-date d-flex align-items-start gap-2 flex-wrap">
         @if (posting.author) {
             <span class="d-inline-flex align-items-start gap-2 flex-wrap">
-                <div class="post-profile-picture-wrap rounded-3">
-                    @if (posting.author.imageUrl === undefined) {
-                        <strong
-                            id="post-default-profile-picture"
-                            class="post-profile-picture rounded-3"
-                            [ngStyle]="{ 'background-color': userProfilePictureBackgroundColor }"
-                            [ngClass]="'post-profile-picture-' + userAuthority"
-                            >{{ userProfilePictureInitials }}</strong
-                        >
-                    } @else {
-                        <img
-                            id="post-profile-picture"
-                            [alt]="'Profile picture of ' + posting.author?.name"
-                            class="post-profile-picture rounded-3"
-                            [src]="posting.author.imageUrl"
-                            [ngStyle]="{ 'background-color': userProfilePictureBackgroundColor }"
-                            [ngClass]="'post-profile-picture-' + userAuthority"
-                        />
-                    }
-                    @if (currentUser !== undefined && posting.author.id === currentUser.id) {
-                        <a
-                            class="post-edit-profile-picture-overlay rounded-3 d-flex align-items-center justify-content-center"
-                            [routerLink]="['/user-settings']"
-                            routerLinkActive="active"
-                        >
-                            <fa-icon class="text-white" [icon]="faCog" />
-                        </a>
-                    }
-                </div>
+                <jhi-profile-picture
+                    imageSizeInRem="2.15"
+                    fontSizeInRem="0.9"
+                    imageId="post-profile-picture"
+                    defaultPictureId="post-default-profile-picture"
+                    [authorId]="posting.author?.id"
+                    [authorName]="posting.author?.name"
+                    [imageUrl]="posting.author?.imageUrl"
+                    [isEditable]="currentUser !== undefined && posting.author.id === currentUser.id"
+                >
+                </jhi-profile-picture>
                 <span class="fs-small d-inline-flex flex-column align-items-start">
                     <span class="fw-semibold">{{ posting.author?.name }}</span>
                     <span class="fs-x-small mt-1 text-body-secondary">
@@ -42,12 +24,14 @@
                 </span>
             </span>
         }
-        <span>-</span>
-        @if (postingIsOfToday) {
-            <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-small"></span>
-        }
-        <span class="fs-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
-            {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
+        <span class="post-header-date-separator">-</span>
+        <span class="post-header-date">
+            @if (postingIsOfToday) {
+                <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-small"></span>,
+            }
+            <span class="post-header-date fs-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+                {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
+            </span>
         </span>
         @if (!!isCommunicationPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
             <span jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></span>

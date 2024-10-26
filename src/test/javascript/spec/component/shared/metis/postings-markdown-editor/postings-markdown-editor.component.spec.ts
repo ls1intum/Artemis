@@ -24,6 +24,8 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { UrlAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/url.action';
+import { AttachmentAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/attachment.action';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -70,6 +72,8 @@ describe('PostingsMarkdownEditor', () => {
             new QuoteAction(),
             new CodeAction(),
             new CodeBlockAction(),
+            new UrlAction(),
+            new AttachmentAction(),
             new UserMentionAction(courseManagementService, metisService),
             new ChannelReferenceAction(metisService, channelService),
             new ExerciseReferenceAction(metisService),
@@ -89,6 +93,8 @@ describe('PostingsMarkdownEditor', () => {
             new QuoteAction(),
             new CodeAction(),
             new CodeBlockAction(),
+            new UrlAction(),
+            new AttachmentAction(),
             new ExerciseReferenceAction(metisService),
         ]);
 
