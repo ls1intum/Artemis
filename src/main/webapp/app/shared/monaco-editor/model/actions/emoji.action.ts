@@ -88,7 +88,9 @@ export class EmojiAction extends TextEditorAction {
      */
     insertEmojiAtCursor(editor: TextEditor, emoji: string): void {
         const position = editor.getPosition();
-        if (!position) return;
+        if (!position) {
+            return;
+        }
 
         this.insertTextAtPosition(editor, position, emoji);
 
