@@ -20,6 +20,7 @@ import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service'
 describe('Unreferenced Feedback Detail Component', () => {
     let comp: UnreferencedFeedbackDetailComponent;
     let fixture: ComponentFixture<UnreferencedFeedbackDetailComponent>;
+    let feedbackService: FeedbackService;
     let sgiService: StructuredGradingCriterionService;
 
     beforeEach(() => {
@@ -43,16 +44,21 @@ describe('Unreferenced Feedback Detail Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(UnreferencedFeedbackDetailComponent);
                 comp = fixture.componentInstance;
-                sgiService = fixture.debugElement.injector.get(StructuredGradingCriterionService);
+                feedbackService = TestBed.inject(FeedbackService);
             });
     });
 
-    it('should call loadLongFeedback on init if feedback has long text', () => {
-        comp.feedback = { id: 42, hasLongFeedbackText: true } as Feedback;
-        const loadLongFeedbackSpy = jest.spyOn(comp, 'loadLongFeedback');
+    it('should call getLongFeedbackText on init if feedback has long text', async () => {
+        const feedbackId = 42;
+        const resultId = 1;
+        const exampleText = 'This is a long feedback text';
+
+        comp.feedback = { id: feedbackId, hasLongFeedbackText: true } as Feedback;
+        fixture.componentRef.setInput('resultId', resultId);
+        const getLongFeedbackTextSpy = jest.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue(exampleText);
+
         comp.ngOnInit();
-        fixture.detectChanges();
-        expect(loadLongFeedbackSpy).toHaveBeenCalledOnce();
+        expect(getLongFeedbackTextSpy).toHaveBeenCalledExactlyOnceWith(fixture.componentInstance.resultId, feedbackId);
     });
 
     it('should update feedback with SGI and emit to parent', () => {
