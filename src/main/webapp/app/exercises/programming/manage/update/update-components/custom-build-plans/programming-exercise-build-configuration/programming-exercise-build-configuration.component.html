@@ -31,6 +31,11 @@
                     <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.description" />
                 </label>
             </div>
+            @if (isNetworkDisabled) {
+                <div class="warning alert-warning mb-2" role="alert">
+                    <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.invalid"></span>
+                </div>
+            }
         }
 
         <div class="mb-2">
