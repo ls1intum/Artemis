@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -70,7 +71,7 @@ public class UserSshPublicKeyService {
      * @throws BadRequestAlertException if the key label is longer than 50 characters
      */
     private void setLabelForKey(UserSshPublicKey newSshPublicKey, String label) {
-        if (label == null || label.isEmpty()) {
+        if (StringUtils.isBlank(label)) {
             String[] parts = newSshPublicKey.getPublicKey().split("\\s+");
             if (parts.length >= 3) {
                 label = String.join(" ", Arrays.copyOfRange(parts, 2, parts.length));
