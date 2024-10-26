@@ -27,7 +27,7 @@ public class UserSshPublicKey extends DomainObject {
      */
     @NotNull
     @Column(name = "user_id")
-    private Long userId;
+    private long userId;
 
     /**
      * The label of the SSH key shwon in the UI
@@ -70,11 +70,11 @@ public class UserSshPublicKey extends DomainObject {
     @Column(name = "expiry_date")
     private ZonedDateTime expiryDate = null;
 
-    public @NotNull Long getUserId() {
+    public @NotNull long getUserId() {
         return userId;
     }
 
-    public void setUserId(@NotNull Long userId) {
+    public void setUserId(@NotNull long userId) {
         this.userId = userId;
     }
 

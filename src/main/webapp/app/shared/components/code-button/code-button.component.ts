@@ -81,9 +81,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     ) {}
 
     async ngOnInit() {
-        const user = await this.accountService.identity();
-
-        this.user = user!;
+        this.user = (await this.accountService.identity())!;
         this.refreshTokenState();
 
         this.copyEnabled = true;

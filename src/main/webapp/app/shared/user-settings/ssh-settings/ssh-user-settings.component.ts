@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, tap } from 'rxjs';
 import { faEdit, faEllipsis, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -6,7 +6,6 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
-import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 
 @Component({
@@ -15,11 +14,10 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['../user-settings.scss', './ssh-user-settings.component.scss'],
 })
 export class SshUserSettingsComponent implements OnInit, OnDestroy {
-    readonly documentationType: DocumentationType = 'SshSetup';
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
 
-    sshPublicKeys: UserSshPublicKey[] = [];
-    keyCount = 0;
-    isLoading = true;
+    readonly documentationType: DocumentationType = 'SshSetup';
 
     readonly faEdit = faEdit;
     readonly faSave = faSave;
@@ -27,17 +25,14 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
     readonly faEllipsis = faEllipsis;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
-
     private dialogErrorSource = new Subject<string>();
+
+    sshPublicKeys: UserSshPublicKey[] = [];
+    keyCount = 0;
+    isLoading = true;
+
     currentDate: dayjs.Dayjs;
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    @ViewChild('itemsDrop', { static: true }) itemsDrop: NgbDropdown;
-
-    constructor(
-        private accountService: AccountService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.currentDate = dayjs();

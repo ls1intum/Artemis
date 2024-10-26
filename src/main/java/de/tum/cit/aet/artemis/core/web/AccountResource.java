@@ -141,7 +141,7 @@ public class AccountResource {
     /**
      * GET account/ssh-public-keys : retrieves all SSH keys of a user
      *
-     * @return the ResponseEntity containing all public SSH keys of a user with status 200 (OK), or with status 400 (Bad Request)
+     * @return the ResponseEntity containing all public SSH keys of a user with status 200 (OK)
      */
     @GetMapping("account/ssh-public-keys")
     @EnforceAtLeastStudent
@@ -156,7 +156,8 @@ public class AccountResource {
      *
      * @param keyId The id of the key that should be fetched
      *
-     * @return the ResponseEntity containing the requested public SSH key of a user with status 200 (OK), or with status 400 (Bad Request)
+     * @return the ResponseEntity containing the requested public SSH key of a user with status 200 (OK), or with status 403 (Access Forbidden) if the key does not exist or is not
+     *         owned by the requesting user
      */
     @GetMapping("account/ssh-public-key/{keyId}")
     @EnforceAtLeastStudent
@@ -169,13 +170,13 @@ public class AccountResource {
     /**
      * GET account/has-ssh-public-key : gets the ssh public key
      *
-     * @return the ResponseEntity containing true if the User has SSH keys, and false if it does not, with status 200 (OK), or with status 400 (Bad Request)
+     * @return the ResponseEntity containing true if the User has SSH keys, and false if it does not, with status 200 (OK)
      */
     @GetMapping("account/has-ssh-public-keys")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> hasUserSSHkeys() {
         User user = userRepository.getUser();
-        Boolean hasKey = userSshPublicKeyService.hasUserSSHkeys(user.getId());
+        boolean hasKey = userSshPublicKeyService.hasUserSSHkeys(user.getId());
         return ResponseEntity.ok(hasKey);
     }
 
@@ -184,15 +185,13 @@ public class AccountResource {
      *
      * @param sshPublicKey the ssh public key to create
      *
-     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
+     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) when the SSH key is malformed, or when a key with the same hash already exists
      */
     @PostMapping("account/ssh-public-key")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> addSshPublicKey(@RequestBody UserSshPublicKeyDTO sshPublicKey) throws GeneralSecurityException, IOException {
-
         User user = userRepository.getUser();
         log.debug("REST request to add SSH key to user {}", user.getLogin());
-        // Parse the public key string
         AuthorizedKeyEntry keyEntry;
         try {
             keyEntry = AuthorizedKeyEntry.parseAuthorizedKeyEntry(sshPublicKey.publicKey());
@@ -200,7 +199,7 @@ public class AccountResource {
         catch (IllegalArgumentException e) {
             throw new BadRequestAlertException("Invalid SSH key format", "SSH key", "invalidKeyFormat", true);
         }
-        // Extract the PublicKey object
+
         userSshPublicKeyService.createSshKeyForUser(user, keyEntry, sshPublicKey);
         return ResponseEntity.ok().build();
     }
@@ -210,7 +209,7 @@ public class AccountResource {
      *
      * @param keyId The id of the key that should be deleted
      *
-     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
+     * @return the ResponseEntity with status 200 (OK) when the deletion succeeded, or with status 403 (Access Forbidden) if the key does not belong to the user, or does not exist
      */
     @DeleteMapping("account/ssh-public-key/{keyId}")
     @EnforceAtLeastStudent

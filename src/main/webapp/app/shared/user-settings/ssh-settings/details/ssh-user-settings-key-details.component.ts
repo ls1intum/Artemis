@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, concatMap, filter, tap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -16,13 +16,21 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['../../user-settings.scss', '../ssh-user-settings.component.scss'],
 })
 export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
+    readonly accountService = inject(AccountService);
+    readonly route = inject(ActivatedRoute);
+    readonly router = inject(Router);
+    readonly alertService = inject(AlertService);
+
     readonly documentationType: DocumentationType = 'SshSetup';
     readonly invalidKeyFormat = 'invalidKeyFormat';
     readonly keyAlreadyExists = 'keyAlreadyExists';
 
-    subscription: Subscription;
+    readonly faEdit = faEdit;
+    readonly faSave = faSave;
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 
-    sshPublicKey: UserSshPublicKey;
+    subscription: Subscription;
 
     // state change variables
     isCreateMode = false; // true when creating new key, false when viewing existing key
@@ -41,19 +49,8 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     displayedLastUsedDate?: dayjs.Dayjs;
     currentDate: dayjs.Dayjs;
 
-    readonly faEdit = faEdit;
-    readonly faSave = faSave;
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    constructor(
-        private accountService: AccountService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.setMessageBasedOnOS(getOS());

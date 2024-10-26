@@ -329,7 +329,7 @@ export class AccountService implements IAccountService {
     /**
      * Sends the added SSH key to the server
      *
-     * @param userSshPublicKey
+     * @param userSshPublicKey The userSshPublicKey DTO containing the details for the new key which should be created
      */
     addNewSshPublicKey(userSshPublicKey: UserSshPublicKey): Observable<HttpResponse<UserSshPublicKey>> {
         return this.http.post<UserSshPublicKey>('api/account/ssh-public-key', userSshPublicKey, { observe: 'response' });

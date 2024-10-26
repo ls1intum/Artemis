@@ -12,7 +12,7 @@
         <div class="list-group-item">
             <div class="d-flex flex-wrap">
                 <p>
-                    <span style="font-size: large" jhiTranslate="artemisApp.userSettings.sshSettingsPage.whatToUseSSHForInfo"></span>
+                    <span class="large-text" jhiTranslate="artemisApp.userSettings.sshSettingsPage.whatToUseSSHForInfo"></span>
                     <jhi-documentation-link [documentationType]="documentationType" [displayString]="'artemisApp.userSettings.sshSettingsPage.learnMore'"> </jhi-documentation-link>
                 </p>
             </div>
@@ -33,7 +33,7 @@
             <!-- input fields for key creation -->
             @if (isCreateMode) {
                 <div class="d-flex flex-wrap mb-4">
-                    <p style="font-size: small">
+                    <p class="small-text">
                         <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.alreadyHaveKey"> </span>
                         <code> {{ copyInstructions }} </code>
                     </p>
@@ -42,7 +42,7 @@
                 <div class="mb-4">
                     <p class="large-text" jhiTranslate="artemisApp.userSettings.sshSettingsPage.label"></p>
                     <textarea class="form-control small-text-area" rows="1" [readonly]="!isCreateMode" [(ngModel)]="displayedKeyLabel"></textarea>
-                    <p style="font-size: small">
+                    <p class="small-text">
                         <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.commentUsedAsLabel"> </span>
                     </p>
                 </div>
