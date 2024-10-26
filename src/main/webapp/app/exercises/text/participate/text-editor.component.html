@@ -25,7 +25,10 @@
                         }
                     } @else {
                         @if (textExercise.allowFeedbackRequests && (!this.textExercise.dueDate || !hasExerciseDueDatePassed(this.textExercise, this.participation))) {
-                            <jhi-request-feedback-button [exercise]="textExercise"></jhi-request-feedback-button>
+                            <jhi-request-feedback-button
+                                [exercise]="textExercise"
+                                [hasAthenaResultForLatestSubmission]="hasAthenaResultForLatestSubmission"
+                            ></jhi-request-feedback-button>
                         }
                     }
                     @if (!this.isReadOnlyWithShowResult) {

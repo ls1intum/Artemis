@@ -9,7 +9,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { isExamExercise } from 'app/shared/util/utils';
@@ -30,6 +29,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
     isExamExercise: boolean;
     participation?: StudentParticipation;
 
+    hasAthenaResultForLatestSubmission = input<boolean>(false);
     isGeneratingFeedback = input<boolean>();
     smallButtons = input<boolean>(false);
     exercise = input.required<Exercise>();
@@ -96,25 +96,11 @@ export class RequestFeedbackButtonComponent implements OnInit {
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
     assureConditionsSatisfied(): boolean {
-        if (this.exercise().type === ExerciseType.PROGRAMMING || !this.hasAthenaResultForLatestSubmission()) {
+        if (this.exercise().type === ExerciseType.PROGRAMMING || this.exercise().type === ExerciseType.MODELLING || !this.hasAthenaResultForLatestSubmission()) {
             return true;
         }
         const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
         this.alertService.warning(submitFirstWarning);
-        return false;
-    }
-
-    hasAthenaResultForLatestSubmission(): boolean {
-        if (this.participation?.submissions && this.participation?.results) {
-            // submissions.results is always undefined so this is neccessary
-            return (
-                this.participation.submissions?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0)).last()?.id ===
-                this.participation.results
-                    ?.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA)
-                    .sort((a, b) => (a.id ?? 0) - (b.id ?? 0))
-                    .last()?.submission?.id
-            );
-        }
         return false;
     }
 }
