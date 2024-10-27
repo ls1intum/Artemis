@@ -1,4 +1,6 @@
-$profile-picture-height: 2.15rem;
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
 
 .post-result-information {
     font-size: small;
@@ -31,52 +33,8 @@ $profile-picture-height: 2.15rem;
     margin-left: 2.65rem;
 }
 
-.post-profile-picture {
-    width: $profile-picture-height;
-    height: $profile-picture-height;
-    font-size: 0.9rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--gray-400);
-    color: var(--white);
-}
-
-.post-profile-picture-wrap {
-    width: $profile-picture-height;
-    height: $profile-picture-height;
-    position: relative;
-}
-
-.post-edit-profile-picture-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(#000, 0.6);
-    opacity: 0;
-    color: var(--white);
-}
-
-.post-edit-profile-picture-overlay:hover {
-    opacity: 1;
-}
-
 .post-authority-icon-student {
     display: none;
-}
-
-.post-profile-picture-student {
-    background-color: var(--cyan);
-}
-
-.post-profile-picture-tutor {
-    background-color: var(--orange);
-}
-
-.post-profile-picture-instructor {
-    background-color: var(--graph-red);
 }
 
 .reference {
@@ -119,4 +77,24 @@ $profile-picture-height: 2.15rem;
 
 .card {
     border-radius: 1em;
+}
+
+@include media-breakpoint-down(sm) {
+    .post-header-author-date {
+        flex-direction: column;
+        gap: 0 !important;
+    }
+
+    .post-content-margin {
+        margin-left: 0;
+    }
+
+    .post-header-date-separator {
+        display: none;
+    }
+
+    .post-header-date span {
+        color: $secondary;
+        font-size: 0.75rem !important;
+    }
 }

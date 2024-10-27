@@ -1,7 +1,11 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" [formGroup]="editForm">
-            <h2 id="myUserLabel" jhiTranslate="artemisApp.userManagement.home.createOrEditLabel"></h2>
+            @if (user.id === undefined) {
+                <h2 id="createUser" jhiTranslate="artemisApp.userManagement.home.createLabel"></h2>
+            } @else {
+                <h2 id="editUser" jhiTranslate="artemisApp.userManagement.home.editLabel"></h2>
+            }
             <div>
                 <div class="form-group">
                     <label for="login" class="form-control-label" jhiTranslate="artemisApp.userManagement.login"></label>
@@ -83,7 +87,7 @@
                 </div>
                 <div class="form-check">
                     <label for="internal" class="form-check-label" ngbTooltip="{{ 'artemisApp.userManagement.passwordTooltip' | artemisTranslate }}">
-                        <input class="form-check-input" type="checkbox" id="internal" name="internal" formControlName="internalInput" [(ngModel)]="user.internal" />
+                        <input class="form-check-input" type="checkbox" id="internal" name="internal" formControlName="internalInput" />
                         <span jhiTranslate="artemisApp.userManagement.internal"></span>
                     </label>
                     <jhi-help-icon text="artemisApp.userManagement.passwordTooltip" />
@@ -255,15 +259,7 @@
                 </div>
                 <div class="form-check">
                     <label for="activated" class="form-check-label">
-                        <input
-                            class="form-check-input"
-                            [disabled]="user.id === null"
-                            type="checkbox"
-                            id="activated"
-                            name="activated"
-                            formControlName="activatedInput"
-                            [(ngModel)]="user.activated"
-                        />
+                        <input class="form-check-input" type="checkbox" id="activated" name="activated" [(ngModel)]="user.activated" />
                         <span jhiTranslate="artemisApp.userManagement.activated"></span>
                     </label>
                 </div>
