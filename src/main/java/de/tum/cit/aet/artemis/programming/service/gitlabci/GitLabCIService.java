@@ -295,7 +295,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuild(participation.getProgrammingExercise().getId());
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(participation.getProgrammingExercise().getId());
         setupGitLabCIConfigurationForRepository(participation.getVcsRepositoryUri(), programmingExercise, participation.getBuildPlanId());
     }
 
