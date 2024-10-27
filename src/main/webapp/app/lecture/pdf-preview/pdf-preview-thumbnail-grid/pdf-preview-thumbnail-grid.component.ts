@@ -187,7 +187,7 @@ export class PdfPreviewThumbnailGridComponent {
      * */
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         //const isVertical = originalCanvas.height > originalCanvas.width;
-        this.isEnlargedView.set(true);
         this.originalCanvas.set(originalCanvas);
+        this.isEnlargedView.set(true);
     }
 }

@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, effect, input, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, effect, input, output, signal, viewChild } from '@angular/core';
 import 'pdfjs-dist/build/pdf.worker';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
@@ -18,10 +18,11 @@ export class PdfPreviewEnlargedCanvasComponent {
 
     pdfContainer = input.required<HTMLDivElement>();
     originalCanvas = input<HTMLCanvasElement>();
+    totalPages = input<number>(0);
 
-    isEnlargedView = input<boolean>(false);
+    isEnlargedViewOutput = output<boolean>();
+
     currentPage = signal<number>(1);
-    totalPages = signal<number>(0);
 
     constructor() {
         effect(
@@ -38,12 +39,10 @@ export class PdfPreviewEnlargedCanvasComponent {
      */
     @HostListener('document:keydown', ['$event'])
     handleKeyboardEvents(event: KeyboardEvent) {
-        if (this.isEnlargedView()) {
-            if (event.key === 'ArrowRight' && this.currentPage() < this.totalPages()) {
-                this.navigatePages('next');
-            } else if (event.key === 'ArrowLeft' && this.currentPage() > 1) {
-                this.navigatePages('prev');
-            }
+        if (event.key === 'ArrowRight' && this.currentPage() < this.totalPages()) {
+            this.navigatePages('next');
+        } else if (event.key === 'ArrowLeft' && this.currentPage() > 1) {
+            this.navigatePages('prev');
         }
     }
 
@@ -59,12 +58,10 @@ export class PdfPreviewEnlargedCanvasComponent {
      * Dynamically updates the canvas size within an enlarged view based on the viewport.
      */
     adjustCanvasSize = () => {
-        if (this.isEnlargedView()) {
-            const canvasElements = this.pdfContainer().querySelectorAll('.pdf-canvas-container canvas');
-            if (this.currentPage() - 1 < canvasElements.length) {
-                const canvas = canvasElements[this.currentPage() - 1] as HTMLCanvasElement;
-                this.updateEnlargedCanvas(canvas);
-            }
+        const canvasElements = this.pdfContainer().querySelectorAll('.pdf-canvas-container canvas');
+        if (this.currentPage() - 1 < canvasElements.length) {
+            const canvas = canvasElements[this.currentPage() - 1] as HTMLCanvasElement;
+            this.updateEnlargedCanvas(canvas);
         }
     };
 
@@ -87,8 +84,6 @@ export class PdfPreviewEnlargedCanvasComponent {
      */
     updateEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         requestAnimationFrame(() => {
-            if (!this.isEnlargedView) return;
-
             const isVertical = originalCanvas.height > originalCanvas.width;
             this.adjustPdfContainerSize(isVertical);
 
@@ -197,7 +192,7 @@ export class PdfPreviewEnlargedCanvasComponent {
      * Closes the enlarged view of the PDF and re-enables scrolling in the PDF container.
      */
     closeEnlargedView(event: MouseEvent) {
-        this.isEnlargedView.apply(false);
+        this.isEnlargedViewOutput.emit(false);
         this.adjustPdfContainerSize(false);
         this.toggleBodyScroll(false);
         event.stopPropagation();

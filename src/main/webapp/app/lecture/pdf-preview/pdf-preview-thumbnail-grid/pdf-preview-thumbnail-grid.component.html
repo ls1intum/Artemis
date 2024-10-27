@@ -1,5 +1,10 @@
 <div class="pdf-container" #pdfContainer>
     @if (isEnlargedView()) {
-        <jhi-pdf-preview-enlarged-canvas-component [pdfContainer]="pdfContainer" [originalCanvas]="originalCanvas()" [isEnlargedView]="isEnlargedView()" />
+        <jhi-pdf-preview-enlarged-canvas-component
+            [pdfContainer]="pdfContainer"
+            [totalPages]="totalPages()"
+            [originalCanvas]="originalCanvas()"
+            (isEnlargedViewOutput)="isEnlargedView.set($event)"
+        />
     }
 </div>
