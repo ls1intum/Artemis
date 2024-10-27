@@ -1235,7 +1235,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     JOIN t.testCases tct
                     WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
                 ), ''),
-                ''
+                CASE
+                    WHEN f.detailText LIKE 'ARES Security Error%' THEN 'Ares Error'
+                    WHEN f.detailText LIKE 'Unwanted Statement found%' THEN 'AST Error'
+                    ELSE 'Student Error'
+                END
             )
             FROM StudentParticipation p
                  JOIN p.results r ON r.id = (

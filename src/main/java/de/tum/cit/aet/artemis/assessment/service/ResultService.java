@@ -603,7 +603,8 @@ public class ResultService {
         List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> {
             String taskIndex = tasks.stream().filter(task -> task.getTaskName().equals(detail.taskNumber())).findFirst().map(task -> String.valueOf(tasks.indexOf(task) + 1))
                     .orElse("0");
-            return new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), taskIndex, "StudentError");
+            return new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), taskIndex,
+                    detail.errorCategory());
         }).toList();
 
         // 8. Return the response DTO containing feedback details, total elements, and test case/task info
