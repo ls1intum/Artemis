@@ -230,8 +230,8 @@ public class FaqResource {
     }
 
     private void checkIsInstructor(FaqState faqState, Long courseId) {
-        if (faqState != FaqState.ACCEPTED) {
-            checkRoleForCourse(courseId, Role.TEACHING_ASSISTANT);
+        if (faqState == FaqState.ACCEPTED) {
+            checkRoleForCourse(courseId, Role.INSTRUCTOR);
         }
     }
 
