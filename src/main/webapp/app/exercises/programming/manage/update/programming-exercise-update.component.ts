@@ -663,16 +663,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     save() {
         const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
-
-        console.log('selection before custom check');
-        console.log('selected Project type: ' + JSON.stringify(this.programmingExercise.projectType));
-        console.log('available project types: ' + JSON.stringify(this.projectTypes));
-
         this.determineProjectTypeIfNotSelected();
-
-        console.log('selection after custom check');
-        console.log('selected Project type: ' + JSON.stringify(this.programmingExercise.projectType));
-        console.log('available project types: ' + JSON.stringify(this.projectTypes));
 
         if (!this.modalService.hasOpenModals()) {
             this.saveExercise();
