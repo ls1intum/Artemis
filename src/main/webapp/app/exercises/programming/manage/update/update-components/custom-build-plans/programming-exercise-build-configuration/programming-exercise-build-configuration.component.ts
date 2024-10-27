@@ -30,8 +30,15 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.timeoutMinValue = profileInfo.buildTimeoutMin ?? 10;
-                this.timeoutMaxValue = profileInfo.buildTimeoutMax ?? 240;
-                this.timeoutDefaultValue = profileInfo.buildTimeoutDefault ?? 120;
+
+                // Set the maximum timeout value to 240 if it is not set in the profile or if it is less than the minimum value
+                this.timeoutMaxValue = profileInfo.buildTimeoutMax && profileInfo.buildTimeoutMax > this.timeoutMinValue ? profileInfo.buildTimeoutMax : 240;
+
+                // Set the default timeout value to 120 if it is not set in the profile or if it is not in the valid range
+                this.timeoutDefaultValue = 120;
+                if (profileInfo.buildTimeoutDefault && profileInfo.buildTimeoutDefault >= this.timeoutMinValue && profileInfo.buildTimeoutDefault <= this.timeoutMaxValue) {
+                    this.timeoutDefaultValue = profileInfo.buildTimeoutDefault;
+                }
 
                 if (!this.timeout) {
                     this.timeoutChange.emit(this.timeoutDefaultValue);
