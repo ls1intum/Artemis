@@ -32,6 +32,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     attachmentSub: Subscription;
     attachmentUnitSub: Subscription;
 
+    // Signals
     course = signal<Course | undefined>(undefined);
     attachment = signal<Attachment | undefined>(undefined);
     attachmentUnit = signal<AttachmentUnit | undefined>(undefined);
@@ -202,6 +203,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
             this.currentPdfUrl.set(objectUrl);
+            this.appendFile.set(false);
+            this.dialogErrorSource.next('');
         } catch (error) {
             this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
         } finally {
@@ -233,13 +236,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.selectedPages()!.clear();
 
             const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
-            this.appendFile.set(true);
             this.currentPdfUrl.set(objectUrl);
+            this.appendFile.set(true);
         } catch (error) {
             this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
         } finally {
             this.isPdfLoading.set(false);
-            this.appendFile.set(false);
             this.fileInput()!.nativeElement.value = '';
         }
     }

@@ -14,20 +14,23 @@ type NavigationDirection = 'next' | 'prev';
 export class PdfPreviewEnlargedCanvasComponent {
     enlargedCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('enlargedCanvas');
 
-    readonly DEFAULT_SLIDE_HEIGHT = 800;
+    readonly DEFAULT_ENLARGED_SLIDE_HEIGHT = 800;
 
+    // Inputs
     pdfContainer = input.required<HTMLDivElement>();
     originalCanvas = input<HTMLCanvasElement>();
     totalPages = input<number>(0);
 
-    isEnlargedViewOutput = output<boolean>();
-
+    // Signals
     currentPage = signal<number>(1);
+
+    //Outputs
+    isEnlargedViewOutput = output<boolean>();
 
     constructor() {
         effect(
             () => {
-                this.displayEnlargedCanvas(this.originalCanvas()!, false);
+                this.displayEnlargedCanvas(this.originalCanvas()!);
             },
             { allowSignalWrites: true },
         );
@@ -65,8 +68,7 @@ export class PdfPreviewEnlargedCanvasComponent {
         }
     };
 
-    displayEnlargedCanvas(originalCanvas: HTMLCanvasElement, isVertical: boolean) {
-        this.adjustPdfContainerSize(isVertical);
+    displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         this.currentPage.set(Number(originalCanvas.id));
         this.toggleBodyScroll(true);
         setTimeout(() => {
@@ -109,7 +111,7 @@ export class PdfPreviewEnlargedCanvasComponent {
 
         if (originalCanvas.height > originalCanvas.width) {
             // Vertical slide
-            const fixedHeight = this.DEFAULT_SLIDE_HEIGHT;
+            const fixedHeight = this.DEFAULT_ENLARGED_SLIDE_HEIGHT;
             scaleY = fixedHeight / originalCanvas.height;
             scaleX = containerWidth / originalCanvas.width;
         } else {
@@ -174,7 +176,7 @@ export class PdfPreviewEnlargedCanvasComponent {
     adjustPdfContainerSize(isVertical: boolean): void {
         const pdfContainer = this.pdfContainer();
         if (isVertical) {
-            pdfContainer.style.height = `${this.DEFAULT_SLIDE_HEIGHT}px`;
+            pdfContainer.style.height = `${this.DEFAULT_ENLARGED_SLIDE_HEIGHT}px`;
         } else {
             pdfContainer.style.height = '60vh';
         }

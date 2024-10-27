@@ -17,27 +17,29 @@ export class PdfPreviewThumbnailGridComponent {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
     readonly DEFAULT_SLIDE_WIDTH = 250;
-    readonly DEFAULT_SLIDE_HEIGHT = 800;
 
+    // Inputs
     currentPdfUrl = input<string>();
     appendFile = input<boolean>();
 
-    isPdfLoading = output<boolean>();
-
+    // Signals
     isEnlargedView = signal<boolean>(false);
     totalPages = signal<number>(0);
     selectedPages = signal<Set<number>>(new Set());
     originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
 
+    // Outputs
+    isPdfLoading = output<boolean>();
     totalPagesOutput = output<number>();
     selectedPagesOutput = output<Set<number>>();
 
+    // Injected services
     private readonly alertService = inject(AlertService);
 
     constructor() {
         effect(
             () => {
-                this.loadOrAppendPdf(this.currentPdfUrl()!, false);
+                this.loadOrAppendPdf(this.currentPdfUrl()!, this.appendFile());
             },
             { allowSignalWrites: true },
         );
@@ -186,7 +188,6 @@ export class PdfPreviewThumbnailGridComponent {
      * @param originalCanvas - The original canvas element of the PDF page to be enlarged.
      * */
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
-        //const isVertical = originalCanvas.height > originalCanvas.width;
         this.originalCanvas.set(originalCanvas);
         this.isEnlargedView.set(true);
     }
