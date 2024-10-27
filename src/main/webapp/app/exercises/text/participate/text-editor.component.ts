@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -246,14 +246,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     get characterCount(): number {
         return this.stringCountService.countCharacters(this.answer);
-    }
-
-    // Displays the alert for confirming refreshing or closing the page if there are unsaved changes
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification(event: any) {
-        if (!this.canDeactivate()) {
-            event.returnValue = this.translateService.instant('pendingChanges');
-        }
     }
 
     canDeactivate(): boolean {

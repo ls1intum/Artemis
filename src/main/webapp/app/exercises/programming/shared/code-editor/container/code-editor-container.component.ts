@@ -1,8 +1,7 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import {
     CommitState,
@@ -37,7 +36,7 @@ export enum CollapsableCodeEditorElement {
     templateUrl: './code-editor-container.component.html',
     styleUrls: ['./code-editor-container.component.scss'],
 })
-export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeactivate {
+export class CodeEditorContainerComponent implements OnChanges {
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
@@ -262,13 +261,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         this.alertService.error(`artemisApp.editor.errors.${errorTranslationKey}`, translationParams);
     }
 
-    /**
-     * The user will be warned if there are unsaved changes when trying to leave the code-editor.
-     */
-    canDeactivate() {
-        return _isEmpty(this.unsavedFiles);
-    }
-
     getText(): string {
         return this.monacoEditor.getText() ?? '';
     }
@@ -284,14 +276,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      */
     highlightLines(startLine: number, endLine: number): void {
         this.monacoEditor.highlightLines(startLine, endLine);
-    }
-
-    // displays the alert for confirming refreshing or closing the page if there are unsaved changes
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification(event: any) {
-        if (!this.canDeactivate()) {
-            event.returnValue = this.translateService.instant('pendingChanges');
-        }
     }
 
     onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {

@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -248,15 +248,5 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
 
     get canDeactivateWarning(): string {
         return this.translateService.instant('pendingChanges');
-    }
-
-    /**
-     * Only allow to refresh the page if no pending changes exist
-     */
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification(event: any) {
-        if (!this.canDeactivate()) {
-            event.returnValue = this.canDeactivateWarning;
-        }
     }
 }
