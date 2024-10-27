@@ -563,6 +563,28 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.formStatusSections.set(updatedFormStatusSections);
     }
 
+    /**
+     * Depending on the build environment not all project types might be supported. Per default the project type is currently set to {@link ProjectType.GRADLE_GRADLE}.
+     * This is also the case, even if {@link ProjectType.GRADLE_GRADLE} is not supported by the build environment.
+     *
+     * This method is called to ensure that a valid project type is selected from the simple mode, if the project type cannot be determined automatically, an error message is
+     * displayed to the user that indicates that the advanced mode should be used to define the project type.
+     */
+    private determineProjectTypeIfNotSelected() {
+        if (this.isSimpleMode() && this.projectTypes) {
+            const isInvalidProjectTypeSelected = this.selectedProjectTypeValue === undefined || !this.projectTypes.includes(this.selectedProjectTypeValue);
+            if (isInvalidProjectTypeSelected) {
+                if (this.projectTypes.includes(ProjectType.GRADLE_GRADLE)) {
+                    this.selectedProjectTypeValue = ProjectType.GRADLE_GRADLE;
+                } else if (this.projectTypes.includes(ProjectType.MAVEN_MAVEN)) {
+                    this.selectedProjectTypeValue = ProjectType.MAVEN_MAVEN;
+                } else {
+                    this.alertService.addErrorAlert('Could not automatically determine project type', 'artemisApp.exercise.errors.projectTypeCouldNotBeDetermined');
+                }
+            }
+        }
+    }
+
     private defineSupportedProgrammingLanguages() {
         this.supportedLanguages = [];
 
@@ -639,6 +661,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     save() {
+        console.log('selection before custom check');
+        console.log('selected Project type: ' + JSON.stringify(this.selectedProjectTypeValue));
+        console.log('available project types: ' + JSON.stringify(this.projectTypes));
+
+        this.determineProjectTypeIfNotSelected();
+
+        console.log('selection after custom check');
         console.log('selected Project type: ' + JSON.stringify(this.selectedProjectTypeValue));
         console.log('available project types: ' + JSON.stringify(this.projectTypes));
 

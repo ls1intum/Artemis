@@ -214,7 +214,8 @@
                 "description": "Wenn das Präsentationsergebnis aktiviert ist, dann können Tutor:innen auf der Seite \"Teilnahmen\" dieser Übung einen Punkt für Präsentation von Studierenden eintragen."
             },
             "errors": {
-                "exerciseNotFound": "Diese Übung konnte nicht gefunden werden"
+                "exerciseNotFound": "Diese Übung konnte nicht gefunden werden",
+                "projectTypeCouldNotBeDetermined": "Der Projekttyp konnte nicht bestimmt werden, bitte wechsle zum erweiterten Modus und wähle den Projekttyp manuell aus."
             },
             "form": {
                 "title": {

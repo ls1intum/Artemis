@@ -214,7 +214,8 @@
                 "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participation\" page of the exercise."
             },
             "errors": {
-                "exerciseNotFound": "This exercise was not found"
+                "exerciseNotFound": "This exercise was not found",
+                "projectTypeCouldNotBeDetermined": "The project type could not be determined, please switch to the advanced mode to manually define it!"
             },
             "form": {
                 "title": {
