@@ -3,18 +3,25 @@ package de.tum.cit.aet.artemis.programming.service.gitlabci;
 import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
 
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
+import org.gitlab4j.api.Constants;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
+import org.gitlab4j.api.GroupApi;
 import org.gitlab4j.api.ProjectApi;
+import org.gitlab4j.api.models.AccessLevel;
 import org.gitlab4j.api.models.Pipeline;
 import org.gitlab4j.api.models.PipelineFilter;
 import org.gitlab4j.api.models.PipelineStatus;
 import org.gitlab4j.api.models.Project;
+import org.gitlab4j.api.models.ProjectAccessToken;
 import org.gitlab4j.api.models.Variable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +44,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.AbstractContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIPermission;
@@ -50,6 +58,8 @@ import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResult
 public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private static final String GITLAB_CI_FILE_EXTENSION = ".yml";
+
+    private static final String GITLAB_TEST_TOKEN_NAME = "Artemis Test Token";
 
     private static final Logger log = LoggerFactory.getLogger(GitLabCIService.class);
 
@@ -91,6 +101,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
 
@@ -110,29 +122,30 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private String gitlabToken;
 
     public GitLabCIService(GitLabApi gitlab, UriService uriService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.gitlab = gitlab;
         this.uriService = uriService;
         this.buildPlanRepository = buildPlanRepository;
         this.buildPlanService = buildPlanService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
             VcsRepositoryUri solutionRepositoryUri) {
-        addBuildPlanToProgrammingExerciseIfUnset(exercise);
-        setupGitLabCIConfiguration(repositoryUri, exercise, generateBuildPlanId(exercise.getProjectKey(), planKey));
-        // TODO: triggerBuild(repositoryUri, exercise.getBranch());
+        addBuildPlanToProgrammingExercise(exercise, false);
+        // This method is called twice when creating an exercise. Once for the template repository and once for the solution repository.
+        // The second time, we don't want to overwrite the configuration.
+        setupGitLabCIConfigurationForGroup(exercise, false);
+        setupGitLabCIConfigurationForRepository(repositoryUri, exercise, generateBuildPlanId(exercise.getProjectKey(), planKey));
     }
 
-    private void setupGitLabCIConfiguration(VcsRepositoryUri repositoryUri, ProgrammingExercise exercise, String buildPlanId) {
+    private void setupGitLabCIConfigurationForRepository(VcsRepositoryUri repositoryUri, ProgrammingExercise exercise, String buildPlanId) {
         final String repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
-        ProjectApi projectApi = gitlab.getProjectApi();
-
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(exercise);
-
+        final ProjectApi projectApi = gitlab.getProjectApi();
         try {
             Project project = projectApi.getProject(repositoryPath);
 
@@ -144,40 +157,99 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             project.setCiConfigPath(buildPlanUrl);
 
             projectApi.updateProject(project);
+
+            setRepositoryVariableIfUnset(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId);
         }
         catch (GitLabApiException e) {
             throw new GitLabCIException("Error enabling CI for " + repositoryUri, e);
         }
+    }
 
-        try {
-            // TODO: Reduce the number of API calls
-            ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
-            updateVariable(repositoryPath, VARIABLE_BUILD_DOCKER_IMAGE_NAME,
-                    programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())));
-            updateVariable(repositoryPath, VARIABLE_BUILD_LOGS_FILE_NAME, "build.log");
-            updateVariable(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId);
-            // TODO: Implement the custom feedback feature
-            updateVariable(repositoryPath, VARIABLE_CUSTOM_FEEDBACK_DIR_NAME, "TODO");
-            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME, notificationPluginDockerImage);
-            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_SECRET_NAME, artemisAuthenticationTokenValue);
-            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + NEW_RESULT_RESOURCE_API_PATH);
-            updateVariable(repositoryPath, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, buildConfig.getBranch());
-            updateVariable(repositoryPath, VARIABLE_TEST_GIT_BRANCH_NAME, buildConfig.getBranch());
-            updateVariable(repositoryPath, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, uriService.getRepositorySlugFromRepositoryUriString(exercise.getTestRepositoryUri()));
-            // TODO: Use a token that is only valid for the test repository for each programming exercise
-            updateVariable(repositoryPath, VARIABLE_TEST_GIT_TOKEN, gitlabToken);
-            updateVariable(repositoryPath, VARIABLE_TEST_GIT_USER, gitlabUser);
-            updateVariable(repositoryPath, VARIABLE_TEST_RESULTS_DIR_NAME, "target/surefire-reports");
+    private void setupGitLabCIConfigurationForGroup(ProgrammingExercise exercise, boolean overwrite) {
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(exercise);
+
+        final String projectKey = exercise.getProjectKey();
+        final ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
+
+        updateGroupVariable(projectKey, VARIABLE_BUILD_DOCKER_IMAGE_NAME,
+                programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())), overwrite);
+        updateGroupVariable(projectKey, VARIABLE_BUILD_LOGS_FILE_NAME, "build.log", overwrite);
+        // TODO: Implement the custom feedback feature
+        updateGroupVariable(projectKey, VARIABLE_CUSTOM_FEEDBACK_DIR_NAME, "TODO", overwrite);
+        updateGroupVariable(projectKey, VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME, notificationPluginDockerImage, overwrite);
+        updateGroupVariable(projectKey, VARIABLE_NOTIFICATION_SECRET_NAME, artemisAuthenticationTokenValue, overwrite);
+        updateGroupVariable(projectKey, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + NEW_RESULT_RESOURCE_API_PATH, overwrite);
+        updateGroupVariable(projectKey, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, buildConfig.getBranch(), overwrite);
+        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_BRANCH_NAME, buildConfig.getBranch(), overwrite);
+        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, uriService.getRepositorySlugFromRepositoryUriString(exercise.getTestRepositoryUri()), overwrite);
+        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_TOKEN, () -> generateGitLabTestToken(exercise), overwrite);
+        updateGroupVariable(projectKey, VARIABLE_TEST_GIT_USER, gitlabUser, overwrite);
+        updateGroupVariable(projectKey, VARIABLE_TEST_RESULTS_DIR_NAME, "target/surefire-reports", overwrite);
+    }
+
+    private void updateGroupVariable(String projectKey, String key, String value, boolean overwrite) {
+        updateGroupVariable(projectKey, key, () -> value, overwrite);
+    }
+
+    private void updateGroupVariable(String projectKey, String key, Supplier<String> value, boolean overwrite) {
+        final GroupApi groupApi = gitlab.getGroupApi();
+        if (groupApi.getOptionalVariable(projectKey, key).isEmpty()) {
+            try {
+                String valueString = value.get();
+                groupApi.createVariable(projectKey, key, valueString, false, canBeMasked(valueString));
+            }
+            catch (GitLabApiException e) {
+                log.error("Error creating variable '{}' for group {}", key, projectKey, e);
+                throw new GitLabCIException("Error creating variable '" + key + "' for group " + projectKey, e);
+            }
         }
-        catch (GitLabApiException e) {
-            log.error("Error creating variable for {} The variables may already have been created.", repositoryUri, e);
+        else if (overwrite) {
+            try {
+                String valueString = value.get();
+                groupApi.updateVariable(projectKey, key, valueString, false, canBeMasked(valueString));
+            }
+            catch (GitLabApiException e) {
+                log.error("Error updating variable '{}' for group {}", key, projectKey, e);
+                throw new GitLabCIException("Error updating variable '" + key + "' for group " + projectKey, e);
+            }
         }
     }
 
-    private void updateVariable(String repositoryPath, String key, String value) throws GitLabApiException {
-        // TODO: We can even define the variables on group level
-        // TODO: If the variable already exists, we should update it
-        gitlab.getProjectApi().createVariable(repositoryPath, key, value, Variable.Type.ENV_VAR, false, canBeMasked(value));
+    private String generateGitLabTestToken(ProgrammingExercise programmingExercise) {
+        String testRepositoryPath = uriService.getRepositoryPathFromRepositoryUri(programmingExercise.getVcsTestRepositoryUri());
+        ZonedDateTime courseEndDate = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getEndDate();
+
+        Date expiryDate;
+        if (courseEndDate != null && courseEndDate.isAfter(ZonedDateTime.now())) {
+            expiryDate = Date.from(courseEndDate.toInstant());
+        }
+        else {
+            expiryDate = Date.from(ZonedDateTime.now().plusMonths(6).toInstant());
+        }
+
+        ProjectAccessToken projectAccessToken;
+        try {
+            projectAccessToken = gitlab.getProjectApi().createProjectAccessToken(testRepositoryPath, GITLAB_TEST_TOKEN_NAME,
+                    List.of(Constants.ProjectAccessTokenScope.READ_REPOSITORY), expiryDate, Long.valueOf(AccessLevel.REPORTER.value));
+        }
+        catch (GitLabApiException e) {
+            log.error("Error creating project access token for test repository {}", testRepositoryPath, e);
+            throw new GitLabCIException("Error creating project access token for test repository " + testRepositoryPath, e);
+        }
+        return projectAccessToken.getToken();
+    }
+
+    private void setRepositoryVariableIfUnset(String repositoryPath, String key, String value) {
+        final ProjectApi projectApi = gitlab.getProjectApi();
+        if (projectApi.getOptionalVariable(repositoryPath, key).isEmpty()) {
+            try {
+                projectApi.createVariable(repositoryPath, key, value, Variable.Type.ENV_VAR, false, canBeMasked(value));
+            }
+            catch (GitLabApiException e) {
+                log.error("Error creating variable '{}' for repository {}", key, repositoryPath, e);
+                throw new GitLabCIException("Error creating variable '" + key + "' for repository " + repositoryPath, e);
+            }
+        }
     }
 
     private boolean canBeMasked(String value) {
@@ -185,9 +257,9 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         return value != null && value.matches("^[a-zA-Z0-9+/=@:.~]{8,}$");
     }
 
-    private void addBuildPlanToProgrammingExerciseIfUnset(ProgrammingExercise programmingExercise) {
+    private void addBuildPlanToProgrammingExercise(ProgrammingExercise programmingExercise, boolean overwrite) {
         Optional<BuildPlan> optionalBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
-        if (optionalBuildPlan.isEmpty()) {
+        if (optionalBuildPlan.isEmpty() || overwrite) {
             var defaultBuildPlan = buildPlanService.generateDefaultBuildPlan(programmingExercise);
             buildPlanRepository.setBuildPlanForExercise(defaultBuildPlan, programmingExercise);
         }
@@ -195,15 +267,15 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
-        addBuildPlanToProgrammingExerciseIfUnset(exercise);
+        addBuildPlanToProgrammingExercise(exercise, true);
+        // When recreating the build plan for the exercise, we want to overwrite the configuration.
+        setupGitLabCIConfigurationForGroup(exercise, true);
 
-        VcsRepositoryUri templateUrl = exercise.getVcsTemplateRepositoryUri();
-        setupGitLabCIConfiguration(templateUrl, exercise, exercise.getTemplateBuildPlanId());
-        // TODO: triggerBuild(templateUrl, exercise.getBranch());
+        VcsRepositoryUri templateUri = exercise.getVcsTemplateRepositoryUri();
+        setupGitLabCIConfigurationForRepository(templateUri, exercise, exercise.getTemplateBuildPlanId());
 
-        VcsRepositoryUri solutionUrl = exercise.getVcsSolutionRepositoryUri();
-        setupGitLabCIConfiguration(solutionUrl, exercise, exercise.getSolutionBuildPlanId());
-        // TODO: triggerBuild(solutionUrl, exercise.getBranch());
+        VcsRepositoryUri solutionUri = exercise.getVcsSolutionRepositoryUri();
+        setupGitLabCIConfigurationForRepository(solutionUri, exercise, exercise.getSolutionBuildPlanId());
     }
 
     @Override
@@ -223,19 +295,20 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
-        setupGitLabCIConfiguration(participation.getVcsRepositoryUri(), participation.getProgrammingExercise(), participation.getBuildPlanId());
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(participation.getProgrammingExercise().getId());
+        setupGitLabCIConfigurationForRepository(participation.getVcsRepositoryUri(), programmingExercise, participation.getBuildPlanId());
     }
 
     @Override
     public void deleteProject(String projectKey) {
-        log.error("Unsupported action: GitLabCIService.deleteBuildPlan()");
-        log.error("Please refer to the repository for deleting the project. The build plan can not be deleted separately.");
+        log.debug("Unsupported action: GitLabCIService.deleteBuildPlan()");
+        log.debug("Please refer to the repository for deleting the project. The build plan can not be deleted separately.");
     }
 
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
-        log.error("Unsupported action: GitLabCIService.deleteBuildPlan()");
-        log.error("Please refer to the repository for deleting the project. The build plan can not be deleted separately.");
+        log.debug("Unsupported action: GitLabCIService.deleteBuildPlan()");
+        log.debug("Please refer to the repository for deleting the project. The build plan can not be deleted separately.");
     }
 
     @Override
@@ -278,46 +351,46 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
-        log.error("Unsupported action: GitLabCIService.checkIfBuildPlanExists()");
+        log.debug("Unsupported action: GitLabCIService.checkIfBuildPlanExists()");
         return true;
     }
 
     @Override
     public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
-        log.error("Unsupported action: GitLabCIService.retrieveLatestArtifact()");
+        log.debug("Unsupported action: GitLabCIService.retrieveLatestArtifact()");
         return null;
     }
 
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
-        log.error("Unsupported action: GitLabCIService.checkIfProjectExists()");
+        log.debug("Unsupported action: GitLabCIService.checkIfProjectExists()");
         return null;
     }
 
     @Override
     public void enablePlan(String projectKey, String planKey) {
-        log.error("Unsupported action: GitLabCIService.enablePlan()");
+        log.debug("Unsupported action: GitLabCIService.enablePlan()");
     }
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri,
             String newDefaultBranch) {
-        log.error("Unsupported action: GitLabCIService.updatePlanRepository()");
+        log.debug("Unsupported action: GitLabCIService.updatePlanRepository()");
     }
 
     @Override
     public void giveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions) {
-        log.error("Unsupported action: GitLabCIService.giveProjectPermissions()");
+        log.debug("Unsupported action: GitLabCIService.giveProjectPermissions()");
     }
 
     @Override
     public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
-        log.error("Unsupported action: GitLabCIService.givePlanPermissions()");
+        log.debug("Unsupported action: GitLabCIService.givePlanPermissions()");
     }
 
     @Override
     public void removeAllDefaultProjectPermissions(String projectKey) {
-        log.error("Unsupported action: GitLabCIService.removeAllDefaultProjectPermissions()");
+        log.debug("Unsupported action: GitLabCIService.removeAllDefaultProjectPermissions()");
     }
 
     @Override
@@ -327,12 +400,12 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws ContinuousIntegrationException {
-        log.error("Unsupported action: GitLabCIService.createProjectForExercise()");
+        log.debug("Unsupported action: GitLabCIService.createProjectForExercise()");
     }
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        log.error("Unsupported action: GitLabCIService.getWebHookUrl()");
+        log.debug("Unsupported action: GitLabCIService.getWebHookUrl()");
         return Optional.empty();
     }
 

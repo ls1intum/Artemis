@@ -171,9 +171,18 @@ class GitlabCIServiceTest extends AbstractProgrammingIntegrationGitlabCIGitlabSa
     void testConfigureBuildPlanSuccess() throws Exception {
         final ProgrammingExercise exercise = programmingExerciseRepository.findWithBuildConfigById(programmingExerciseId).orElseThrow();
         final ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        final String repositoryPath = uriService.getRepositoryPathFromRepositoryUri(participation.getVcsRepositoryUri());
         mockConfigureBuildPlan(participation, defaultBranch);
+
         continuousIntegrationService.configureBuildPlan(participation, defaultBranch);
+
         verifyMocks();
+        verify(gitlab, atLeastOnce()).getProjectApi();
+        verify(gitlab.getProjectApi(), atLeastOnce()).getProject(eq(repositoryPath));
+        verify(gitlab.getProjectApi(), atLeastOnce()).updateProject(any(Project.class));
+        verify(gitlab.getProjectApi(), atLeastOnce()).getOptionalVariable(eq(repositoryPath), anyString());
+        verify(gitlab.getProjectApi(), atLeastOnce()).createVariable(eq(repositoryPath), anyString(), anyString(), any(), anyBoolean(), anyBoolean());
+        verify(gitlab.getGroupApi(), never()).createVariable(anyString(), anyString(), anyString(), anyBoolean(), anyBoolean());
     }
 
     @Test
@@ -198,9 +207,16 @@ class GitlabCIServiceTest extends AbstractProgrammingIntegrationGitlabCIGitlabSa
         continuousIntegrationService.createBuildPlanForExercise(exercise, "TEST-EXERCISE", participation.getVcsRepositoryUri(), null, null);
 
         verify(gitlab, atLeastOnce()).getProjectApi();
+        verify(gitlab, atLeastOnce()).getGroupApi();
+
         verify(gitlab.getProjectApi(), atLeastOnce()).getProject(eq(repositoryPath));
         verify(gitlab.getProjectApi(), atLeastOnce()).updateProject(any(Project.class));
+        verify(gitlab.getProjectApi(), atLeastOnce()).getOptionalVariable(any(), anyString());
         verify(gitlab.getProjectApi(), atLeastOnce()).createVariable(anyString(), anyString(), anyString(), any(), anyBoolean(), anyBoolean());
+
+        verify(gitlab.getGroupApi(), atLeastOnce()).getOptionalVariable(any(), anyString());
+        verify(gitlab.getGroupApi(), atLeastOnce()).createVariable(anyString(), anyString(), anyString(), anyBoolean(), anyBoolean());
+
         var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(exercise.getId());
         assertThat(buildPlanOptional).isPresent();
         assertThat(buildPlanOptional.get().getBuildPlan()).isNotBlank();

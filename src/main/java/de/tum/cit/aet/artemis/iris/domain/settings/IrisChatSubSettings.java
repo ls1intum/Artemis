@@ -1,7 +1,11 @@
 package de.tum.cit.aet.artemis.iris.domain.settings;
 
+import java.util.SortedSet;
+import java.util.TreeSet;
+
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
@@ -24,6 +28,10 @@ public class IrisChatSubSettings extends IrisSubSettings {
     @Column(name = "rate_limit_timeframe_hours")
     private Integer rateLimitTimeframeHours;
 
+    @Column(name = "enabled_for_categories")
+    @Convert(converter = IrisListConverter.class)
+    private SortedSet<String> enabledForCategories = new TreeSet<>();
+
     @Nullable
     public Integer getRateLimit() {
         return rateLimit;
@@ -40,5 +48,13 @@ public class IrisChatSubSettings extends IrisSubSettings {
 
     public void setRateLimitTimeframeHours(@Nullable Integer rateLimitTimeframeHours) {
         this.rateLimitTimeframeHours = rateLimitTimeframeHours;
+    }
+
+    public SortedSet<String> getEnabledForCategories() {
+        return enabledForCategories;
+    }
+
+    public void setEnabledForCategories(SortedSet<String> enabledForCategories) {
+        this.enabledForCategories = enabledForCategories;
     }
 }

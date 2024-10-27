@@ -8,8 +8,10 @@ import static de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType.GLOBA
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
@@ -17,6 +19,9 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -37,6 +42,10 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 /**
  * Service for managing {@link IrisSettings}.
@@ -55,10 +64,20 @@ public class IrisSettingsService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public IrisSettingsService(IrisSettingsRepository irisSettingsRepository, IrisSubSettingsService irisSubSettingsService, AuthorizationCheckService authCheckService) {
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ObjectMapper objectMapper;
+
+    private final TextExerciseRepository textExerciseRepository;
+
+    public IrisSettingsService(IrisSettingsRepository irisSettingsRepository, IrisSubSettingsService irisSubSettingsService, AuthorizationCheckService authCheckService,
+            ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, TextExerciseRepository textExerciseRepository) {
         this.irisSettingsRepository = irisSettingsRepository;
         this.irisSubSettingsService = irisSubSettingsService;
         this.authCheckService = authCheckService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.objectMapper = objectMapper;
+        this.textExerciseRepository = textExerciseRepository;
     }
 
     /**
@@ -248,6 +267,11 @@ public class IrisSettingsService {
      * @return The updated course Iris settings
      */
     private IrisCourseSettings updateCourseSettings(IrisCourseSettings existingSettings, IrisCourseSettings settingsUpdate) {
+        var oldEnabledForCategoriesExerciseChat = existingSettings.getIrisChatSettings() == null ? new TreeSet<String>()
+                : existingSettings.getIrisChatSettings().getEnabledForCategories();
+        var oldEnabledForCategoriesTextExerciseChat = existingSettings.getIrisTextExerciseChatSettings() == null ? new TreeSet<String>()
+                : existingSettings.getIrisTextExerciseChatSettings().getEnabledForCategories();
+
         var parentSettings = getCombinedIrisGlobalSettings();
         // @formatter:off
         existingSettings.setIrisChatSettings(irisSubSettingsService.update(
@@ -276,7 +300,123 @@ public class IrisSettingsService {
         ));
         // @formatter:on
 
+        // Automatically update the exercise settings when the enabledForCategories is changed
+        var newEnabledForCategoriesExerciseChat = existingSettings.getIrisChatSettings() == null ? new TreeSet<String>()
+                : existingSettings.getIrisChatSettings().getEnabledForCategories();
+        if (!oldEnabledForCategoriesExerciseChat.equals(newEnabledForCategoriesExerciseChat)) {
+            programmingExerciseRepository.findAllWithCategoriesByCourseId(existingSettings.getCourse().getId())
+                    .forEach(exercise -> setEnabledForExerciseByCategories(exercise, oldEnabledForCategoriesExerciseChat, newEnabledForCategoriesExerciseChat));
+        }
+
+        var newEnabledForCategoriesTextExerciseChat = existingSettings.getIrisTextExerciseChatSettings() == null ? new TreeSet<String>()
+                : existingSettings.getIrisTextExerciseChatSettings().getEnabledForCategories();
+        if (!Objects.equals(oldEnabledForCategoriesTextExerciseChat, newEnabledForCategoriesTextExerciseChat)) {
+            textExerciseRepository.findAllWithCategoriesByCourseId(existingSettings.getCourse().getId())
+                    .forEach(exercise -> setEnabledForExerciseByCategories(exercise, oldEnabledForCategoriesTextExerciseChat, newEnabledForCategoriesTextExerciseChat));
+        }
+
         return irisSettingsRepository.save(existingSettings);
+    }
+
+    /**
+     * Set the enabled status for an exercise based on it's categories.
+     * Compares the old and new enabled categories, reads the exercise categories,
+     * and updates the Iris chat settings accordingly if the new enabled categories match any of the exercise categories.
+     * This method is used when the enabled categories of the course settings are updated.
+     *
+     * @param exercise                The exercise to update the enabled status for
+     * @param oldEnabledForCategories The old enabled categories
+     * @param newEnabledForCategories The new enabled categories
+     */
+    public void setEnabledForExerciseByCategories(Exercise exercise, SortedSet<String> oldEnabledForCategories, SortedSet<String> newEnabledForCategories) {
+        var removedCategories = new TreeSet<>(oldEnabledForCategories);
+        removedCategories.removeAll(newEnabledForCategories);
+        var categories = getCategoryNames(exercise.getCategories());
+
+        if (categories.stream().anyMatch(newEnabledForCategories::contains)) {
+            setExerciseSettingsEnabled(exercise, true);
+        }
+        else if (categories.stream().anyMatch(removedCategories::contains)) {
+            setExerciseSettingsEnabled(exercise, false);
+        }
+    }
+
+    /**
+     * Set the enabled status for an exercise based on its categories.
+     * Reads the exercise categories and updates the Iris chat settings accordingly if the enabled categories match any of the exercise categories.
+     * This method is used when the categories of an exercise are updated.
+     *
+     * @param exercise              The exercise to update the enabled status for
+     * @param oldExerciseCategories The old exercise categories
+     */
+    public void setEnabledForExerciseByCategories(Exercise exercise, Set<String> oldExerciseCategories) {
+        var oldCategories = getCategoryNames(oldExerciseCategories);
+        var newCategories = getCategoryNames(exercise.getCategories());
+        if (oldCategories.isEmpty() && newCategories.isEmpty()) {
+            return;
+        }
+
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var courseSettings = getRawIrisSettingsFor(course);
+
+        Set<String> enabledForCategories;
+        if (exercise instanceof ProgrammingExercise) {
+            enabledForCategories = courseSettings.getIrisChatSettings().getEnabledForCategories();
+        }
+        else if (exercise instanceof TextExercise) {
+            enabledForCategories = courseSettings.getIrisTextExerciseChatSettings().getEnabledForCategories();
+        }
+        else {
+            return;
+        }
+        if (enabledForCategories == null) {
+            return;
+        }
+
+        if (newCategories.stream().anyMatch(enabledForCategories::contains)) {
+            setExerciseSettingsEnabled(exercise, true);
+        }
+        else if (oldCategories.stream().anyMatch(enabledForCategories::contains)) {
+            setExerciseSettingsEnabled(exercise, false);
+        }
+    }
+
+    /**
+     * Helper method to set the enabled status for an exercise's Iris settings.
+     * Currently able to handle {@link ProgrammingExercise} and {@link TextExercise} settings.
+     *
+     * @param exercise The exercise to update the enabled status for
+     * @param enabled  Whether the Iris settings should be enabled
+     */
+    private void setExerciseSettingsEnabled(Exercise exercise, boolean enabled) {
+        var exerciseSettings = getRawIrisSettingsFor(exercise);
+        if (exercise instanceof ProgrammingExercise) {
+            exerciseSettings.getIrisChatSettings().setEnabled(enabled);
+        }
+        else if (exercise instanceof TextExercise) {
+            exerciseSettings.getIrisTextExerciseChatSettings().setEnabled(enabled);
+        }
+        irisSettingsRepository.save(exerciseSettings);
+    }
+
+    /**
+     * Convert the category JSON strings of an exercise to a set of category names.
+     *
+     * @param exerciseCategories The set of category JSON strings
+     * @return The set of category names
+     */
+    private Set<String> getCategoryNames(Set<String> exerciseCategories) {
+        var categories = new HashSet<String>();
+        for (var categoryJson : exerciseCategories) {
+            try {
+                var category = objectMapper.readTree(categoryJson);
+                categories.add(category.get("category").asText());
+            }
+            catch (JsonProcessingException e) {
+                return new HashSet<>();
+            }
+        }
+        return categories;
     }
 
     /**
