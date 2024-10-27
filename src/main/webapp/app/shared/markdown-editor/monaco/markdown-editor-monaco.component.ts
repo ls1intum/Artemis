@@ -50,6 +50,7 @@ import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -288,6 +289,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     filterDisplayedAction<T extends TextEditorAction>(action?: T): T | undefined {
         return action?.hideInEditor ? undefined : action;
+    }
+
+    handleActionClick(event: MouseEvent, action: TextEditorAction): void {
+        const x = event.clientX;
+        const y = event.clientY;
+        if (action instanceof EmojiAction) {
+            action.setPoint({ x, y });
+        }
+
+        action.executeInCurrentEditor();
     }
 
     ngAfterViewInit(): void {
