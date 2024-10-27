@@ -7,7 +7,7 @@ import { Fixtures } from '../../../fixtures/fixtures';
 import { expect } from '@playwright/test';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 
-test.describe('Text exercise participation', () => {
+test.describe('Text exercise participation', { tag: '@fast' }, () => {
     let course: Course;
     let exercise: TextExercise;
 

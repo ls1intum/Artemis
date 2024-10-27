@@ -5,7 +5,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { expect } from '@playwright/test';
 
-test.describe('Course exercise', () => {
+test.describe('Course exercise', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {

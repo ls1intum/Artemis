@@ -9,7 +9,7 @@ import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 
-test.describe('Modeling Exercise Management', () => {
+test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {

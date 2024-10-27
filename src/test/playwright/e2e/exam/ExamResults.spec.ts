@@ -15,7 +15,7 @@ import { ProgrammingExerciseTaskStatus } from '../../support/pageobjects/exam/Ex
 import { Page } from '@playwright/test';
 import { StudentExam } from 'app/entities/student-exam.model';
 
-test.describe('Exam Results', () => {
+test.describe('Exam Results', { tag: '@slow' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ browser }) => {

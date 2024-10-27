@@ -6,7 +6,7 @@ import { generateUUID, titleLowercase } from '../../support/utils';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 
-test.describe('Course messages', () => {
+test.describe('Course messages', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests, courseMessages }) => {

@@ -16,7 +16,7 @@ const tutorTextFeedback = 'Nice ending of the sentence!';
 const tutorTextFeedbackPoints = 2;
 const complaint = "That feedback wasn't very useful!";
 
-test.describe('Text exercise assessment', () => {
+test.describe('Text exercise assessment', { tag: '@fast' }, () => {
     let course: Course;
     let exercise: TextExercise;
 

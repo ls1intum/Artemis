@@ -17,7 +17,7 @@ const tutorCodeFeedback = 'The input parameter should be mentioned in javadoc!';
 const tutorCodeFeedbackPoints = -2;
 const complaint = "That feedback wasn't very useful!";
 
-test.describe('Programming exercise assessment', () => {
+test.describe('Programming exercise assessment', { tag: '@slow' }, () => {
     let course: Course;
     let exercise: ProgrammingExercise;
     let dueDate: dayjs.Dayjs;

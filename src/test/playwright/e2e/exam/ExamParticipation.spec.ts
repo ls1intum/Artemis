@@ -17,7 +17,7 @@ import { ExamParticipationActions } from '../../support/pageobjects/exam/ExamPar
 const textFixture = 'loremIpsum.txt';
 const textFixtureShort = 'loremIpsum-short.txt';
 
-test.describe('Exam participation', () => {
+test.describe('Exam participation', { tag: '@slow' }, () => {
     let course: Course;
     let exerciseArray: Array<Exercise> = [];
     let studentTwoName: string;

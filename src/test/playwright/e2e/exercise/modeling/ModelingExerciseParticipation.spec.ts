@@ -4,7 +4,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 
-test.describe('Modeling Exercise Participation', () => {
+test.describe('Modeling Exercise Participation', { tag: '@slow' }, () => {
     let course: Course;
     let modelingExercise: ModelingExercise;
 

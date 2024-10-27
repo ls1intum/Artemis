@@ -53,7 +53,7 @@ test.beforeAll('Create course', async ({ browser }) => {
     studentOneName = (await users.getUserInfo(studentOne.username, page)).name!;
 });
 
-test.describe('Exam assessment', () => {
+test.describe('Exam assessment', { tag: '@slow' }, () => {
     let programmingAssessmentSuccessful = false;
     let modelingAssessmentSuccessful = false;
     let textAssessmentSuccessful = false;

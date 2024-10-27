@@ -7,14 +7,18 @@
         "@playwright/test": "1.44.1",
         "dayjs": "1.11.11",
         "dotenv": "16.4.5",
+        "junit-merge": "2.0.0",
         "npm-check-updates": "16.14.20",
         "simple-git": "3.24.0",
         "uuid": "9.0.1"
     },
     "scripts": {
-        "playwright:test": "playwright test e2e",
+        "playwright:test": "npm run playwright:test:fast; npm run playwright:test:slow; npm run merge-reports",
+        "playwright:test:fast": "PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-fast.xml npx playwright test e2e --grep \"@fast\" --reporter=junit",
+        "playwright:test:slow": "PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-slow.xml npx playwright test e2e --grep \"@slow\" --workers 1 --reporter=junit",
         "playwright:open": "playwright test e2e --ui",
         "playwright:setup": "npx playwright install --with-deps chromium && playwright test init",
+        "merge-reports": "junit-merge ./test-reports/results-fast.xml ./test-reports/results-slow.xml -o ./test-reports/results.xml; rm ./test-reports/results-fast.xml; rm ./test-reports/results-slow.xml",
         "update": "ncu -i --format group"
     }
 }
