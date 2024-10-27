@@ -54,6 +54,11 @@ export class ExerciseImportFromFileComponent implements OnInit {
                 if (!(this.exercise as ProgrammingExercise).buildConfig) {
                     (this.exercise as ProgrammingExercise).buildConfig = copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
                 }
+                if ((this.exercise as ProgrammingExercise).auxiliaryRepositories) {
+                    (this.exercise as ProgrammingExercise).auxiliaryRepositories!.forEach((repo, index) => {
+                        (this.exercise as ProgrammingExercise).auxiliaryRepositories![index].id = undefined;
+                    });
+                }
                 break;
             default:
                 this.alertService.error('artemisApp.exercise.importFromFile.notSupportedExerciseType', {
