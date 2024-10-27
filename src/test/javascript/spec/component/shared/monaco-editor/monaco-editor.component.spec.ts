@@ -14,6 +14,8 @@ describe('MonacoEditorComponent', () => {
 
     const singleLineText = 'public class Main { }';
     const multiLineText = ['public class Main {', 'static void main() {', 'foo();', '}', '}'].join('\n');
+    const textWithEmoticons = 'Hello :)';
+    const textWithEmojis = 'Hello 🙂';
 
     const buildAnnotationArray: Annotation[] = [{ fileName: 'example.java', row: 1, column: 0, timestamp: 0, type: MonacoEditorBuildAnnotationType.ERROR, text: 'example error' }];
 
@@ -261,5 +263,30 @@ describe('MonacoEditorComponent', () => {
         const applySpy = jest.spyOn(preset, 'apply');
         comp.applyOptionPreset(preset);
         expect(applySpy).toHaveBeenCalledExactlyOnceWith(comp['_editor']);
+    });
+
+    it('should convert text emoticons to emojis using convertTextToEmoji', () => {
+        fixture.detectChanges();
+        const result = comp.convertTextToEmoji(textWithEmoticons);
+        expect(result).toBe(textWithEmojis);
+    });
+
+    it('should detect if text is converted to emoji using isConvertedToEmoji', () => {
+        fixture.detectChanges();
+        const isConverted = comp.isConvertedToEmoji(textWithEmoticons, textWithEmojis);
+        expect(isConverted).toBeTrue();
+
+        const notConverted = comp.isConvertedToEmoji(textWithEmojis, textWithEmojis);
+        expect(notConverted).toBeFalse();
+    });
+
+    it('should not change the editor text if no conversion is needed', () => {
+        fixture.detectChanges();
+        const originalText = 'Hello 😊';
+        comp.setText(originalText);
+        expect(comp.getText()).toBe(originalText);
+
+        comp.setText(originalText);
+        expect(comp.getText()).toBe(originalText);
     });
 });
