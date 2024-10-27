@@ -1,18 +1,17 @@
 @if (!isExamExercise && requestFeedbackEnabled) {
     @if (athenaEnabled) {
         @if (exercise().type === ExerciseType.TEXT) {
-            <jhi-button
+            <button
                 class="btn btn-primary"
-                (onClick)="requestFeedback()"
+                (click)="requestFeedback()"
                 [class.btn-sm]="smallButtons()"
                 [disabled]="isGeneratingFeedback()"
                 [id]="'request-feedback-' + exercise().id"
-                [tooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip'"
-                [isLoading]="isGeneratingFeedback()"
+                [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip'"
             >
                 <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
-            </jhi-button>
+            </button>
         } @else {
             <a
                 class="btn btn-primary"

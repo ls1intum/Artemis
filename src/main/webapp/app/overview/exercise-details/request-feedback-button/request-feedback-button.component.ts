@@ -15,12 +15,11 @@ import { isExamExercise } from 'app/shared/util/utils';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-request-feedback-button',
     standalone: true,
-    imports: [CommonModule, ArtemisSharedCommonModule, NgbTooltipModule, FontAwesomeModule, ArtemisSharedComponentModule],
+    imports: [CommonModule, ArtemisSharedCommonModule, NgbTooltipModule, FontAwesomeModule],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit {
