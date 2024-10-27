@@ -16,6 +16,8 @@ describe('MonacoEditorComponent', () => {
     const multiLineText = ['public class Main {', 'static void main() {', 'foo();', '}', '}'].join('\n');
     const textWithEmoticons = 'Hello :)';
     const textWithEmojis = 'Hello 🙂';
+    const thumbsUpShortcut = ':+1:';
+    const thumbsUpEmoji = '👍';
 
     const buildAnnotationArray: Annotation[] = [{ fileName: 'example.java', row: 1, column: 0, timestamp: 0, type: MonacoEditorBuildAnnotationType.ERROR, text: 'example error' }];
 
@@ -288,5 +290,20 @@ describe('MonacoEditorComponent', () => {
 
         comp.setText(originalText);
         expect(comp.getText()).toBe(originalText);
+    });
+
+    it('should detect if :+1: is converted to thumbs-up emoji', () => {
+        fixture.detectChanges();
+        const isConverted = comp.isConvertedToEmoji(thumbsUpShortcut, thumbsUpEmoji);
+        expect(isConverted).toBeTrue();
+
+        const notConverted = comp.isConvertedToEmoji(thumbsUpEmoji, thumbsUpEmoji);
+        expect(notConverted).toBeFalse();
+    });
+
+    it('should update the editor text with the thumbs-up emoji when :+1: is typed', () => {
+        fixture.detectChanges();
+        comp.setText(thumbsUpShortcut);
+        expect(comp.getText()).toBe(thumbsUpEmoji);
     });
 });
