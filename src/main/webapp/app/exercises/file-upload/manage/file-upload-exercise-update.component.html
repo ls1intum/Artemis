@@ -230,8 +230,8 @@
         [isDisabled]="
             !!(editForm.form.invalid || fileUploadExercise.dueDateError || fileUploadExercise.assessmentDueDateError || fileUploadExercise.exampleSolutionPublicationDateError)
         "
-        (cancelAction)="previousState()"
-        (saveAction)="save()"
+        (onCancel)="previousState()"
+        (save)="save()"
         [(notificationText)]="notificationText"
     />
 </form>

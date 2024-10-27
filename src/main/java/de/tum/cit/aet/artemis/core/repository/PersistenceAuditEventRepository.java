@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.repository;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.Instant;
@@ -9,12 +10,14 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.PersistentAuditEvent;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -22,6 +25,8 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 /**
  * Spring Data JPA repository for the PersistentAuditEvent entity.
  */
+@Profile(PROFILE_CORE)
+@Repository
 public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<PersistentAuditEvent, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "data" })

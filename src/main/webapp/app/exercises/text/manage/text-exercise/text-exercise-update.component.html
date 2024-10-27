@@ -220,8 +220,8 @@
         [isImport]="isImport"
         [isSaving]="isSaving"
         [isDisabled]="!!(editForm.form.invalid || textExercise.dueDateError || textExercise.assessmentDueDateError || textExercise.exampleSolutionPublicationDateError)"
-        (cancelAction)="previousState()"
-        (saveAction)="save()"
+        (onCancel)="previousState()"
+        (save)="save()"
         [(notificationText)]="notificationText"
     />
 </form>

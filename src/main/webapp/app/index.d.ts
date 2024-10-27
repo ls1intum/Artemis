@@ -1,9 +1,4 @@
-declare module 'showdown-katex' {
-    const main: () => ShowDownExtension;
-    export = main;
-}
-
-declare module 'showdown-highlight' {
-    const main: ({ pre: boolean }) => ShowDownExtension;
+declare module 'markdown-it-class' {
+    const main: (md: MarkdownIt) => void;
     export = main;
 }
