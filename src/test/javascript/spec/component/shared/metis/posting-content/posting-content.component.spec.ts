@@ -496,7 +496,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference [faq]faq(/courses/1/faq?faqId=45)[/faq].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses/1/faq'],

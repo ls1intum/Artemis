@@ -263,7 +263,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         });
     });
 
-    describe('FaqReferenceAction (', () => {
+    describe('FaqReferenceAction', () => {
         it('should initialize with empty values if faqs are not available', () => {
             jest.spyOn(metisService, 'getCourse').mockReturnValue({ faqs: undefined } as any);
 
