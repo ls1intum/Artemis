@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, inject, input, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import 'pdfjs-dist/build/pdf.worker';
@@ -40,10 +40,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     currentPdfBlob = signal<Blob | undefined>(undefined);
     currentPdfUrl = signal<string | undefined>(undefined);
     totalPages = signal<number>(0);
+    appendFile = signal<boolean>(false);
     isFileChanged = signal<boolean>(false);
-
-    allPagesSelected = input<boolean>();
-    selectedPages = input<Set<number>>(new Set());
+    selectedPages = signal<Set<number>>(new Set());
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
@@ -57,9 +56,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
+    protected readonly faFileImport = faFileImport;
     protected readonly faSave = faSave;
     protected readonly faTimes = faTimes;
-    protected readonly faFileImport = faFileImport;
     protected readonly faTrash = faTrash;
 
     ngOnInit() {
@@ -93,8 +92,19 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.attachmentUnitSub?.unsubscribe();
     }
 
-    receiveIsPdfLoading($event: boolean) {
-        this.isPdfLoading.set($event);
+    /**
+     * Checks if all pages are selected.
+     * @returns True if the number of selected pages equals the total number of pages, otherwise false.
+     */
+    allPagesSelected() {
+        return this.selectedPages().size === this.totalPages();
+    }
+
+    /**
+     * Triggers the file input to select files.
+     */
+    triggerFileInput(): void {
+        this.fileInput().nativeElement.click();
     }
 
     updateAttachmentWithFile(): void {
@@ -192,19 +202,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
             this.currentPdfUrl.set(objectUrl);
-            URL.revokeObjectURL(objectUrl);
         } catch (error) {
             this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
         } finally {
             this.isPdfLoading.set(false);
         }
-    }
-
-    /**
-     * Triggers the file input to select files.
-     */
-    triggerFileInput(): void {
-        this.fileInput().nativeElement.click();
     }
 
     /**
@@ -231,11 +233,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.selectedPages()!.clear();
 
             const objectUrl = URL.createObjectURL(this.currentPdfBlob()!);
+            this.appendFile.set(true);
             this.currentPdfUrl.set(objectUrl);
         } catch (error) {
             this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
         } finally {
             this.isPdfLoading.set(false);
+            this.appendFile.set(false);
+            this.fileInput()!.nativeElement.value = '';
         }
     }
 }

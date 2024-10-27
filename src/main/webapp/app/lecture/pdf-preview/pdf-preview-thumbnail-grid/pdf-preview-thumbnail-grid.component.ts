@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import * as PDFJS from 'pdfjs-dist';
 import 'pdfjs-dist/build/pdf.worker';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -13,25 +13,34 @@ import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/pdf-preview/pdf-p
     standalone: true,
     imports: [ArtemisSharedModule, PdfPreviewEnlargedCanvasComponent],
 })
-export class PdfPreviewThumbnailGridComponent implements OnInit {
+export class PdfPreviewThumbnailGridComponent {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
-    enlargedCanvasComponent = viewChild.required<PdfPreviewEnlargedCanvasComponent>('enlargedCanvasComponent');
 
     readonly DEFAULT_SLIDE_WIDTH = 250;
     readonly DEFAULT_SLIDE_HEIGHT = 800;
 
     currentPdfUrl = input<string>();
+    appendFile = input<boolean>();
 
     isPdfLoading = output<boolean>();
 
     isEnlargedView = signal<boolean>(false);
     totalPages = signal<number>(0);
     selectedPages = signal<Set<number>>(new Set());
+    originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
+
+    totalPagesOutput = output<number>();
+    selectedPagesOutput = output<Set<number>>();
 
     private readonly alertService = inject(AlertService);
 
-    ngOnInit() {
-        this.loadOrAppendPdf(this.currentPdfUrl()!, false);
+    constructor() {
+        effect(
+            () => {
+                this.loadOrAppendPdf(this.currentPdfUrl()!, false);
+            },
+            { allowSignalWrites: true },
+        );
     }
 
     /**
@@ -68,10 +77,8 @@ export class PdfPreviewThumbnailGridComponent implements OnInit {
         } catch (error) {
             onError(this.alertService, error);
         } finally {
+            this.totalPagesOutput.emit(this.totalPages());
             this.isPdfLoading.emit(false);
-            if (append) {
-                //this.fileInput()!.nativeElement.value = '';
-            }
         }
     }
 
@@ -165,8 +172,10 @@ export class PdfPreviewThumbnailGridComponent implements OnInit {
         checkbox.addEventListener('change', () => {
             if (checkbox.checked) {
                 this.selectedPages().add(Number(checkbox.id));
+                this.selectedPagesOutput.emit(this.selectedPages());
             } else {
                 this.selectedPages().delete(Number(checkbox.id));
+                this.selectedPagesOutput.emit(this.selectedPages());
             }
         });
         return checkbox;
@@ -177,8 +186,8 @@ export class PdfPreviewThumbnailGridComponent implements OnInit {
      * @param originalCanvas - The original canvas element of the PDF page to be enlarged.
      * */
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
-        const isVertical = originalCanvas.height > originalCanvas.width;
+        //const isVertical = originalCanvas.height > originalCanvas.width;
         this.isEnlargedView.set(true);
-        this.enlargedCanvasComponent().displayEnlargedCanvas(originalCanvas, isVertical);
+        this.originalCanvas.set(originalCanvas);
     }
 }

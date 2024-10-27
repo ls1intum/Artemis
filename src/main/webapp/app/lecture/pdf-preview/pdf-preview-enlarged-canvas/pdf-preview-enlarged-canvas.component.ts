@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, contentChild, input, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, effect, input, signal, viewChild } from '@angular/core';
 import 'pdfjs-dist/build/pdf.worker';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
@@ -12,15 +12,25 @@ type NavigationDirection = 'next' | 'prev';
     imports: [ArtemisSharedModule],
 })
 export class PdfPreviewEnlargedCanvasComponent {
-    enlargedCanvas = contentChild.required<ElementRef<HTMLCanvasElement>>('enlargedCanvas');
+    enlargedCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('enlargedCanvas');
 
     readonly DEFAULT_SLIDE_HEIGHT = 800;
 
     pdfContainer = input.required<HTMLDivElement>();
+    originalCanvas = input<HTMLCanvasElement>();
 
-    isEnlargedView = signal<boolean>(false);
+    isEnlargedView = input<boolean>(false);
     currentPage = signal<number>(1);
     totalPages = signal<number>(0);
+
+    constructor() {
+        effect(
+            () => {
+                this.displayEnlargedCanvas(this.originalCanvas()!, false);
+            },
+            { allowSignalWrites: true },
+        );
+    }
 
     /**
      * Handles navigation within the PDF viewer using keyboard arrow keys.
@@ -58,50 +68,13 @@ export class PdfPreviewEnlargedCanvasComponent {
         }
     };
 
-    /**
-     * Closes the enlarged view if a click event occurs outside the actual canvas area but within the enlarged container.
-     * @param event The mouse event captured, used to determine the location of the click.
-     */
-    closeIfOutside(event: MouseEvent): void {
-        const target = event.target as HTMLElement;
-        const enlargedCanvas = this.enlargedCanvas().nativeElement;
-
-        if (target.classList.contains('enlarged-container') && target !== enlargedCanvas) {
-            this.closeEnlargedView(event);
-        }
-    }
-
-    /**
-     * Closes the enlarged view of the PDF and re-enables scrolling in the PDF container.
-     */
-    closeEnlargedView(event: MouseEvent) {
-        this.isEnlargedView.set(false);
-        this.adjustPdfContainerSize(false);
-        this.toggleBodyScroll(false);
-        event.stopPropagation();
-    }
-
-    /**
-     * Handles navigation between PDF pages and stops event propagation to prevent unwanted side effects.
-     * @param direction The direction to navigate.
-     * @param event The MouseEvent to be stopped.
-     */
-    handleNavigation(direction: NavigationDirection, event: MouseEvent): void {
-        event.stopPropagation();
-        this.navigatePages(direction);
-    }
-
-    /**
-     * Navigates to a specific page in the PDF based on the direction relative to the current page.
-     * @param direction The navigation direction (next or previous).
-     */
-    navigatePages(direction: NavigationDirection) {
-        const nextPageIndex = direction === 'next' ? this.currentPage() + 1 : this.currentPage() - 1;
-        if (nextPageIndex > 0 && nextPageIndex <= this.totalPages()) {
-            this.currentPage.set(nextPageIndex);
-            const canvas = this.pdfContainer().querySelectorAll('.pdf-canvas-container canvas')[this.currentPage() - 1] as HTMLCanvasElement;
-            this.updateEnlargedCanvas(canvas);
-        }
+    displayEnlargedCanvas(originalCanvas: HTMLCanvasElement, isVertical: boolean) {
+        this.adjustPdfContainerSize(isVertical);
+        this.currentPage.set(Number(originalCanvas.id));
+        this.toggleBodyScroll(true);
+        setTimeout(() => {
+            this.updateEnlargedCanvas(originalCanvas);
+        }, 500);
     }
 
     /**
@@ -220,12 +193,49 @@ export class PdfPreviewEnlargedCanvasComponent {
         this.pdfContainer().style.overflow = disable ? 'hidden' : 'auto';
     }
 
-    displayEnlargedCanvas(originalCanvas: HTMLCanvasElement, isVertical: boolean) {
-        this.adjustPdfContainerSize(isVertical);
-        this.currentPage.set(Number(originalCanvas.id));
-        this.toggleBodyScroll(true);
-        setTimeout(() => {
-            this.updateEnlargedCanvas(originalCanvas);
-        }, 500);
+    /**
+     * Closes the enlarged view of the PDF and re-enables scrolling in the PDF container.
+     */
+    closeEnlargedView(event: MouseEvent) {
+        this.isEnlargedView.apply(false);
+        this.adjustPdfContainerSize(false);
+        this.toggleBodyScroll(false);
+        event.stopPropagation();
+    }
+
+    /**
+     * Closes the enlarged view if a click event occurs outside the actual canvas area but within the enlarged container.
+     * @param event The mouse event captured, used to determine the location of the click.
+     */
+    closeIfOutside(event: MouseEvent): void {
+        const target = event.target as HTMLElement;
+        const enlargedCanvas = this.enlargedCanvas().nativeElement;
+
+        if (target.classList.contains('enlarged-container') && target !== enlargedCanvas) {
+            this.closeEnlargedView(event);
+        }
+    }
+
+    /**
+     * Handles navigation between PDF pages and stops event propagation to prevent unwanted side effects.
+     * @param direction The direction to navigate.
+     * @param event The MouseEvent to be stopped.
+     */
+    handleNavigation(direction: NavigationDirection, event: MouseEvent): void {
+        event.stopPropagation();
+        this.navigatePages(direction);
+    }
+
+    /**
+     * Navigates to a specific page in the PDF based on the direction relative to the current page.
+     * @param direction The navigation direction (next or previous).
+     */
+    navigatePages(direction: NavigationDirection) {
+        const nextPageIndex = direction === 'next' ? this.currentPage() + 1 : this.currentPage() - 1;
+        if (nextPageIndex > 0 && nextPageIndex <= this.totalPages()) {
+            this.currentPage.set(nextPageIndex);
+            const canvas = this.pdfContainer().querySelectorAll('.pdf-canvas-container canvas')[this.currentPage() - 1] as HTMLCanvasElement;
+            this.updateEnlargedCanvas(canvas);
+        }
     }
 }

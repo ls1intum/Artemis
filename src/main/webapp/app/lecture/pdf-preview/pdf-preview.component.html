@@ -40,7 +40,13 @@
             </div>
         </div>
         @if (currentPdfUrl()) {
-            <jhi-pdf-preview-thumbnail-grid-component [currentPdfUrl]="currentPdfUrl()" (isPdfLoading)="receiveIsPdfLoading($event)" />
+            <jhi-pdf-preview-thumbnail-grid-component
+                [currentPdfUrl]="currentPdfUrl()"
+                [appendFile]="appendFile()"
+                (isPdfLoading)="isPdfLoading.set($event)"
+                (selectedPagesOutput)="selectedPages.set($event)"
+                (totalPagesOutput)="totalPages.set($event)"
+            />
         }
         <div class="d-flex justify-content-between">
             <div>
