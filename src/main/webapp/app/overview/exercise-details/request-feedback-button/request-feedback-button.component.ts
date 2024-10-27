@@ -109,7 +109,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
      * No request with pending changes (these would be overriden after participation update)
      */
     assureTextConditions(): boolean {
-        if (!this.hasAthenaResultForLatestSubmission()) {
+        if (this.hasAthenaResultForLatestSubmission()) {
             const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
             this.alertService.warning(submitFirstWarning);
             return false;
