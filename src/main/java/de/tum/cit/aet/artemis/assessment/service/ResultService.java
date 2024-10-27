@@ -630,28 +630,32 @@ public class ResultService {
     }
 
     /**
-     * Deletes long feedback texts for the provided list of feedback items.
+     * Deletes long feedback texts for the provided list of feedback items to prevent duplicate entries in the {@link LongFeedbackTextRepository}.
      * <br>
-     * This method iterates over the provided list of feedback and checks if each feedback has an associated long feedback text.
-     * If the feedback has a long feedback text and its ID is not null, the method fetches the corresponding {@link LongFeedbackText}
-     * from the repository and deletes it.
+     * This method processes the provided list of feedback items, identifies those with associated long feedback texts, and removes them in bulk
+     * from the repository to avoid potential duplicate entry errors when saving new feedback entries.
      * <p>
-     * This is useful in cases where long feedback texts need to be removed, such as during feedback cleanup operations.
+     * Primarily used to ensure data consistency in the {@link LongFeedbackTextRepository}, especially during operations where feedback entries are
+     * overridden or updated. The deletion is performed only for feedback items with a non-null ID and an associated long feedback text.
+     * <p>
+     * This approach reduces the need for individual deletion calls and performs batch deletion in a single database operation.
      *
-     * @param feedbackList The list of {@link Feedback} objects for which the long feedback texts are to be deleted.
-     *                         Only feedback items that have long feedback texts and a non-null ID will be processed.
+     * @param feedbackList The list of {@link Feedback} objects for which the long feedback texts are to be deleted. Only feedback items that have long feedback texts and a
+     *                         non-null ID will be processed.
+     * @param result       The {@link Result} object associated with the feedback items, used to update feedback list before processing.
      */
     public void deleteLongFeedback(List<Feedback> feedbackList, Result result) {
         if (feedbackList == null) {
             return;
         }
+
+        List<Long> feedbackIdsWithLongText = feedbackList.stream().filter(feedback -> feedback.getHasLongFeedbackText() && feedback.getId() != null).map(Feedback::getId)
+                .collect(Collectors.toList());
+
+        List<LongFeedbackText> longFeedbackTextsToDelete = longFeedbackTextRepository.findByFeedbackIds(feedbackIdsWithLongText);
+        longFeedbackTextRepository.deleteAll(longFeedbackTextsToDelete);
+
         List<Feedback> feedbacks = new ArrayList<>(feedbackList);
         result.updateAllFeedbackItems(feedbacks, true);
-        for (Feedback feedback : feedbackList) {
-            if (feedback.getHasLongFeedbackText() && feedback.getId() != null) {
-                Optional<LongFeedbackText> longFeedbackTextOpt = longFeedbackTextRepository.findByFeedbackId(feedback.getId());
-                longFeedbackTextOpt.ifPresent(longFeedbackTextRepository::delete);
-            }
-        }
     }
 }
