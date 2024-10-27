@@ -235,6 +235,7 @@
                             [smallButtons]="smallButtons"
                             [isGeneratingFeedback]="isGeneratingFeedback"
                             (generatingFeedback)="this.isGeneratingFeedback = true"
+                            [isSubmitted]="gradedParticipation?.submissions?.last()?.submitted || false"
                         ></jhi-request-feedback-button>
                     }
                 }
