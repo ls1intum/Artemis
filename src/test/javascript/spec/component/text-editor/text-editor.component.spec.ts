@@ -370,7 +370,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should set the latest submission if updateParticipation is called with submission id that does not exist', () => {
-        const submissionList = [{ id: 1 }, { id: 3 }, { id: 4, results: [{ id: 1, assessmentType = AssessmentType.MANUAL }] }];
+        const submissionList = [{ id: 1 }, { id: 3 }, { id: 4, results: [{ id: 1, assessmentType : AssessmentType.MANUAL }] }];
 
         const exGroup = {
             id: 1,
