@@ -570,7 +570,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * This method is called to ensure that a valid project type is selected from the simple mode, if the project type cannot be determined automatically, an error message is
      * displayed to the user that indicates that the advanced mode should be used to define the project type.
      */
-    private determineProjectTypeIfNotSelected() {
+    private determineProjectTypeIfNotSelectedAndInSimpleMode() {
         if (this.isSimpleMode() && this.projectTypes) {
             const selectedProjectType = this.programmingExercise.projectType;
             const isInvalidProjectTypeSelected = selectedProjectType === undefined || !this.projectTypes.includes(selectedProjectType);
@@ -663,7 +663,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     save() {
         const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
-        this.determineProjectTypeIfNotSelected();
+        this.determineProjectTypeIfNotSelectedAndInSimpleMode();
 
         if (!this.modalService.hasOpenModals()) {
             this.saveExercise();
