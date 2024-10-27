@@ -111,7 +111,7 @@ describe('TextEditorComponent', () => {
     it('should use inputValues if present instead of loading new details', fakeAsync(() => {
         comp.inputExercise = textExercise;
         comp.inputParticipation = participation;
-
+        comp.inputSubmission = { id: 1, text: 'test' };
         // @ts-ignore updateParticipation is private
         const updateParticipationSpy = jest.spyOn(comp, 'updateParticipation');
         // @ts-ignore setupComponentWithInputValuesSpy is private
@@ -122,6 +122,7 @@ describe('TextEditorComponent', () => {
         expect(getTextForParticipationStub).not.toHaveBeenCalled();
         expect(updateParticipationSpy).not.toHaveBeenCalled();
         expect(setupComponentWithInputValuesSpy).toHaveBeenCalled();
+        expect(comp.answer).toBeDefined();
     }));
 
     it('should not allow to submit after the due date if there is no due date', fakeAsync(() => {
@@ -367,6 +368,29 @@ describe('TextEditorComponent', () => {
         expect(comp.submission.id).toBe(2);
     });
 
+    it('should set the latest submission if updateParticipation is called with submission id that does not exist', () => {
+        const submissionList = [{ id: 1 }, { id: 3 }, { id: 4 }];
+
+        const exGroup = {
+            id: 1,
+        };
+        const textExercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+            exerciseGroup: exGroup,
+            course: { id: 1 },
+            assessmentDueDate: dayjs().add(6, 'minutes'),
+        } as TextExercise;
+        comp.participation = {
+            id: 2,
+            submissions: submissionList,
+            exercise: textExercise,
+            results: [{ id: 1 }, { id: 2 }],
+        } as StudentParticipation;
+        comp['updateParticipation'](comp.participation, 2);
+        expect(comp.submission.id).toBe(4);
+    });
+
     it('should not render the submit button when isReadOnlyWithShowResult is true', () => {
         comp.isReadOnlyWithShowResult = true;
         comp.textExercise = textExercise;
@@ -390,7 +414,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should destroy', () => {
-        comp.submission = { text: 'abc' } as TextSubmission;
+        comp.submission = { id: 1, text: 'abc' } as TextSubmission;
         comp.answer = 'def';
         comp.textExercise = { id: 1 } as TextExercise;
         jest.spyOn(textSubmissionService, 'update');
