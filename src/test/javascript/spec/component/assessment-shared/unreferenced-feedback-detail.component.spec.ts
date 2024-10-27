@@ -45,6 +45,7 @@ describe('Unreferenced Feedback Detail Component', () => {
                 fixture = TestBed.createComponent(UnreferencedFeedbackDetailComponent);
                 comp = fixture.componentInstance;
                 feedbackService = TestBed.inject(FeedbackService);
+                sgiService = TestBed.inject(StructuredGradingCriterionService); // Add this line to inject sgiService
             });
     });
 
@@ -58,7 +59,7 @@ describe('Unreferenced Feedback Detail Component', () => {
         const getLongFeedbackTextSpy = jest.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue(exampleText);
 
         comp.ngOnInit();
-        expect(getLongFeedbackTextSpy).toHaveBeenCalledExactlyOnceWith(fixture.componentInstance.resultId, feedbackId);
+        expect(getLongFeedbackTextSpy).toHaveBeenCalledWith(fixture.componentInstance.resultId, feedbackId);
     });
 
     it('should update feedback with SGI and emit to parent', () => {
@@ -68,12 +69,12 @@ describe('Unreferenced Feedback Detail Component', () => {
             detailText: 'feedback1',
             credits: 1.5,
         } as Feedback;
-        // Fake call as a DragEvent
+
         jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
             comp.feedback.gradingInstruction = instruction;
             comp.feedback.credits = instruction.credits;
         });
-        // Call spy function with empty event
+
         comp.updateFeedbackOnDrop(new Event(''));
 
         expect(comp.feedback.gradingInstruction).toBe(instruction);

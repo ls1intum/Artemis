@@ -654,6 +654,6 @@ public class ResultService {
         longFeedbackTextRepository.deleteByFeedbackIds(feedbackIdsWithLongText);
 
         List<Feedback> feedbacks = new ArrayList<>(feedbackList);
-        result.updateAllFeedbackItems(feedbacks, true);
+        result.updateAllFeedbackItems(feedbacks, false);
     }
 }
