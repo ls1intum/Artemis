@@ -2,14 +2,25 @@ package de.tum.cit.aet.artemis.iris.settings;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
+import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
@@ -23,6 +34,9 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSubSettingsRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
@@ -34,15 +48,58 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
     @Autowired
     private IrisSettingsRepository irisSettingsRepository;
 
+    @Autowired
+    private AeolusTemplateService aeolusTemplateService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
     private Course course;
 
     private ProgrammingExercise programmingExercise;
 
+    private TextExercise textExercise;
+
+    private static Stream<Arguments> getCourseSettingsCategoriesSource() {
+        return Stream.of(Arguments.of(List.of("COURSE"), List.of(List.of("category1")), false),
+                Arguments.of(List.of("COURSE", "EXERCISE"), List.of(List.of("category1"), List.of("category1")), true),
+                Arguments.of(List.of("EXERCISE", "COURSE"), List.of(List.of("category1"), List.of("category1")), true),
+                Arguments.of(List.of("EXERCISE"), List.of(List.of("category1")), false),
+                Arguments.of(List.of("EXERCISE", "COURSE", "EXERCISE"), List.of(List.of("category1"), List.of("category1"), List.of()), false),
+                Arguments.of(List.of("COURSE", "EXERCISE", "COURSE"), List.of(List.of("category1"), List.of("category1"), List.of()), false),
+                Arguments.of(List.of("EXERCISE", "COURSE", "EXERCISE"), List.of(List.of("category1", "category2"), List.of("category1"), List.of("category2")), false),
+                Arguments.of(List.of("EXERCISE", "COURSE", "EXERCISE"), List.of(List.of("category1", "category2"), List.of("category1"), List.of("category1")), true),
+                Arguments.of(List.of("EXERCISE", "COURSE", "EXERCISE"), List.of(List.of("category1"), List.of("category2"), List.of("category2")), true),
+                Arguments.of(List.of("COURSE", "EXERCISE", "COURSE"), List.of(List.of("category1", "category2"), List.of("category1"), List.of("category2")), false),
+                Arguments.of(List.of("COURSE", "EXERCISE", "COURSE"), List.of(List.of("category1", "category2"), List.of("category1"), List.of("category1")), true));
+    }
+
     @BeforeEach
-    void initTestCase() {
+    void initTestCase() throws JsonProcessingException {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var projectKey1 = programmingExercise.getProjectKey();
+        programmingExercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)));
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+
+        var templateRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "exercise");
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + templateRepositorySlug + ".git");
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        var solutionRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "solution");
+        var solutionParticipation = programmingExercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(localVCBaseUrl + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git");
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+        // Text Exercise
+        ZonedDateTime pastReleaseDate = ZonedDateTime.now().minusDays(5);
+        ZonedDateTime pastDueDate = ZonedDateTime.now().minusDays(3);
+        ZonedDateTime pastAssessmentDueDate = ZonedDateTime.now().minusDays(2);
+        textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
     }
 
     @Test
@@ -167,6 +224,51 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(updatedSettings).usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings1);
         assertThat(loadedSettings1).usingRecursiveComparison().ignoringFields("id", "course", "irisChatSettings.id", "irisChatSettings.template.id",
                 "irisLectureIngestionSettings.id", "irisCompetencyGenerationSettings.id", "irisCompetencyGenerationSettings.template.id").isEqualTo(courseSettings);
+    }
+
+    /**
+     * This test check if exercises get correctly enabled and disabled based on the categories in the course settings.
+     *
+     * @param operations      List of operations to perform on the settings. Possible values are "COURSE" and "EXERCISE".
+     * @param categories      List of categories to set for the course and exercise settings.
+     * @param exerciseEnabled Expected value of the exercise enabled flag.
+     * @throws Exception If something request fails.
+     */
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("getCourseSettingsCategoriesSource")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCourseSettingsCategories(List<String> operations, List<List<String>> categories, boolean exerciseEnabled) throws Exception {
+        activateIrisGlobally();
+        activateIrisFor(course);
+        course = courseRepository.findByIdElseThrow(course.getId());
+
+        for (int i = 0; i < operations.size(); i++) {
+            String operation = operations.get(i);
+            SortedSet<String> category = new TreeSet<>(categories.get(i));
+            if (operation.equals("COURSE")) {
+                var loadedSettings = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+                loadedSettings.getIrisChatSettings().setEnabledForCategories(category);
+                loadedSettings.getIrisTextExerciseChatSettings().setEnabledForCategories(category);
+                request.putWithResponseBody("/api/courses/" + course.getId() + "/raw-iris-settings", loadedSettings, IrisSettings.class, HttpStatus.OK);
+            }
+            else if (operation.equals("EXERCISE")) {
+                programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+                programmingExercise.setCategories(category.stream().map(cat -> "{\"color\":\"#6ae8ac\",\"category\":\"" + cat + "\"}").collect(Collectors.toSet()));
+                request.putWithResponseBody("/api/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+
+                textExercise = (TextExercise) exerciseRepository.findByIdElseThrow(textExercise.getId());
+                textExercise.setCategories(category.stream().map(cat -> "{\"color\":\"#6ae8ac\",\"category\":\"" + cat + "\"}").collect(Collectors.toSet()));
+                request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+            }
+        }
+
+        // Load programming exercise Iris settings
+        var loadedSettings1 = request.get("/api/exercises/" + programmingExercise.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+        assertThat(loadedSettings1.getIrisChatSettings().isEnabled()).isEqualTo(exerciseEnabled);
+
+        // Load text exercise Iris settings
+        var loadedSettings2 = request.get("/api/exercises/" + textExercise.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+        assertThat(loadedSettings2.getIrisTextExerciseChatSettings().isEnabled()).isEqualTo(exerciseEnabled);
     }
 
     @Test
