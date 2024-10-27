@@ -215,6 +215,7 @@ describe('RequestFeedbackButtonComponent', () => {
         } as StudentParticipation;
         const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, studentParticipations: [participation], allowFeedbackRequests: true } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('isSubmitted', true);
         fixture.componentRef.setInput('isGeneratingFeedback', false);
         mockExerciseDetails(exercise);
 
