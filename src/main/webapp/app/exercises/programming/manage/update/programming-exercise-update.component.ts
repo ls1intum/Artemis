@@ -572,12 +572,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      */
     private determineProjectTypeIfNotSelected() {
         if (this.isSimpleMode() && this.projectTypes) {
-            const isInvalidProjectTypeSelected = this.selectedProjectTypeValue === undefined || !this.projectTypes.includes(this.selectedProjectTypeValue);
+            const selectedProjectType = this.getProgrammingExerciseCreationConfig().selectedProjectType;
+            const isInvalidProjectTypeSelected = selectedProjectType === undefined || !this.projectTypes.includes(selectedProjectType);
             if (isInvalidProjectTypeSelected) {
                 if (this.projectTypes.includes(ProjectType.PLAIN_GRADLE)) {
-                    this.selectedProjectTypeValue = ProjectType.PLAIN_GRADLE;
+                    this.getProgrammingExerciseCreationConfig().selectedProjectType = ProjectType.PLAIN_GRADLE;
                 } else if (this.projectTypes.includes(ProjectType.PLAIN_MAVEN)) {
-                    this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
+                    this.getProgrammingExerciseCreationConfig().selectedProjectType = ProjectType.PLAIN_MAVEN;
                 } else {
                     this.alertService.addErrorAlert('Could not automatically determine project type', 'artemisApp.exercise.errors.projectTypeCouldNotBeDetermined');
                 }
@@ -662,13 +663,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     save() {
         console.log('selection before custom check');
-        console.log('selected Project type: ' + JSON.stringify(this.selectedProjectTypeValue));
+        console.log('selected Project type: ' + JSON.stringify(this.getProgrammingExerciseCreationConfig().selectedProjectType));
         console.log('available project types: ' + JSON.stringify(this.projectTypes));
 
         this.determineProjectTypeIfNotSelected();
 
         console.log('selection after custom check');
-        console.log('selected Project type: ' + JSON.stringify(this.selectedProjectTypeValue));
+        console.log('selected Project type: ' + JSON.stringify(this.getProgrammingExerciseCreationConfig().selectedProjectType));
         console.log('available project types: ' + JSON.stringify(this.projectTypes));
 
         const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
