@@ -13,10 +13,9 @@ export abstract class IrisSubSettings implements BaseEntity {
     enabled = false;
     allowedVariants?: string[];
     selectedVariant?: string;
+    enabledForCategories?: string[];
 }
 
-// TODO: Split into ProgrammingExerciseChatSubSettings and CourseChatSubSettings
-// TODO: Each feature should probably get its own rate limit instead of sharing one
 export class IrisChatSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.CHAT;
     rateLimit?: number;

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20241010101010" author="morrien">
+        <addColumn tableName="iris_sub_settings">
+            <column name="enabled_for_categories" type="varchar(500)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
