@@ -4,6 +4,7 @@ import static org.gitlab4j.api.models.AccessLevel.DEVELOPER;
 import static org.gitlab4j.api.models.AccessLevel.GUEST;
 import static org.gitlab4j.api.models.AccessLevel.MAINTAINER;
 import static org.gitlab4j.api.models.AccessLevel.REPORTER;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyLong;
@@ -60,6 +61,7 @@ import org.gitlab4j.api.models.Pipeline;
 import org.gitlab4j.api.models.PipelineFilter;
 import org.gitlab4j.api.models.PipelineStatus;
 import org.gitlab4j.api.models.Project;
+import org.gitlab4j.api.models.ProjectAccessToken;
 import org.gitlab4j.api.models.ProjectHook;
 import org.gitlab4j.api.models.ProtectedBranch;
 import org.gitlab4j.api.models.PushData;
@@ -916,6 +918,15 @@ public class GitlabRequestMockProvider {
         else {
             Project project = new Project();
             doReturn(project).when(projectApi).updateProject(any());
+        }
+    }
+
+    public void mockCreateProjectAccessToken(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(projectApi).createProjectAccessToken(anyString(), anyString(), anyList(), any(), anyLong());
+        }
+        else {
+            doReturn(new ProjectAccessToken()).when(projectApi).createProjectAccessToken(anyString(), anyString(), anyList(), any(), anyLong());
         }
     }
 
