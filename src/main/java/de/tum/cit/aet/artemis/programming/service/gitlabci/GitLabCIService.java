@@ -210,7 +210,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             }
             catch (GitLabApiException e) {
                 log.error("Error updating variable '{}' for group {}", key, projectKey, e);
-                throw new GitLabCIException("Error creating variable '" + key + "' for group " + projectKey, e);
+                throw new GitLabCIException("Error updating variable '" + key + "' for group " + projectKey, e);
             }
         }
     }

@@ -923,7 +923,7 @@ public class GitlabRequestMockProvider {
 
     public void mockCreateProjectAccessToken(boolean shouldFail) throws GitLabApiException {
         if (shouldFail) {
-            doThrow(new GitLabApiException("Internal Error", 500)).when(projectApi).createProjectAccessToken(any(), anyString(), any(), any());
+            doThrow(new GitLabApiException("Internal Error", 500)).when(projectApi).createProjectAccessToken(anyString(), anyString(), anyList(), any(), anyLong());
         }
         else {
             doReturn(new ProjectAccessToken()).when(projectApi).createProjectAccessToken(anyString(), anyString(), anyList(), any(), anyLong());
