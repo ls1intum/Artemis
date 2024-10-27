@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.assessment.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -35,6 +37,14 @@ public interface LongFeedbackTextRepository extends ArtemisJpaRepository<LongFee
             WHERE longFeedback.feedback.id = :feedbackId
             """)
     Optional<LongFeedbackText> findWithFeedbackAndResultAndParticipationByFeedbackId(@Param("feedbackId") final Long feedbackId);
+
+    @Modifying
+    @Transactional
+    @Query("""
+            DELETE FROM LongFeedbackText longFeedback
+            WHERE longFeedback.feedback.id IN :feedbackIds
+            """)
+    void deleteByFeedbackIds(@Param("feedbackIds") List<Long> feedbackIds);
 
     default LongFeedbackText findByFeedbackIdWithFeedbackAndResultAndParticipationElseThrow(final Long feedbackId) {
         return getValueElseThrow(findWithFeedbackAndResultAndParticipationByFeedbackId(feedbackId), feedbackId);

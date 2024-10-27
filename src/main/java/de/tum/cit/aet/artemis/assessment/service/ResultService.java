@@ -649,11 +649,9 @@ public class ResultService {
             return;
         }
 
-        List<Long> feedbackIdsWithLongText = feedbackList.stream().filter(feedback -> feedback.getHasLongFeedbackText() && feedback.getId() != null).map(Feedback::getId)
-                .collect(Collectors.toList());
+        List<Long> feedbackIdsWithLongText = feedbackList.stream().filter(feedback -> feedback.getHasLongFeedbackText() && feedback.getId() != null).map(Feedback::getId).toList();
 
-        List<LongFeedbackText> longFeedbackTextsToDelete = longFeedbackTextRepository.findByFeedbackIds(feedbackIdsWithLongText);
-        longFeedbackTextRepository.deleteAll(longFeedbackTextsToDelete);
+        longFeedbackTextRepository.deleteByFeedbackIds(feedbackIdsWithLongText);
 
         List<Feedback> feedbacks = new ArrayList<>(feedbackList);
         result.updateAllFeedbackItems(feedbacks, true);
