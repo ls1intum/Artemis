@@ -111,14 +111,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     convertTextToEmoji(text: string): string {
-        const customShortcuts = {
-            ':+1:': '👍',
-        };
-
-        for (const [shortcut, emoji] of Object.entries(customShortcuts)) {
-            text = text.split(shortcut).join(emoji);
-        }
-
         return this.emojiConvertor.replace_emoticons(text);
     }
 
