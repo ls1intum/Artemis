@@ -23,6 +23,8 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { UrlAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/url.action';
+import { AttachmentAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/attachment.action';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
@@ -116,6 +118,8 @@ describe('PostingsMarkdownEditor', () => {
                 expect.any(CodeAction),
                 expect.any(CodeBlockAction),
                 expect.any(EmojiAction),
+                expect.any(UrlAction),
+                expect.any(AttachmentAction),
                 expect.any(UserMentionAction),
                 expect.any(ChannelReferenceAction),
                 expect.any(ExerciseReferenceAction),
@@ -138,6 +142,8 @@ describe('PostingsMarkdownEditor', () => {
                 expect.any(CodeAction),
                 expect.any(CodeBlockAction),
                 expect.any(EmojiAction),
+                expect.any(UrlAction),
+                expect.any(AttachmentAction),
                 expect.any(ExerciseReferenceAction),
             ]),
         );
@@ -204,6 +210,7 @@ describe('PostingsMarkdownEditor', () => {
         component.suppressNewlineOnEnter = true;
         const event = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true });
         const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        component.onKeyDown(event);
         expect(preventDefaultSpy).not.toHaveBeenCalled();
     });
 
