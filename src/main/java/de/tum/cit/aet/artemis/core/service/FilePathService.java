@@ -75,6 +75,10 @@ public class FilePathService {
         return Path.of(fileUploadPath, "markdown");
     }
 
+    public static Path getMarkdownFilePathForConversation(long courseId, long conversationId) {
+        return getMarkdownFilePath().resolve("communication").resolve(String.valueOf(courseId)).resolve(String.valueOf(conversationId));
+    }
+
     /**
      * Convert the given public file url to its corresponding local path
      *
