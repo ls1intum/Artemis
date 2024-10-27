@@ -28,7 +28,7 @@ export class DragAndDropQuiz {
     }
 
     async dragUsingCoordinates(x: number, y: number) {
-        const classElement = this.page.locator('#modeling-editor-sidebar').locator('div').nth(3);
+        const classElement = this.page.locator('#modeling-editor-sidebar').locator('div').nth(2);
         const modelingEditorCanvas = this.page.locator(MODELING_EDITOR_CANVAS);
         await classElement.dragTo(modelingEditorCanvas, { targetPosition: { x: x, y: y } });
     }
