@@ -14,6 +14,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { ArtemisExerciseButtonsModule } from 'app/overview/exercise-details/exercise-buttons.module';
 
 @NgModule({
     imports: [
@@ -29,6 +30,7 @@ import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/re
         ArtemisTeamParticipeModule,
         IrisModule,
         RequestFeedbackButtonComponent,
+        ArtemisExerciseButtonsModule,
     ],
     declarations: [TextEditorComponent, TextResultComponent],
     exports: [TextEditorComponent],

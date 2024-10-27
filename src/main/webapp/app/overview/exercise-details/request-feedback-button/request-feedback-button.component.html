@@ -5,9 +5,9 @@
                 class="btn btn-primary"
                 (click)="requestFeedback()"
                 [class.btn-sm]="smallButtons()"
-                [disabled]="isGeneratingFeedback()"
+                [disabled]="!participation?.submissions?.last()?.submitted || isGeneratingFeedback()"
                 [id]="'request-feedback-' + exercise().id"
-                [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip'"
+                [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
             >
                 <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>

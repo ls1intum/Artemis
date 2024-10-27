@@ -28,6 +28,8 @@
                             <jhi-request-feedback-button
                                 [exercise]="textExercise"
                                 [hasAthenaResultForLatestSubmission]="hasAthenaResultForLatestSubmission"
+                                [isGeneratingFeedback]="isGeneratingFeedback"
+                                (generatingFeedback)="this.isGeneratingFeedback = true"
                             ></jhi-request-feedback-button>
                         }
                     }
