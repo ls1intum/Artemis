@@ -31,7 +31,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
     participation?: StudentParticipation;
 
     hasAthenaResultForLatestSubmission = input<boolean>(false);
-    isGeneratingFeedback = input<boolean>();
+    isGeneratingFeedback = input<boolean>(false);
     smallButtons = input<boolean>(false);
     exercise = input.required<Exercise>();
     generatingFeedback = output<void>();
