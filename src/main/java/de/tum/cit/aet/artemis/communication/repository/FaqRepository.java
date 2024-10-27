@@ -43,6 +43,4 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
     @Transactional
     @Modifying
     void deleteAllByCourseId(Long courseId);
-
-    Faq findByIdAndFaqState(Long faqId, Faq faqState);
 }
