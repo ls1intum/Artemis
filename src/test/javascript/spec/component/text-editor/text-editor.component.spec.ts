@@ -41,6 +41,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
@@ -369,7 +370,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should set the latest submission if updateParticipation is called with submission id that does not exist', () => {
-        const submissionList = [{ id: 1 }, { id: 3 }, { id: 4 }];
+        const submissionList = [{ id: 1 }, { id: 3 }, { id: 4, results: [{ id: 1, assessmentType = AssessmentType.MANUAL }] }];
 
         const exGroup = {
             id: 1,
@@ -414,11 +415,20 @@ describe('TextEditorComponent', () => {
     });
 
     it('should destroy', () => {
-        comp.submission = { id: 1, text: 'abc' } as TextSubmission;
+        comp.submission = { text: 'abc' } as TextSubmission;
         comp.answer = 'def';
         comp.textExercise = { id: 1 } as TextExercise;
         jest.spyOn(textSubmissionService, 'update');
         comp.ngOnDestroy();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
+    });
+
+    it('should destroy and call submission service when submission id', () => {
+        comp.submission = { id: 1, text: 'abc' } as TextSubmission;
+        comp.answer = 'def';
+        comp.textExercise = { id: 1 } as TextExercise;
+        jest.spyOn(textSubmissionService, 'update');
+        comp.ngOnDestroy();
+        expect(textSubmissionService.update).toHaveBeenCalled();
     });
 });
