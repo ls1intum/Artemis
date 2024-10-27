@@ -11,6 +11,7 @@ import { metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { DOCUMENT } from '@angular/common';
+import { Reaction } from '../../../../../../../main/webapp/app/entities/metis/reaction.model';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -135,5 +136,37 @@ describe('AnswerPostComponent', () => {
         const setStyleSpy = jest.spyOn(component.renderer, 'setStyle');
         (component as any).enableBodyScroll();
         expect(setStyleSpy).toHaveBeenCalledWith(expect.objectContaining({ className: 'thread-answer-post' }), 'overflow-y', 'auto');
+    });
+
+    it('should adjust dropdown position if it overflows the screen width', () => {
+        const dropdownWidth = 200;
+        const screenWidth = window.innerWidth;
+
+        component.dropdownPosition = { x: screenWidth - 50, y: 100 };
+        component.adjustDropdownPosition();
+
+        expect(component.dropdownPosition.x).toBe(screenWidth - dropdownWidth - 10);
+    });
+
+    it('should not adjust dropdown position if it does not overflow the screen width', () => {
+        const initialX = 100;
+        component.dropdownPosition = { x: initialX, y: 100 };
+        component.adjustDropdownPosition();
+
+        expect(component.dropdownPosition.x).toBe(initialX);
+    });
+
+    it('should update the posting when onPostingUpdated is called', () => {
+        const updatedPosting = { ...metisResolvingAnswerPostUser1, content: 'Updated content' };
+        component.onPostingUpdated(updatedPosting);
+
+        expect(component.posting).toEqual(updatedPosting);
+    });
+
+    it('should update reactions when onReactionsUpdated is called', () => {
+        const updatedReactions = [{ id: 1, emojiId: 'smile', userId: 2 } as Reaction];
+        component.onReactionsUpdated(updatedReactions);
+
+        expect(component.posting.reactions).toEqual(updatedReactions);
     });
 });

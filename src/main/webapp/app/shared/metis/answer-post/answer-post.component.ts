@@ -103,6 +103,16 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
         };
 
         this.showDropdown = true;
+        this.adjustDropdownPosition();
         this.disableBodyScroll();
+    }
+
+    adjustDropdownPosition() {
+        const dropdownWidth = 200;
+        const screenWidth = window.innerWidth;
+
+        if (this.dropdownPosition.x + dropdownWidth > screenWidth) {
+            this.dropdownPosition.x = screenWidth - dropdownWidth - 10;
+        }
     }
 }
