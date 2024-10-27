@@ -29,7 +29,7 @@
                                     [id]="'file-upload ' + uniqueMarkdownEditorId"
                                     class="file-upload-footer-input"
                                     type="file"
-                                    accept="image/*"
+                                    [accept]="allowedFileExtensions()"
                                     [multiple]="true"
                                     (change)="onFileUpload($event)"
                                 />

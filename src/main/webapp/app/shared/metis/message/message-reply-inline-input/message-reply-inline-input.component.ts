@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation, input } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -6,6 +6,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
 import { LocalStorageService } from 'ngx-webstorage';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
@@ -15,6 +16,8 @@ import { LocalStorageService } from 'ngx-webstorage';
 })
 export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges {
     warningDismissed = false;
+
+    readonly activeConversation = input<ConversationDTO>();
 
     @Output()
     valueChange = new EventEmitter<void>();
