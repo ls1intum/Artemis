@@ -12,7 +12,7 @@ describe('CodeEditorHeaderComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbDropdownMocksModule],
-            declarations: [CodeEditorHeaderComponent],
+            declarations: [],
             providers: [],
         })
             .compileComponents()
@@ -23,25 +23,25 @@ describe('CodeEditorHeaderComponent', () => {
     });
 
     it('should only allow tab sizes between 1 and the maximum size', () => {
-        comp.tabSize = 4;
+        fixture.componentRef.setInput('tabSize', 4);
         comp.validateTabSize();
-        expect(comp.tabSize).toBe(4);
+        expect(comp.tabSize()).toBe(4);
 
-        comp.tabSize = -1;
+        fixture.componentRef.setInput('tabSize', -1);
         comp.validateTabSize();
-        expect(comp.tabSize).toBe(1);
+        expect(comp.tabSize()).toBe(1);
 
-        comp.tabSize = MAX_TAB_SIZE + 10;
+        fixture.componentRef.setInput('tabSize', MAX_TAB_SIZE + 10);
         comp.validateTabSize();
-        expect(comp.tabSize).toBe(MAX_TAB_SIZE);
+        expect(comp.tabSize()).toBe(MAX_TAB_SIZE);
     });
 
-    it('should notify when the tab size changed', fakeAsync(() => {
-        comp.tabSizeChanged.subscribe((tabSize) => {
+    it('should notify when the tab size was validated', fakeAsync(() => {
+        comp.onValidateTabSize.subscribe((tabSize) => {
             expect(tabSize).toBe(5);
         });
 
-        comp.tabSize = 5;
+        fixture.componentRef.setInput('tabSize', 5);
         comp.validateTabSize();
 
         tick();

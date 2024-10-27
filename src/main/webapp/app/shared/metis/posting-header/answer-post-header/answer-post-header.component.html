@@ -24,12 +24,14 @@
                 </span>
             </span>
         }
-        <span>-</span>
-        @if (postingIsOfToday) {
-            <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-small"></span>
-        }
-        <span class="fs-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
-            {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
+        <span class="post-header-date-separator">-</span>
+        <span class="post-header-date">
+            @if (postingIsOfToday) {
+                <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-small"></span>,
+            }
+            <span class="post-header-date fs-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+                {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
+            </span>
         </span>
         @if (!!isCommunicationPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {
             <span jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></span>
