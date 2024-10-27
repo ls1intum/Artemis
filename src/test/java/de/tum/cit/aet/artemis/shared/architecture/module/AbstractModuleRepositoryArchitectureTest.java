@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,14 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
     void shouldBeNamedRepository() {
         ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(Repository.class).should().haveSimpleNameEndingWith("Repository")
                 .because("repositories should have a name ending with 'Repository'.");
+        // allow empty should since some modules do not have repositories
+        rule.allowEmptyShould(true).check(allClasses);
+    }
+
+    @Test
+    void shouldBeAnnotatedRepository() {
+        ArchRule rule = classesOfThisModuleThat().haveSimpleNameEndingWith("Repository").and().areInterfaces().should().beAnnotatedWith(Repository.class).orShould()
+                .beAnnotatedWith(NoRepositoryBean.class).because("repositories should be annotated with @Repository or @NoRepositoryBean.");
         // allow empty should since some modules do not have repositories
         rule.allowEmptyShould(true).check(allClasses);
     }
