@@ -33,7 +33,13 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     @Transactional // ok because of delete
     @Query("""
             DELETE FROM TextBlock tb
-            WHERE tb.feedback IN (SELECT f FROM Feedback f JOIN f.result r WHERE r.submission IS NULL AND r.participation IS NULL)
+            WHERE tb.feedback IN (
+                SELECT f
+                FROM Feedback f
+                    LEFT JOIN f.result r
+                WHERE r.submission IS NULL
+                    AND r.participation IS NULL
+            )
             """)
     void deleteTextBlockForOrphanResults();
 
@@ -44,7 +50,11 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     @Transactional // ok because of delete
     @Query("""
             DELETE FROM TextBlock tb
-            WHERE tb.feedback IN (SELECT f FROM Feedback f WHERE f.result IS NULL)
+            WHERE tb.feedback IN (
+                SELECT f
+                FROM Feedback f
+                WHERE f.result IS NULL
+            )
             """)
     void deleteTextBlockForEmptyFeedback();
 
@@ -61,20 +71,22 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     @Transactional // ok because of delete
     @Query("""
             DELETE FROM TextBlock tb
-            WHERE tb.feedback IN (SELECT f
+            WHERE tb.feedback IN (
+                SELECT f
                 FROM Feedback f
-                JOIN f.result r
-                JOIN r.participation p
-                LEFT JOIN p.exercise e
-                LEFT JOIN e.course c
-                WHERE f.result.id NOT IN (SELECT MAX(r2.id)
+                    LEFT JOIN f.result r
+                    LEFT JOIN r.participation p
+                    LEFT JOIN p.exercise e
+                    LEFT JOIN e.course c
+                WHERE f.result.id NOT IN (
+                    SELECT MAX(r2.id)
                     FROM Result r2
                     WHERE r2.participation.id = p.id
                         AND r2.rated = TRUE
-                    )
+                )
                     AND c.endDate < :deleteTo
                     AND c.startDate > :deleteFrom
-                )
+            )
             """)
     void deleteTextBlockForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
@@ -91,16 +103,17 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     @Transactional // ok because of delete
     @Query("""
             DELETE FROM TextBlock tb
-            WHERE tb.feedback IN (SELECT f
+            WHERE tb.feedback IN (
+                SELECT f
                 FROM Feedback f
-                JOIN f.result r
-                JOIN r.participation p
-                LEFT JOIN p.exercise e
-                LEFT JOIN e.course c
-                WHERE r.rated=false
+                    LEFT JOIN f.result r
+                    LEFT JOIN r.participation p
+                    LEFT JOIN p.exercise e
+                    LEFT JOIN e.course c
+                WHERE r.rated = FALSE
                     AND c.endDate < :deleteTo
                     AND c.startDate > :deleteFrom
-                )
+            )
             """)
     void deleteTextBlockForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

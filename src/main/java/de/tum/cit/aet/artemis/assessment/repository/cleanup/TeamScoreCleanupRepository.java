@@ -25,7 +25,8 @@ public interface TeamScoreCleanupRepository extends ArtemisJpaRepository<TeamSco
     @Modifying
     @Transactional // ok because of delete
     @Query("""
-            DELETE FROM TeamScore ps WHERE ps.team IS NULL
+            DELETE FROM TeamScore ps
+            WHERE ps.team IS NULL
             """)
     void deleteOrphanTeamScore();
 }

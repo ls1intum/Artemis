@@ -39,9 +39,9 @@ public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaReposit
     @Query("""
             SELECT pc.id
             FROM PlagiarismComparison pc
-            JOIN pc.plagiarismResult pr
-            JOIN pr.exercise ex
-            JOIN ex.course c
+                LEFT JOIN pc.plagiarismResult pr
+                LEFT JOIN pr.exercise ex
+                LEFT JOIN ex.course c
             WHERE pc.status = de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE
                 AND c.endDate < :deleteTo
                 AND c.startDate > :deleteFrom
