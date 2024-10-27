@@ -24,6 +24,25 @@
         jhiTranslate="artemisApp.iris.settings.subSettings.enabled.off"
     ></div>
 </div>
+@if (settingsType === COURSE && (subSettings?.type === CHAT || subSettings?.type === TEXT_EXERCISE_CHAT)) {
+    <h4 class="form-label mt-3" jhiTranslate="artemisApp.iris.settings.subSettings.enabledForCategories"></h4>
+    <div class="form-group">
+        <div class="form-group">
+            @for (category of categories; track category) {
+                <div class="form-check">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="{{ category }}"
+                        [ngModel]="subSettings?.enabledForCategories?.includes(category)"
+                        (ngModelChange)="onCategorySelectionChange(category)"
+                    />
+                    <label class="form-check-label" for="{{ category }}">{{ category }}</label>
+                </div>
+            }
+        </div>
+    </div>
+}
 <h4 class="form-label mt-3" jhiTranslate="artemisApp.iris.settings.subSettings.variants.title"></h4>
 <span><span class="fw-bold fs-5" jhiTranslate="artemisApp.iris.settings.subSettings.variants.allowedVariants.title"></span>: </span>
 @if (parentSubSettings) {
