@@ -56,6 +56,20 @@ describe('PostingsMarkdownEditor', () => {
         getPosition: jest.fn(),
         setPosition: jest.fn(),
         focus: jest.fn(),
+        addAction: jest.fn(),
+        executeAction: jest.fn(),
+        layout: jest.fn(),
+        replaceTextAtRange: jest.fn(),
+        getDomNode: jest.fn(),
+        triggerCompletion: jest.fn(),
+        getTextAtRange: jest.fn(),
+        getLineText: jest.fn(),
+        getNumberOfLines: jest.fn(),
+        getEndPosition: jest.fn(),
+        getSelection: jest.fn(),
+        setSelection: jest.fn(),
+        revealRange: jest.fn(),
+        addCompleter: jest.fn(),
     };
 
     const mockPositionStrategy = {
