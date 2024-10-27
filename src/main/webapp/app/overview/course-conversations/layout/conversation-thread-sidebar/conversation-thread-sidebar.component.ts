@@ -62,8 +62,8 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
                 modifiers: [
                     // Set maximum width
                     interact.modifiers!.restrictSize({
-                        min: { width: 435, height: 0 },
-                        max: { width: 600, height: 4000 },
+                        min: { width: window.innerWidth * 0.3, height: 0 },
+                        max: { width: window.innerWidth, height: 0 },
                     }),
                 ],
                 inertia: true,

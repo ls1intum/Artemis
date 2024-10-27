@@ -62,10 +62,8 @@ export class AssessmentLayoutComponent {
     }
 
     @Output() save = new EventEmitter<void>();
-    // eslint-disable-next-line @angular-eslint/no-output-native
-    @Output() submit = new EventEmitter<void>();
-    // eslint-disable-next-line @angular-eslint/no-output-native
-    @Output() cancel = new EventEmitter<void>();
+    @Output() onSubmit = new EventEmitter<void>();
+    @Output() onCancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() updateAssessmentAfterComplaint = new EventEmitter<AssessmentAfterComplaint>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();

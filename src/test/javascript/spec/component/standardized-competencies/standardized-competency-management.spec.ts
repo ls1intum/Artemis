@@ -479,15 +479,15 @@ describe('StandardizedCompetencyManagementComponent', () => {
     });
 
     it('should not deactivate with pending changes', () => {
-        const deactivateWarningSpy = jest.spyOn(component, 'canDeactivateWarning', 'get');
+        let canDeactivate;
 
         component['isEditing'] = false;
-        component['unloadNotification']({ returnValue: '' });
-        expect(deactivateWarningSpy).not.toHaveBeenCalled();
+        canDeactivate = component.canDeactivate();
+        expect(canDeactivate).toBeTrue();
 
         component['isEditing'] = true;
-        component['unloadNotification']({ returnValue: '' });
-        expect(deactivateWarningSpy).toHaveBeenCalled();
+        canDeactivate = component.canDeactivate();
+        expect(canDeactivate).toBeFalse();
     });
 
     function prepareAndExecuteCompetencyUpdate(tree: KnowledgeAreaDTO[], competencyToUpdate: StandardizedCompetencyDTO, updatedCompetency: StandardizedCompetencyDTO) {
