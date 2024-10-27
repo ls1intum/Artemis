@@ -106,7 +106,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
     /**
      * Special conditions for text exercises.
      * Not more than 1 request per submission.
-     * No request with pending changes (these would be overriden after participation update)
+     * No request with pending changes (these would be overwritten after participation update)
      */
     assureTextConditions(): boolean {
         if (this.hasAthenaResultForLatestSubmission()) {
@@ -114,10 +114,11 @@ export class RequestFeedbackButtonComponent implements OnInit {
             this.alertService.warning(submitFirstWarning);
             return false;
         }
-        if (this.pendingChanges) {
+        if (this.pendingChanges()) {
             const pendingChangesMessage = this.translateService.instant('artemisApp.exercise.feedbackRequestPendingChanges');
             this.alertService.warning(pendingChangesMessage);
             return false;
         }
+        return true;
     }
 }
