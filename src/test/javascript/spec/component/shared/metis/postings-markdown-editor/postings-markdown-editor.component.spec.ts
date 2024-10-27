@@ -52,6 +52,12 @@ describe('PostingsMarkdownEditor', () => {
         scrollStrategies: { reposition: jest.fn().mockReturnValue({}) },
     };
 
+    const mockEditor: TextEditor = {
+        getPosition: jest.fn(),
+        setPosition: jest.fn(),
+        focus: jest.fn(),
+    };
+
     const mockPositionStrategy = {
         left: jest.fn().mockReturnThis(),
         top: jest.fn().mockReturnThis(),
@@ -222,15 +228,17 @@ describe('PostingsMarkdownEditor', () => {
         expect(preventDefaultSpy).not.toHaveBeenCalled();
     });
 
+    it('should not create emoji picker if position is not set', () => {
+        const emojiAction = new EmojiAction(component.viewContainerRef, mockOverlay as any, overlayPositionBuilderMock as any);
+        emojiAction.run(mockEditor);
+
+        expect(mockOverlay.create).not.toHaveBeenCalled();
+        expect(mockOverlayRef.attach).not.toHaveBeenCalled();
+    });
+
     it('should attach EmojiPickerComponent to overlay when EmojiAction.run is called', () => {
         const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
-
-        const mockEditor: TextEditor = {
-            getPosition: jest.fn(),
-            setPosition: jest.fn(),
-            focus: jest.fn(),
-        } as any;
 
         emojiAction.run(mockEditor);
 
@@ -241,12 +249,6 @@ describe('PostingsMarkdownEditor', () => {
     it('should create overlay with correct position when EmojiAction.run is called', () => {
         const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
-
-        const mockEditor: TextEditor = {
-            getPosition: jest.fn(),
-            setPosition: jest.fn(),
-            focus: jest.fn(),
-        } as any;
 
         const mockPositionStrategy = {
             left: jest.fn().mockReturnThis(),
@@ -274,15 +276,31 @@ describe('PostingsMarkdownEditor', () => {
         const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
 
-        const mockEditor: TextEditor = {
-            getPosition: jest.fn(),
-            setPosition: jest.fn(),
-            focus: jest.fn(),
-        } as any;
-
         emojiAction.run(mockEditor);
         backdropClickSubject.next();
 
         expect(mockOverlayRef.dispose).toHaveBeenCalled();
+    });
+
+    it('should destroy emoji picker if it is already open', () => {
+        const emojiAction = new EmojiAction(component.viewContainerRef, mockOverlay as any, overlayPositionBuilderMock as any);
+
+        emojiAction['overlayRef'] = mockOverlayRef as any;
+        const destroySpy = jest.spyOn(emojiAction as any, 'destroyEmojiPicker');
+
+        emojiAction.run(mockEditor);
+
+        expect(destroySpy).toHaveBeenCalled();
+        expect(mockOverlayRef.dispose).toHaveBeenCalled();
+    });
+
+    it('should clean up overlay reference on destroy', () => {
+        const emojiAction = new EmojiAction(component.viewContainerRef, mockOverlay as any, overlayPositionBuilderMock as any);
+
+        emojiAction['overlayRef'] = mockOverlayRef as any;
+        emojiAction['destroyEmojiPicker']();
+
+        expect(mockOverlayRef.dispose).toHaveBeenCalled();
+        expect(emojiAction['overlayRef']).toBeNull();
     });
 });

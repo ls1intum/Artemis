@@ -12,6 +12,7 @@ import {
     ViewEncapsulation,
     computed,
     forwardRef,
+    inject,
     input,
 } from '@angular/core';
 import { ViewContainerRef } from '@angular/core';
@@ -72,6 +73,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     fallbackConversationId = computed<number | undefined>(() => this.activeConversation()?.id);
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+    private overlay = inject(Overlay);
 
     constructor(
         private cdref: ChangeDetectorRef,
@@ -80,7 +82,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         private lectureService: LectureService,
         private channelService: ChannelService,
         public viewContainerRef: ViewContainerRef,
-        private overlay: Overlay,
         private positionBuilder: OverlayPositionBuilder,
     ) {}
 
