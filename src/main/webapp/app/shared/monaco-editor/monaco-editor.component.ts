@@ -13,7 +13,7 @@ import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/
 import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
 import { getOS } from 'app/shared/util/os-detector.util';
 
-import EmojiConvertor from 'emoji-js';
+import { EmojiConvertor } from 'emoji-js';
 
 export const MAX_TAB_SIZE = 8;
 
@@ -36,7 +36,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private readonly _editor: monaco.editor.IStandaloneCodeEditor;
     private readonly textEditorAdapter: MonacoTextEditorAdapter;
     private readonly monacoEditorContainerElement: HTMLElement;
-    private emojiConvertor: EmojiConvertor;
+    private readonly emojiConvertor = new EmojiConvertor();
 
     /*
      * Elements, models, and actions of the editor.
@@ -89,7 +89,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
         this.renderer.appendChild(this.elementRef.nativeElement, this.monacoEditorContainerElement);
 
-        this.emojiConvertor = new EmojiConvertor();
         this.emojiConvertor.replace_mode = 'unified';
         this.emojiConvertor.allow_native = true;
 
