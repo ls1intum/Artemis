@@ -216,7 +216,7 @@ describe('ShortAnswerQuestionUtil', () => {
         const originalTextParts2 = [['`random code`'], ['`    some more code`', '[-spot 1]'], ['`last code paragraph`']];
         const formattedTextParts2 = [
             ['<p><code>random code</code></p>'],
-            ['<p><code>&nbsp;&nbsp;&nbsp;&nbsp;some more code</code></p>', '<p>[-spot 1]</p>'],
+            ['<p><code>    &nbsp;&nbsp;&nbsp;&nbsp;some more code</code></p>', '<p>[-spot 1]</p>'],
             ['<p><code>last code paragraph</code></p>'],
         ];
         expect(service.transformTextPartsIntoHTML(originalTextParts2)).toEqual(formattedTextParts2);

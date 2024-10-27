@@ -11,6 +11,9 @@ import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-
 import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
+import { getOS } from 'app/shared/util/os-detector.util';
+
+import { EmojiConvertor } from 'emoji-js';
 
 export const MAX_TAB_SIZE = 8;
 
@@ -33,6 +36,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private readonly _editor: monaco.editor.IStandaloneCodeEditor;
     private readonly textEditorAdapter: MonacoTextEditorAdapter;
     private readonly monacoEditorContainerElement: HTMLElement;
+    private readonly emojiConvertor = new EmojiConvertor();
 
     /*
      * Elements, models, and actions of the editor.
@@ -85,6 +89,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
         this.renderer.appendChild(this.elementRef.nativeElement, this.monacoEditorContainerElement);
 
+        this.emojiConvertor.replace_mode = 'unified';
+        this.emojiConvertor.allow_native = true;
+
         effect(() => {
             // TODO: The CSS class below allows the editor to shrink in the CodeEditorContainerComponent. We should eventually remove this class and handle the editor size differently in the code editor grid.
             if (this.shrinkToFit()) {
@@ -100,6 +107,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 readOnly: this.readOnly(),
             });
         });
+    }
+
+    convertTextToEmoji(text: string): string {
+        return this.emojiConvertor.replace_emoticons(text);
     }
 
     ngOnInit(): void {
@@ -119,6 +130,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
 
         this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
+            // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
+            // See https://github.com/microsoft/monaco-editor/issues/307
+            if (getOS() === 'iOS' && document.activeElement && 'blur' in document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
             this.onBlurEditor.emit();
         });
     }
@@ -167,9 +183,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return this._editor.getContentHeight() + this._editor.getOption(monaco.editor.EditorOption.lineHeight);
     }
 
+    isConvertedToEmoji(originalText: string, convertedText: string): boolean {
+        return originalText !== convertedText;
+    }
+
     setText(text: string): void {
-        if (this.getText() !== text) {
-            this._editor.setValue(text);
+        const convertedText = this.convertTextToEmoji(text);
+        if (this.isConvertedToEmoji(text, convertedText)) {
+            this._editor.setValue(convertedText);
+            this.setPosition({ column: this.getPosition().column + 2 + text.length, lineNumber: this.getPosition().lineNumber });
+        }
+        if (this.getText() !== convertedText) {
+            this._editor.setValue(convertedText);
         }
     }
 
