@@ -107,6 +107,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
+            if (this._activeConversation?.id === conversation.id) {
+                return;
+            }
             this._activeConversation = conversation;
             this.onActiveConversationChange();
         });
