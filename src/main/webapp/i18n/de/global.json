@@ -35,6 +35,7 @@
                 "quizExercise": "Quiz Aufgabe",
                 "lecture": "Vorlesung",
                 "competency": "Kompetenz",
+                "ltiOutcomeUrl": "LTI-Outcome-URL",
                 "submittedAnswer": "Eingereichte Antwort",
                 "quizQuestion": "Frage",
                 "multipleChoiceQuestion": "Multiple-Choice Frage",
@@ -207,6 +208,7 @@
             "confirm": "Bestätigen",
             "download": "Herunterladen",
             "dashboard": "Dashboard",
+            "exportRepos": "Repositories herunterladen",
             "units": "Einheiten",
             "edit": "Bearbeiten",
             "connect": "Verknüpfen",
@@ -350,6 +352,7 @@
         "statistics": "Kursstatistiken",
         "exams": "Klausuren",
         "communication": "Kommunikation",
+        "archive": "Kursarchiv",
         "faq": "FAQ"
     },
     "connectionStatus": {

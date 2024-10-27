@@ -7,7 +7,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
-import { Faq } from 'app/entities/faq.model';
+import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqService } from 'app/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -16,6 +16,7 @@ import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { onError } from 'app/shared/util/global.utils';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @Component({
     selector: 'jhi-course-faq',
@@ -23,7 +24,7 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
     styleUrls: ['../course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent],
+    imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, ArtemisMarkdownModule],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -44,7 +45,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     readonly ButtonType = ButtonType;
 
     // Icons
-    faFilter = faFilter;
+    readonly faFilter = faFilter;
 
     private route = inject(ActivatedRoute);
 
@@ -71,7 +72,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
     private loadFaqs() {
         this.faqService
-            .findAllByCourseId(this.courseId)
+            .findAllByCourseIdAndState(this.courseId, FaqState.ACCEPTED)
             .pipe(map((res: HttpResponse<Faq[]>) => res.body))
             .subscribe({
                 next: (res: Faq[]) => {

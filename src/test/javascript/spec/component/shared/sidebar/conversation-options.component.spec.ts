@@ -85,6 +85,43 @@ examples.forEach((conversation) => {
             expect(component).toBeTruthy();
         });
 
+        it('should remove conversation from favorites when hidden', fakeAsync(() => {
+            component.conversation.isFavorite = true;
+            component.conversation.isHidden = false;
+
+            const hideButton = fixture.debugElement.nativeElement.querySelector('.hide');
+            hideButton.click();
+            tick(501);
+
+            expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
+            expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, component.conversation.id, false);
+
+            expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
+            expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
+
+            expect(component.conversation.isFavorite).toBeFalse();
+            expect(component.conversation.isHidden).toBeTrue();
+        }));
+
+        it('should remove conversation from hidden when favorited', fakeAsync(() => {
+            component.conversation.isFavorite = false;
+            component.conversation.isHidden = true;
+            fixture.detectChanges();
+
+            const favoriteButton = fixture.debugElement.nativeElement.querySelector('.favorite');
+            favoriteButton.click();
+            tick(501);
+
+            expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
+            expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, component.conversation.id, false);
+
+            expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
+            expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, component.conversation.id, true);
+
+            expect(component.conversation.isHidden).toBeFalse();
+            expect(component.conversation.isFavorite).toBeTrue();
+        }));
+
         it('should call updateIsFavorite when button is clicked', fakeAsync(() => {
             const button = fixture.debugElement.nativeElement.querySelector('.favorite');
             button.click();

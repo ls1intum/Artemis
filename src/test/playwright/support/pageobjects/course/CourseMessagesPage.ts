@@ -18,15 +18,16 @@ export class CourseMessagesPage {
      * Clicks the button to initiate channel creation.
      */
     async createChannelButton() {
-        await this.page.locator('#plusButton-generalChannels').click();
-        await this.page.locator('.modal-content #createChannel').click();
+        await this.page.click('.square-button > .ng-fa-icon');
+        await this.page.click('text=Create channel');
     }
 
     /**
      * Navigates to the channel overview section.
      */
-    browseChannelsButton(channelGroup: string) {
-        return this.page.locator(`#plusButton-${channelGroup}`);
+    async browseChannelsButton() {
+        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.locator('button', { hasText: 'Browse Channels' }).click();
     }
 
     /**
@@ -212,9 +213,8 @@ export class CourseMessagesPage {
      * @param message - The message to be written.
      */
     async writeMessage(message: string) {
-        const messageField = this.page.locator('.markdown-editor .monaco-editor');
-        await messageField.click();
-        await messageField.pressSequentially(message);
+        const messageField = this.page.locator('.markdown-editor .monaco-editor textarea');
+        await messageField.fill(message);
     }
 
     /**
@@ -243,9 +243,8 @@ export class CourseMessagesPage {
     async editMessage(messageId: number, message: string) {
         const postLocator = this.getSinglePost(messageId);
         await postLocator.locator('.editIcon').click();
-        const editorLocator = postLocator.locator('.markdown-editor .monaco-editor');
-        await editorLocator.click();
-        await editorLocator.pressSequentially(message);
+        const editorLocator = postLocator.locator('.markdown-editor .monaco-editor textarea');
+        await editorLocator.fill(message);
         const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/messages/*`);
         await postLocator.locator('#save').click();
         await responsePromise;
@@ -288,7 +287,8 @@ export class CourseMessagesPage {
      * Clicks the button to initiate group chat creation.
      */
     async createGroupChatButton() {
-        await this.page.locator('#plusButton-groupChats').click();
+        await this.page.locator('.btn-primary.btn-sm.square-button').click();
+        await this.page.locator('button', { hasText: 'Create Group Chat' }).click();
     }
 
     /**

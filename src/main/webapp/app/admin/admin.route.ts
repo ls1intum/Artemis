@@ -20,6 +20,7 @@ import { BuildAgentSummaryComponent } from 'app/localci/build-agents/build-agent
 import { StandardizedCompetencyManagementComponent } from 'app/admin/standardized-competencies/standardized-competency-management.component';
 import { BuildAgentDetailsComponent } from 'app/localci/build-agents/build-agent-details/build-agent-details/build-agent-details.component';
 import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
+import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
 export const adminState: Routes = [
     {
@@ -116,6 +117,7 @@ export const adminState: Routes = [
                 data: {
                     pageTitle: 'artemisApp.standardizedCompetency.title',
                 },
+                canDeactivate: [PendingChangesGuard],
             },
             {
                 // Create a new path without a component defined to prevent the StandardizedCompetencyManagementComponent from being always rendered

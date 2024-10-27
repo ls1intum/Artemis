@@ -1013,7 +1013,7 @@ public class ProgrammingExerciseService {
      * @param exerciseId of the exercise
      */
     public void deleteTasksWithSolutionEntries(Long exerciseId) {
-        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
+        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
         Set<ProgrammingExerciseSolutionEntry> solutionEntries = tasks.stream().map(ProgrammingExerciseTask::getTestCases).flatMap(Collection::stream)
                 .map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).collect(Collectors.toSet());
         programmingExerciseTaskRepository.deleteAll(tasks);
@@ -1056,5 +1056,16 @@ public class ProgrammingExerciseService {
 
         programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
         return programmingExercise;
+    }
+
+    /**
+     * Load a programming exercise, only with eager auxiliary repositories
+     *
+     * @param exerciseId the ID of the programming exercise to load
+     * @return the loaded programming exercise entity
+     */
+    public ProgrammingExercise loadProgrammingExerciseWithAuxiliaryRepositories(long exerciseId) {
+        final Set<ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions> fetchOptions = Set.of(AuxiliaryRepositories);
+        return programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
     }
 }

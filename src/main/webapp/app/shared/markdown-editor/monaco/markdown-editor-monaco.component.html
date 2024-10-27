@@ -29,7 +29,7 @@
                                     [id]="'file-upload ' + uniqueMarkdownEditorId"
                                     class="file-upload-footer-input"
                                     type="file"
-                                    accept="image/*"
+                                    [accept]="allowedFileExtensions()"
                                     [multiple]="true"
                                     (change)="onFileUpload($event)"
                                 />
@@ -40,7 +40,7 @@
                                 >
                                     <div class="row mx-0 align-items-baseline">
                                         <span class="col upload-subtitle" jhiTranslate="artemisApp.markdownEditor.fileUpload"></span>
-                                        <a class="col-auto" href="http://demo.showdownjs.com">
+                                        <a class="col-auto" href="https://markdown-it.github.io/">
                                             <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
                                         </a>
                                     </div>
@@ -229,7 +229,7 @@
 </div>
 
 <ng-template #simpleActionButton let-action="action">
-    <button type="button" class="btn btn-sm py-0" [ngbTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined" (click)="action.executeInCurrentEditor()">
+    <button type="button" class="btn btn-sm py-0" [ngbTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined" (click)="handleActionClick($event, action)">
         @if (action.icon) {
             <fa-icon [icon]="action.icon" />
         } @else {

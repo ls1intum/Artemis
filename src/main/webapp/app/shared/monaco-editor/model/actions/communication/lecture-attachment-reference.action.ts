@@ -8,6 +8,7 @@ import { Attachment } from 'app/entities/attachment.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
+import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
 
 interface LectureWithDetails {
     id: number;
@@ -109,23 +110,29 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
     }
 
     insertLectureReference(editor: TextEditor, lecture: LectureWithDetails): void {
-        this.replaceTextAtCurrentSelection(editor, `[lecture]${lecture.title}(${this.metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
+        this.replaceTextAtCurrentSelection(
+            editor,
+            `[lecture]${sanitizeStringForMarkdownEditor(lecture.title)}(${this.metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`,
+        );
     }
 
     insertAttachmentReference(editor: TextEditor, attachment: Attachment): void {
         const shortLink = attachment.link?.split('attachments/')[1];
-        this.replaceTextAtCurrentSelection(editor, `[attachment]${attachment.name}(${shortLink})[/attachment]`);
+        this.replaceTextAtCurrentSelection(editor, `[attachment]${sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
     insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide): void {
         const shortLink = slide.slideImagePath?.split('attachments/')[1];
         // Remove the trailing slash and the file name.
         const shortLinkWithoutFileName = shortLink?.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
-        this.replaceTextAtCurrentSelection(editor, `[slide]${attachmentUnit.name} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`);
+        this.replaceTextAtCurrentSelection(
+            editor,
+            `[slide]${sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`,
+        );
     }
 
     insertAttachmentUnitReference(editor: TextEditor, attachmentUnit: AttachmentUnit): void {
         const shortLink = attachmentUnit.attachment?.link!.split('attachments/')[1];
-        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${attachmentUnit.name}(${shortLink})[/lecture-unit]`);
+        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentUnit.name)}(${shortLink})[/lecture-unit]`);
     }
 }

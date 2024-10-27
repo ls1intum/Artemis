@@ -12,13 +12,12 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class BuildLogEntryServiceTest extends AbstractSpringIntegrationIndependentTest {
+class BuildLogEntryServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String GRADLE_SCENARIO = """
             ~~~~~~~~~~~~~~~~~~~~ Pull image progress: Downloading ~~~~~~~~~~~~~~~~~~~~
@@ -330,9 +329,6 @@ class BuildLogEntryServiceTest extends AbstractSpringIntegrationIndependentTest 
             Store variable context...
             Finished building MTCTSTMVN-ARTEMISADMIN-JOB1-7.
             """;
-
-    @Autowired
-    private BuildLogEntryService buildLogEntryService;
 
     @ValueSource(strings = { GRADLE_SCENARIO, MAVEN_SCENARIO })
     @ParameterizedTest

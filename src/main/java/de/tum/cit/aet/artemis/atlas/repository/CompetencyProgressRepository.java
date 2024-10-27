@@ -94,4 +94,16 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
                 AND c = :competency
             """)
     Set<CompetencyProgress> findAllPriorByCompetencyId(@Param("competency") CourseCompetency competency, @Param("user") User userId);
+
+    @Query("""
+            SELECT COALESCE(GREATEST(0.0, LEAST(1.0, AVG(cp.progress * cp.confidence / com.masteryThreshold))), 0.0)
+            FROM CompetencyProgress cp
+                LEFT JOIN cp.competency com
+                LEFT JOIN com.course c
+                LEFT JOIN cp.user u
+            WHERE com.id = :competencyId
+                AND cp.progress > 0
+                AND c.studentGroupName MEMBER OF u.groups
+            """)
+    double findAverageOfAllNonZeroStudentProgressByCompetencyId(@Param("competencyId") long competencyId);
 }

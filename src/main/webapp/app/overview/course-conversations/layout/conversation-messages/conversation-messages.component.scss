@@ -1,3 +1,7 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
 .conversation-messages {
     --message-input-height-prod: 171px;
     --message-input-height-dev: 187px;
@@ -45,10 +49,16 @@
 
         &.content-height-dev {
             max-height: calc(75vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+
+            @include media-breakpoint-down(sm) {
+                max-height: calc(90vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+                max-height: calc(90dvh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+            }
         }
 
-        @media (max-width: 768px) {
-            max-height: calc(75vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height)) !important;
+        @include media-breakpoint-down(sm) {
+            max-height: calc(90vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
+            max-height: calc(90dvh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
         }
     }
 
@@ -58,5 +68,9 @@
         height: 250px;
         padding-top: 100px;
         padding-bottom: 100px;
+    }
+
+    .conversation-messages-message-list.is-fetching-posts {
+        display: none;
     }
 }
