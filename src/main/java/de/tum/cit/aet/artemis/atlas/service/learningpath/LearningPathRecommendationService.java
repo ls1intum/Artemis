@@ -490,8 +490,11 @@ public class LearningPathRecommendationService {
 
         final var numberOfRequiredExercisePointsToMaster = calculateNumberOfExercisePointsRequiredToMaster(user, competency, weightedConfidence);
 
+        // First sort exercises based on title to ensure consistent ordering over multiple calls then prefer higher weighted exercises
         final var pendingExercises = competency.getExerciseLinks().stream().filter(link -> !learningObjectService.isCompletedByUser(link.getExercise(), user))
-                .sorted(Comparator.comparingDouble(CompetencyExerciseLink::getWeight).reversed()).map(CompetencyExerciseLink::getExercise).toList();
+                .sorted(Comparator.comparing(link -> link.getExercise().getTitle())).sorted(Comparator.comparingDouble(CompetencyExerciseLink::getWeight).reversed())
+                .map(CompetencyExerciseLink::getExercise).toList();
+
         final var pendingExercisePoints = pendingExercises.stream().mapToDouble(BaseExercise::getMaxPoints).sum();
 
         Map<DifficultyLevel, List<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(pendingExercises);
