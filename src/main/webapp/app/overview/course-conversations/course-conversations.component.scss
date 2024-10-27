@@ -43,7 +43,7 @@
 }
 
 .communication-message-wrap {
-    min-width: 200px;
+    min-width: 30%;
 }
 
 @include media-breakpoint-down(sm) {
@@ -86,15 +86,6 @@
 
     .communication-message-wrap.is-answer-thread-open {
         display: none;
-    }
-
-    .communication-answer-message-wrap {
-        max-width: 100%;
-        display: none;
-    }
-
-    .communication-answer-message-wrap.is-answer-thread-open {
-        display: flex;
     }
 
     .communication-message-wrap {
