@@ -27,7 +27,7 @@ describe('TextUnitComponent', () => {
         visibleToStudents: true,
     };
 
-    const exampleHtml = '<h3 id="samplemarkdown">Sample Markdown</h3>';
+    const exampleHtml = '<h1>Sample Markdown</h1>';
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({

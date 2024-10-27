@@ -52,4 +52,16 @@ describe('ConversationThreadSidebarComponent', () => {
         component.activeConversation = conversation;
         expect(component.hasChannelModerationRights).toBe(hasModerationRights);
     });
+
+    it('should set min and max width for the resizable thread section', () => {
+        const expandedThreadElement = fixture.debugElement.nativeElement.querySelector('.expanded-thread');
+        const minWidth = window.innerWidth * 0.3;
+        const maxWidth = window.innerWidth;
+
+        expandedThreadElement.style.width = `${minWidth}px`;
+        expect(parseFloat(expandedThreadElement.style.width)).toBeGreaterThanOrEqual(minWidth);
+
+        expandedThreadElement.style.width = `${maxWidth}px`;
+        expect(parseFloat(expandedThreadElement.style.width)).toBeLessThanOrEqual(maxWidth);
+    });
 });
