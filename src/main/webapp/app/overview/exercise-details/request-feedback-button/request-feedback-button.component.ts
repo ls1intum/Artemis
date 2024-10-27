@@ -29,6 +29,7 @@ export class RequestFeedbackButtonComponent implements OnInit {
     isExamExercise: boolean;
     participation?: StudentParticipation;
 
+    pendingChanges = input<boolean>(false);
     hasAthenaResultForLatestSubmission = input<boolean>(false);
     isGeneratingFeedback = input<boolean>();
     smallButtons = input<boolean>(false);
@@ -96,11 +97,27 @@ export class RequestFeedbackButtonComponent implements OnInit {
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
     assureConditionsSatisfied(): boolean {
-        if (this.exercise().type === ExerciseType.PROGRAMMING || this.exercise().type === ExerciseType.MODELING || !this.hasAthenaResultForLatestSubmission()) {
+        if (this.exercise().type === ExerciseType.PROGRAMMING || this.exercise().type === ExerciseType.MODELING || this.assureTextConditions()) {
             return true;
         }
-        const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
-        this.alertService.warning(submitFirstWarning);
         return false;
+    }
+
+    /**
+     * Special conditions for text exercises.
+     * Not more than 1 request per submission.
+     * No request with pending changes (these would be overriden after participation update)
+     */
+    assureTextConditions(): boolean {
+        if (!this.hasAthenaResultForLatestSubmission()) {
+            const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
+            this.alertService.warning(submitFirstWarning);
+            return false;
+        }
+        if (this.pendingChanges) {
+            const pendingChangesMessage = this.translateService.instant('artemisApp.exercise.feedbackRequestPendingChanges');
+            this.alertService.warning(pendingChangesMessage);
+            return false;
+        }
     }
 }

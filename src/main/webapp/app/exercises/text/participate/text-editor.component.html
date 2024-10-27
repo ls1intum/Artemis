@@ -27,6 +27,7 @@
                         @if (textExercise.allowFeedbackRequests && (!this.textExercise.dueDate || !hasExerciseDueDatePassed(this.textExercise, this.participation))) {
                             <jhi-request-feedback-button
                                 [exercise]="textExercise"
+                                [pendingChanges]="submission.text !== answer"
                                 [hasAthenaResultForLatestSubmission]="hasAthenaResultForLatestSubmission"
                                 [isGeneratingFeedback]="isGeneratingFeedback"
                                 (generatingFeedback)="this.isGeneratingFeedback = true"
