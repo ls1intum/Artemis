@@ -574,10 +574,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isSimpleMode() && this.projectTypes) {
             const isInvalidProjectTypeSelected = this.selectedProjectTypeValue === undefined || !this.projectTypes.includes(this.selectedProjectTypeValue);
             if (isInvalidProjectTypeSelected) {
-                if (this.projectTypes.includes(ProjectType.GRADLE_GRADLE)) {
-                    this.selectedProjectTypeValue = ProjectType.GRADLE_GRADLE;
-                } else if (this.projectTypes.includes(ProjectType.MAVEN_MAVEN)) {
-                    this.selectedProjectTypeValue = ProjectType.MAVEN_MAVEN;
+                if (this.projectTypes.includes(ProjectType.PLAIN_GRADLE)) {
+                    this.selectedProjectTypeValue = ProjectType.PLAIN_GRADLE;
+                } else if (this.projectTypes.includes(ProjectType.PLAIN_MAVEN)) {
+                    this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
                 } else {
                     this.alertService.addErrorAlert('Could not automatically determine project type', 'artemisApp.exercise.errors.projectTypeCouldNotBeDetermined');
                 }
