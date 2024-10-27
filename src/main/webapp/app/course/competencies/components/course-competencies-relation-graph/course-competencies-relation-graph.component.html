@@ -1,0 +1,36 @@
+<div class="course-competencies-graph-container h-100" xmlns:svg="http://www.w3.org/2000/svg">
+    <ngx-graph
+        [nodes]="nodes()"
+        [links]="edges()"
+        layout="dagreCluster"
+        [draggingEnabled]="false"
+        [showMiniMap]="true"
+        [miniMapMaxWidth]="200"
+        [miniMapMaxHeight]="150"
+        [update$]="update$"
+        [center$]="center$"
+    >
+        <ng-template #defsTemplate>
+            <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
+            </svg:marker>
+        </ng-template>
+        <ng-template #nodeTemplate let-node>
+            <svg:g [attr.width]="node.dimension.width" [attr.height]="node.dimension.height" (click)="onCourseCompetencySelection.emit(node.data.id)">
+                <svg:foreignObject class="node" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
+                    <jhi-course-competency-relation-node [courseCompetencyNode]="node" (onSizeSet)="setNodeDimension($event)" />
+                </svg:foreignObject>
+            </svg:g>
+        </ng-template>
+        <ng-template #linkTemplate let-link>
+            <svg:g class="edge" (click)="selectRelation(link.data.id)">
+                <svg:path class="line" [class.selected]="selectedRelationId() == link.data.id" stroke-width="2" marker-end="url(#arrow)" />
+                <svg:text class="edge-label" text-anchor="middle">
+                    <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
+                        {{ ('artemisApp.courseCompetency.relations.relationTypes.' + link.label | artemisTranslate).toUpperCase() }}
+                    </textPath>
+                </svg:text>
+            </svg:g>
+        </ng-template>
+    </ngx-graph>
+</div>
