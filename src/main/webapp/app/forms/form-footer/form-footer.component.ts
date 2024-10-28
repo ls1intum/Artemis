@@ -10,8 +10,8 @@ import { ButtonSize } from 'app/shared/components/button.component';
 })
 export class FormFooterComponent {
     @Output() save = new EventEmitter<void>();
-    // eslint-disable-next-line @angular-eslint/no-output-native
-    @Output() cancel = new EventEmitter<void>();
+
+    @Output() onCancel = new EventEmitter<void>();
 
     @Input() isSaving: boolean = false;
     @Input() isDisabled: boolean = false;
