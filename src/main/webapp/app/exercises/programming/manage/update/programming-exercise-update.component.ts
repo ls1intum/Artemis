@@ -105,6 +105,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isImportFromExistingExercise: boolean;
     isImportFromFile: boolean;
     isEdit: boolean;
+    isCreate: boolean;
     isExamMode: boolean;
     isLocal: boolean;
     hasUnsavedChanges = false;
@@ -439,6 +440,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                         this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
                         this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
                         this.isEdit = segments.some((segment) => segment.path === 'edit');
+                        this.isCreate = segments.some((segment) => segment.path === 'new');
                     }),
                     switchMap(() => this.activatedRoute.params),
                     tap((params) => {
@@ -571,7 +573,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * displayed to the user that indicates that the advanced mode should be used to define the project type.
      */
     private determineProjectTypeIfNotSelectedAndInSimpleMode() {
-        if (this.isSimpleMode() && this.projectTypes) {
+        if (this.isSimpleMode() && this.isCreate && this.projectTypes) {
             const selectedProjectType = this.programmingExercise.projectType;
             const isInvalidProjectTypeSelected = selectedProjectType === undefined || !this.projectTypes.includes(selectedProjectType);
             if (isInvalidProjectTypeSelected) {
