@@ -11,6 +11,9 @@ import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { of } from 'rxjs';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { HttpResponse } from '@angular/common/http';
 
 function baseSettings() {
     const irisSubSettings = new IrisChatSubSettings();
@@ -23,10 +26,20 @@ function baseSettings() {
     return irisSubSettings;
 }
 
+function mockCategories() {
+    return [
+        // Convert ExerciseCategory to json string
+        JSON.stringify(new ExerciseCategory('category1', '0xff0000')),
+        JSON.stringify(new ExerciseCategory('category2', '0x00ff00')),
+        JSON.stringify(new ExerciseCategory('category3', '0x0000ff')),
+    ];
+}
+
 describe('IrisCommonSubSettingsUpdateComponent Component', () => {
     let comp: IrisCommonSubSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisCommonSubSettingsUpdateComponent>;
     let getVariantsSpy: jest.SpyInstance;
+    let getCategoriesSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -36,7 +49,9 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
             .compileComponents()
             .then(() => {
                 const irisSettingsService = TestBed.inject(IrisSettingsService);
+                const courseManagementService = TestBed.inject(CourseManagementService);
                 getVariantsSpy = jest.spyOn(irisSettingsService, 'getVariantsForFeature').mockReturnValue(of(mockVariants()));
+                getCategoriesSpy = jest.spyOn(courseManagementService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: mockCategories() })));
             });
         fixture = TestBed.createComponent(IrisCommonSubSettingsUpdateComponent);
         comp = fixture.componentInstance;
@@ -180,5 +195,28 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
 
         expect(comp.enabled).toBeFalse();
         expect(comp.allowedVariants).toEqual(newModels);
+    });
+
+    it('enable categories', () => {
+        comp.subSettings = baseSettings();
+        comp.parentSubSettings = baseSettings();
+        comp.parentSubSettings.enabled = false;
+        comp.isAdmin = true;
+        comp.settingsType = IrisSettingsType.COURSE;
+        comp.availableVariants = mockVariants();
+        fixture.detectChanges();
+
+        expect(getCategoriesSpy).toHaveBeenCalledOnce();
+
+        comp.onCategorySelectionChange('category1');
+        expect(comp.subSettings!.enabledForCategories).toEqual(['category1']);
+        comp.onCategorySelectionChange('category2');
+        expect(comp.subSettings!.enabledForCategories).toEqual(['category1', 'category2']);
+        comp.onCategorySelectionChange('category1');
+        expect(comp.subSettings!.enabledForCategories).toEqual(['category2']);
+
+        comp.subSettings = undefined;
+        comp.onCategorySelectionChange('category1');
+        expect(comp.subSettings).toBeUndefined();
     });
 });
