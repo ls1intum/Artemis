@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.Post_;
 import de.tum.cit.aet.artemis.communication.domain.Reaction_;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel_;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation_;
 import de.tum.cit.aet.artemis.core.domain.Course_;
@@ -93,11 +92,11 @@ public class MessageSpecs {
         return (root, query, criteriaBuilder) -> {
             final var conversationJoin = root.join(Post_.conversation, JoinType.LEFT);
             final var isInCoursePredicate = criteriaBuilder.equal(conversationJoin.get(Channel_.COURSE).get(Course_.ID), courseId);
-            final var isCourseWidePredicate = criteriaBuilder.isTrue(conversationJoin.get(Channel_.IS_COURSE_WIDE));
+            // final var isCourseWidePredicate = criteriaBuilder.isTrue(conversationJoin.get(Channel_.IS_COURSE_WIDE));
             // make sure we only fetch channels (which are sub types of conversations)
             // this avoids the creation of sub queries
-            final var isChannelPredicate = criteriaBuilder.equal(conversationJoin.type(), criteriaBuilder.literal(Channel.class));
-            return criteriaBuilder.and(isInCoursePredicate, isCourseWidePredicate, isChannelPredicate);
+            // final var isChannelPredicate = criteriaBuilder.equal(conversationJoin.type(), criteriaBuilder.literal(Channel.class));
+            return criteriaBuilder.and(isInCoursePredicate);
         };
     }
 

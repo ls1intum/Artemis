@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getCo
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getConversationsSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getCourseWideChannelsSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getOwnSpecification;
-import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSearchTextSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSortSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUnresolvedSpecification;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
@@ -53,7 +52,6 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     private Specification<Post> configureSearchSpecification(Specification<Post> specification, PostContextFilterDTO postContextFilter, long userId) {
         return specification
         // @formatter:off
-            .and(getSearchTextSpecification(postContextFilter.searchText()))
             .and(getOwnSpecification(Boolean.TRUE.equals(postContextFilter.filterToOwn()), userId))
             .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
             .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
@@ -72,8 +70,9 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     default Page<Post> findMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
         var specification = Specification.where(getConversationSpecification(postContextFilter.conversationId()));
         specification = configureSearchSpecification(specification, postContextFilter, userId);
+        String searchText = postContextFilter.searchText() != null ? postContextFilter.searchText() : "";
         // Fetch all necessary attributes to avoid lazy loading (even though relations are defined as EAGER in the domain class, specification queries do not respect this)
-        return findPostsWithSpecification(pageable, specification);
+        return findPostsWithSpecification(pageable, specification, searchText);
     }
 
     /**
@@ -88,17 +87,18 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
         var specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.courseId()))
                 .and(getConversationsSpecification(postContextFilter.courseWideChannelIds()));
         specification = configureSearchSpecification(specification, postContextFilter, userId);
-        return findPostsWithSpecification(pageable, specification);
+        String searchText = postContextFilter.searchText() != null ? postContextFilter.searchText() : "";
+        return findPostsWithSpecification(pageable, specification, searchText);
     }
 
-    private PageImpl<Post> findPostsWithSpecification(Pageable pageable, Specification<Post> specification) {
+    private PageImpl<Post> findPostsWithSpecification(Pageable pageable, Specification<Post> specification, String searchText) {
         // Only fetch the postIds without any left joins to avoid that Hibernate loads all objects and creates the page in Java
         long start = System.nanoTime();
         Page<Long> postIds = findPostIdsWithSpecification(specification, pageable);
         log.debug("findPostIdsWithSpecification took {}", TimeLogUtil.formatDurationFrom(start));
         // Fetch all necessary attributes to avoid lazy loading (even though relations are defined as EAGER in the domain class, specification queries do not respect this)
         long start2 = System.nanoTime();
-        List<Post> posts = findByPostIdsWithEagerRelationships(postIds.getContent());
+        List<Post> posts = findByPostIdsWithEagerRelationships(postIds.getContent(), searchText);
         // Make sure to sort the posts in the same order as the postIds
         Map<Long, Post> postMap = posts.stream().collect(Collectors.toMap(Post::getId, post -> post));
         posts = postIds.stream().map(postMap::get).toList();
@@ -118,9 +118,9 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
                     LEFT JOIN FETCH a.reactions
                     LEFT JOIN FETCH a.post
                     LEFT JOIN FETCH a.author
-            WHERE p.id IN :postIds
+            WHERE p.id IN :postIds and (p.content like %:searchText% OR a.content like %:searchText%)
             """)
-    List<Post> findByPostIdsWithEagerRelationships(@Param("postIds") List<Long> postIds);
+    List<Post> findByPostIdsWithEagerRelationships(@Param("postIds") List<Long> postIds, @Param("searchText") String searchText);
 
     default Post findMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {
         return getValueElseThrow(findById(postId).filter(post -> post.getConversation() != null), postId);
