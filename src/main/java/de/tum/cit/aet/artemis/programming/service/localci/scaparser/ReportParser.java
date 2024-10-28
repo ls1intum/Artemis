@@ -10,6 +10,8 @@ import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.Par
  */
 public class ReportParser {
 
+    private static final ParserPolicy parserPolicy = new ParserPolicy();
+
     /**
      * Builds the document using the provided string and parses it to a Report object.
      *
@@ -19,7 +21,6 @@ public class ReportParser {
      * @throws UnsupportedToolException if the static code analysis tool which created the report is not supported
      */
     public static StaticCodeAnalysisReportDTO getReport(String reportContent, String fileName) {
-        ParserPolicy parserPolicy = new ParserPolicy();
         ParserStrategy parserStrategy = parserPolicy.configure(fileName);
         return parserStrategy.parse(reportContent);
     }
