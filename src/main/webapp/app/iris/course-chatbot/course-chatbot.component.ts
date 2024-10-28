@@ -8,7 +8,7 @@ import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbo
     templateUrl: './course-chatbot.component.html',
     styleUrl: './course-chatbot.component.scss',
     standalone: true,
-    imports: [IrisModule, IrisModule, IrisBaseChatbotComponent],
+    imports: [IrisModule, IrisBaseChatbotComponent],
 })
 export class CourseChatbotComponent implements OnChanges {
     courseId = input<number>();

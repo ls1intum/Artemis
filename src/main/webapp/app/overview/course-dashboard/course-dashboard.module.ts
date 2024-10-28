@@ -48,7 +48,6 @@ const routes: Routes = [
         FeatureToggleModule,
         ArtemisCompetenciesModule,
         CourseChatbotComponent,
-        CourseChatbotComponent,
     ],
 })
 export class CourseDashboardModule {}
