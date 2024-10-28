@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    selector: 'app-sort-icon',
+    selector: 'jhi-sort-icon',
     templateUrl: './sort-icon.component.html',
     styleUrls: ['./sort-icon.component.scss'],
     standalone: true,
