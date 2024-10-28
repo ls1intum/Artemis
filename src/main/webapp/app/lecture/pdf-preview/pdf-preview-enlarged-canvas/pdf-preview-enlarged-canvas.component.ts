@@ -1,5 +1,4 @@
 import { Component, ElementRef, HostListener, effect, input, output, signal, viewChild } from '@angular/core';
-import 'pdfjs-dist/build/pdf.worker';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 type NavigationDirection = 'next' | 'prev';
