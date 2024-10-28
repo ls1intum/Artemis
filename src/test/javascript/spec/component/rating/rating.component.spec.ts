@@ -70,6 +70,34 @@ describe('RatingComponent', () => {
         expect(ratingComponent.rating).toBe(1);
     });
 
+    it('should call loadRating on ngOnInit', () => {
+        const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
+        ratingComponent.ngOnInit();
+        expect(loadRatingSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not set rating if result participation is not defined', () => {
+        ratingComponent.result = { id: 90 } as Result;
+        ratingComponent.result.submission = { id: 1 } as Submission;
+        // result.participation undefined
+        const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
+        jest.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
+        ratingComponentFixture.detectChanges();
+        expect(loadRatingSpy).toHaveBeenCalledOnce();
+        expect(ratingComponent.rating).toBeUndefined();
+    });
+
+    it('should call loadRating when result changes', () => {
+        const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
+        ratingComponent.result = { id: 90 } as Result;
+        ratingComponent.result.submission = { id: 1 } as Submission;
+        ratingComponent.result.participation = { id: 1 } as Participation;
+        jest.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
+        ratingComponentFixture.detectChanges();
+        expect(loadRatingSpy).toHaveBeenCalledOnce();
+        expect(ratingComponent.rating).toBe(2);
+    });
+
     describe('OnRate', () => {
         beforeEach(() => {
             ratingComponent.rating = 0;
