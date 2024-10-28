@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -244,14 +244,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     get canDeactivateWarning() {
         return this.translateService.instant('artemisApp.examParticipation.pendingChanges');
-    }
-
-    // displays the alert for confirming leaving the page if there are unsaved changes
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification(event: any): void {
-        if (!this.canDeactivate()) {
-            event.returnValue = this.canDeactivateWarning;
-        }
     }
 
     get activePageIndex(): number {

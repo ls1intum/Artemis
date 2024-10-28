@@ -47,10 +47,8 @@ export class AssessmentHeaderComponent {
     @Input() isProgrammingExercise = false; // remove once diff view activated for programming exercises
 
     @Output() save = new EventEmitter<void>();
-    // eslint-disable-next-line @angular-eslint/no-output-native
-    @Output() submit = new EventEmitter<void>();
-    // eslint-disable-next-line @angular-eslint/no-output-native
-    @Output() cancel = new EventEmitter<void>();
+    @Output() onSubmit = new EventEmitter<void>();
+    @Output() onCancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();
     @Output() useAsExampleSubmission = new EventEmitter<void>();
@@ -143,9 +141,9 @@ export class AssessmentHeaderComponent {
     submitOnControlAndEnter(event: KeyboardEvent) {
         event.preventDefault();
         if (!this.overrideDisabled) {
-            this.submit.emit();
+            this.onSubmit.emit();
         } else if (!this.submitDisabled) {
-            this.submit.emit();
+            this.onSubmit.emit();
             this.sendSubmitAssessmentEventToAnalytics();
         }
     }
