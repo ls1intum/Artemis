@@ -1,0 +1,13 @@
+api: v0.0.1
+metadata:
+  name: "C#"
+  id: c_sharp
+actions:
+  - name: build
+    script: dotnet build "./tests"
+  - name: test
+    script: dotnet test --logger=junit "./tests"
+    results:
+      - name: NUnit Test Results
+        path: tests/TestResults/TestResults.xml
+        type: junit
