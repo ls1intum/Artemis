@@ -517,7 +517,6 @@ export class MetisService implements OnDestroy {
         let routerLinkComponents = undefined;
         let queryParams = undefined;
         let displayName = '';
-        console.log(post);
         if (post.conversation) {
             displayName = this.getDisplayName(post)!;
             routerLinkComponents = ['/courses', this.courseId, 'communication'];
