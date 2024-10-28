@@ -10,7 +10,7 @@ import {
 } from 'app/entities/competency/standardized-competency.model';
 import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faSort, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { forkJoin, map } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -166,16 +166,6 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
 
     get canDeactivateWarning(): string {
         return this.translateService.instant('pendingChanges');
-    }
-
-    /**
-     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
-     */
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification(event: any) {
-        if (!this.canDeactivate()) {
-            event.returnValue = this.canDeactivateWarning;
-        }
     }
 
     private convertToKnowledgeAreaForImport(knowledgeAreaDTO: KnowledgeAreaDTO, isVisible = true, level = 0, selected = false): KnowledgeAreaForImport {

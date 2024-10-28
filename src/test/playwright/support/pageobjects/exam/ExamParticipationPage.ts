@@ -85,9 +85,9 @@ export class ExamParticipationPage extends ExamParticipationActions {
     }
 
     private async makeModelingExerciseSubmission(exerciseID: number) {
-        await this.modelingExerciseEditor.addComponentToModel(exerciseID, 1);
         await this.modelingExerciseEditor.addComponentToModel(exerciseID, 2);
         await this.modelingExerciseEditor.addComponentToModel(exerciseID, 3);
+        await this.modelingExerciseEditor.addComponentToModel(exerciseID, 4);
     }
 
     private async makeQuizExerciseSubmission(exerciseID: number, quizExerciseID: number) {

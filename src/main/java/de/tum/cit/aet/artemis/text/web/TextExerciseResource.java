@@ -78,6 +78,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
@@ -155,6 +156,8 @@ public class TextExerciseResource {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final Optional<IrisSettingsService> irisSettingsService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
@@ -163,7 +166,7 @@ public class TextExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
             ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressService competencyProgressService, Optional<IrisSettingsService> irisSettingsService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -189,6 +192,7 @@ public class TextExerciseResource {
         this.channelRepository = channelRepository;
         this.athenaModuleService = athenaModuleService;
         this.competencyProgressService = competencyProgressService;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -230,6 +234,8 @@ public class TextExerciseResource {
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(textExercise);
         competencyProgressService.updateProgressByLearningObjectAsync(result);
 
+        irisSettingsService.ifPresent(iss -> iss.setEnabledForExerciseByCategories(result, new HashSet<>()));
+
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);
     }
 
@@ -260,7 +266,7 @@ public class TextExerciseResource {
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Important: use the original exercise for permission check
-        final TextExercise textExerciseBeforeUpdate = textExerciseRepository.findWithEagerCompetenciesByIdElseThrow(textExercise.getId());
+        final TextExercise textExerciseBeforeUpdate = textExerciseRepository.findWithEagerCompetenciesAndCategoriesByIdElseThrow(textExercise.getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExerciseBeforeUpdate, user);
 
         // Forbid changing the course the exercise belongs to.
@@ -288,6 +294,8 @@ public class TextExerciseResource {
         exerciseService.notifyAboutExerciseChanges(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise));
+
+        irisSettingsService.ifPresent(iss -> iss.setEnabledForExerciseByCategories(textExercise, textExerciseBeforeUpdate.getCategories()));
 
         return ResponseEntity.ok(updatedTextExercise);
     }

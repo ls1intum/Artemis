@@ -45,7 +45,8 @@
                 "codeBlock": "Code Block",
                 "code": "Code",
                 "color": "Color",
-                "style": "Style"
+                "style": "Style",
+                "emoji": "Emoji"
             },
             "visualEditor": {
                 "hintTooltip": "Add a hint here (visible during the quiz via ?-Button)",
