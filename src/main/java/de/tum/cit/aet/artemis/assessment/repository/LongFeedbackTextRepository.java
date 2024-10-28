@@ -1,14 +1,20 @@
 package de.tum.cit.aet.artemis.assessment.repository;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
+@Profile(PROFILE_CORE)
+@Repository
 public interface LongFeedbackTextRepository extends ArtemisJpaRepository<LongFeedbackText, Long> {
 
     @Query("""

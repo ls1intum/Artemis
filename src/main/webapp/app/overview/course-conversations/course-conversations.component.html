@@ -62,10 +62,7 @@
                     <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
                 }
             </div>
-            <div
-                class="communication-answer-message-wrap col flex-grow-1 justify-end px-0 scrollable-content"
-                [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'is-answer-thread-open': !!postInThread }"
-            >
+            <div class="scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'is-answer-thread-open': !!postInThread }">
                 @if (!!postInThread) {
                     <jhi-conversation-thread-sidebar
                         [activeConversation]="activeConversation ?? postInThread.conversation!"
