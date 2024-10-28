@@ -115,7 +115,7 @@
                     <button
                         id="submit"
                         class="btn m-1 btn-success"
-                        (click)="submit.emit(); sendSubmitAssessmentEventToAnalytics()"
+                        (click)="onSubmit.emit(); sendSubmitAssessmentEventToAnalytics()"
                         [disabled]="submitDisabled"
                         [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
                     >
@@ -127,7 +127,7 @@
                     @if (!isTestRun) {
                         <button
                             class="btn m-1 btn-danger"
-                            (click)="cancel.emit()"
+                            (click)="onCancel.emit()"
                             [disabled]="!(exercise?.isAtLeastInstructor || isAssessor) || saveBusy || submitBusy || cancelBusy"
                         >
                             @if (cancelBusy) {
@@ -140,7 +140,7 @@
                 @if (overrideVisible) {
                     <button
                         class="btn m-1 btn-danger"
-                        (click)="submit.emit()"
+                        (click)="onSubmit.emit()"
                         [disabled]="overrideDisabled"
                         [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
                     >

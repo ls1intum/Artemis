@@ -18,6 +18,15 @@ public abstract class CompetencyLearningObjectLink implements Serializable {
     @Column(name = "link_weight")
     protected double weight;
 
+    public CompetencyLearningObjectLink(CourseCompetency competency, double weight) {
+        this.competency = competency;
+        this.weight = weight;
+    }
+
+    public CompetencyLearningObjectLink() {
+        // Empty constructor for Spring
+    }
+
     public CourseCompetency getCompetency() {
         return competency;
     }
@@ -32,14 +41,5 @@ public abstract class CompetencyLearningObjectLink implements Serializable {
 
     public void setWeight(double weight) {
         this.weight = weight;
-    }
-
-    public CompetencyLearningObjectLink(CourseCompetency competency, double weight) {
-        this.competency = competency;
-        this.weight = weight;
-    }
-
-    public CompetencyLearningObjectLink() {
-        // Empty constructor for Spring
     }
 }
