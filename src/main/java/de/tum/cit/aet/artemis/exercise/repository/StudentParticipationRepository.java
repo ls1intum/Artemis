@@ -1205,19 +1205,22 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * - The number of occurrences of each feedback detail (COUNT).
      * - The relative count as a percentage of the total distinct results.
      * - The corresponding task name for each feedback item by checking if the feedback test case name is associated with a task.
+     * If a feedback item is not assigned to a task, it is labeled as "Not assigned to task."
      * <br>
      * It supports filtering by:
      * - Search term: Case-insensitive filtering on feedback detail text.
-     * - Test case names: Filters feedback based on specific test case names.
-     * - Task names: Filters feedback based on specific task names by mapping them to their associated test cases.
-     * - Occurrence range: Filters feedback based on the count of occurrences between the specified minimum and maximum values (inclusive).
+     * - Test case names: Filters feedback based on specific test case names (optional).
+     * - Task names: Filters feedback based on specific task names by mapping them to their associated test cases. If "Not assigned to task"
+     * is specified, only feedback items without an associated task will be included.
+     * - Occurrence range: Filters feedback where the number of occurrences (COUNT) is between the specified minimum and maximum values (inclusive).
      * <br>
      * Grouping is done by feedback detail text and test case name. The occurrence count is filtered using the HAVING clause.
      *
      * @param exerciseId      The ID of the exercise for which feedback details should be retrieved.
      * @param searchTerm      The search term used for filtering the feedback detail text (optional).
-     * @param filterTestCases List of test case names to filter the feedback results (optional).
+     * @param filterTestCases List of active test case names to filter the feedback results (optional).
      * @param filterTaskNames List of task names to filter feedback results based on the associated test cases (optional).
+     *                            If "Not assigned to task" is specified, only feedback entries without an associated task will be returned.
      * @param minOccurrence   The minimum number of occurrences to include in the results.
      * @param maxOccurrence   The maximum number of occurrences to include in the results.
      * @param pageable        Pagination information to apply.
