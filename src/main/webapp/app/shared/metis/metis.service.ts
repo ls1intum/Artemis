@@ -6,7 +6,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { Posting } from 'app/entities/metis/posting.model';
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -27,10 +27,11 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -49,6 +50,7 @@ export class MetisService implements OnDestroy {
     private subscriptionChannel?: string;
 
     private courseWideTopicSubscription: Subscription;
+    private translateService = inject(TranslateService);
 
     constructor(
         protected postService: PostService,
@@ -515,12 +517,24 @@ export class MetisService implements OnDestroy {
         let routerLinkComponents = undefined;
         let queryParams = undefined;
         let displayName = '';
+        console.log(post);
         if (post.conversation) {
-            displayName = getAsChannelDTO(post.conversation)?.name ?? '';
+            displayName = this.getDisplayName(post)!;
             routerLinkComponents = ['/courses', this.courseId, 'communication'];
             queryParams = { conversationId: post.conversation.id! };
         }
         return { routerLinkComponents, displayName, queryParams };
+    }
+
+    getDisplayName(post: Post) {
+        switch (post.conversation!.type) {
+            case ConversationType.CHANNEL:
+                return getAsChannelDTO(post.conversation)?.name ?? '';
+            case ConversationType.ONE_TO_ONE:
+                return this.translateService.instant('artemisApp.conversationsLayout.conversationSelectionSideBar.groupChat');
+            case ConversationType.GROUP_CHAT:
+                return this.translateService.instant('artemisApp.conversationsLayout.conversationSelectionSideBar.directMessage');
+        }
     }
 
     /**
