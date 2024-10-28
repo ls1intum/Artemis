@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostListener, OnDestroy, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, HostListener, OnDestroy, inject } from '@angular/core';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
@@ -12,6 +12,7 @@ import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbo
     templateUrl: './chatbot-widget.component.html',
     styleUrls: ['./chatbot-widget.component.scss'],
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [IrisBaseChatbotComponent],
 })
 export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
