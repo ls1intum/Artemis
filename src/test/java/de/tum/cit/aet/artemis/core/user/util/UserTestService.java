@@ -950,7 +950,7 @@ public class UserTestService {
         userSshPublicKeyRepository.save(userKey);
 
         request.delete("/api/account/ssh-public-key/3443", HttpStatus.FORBIDDEN);
-        request.get("/api/account/ssh-public-key/43443", HttpStatus.NOT_FOUND, UserSshPublicKeyDTO.class);
+        request.get("/api/account/ssh-public-key/43443", HttpStatus.FORBIDDEN, UserSshPublicKeyDTO.class);
         request.get("/api/account/ssh-public-key/" + userKey.getId(), HttpStatus.FORBIDDEN, UserSshPublicKeyDTO.class);
 
     }
