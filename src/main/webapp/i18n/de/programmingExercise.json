@@ -354,6 +354,8 @@
                     "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten.",
                     "search": "Suche ...",
                     "filter": "Filter",
+                    "noData": "Es konnten keine Feedback Einträge für die Programmieraufgabe gefunden werden.",
+                    "noDataFilter": "Für den spezifizierten Filter oder Suchbegriff konnten keine Feedback Einträge gefunden werden.",
                     "feedbackModal": {
                         "header": "Fehlerdetails",
                         "feedbackTitle": "Feedback zu Testfällen",

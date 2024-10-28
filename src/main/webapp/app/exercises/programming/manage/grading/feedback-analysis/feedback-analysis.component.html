@@ -6,6 +6,13 @@
         }
     </th>
 </ng-template>
+<ng-template #emptyTableTemplate>
+    @if (this.selectedFiltersCount() > 0 || this.searchTerm() !== '') {
+        <div class="text-center p-3 text-muted" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.noDataFilter"></div>
+    } @else {
+        <div class="text-center p-3 text-muted" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.noData"></div>
+    }
+</ng-template>
 <div class="m-3">
     <div class="row m-0 justify-content-between align-items-center">
         <h3 class="m-0 col p-0" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.title" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
@@ -56,19 +63,27 @@
             </tr>
         </thead>
         <tbody class="table-group-divider">
-            @for (item of content().resultsOnPage; track item) {
+            @if (content().resultsOnPage === undefined || content().resultsOnPage.length === 0) {
                 <tr>
-                    <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
-                    <td>
-                        {{ item.detailText.length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailText | slice: 0 : 100) + '...' : item.detailText }}
-                    </td>
-                    <td>{{ item.taskName }}</td>
-                    <td>{{ item.testCaseName }}</td>
-                    <td>{{ item.errorCategory }}</td>
-                    <td class="text-center">
-                        <fa-icon [icon]="faUpRightAndDownLeftFromCenter" class="ms-2 clickable" (click)="openFeedbackModal(item)"></fa-icon>
+                    <td colspan="6">
+                        <ng-container *ngTemplateOutlet="emptyTableTemplate"></ng-container>
                     </td>
                 </tr>
+            } @else {
+                @for (item of content().resultsOnPage; track item) {
+                    <tr>
+                        <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
+                        <td>
+                            {{ item.detailText.length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailText | slice: 0 : 100) + '...' : item.detailText }}
+                        </td>
+                        <td>{{ item.taskName }}</td>
+                        <td>{{ item.testCaseName }}</td>
+                        <td>{{ item.errorCategory }}</td>
+                        <td class="text-center">
+                            <fa-icon [icon]="faUpRightAndDownLeftFromCenter" class="ms-2 clickable" (click)="openFeedbackModal(item)"></fa-icon>
+                        </td>
+                    </tr>
+                }
             }
         </tbody>
     </table>
