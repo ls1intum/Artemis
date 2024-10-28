@@ -60,7 +60,10 @@ public class MessageSpecs {
 
                 Predicate searchInMessageContent = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
 
-                return criteriaBuilder.and(searchInMessageContent);
+                Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
+                Predicate searchInAnswerContent = criteriaBuilder.like(criteriaBuilder.lower(answersJoin.get(AnswerPost_.CONTENT)), searchTextLiteral);
+
+                return criteriaBuilder.or(searchInMessageContent, searchInAnswerContent);
             }
         });
     }
