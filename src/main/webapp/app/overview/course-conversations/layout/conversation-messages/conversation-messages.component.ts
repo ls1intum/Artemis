@@ -44,6 +44,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     readonly PageType = PageType;
     readonly ButtonType = ButtonType;
 
+    private scrollDebounceTime = 100; // ms
+    private scrollSubject = new Subject<number>();
+
     @Output() openThread = new EventEmitter<Post>();
 
     @ViewChild('searchInput')
@@ -96,6 +99,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.subscribeToSearch();
         this.subscribeToMetis();
         this.subscribeToActiveConversation();
+        this.setupScrollDebounce();
         this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
 
         this.layoutService
@@ -271,8 +275,15 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
     }
 
+    private setupScrollDebounce(): void {
+        this.scrollSubject.pipe(debounceTime(this.scrollDebounceTime), takeUntil(this.ngUnsubscribe)).subscribe((scrollTop) => {
+            if (this._activeConversation?.id) {
+                sessionStorage.setItem(this.sessionStorageKey + this._activeConversation.id, scrollTop.toString());
+            }
+        });
+    }
+
     private saveScrollPosition = () => {
-        const scrollTop = this.content.nativeElement.scrollTop;
-        sessionStorage.setItem(this.sessionStorageKey + this._activeConversation?.id, scrollTop.toString());
+        this.scrollSubject.next(this.content.nativeElement.scrollTop);
     };
 }
