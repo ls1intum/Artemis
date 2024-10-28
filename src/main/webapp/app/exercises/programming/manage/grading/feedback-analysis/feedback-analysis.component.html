@@ -1,9 +1,11 @@
 <ng-template #headerTemplate let-column="column" let-label="label">
     <th scope="col" [class.clickable]="isSortableColumn(column)" (click)="isSortableColumn(column) && setSortedColumn(column)">
-        <span [jhiTranslate]="label"></span>
-        @if (sortedColumn() === column) {
-            <fa-icon [icon]="sortIcon()"></fa-icon>
-        }
+        <div style="display: flex; align-items: center">
+            <span [jhiTranslate]="label"></span>
+            @if (isSortableColumn(column)) {
+                <app-sort-icon [direction]="getSortDirection(column)"></app-sort-icon>
+            }
+        </div>
     </th>
 </ng-template>
 <ng-template #emptyTableTemplate>

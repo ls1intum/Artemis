@@ -9,13 +9,14 @@ import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading
 import { FeedbackFilterModalComponent, FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
+import { SortIconComponent } from 'app/shared/sort/sort-icon.component';
 
 @Component({
     selector: 'jhi-feedback-analysis',
     templateUrl: './feedback-analysis.component.html',
     styleUrls: ['./feedback-analysis.component.scss'],
     standalone: true,
-    imports: [ArtemisSharedCommonModule],
+    imports: [ArtemisSharedCommonModule, SortIconComponent],
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent {
@@ -44,7 +45,6 @@ export class FeedbackAnalysisComponent {
     readonly faUpRightAndDownLeftFromCenter = faUpRightAndDownLeftFromCenter;
     readonly SortingOrder = SortingOrder;
     readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 150;
-    readonly sortIcon = computed(() => (this.sortingOrder() === SortingOrder.ASCENDING ? this.faSortUp : this.faSortDown));
 
     readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
     readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
@@ -124,6 +124,13 @@ export class FeedbackAnalysisComponent {
             this.sortingOrder.set(SortingOrder.ASCENDING);
         }
         this.loadData();
+    }
+
+    getSortDirection(column: string): 'asc' | 'desc' | 'none' {
+        if (this.sortedColumn() === column) {
+            return this.sortingOrder() === SortingOrder.ASCENDING ? 'asc' : 'desc';
+        }
+        return 'none';
     }
 
     async openFilterModal(): Promise<void> {
