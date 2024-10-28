@@ -39,6 +39,8 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
+    private sessionStorageKey = 'conversationId.scrollPosition.';
+
     readonly PageType = PageType;
     readonly ButtonType = ButtonType;
 
@@ -137,11 +139,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     ngAfterViewInit() {
         this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
+        this.content.nativeElement.addEventListener('scroll', this.saveScrollPosition);
     }
 
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.content.nativeElement.removeEventListener('scroll', this.saveScrollPosition);
     }
 
     private onActiveConversationChange() {
@@ -246,8 +250,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     scrollToBottomOfMessages() {
         // Use setTimeout to ensure the scroll happens after the new message is rendered
         setTimeout(() => {
-            this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
-        }, 0);
+            const savedScrollPosition = sessionStorage.getItem(this.sessionStorageKey + this._activeConversation?.id);
+            if (savedScrollPosition) {
+                this.content.nativeElement.scrollTop = parseInt(savedScrollPosition, 10);
+            } else {
+                this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+            }
+        }, 30);
     }
 
     onSearchQueryInput($event: Event) {
@@ -261,4 +270,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.searchInput.nativeElement.dispatchEvent(new Event('input'));
         }
     }
+
+    private saveScrollPosition = () => {
+        const scrollTop = this.content.nativeElement.scrollTop;
+        sessionStorage.setItem(this.sessionStorageKey + this._activeConversation?.id, scrollTop.toString());
+    };
 }
