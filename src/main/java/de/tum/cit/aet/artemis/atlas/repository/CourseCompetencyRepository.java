@@ -1,14 +1,18 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -21,6 +25,8 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 /**
  * Spring Data JPA repository for the {@link CourseCompetency} entity.
  */
+@Profile(PROFILE_CORE)
+@Repository
 public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseCompetency, Long> {
 
     @Query("""

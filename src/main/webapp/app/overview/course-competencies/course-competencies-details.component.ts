@@ -118,22 +118,30 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                     }
                 }
 
-                if (this.competency.exerciseLinks) {
-                    // Add exercises as lecture units for display
-                    this.competency.lectureUnitLinks = this.competency.lectureUnitLinks ?? [];
-                    this.competency.lectureUnitLinks.push(
-                        ...this.competency.exerciseLinks.map((exerciseLink) => {
-                            const exerciseUnit = new ExerciseUnit();
-                            exerciseUnit.id = exerciseLink.exercise?.id;
-                            exerciseUnit.exercise = exerciseLink.exercise;
-                            return new CompetencyLectureUnitLink(this.competency, exerciseUnit as LectureUnit, MEDIUM_COMPETENCY_LINK_WEIGHT);
-                        }),
-                    );
-                }
+                this.handleExerciseLinks();
+
                 this.isLoading = false;
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
+    }
+
+    /**
+     * Add exercises as lecture units for display
+     * @private
+     */
+    private handleExerciseLinks() {
+        if (this.competency.exerciseLinks) {
+            this.competency.lectureUnitLinks = this.competency.lectureUnitLinks ?? [];
+            this.competency.lectureUnitLinks.push(
+                ...this.competency.exerciseLinks.map((exerciseLink) => {
+                    const exerciseUnit = new ExerciseUnit();
+                    exerciseUnit.id = exerciseLink.exercise?.id;
+                    exerciseUnit.exercise = exerciseLink.exercise;
+                    return new CompetencyLectureUnitLink(this.competency, exerciseUnit as LectureUnit, MEDIUM_COMPETENCY_LINK_WEIGHT);
+                }),
+            );
+        }
     }
 
     showFireworksIfMastered() {
