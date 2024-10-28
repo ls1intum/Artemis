@@ -20,6 +20,7 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ChatServiceMode } from 'app/iris/iris-chat.service';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -49,6 +50,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     readonly LectureUnitType = LectureUnitType;
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
+    readonly ChatServiceMode = ChatServiceMode;
 
     // Icons
     faSpinner = faSpinner;
