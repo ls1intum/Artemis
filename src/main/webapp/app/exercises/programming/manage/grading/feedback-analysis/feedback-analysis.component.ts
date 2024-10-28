@@ -29,7 +29,7 @@ export class FeedbackAnalysisComponent {
     private localStorage = inject(LocalStorageService);
 
     readonly page = signal<number>(1);
-    readonly pageSize = signal<number>(20);
+    readonly pageSize = signal<number>(25);
     readonly searchTerm = signal<string>('');
     readonly sortingOrder = signal<SortingOrder>(SortingOrder.DESCENDING);
     readonly sortedColumn = signal<string>('count');
@@ -44,7 +44,7 @@ export class FeedbackAnalysisComponent {
     readonly faFilter = faFilter;
     readonly faUpRightAndDownLeftFromCenter = faUpRightAndDownLeftFromCenter;
     readonly SortingOrder = SortingOrder;
-    readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 150;
+    readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 200;
 
     readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
     readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
