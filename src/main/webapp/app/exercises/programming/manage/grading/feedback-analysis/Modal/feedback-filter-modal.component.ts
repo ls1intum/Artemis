@@ -1,4 +1,4 @@
-import { Component, computed, inject, output, signal } from '@angular/core';
+import { Component, inject, output, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 import { FeedbackAnalysisService } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
@@ -28,11 +28,10 @@ export class FeedbackFilterModalComponent {
     readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
     readonly FILTER_OCCURRENCE_KEY = 'feedbackAnalysis.occurrence';
 
-    readonly totalAmountOfTasks = signal<number>(0);
     readonly testCaseNames = signal<string[]>([]);
     readonly minCount = signal<number>(0);
     readonly maxCount = signal<number>(0);
-    readonly taskArray = computed(() => Array.from({ length: this.totalAmountOfTasks() }, (_, i) => i + 1));
+    readonly taskArray = signal<string[]>([]);
 
     filters: FilterData = {
         tasks: [],

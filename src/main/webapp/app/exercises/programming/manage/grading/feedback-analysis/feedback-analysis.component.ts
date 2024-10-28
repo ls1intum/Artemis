@@ -50,7 +50,7 @@ export class FeedbackAnalysisComponent {
     readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
     readonly FILTER_OCCURRENCE_KEY = 'feedbackAnalysis.occurrence';
     readonly selectedFiltersCount = signal<number>(0);
-    readonly totalAmountOfTasks = signal<number>(0);
+    readonly taskNames = signal<string[]>([]);
     readonly testCaseNames = signal<string[]>([]);
     readonly minCount = signal<number>(0);
     readonly maxCount = signal<number>(0);
@@ -89,7 +89,7 @@ export class FeedbackAnalysisComponent {
             });
             this.content.set(response.feedbackDetails);
             this.totalItems.set(response.totalItems);
-            this.totalAmountOfTasks.set(response.totalAmountOfTasks);
+            this.taskNames.set(response.taskNames);
             this.testCaseNames.set(response.testCaseNames);
         } catch (error) {
             this.alertService.error('artemisApp.programmingExercise.configureGrading.feedbackAnalysis.error');
@@ -113,7 +113,7 @@ export class FeedbackAnalysisComponent {
     }
 
     isSortableColumn(column: string): boolean {
-        return ['count', 'detailText', 'testCaseName'].includes(column);
+        return ['count', 'detailText', 'testCaseName', 'taskName'].includes(column);
     }
 
     setSortedColumn(column: string): void {
@@ -136,7 +136,7 @@ export class FeedbackAnalysisComponent {
         const modalRef = this.modalService.open(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
 
         modalRef.componentInstance.exerciseId = this.exerciseId;
-        modalRef.componentInstance.totalAmountOfTasks = this.totalAmountOfTasks;
+        modalRef.componentInstance.taskArray = this.taskNames;
         modalRef.componentInstance.testCaseNames = this.testCaseNames;
         modalRef.componentInstance.maxCount = this.maxCount;
         modalRef.componentInstance.filters = {

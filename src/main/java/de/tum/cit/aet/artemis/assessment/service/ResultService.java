@@ -576,15 +576,22 @@ public class ResultService {
         long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
 
         // 2. Extract test case names using streams
-        List<String> testCaseNames = programmingExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
+        List<String> activeTestCaseNames = programmingExercise.getTestCases().stream().filter(ProgrammingExerciseTestCase::isActive).map(ProgrammingExerciseTestCase::getTestName)
+                .toList();
 
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
 
+        // Include "Not assigned to a task" if any feedback is without a task
+        Set<String> taskNames = tasks.stream().map(ProgrammingExerciseTask::getTaskName).collect(Collectors.toSet());
+
         // 3. Generate filter task names directly
-        List<String> filterTaskNames = data.getFilterTasks().stream().map(index -> {
-            int idx = Integer.parseInt(index);
-            return (idx > 0 && idx <= tasks.size()) ? tasks.get(idx - 1).getTaskName() : null;
-        }).filter(Objects::nonNull).toList();
+        List<String> includeUnassignedTasks = new ArrayList<>(taskNames);
+        if (!data.getFilterTasks().isEmpty()) {
+            includeUnassignedTasks.removeAll(data.getFilterTasks());
+        }
+        else {
+            includeUnassignedTasks.clear();
+        }
 
         // 4. Set minOccurrence and maxOccurrence based on filterOccurrence
         long minOccurrence = data.getFilterOccurrence().length == 2 ? Long.parseLong(data.getFilterOccurrence()[0]) : 0;
@@ -595,21 +602,17 @@ public class ResultService {
 
         // 6. Fetch filtered feedback from the repository
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
-                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), filterTaskNames, minOccurrence, maxOccurrence,
-                pageable);
+                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
+                maxOccurrence, pageable);
 
         // 7. Process feedback details
         // Map to index (+1 for 1-based indexing)
-        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> {
-            String taskIndex = tasks.stream().filter(task -> task.getTaskName().equals(detail.taskNumber())).findFirst().map(task -> String.valueOf(tasks.indexOf(task) + 1))
-                    .orElse("0");
-            return new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), taskIndex,
-                    detail.errorCategory());
-        }).toList();
+        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.count(),
+                (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
 
-        // 8. Return the response DTO containing feedback details, total elements, and test case/task info
-        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), tasks.size(),
-                testCaseNames);
+        // 8. Return the response DTO containing feedback details, all task names (including "Not assigned to a task"), and test case names
+        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), taskNames,
+                activeTestCaseNames);
     }
 
     /**

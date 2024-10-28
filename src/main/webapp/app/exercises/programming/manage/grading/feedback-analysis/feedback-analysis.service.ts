@@ -7,7 +7,7 @@ import { FilterData } from 'app/exercises/programming/manage/grading/feedback-an
 export interface FeedbackAnalysisResponse {
     feedbackDetails: SearchResult<FeedbackDetail>;
     totalItems: number;
-    totalAmountOfTasks: number;
+    taskNames: string[];
     testCaseNames: string[];
 }
 export interface FeedbackDetail {
@@ -15,7 +15,7 @@ export interface FeedbackDetail {
     relativeCount: number;
     detailText: string;
     testCaseName: string;
-    taskNumber: string;
+    taskName: string;
     errorCategory: string;
 }
 @Injectable()

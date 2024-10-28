@@ -17,14 +17,14 @@ describe('FeedbackAnalysisComponent', () => {
     let localStorageService: LocalStorageService;
 
     const feedbackMock: FeedbackDetail[] = [
-        { detailText: 'Test feedback 1 detail', testCaseName: 'test1', count: 10, relativeCount: 50, taskNumber: '1', errorCategory: 'StudentError' },
-        { detailText: 'Test feedback 2 detail', testCaseName: 'test2', count: 5, relativeCount: 25, taskNumber: '2', errorCategory: 'StudentError' },
+        { detailText: 'Test feedback 1 detail', testCaseName: 'test1', count: 10, relativeCount: 50, taskName: '1', errorCategory: 'StudentError' },
+        { detailText: 'Test feedback 2 detail', testCaseName: 'test2', count: 5, relativeCount: 25, taskName: '2', errorCategory: 'StudentError' },
     ];
 
     const feedbackResponseMock: FeedbackAnalysisResponse = {
         feedbackDetails: { resultsOnPage: feedbackMock, numberOfPages: 1 },
         totalItems: 2,
-        totalAmountOfTasks: 1,
+        taskNames: ['task1', 'task2'],
         testCaseNames: ['test1', 'test2'],
     };
 
@@ -165,7 +165,7 @@ describe('FeedbackAnalysisComponent', () => {
                 testCases: ['testCase1'],
                 occurrence: [component.minCount(), 5],
             });
-            expect(modalInstance.totalAmountOfTasks).toBe(component.totalAmountOfTasks);
+            expect(modalInstance.taskNames).toBe(component.taskNames);
             expect(modalInstance.testCaseNames).toBe(component.testCaseNames);
             expect(modalInstance.exerciseId).toBe(component.exerciseId);
             expect(modalInstance.maxCount).toBe(component.maxCount);
