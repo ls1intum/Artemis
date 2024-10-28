@@ -340,41 +340,41 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 disableTranslation: true,
             });
         });
-    });
 
-    describe('save should set project type in invalid default value is selected', () => {
-        beforeEach(() => {
-            const programmingExercise = new ProgrammingExercise(undefined, undefined);
-            programmingExercise.releaseDate = dayjs(); // We will get a warning if we do not set a release date
-            programmingExercise.projectType = ProjectType.PLAIN_GRADLE;
-            programmingExercise.course = course;
+        describe('should set project type in invalid default value is selected', () => {
+            beforeEach(() => {
+                const programmingExercise = new ProgrammingExercise(undefined, undefined);
+                programmingExercise.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+                programmingExercise.projectType = ProjectType.PLAIN_GRADLE;
+                programmingExercise.course = course;
 
-            comp.programmingExercise = programmingExercise;
-            comp.backupExercise = {} as ProgrammingExercise;
-            fixture.detectChanges();
+                comp.programmingExercise = programmingExercise;
+                comp.backupExercise = {} as ProgrammingExercise;
+                fixture.detectChanges();
+            });
+
+            it('should set valid project type in simple mode if default project type (gradle) is not supported', () => {
+                comp.isSimpleMode.set(true);
+                comp.projectTypes = [ProjectType.PLAIN_MAVEN];
+                fixture.detectChanges();
+
+                comp.save();
+
+                fixture.detectChanges();
+                expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
+            });
+
+            it('should keep gradle if gradle is supported', fakeAsync(() => {
+                comp.isSimpleMode.set(true);
+                comp.projectTypes = [ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE];
+                fixture.detectChanges();
+
+                comp.save();
+
+                fixture.detectChanges();
+                expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_GRADLE);
+            }));
         });
-
-        it('should set valid project type in simple mode if default project type (gradle) is not supported', () => {
-            comp.isSimpleMode.set(true);
-            comp.projectTypes = [ProjectType.PLAIN_MAVEN];
-            fixture.detectChanges();
-
-            comp.save();
-
-            fixture.detectChanges();
-            expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
-        });
-
-        it('should keep gradle if gradle is supported', fakeAsync(() => {
-            comp.isSimpleMode.set(true);
-            comp.projectTypes = [ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE];
-            fixture.detectChanges();
-
-            comp.save();
-
-            fixture.detectChanges();
-            expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_GRADLE);
-        }));
     });
 
     describe('exam mode', () => {
