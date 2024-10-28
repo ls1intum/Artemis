@@ -79,7 +79,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
     faXmark = faXmark;
     faCircleNotch = faCircleNotch;
     faExclamationTriangle = faExclamationTriangle;
-
     private showTestDetails = false;
     isLoading = false;
     loadingFailed = false;
