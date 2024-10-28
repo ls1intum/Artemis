@@ -3,7 +3,10 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import org.jvnet.hk2.annotations.Service;
 import org.springframework.context.annotation.Profile;
 
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
@@ -14,8 +17,9 @@ import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -75,6 +79,21 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
         var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
 
         pyrisPipelineService.executePipeline("lecture-chat", "default", pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), session.getId())),
-                dto -> new PyrisLectureChatPipelineExecutionDTO(dto, PyrisLectureDTO.of(course)));
+                dto -> new PyrisLectureChatPipelineExecutionDTO(new PyrisCourseDTO(course), conversation, new PyrisUserDTO(session.getUser()), dto.settings(), dto.initialStages()),
+                stages -> irisChatWebsocketService.sendMessage(session, null, stages));
+    }
+
+    @Override
+    public void checkHasAccessTo(User user, IrisLectureChatSession session) {
+        if (!session.getUser().equals(user)) {
+            throw new AccessForbiddenException("Iris Lecture chat Session", session.getId());
+        }
+
+        authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, session.getLecture(), user);
+    }
+
+    @Override
+    public void checkIsFeatureActivatedFor(IrisLectureChatSession session) {
+
     }
 }
