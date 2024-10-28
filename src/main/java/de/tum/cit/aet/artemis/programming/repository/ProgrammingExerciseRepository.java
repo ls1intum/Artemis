@@ -108,8 +108,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencies", "buildConfig" })
-    Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesCompetenciesAndBuildConfigById(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencies", "buildConfig", "categories" })
+    Optional<ProgrammingExercise> findForUpdateById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(long exerciseId);
@@ -117,6 +117,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     List<ProgrammingExercise> findAllByProjectKey(String projectKey);
 
     List<ProgrammingExercise> findAllByCourseId(Long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "categories" })
+    List<ProgrammingExercise> findAllWithCategoriesByCourseId(Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
@@ -596,8 +599,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @return The programming exercise related to the given id
      */
     @NotNull
-    default ProgrammingExercise findByIdWithAuxiliaryRepositoriesCompetenciesAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithAuxiliaryRepositoriesCompetenciesAndBuildConfigById(programmingExerciseId), programmingExerciseId);
+    default ProgrammingExercise findForUpdateByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findForUpdateById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -987,5 +990,16 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     default ProgrammingExercise findByIdElseThrow(long programmingExerciseId) {
         return getValueElseThrow(findById(programmingExerciseId));
+    }
+
+    /**
+     * Find a programming exercise by its id, including its test cases, and throw an Exception if it cannot be found.
+     *
+     * @param exerciseId of the programming exercise.
+     * @return The programming exercise with the associated test cases related to the given id.
+     * @throws EntityNotFoundException if the programming exercise with the given id cannot be found.
+     */
+    default ProgrammingExercise findWithTestCasesByIdElseThrow(Long exerciseId) {
+        return getArbitraryValueElseThrow(findWithTestCasesById(exerciseId), Long.toString(exerciseId));
     }
 }

@@ -1,3 +1,7 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
 $menu-width-closed: 64px;
 $menu-width-open: 220px;
 $breadcrumb-height: 45px; // needed to make the exam fullscreen
@@ -41,6 +45,7 @@ $transition-color-length: 0.2s;
 
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
+        height: calc(100dvh - var(--sidebar-footer-height-prod)) !important;
     }
 
     &.exam-wrapper {
@@ -84,6 +89,7 @@ $transition-color-length: 0.2s;
 
         @media (max-width: 768px) {
             height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
+            height: calc(100dvh - var(--sidebar-footer-height-prod)) !important;
         }
     }
 
@@ -390,5 +396,15 @@ jhi-secured-image {
             margin-left: 0 !important; /* Remove any left margin or padding if necessary */
             width: 100% !important; /* Make the content full width */
         }
+    }
+}
+
+@include media-breakpoint-down(sm) {
+    .is-communication-module .btn-sidebar-collapse-chevron {
+        transform: rotateZ(0deg);
+    }
+
+    .is-collapsed.is-communication-module .btn-sidebar-collapse-chevron {
+        transform: rotateZ(-180deg);
     }
 }

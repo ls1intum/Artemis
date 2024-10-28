@@ -25,7 +25,8 @@ public interface StudentScoreCleanupRepository extends ArtemisJpaRepository<Stud
     @Modifying
     @Transactional // ok because of delete
     @Query("""
-            DELETE FROM StudentScore ps WHERE ps.user IS NULL
+            DELETE FROM StudentScore ps
+            WHERE ps.user IS NULL
             """)
     void deleteOrphanStudentScore();
 }

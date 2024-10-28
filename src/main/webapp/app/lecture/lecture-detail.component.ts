@@ -89,7 +89,7 @@ export class LectureDetailComponent implements OnInit, OnDestroy {
         }
     }
     /**
-     * Trigger the Ingeston of this Lecture in Iris.
+     * Trigger the ingestion of this lecture in Iris.
      */
     ingestLectureInPyris() {
         this.lectureService.ingestLecturesInPyris(this.lecture.course!.id!, this.lecture.id).subscribe({

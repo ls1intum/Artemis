@@ -110,7 +110,7 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                     LEFT JOIN r.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
-                                WHERE f.result.id NOT IN (
+                WHERE f.result.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
                     WHERE r2.participation.id = p.id

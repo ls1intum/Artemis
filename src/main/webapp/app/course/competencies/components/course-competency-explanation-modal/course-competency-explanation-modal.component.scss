@@ -1,0 +1,12 @@
+.explanation-model-gif {
+    display: block;
+    max-width: 800px;
+    margin: 0 auto; // Centers the container horizontally
+
+    img {
+        width: 100%; // Makes both GIFs responsive
+        height: auto; // Maintains aspect ratio
+        display: block; // Centers the image horizontally
+        margin: 0 auto;
+    }
+}

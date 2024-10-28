@@ -53,6 +53,10 @@ export abstract class BaseCompetency implements BaseEntity {
     taxonomy?: CompetencyTaxonomy;
 }
 
+export interface UpdateCourseCompetencyRelationDTO {
+    newRelationType: CompetencyRelationType;
+}
+
 export abstract class CourseCompetency extends BaseCompetency {
     softDueDate?: dayjs.Dayjs;
     masteryThreshold?: number;

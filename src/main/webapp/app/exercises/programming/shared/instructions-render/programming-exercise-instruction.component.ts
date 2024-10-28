@@ -16,7 +16,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { ShowdownExtension } from 'showdown';
+import type { PluginSimple } from 'markdown-it';
 import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, merge, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -80,7 +80,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public renderedMarkdown: SafeHtml;
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
-    markdownExtensions: ShowdownExtension[];
+    markdownExtensions: PluginSimple[];
     private injectableContentFoundSubscription: Subscription;
     private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;

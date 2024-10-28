@@ -6,18 +6,14 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
-import de.tum.cit.aet.artemis.programming.service.localci.LocalCIResultService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
-class LocalCIResultServiceTest extends AbstractLocalCILocalVCIntegrationTest {
+class LocalCIResultServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localciresultservice";
-
-    @Autowired
-    private LocalCIResultService localCIResultService;
 
     @Override
     protected String getTestPrefix() {

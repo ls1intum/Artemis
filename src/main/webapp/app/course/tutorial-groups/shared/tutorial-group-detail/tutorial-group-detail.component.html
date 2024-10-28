@@ -10,13 +10,16 @@
             <jhi-icon-card [headerIcon]="faUserCheck" headline="artemisApp.entities.tutorialGroup.teachingAssistant">
                 <div class="text-center">
                     <div class="mb-2">
-                        @if (tutorialGroup.teachingAssistantImageUrl) {
-                            <img class="tutorial-group-detail-tutor-image rounded-3" [alt]="tutorialGroup.teachingAssistantName" [src]="tutorialGroup.teachingAssistantImageUrl" />
-                        } @else {
-                            <strong class="tutorial-group-detail-tutor-default-image rounded-3" [ngStyle]="{ 'background-color': tutorDefaultProfilePictureHue }">{{
-                                tutorInitials
-                            }}</strong>
-                        }
+                        <jhi-profile-picture
+                            imageSizeInRem="4.5"
+                            fontSizeInRem="2"
+                            imageId="tutor-profile-picture"
+                            defaultPictureId="tutor-default-profile-picture"
+                            [authorId]="tutorialGroup.teachingAssistantId"
+                            [authorName]="tutorialGroup.teachingAssistantName"
+                            [imageUrl]="tutorialGroup.teachingAssistantImageUrl"
+                        >
+                        </jhi-profile-picture>
                     </div>
 
                     <div>

@@ -74,8 +74,8 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
@@ -92,6 +92,9 @@ public class ProgrammingExerciseUtilService {
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    @Value("${artemis.version-control.url}")
+    protected String artemisVersionControlUrl;
 
     @Autowired
     private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepo;
@@ -142,7 +145,7 @@ public class ProgrammingExerciseUtilService {
     private ExerciseHintRepository exerciseHintRepository;
 
     @Autowired
-    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+    private ProgrammingExerciseTaskTestRepository programmingExerciseTaskRepository;
 
     @Autowired
     private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
@@ -197,7 +200,7 @@ public class ProgrammingExerciseUtilService {
         TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
-        participation.setRepositoryUri(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
+        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         templateProgrammingExerciseParticipationRepo.save(participation);
         exercise.setTemplateParticipation(participation);
@@ -215,7 +218,7 @@ public class ProgrammingExerciseUtilService {
         SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.SOLUTION));
-        participation.setRepositoryUri(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
+        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
         participation.setInitializationState(InitializationState.INITIALIZED);
         solutionProgrammingExerciseParticipationRepo.save(participation);
         exercise.setSolutionParticipation(participation);

@@ -107,9 +107,9 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
                     SELECT MAX(r2.id)
                     FROM Result r2
                     WHERE r2.participation.id = p.id)
-                    AND r.rated=false
-                    AND c.endDate < :deleteTo
-                    AND c.startDate > :deleteFrom
+                        AND r.rated = FALSE
+                        AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
                 )
             """)
     void deleteOldNonRatedFeedbackWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);

@@ -1,13 +1,13 @@
-@for (preview of linkPreviews; track trackLinks($index, preview)) {
+@for (preview of linkPreviews(); track trackLinks($index, preview)) {
     <div>
         <jhi-link-preview
             [linkPreview]="preview"
-            [showLoadingsProgress]="showLoadingsProgress"
-            [hasError]="hasError"
-            [loaded]="loaded"
-            [posting]="posting"
-            [isReply]="isReply"
-            [multiple]="multiple"
+            [showLoadingsProgress]="showLoadingsProgress()"
+            [hasError]="hasError()"
+            [loaded]="loaded()"
+            [posting]="posting()"
+            [isReply]="isReply()"
+            [multiple]="multiple()"
         />
     </div>
 }

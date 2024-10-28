@@ -12,11 +12,18 @@ import { ScoresStorageService } from 'app/course/course-scores/scores-storage.se
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { CourseScores } from 'app/course/course-scores/course-scores';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { CourseCardHeaderComponent } from './course-card-header/course-card-header.component';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { NgxChartsModule, PieChartModule } from '@swimlane/ngx-charts';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-overview-course-card',
     templateUrl: './course-card.component.html',
     styleUrls: ['course-card.scss'],
+    standalone: true,
+    imports: [CourseCardHeaderComponent, ArtemisSharedCommonModule, NgxChartsModule, PieChartModule, TranslateDirective, RouterLink],
 })
 export class CourseCardComponent implements OnChanges {
     protected readonly faArrowRight = faArrowRight;
@@ -80,8 +87,6 @@ export class CourseCardComponent implements OnChanges {
             this.ngxDoughnutData[1].value = scoreNotReached;
             this.ngxDoughnutData = [...this.ngxDoughnutData];
         }
-
-        this.courseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;
     }
 
     /**
