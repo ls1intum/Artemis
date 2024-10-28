@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: artemis-app
+data:
+  SPRING_DATASOURCE_URL: jdbc:mysql://artemis-mysql/artemis?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+  SPRING_PROFILES_ACTIVE: {{ include "artemis.springprofiles" .}}
+  artemis.file-upload-path: {{ .Values.artemis.volumes.mountPath }}/uploads
+  artemis.submission-export-path: {{ .Values.artemis.volumes.mountPath }}/exports
+  artemis.repo-clone-path: {{ .Values.artemis.volumes.mountPath }}/repos
+  artemis.repo-download-clone-path: {{ .Values.artemis.volumes.mountPath }}/repos-download
+  eureka.client.enabled: "true"
+  eureka.instance.instanceId: "${HOSTNAME}"
+  spring.hazelcast.interface: "${MY_POD_IP}"
+  spring.websocket.broker.addresses: "{{ .Values.broker.service.name }}:{{ .Values.broker.service.port }}"
+  spring.artemis.mode: "native"
+  spring.artemis.broker-url: "tcp://{{ .Values.broker.service.name }}:61616"
+  logging.level.reactor.netty.transport.TransportConnector: "DEBUG"
+  {{- with (first .Values.artemis.ingress.hosts) }}
+  server.url: https://{{ .host }}
+  {{- end }}
+  EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://admin:${spring.security.user.password}@{{ .Values.registry.service.name }}:{{ .Values.registry.service.port }}/eureka/
+  {{- if .Values.artemis.autoscaler.enabled }}
+  management.metrics.export.prometheus.enabled: "true"
+  spring.prometheus.monitoringIp: {{ .Values.artemis.autoscaler.monitoringIp }}
+  {{- end }}
+  jhipster.security.authentication.jwt.base64-secret: {{ required "Registry JWT is required!" .Values.application.registry.jwt | b64enc | quote }}

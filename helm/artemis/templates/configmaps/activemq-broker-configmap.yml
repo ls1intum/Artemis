@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: activemq-broker-configmap
+data:
+  broker.xml: |
+    <configuration xmlns="urn:activemq"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xmlns:xi="http://www.w3.org/2001/XInclude"
+                  xsi:schemaLocation="urn:activemq /schema/artemis-configuration.xsd">
+
+      <core xmlns="urn:activemq:core" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="urn:activemq:core ">
+
+          <name>ActiveMQ Kubernetes</name>
+
+          <journal-pool-files>10</journal-pool-files>
+
+          <max-disk-usage>100</max-disk-usage>
+
+          <acceptors>
+            <!-- Acceptor for every supported protocol -->
+            <acceptor name="artemis">tcp://0.0.0.0:61616?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;amqpMinLargeMessageSize=102400;protocols=CORE,AMQP,STOMP,HORNETQ,MQTT,OPENWIRE;useEpoll=true;amqpCredits=1000;amqpLowCredits=300;amqpDuplicateDetection=true</acceptor>
+
+            <!-- STOMP Acceptor. -->
+            <acceptor name="stomp">tcp://0.0.0.0:61613?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;protocols=STOMP;useEpoll=true;heartBeatToConnectionTtlModifier=6</acceptor>
+          </acceptors>
+
+          <connectors>
+            <connector name="netty-connector">tcp://0.0.0.0:61616</connector>
+          </connectors>
+
+          <wildcard-addresses>
+            <routing-enabled>true</routing-enabled>
+            <delimiter>/</delimiter>
+            <any-words>#</any-words>
+            <single-word>*</single-word>
+          </wildcard-addresses>
+
+
+          <security-settings>
+            <security-setting match="#">
+                <permission type="createNonDurableQueue" roles="amq"/>
+                <permission type="deleteNonDurableQueue" roles="amq"/>
+                <permission type="createDurableQueue" roles="amq"/>
+                <permission type="deleteDurableQueue" roles="amq"/>
+                <permission type="createAddress" roles="amq"/>
+                <permission type="deleteAddress" roles="amq"/>
+                <permission type="consume" roles="amq"/>
+                <permission type="browse" roles="amq"/>
+                <permission type="send" roles="amq"/>
+                <!-- we need this otherwise ./artemis data imp wouldn't work -->
+                <permission type="manage" roles="amq"/>
+            </security-setting>
+          </security-settings>
+
+          <address-settings>
+            <!--default for catch all-->
+            <address-setting match="#">
+                <dead-letter-address>DLQ</dead-letter-address>
+                <expiry-address>ExpiryQueue</expiry-address>
+                <redelivery-delay>0</redelivery-delay>
+                <!-- with -1 only the global-max-size is in use for limiting -->
+                <max-size-bytes>-1</max-size-bytes>
+                <message-counter-history-day-limit>10</message-counter-history-day-limit>
+                <address-full-policy>PAGE</address-full-policy>
+                <auto-create-queues>true</auto-create-queues>
+                <auto-create-addresses>true</auto-create-addresses>
+                <auto-create-jms-queues>true</auto-create-jms-queues>
+                <auto-create-jms-topics>true</auto-create-jms-topics>
+            </address-setting>
+          </address-settings>
+      </core>
+    </configuration>

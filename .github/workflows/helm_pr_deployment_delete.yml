@@ -1,0 +1,36 @@
+name: Cleanup PR Deployment from Kubernetes
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  destroy:
+    if: ${{ github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    runs-on: ubuntu-latest
+    environment: k8s
+    concurrency: k8s-pr${{ github.event.pull_request.number }}
+
+    steps:
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.15.0
+
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: v1.30.1
+
+      - name: Authenticate to Kubernetes cluster
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" > "$HOME/.kube/config"
+
+      - name: Delete Helm release
+        run: |
+          helm uninstall artemis --namespace artemis-pr${{ github.event.pull_request.number }}
+
+      - name: Delete Kubernetes namespace
+        run: |
+          kubectl delete namespace artemis-pr${{ github.event.pull_request.number }}

@@ -1,0 +1,248 @@
+# Default values for artemis.
+
+# Specify the Artemis version
+# This value is used as docker image tag, so also "pr-1234" is a valid value here.
+# See https://github.com/ls1intum/Artemis/pkgs/container/artemis/versions
+artemisVersion: "7.5.0"
+
+
+# Application specific configuration 
+application: 
+  userManagement: 
+
+    # Initial Artemis admin account - Required!
+    internalAdmin: 
+      username:
+      password:
+   
+    # Set true if external user management should be enabled
+    useExternal: false
+
+    provider: ""
+
+    # the whole section is optional: whether user details (such as the registration number) can be obtained from a LDAP service
+    ldap:
+      enabled: false
+      url: ""
+      userDn: ""
+      base: ""
+      password: ""
+      allowedUsernamePattern: ''
+      # allowedUsernamePattern: '^([a-z]{2}\d{2}[a-z]{3})$'zs # example for a TUM identifier, e.g. ab12cde
+
+  # Local Version Control configuration
+  versioncontrol:
+    provider: "localvc"
+    url: ""
+    local_vcs_repo_path: /artemisdata/vcs/repo
+    ssh_key_path: /artemisdata/artemisdata/ssh-keys
+    build_agent_git_credentials:
+      user: "artemis-icl-build-agent"
+      password: ""
+
+
+  # Local Continuous Integration configuration
+  continuousintegration:
+    provider: "localci"
+    artemis_authentication_token_value: "demo" # FIXME: Set secure auth token
+    specify_concurrent_builds: true
+    concurrent_build_size: 3
+    specify_thread_pool_size: false
+    image_cleanup:
+      enabled: true
+      expiry_days: 7
+      cleanup_schedule_time: "0 0 3 * * *"
+
+      
+  # Configuration of the jHipster Registry
+  registry: 
+    jwt: 
+    password: "SuperSecure"
+
+  # ActiveMQ message broker configuration 
+  broker: 
+    username: "brokeruser"
+    password: "brokerpassword"
+
+
+# Configuration for the artemis application server pods 
+artemis:
+  # Currently we only support 1 replica of artemis. This will change in the future
+  # Note that this value is ignored if the horizontal pod autoscaler is used
+  replicaCount: 0
+
+  image:
+    repository: "ghcr.io/ls1intum/"
+    name: "artemis"
+    pullPolicy: Always
+
+  podAnnotations:
+    prometheus.io/path: /management/prometheus
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+
+  podSecurityContext: 
+    allowPrivilegeEscalation: false
+
+  securityContext: {}
+
+  service:
+    type: ClusterIP
+    port: 8080
+
+  ingress:
+    enabled: true
+    className: ""
+    annotations: {}
+      # kubernetes.io/ingress.class: nginx
+      # kubernetes.io/tls-acme: "true"
+    hosts:
+      - host: artemis.example
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+    tls: []
+    #  - secretName: chart-example-tls
+    #    hosts:
+    #      - example.com
+
+  volumes: 
+    name: artemis-pvc
+    accessModes: 
+      - ReadWriteMany
+    size: 3Gi 
+    storageClassName: ""
+    mountPath: "/artemisdata"
+
+  resources:
+    requests:
+      memory: "2560Mi"
+      cpu: "1000m"
+    limits:
+      memory: "5120Mi"
+      cpu: "2000m"
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  autoscaler:
+    # Whether the autoscaling should be used for the Artemis deployment
+    enabled: false
+    # Wether custom prometheus + prometheus adapter instances should be deployed. You have to provide a custom prometheus instance & configure it, if you set this value to true.
+    customPrometheus: false
+    # IP address range that should be allowed to query metrics (must include the IP of the deployed prometheus server)
+    monitoringIp: "0.0.0.0/0"
+    # Behavior of the autoscaler
+    behavior: {}
+    # Which metrics should be used for the scaling
+    metrics:
+      # Average number of users per instance that should be targeted - the autoscaler will scale according to this metrics
+      usersPerInstance: 100
+      # External metrics: These metrics are not dependent on the individual Artemis instance but are the same across all instances.
+      # These metrics can be used for preemptive scaling
+      externalMetrics:
+        # Possible metrics:
+        # artemis.scheduled.{exams,exercises}.{due,release}.{count,student_multiplier,student_multiplier.active.14}
+        - name: "artemis_scheduled_exercises_release_student_multiplier"
+          targetValue: 50 # How many users should be targeted
+          # The labels define which metric should be used as multiple data points for the same name exist
+          labels:
+            exerciseType: "TEXT" # Only for exercise-metrics, one of TEXT, QUIZ, PROGRAMMING, MODELING, FILE_UPLOAD
+            range: "120" # in minutes, one of 5, 15, 30, 45, 60, 120
+    # Minimum number of replicas
+    minReplicas: 1
+    # Maximum number of replicas
+    maxReplicas: 5
+
+database: 
+  volumes:
+    size: 3Gi
+    storageClassName: ""
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "1000m"
+    limits:
+      memory: "1024Mi"
+      cpu: "2000m"
+
+registry:
+  replicaCount: 1
+
+  image:
+    # Leave empty to use the official image
+    repository: ""
+    name: "jhipster/jhipster-registry"
+    version: "v7.4.0"
+    pullPolicy: Always
+
+      #podAnnotations: {}
+
+  service: 
+    name: jhipster-registry-service
+    type: ClusterIP
+    port: 8761
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "1000m"
+    limits:
+      memory: "1024Mi"
+      cpu: "2000m"
+
+broker: 
+  image: 
+    repository: "ghcr.io/ls1intum/"
+    name: "activemq-broker-docker-adoptopenjdk-11"
+    version: "2.21.0"
+    pullPolicy: Always
+
+  service:
+    name: "activemq-broker"
+    type: ClusterIP
+    port: 61616
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "1000m"
+    limits:
+      memory: "1024Mi"
+      cpu: "2000m"
+
+# Prometheus server & adapter for horizontal autoscaling
+prometheus:
+  alertmanager:
+    enabled: false
+  kubeStateMetrics:
+    enabled: false
+  nodeExporter:
+    enabled: false
+  pushgateway:
+    enabled: false
+  server:
+    global:
+      scrape_interval: "15s"
+
+prometheus-adapter:
+  rbac:
+    # Whether e.g. a ClusterRoleBinding should be created. This should usually be set to false if artemis.autoscaaler.customPrometheus is set to true.
+    create: true
+  rules:
+    # You might want to disable the default roles in case you use a custom prometheus instance
+    default: true
+    external:
+    # This rule transforms the metrics provided by Artemis (Prometheus-metrics) to Kubernetes metrics. The labels are also transformed.
+    - seriesQuery: '{range!=""}'
+      resources:
+        template: <<.Resource>>
+      metricsQuery: avg(<<.Series>>{<<.LabelMatchers>>})
+  prometheus:
+      port: 80
+      url: http://{{ tpl (.Release.Name) . }}-prometheus-server.{{ tpl (.Release.Namespace) . }}.svc
+# End Prometheus server & adapter for horizontal autoscaling

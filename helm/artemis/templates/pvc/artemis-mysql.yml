@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: artemis-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.database.volumes.size }}
+  {{- if ne .Values.database.volumes.storageClassName "" }}
+  storageClassName: {{ .Values.database.volumes.storageClassName }}
+  {{- end }}
+  volumeMode: Filesystem

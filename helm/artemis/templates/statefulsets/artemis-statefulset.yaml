@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "artemis.fullname" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "artemis.fullname" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "artemis.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.artemis.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "artemis.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext: {}
+      restartPolicy: Always
+      securityContext:
+        # Make sure that the container can read and write the PVC 
+        # The Artemis executable is started with an unprivileged user (UID 1000)
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.artemis.image.repository }}{{ .Values.artemis.image.name }}:{{ .Values.artemisVersion | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.artemis.image.pullPolicy }}
+         
+          # We hand the pod IP to the container env here to build the hazelcast cluster. 
+          # The MY_POD_IP variable is used in the artemis configmap
+          env: 
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: SPRING_PROFILES_ACTIVE
+              value: core,scheduling,{{ include "artemis.springprofiles" .}}
+          envFrom:
+            - configMapRef:
+                name: artemis-usermanagement-configmap
+            - configMapRef:
+                name: artemis-vcs-configmap
+            - configMapRef:
+                name: artemis-ci-configmap
+            - configMapRef:
+                name: artemis-app
+                optional: false
+            - secretRef:
+                name: artemis-usermanagement-secrets
+            - secretRef:
+                name: artemis-secrets
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          securityContext:
+            {{- toYaml .Values.artemis.podSecurityContext | nindent 14 }}
+          resources:
+            {{- toYaml .Values.artemis.resources | nindent 12 }}
+          volumeMounts:
+            - mountPath: {{ .Values.artemis.volumes.mountPath }} 
+              name: artemis-volume
+
+      {{- with .Values.artemis.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.artemis.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.artemis.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      initContainers:
+        - name: init-ds
+          image: busybox:latest
+          command:
+              - '/bin/sh'
+              - '-c'
+              - |
+                  while true
+                  do
+                    rt=$(nc -z -w 1 artemis-mysql 3306)
+                    if [ $? -eq 0 ]; then
+                      echo "DB is UP"
+                      break
+                    fi
+                    echo "DB is not yet reachable;sleep for 10s before retry"
+                    sleep 10
+                  done
+
+      volumes:
+      - name: artemis-volume
+        persistentVolumeClaim:
+          claimName: {{ .Values.artemis.volumes.name }}

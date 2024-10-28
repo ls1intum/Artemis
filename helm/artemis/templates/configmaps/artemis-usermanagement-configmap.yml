@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: artemis-usermanagement-configmap
+data:
+  {{- if and .Values.application.userManagement.useExternal ( eq .Values.application.userManagement.provider "jira") }}
+  artemis.user-management.use-external: "true"
+  artemis.user-management.external.url: {{ required "Jira URL is required" .Values.application.userManagement.jira.url | quote }}
+  artemis.user-management.external.admin-group-name: {{ .Values.application.userManagement.jira.adminGroupName | quote }}
+  {{- else }}
+  artemis.user-management.use-external: "false"
+  {{- end }}
+  {{- with .Values.application.userManagement.ldap }}
+  {{- if .enabled }}
+  artemis.user-management.ldap.url: {{ required "LDAP URL is required" .url | quote }}
+  artemis.user-management.ldap.base: {{ required "LDAP BASE is required" .base | quote }}
+  artemis.user-management.ldap.allowed-username-pattern: {{ .allowedUsernamePattern | squote }}
+  management.health.ldap.enabled: "true"
+  {{- end }}
+  {{- end }}

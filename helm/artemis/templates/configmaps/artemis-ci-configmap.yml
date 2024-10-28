@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: artemis-ci-configmap
+data:
+  artemis.continuous-integration.auth-token-value: {{ .Values.application.continuousintegration.artemis_authentication_token_value | quote }}
+  artemis.continuous-integration.specify-concurrent-builds: {{ .Values.application.continuousintegration.specify_concurrent_builds | quote }}
+  artemis.continuous-integration.concurrent-build-size: {{ .Values.application.continuousintegration.concurrent_build_size | quote }}
+  artemis.continuous-integration.specify-thread-pool-size: {{ .Values.application.continuousintegration.specify_thread_pool_size | quote }}
+  artemis.continuous-integration.image-cleanup.enabled: {{ .Values.application.continuousintegration.image_cleanup.enabled | quote }}
+  artemis.continuous-integration.image-cleanup.expiry-days: {{ .Values.application.continuousintegration.image_cleanup.expiry_days | quote }}
+  artemis.continuous-integration.image-cleanup.cleanup-schedule-time: {{ .Values.application.continuousintegration.image_cleanup.cleanup_schedule_time | quote }}

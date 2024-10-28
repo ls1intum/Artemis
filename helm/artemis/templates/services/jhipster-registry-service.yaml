@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: jhipster-registry-service
+spec:
+  type: {{ .Values.registry.service.type }}
+  ports:
+    - name: jhipster-registry-port
+      port: {{ .Values.registry.service.port }}
+      targetPort: registry-p-port
+      protocol: TCP
+  selector:
+    app: jhipster-registry

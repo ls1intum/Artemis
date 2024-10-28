@@ -1,0 +1,93 @@
+name: Deploy PR to Kubernetes
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  deploy:
+    if: ${{ github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    runs-on: ubuntu-latest
+    environment: k8s
+    concurrency: k8s-pr${{ github.event.pull_request.number }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.15.0
+
+      - name: Setup Kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: v1.30.1
+
+      - name: Authenticate to Kubernetes cluster
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" > "$HOME/.kube/config"
+
+      - name: Get branch name
+        id: branch
+        run: echo "BRANCH_NAME=\"${GITHUB_REF#refs/heads/}\"" >> "$GITHUB_ENV"
+
+      - name: Determine tag
+        id: determine-tag
+        run: echo "SEM_VERSION=0.0.0-pr${{ github.event.pull_request.number }}" >> "$GITHUB_ENV"
+
+      - name: Update chart dependencies
+        run: helm dependency update helm/artemis
+
+      - name: Chart | Push
+        uses: appany/helm-oci-chart-releaser@v0.3.0
+        with:
+          name: artemis
+          repository: ${{ github.repository_owner }}/helm
+          tag: ${{ env.SEM_VERSION }}
+          path: helm/artemis
+          registry: ghcr.io
+          registry_username: ${{ github.repository_owner }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          update_dependencies: 'true'
+
+      - name: Deploy Helm chart
+        run: |
+          helm upgrade --install artemis \
+            oci://ghcr.io/${{ github.repository_owner }}/helm/artemis --version ${{ env.SEM_VERSION }} \
+            --namespace artemis-pr${{ github.event.pull_request.number }} --create-namespace \
+            --set artemis.ingress.className="" \
+            --set artemis.ingress.annotations.cert-manager\\.io/cluster-issuer="letsencrypt-prod" \
+            --set artemis.ingress.annotations.spec\\.ingressClassName=nginx \
+            --set-string artemis.ingress.annotations.kubernetes\\.io/tls-acme="true" \
+            --set-string artemis.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/ssl-redirect="true" \
+            --set artemis.ingress.hosts[0].host=pr${{ github.event.pull_request.number }}.artemis-k8s.ase.cit.tum.de \
+            --set artemis.ingress.hosts[0].paths[0].path="/" \
+            --set artemis.ingress.hosts[0].paths[0].pathType=ImplementationSpecific \
+            --set artemis.ingress.tls[0].secretName=artemis-pr${{ github.event.pull_request.number }}-tls \
+            --set artemis.ingress.tls[0].hosts[0]=pr${{ github.event.pull_request.number }}.artemis-k8s.ase.cit.tum.de \
+            --set application.registry.jwt=${{ secrets.REGISTRY_JWT }} \
+            --set application.versioncontrol.url="https://pr${{ github.event.pull_request.number }}.artemis-k8s.ase.cit.tum.de" \
+            --set application.userManagement.internalAdmin.username=admin \
+            --set application.userManagement.internalAdmin.password=${{ secrets.ADMIN_PW }} \
+            --set artemisVersion=pr-${{ github.event.pull_request.number }} \
+            --wait
+
+      - name: Post Deployment Comment
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.issue.number;
+
+            github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: prNumber,
+              body: `
+            :rocket: Deployed **PR #${prNumber}** to https://pr${prNumber}.artemis-k8s.ase.cit.tum.de
+
+            :hourglass_flowing_sand: It might take up to **10 minutes** to fully start up.
+              `
+            });

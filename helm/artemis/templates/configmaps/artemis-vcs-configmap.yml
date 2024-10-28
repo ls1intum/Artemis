@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: artemis-vcs-configmap
+data:
+  artemis.version-control.url: {{ .Values.application.versioncontrol.url | quote }}
+  artemis.version-control.local-vcs-repo-path: {{ .Values.application.versioncontrol.local_vcs_repo_path | quote }}
+  artemis.version-control.ssh_key_path: {{ .Values.application.versioncontrol.ssh_key_path | quote }}
+  artemis.version-control.build-agent-git-username: {{ .Values.application.versioncontrol.build_agent_git_credentials.user | quote }}
+  artemis.version-control.build-agent-git-password: {{ .Values.application.versioncontrol.build_agent_git_credentials.password | quote }}
