@@ -70,12 +70,9 @@ public class SarifParser implements ParserStrategy {
         int endLine = region.getEndLine().orElse(startLine);
         int endColumn = region.getEndColumn().orElse(startColumn + 1);
 
-        String ruleId = result.getRuleId()
-                .orElseGet(() -> result.getRule().flatMap(ReportingDescriptorReference::getId).orElseThrow(() -> new RuntimeException("Either ruleId or rule.id must be present")));
+        String ruleId = getRuleId(result);
 
-        // ruleIndex can use -1 to indicate a missing value
-        Optional<Integer> ruleIndexOrMinusOne = result.getRuleIndex().or(() -> result.getRule().flatMap(ReportingDescriptorReference::getIndex));
-        Optional<Integer> ruleIndex = ruleIndexOrMinusOne.flatMap(index -> index != -1 ? Optional.of(index) : Optional.empty());
+        Optional<Integer> ruleIndex = getRuleIndex(result);
 
         Optional<ReportingDescriptor> ruleByIndex = driver.getRules().flatMap(rules -> ruleIndex.map(rules::get));
         Optional<ReportingDescriptor> rule = ruleByIndex.or(() -> lookupRuleById(ruleId, ruleOfId));
@@ -85,17 +82,36 @@ public class SarifParser implements ParserStrategy {
 
         Result.Level level = result.getLevel().orElse(Result.Level.WARNING);
 
-        String message = result.getMessage().getText().orElseGet(() -> {
-            String messageId = result.getMessage().getId().orElseThrow(() -> new RuntimeException("Either text or id must be present"));
-
-            var ruleMessageString = rule.flatMap(ReportingDescriptor::getMessageStrings).map(MessageStrings::getAdditionalProperties).map(strings -> strings.get(messageId));
-            var globalMessageString = driver.getGlobalMessageStrings().map(GlobalMessageStrings::getAdditionalProperties).map(strings -> strings.get(messageId));
-
-            var messageString = ruleMessageString.or(() -> globalMessageString).orElseThrow(() -> new RuntimeException("Message lookup failed"));
-            return messageString.getText();
-        });
+        String message = findMessage(result, driver, rule);
 
         return new StaticCodeAnalysisIssue(path, startLine, endLine, startColumn, endColumn, ruleId, category, message, level.toString(), null);
+    }
+
+    private static String getRuleId(Result result) {
+        return result.getRuleId()
+                .orElseGet(() -> result.getRule().flatMap(ReportingDescriptorReference::getId).orElseThrow(() -> new RuntimeException("Either ruleId or rule.id must be present")));
+    }
+
+    private static Optional<Integer> getRuleIndex(Result result) {
+        // ruleIndex can use -1 to indicate a missing value
+        Optional<Integer> ruleIndexOrMinusOne = result.getRuleIndex().or(() -> result.getRule().flatMap(ReportingDescriptorReference::getIndex));
+        return ruleIndexOrMinusOne.flatMap(index -> index != -1 ? Optional.of(index) : Optional.empty());
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static String findMessage(Result result, ToolComponent driver, Optional<ReportingDescriptor> rule) {
+        return result.getMessage().getText().orElseGet(() -> lookupMessageById(result, driver, rule));
+    }
+
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private static String lookupMessageById(Result result, ToolComponent driver, Optional<ReportingDescriptor> rule) {
+        String messageId = result.getMessage().getId().orElseThrow(() -> new RuntimeException("Either text or id must be present"));
+
+        var ruleMessageString = rule.flatMap(ReportingDescriptor::getMessageStrings).map(MessageStrings::getAdditionalProperties).map(strings -> strings.get(messageId));
+        var globalMessageString = driver.getGlobalMessageStrings().map(GlobalMessageStrings::getAdditionalProperties).map(strings -> strings.get(messageId));
+
+        var messageString = ruleMessageString.or(() -> globalMessageString).orElseThrow(() -> new RuntimeException("Message lookup failed"));
+        return messageString.getText();
     }
 
     private static Optional<ReportingDescriptor> lookupRuleById(String ruleId, Map<String, ReportingDescriptor> ruleOfId) {
