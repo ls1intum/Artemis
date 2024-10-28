@@ -74,8 +74,8 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
@@ -145,7 +145,7 @@ public class ProgrammingExerciseUtilService {
     private ExerciseHintRepository exerciseHintRepository;
 
     @Autowired
-    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+    private ProgrammingExerciseTaskTestRepository programmingExerciseTaskRepository;
 
     @Autowired
     private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
