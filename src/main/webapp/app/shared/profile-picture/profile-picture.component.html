@@ -3,7 +3,7 @@
         <strong
             [id]="defaultPictureId()"
             class="profile-picture rounded-3"
-            [ngStyle]="{ 'background-color': profilePictureBackgroundColor, 'font-size': fontSize }"
+            [ngStyle]="{ 'background-color': isGray() ? '#888' : profilePictureBackgroundColor, 'font-size': fontSize }"
             [ngClass]="defaultPictureClass()"
             >{{ userProfilePictureInitials }}</strong
         >
@@ -13,7 +13,7 @@
             [alt]="authorName()"
             class="profile-picture rounded-3"
             [src]="imageUrl()"
-            [ngStyle]="{ 'background-color': profilePictureBackgroundColor }"
+            [ngStyle]="{ 'background-color': isGray() ? '#888' : profilePictureBackgroundColor }"
             [ngClass]="imageClass()"
         />
     }

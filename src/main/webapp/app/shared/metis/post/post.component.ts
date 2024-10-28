@@ -6,6 +6,7 @@ import {
     EventEmitter,
     Input,
     OnChanges,
+    OnDestroy,
     OnInit,
     Output,
     ViewChild,
@@ -26,14 +27,21 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { animate, style, transition, trigger } from '@angular/animations';
 
 @Component({
     selector: 'jhi-post',
     templateUrl: './post.component.html',
     styleUrls: ['./post.component.scss', './../metis.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    animations: [
+        trigger('fade', [
+            transition(':enter', [style({ opacity: 0 }), animate('300ms ease-in', style({ opacity: 1 }))]),
+            transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
+        ]),
+    ],
 })
-export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
+export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked, OnDestroy {
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() readOnlyMode: boolean;
     @Input() previewMode: boolean;
@@ -53,6 +61,11 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
+    isDeleted = false;
+    readonly timeToDeleteInSeconds = 6;
+    deleteTimerInSeconds = 6;
+    deleteTimer: NodeJS.Timeout | undefined;
+    deleteInterval: NodeJS.Timeout | undefined;
 
     pageType: PageType;
     contextInformation: ContextInformation;
@@ -93,6 +106,16 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
         this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
         this.sortAnswerPosts();
+    }
+
+    ngOnDestroy(): void {
+        if (this.deleteTimer !== undefined) {
+            clearTimeout(this.deleteTimer);
+        }
+
+        if (this.deleteInterval !== undefined) {
+            clearInterval(this.deleteInterval);
+        }
     }
 
     /**
@@ -176,6 +199,34 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                     },
                 });
             }
+        }
+    }
+
+    onDeleteEvent(isDelete: boolean) {
+        this.isDeleted = isDelete;
+
+        if (this.deleteTimer !== undefined) {
+            clearTimeout(this.deleteTimer);
+        }
+
+        if (this.deleteInterval !== undefined) {
+            clearInterval(this.deleteInterval);
+        }
+
+        if (isDelete) {
+            this.deleteTimerInSeconds = this.timeToDeleteInSeconds;
+
+            this.deleteTimer = setTimeout(
+                () => {
+                    this.metisService.deletePost(this.posting);
+                },
+                this.deleteTimerInSeconds * 1000 + 1000,
+            );
+
+            this.deleteInterval = setInterval(() => {
+                this.deleteTimerInSeconds = Math.max(0, this.deleteTimerInSeconds - 1);
+                this.changeDetector.detectChanges();
+            }, 1000);
         }
     }
 }
