@@ -256,7 +256,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             } else {
                 this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
             }
-        }, 30);
+        }, 0);
     }
 
     onSearchQueryInput($event: Event) {
