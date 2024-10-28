@@ -3,7 +3,7 @@
         <div style="display: flex; align-items: center">
             <span [jhiTranslate]="label"></span>
             @if (isSortableColumn(column)) {
-                <app-sort-icon [direction]="getSortDirection(column)"></app-sort-icon>
+                <jhi-sort-icon [direction]="getSortDirection(column)"></jhi-sort-icon>
             }
         </div>
     </th>
