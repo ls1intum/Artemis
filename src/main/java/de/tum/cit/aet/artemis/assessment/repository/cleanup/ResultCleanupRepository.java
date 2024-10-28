@@ -89,7 +89,7 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
                 AND EXISTS (
                     SELECT 1
                     FROM Course c
-                    LEFT JOIN c.exercises e
+                        LEFT JOIN c.exercises e
                     WHERE e = r.participation.exercise
                         AND c.endDate < :deleteTo
                         AND c.startDate > :deleteFrom
