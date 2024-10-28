@@ -193,6 +193,7 @@ describe('RequestFeedbackButtonComponent', () => {
         } as StudentParticipation;
         const exercise = { id: 1, type: ExerciseType.TEXT, studentParticipations: [participation], course: {}, allowFeedbackRequests: true } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('isSubmitted', false);
         fixture.componentRef.setInput('isGeneratingFeedback', false);
         mockExerciseDetails(exercise);
 
@@ -214,6 +215,7 @@ describe('RequestFeedbackButtonComponent', () => {
         } as StudentParticipation;
         const exercise = { id: 1, type: ExerciseType.TEXT, course: {}, studentParticipations: [participation], allowFeedbackRequests: true } as Exercise;
         fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('isSubmitted', true);
         fixture.componentRef.setInput('isGeneratingFeedback', false);
         mockExerciseDetails(exercise);
 
