@@ -49,11 +49,13 @@ export class FeedbackAnalysisComponent {
     readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
     readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
     readonly FILTER_OCCURRENCE_KEY = 'feedbackAnalysis.occurrence';
+    readonly FILTER_ERROR_CATEGORIES_KEY = 'feedbackAnalysis.errorCategories';
     readonly selectedFiltersCount = signal<number>(0);
     readonly taskNames = signal<string[]>([]);
     readonly testCaseNames = signal<string[]>([]);
     readonly minCount = signal<number>(0);
     readonly maxCount = signal<number>(0);
+    readonly errorCategories = signal<string[]>([]);
 
     private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
 
@@ -69,6 +71,7 @@ export class FeedbackAnalysisComponent {
         const savedTasks = this.localStorage.retrieve(this.FILTER_TASKS_KEY) || [];
         const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY) || [];
         const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY) || [];
+        const savedErrorCategories = this.localStorage.retrieve(this.FILTER_ERROR_CATEGORIES_KEY) || [];
 
         const state = {
             page: this.page(),
@@ -76,6 +79,7 @@ export class FeedbackAnalysisComponent {
             searchTerm: this.searchTerm() || '',
             sortingOrder: this.sortingOrder(),
             sortedColumn: this.sortedColumn(),
+            filterErrorCategories: this.errorCategories(),
         };
 
         try {
@@ -85,12 +89,14 @@ export class FeedbackAnalysisComponent {
                     tasks: this.selectedFiltersCount() !== 0 ? savedTasks : [],
                     testCases: this.selectedFiltersCount() !== 0 ? savedTestCases : [],
                     occurrence: this.selectedFiltersCount() !== 0 ? savedOccurrence : [],
+                    errorCategories: this.selectedFiltersCount() !== 0 ? savedErrorCategories : [],
                 },
             });
             this.content.set(response.feedbackDetails);
             this.totalItems.set(response.totalItems);
             this.taskNames.set(response.taskNames);
             this.testCaseNames.set(response.testCaseNames);
+            this.errorCategories.set(response.errorCategories);
         } catch (error) {
             this.alertService.error('artemisApp.programmingExercise.configureGrading.feedbackAnalysis.error');
         }
@@ -137,6 +143,7 @@ export class FeedbackAnalysisComponent {
         const savedTasks = this.localStorage.retrieve(this.FILTER_TASKS_KEY);
         const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY);
         const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY);
+        const savedErrorCategories = this.localStorage.retrieve(this.FILTER_ERROR_CATEGORIES_KEY);
         this.minCount.set(0);
         this.maxCount.set(await this.feedbackAnalysisService.getMaxCount(this.exerciseId()));
 
@@ -146,10 +153,12 @@ export class FeedbackAnalysisComponent {
         modalRef.componentInstance.taskArray = this.taskNames;
         modalRef.componentInstance.testCaseNames = this.testCaseNames;
         modalRef.componentInstance.maxCount = this.maxCount;
+        modalRef.componentInstance.errorCategories = this.errorCategories;
         modalRef.componentInstance.filters = {
             tasks: this.selectedFiltersCount() !== 0 ? savedTasks : [],
             testCases: this.selectedFiltersCount() !== 0 ? savedTestCases : [],
             occurrence: this.selectedFiltersCount() !== 0 ? savedOccurrence : [this.minCount(), this.maxCount()],
+            errorCategories: this.selectedFiltersCount() !== 0 ? savedErrorCategories : [],
         };
         modalRef.componentInstance.filterApplied.subscribe((filters: any) => {
             this.applyFilters(filters);
@@ -168,6 +177,9 @@ export class FeedbackAnalysisComponent {
         }
         if (filters.testCases && filters.testCases.length > 0) {
             count += filters.testCases.length;
+        }
+        if (filters.errorCategories && filters.errorCategories.length > 0) {
+            count += filters.errorCategories.length;
         }
         if (filters.occurrence && (filters.occurrence[0] !== 0 || filters.occurrence[1] !== this.maxCount())) {
             count++;

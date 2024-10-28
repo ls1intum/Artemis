@@ -542,48 +542,53 @@ public class ResultService {
     }
 
     /**
-     * Retrieves paginated and filtered aggregated feedback details for a given exercise, including the count of each unique feedback detail text, test case name, and task.
+     * Retrieves paginated and filtered aggregated feedback details for a given exercise, including the count of each unique feedback detail text,
+     * test case name, task name, and error category.
      * <br>
      * For each feedback detail:
      * 1. The relative count is calculated as a percentage of the total distinct results for the exercise.
      * 2. Task names are assigned based on associated test case names, with a mapping created between test cases and tasks from the exercise database.
      * Feedback items not assigned to any task are labeled as "Not assigned to a task."
+     * 3. Error categories are classified as one of "Student Error," "Ares Error," or "AST Error," based on feedback content.
      * <br>
      * It supports filtering by:
      * - Search term: Case-insensitive filtering on feedback detail text.
      * - Test case names: Filters feedback based on specific test case names. Only active test cases are included in the filtering options.
      * - Task names: Filters feedback based on specified task names and includes unassigned tasks if "Not assigned to a task" is selected.
      * - Occurrence range: Filters feedback where the number of occurrences (COUNT) is within the specified minimum and maximum range.
+     * - Error categories: Filters feedback based on selected error categories, such as "Student Error," "Ares Error," and "AST Error."
      * <br>
      * Pagination and sorting:
      * - Sorting is applied based on the specified column and order (ascending or descending).
      * - The result is paginated according to the provided page number and page size.
      *
      * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
-     * @param data       The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters (task names, test cases,
-     *                       occurrence range).
+     * @param data       The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters
+     *                       (task names, test cases, occurrence range, error categories).
      * @return A {@link FeedbackAnalysisResponseDTO} object containing:
      *         - A {@link SearchResultPageDTO} of paginated feedback details.
      *         - The total number of distinct results for the exercise.
      *         - A set of task names, including "Not assigned to a task" if applicable.
      *         - A list of active test case names used in the feedback.
+     *         - A list of predefined error categories ("Student Error," "Ares Error," "AST Error") available for filtering.
      */
     public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, FeedbackPageableDTO data) {
 
         // 1. Fetch programming exercise with associated test cases
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesByIdElseThrow(exerciseId);
 
+        // 2. Get the distinct count of results for calculating relative feedback counts
         long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
 
-        // 2. Extract only active test case names
+        // 3. Extract only active test case names for use in filtering options
         List<String> activeTestCaseNames = programmingExercise.getTestCases().stream().filter(ProgrammingExerciseTestCase::isActive).map(ProgrammingExerciseTestCase::getTestName)
                 .toList();
 
-        // 3. Retrieve all tasks and map their names
+        // 4. Retrieve all tasks associated with the exercise and map their names
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
         Set<String> taskNames = tasks.stream().map(ProgrammingExerciseTask::getTaskName).collect(Collectors.toSet());
 
-        // Include unassigned tasks if specified by the filter; otherwise, only include specific tasks
+        // 5. Include unassigned tasks if specified by the filter; otherwise, only include specified tasks
         List<String> includeUnassignedTasks = new ArrayList<>(taskNames);
         if (!data.getFilterTasks().isEmpty()) {
             includeUnassignedTasks.removeAll(data.getFilterTasks());
@@ -592,25 +597,31 @@ public class ResultService {
             includeUnassignedTasks.clear();
         }
 
-        // 4. Set occurrence range based on filter parameters
+        // 6. Define the occurrence range based on filter parameters
         long minOccurrence = data.getFilterOccurrence().length == 2 ? Long.parseLong(data.getFilterOccurrence()[0]) : 0;
         long maxOccurrence = data.getFilterOccurrence().length == 2 ? Long.parseLong(data.getFilterOccurrence()[1]) : Integer.MAX_VALUE;
 
-        // 5. Configure pagination and sorting
+        // 7. Define the error categories to filter based on user selection
+        List<String> filterErrorCategories = data.getFilterErrorCategories();
+
+        // 8. Set up pagination and sorting based on input data
         final var pageable = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
 
-        // 6. Fetch filtered feedback using the repository query
+        // 9. Query the database to retrieve paginated and filtered feedback
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
                 StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
-                maxOccurrence, pageable);
+                maxOccurrence, filterErrorCategories, pageable);
 
-        // 7. Process and map feedback details, calculating relative count and assigning task names
+        // 10. Process and map feedback details, calculating relative count and assigning task names
         List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.count(),
                 (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
 
-        // 8. Return response containing processed feedback details, task names, and active test case names
+        // 11. Predefined error categories available for filtering on the client side
+        final List<String> ERROR_CATEGORIES = List.of("Student Error", "Ares Error", "AST Error");
+
+        // 12. Return response containing processed feedback details, task names, active test case names, and error categories
         return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), taskNames,
-                activeTestCaseNames);
+                activeTestCaseNames, ERROR_CATEGORIES);
     }
 
     /**

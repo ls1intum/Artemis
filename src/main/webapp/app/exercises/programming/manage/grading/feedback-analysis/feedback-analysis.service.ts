@@ -9,6 +9,7 @@ export interface FeedbackAnalysisResponse {
     totalItems: number;
     taskNames: string[];
     testCaseNames: string[];
+    errorCategories: string[];
 }
 export interface FeedbackDetail {
     count: number;
@@ -29,7 +30,8 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             .set('sortedColumn', pageable.sortedColumn)
             .set('filterTasks', options.filters.tasks.join(','))
             .set('filterTestCases', options.filters.testCases.join(','))
-            .set('filterOccurrence', options.filters.occurrence.join(','));
+            .set('filterOccurrence', options.filters.occurrence.join(','))
+            .set('filterErrorCategories', options.filters.errorCategories.join(','));
 
         return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details`, { params });
     }

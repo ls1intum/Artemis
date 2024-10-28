@@ -365,6 +365,7 @@
                         "modalTitle": "Filteroptionen",
                         "task": "Tasks",
                         "testcase": "Testfälle",
+                        "errorCategory": "Fehlerkategorien",
                         "occurrence": "Häufigkeit",
                         "clear": "Filter zurücksetzen",
                         "cancel": "Abbrechen",
