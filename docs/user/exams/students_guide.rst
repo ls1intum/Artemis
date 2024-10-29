@@ -141,9 +141,8 @@ Exam Conduction
    Exam Navigation Sidebar
 
 - You have two options to save your changes for an exercise:
-- Various question types can be included in quiz exam exercises. These are:
 
-    1. Click the |save_exercise| button to maually save and submit your changes.
+    1. Click the |save_exercise| button to manually save and submit your changes.
     2. Select an exercise in the navigation sidebar (either the current one or a different exercise), which will automatically save and submit your changes.
    
         .. warning::
