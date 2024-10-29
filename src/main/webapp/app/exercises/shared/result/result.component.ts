@@ -55,6 +55,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
+    @Input() isQueued = false;
     @Input() short = true;
     @Input() result?: Result;
     @Input() showUngradedResults = false;
@@ -174,9 +175,12 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.ngOnInit();
         }
 
-        if (changes.isBuilding?.currentValue) {
+        if (changes.isBuilding?.currentValue && changes.isBuilding?.currentValue === true) {
             // If it's building, we change the templateStatus to building regardless of any other settings.
             this.templateStatus = ResultTemplateStatus.IS_BUILDING;
+        } else if (changes.isQueued?.currentValue && changes.isQueued?.currentValue === true) {
+            // If it's queued, we change the templateStatus to queued regardless of any other settings.
+            this.templateStatus = ResultTemplateStatus.IS_QUEUED;
         } else if (changes.missingResultInfo || changes.isBuilding?.previousValue) {
             // If ...
             // ... the result was building and is not building anymore, or
@@ -191,7 +195,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      * Sets the corresponding icon, styling and message to display results.
      */
     evaluate() {
-        this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding, this.missingResultInfo);
+        this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding, this.missingResultInfo, this.isQueued);
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);

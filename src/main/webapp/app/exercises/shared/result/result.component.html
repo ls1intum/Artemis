@@ -4,6 +4,12 @@
 -->
 <ng-container id="result">
     @switch (templateStatus) {
+        @case (ResultTemplateStatus.IS_QUEUED) {
+            <span class="text-primary">
+                <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
+                <span id="test-queued" jhiTranslate="artemisApp.editor.queued"></span>
+            </span>
+        }
         @case (ResultTemplateStatus.IS_BUILDING) {
             <span class="text-primary">
                 <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />

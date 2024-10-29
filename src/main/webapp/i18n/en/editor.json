@@ -31,6 +31,7 @@
             "submitDescription": "Stage, commit, push, build and test your changes.",
             "buildOutput": "&nbsp; Build Output",
             "building": "Building and testing...",
+            "queued": "Queued...",
             "buildFailed": "Build failed",
             "noBuildOutput": "No build results available",
             "generatingFeedback": "Generating feedback...",

@@ -44,6 +44,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
 
     result?: Result;
     isBuilding: boolean;
+    isQueued: boolean;
     missingResultInfo = MissingResultInformation.NONE;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
@@ -170,6 +171,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      * @param submissionState the submission is currently in.
      */
     private updateSubmissionState(submissionState: ProgrammingSubmissionState) {
+        this.isQueued = submissionState === ProgrammingSubmissionState.IS_QUEUED;
         this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
 
         if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {

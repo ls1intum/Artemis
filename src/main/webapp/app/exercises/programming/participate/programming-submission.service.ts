@@ -21,6 +21,8 @@ export enum ProgrammingSubmissionState {
     IS_BUILDING_PENDING_SUBMISSION = 'IS_BUILDING_PENDING_SUBMISSION',
     // A failed submission is a pending submission that has not received a result within an expected time frame.
     HAS_FAILED_SUBMISSION = 'HAS_FAILED_SUBMISSION',
+    // The submission is queued and will be built soon.
+    IS_QUEUED = 'IS_QUEUED',
 }
 
 export type ProgrammingSubmissionStateObj = { participationId: number; submissionState: ProgrammingSubmissionState; submission?: ProgrammingSubmission };
@@ -54,6 +56,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     public PROGRAMMING_EXERCISE_RESOURCE_URL = 'api/programming-exercises/';
     // Default value: 2 minutes.
     private DEFAULT_EXPECTED_RESULT_ETA = 2 * 60 * 1000;
+    // Default value: 30 seconds.
+    private DEFAULT_EXPECTED_QUEUE_ESTIMATE = 30 * 1000;
     private SUBMISSION_TEMPLATE_TOPIC = '/topic/exercise/%exerciseId%/newSubmissions';
 
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
@@ -72,8 +76,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private resultTimerSubscriptions: { [participationId: number]: Subscription } = {};
     private resultEtaSubject = new BehaviorSubject<number>(this.DEFAULT_EXPECTED_RESULT_ETA);
 
+    private queueEstimateTimerSubscriptions: { [participationId: number]: Subscription } = {};
+
     private exerciseBuildStateValue: { [exerciseId: number]: ExerciseSubmissionState } = {};
     private currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA;
+    private currentExpectedQueueEstimate = this.DEFAULT_EXPECTED_QUEUE_ESTIMATE;
 
     constructor(
         private websocketService: JhiWebsocketService,
@@ -85,6 +92,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     ngOnDestroy(): void {
         Object.values(this.resultSubscriptions).forEach((sub) => sub.unsubscribe());
         Object.values(this.resultTimerSubscriptions).forEach((sub) => sub.unsubscribe());
+        Object.values(this.queueEstimateTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         this.submissionTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
     }
 
@@ -173,6 +181,26 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         }
     }
 
+    private startQueueEstimateTimer(participationId: number, exerciseId: number, submission: ProgrammingSubmission, time = this.currentExpectedQueueEstimate) {
+        this.resetQueueEstimateTimer(participationId);
+        this.queueEstimateTimerSubscriptions[participationId] = timer(time).subscribe(() => {
+            const remainingTime = this.getExpectedRemainingTimeForBuild(submission);
+            if (remainingTime > 0) {
+                this.emitBuildingSubmission(participationId, exerciseId, submission);
+                this.startResultWaitingTimer(participationId, remainingTime);
+            } else {
+                this.emitFailedSubmission(participationId, exerciseId);
+            }
+            this.resetQueueEstimateTimer(participationId);
+        });
+    }
+
+    private resetQueueEstimateTimer(participationId: number) {
+        if (this.queueEstimateTimerSubscriptions[participationId]) {
+            this.queueEstimateTimerSubscriptions[participationId].unsubscribe();
+        }
+    }
+
     /**
      * Set up a submission subscription for the latest pending submission if not yet existing.
      *
@@ -199,12 +227,25 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     .receive(newSubmissionTopic)
                     .pipe(
                         tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
+                            if (!this.isNewestSubmission(submission as ProgrammingSubmission, exerciseId, participationId)) {
+                                return;
+                            }
                             if (checkIfSubmissionIsError(submission)) {
                                 const programmingSubmissionError = submission as ProgrammingSubmissionError;
                                 this.emitFailedSubmission(programmingSubmissionError.participationId, exerciseId);
                                 return;
                             }
                             const programmingSubmission = submission as ProgrammingSubmission;
+
+                            if (!programmingSubmission.isProcessing) {
+                                const queueRemainingTime = this.getExpectedRemainingTimeForQueue(programmingSubmission);
+                                if (queueRemainingTime > 0) {
+                                    this.emitQueuedSubmission(participationId, exerciseId, programmingSubmission);
+                                    this.startQueueEstimateTimer(participationId, exerciseId, programmingSubmission, queueRemainingTime);
+                                    return;
+                                }
+                            }
+                            this.resetQueueEstimateTimer(participationId);
                             const submissionParticipationId = programmingSubmission.participation!.id!;
                             this.emitBuildingSubmission(submissionParticipationId, this.participationIdToExerciseId.get(submissionParticipationId)!, submission);
                             // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
@@ -215,6 +256,15 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }
             this.submissionTopicsSubscribed.set(participationId, newSubmissionTopic);
         }
+    }
+
+    private isNewestSubmission(newSubmission: ProgrammingSubmission, exerciseId: number, participationId: number): boolean {
+        const currentSubmission = this.exerciseBuildState[exerciseId]?.[participationId]?.submission;
+
+        if (!currentSubmission?.id) return true;
+        if (!newSubmission?.id) return false;
+
+        return newSubmission.id > currentSubmission.id;
     }
 
     /**
@@ -264,6 +314,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 filter(() => !!this.exerciseBuildState[exerciseId][participationId]),
                 tap(() => {
                     // We reset the timer when a new result came through OR the timer ran out. The stream will then be inactive until the next submission comes in.
+                    this.resetQueueEstimateTimer(participationId);
                     this.resetResultWaitingTimer(participationId);
                 }),
             )
@@ -285,6 +336,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     private emitBuildingSubmission(participationId: number, exerciseId: number, submission: ProgrammingSubmission) {
         const newSubmissionState = { participationId, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission };
+        this.notifySubscribers(participationId, exerciseId, newSubmissionState);
+    }
+
+    private emitQueuedSubmission(participationId: number, exerciseId: number, submission: ProgrammingSubmission) {
+        const newSubmissionState = { participationId, submissionState: ProgrammingSubmissionState.IS_QUEUED, submission };
         this.notifySubscribers(participationId, exerciseId, newSubmissionState);
     }
 
@@ -327,6 +383,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      */
     private getExpectedRemainingTimeForBuild(submission: ProgrammingSubmission): number {
         return this.currentExpectedResultETA - (Date.now() - Date.parse(submission.submissionDate as any));
+    }
+
+    private getExpectedRemainingTimeForQueue(submission: ProgrammingSubmission): number {
+        return this.currentExpectedQueueEstimate - (Date.now() - Date.parse(submission.submissionDate as any));
     }
 
     /**
@@ -541,11 +601,18 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             // Find out in what state the latest submission is (pending / failed). If the submission is pending, start the result timer.
             map((submission: ProgrammingSubmission | undefined) => {
                 if (submission) {
-                    const remainingTime = this.getExpectedRemainingTimeForBuild(submission);
-                    if (remainingTime > 0) {
-                        this.emitBuildingSubmission(participationId, exerciseId, submission);
-                        this.startResultWaitingTimer(participationId, remainingTime);
-                        return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION };
+                    const queueRemainingTime = this.getExpectedRemainingTimeForQueue(submission);
+                    if (!submission.isProcessing && queueRemainingTime > 0) {
+                        this.emitQueuedSubmission(participationId, exerciseId, submission);
+                        this.startQueueEstimateTimer(participationId, exerciseId, submission, queueRemainingTime);
+                        return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_QUEUED };
+                    } else {
+                        const remainingTime = this.getExpectedRemainingTimeForBuild(submission);
+                        if (remainingTime > 0) {
+                            this.emitBuildingSubmission(participationId, exerciseId, submission);
+                            this.startResultWaitingTimer(participationId, remainingTime);
+                            return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION };
+                        }
                     }
                     // The server sends the latest submission without a result - so it could be that the result is too old. In this case the error is shown directly.
                     this.emitFailedSubmission(participationId, exerciseId);
@@ -554,7 +621,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 this.emitNoPendingSubmission(participationId, exerciseId);
                 return { participationId, submission: undefined, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION };
             }),
-            // Now update the exercise build state object and start the result subscription regardless of the submission state.
+            // Now update the exercise build state object and start the build and result subscription regardless of the submission state.
             tap((submissionStateObj: ProgrammingSubmissionStateObj) => {
                 const exerciseSubmissionState: ExerciseSubmissionState = { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: submissionStateObj };
                 this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseSubmissionState };
@@ -655,6 +722,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.resultSubscriptions = {};
         Object.values(this.resultTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         this.resultTimerSubscriptions = {};
+        Object.values(this.queueEstimateTimerSubscriptions).forEach((sub) => sub.unsubscribe());
+        this.queueEstimateTimerSubscriptions = {};
         this.submissionTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
         this.submissionTopicsSubscribed.forEach((_, participationId) => this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise));
         this.submissionTopicsSubscribed.clear();

@@ -6,6 +6,7 @@ export class ProgrammingSubmission extends Submission {
     public commitHash?: string;
     public buildFailed?: boolean;
     public buildArtifact?: boolean; // whether the result includes a build artifact or not
+    public isProcessing?: boolean;
 
     constructor() {
         super(SubmissionExerciseType.PROGRAMMING);

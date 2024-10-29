@@ -30,6 +30,11 @@ export enum ResultTemplateStatus {
      */
     IS_BUILDING = 'IS_BUILDING',
     /**
+     * Submission is currently queued and will be processed soon.
+     * This is currently only relevant for programming exercises.
+     */
+    IS_QUEUED = 'IS_QUEUED',
+    /**
      * An automatic feedback suggestion is currently being generated and should be available soon.
      * This is currently only relevant for programming exercises.
      */
@@ -150,6 +155,7 @@ export const evaluateTemplateStatus = (
     result: Result | undefined,
     isBuilding: boolean,
     missingResultInfo = MissingResultInformation.NONE,
+    isQueued = false,
 ): ResultTemplateStatus => {
     // Fallback if participation is not set
     if (!participation || !exercise) {
@@ -212,7 +218,9 @@ export const evaluateTemplateStatus = (
 
     // Evaluate status for programming and quiz exercises
     if (isProgrammingOrQuiz(participation)) {
-        if (isBuilding) {
+        if (isQueued) {
+            return ResultTemplateStatus.IS_QUEUED;
+        } else if (isBuilding) {
             return ResultTemplateStatus.IS_BUILDING;
         } else if (isAIResultAndIsBeingProcessed(result)) {
             return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
