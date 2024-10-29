@@ -6,7 +6,7 @@ on:
 
 jobs:
   destroy:
-    if: ${{ github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
+    if: ${{ github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' && contains(github.event.pull_request.labels.*.name, 'deploy:k8s') }}
     runs-on: ubuntu-latest
     environment:
       name: k8s
