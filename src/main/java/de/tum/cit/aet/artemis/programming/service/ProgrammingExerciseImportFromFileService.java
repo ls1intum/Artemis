@@ -179,43 +179,60 @@ public class ProgrammingExerciseImportFromFileService {
 
         // TODO import auxiliary repos
 
-        copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, basePath);
-        replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), templateRepo, solutionRepo, testRepo);
+        copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, auxiliaryRepositories, basePath);
+        replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), List.of(solutionRepo, templateRepo, testRepo));
+        replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), auxiliaryRepositories);
 
         gitService.stageAllChanges(templateRepo);
         gitService.stageAllChanges(solutionRepo);
         gitService.stageAllChanges(testRepo);
+        for (Repository auxRepo : auxiliaryRepositories) {
+            gitService.stageAllChanges(auxRepo);
+        }
 
         gitService.commitAndPush(templateRepo, "Import template from file", true, user);
         gitService.commitAndPush(solutionRepo, "Import solution from file", true, user);
         gitService.commitAndPush(testRepo, "Import tests from file", true, user);
+        for (Repository auxRepo : auxiliaryRepositories) {
+            gitService.commitAndPush(auxRepo, "Import auxiliary repo from file", true, user);
+        }
+
     }
 
-    private void replaceImportedExerciseShortName(Map<String, String> replacements, Repository... repositories) {
+    private void replaceImportedExerciseShortName(Map<String, String> replacements, List<Repository> repositories) {
         for (Repository repository : repositories) {
             fileService.replaceVariablesInFileRecursive(repository.getLocalPath(), replacements, SHORT_NAME_REPLACEMENT_EXCLUSIONS);
         }
     }
 
-    private void copyImportedExerciseContentToRepositories(Repository templateRepo, Repository solutionRepo, Repository testRepo, Path basePath) throws IOException {
+    private void copyImportedExerciseContentToRepositories(Repository templateRepo, Repository solutionRepo, Repository testRepo, List<Repository> auxiliaryRepositories,
+            Path basePath) throws IOException {
         repositoryService.deleteAllContentInRepository(templateRepo);
         repositoryService.deleteAllContentInRepository(solutionRepo);
         repositoryService.deleteAllContentInRepository(testRepo);
-        copyExerciseContentToRepository(templateRepo, RepositoryType.TEMPLATE, basePath);
-        copyExerciseContentToRepository(solutionRepo, RepositoryType.SOLUTION, basePath);
-        copyExerciseContentToRepository(testRepo, RepositoryType.TESTS, basePath);
+        for (Repository auxRepo : auxiliaryRepositories) {
+            repositoryService.deleteAllContentInRepository(auxRepo);
+        }
+
+        copyExerciseContentToRepository(templateRepo, RepositoryType.TEMPLATE.getName(), basePath);
+        copyExerciseContentToRepository(solutionRepo, RepositoryType.SOLUTION.getName(), basePath);
+        copyExerciseContentToRepository(testRepo, RepositoryType.TESTS.getName(), basePath);
+        for (Repository auxRepo : auxiliaryRepositories) {
+            String auxRepoSuffix = auxRepo.getLocalPath().toString().split("-")[1];
+            copyExerciseContentToRepository(auxRepo, auxRepoSuffix, basePath);
+        }
     }
 
     /**
      * Copies everything from the extracted zip file to the repository, except the .git folder
      *
-     * @param repository     the repository to which the content should be copied
-     * @param repositoryType the type of the repository
-     * @param basePath       the path to the extracted zip file
+     * @param repository the repository to which the content should be copied
+     * @param repoName   the name of the repository
+     * @param basePath   the path to the extracted zip file
      **/
-    private void copyExerciseContentToRepository(Repository repository, RepositoryType repositoryType, Path basePath) throws IOException {
-        FileUtils.copyDirectory(retrieveRepositoryDirectoryPath(basePath, repositoryType.getName()).toFile(), repository.getLocalPath().toFile(),
-                new NotFileFilter(new NameFileFilter(".git")));
+    private void copyExerciseContentToRepository(Repository repository, String repoName, Path basePath) throws IOException {
+        FileUtils.copyDirectory(retrieveRepositoryDirectoryPath(basePath, repoName).toFile(), repository.getLocalPath().toFile(), new NotFileFilter(new NameFileFilter(".git")));
+
         try (var files = Files.walk(repository.getLocalPath())) {
             files.filter(file -> "gradlew".equals(file.getFileName().toString())).forEach(file -> file.toFile().setExecutable(true));
         }
@@ -250,17 +267,17 @@ public class ProgrammingExerciseImportFromFileService {
         }
     }
 
-    private Path retrieveRepositoryDirectoryPath(Path dirPath, String repoType) {
+    private Path retrieveRepositoryDirectoryPath(Path dirPath, String repoName) {
         List<Path> result;
         try (Stream<Path> walk = Files.walk(dirPath)) {
-            result = walk.filter(Files::isDirectory).filter(file -> file.getFileName().toString().endsWith("-" + repoType)).toList();
+            result = walk.filter(Files::isDirectory).filter(file -> file.getFileName().toString().endsWith("-" + repoName)).toList();
         }
         catch (IOException e) {
             throw new BadRequestAlertException("Could not read the directory", "programmingExercise", "couldnotreaddirectory");
         }
         if (result.size() != 1) {
             throw new IllegalArgumentException(
-                    "There are either no or more than one sub-directories containing " + repoType + " in their name. Please make sure that there is exactly one.");
+                    "There are either no or more than one sub-directories containing " + repoName + " in their name. Please make sure that there is exactly one.");
         }
 
         return result.getFirst();
