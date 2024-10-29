@@ -145,8 +145,9 @@ Exam Conduction
 
     1. Click the |save_exercise| button to maually save and submit your changes.
     2. Select an exercise in the navigation sidebar (either the current one or a different exercise), which will automatically save and submit your changes.
-    .. warning::
-        The |save_exercise| button is only available for text, modeling, and quiz exercises. For file upload exercises, you need to manually click the |upload| button, and for programming exercises, you need to manually click the |submit| button to save and submit your changes. 
+   
+        .. warning::
+            The |save_exercise| button is only available for text, modeling, and quiz exercises. For file upload exercises, you need to manually click the |upload| button, and for programming exercises, you need to manually click the |submit| button to save and submit your changes. 
    
 - On the header, you will find the exam bar that includes the remaining time and the |exam_hand_in_early| button. If you click this button, you will be sent to the exam `End Screen`_.
 - The *time left* until the end of the exam is also shown next to the button.
