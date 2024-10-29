@@ -189,7 +189,9 @@ const routes: Routes = [
             },
             {
                 path: 'learning-path',
-                loadChildren: () => import('app/course/learning-paths/learning-paths.module').then((m) => m.ArtemisLearningPathsModule),
+                loadComponent: () =>
+                    import('app/course/learning-paths/pages/learning-path-student-page/learning-path-student-page.component').then((c) => c.LearningPathStudentPageComponent),
+                // loadChildren: () => import('app/course/learning-paths/learning-paths.module').then((m) => m.ArtemisLearningPathsModule),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.learningPath',
