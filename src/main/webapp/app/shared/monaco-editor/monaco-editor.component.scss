@@ -14,8 +14,8 @@
         }
 
         // See https://github.com/microsoft/monaco-editor/issues/1084
-        .monaco-editor .view-line {
-            -webkit-user-modify: read-write-plaintext-only;
+        .view-lines {
+            -webkit-user-modify: read-write-plaintext-only !important;
         }
     }
 }
