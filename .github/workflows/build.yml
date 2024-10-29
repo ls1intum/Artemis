@@ -138,7 +138,9 @@ jobs:
         platforms: linux/amd64,linux/arm64
         file: ./docker/artemis/Dockerfile
         context: .
-        tags: ghcr.io/ls1intum/artemis:${{ steps.compute-tag.outputs.result }}
+        tags: |
+          ghcr.io/ls1intum/artemis:${{ steps.compute-tag.outputs.result }}
+          ghcr.io/ls1intum/artemis:${{ github.sha }}
         push: true
         cache-from: type=gha
         cache-to: type=gha,mode=min
