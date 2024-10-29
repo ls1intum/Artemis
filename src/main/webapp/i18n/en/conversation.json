@@ -45,9 +45,7 @@
                 "examChannels": "Exams",
                 "createChannel": "Create channel",
                 "browseChannels": "Browse channels",
-                "groupChat": "Group Chat",
                 "groupChats": "Group Chats",
-                "directMessage": "Direct Message",
                 "directMessages": "Direct Messages",
                 "filterConversationPlaceholder": "Filter conversations",
                 "sideBarSection": {

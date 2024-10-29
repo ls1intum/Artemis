@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.Post_;
 import de.tum.cit.aet.artemis.communication.domain.Reaction_;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel_;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation_;
 import de.tum.cit.aet.artemis.core.domain.Course_;
@@ -38,8 +39,8 @@ public class MessageSpecs {
     }
 
     /**
-     * Specification which filters Messages according to a search string in a match-all-manner
-     * message is only kept if the search string (which is not a #id pattern) is included in the message content (all strings lowercased)
+     * Specification which filters Messages and answer posts according to a search string in a match-all-manner
+     * Message and answer post are only kept if the search string (which is not a #id pattern) is included in the message content (all strings lowercased)
      *
      * @param searchText Text to be searched within messages
      * @return specification used to chain DB operations
@@ -95,12 +96,16 @@ public class MessageSpecs {
         return (root, query, criteriaBuilder) -> {
             final var conversationJoin = root.join(Post_.conversation, JoinType.LEFT);
             final var isInCoursePredicate = criteriaBuilder.equal(conversationJoin.get(Channel_.COURSE).get(Course_.ID), courseId);
-            return criteriaBuilder.and(isInCoursePredicate);
+            final var isCourseWidePredicate = criteriaBuilder.isTrue(conversationJoin.get(Channel_.IS_COURSE_WIDE));
+            // make sure we only fetch channels (which are sub types of conversations)
+            // this avoids the creation of sub queries
+            final var isChannelPredicate = criteriaBuilder.equal(conversationJoin.type(), criteriaBuilder.literal(Channel.class));
+            return criteriaBuilder.and(isInCoursePredicate, isCourseWidePredicate, isChannelPredicate);
         };
     }
 
     /**
-     * Specification to fetch Posts of the calling user
+     * Specification to fetch Posts and answer posts of the calling user
      *
      * @param filterToOwn whether only calling users own Posts should be fetched or not
      * @param userId      id of the calling user
@@ -112,7 +117,9 @@ public class MessageSpecs {
                 return null;
             }
             else {
-                return criteriaBuilder.equal(root.get(Post_.AUTHOR).get(User_.ID), userId);
+                Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
+                Predicate searchInAnswerContent = criteriaBuilder.equal(answersJoin.get(AnswerPost_.AUTHOR).get(User_.ID), userId);
+                return criteriaBuilder.or(criteriaBuilder.equal(root.get(Post_.AUTHOR).get(User_.ID), userId), searchInAnswerContent);
             }
         });
     }
