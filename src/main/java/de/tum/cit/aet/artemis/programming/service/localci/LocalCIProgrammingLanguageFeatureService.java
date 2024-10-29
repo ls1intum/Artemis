@@ -19,6 +19,7 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.VHDL
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.FACT;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.GCC;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.GRADLE_GRADLE;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.MAVEN_BLACKBOX;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.MAVEN_MAVEN;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_GRADLE;
@@ -47,7 +48,7 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(C_PLUS_PLUS, new ProgrammingLanguageFeature(C_PLUS_PLUS, false, false, true, false, false, List.of(), false, true));
         programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, true, false, false, false, true, List.of(), false, true));
         programmingLanguageFeatures.put(JAVA,
-                new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN), false, true));
+                new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(PLAIN_GRADLE, GRADLE_GRADLE, PLAIN_MAVEN, MAVEN_MAVEN, MAVEN_BLACKBOX), false, true));
         programmingLanguageFeatures.put(JAVASCRIPT, new ProgrammingLanguageFeature(JAVASCRIPT, false, false, true, false, false, List.of(), false, true));
         programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, false, false, true, true, false, List.of(), false, true));
         programmingLanguageFeatures.put(OCAML, new ProgrammingLanguageFeature(OCAML, false, false, false, false, true, List.of(), false, true));
