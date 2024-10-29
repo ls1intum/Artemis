@@ -5,6 +5,8 @@ metadata:
 data:
   SPRING_DATASOURCE_URL: jdbc:mysql://artemis-mysql/artemis?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC&createDatabaseIfNotExist=true
   SPRING_PROFILES_ACTIVE: {{ include "artemis.springprofiles" .}}
+  INFO_OPERATORNAME: {{ .Values.application.operator.name }}
+  INFO_OPERATORADMINNAME: {{ .Values.application.operator.admin_name }}
   artemis.file-upload-path: {{ .Values.artemis.volumes.mountPath }}/uploads
   artemis.submission-export-path: {{ .Values.artemis.volumes.mountPath }}/exports
   artemis.repo-clone-path: {{ .Values.artemis.volumes.mountPath }}/repos

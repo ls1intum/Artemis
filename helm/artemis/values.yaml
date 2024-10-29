@@ -30,6 +30,10 @@ application:
       allowedUsernamePattern: ''
       # allowedUsernamePattern: '^([a-z]{2}\d{2}[a-z]{3})$'zs # example for a TUM identifier, e.g. ab12cde
 
+  operator:
+    name: "Example University Name" # FIXME: Set the name of your university
+    admin_name: "Max Mustermann" # FIXME: Set the name of the main admin
+
   # Local Version Control configuration
   versioncontrol:
     provider: "localvc"

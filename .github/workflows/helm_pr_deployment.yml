@@ -74,6 +74,8 @@ jobs:
             --set application.versioncontrol.url="https://pr${{ github.event.pull_request.number }}.artemis-k8s.ase.cit.tum.de" \
             --set application.userManagement.internalAdmin.username=admin \
             --set application.userManagement.internalAdmin.password=${{ secrets.ADMIN_PW }} \
+            --set application.operator.name="Technical University of Munich" \
+            --set application.operator.admin_name="Stephan Krusche" \
             --set artemisVersion=${{ github.sha }} \
             --timeout 15m \
             --wait
