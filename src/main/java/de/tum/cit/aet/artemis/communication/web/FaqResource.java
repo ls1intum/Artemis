@@ -80,7 +80,7 @@ public class FaqResource {
         if (faq.getId() != null) {
             throw new BadRequestAlertException("A new faq cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        checkIsInstructor(faq.getFaqState(), courseId);
+        checkIsInstructorForAcceptedFaq(faq.getFaqState(), courseId);
         if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
         }
@@ -105,9 +105,9 @@ public class FaqResource {
         if (faqId == null || !faqId.equals(faq.getId())) {
             throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
         }
-        checkIsInstructor(faq.getFaqState(), courseId);
+        checkIsInstructorForAcceptedFaq(faq.getFaqState(), courseId);
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
-        checkIsInstructor(faq.getFaqState(), courseId);
+        checkIsInstructorForAcceptedFaq(faq.getFaqState(), courseId);
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
@@ -229,7 +229,7 @@ public class FaqResource {
         }
     }
 
-    private void checkIsInstructor(FaqState faqState, Long courseId) {
+    private void checkIsInstructorForAcceptedFaq(FaqState faqState, Long courseId) {
         if (faqState == FaqState.ACCEPTED) {
             checkRoleForCourse(courseId, Role.INSTRUCTOR);
         }
