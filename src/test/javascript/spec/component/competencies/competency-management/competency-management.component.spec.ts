@@ -41,8 +41,11 @@ describe('CompetencyManagementComponent', () => {
     let profileService: ProfileService;
     let irisSettingsService: IrisSettingsService;
     let modalService: NgbModal;
+    let alertService: AlertService;
 
-    let getAllForCourseSpy: any;
+    let getProfileInfoSpy: jest.SpyInstance;
+    let getAllForCourseSpy: jest.SpyInstance;
+    let getIrisSettingsSpy: jest.SpyInstance;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -70,6 +73,10 @@ describe('CompetencyManagementComponent', () => {
                     provide: ProfileService,
                     useClass: MockProfileService,
                 },
+                {
+                    provide: AlertService,
+                    useClass: MockAlertService,
+                },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 {
                     provide: ActivatedRoute,
@@ -86,6 +93,9 @@ describe('CompetencyManagementComponent', () => {
         }).compileComponents();
 
         courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+        profileService = TestBed.inject(ProfileService);
+        alertService = TestBed.inject(AlertService);
 
         const competency: Competency = new Competency();
         const textUnit = new TextUnit();
@@ -107,8 +117,12 @@ describe('CompetencyManagementComponent', () => {
             } as Prerequisite,
         ]);
 
-        profileService = TestBed.inject(ProfileService);
-        irisSettingsService = TestBed.inject(IrisSettingsService);
+        const profileInfoResponse = {
+            activeProfiles: [PROFILE_IRIS],
+        } as ProfileInfo;
+        getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
+
+        getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
 
         fixture = TestBed.createComponent(CompetencyManagementComponent);
         component = fixture.componentInstance;
@@ -121,19 +135,16 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should show generate button if IRIS is enabled', async () => {
-        const profileInfoResponse = {
-            activeProfiles: [PROFILE_IRIS],
-        } as ProfileInfo;
         const irisSettingsResponse = {
             irisCompetencyGenerationSettings: {
                 enabled: true,
             },
         } as IrisCourseSettings;
-        const getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
-        const getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettingsResponse));
+        getIrisSettingsSpy.mockReturnValue(of(irisSettingsResponse));
 
         fixture.detectChanges();
         await fixture.whenStable();
+        fixture.detectChanges();
 
         const generateButton = fixture.nativeElement.querySelector('#generateButton');
 
@@ -162,15 +173,24 @@ describe('CompetencyManagementComponent', () => {
         expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
     });
 
-    it('should show alert when loading course competencies fails', async () => {
-        const alertService = TestBed.inject(AlertService);
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
-        getAllForCourseSpy.mockRejectedValueOnce();
+    it('should show alert when loading iris settings fails', async () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        getIrisSettingsSpy.mockRejectedValueOnce({});
 
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(alertServiceErrorSpy).toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should show alert when loading course competencies fails', async () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        getAllForCourseSpy.mockRejectedValueOnce({});
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(errorSpy).toHaveBeenCalledOnce();
     });
 
     it('should open course competency explanation', () => {
@@ -211,7 +231,7 @@ describe('CompetencyManagementComponent', () => {
         importButton.nativeElement.click();
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(modalService.open).toHaveBeenCalledWith(ImportAllCourseCompetenciesModalComponent, {
+        expect(modalService.open).toHaveBeenCalledExactlyOnceWith(ImportAllCourseCompetenciesModalComponent, {
             size: 'lg',
             backdrop: 'static',
         });
