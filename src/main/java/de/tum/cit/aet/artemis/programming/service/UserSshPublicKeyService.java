@@ -8,7 +8,7 @@ import java.security.PublicKey;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
@@ -73,6 +72,9 @@ public class UserSshPublicKeyService {
     private void setLabelForKey(UserSshPublicKey newSshPublicKey, String label) {
         if (StringUtils.isBlank(label)) {
             String[] parts = newSshPublicKey.getPublicKey().split("\\s+");
+
+            // we are only interested in the comment of the key. A typical key looks like this, the key prefix, the actual key and then the comment:
+            // ssh-rsa AAAAB3NzaC1yc2EAAAADAYVTLQ== comment
             if (parts.length >= 3) {
                 label = String.join(" ", Arrays.copyOfRange(parts, 2, parts.length));
             }
@@ -97,8 +99,8 @@ public class UserSshPublicKeyService {
      * @throws AccessForbiddenException if the key does not belong to the user, or does not exist
      */
     public UserSshPublicKey getSshKeyForUser(User user, Long keyId) {
-        Optional< UserSshPublicKey> userSshPublicKey = userSshPublicKeyRepository.findByIdAndUserId(keyId, user.getId());
-        return userSshPublicKey.orThrow(new AccessForbiddenException("SSH key", keyId));
+        Optional<UserSshPublicKey> userSshPublicKey = userSshPublicKeyRepository.findByIdAndUserId(keyId, user.getId());
+        return userSshPublicKey.orElseThrow(() -> new AccessForbiddenException("SSH key", keyId));
     }
 
     /**

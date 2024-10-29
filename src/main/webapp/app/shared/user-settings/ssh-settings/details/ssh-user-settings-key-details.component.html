@@ -41,7 +41,7 @@
 
                 <div class="mb-4">
                     <p class="large-text" jhiTranslate="artemisApp.userSettings.sshSettingsPage.label"></p>
-                    <textarea class="form-control small-text-area" rows="1" [readonly]="!isCreateMode" [(ngModel)]="displayedKeyLabel"></textarea>
+                    <textarea class="form-control small-text-area" rows="1" [readonly]="!isCreateMode" [(ngModel)]="displayedKeyLabel" maxlength="50">></textarea>
                     <p class="small-text">
                         <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.commentUsedAsLabel"> </span>
                     </p>

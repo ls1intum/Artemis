@@ -26,8 +26,8 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     readonly keyAlreadyExists = 'keyAlreadyExists';
     readonly keyLabelTooLong = 'keyLabelTooLong';
 
-    readonly faEdit = faEdit;
-    readonly faSave = faSave;
+    protected readonly faEdit = faEdit;
+    protected readonly faSave = faSave;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
 

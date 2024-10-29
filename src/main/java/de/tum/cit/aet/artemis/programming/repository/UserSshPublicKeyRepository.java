@@ -19,6 +19,8 @@ public interface UserSshPublicKeyRepository extends ArtemisJpaRepository<UserSsh
 
     Optional<UserSshPublicKey> findByKeyHash(String keyHash);
 
+    Optional<UserSshPublicKey> findByIdAndUserId(Long keyId, Long userId);
+
     boolean existsByIdAndUserId(Long id, Long userId);
 
     boolean existsByUserId(Long userId);
