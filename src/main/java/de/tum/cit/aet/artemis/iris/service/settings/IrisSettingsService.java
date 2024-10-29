@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -484,6 +485,18 @@ public class IrisSettingsService {
 
     /**
      * Checks whether an Iris feature is enabled for an exercise.
+     *
+     * @param type    The Iris feature to check
+     * @param lecture The exercise to check
+     * @return Whether the Iris feature is enabled for the exercise
+     */
+    public boolean isEnabledFor(IrisSubSettingsType type, Lecture lecture) {
+        var settings = getCombinedIrisSettingsFor(lecture, true);
+        return isFeatureEnabledInSettings(settings, type);
+    }
+
+    /**
+     * Checks whether an Iris feature is enabled for an exercise.
      * Throws an exception if the feature is disabled.
      *
      * @param type     The Iris feature to check
@@ -493,6 +506,19 @@ public class IrisSettingsService {
         if (!isEnabledFor(type, exercise)) {
             throw new AccessForbiddenAlertException("The Iris " + type.name() + " feature is disabled for this exercise.", "Iris",
                     "iris." + type.name().toLowerCase() + "Disabled");
+        }
+    }
+
+    /**
+     * Checks whether an Iris feature is enabled for an exercise.
+     * Throws an exception if the feature is disabled.
+     *
+     * @param type    The Iris feature to check
+     * @param lecture The exercise to check
+     */
+    public void isEnabledForElseThrow(IrisSubSettingsType type, Lecture lecture) {
+        if (!isEnabledFor(type, lecture)) {
+            throw new AccessForbiddenAlertException("The Iris " + type.name() + " feature is disabled for this lecture.", "Iris", "iris." + type.name().toLowerCase() + "Disabled");
         }
     }
 
@@ -562,6 +588,31 @@ public class IrisSettingsService {
                 irisSubSettingsService.combineTextExerciseChatSettings(settingsList, minimal),
                 irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal),
                 irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal)
+        );
+        // @formatter:on
+    }
+
+    /**
+     * Get the combined Iris settings for a lecture as an {@link IrisCombinedSettingsDTO}.
+     * Combines the global Iris settings with the course Iris settings and the lecture Iris settings.
+     * If minimal is true, only certain attributes are returned. The minimal version can safely be passed to the students.
+     * See also {@link IrisSubSettingsService} for how the combining works in detail
+     *
+     * @param lecture The exercise to get the Iris settings for
+     * @param minimal Whether to return the minimal version of the settings
+     * @return The combined Iris settings for the exercise
+     */
+    public IrisCombinedSettingsDTO getCombinedIrisSettingsFor(Lecture lecture, boolean minimal) {
+        var settingsList = new ArrayList<IrisSettings>();
+        settingsList.add(getGlobalSettings());
+        // TODO: Add lecture settings
+
+        // @formatter:off
+        return new IrisCombinedSettingsDTO(
+            irisSubSettingsService.combineChatSettings(settingsList, minimal),
+            irisSubSettingsService.combineTextExerciseChatSettings(settingsList, minimal),
+            irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal),
+            irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal)
         );
         // @formatter:on
     }
@@ -666,6 +717,7 @@ public class IrisSettingsService {
             case TEXT_EXERCISE_CHAT -> settings.irisTextExerciseChatSettings().enabled();
             case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().enabled();
             case LECTURE_INGESTION -> settings.irisLectureIngestionSettings().enabled();
+            case LECTURE_CHAT -> true; // TODO
         };
     }
 }
