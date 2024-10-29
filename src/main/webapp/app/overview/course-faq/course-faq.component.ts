@@ -34,7 +34,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     private parentParamSubscription: Subscription;
 
     courseId: number;
-    faqId: number;
+    referencedFaqId: number;
     faqs: Faq[];
 
     filteredFaqs: Faq[];
@@ -60,8 +60,8 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
     constructor() {
         effect(() => {
-            if (this.faqId) {
-                this.scrollToFaq(this.faqId);
+            if (this.referencedFaqId) {
+                this.scrollToFaq(this.referencedFaqId);
             }
         });
     }
@@ -74,7 +74,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
         });
 
         this.route.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((params) => {
-            this.faqId = params['faqId'];
+            this.referencedFaqId = params['faqId'];
         });
 
         this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {

@@ -29,9 +29,6 @@ export function isCommunicationEnabled(course: Course | undefined) {
     return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config === CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
 }
 
-/**
- * Note: Keep in sync with method in CourseRepository.java
- */
 export function isFaqEnabled(course: Course | undefined) {
     return course?.faqEnabled;
 }
