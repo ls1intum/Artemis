@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
-import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
@@ -84,8 +83,6 @@ public class LearningPathService {
 
     private final CompetencyRelationRepository competencyRelationRepository;
 
-    private final LearningPathNgxService learningPathNgxService;
-
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -94,9 +91,8 @@ public class LearningPathService {
 
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
             LearningPathNavigationService learningPathNavigationService, CourseRepository courseRepository, CompetencyRepository competencyRepository,
-            CompetencyRelationRepository competencyRelationRepository, LearningPathNgxService learningPathNgxService,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository, StudentParticipationRepository studentParticipationRepository,
-            CourseCompetencyRepository courseCompetencyRepository) {
+            CompetencyRelationRepository competencyRelationRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            StudentParticipationRepository studentParticipationRepository, CourseCompetencyRepository courseCompetencyRepository) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
         this.competencyProgressRepository = competencyProgressRepository;
@@ -104,7 +100,6 @@ public class LearningPathService {
         this.courseRepository = courseRepository;
         this.competencyRepository = competencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
-        this.learningPathNgxService = learningPathNgxService;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
@@ -379,28 +374,6 @@ public class LearningPathService {
         Set<CompetencyGraphEdgeDTO> relationDTOs = relations.stream().map(CompetencyGraphEdgeDTO::of).collect(Collectors.toSet());
 
         return new LearningPathCompetencyGraphDTO(progressDTOs, relationDTOs);
-    }
-
-    /**
-     * Generates Ngx graph representation of the learning path graph.
-     *
-     * @param learningPath the learning path for which the Ngx representation should be created
-     * @return Ngx graph representation of the learning path
-     * @see NgxLearningPathDTO
-     */
-    public NgxLearningPathDTO generateNgxGraphRepresentation(@NotNull LearningPath learningPath) {
-        return this.learningPathNgxService.generateNgxGraphRepresentation(learningPath);
-    }
-
-    /**
-     * Generates Ngx path representation of the learning path.
-     *
-     * @param learningPath the learning path for which the Ngx representation should be created
-     * @return Ngx path representation of the learning path
-     * @see NgxLearningPathDTO
-     */
-    public NgxLearningPathDTO generateNgxPathRepresentation(@NotNull LearningPath learningPath) {
-        return this.learningPathNgxService.generateNgxPathRepresentation(learningPath);
     }
 
     /**
