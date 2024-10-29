@@ -132,9 +132,9 @@ export class FeedbackAnalysisComponent {
         this.loadData();
     }
 
-    getSortDirection(column: string): 'asc' | 'desc' | 'none' {
+    getSortDirection(column: string): SortingOrder.ASCENDING | SortingOrder.DESCENDING | 'none' {
         if (this.sortedColumn() === column) {
-            return this.sortingOrder() === SortingOrder.ASCENDING ? 'asc' : 'desc';
+            return this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.ASCENDING : SortingOrder.DESCENDING;
         }
         return 'none';
     }

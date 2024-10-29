@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { SortIconComponent } from 'app/shared/sort/sort-icon.component';
+import { SortingOrder } from 'app/shared/table/pageable-table';
 
 describe('SortIconComponent', () => {
     let component: SortIconComponent;
@@ -15,15 +16,15 @@ describe('SortIconComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('should set isAscending to true when direction is "asc"', () => {
-        fixture.componentRef.setInput('direction', 'asc');
+    it('should set isAscending to true when direction is Ascending', () => {
+        fixture.componentRef.setInput('direction', SortingOrder.ASCENDING);
         fixture.detectChanges();
         expect(component.isAscending()).toBeTrue();
         expect(component.isDescending()).toBeFalse();
     });
 
-    it('should set isDescending to true when direction is "desc"', () => {
-        fixture.componentRef.setInput('direction', 'desc');
+    it('should set isDescending to true when direction is Descending', () => {
+        fixture.componentRef.setInput('direction', SortingOrder.DESCENDING);
         fixture.detectChanges();
         expect(component.isDescending()).toBeTrue();
         expect(component.isAscending()).toBeFalse();

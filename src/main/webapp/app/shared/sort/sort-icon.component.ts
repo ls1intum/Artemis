@@ -2,6 +2,7 @@ import { Component, computed, input } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
 import { faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import { SortingOrder } from 'app/shared/table/pageable-table';
 
 @Component({
     selector: 'jhi-sort-icon',
@@ -11,11 +12,11 @@ import { faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
     imports: [FontAwesomeModule, CommonModule],
 })
 export class SortIconComponent {
-    direction = input.required<'asc' | 'desc' | 'none'>();
+    direction = input.required<SortingOrder.ASCENDING | SortingOrder.DESCENDING | 'none'>();
 
     faSortUp = faSortUp;
     faSortDown = faSortDown;
 
-    isAscending = computed(() => this.direction() === 'asc');
-    isDescending = computed(() => this.direction() === 'desc');
+    isAscending = computed(() => this.direction() === SortingOrder.ASCENDING);
+    isDescending = computed(() => this.direction() === SortingOrder.DESCENDING);
 }
