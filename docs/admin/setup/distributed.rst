@@ -620,7 +620,7 @@ These credentials are used to clone repositories via HTTPS. You must also add th
                     short-name: "artemis-build-agent-X"             # Short name of the build agent. This should be unique for each build agent. Only lowercase letters, numbers and hyphens are allowed.
                     display-name: "Artemis Build Agent X"           # This value is optional. If omitted, the short name will be used as display name. Display name of the build agent. This is shown in the Artemis UI.
                 build-timeout-seconds:
-                    max: 2400                                      # (Optional, default 240) Maximum time in seconds a build job is allowed to run. If a build job exceeds this time, it will be cancelled.
+                    max: 240                                        # (Optional, default 240) Maximum time in seconds a build job is allowed to run. If a build job exceeds this time, it will be cancelled.
 
 
 Please note that ``artemis.continuous-integration.build-agent.short-name`` must be provided. Otherwise, the build agent will not start.
