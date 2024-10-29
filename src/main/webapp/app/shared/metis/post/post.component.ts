@@ -1,20 +1,6 @@
-import {
-    AfterContentChecked,
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    Input,
-    OnChanges,
-    OnDestroy,
-    OnInit,
-    Output,
-    ViewChild,
-    ViewContainerRef,
-} from '@angular/core';
+import { AfterContentChecked, ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
@@ -61,11 +47,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
-    isDeleted = false;
-    readonly timeToDeleteInSeconds = 6;
-    deleteTimerInSeconds = 6;
-    deleteTimer: NodeJS.Timeout | undefined;
-    deleteInterval: NodeJS.Timeout | undefined;
 
     pageType: PageType;
     contextInformation: ContextInformation;
@@ -77,8 +58,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     faCheckSquare = faCheckSquare;
 
     constructor(
-        private metisService: MetisService,
-        protected changeDetector: ChangeDetectorRef,
         private oneToOneChatService: OneToOneChatService,
         private metisConversationService: MetisConversationService,
         private router: Router,
@@ -199,34 +178,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                     },
                 });
             }
-        }
-    }
-
-    onDeleteEvent(isDelete: boolean) {
-        this.isDeleted = isDelete;
-
-        if (this.deleteTimer !== undefined) {
-            clearTimeout(this.deleteTimer);
-        }
-
-        if (this.deleteInterval !== undefined) {
-            clearInterval(this.deleteInterval);
-        }
-
-        if (isDelete) {
-            this.deleteTimerInSeconds = this.timeToDeleteInSeconds;
-
-            this.deleteTimer = setTimeout(
-                () => {
-                    this.metisService.deletePost(this.posting);
-                },
-                this.deleteTimerInSeconds * 1000 + 1000,
-            );
-
-            this.deleteInterval = setInterval(() => {
-                this.deleteTimerInSeconds = Math.max(0, this.deleteTimerInSeconds - 1);
-                this.changeDetector.detectChanges();
-            }, 1000);
         }
     }
 }

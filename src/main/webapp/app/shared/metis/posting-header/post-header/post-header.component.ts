@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, ViewChild, input, output } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -22,9 +22,6 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     isAtLeastInstructorInCourse: boolean;
     mayEditOrDelete = false;
-
-    isDeleted = input<boolean>(false);
-    isDeleteEvent = output<boolean>();
 
     // Icons
     faPencilAlt = faPencilAlt;

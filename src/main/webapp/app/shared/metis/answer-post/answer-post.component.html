@@ -6,8 +6,10 @@
         [isCommunicationPage]="isCommunicationPage"
         [lastReadDate]="lastReadDate"
         [hasChannelModerationRights]="hasChannelModerationRights"
+        [isDeleted]="isDeleted"
+        (isDeleteEvent)="onDeleteEvent(true)"
     />
-    @if (!createAnswerPostModal.isInputOpen) {
+    @if (!isDeleted && !createAnswerPostModal.isInputOpen) {
         <div class="answer-post-content-margin">
             <jhi-posting-content
                 [content]="posting.content"
@@ -19,18 +21,28 @@
                 (channelReferenceClicked)="channelReferenceClicked.emit($event)"
             />
         </div>
+    } @else if (isDeleted) {
+        <span class="d-inline-flex align-items-center">
+            <span class="text-secondary" jhiTranslate="artemisApp.metis.post.deletedContent" [translateValues]="{ progress: deleteTimerInSeconds }"></span>
+            <button class="btn btn-outline-primary btn-sm ms-2 position-relative">
+                <span class="post-delete-button-label" jhiTranslate="artemisApp.metis.post.undoDelete" (click)="onDeleteEvent(false)"></span>
+                <span class="post-delete-button-background"></span>
+            </button>
+        </span>
     }
     <div class="answer-post-content-margin">
         <ng-container #createEditAnswerPostContainer />
     </div>
-    <div class="answer-post-content-margin">
-        <jhi-answer-post-footer
-            [isReadOnlyMode]="isReadOnlyMode"
-            [posting]="posting"
-            [isLastAnswer]="isLastAnswer"
-            [isThreadSidebar]="isThreadSidebar"
-            (openPostingCreateEditModal)="openPostingCreateEditModal.emit()"
-        />
-    </div>
+    @if (!isDeleted) {
+        <div class="answer-post-content-margin" @fade>
+            <jhi-answer-post-footer
+                [isReadOnlyMode]="isReadOnlyMode"
+                [posting]="posting"
+                [isLastAnswer]="isLastAnswer"
+                [isThreadSidebar]="isThreadSidebar"
+                (openPostingCreateEditModal)="openPostingCreateEditModal.emit()"
+            />
+        </div>
+    }
 </div>
 <jhi-answer-post-create-edit-modal #createAnswerPostModal [posting]="posting" [createEditAnswerPostContainerRef]="containerRef" />
