@@ -495,6 +495,14 @@ export class MetisService implements OnDestroy {
     }
 
     /**
+     * returns the router link required for navigating to the exercise referenced within a faq
+     * @return {string} router link of the faq
+     */
+    getLinkForFaq(): string {
+        return `/courses/${this.getCourse().id}/faq`;
+    }
+
+    /**
      * determines the routing params required for navigating to the detail view of the given post
      * @param {Post} post to be navigated to
      * @return {Params} required parameter key-value pair

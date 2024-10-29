@@ -46,7 +46,8 @@
                 "exercise": "Exercise",
                 "lecture": "Lecture",
                 "channel": "Channel",
-                "user": "User"
+                "user": "User",
+                "faq": "FAQ"
             },
             "channel": {
                 "noChannel": "There is no channel available.",

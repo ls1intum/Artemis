@@ -8,7 +8,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { LectureService } from 'app/lecture/lecture.service';
-import { Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import * as CourseModel from 'app/entities/course.model';
@@ -23,12 +23,14 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
-import { UrlAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/url.action';
-import { AttachmentAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/attachment.action';
+import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
+import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
+import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { ComponentPortal } from '@angular/cdk/portal';
+import { HttpResponse } from '@angular/common/http';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -37,6 +39,7 @@ describe('PostingsMarkdownEditor', () => {
     let mockMarkdownEditorComponent: MarkdownEditorMonacoComponent;
     let metisService: MetisService;
     let lectureService: LectureService;
+    let findLectureWithDetailsSpy: jest.SpyInstance;
 
     const backdropClickSubject = new Subject<void>();
     const mockOverlayRef = {
@@ -117,6 +120,10 @@ describe('PostingsMarkdownEditor', () => {
                 debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
                 lectureService = TestBed.inject(LectureService);
+
+                findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
+                const returnValue = of(new HttpResponse({ body: [], status: 200 }));
+                findLectureWithDetailsSpy.mockReturnValue(returnValue);
                 fixture.autoDetectChanges();
                 mockMarkdownEditorComponent = fixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
                 component.ngOnInit();
@@ -151,6 +158,53 @@ describe('PostingsMarkdownEditor', () => {
 
     it('should have set the correct default commands on init if communication is disabled', () => {
         jest.spyOn(CourseModel, 'isCommunicationEnabled').mockReturnValueOnce(false);
+        component.ngOnInit();
+
+        expect(component.defaultActions).toEqual(
+            expect.arrayContaining([
+                expect.any(BoldAction),
+                expect.any(ItalicAction),
+                expect.any(UnderlineAction),
+                expect.any(QuoteAction),
+                expect.any(CodeAction),
+                expect.any(CodeBlockAction),
+                expect.any(EmojiAction),
+                expect.any(UrlAction),
+                expect.any(AttachmentAction),
+                expect.any(ExerciseReferenceAction),
+            ]),
+        );
+
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
+    });
+
+    it('should have set the correct default commands on init if faq is enabled', () => {
+        jest.spyOn(CourseModel, 'isFaqEnabled').mockReturnValueOnce(true);
+        component.ngOnInit();
+
+        expect(component.defaultActions).toEqual(
+            expect.arrayContaining([
+                expect.any(BoldAction),
+                expect.any(ItalicAction),
+                expect.any(UnderlineAction),
+                expect.any(QuoteAction),
+                expect.any(CodeAction),
+                expect.any(CodeBlockAction),
+                expect.any(EmojiAction),
+                expect.any(UrlAction),
+                expect.any(AttachmentAction),
+                expect.any(UserMentionAction),
+                expect.any(ChannelReferenceAction),
+                expect.any(ExerciseReferenceAction),
+                expect.any(FaqReferenceAction),
+            ]),
+        );
+
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
+    });
+
+    it('should have set the correct default commands on init if faq is disabled', () => {
+        jest.spyOn(CourseModel, 'isFaqEnabled').mockReturnValueOnce(false);
         component.ngOnInit();
 
         expect(component.defaultActions).toEqual(
