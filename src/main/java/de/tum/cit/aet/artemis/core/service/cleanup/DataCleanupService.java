@@ -112,9 +112,7 @@ public class DataCleanupService {
         this.participantScoreCleanupRepository.deleteParticipantScoresForLatestNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         this.participantScoreCleanupRepository.deleteParticipantScoresForNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         this.feedbackCleanupRepository.deleteOldNonRatedFeedbackWhereCourseDateBetween(deleteFrom, deleteTo);
-
-        var latestNonRatedResultIds = this.resultCleanupRepository.getLatestResultsWhereRatedGroupedByParticipation(false);
-        this.resultCleanupRepository.deleteNonLatestNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo, latestNonRatedResultIds);
+        this.resultCleanupRepository.deleteNonLatestNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         return CleanupServiceExecutionRecordDTO.of(this.createCleanupJobExecution(CleanupJobType.NON_RATED_RESULTS, deleteFrom, deleteTo));
     }
 
@@ -132,9 +130,7 @@ public class DataCleanupService {
         this.feedbackCleanupRepository.deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         this.participantScoreCleanupRepository.deleteParticipantScoresForNonLatestLastResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         this.participantScoreCleanupRepository.deleteParticipantScoresForNonLatestLastRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
-
-        var latestRatedResultIds = this.resultCleanupRepository.getLatestResultsWhereRatedGroupedByParticipation(true);
-        this.resultCleanupRepository.deleteNonLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo, latestRatedResultIds);
+        this.resultCleanupRepository.deleteNonLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         return CleanupServiceExecutionRecordDTO.of(this.createCleanupJobExecution(CleanupJobType.RATED_RESULTS, deleteFrom, deleteTo));
     }
 
