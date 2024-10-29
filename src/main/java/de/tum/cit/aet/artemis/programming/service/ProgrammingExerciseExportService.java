@@ -174,9 +174,9 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             exportErrors.add("Failed to export programming exercise repositories: " + e.getMessage());
         }
 
-        // Add problem statement as .md file
         exercise.setAuxiliaryRepositories(auxiliaryRepositoryRepository.findByExerciseId(exercise.getId()));
 
+        // Add problem statement as .md file
         exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir.orElseThrow(), pathsToBeZipped);
 
         return exportDir.orElseThrow();
