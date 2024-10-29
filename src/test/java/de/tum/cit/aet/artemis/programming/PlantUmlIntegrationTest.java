@@ -17,11 +17,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import net.sourceforge.plantuml.SourceStringReader;
 import net.sourceforge.plantuml.core.DiagramDescription;
 
-class PlantUmlIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class PlantUmlIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "plantumlintegration";
 

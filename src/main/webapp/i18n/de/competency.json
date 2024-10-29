@@ -172,8 +172,9 @@
             "softDueDate": "Empfohlen bis",
             "masteryThreshold": "Schwellwert zum Erreichen der Kompetenz",
             "manage": {
-                "helpButton": "Hilfe",
-                "importAllButton": "Alles eines Kurses importieren"
+                "importAllButton": "Alles eines Kurses importieren",
+                "editRelationsButton": "Beziehungen bearbeiten",
+                "helpButton": "Hilfe"
             },
             "importSettings": {
                 "importRelationsLabel": "Beziehungen importieren",
@@ -240,6 +241,36 @@
                     "totalPointsAchievable": "Erreichbare Punkte",
                     "noOfParticipants": "Anzahl der Teilnehmenden",
                     "participationRate": "Teilnahmerate"
+                }
+            },
+            "relations": {
+                "modalTitle": "Beziehungen zwischen Kurskompetenzen",
+                "relationTypes": {
+                    "ASSUMES": "Setzt voraus",
+                    "EXTENDS": "Erweitert",
+                    "MATCHES": "Stimmt überein mit"
+                },
+                "form": {
+                    "headCourseCompetencyLabel": "Startkurskompetenz",
+                    "headCourseCompetencyDefaultOption": "Wähle Startkurskompetenz",
+                    "tailCourseCompetencyLabel": "Schlusskurskompetenz",
+                    "tailCourseCompetencyDefaultOption": "Wähle Schlusskurskompetenz",
+                    "relationTypeLabel": "Beziehungstyp",
+                    "relationTypeDefaultOption": "Wähle Beziehungstyp",
+                    "deleteRelationButtonLabel": "Beziehung löschen",
+                    "updateRelationButtonLabel": "Beziehung aktualisieren",
+                    "createRelationButtonLabel": "Beziehung erstellen",
+                    "cyclicDependencyError": "Du kannst keine zyklischen Beziehungen zwischen Kurskompetenzen erstellen."
+                },
+                "graph": {
+                    "nodeTypes": {
+                        "competency": "K",
+                        "prerequisite": "V"
+                    },
+                    "tooltips": {
+                        "competency": "Dieser Knoten repräsentiert eine Kompetenz",
+                        "prerequisite": "Dieser Knoten repräsentiert eine Voraussetzung"
+                    }
                 }
             },
             "featureExplanation": {

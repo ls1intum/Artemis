@@ -92,10 +92,19 @@ public class PyrisJobService {
     /**
      * Remove a job from the job map.
      *
-     * @param token the token
+     * @param job the job to remove
      */
-    public void removeJob(String token) {
-        jobMap.remove(token);
+    public void removeJob(PyrisJob job) {
+        jobMap.remove(job.jobId());
+    }
+
+    /**
+     * Store a job in the job map.
+     *
+     * @param job the job to store
+     */
+    public void updateJob(PyrisJob job) {
+        jobMap.put(job.jobId(), job);
     }
 
     /**

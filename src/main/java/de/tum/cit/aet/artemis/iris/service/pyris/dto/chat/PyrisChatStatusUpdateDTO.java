@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 /**
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 public record PyrisChatStatusUpdateDTO(
         String result, // TODO: Wrap in Optional for API clarity
         List<PyrisStageDTO> stages,
-        List<String> suggestions
+        List<String> suggestions,
+        List<LLMRequest> tokens
 ) {}
 // @formatter:on

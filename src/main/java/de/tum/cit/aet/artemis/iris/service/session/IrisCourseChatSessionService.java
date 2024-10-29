@@ -27,12 +27,11 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.LearningMetricsService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
@@ -40,7 +39,6 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
@@ -55,8 +53,6 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
-
-    private final IrisMessageService irisMessageService;
 
     private final IrisSettingsService irisSettingsService;
 
@@ -78,12 +74,12 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private final LearningMetricsService learningMetricsService;
 
-    public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
-            AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper,
-            CourseRepository courseRepository, StudentParticipationRepository studentParticipationRepository, LearningMetricsService learningMetricsService) {
-        super(irisSessionRepository, objectMapper);
-        this.irisMessageService = irisMessageService;
+    public IrisCourseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
+            IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
+            IrisRateLimitService rateLimitService, IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService,
+            ObjectMapper objectMapper, CourseRepository courseRepository, StudentParticipationRepository studentParticipationRepository,
+            LearningMetricsService learningMetricsService) {
+        super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
@@ -203,24 +199,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         return course;
     }
 
-    /**
-     * Handles the status update of a CourseChatJob by sending the result to the student via the Websocket.
-     *
-     * @param job          The job that was executed
-     * @param statusUpdate The status update of the job
-     */
-    public void handleStatusUpdate(CourseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        var session = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
-        if (statusUpdate.result() != null) {
-            var message = new IrisMessage();
-            message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-            var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
-        }
-        else {
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions());
-        }
-        updateLatestSuggestions(session, statusUpdate.suggestions());
+    @Override
+    protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisCourseChatSession session) {
+        builder.withCourse(session.getCourse().getId());
     }
 
     /**

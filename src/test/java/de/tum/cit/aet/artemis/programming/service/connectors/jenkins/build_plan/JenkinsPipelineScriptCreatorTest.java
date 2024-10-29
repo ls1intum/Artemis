@@ -6,36 +6,15 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
-import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsPipelineScriptCreator;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
-class JenkinsPipelineScriptCreatorTest extends AbstractSpringIntegrationJenkinsGitlabTest {
-
-    @Autowired
-    private BuildPlanRepository buildPlanRepository;
-
-    @Autowired
-    private JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
+class JenkinsPipelineScriptCreatorTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private ProgrammingExercise programmingExercise;
 

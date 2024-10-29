@@ -6,6 +6,25 @@ import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz
 const hintOrExpRegex = new RegExp(escapeStringForUseInRegex(`${QuizExplanationAction.IDENTIFIER}`) + '|' + escapeStringForUseInRegex(`${QuizHintAction.IDENTIFIER}`), 'g');
 
 /**
+ * Takes a string and removes any symbols used for syntax in the markdown editor.
+ * @param {string} str - The string for sanitization.
+ */
+export function sanitizeStringForMarkdownEditor(str: string | undefined): string | undefined {
+    if (str === undefined) {
+        return str;
+    }
+
+    const symbolsToRemove = ['(', ')', '[', ']'];
+    let newString = str;
+
+    symbolsToRemove.forEach((symbolToRemove) => {
+        newString = newString.replaceAll(symbolToRemove, '');
+    });
+
+    return newString;
+}
+
+/**
  * Parse the markdown text and apply the result to the target object's data
  *
  * The markdown text is split at QuizHintAction.IDENTIFIER and QuizExplanationAction.IDENTIFIER tags.

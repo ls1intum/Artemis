@@ -32,8 +32,8 @@ public class TemplateUpgradePolicyService {
     public TemplateUpgradeService getUpgradeService(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
             case JAVA -> javaRepositoryUpgradeService;
-            case KOTLIN, PYTHON, C, HASKELL, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS -> defaultRepositoryUpgradeService;
-            case C_SHARP, SQL, TYPESCRIPT, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
+            case KOTLIN, PYTHON, C, HASKELL, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT -> defaultRepositoryUpgradeService;
+            case C_SHARP, SQL, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
                 throw new UnsupportedOperationException("Unsupported programming language: " + programmingLanguage);
         };
     }

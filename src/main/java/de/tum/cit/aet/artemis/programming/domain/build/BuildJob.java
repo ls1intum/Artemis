@@ -88,7 +88,7 @@ public class BuildJob extends DomainObject {
         this.courseId = queueItem.courseId();
         this.participationId = queueItem.participationId();
         this.result = result;
-        this.buildAgentAddress = queueItem.buildAgentAddress();
+        this.buildAgentAddress = queueItem.buildAgent().memberAddress();
         this.buildStartDate = queueItem.jobTimingInfo().buildStartDate();
         this.buildCompletionDate = queueItem.jobTimingInfo().buildCompletionDate();
         this.repositoryType = queueItem.repositoryInfo().repositoryType();

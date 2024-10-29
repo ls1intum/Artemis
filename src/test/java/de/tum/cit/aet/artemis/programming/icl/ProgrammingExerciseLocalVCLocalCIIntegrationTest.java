@@ -26,17 +26,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -47,8 +43,6 @@ import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 // TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
 // This reduces the overhead of repeatedly creating and tearing down a new Spring application context for each test method.
@@ -61,21 +55,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 // concurrently. For example, it prevents overloading the LocalCI's result processing system with too many build job results at the same time, which could lead to flaky tests
 // or timeouts. By keeping everything in the same thread, we maintain more predictable and stable test behavior, while not increasing the test execution time significantly.
 @Execution(ExecutionMode.SAME_THREAD)
-class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "progexlocalvclocalci";
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private AeolusRequestMockProvider aeolusRequestMockProvider;
-
-    @Autowired
-    private CompetencyUtilService competencyUtilService;
 
     private Course course;
 
@@ -90,12 +72,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
     private LocalRepository assignmentRepository;
 
     private Competency competency;
-
-    @Value("${artemis.user-management.internal-admin.username}")
-    private String localVCUsername;
-
-    @Value("${artemis.user-management.internal-admin.password}")
-    private String localVCPassword;
 
     @BeforeAll
     void setupAll() {

@@ -15,10 +15,9 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -26,7 +25,6 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisProgrammingExerciseDTOService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
@@ -46,8 +44,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 @Service
 @Profile(PROFILE_IRIS)
 public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisExerciseChatSession> implements IrisRateLimitedFeatureInterface {
-
-    private final IrisMessageService irisMessageService;
 
     private final IrisSettingsService irisSettingsService;
 
@@ -69,13 +65,12 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final PyrisProgrammingExerciseDTOService pyrisProgrammingExerciseDTOService;
 
-    public IrisExerciseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
-            AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
+    public IrisExerciseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
+            IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository,
             ObjectMapper objectMapper, PyrisProgrammingExerciseDTOService pyrisProgrammingExerciseDTOService) {
-        super(irisSessionRepository, objectMapper);
-        this.irisMessageService = irisMessageService;
+        super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
@@ -188,24 +183,9 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
                 .flatMap(sub -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(sub.getId()));
     }
 
-    /**
-     * Handles the status update of a ExerciseChatJob by sending the result to the student via the Websocket.
-     *
-     * @param job          The job that was executed
-     * @param statusUpdate The status update of the job
-     */
-    public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        var session = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
-        if (statusUpdate.result() != null) {
-            var message = new IrisMessage();
-            message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-            var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
-        }
-        else {
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions());
-        }
-
-        updateLatestSuggestions(session, statusUpdate.suggestions());
+    @Override
+    protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisExerciseChatSession session) {
+        var exercise = session.getExercise();
+        builder.withCourse(exercise.getCourseViaExerciseGroupOrCourseMember().getId()).withExercise(exercise.getId());
     }
 }

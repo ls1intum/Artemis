@@ -109,11 +109,12 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should embed manually uploaded files', () => {
+        const inputEvent = { target: { files: [new File([''], 'test.png')] } } as unknown as InputEvent;
         const embedFilesStub = jest.spyOn(comp, 'embedFiles').mockImplementation();
         fixture.detectChanges();
         const files = [new File([''], 'test.png')];
-        comp.onFileUpload({ target: { files } });
-        expect(embedFilesStub).toHaveBeenCalledExactlyOnceWith(files);
+        comp.onFileUpload(inputEvent);
+        expect(embedFilesStub).toHaveBeenCalledExactlyOnceWith(files, inputEvent.target);
     });
 
     it('should not embed via manual upload if the event contains no files', () => {
@@ -228,7 +229,21 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.MEDIUM);
     });
 
+    it('should not react to content height changes if file upload is enabled but the footer has not loaded', () => {
+        comp.initialEditorHeight = MarkdownEditorHeight.SMALL;
+        jest.spyOn(comp, 'getElementClientHeight').mockReturnValue(0);
+        comp.enableFileUpload = true;
+        comp.linkEditorHeightToContentHeight = true;
+        comp.resizableMinHeight = MarkdownEditorHeight.INLINE;
+        comp.resizableMaxHeight = MarkdownEditorHeight.LARGE;
+        fixture.detectChanges();
+        expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.SMALL);
+        comp.onContentHeightChanged(9999);
+        expect(comp.targetWrapperHeight).toBe(MarkdownEditorHeight.SMALL);
+    });
+
     it('should react to content height changes if the height is linked to the editor', () => {
+        jest.spyOn(comp, 'getElementClientHeight').mockReturnValue(20);
         comp.linkEditorHeightToContentHeight = true;
         comp.resizableMaxHeight = MarkdownEditorHeight.LARGE;
         fixture.detectChanges();

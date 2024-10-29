@@ -161,7 +161,7 @@ describe('PostingContentComponent', () => {
         it('should only include content before reference for empty patternMatches', () => {
             component.content = 'I do not want to reference a Post.';
             component.computePostingContentParts([]);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: component.content,
                     linkToReference: undefined,
@@ -184,7 +184,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference #${idOfExercisePostToReference} in the same exercise context.`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', metisCourse.id, 'discussion'],
@@ -208,7 +208,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference #${idOfLecturePostToReference} in the same lecture context.`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', metisCourse.id, 'discussion'],
@@ -232,7 +232,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference #${idOfGeneralCourseWidePost} with course-wide context while currently being at course discussion overview.`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', metisCourse.id, 'discussion'],
@@ -255,7 +255,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference #${idOfLecturePostToReference} with lecture context while currently being at the course discussion overview.`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', metisCourse.id, 'discussion'],
@@ -278,7 +278,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference #${idOfExercisePostToReference} with exercise context while currently being at the course discussion overview.`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', metisCourse.id, 'discussion'],
@@ -301,7 +301,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference #${idOfCourseWidePostToReference} with course-wide context while currently being at a lecture page.`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', metisCourse.id, 'discussion'],
@@ -324,7 +324,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference #${idOfExercisePostToReference} with exercise context while currently being at a lecture page.`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', metisCourse.id, 'discussion'],
@@ -340,7 +340,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference [file-upload]File Upload Exercise(courses/1/exercises/1)[/file-upload].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['courses/1/exercises/1'],
@@ -355,7 +355,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference [modeling]Modeling Exercise(courses/1/exercises/1)[/modeling].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['courses/1/exercises/1'],
@@ -370,7 +370,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference [quiz]Quiz Exercise(courses/1/exercises/1)[/quiz].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['courses/1/exercises/1'],
@@ -385,7 +385,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference [programming]Programming Exercise(courses/1/exercises/1)[/programming].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['courses/1/exercises/1'],
@@ -400,7 +400,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference [text]Text Exercise(courses/1/exercises/1)[/text].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['courses/1/exercises/1'],
@@ -415,7 +415,7 @@ describe('PostingContentComponent', () => {
             component.content = `I want to reference [lecture]Lecture 1(courses/1/lectures/1)[/lecture].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['courses/1/lectures/1'],
@@ -432,7 +432,7 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             // the attachment directory that is removed when showing the text in edit mode
             const attachmentDirectory = 'api/files/attachments/';
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     referenceStr: `PDF File`,
@@ -449,7 +449,7 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             // the attachment directory that is removed when showing the text in edit mode
             const attachmentDirectory = 'api/files/attachments/';
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     referenceStr: `PDF File lecture unit`,
@@ -466,7 +466,7 @@ describe('PostingContentComponent', () => {
             component.computePostingContentParts(matches);
             // the attachment directory that is removed when showing the text in edit mode
             const attachmentDirectory = 'api/files/attachments/';
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     referenceStr: `PDF File Slide 7`,
@@ -481,7 +481,7 @@ describe('PostingContentComponent', () => {
             component.content = `This message is important for [user]Test(test_login)[/user].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'This message is important for ',
                     referenceStr: `Test`,
@@ -496,7 +496,7 @@ describe('PostingContentComponent', () => {
             component.content = `This topic belongs to [channel]test(1)[/channel].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'This topic belongs to ',
                     referenceStr: 'test',
@@ -511,7 +511,7 @@ describe('PostingContentComponent', () => {
             component.content = `This topic belongs to [channel]test(abc)[/channel].`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
-            expect(component.postingContentParts).toEqual([
+            expect(component.postingContentParts()).toEqual([
                 {
                     contentBeforeReference: 'This topic belongs to ',
                     referenceStr: 'test',

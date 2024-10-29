@@ -12,17 +12,19 @@ import {
     ViewChild,
     ViewChildren,
     ViewEncapsulation,
+    inject,
 } from '@angular/core';
-import { faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 
 @Component({
     selector: 'jhi-course-wide-search',
@@ -54,6 +56,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     faTimes = faTimes;
     faEnvelope = faEnvelope;
     faCircleNotch = faCircleNotch;
+    faChevronLeft = faChevronLeft;
 
     readonly SortDirection = SortDirection;
     sortingOrder = SortDirection.ASCENDING;
@@ -68,6 +71,8 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     formGroup: FormGroup;
 
     getAsChannel = getAsChannelDTO;
+
+    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
 
     constructor(
         public metisService: MetisService, // instance from course-conversations.component
@@ -90,6 +95,10 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+    }
+
+    openSidebar() {
+        this.courseSidebarService.openSidebar();
     }
 
     private subscribeToMetis() {
@@ -150,8 +159,18 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             pageSize: 50,
         };
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
-            this.currentPostContextFilter!.courseWideChannelIds = conversations.map((conversation) => conversation!.id!);
+            this.currentPostContextFilter!.courseWideChannelIds = conversations
+                .filter((conversation) => !(this.currentPostContextFilter?.filterToUnresolved && this.conversationIsAnnouncement(conversation)))
+                .map((conversation) => conversation.id!);
         });
+    }
+
+    conversationIsAnnouncement(conversation: ConversationDTO) {
+        if (conversation.type === 'channel') {
+            const channel = conversation as ChannelDTO;
+            return channel.isAnnouncementChannel;
+        }
+        return false;
     }
 
     postsTrackByFn = (index: number, post: Post): number => post.id!;

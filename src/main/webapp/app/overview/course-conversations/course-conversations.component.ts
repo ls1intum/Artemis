@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,6 +22,9 @@ import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversat
 import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import { LayoutService } from 'app/shared/breakpoints/layout.service';
+import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -85,6 +88,10 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
+    private closeSidebarEventSubscription: Subscription;
+    private openSidebarEventSubscription: Subscription;
+    private toggleSidebarEventSubscription: Subscription;
+    private breakpointSubscription: Subscription;
     course?: Course;
     isLoading = false;
     isServiceSetUp = false;
@@ -102,6 +109,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isCollapsed = false;
     isProduction = true;
     isTestServer = false;
+    isMobile = false;
 
     readonly CHANNEL_TYPE_SHOW_ADD_OPTION = CHANNEL_TYPE_SHOW_ADD_OPTION;
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
@@ -130,6 +138,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     createChannelFn?: (channel: ChannelDTO) => Observable<never>;
     channelActions$ = new EventEmitter<ChannelAction>();
 
+    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
+    private layoutService: LayoutService = inject(LayoutService);
+
     constructor(
         private router: Router,
         private activatedRoute: ActivatedRoute,
@@ -156,8 +167,35 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
+
+        this.breakpointSubscription = this.layoutService.subscribeToLayoutChanges().subscribe(() => {
+            this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
+        });
+
+        this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
+            this.setIsCollapsed(true);
+        });
+
+        this.closeSidebarEventSubscription = this.courseSidebarService.closeSidebar$.subscribe(() => {
+            this.setIsCollapsed(false);
+        });
+
+        this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
+            this.toggleSidebar();
+        });
+
+        if (!this.isMobile) {
+            if (this.courseOverviewService.getSidebarCollapseStateFromStorage('conversation')) {
+                this.courseSidebarService.openSidebar();
+            } else {
+                this.courseSidebarService.closeSidebar();
+            }
+        } else {
+            this.courseSidebarService.openSidebar();
+        }
+
         this.isLoading = true;
-        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('conversation');
         this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
             if (isServiceSetUp) {
                 this.course = this.metisConversationService.course;
@@ -214,9 +252,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.activatedRoute.queryParams.pipe(take(1), takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
             if (queryParams.conversationId) {
                 this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
+
+                this.closeSidebarOnMobile();
             }
             if (queryParams.messageId) {
                 this.postInThread = { id: Number(queryParams.messageId) } as Post;
+
+                this.closeSidebarOnMobile();
             } else {
                 this.postInThread = undefined;
             }
@@ -236,12 +278,20 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.openSidebarEventSubscription?.unsubscribe();
+        this.closeSidebarEventSubscription?.unsubscribe();
+        this.toggleSidebarEventSubscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
+        this.breakpointSubscription?.unsubscribe();
     }
 
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
+            const previousConversation = this.activeConversation;
             this.activeConversation = conversation;
+            if (this.isMobile && conversation && previousConversation?.id !== conversation.id) {
+                this.courseSidebarService.closeSidebar();
+            }
             this.updateQueryParameters();
         });
     }
@@ -286,8 +336,20 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             : DEFAULT_CHANNEL_GROUPS;
     }
 
+    hideSearchTerm() {
+        this.courseWideSearchTerm = '';
+    }
+
     onSearch() {
+        if (this.isMobile) {
+            if (this.courseWideSearchTerm) {
+                this.courseSidebarService.closeSidebar();
+            } else {
+                this.courseSidebarService.openSidebar();
+            }
+        }
         this.metisConversationService.setActiveConversation(undefined);
+        this.activeConversation = undefined;
         this.updateQueryParameters();
         this.courseWideSearchConfig.searchTerm = this.courseWideSearchTerm;
         this.courseWideSearch?.onSearch();
@@ -316,11 +378,22 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onConversationSelected(conversationId: number) {
+        this.closeSidebarOnMobile();
         this.metisConversationService.setActiveConversation(conversationId);
     }
 
     toggleSidebar() {
-        this.isCollapsed = !this.isCollapsed;
+        this.setIsCollapsed(!this.isCollapsed);
+    }
+
+    closeSidebarOnMobile() {
+        if (this.isMobile) {
+            this.courseSidebarService.closeSidebar();
+        }
+    }
+
+    setIsCollapsed(value: boolean) {
+        this.isCollapsed = value;
         this.courseOverviewService.setSidebarCollapseState('conversation', this.isCollapsed);
     }
 
@@ -395,12 +468,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                         complete: () => {
                             if (newActiveConversation) {
                                 this.metisConversationService.setActiveConversation(newActiveConversation);
+                                this.closeSidebarOnMobile();
                             }
                         },
                     });
                 } else {
                     if (newActiveConversation) {
                         this.metisConversationService.setActiveConversation(newActiveConversation);
+                        this.closeSidebarOnMobile();
                     }
                 }
                 this.prepareSidebarData();
