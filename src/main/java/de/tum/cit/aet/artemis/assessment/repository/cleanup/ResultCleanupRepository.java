@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment.repository.cleanup;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
@@ -38,13 +39,28 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
     void deleteResultWithoutParticipationAndSubmission();
 
     /**
+     * Retrieves the IDs of the latest results that are rated or unrated, grouped by participation.
+     *
+     * @param rated specifies whether to filter results based on their rated status.
+     * @return a list of IDs representing the latest results for each participation that match the rated status.
+     */
+    @Query("""
+            SELECT MAX(r.id)
+            FROM Result r
+            WHERE r.rated = :rated
+            GROUP BY r.participation
+            """)
+    List<Long> getLatestResultsWhereRatedGroupedByParticipation(@Param("rated") boolean rated);
+
+    /**
      * Deletes non-rated {@link Result} entries that are not the latest result where the associated {@link Participation} and {@link Exercise} are not null,
      * and the course's start and end dates fall between the specified date range.
      * This query deletes non-rated results associated with exercises within courses whose end date is before
      * {@code deleteTo} and start date is after {@code deleteFrom}.
      *
-     * @param deleteFrom the start date for selecting courses
-     * @param deleteTo   the end date for selecting courses
+     * @param deleteFrom              the start date for selecting courses
+     * @param deleteTo                the end date for selecting courses
+     * @param latestNonRatedResultIds ids of latest non-rated results pro participation(participation not provided)
      */
     @Modifying
     @Transactional // ok because of delete
@@ -61,14 +77,10 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
                         AND c.endDate < :deleteTo
                         AND c.startDate > :deleteFrom
                 )
-                AND r.id NOT IN (
-                    SELECT MAX(r2.id)
-                    FROM Result r2
-                    WHERE r2.participation = r.participation
-                        AND r2.rated = FALSE
-                )
+                AND r.id NOT IN :latestNonRatedResultIds
             """)
-    void deleteNonLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    void deleteNonLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo,
+            @Param("latestNonRatedResultIds") List<Long> latestNonRatedResultIds);
 
     /**
      * Deletes rated {@link Result} entries that are not the latest rated result for a {@link Participation}, within courses
@@ -76,8 +88,9 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
      * This query removes rated results that are not the most recent for a participation, for courses whose end date is
      * before {@code deleteTo} and start date is after {@code deleteFrom}.
      *
-     * @param deleteFrom the start date for selecting courses
-     * @param deleteTo   the end date for selecting courses
+     * @param deleteFrom           the start date for selecting courses
+     * @param deleteTo             the end date for selecting courses
+     * @param latestRatedResultIds ids of latest rated results pro participation(participation not provided)
      */
     @Modifying
     @Transactional // ok because of delete
@@ -94,12 +107,8 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
                         AND c.endDate < :deleteTo
                         AND c.startDate > :deleteFrom
                 )
-                AND r.id NOT IN (
-                    SELECT MAX(r2.id)
-                    FROM Result r2
-                    WHERE r2.participation = r.participation
-                        AND r2.rated = TRUE
-                )
+                AND r.id NOT IN :latestRatedResultIds
             """)
-    void deleteNonLatestRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    void deleteNonLatestRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo,
+            @Param("latestRatedResultIds") List<Long> latestRatedResultIds);
 }
