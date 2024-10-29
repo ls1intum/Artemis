@@ -73,10 +73,6 @@ describe('CompetencyManagementComponent', () => {
                     provide: ProfileService,
                     useClass: MockProfileService,
                 },
-                {
-                    provide: AlertService,
-                    useClass: MockAlertService,
-                },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 {
                     provide: ActivatedRoute,
