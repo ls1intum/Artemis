@@ -177,8 +177,6 @@ public class ProgrammingExerciseImportFromFileService {
             auxiliaryRepositories.add(gitService.getOrCheckoutRepository(new VcsRepositoryUri(auxiliaryRepository.getRepositoryUri()), false));
         }
 
-        // TODO import auxiliary repos
-
         copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, auxiliaryRepositories, basePath);
         replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), List.of(solutionRepo, templateRepo, testRepo));
         replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), auxiliaryRepositories);
@@ -231,7 +229,13 @@ public class ProgrammingExerciseImportFromFileService {
      * @param basePath   the path to the extracted zip file
      **/
     private void copyExerciseContentToRepository(Repository repository, String repoName, Path basePath) throws IOException {
-        FileUtils.copyDirectory(retrieveRepositoryDirectoryPath(basePath, repoName).toFile(), repository.getLocalPath().toFile(), new NotFileFilter(new NameFileFilter(".git")));
+        // @formatter:off
+        FileUtils.copyDirectory(
+            retrieveRepositoryDirectoryPath(basePath, repoName).toFile(),
+            repository.getLocalPath().toFile(),
+            new NotFileFilter(new NameFileFilter(".git"))
+        );
+        // @formatter:on
 
         try (var files = Files.walk(repository.getLocalPath())) {
             files.filter(file -> "gradlew".equals(file.getFileName().toString())).forEach(file -> file.toFile().setExecutable(true));
