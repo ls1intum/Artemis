@@ -39,7 +39,7 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
-    private sessionStorageKey = 'conversationId.scrollPosition.';
+    sessionStorageKey = 'conversationId.scrollPosition.';
 
     readonly PageType = PageType;
     readonly ButtonType = ButtonType;
@@ -282,7 +282,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         });
     }
 
-    private saveScrollPosition = () => {
+    saveScrollPosition = () => {
         this.scrollSubject.next(this.content.nativeElement.scrollTop);
     };
 

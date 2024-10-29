@@ -131,6 +131,26 @@ examples.forEach((activeConversation) => {
             expect(getFilteredPostSpy).toHaveBeenCalledOnce();
         }));
 
+        it('should save the scroll position in sessionStorage', fakeAsync(() => {
+            // Überwache sessionStorage.setItem
+            const setItemSpy = jest.spyOn(sessionStorage, 'setItem');
+            component.ngOnInit();
+            component.content.nativeElement.scrollTop = 200;
+            component.saveScrollPosition();
+            tick(100);
+            const expectedKey = `${component.sessionStorageKey}${component._activeConversation?.id}`;
+            const expectedValue = '200';
+            expect(setItemSpy).toHaveBeenCalledWith(expectedKey, expectedValue);
+        }));
+
+        it('should scroll to the bottom when a new message is created', fakeAsync(() => {
+            component.content.nativeElement.scrollTop = 100;
+            fixture.detectChanges();
+            component.handleNewMessageCreated();
+            tick();
+            expect(component.content.nativeElement.scrollTop).toBe(component.content.nativeElement.scrollHeight);
+        }));
+
         it('should create empty post with the correct conversation type', fakeAsync(() => {
             const createEmptyPostForContextSpy = jest.spyOn(metisService, 'createEmptyPostForContext').mockReturnValue(new Post());
             component.createEmptyPost();
