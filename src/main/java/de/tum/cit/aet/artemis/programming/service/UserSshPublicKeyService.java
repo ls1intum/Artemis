@@ -97,15 +97,8 @@ public class UserSshPublicKeyService {
      * @throws AccessForbiddenException if the key does not belong to the user, or does not exist
      */
     public UserSshPublicKey getSshKeyForUser(User user, Long keyId) {
-        try {
-            var userSshPublicKey = userSshPublicKeyRepository.findByIdElseThrow(keyId);
-            if (Objects.equals(userSshPublicKey.getUserId(), user.getId())) {
-                return userSshPublicKey;
-            }
-        }
-        catch (EntityNotFoundException ignored) {
-        }
-        throw new AccessForbiddenException("SSH key", keyId);
+        Optional< UserSshPublicKey> userSshPublicKey = userSshPublicKeyRepository.findByIdAndUserId(keyId, user.getId());
+        return userSshPublicKey.orThrow(new AccessForbiddenException("SSH key", keyId));
     }
 
     /**
