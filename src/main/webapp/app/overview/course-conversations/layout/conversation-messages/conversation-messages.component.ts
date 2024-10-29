@@ -9,6 +9,7 @@ import {
     OnInit,
     Output,
     QueryList,
+    Renderer2,
     ViewChild,
     ViewChildren,
     ViewEncapsulation,
@@ -30,6 +31,7 @@ import { canCreateNewMessageInConversation } from 'app/shared/metis/conversation
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 
 @Component({
     selector: 'jhi-conversation-messages',
@@ -46,6 +48,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private scrollDebounceTime = 100; // ms
     private scrollSubject = new Subject<number>();
+    private canStartSaving = false;
 
     @Output() openThread = new EventEmitter<Post>();
 
@@ -53,7 +56,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     searchInput: ElementRef;
 
     @ViewChildren('postingThread')
-    messages: QueryList<any>;
+    messages: QueryList<PostingThreadComponent>;
     @ViewChild('container')
     content: ElementRef;
     @Input()
@@ -75,6 +78,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     searchText = '';
     _activeConversation?: ConversationDTO;
 
+    elementsAtScrollPosition: PostingThreadComponent[];
     newPost?: Post;
     posts: Post[] = [];
     totalNumberOfPosts = 0;
@@ -88,6 +92,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     isMobile = false;
 
     private layoutService: LayoutService = inject(LayoutService);
+    private renderer = inject(Renderer2);
 
     constructor(
         public metisService: MetisService, // instance from course-conversations.component
@@ -143,7 +148,15 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     ngAfterViewInit() {
         this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
-        this.content.nativeElement.addEventListener('scroll', this.saveScrollPosition);
+        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
+            if (this.posts.length > 0) {
+                const savedScrollId = sessionStorage.getItem(this.sessionStorageKey + this._activeConversation?.id) ?? '';
+                setTimeout(() => this.goToLastSelectedElement(parseInt(savedScrollId!, 10)), 0);
+            }
+        });
+        this.content.nativeElement.addEventListener('scroll', () => {
+            this.findElementsAtScrollPosition();
+        });
     }
 
     ngOnDestroy(): void {
@@ -158,6 +171,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.searchInput.nativeElement.value = '';
                 this.searchText = '';
             }
+            this.canStartSaving = false;
             this.onSearch();
             this.createEmptyPost();
         }
@@ -247,21 +261,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
     handleScrollOnNewMessage = () => {
         if ((this.posts.length > 0 && this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
-            this.scrollToBottomOfMessages(false);
+            this.scrollToBottomOfMessages();
         }
     };
 
-    scrollToBottomOfMessages(newMessageCreated: boolean) {
+    scrollToBottomOfMessages() {
         // Use setTimeout to ensure the scroll happens after the new message is rendered
         setTimeout(() => {
-            const savedScrollPosition = sessionStorage.getItem(this.sessionStorageKey + this._activeConversation?.id);
-            if (savedScrollPosition && !newMessageCreated) {
-                this.content.nativeElement.scrollTop = parseInt(savedScrollPosition, 10);
-            } else {
-                this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
-            }
+            this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
         }, 0);
     }
+
     onSearchQueryInput($event: Event) {
         const searchTerm = ($event.target as HTMLInputElement).value?.trim().toLowerCase() ?? '';
         this.search$.next(searchTerm);
@@ -282,12 +292,41 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         });
     }
 
-    saveScrollPosition = () => {
-        this.scrollSubject.next(this.content.nativeElement.scrollTop);
+    saveScrollPosition = (postId: number) => {
+        this.scrollSubject.next(postId);
     };
 
     handleNewMessageCreated() {
         this.createEmptyPost();
-        this.scrollToBottomOfMessages(true);
+        this.scrollToBottomOfMessages();
+    }
+    private async goToLastSelectedElement(lastScrollPosition: number) {
+        if (!lastScrollPosition) {
+            this.scrollToBottomOfMessages();
+            this.canStartSaving = true;
+            return;
+        }
+        const messageArray = this.messages.toArray();
+        const element = messageArray.find((message) => message.post.id === lastScrollPosition); // Suchen nach dem Post
+
+        if (!element) {
+            this.fetchNextPage();
+        } else {
+            await this.renderer.selectRootElement(element.elementRef.nativeElement, true).scrollIntoView({ behavior: 'instant', block: 'center' });
+            this.canStartSaving = true;
+        }
+    }
+
+    private findElementsAtScrollPosition() {
+        const messageArray = this.messages.toArray();
+        this.elementsAtScrollPosition = messageArray.filter((message) => {
+            const rect = message.elementRef.nativeElement.getBoundingClientRect();
+            const containerRect = this.content.nativeElement.getBoundingClientRect();
+            return rect.top >= containerRect.top && rect.bottom <= containerRect.bottom;
+        });
+
+        if (this.elementsAtScrollPosition && this.canStartSaving) {
+            this.saveScrollPosition(this.elementsAtScrollPosition[0].post.id!);
+        }
     }
 }

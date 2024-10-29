@@ -135,11 +135,10 @@ examples.forEach((activeConversation) => {
             // Überwache sessionStorage.setItem
             const setItemSpy = jest.spyOn(sessionStorage, 'setItem');
             component.ngOnInit();
-            component.content.nativeElement.scrollTop = 200;
-            component.saveScrollPosition();
+            component.saveScrollPosition(15);
             tick(100);
             const expectedKey = `${component.sessionStorageKey}${component._activeConversation?.id}`;
-            const expectedValue = '200';
+            const expectedValue = '15';
             expect(setItemSpy).toHaveBeenCalledWith(expectedKey, expectedValue);
         }));
 
