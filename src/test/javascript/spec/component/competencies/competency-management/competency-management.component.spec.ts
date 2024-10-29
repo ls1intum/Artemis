@@ -31,6 +31,8 @@ import {
     ImportAllCourseCompetenciesModalComponent,
     ImportAllCourseCompetenciesResult,
 } from 'app/course/competencies/components/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 
 describe('CompetencyManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
@@ -42,8 +44,8 @@ describe('CompetencyManagementComponent', () => {
 
     let getAllForCourseSpy: any;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbProgressbar],
             declarations: [
                 CompetencyManagementComponent,
@@ -60,6 +62,14 @@ describe('CompetencyManagementComponent', () => {
                 provideRouter([]),
                 MockProvider(AccountService),
                 MockProvider(AlertService),
+                {
+                    provide: AlertService,
+                    useClass: MockAlertService,
+                },
+                {
+                    provide: ProfileService,
+                    useClass: MockProfileService,
+                },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 {
                     provide: ActivatedRoute,
@@ -73,34 +83,37 @@ describe('CompetencyManagementComponent', () => {
                 },
             ],
             schemas: [],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CompetencyManagementComponent);
-                component = fixture.componentInstance;
-                courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
-                modalService = fixture.debugElement.injector.get(NgbModal);
+        }).compileComponents();
 
-                const competency: Competency = new Competency();
-                const textUnit = new TextUnit();
-                competency.id = 1;
-                competency.description = 'test';
-                competency.lectureUnits = [textUnit];
-                const courseCompetencyProgress = new CourseCompetencyProgress();
-                courseCompetencyProgress.competencyId = 1;
-                courseCompetencyProgress.numberOfStudents = 8;
-                courseCompetencyProgress.numberOfMasteredStudents = 5;
-                courseCompetencyProgress.averageStudentScore = 90;
+        courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
 
-                getAllForCourseSpy = jest.spyOn(courseCompetencyApiService, 'getCourseCompetenciesByCourseId').mockResolvedValue([
-                    competency,
-                    { id: 5, type: CourseCompetencyType.COMPETENCY } as Competency,
-                    {
-                        id: 3,
-                        type: CourseCompetencyType.PREREQUISITE,
-                    } as Prerequisite,
-                ]);
-            });
+        const competency: Competency = new Competency();
+        const textUnit = new TextUnit();
+        competency.id = 1;
+        competency.description = 'test';
+        competency.lectureUnits = [textUnit];
+        const courseCompetencyProgress = new CourseCompetencyProgress();
+        courseCompetencyProgress.competencyId = 1;
+        courseCompetencyProgress.numberOfStudents = 8;
+        courseCompetencyProgress.numberOfMasteredStudents = 5;
+        courseCompetencyProgress.averageStudentScore = 90;
+
+        getAllForCourseSpy = jest.spyOn(courseCompetencyApiService, 'getCourseCompetenciesByCourseId').mockResolvedValue([
+            competency,
+            { id: 5, type: CourseCompetencyType.COMPETENCY } as Competency,
+            {
+                id: 3,
+                type: CourseCompetencyType.PREREQUISITE,
+            } as Prerequisite,
+        ]);
+
+        profileService = TestBed.inject(ProfileService);
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+
+        fixture = TestBed.createComponent(CompetencyManagementComponent);
+        component = fixture.componentInstance;
+
+        modalService = fixture.debugElement.injector.get(NgbModal);
     });
 
     afterEach(() => {
@@ -108,8 +121,6 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should show generate button if IRIS is enabled', async () => {
-        profileService = TestBed.inject(ProfileService);
-        irisSettingsService = TestBed.inject(IrisSettingsService);
         const profileInfoResponse = {
             activeProfiles: [PROFILE_IRIS],
         } as ProfileInfo;
@@ -121,8 +132,8 @@ describe('CompetencyManagementComponent', () => {
         const getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
         const getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettingsResponse));
 
-        component['loadIrisEnabled']();
         fixture.detectChanges();
+        await fixture.whenStable();
 
         const generateButton = fixture.nativeElement.querySelector('#generateButton');
 
@@ -132,12 +143,43 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should load competencies and prerequisites', async () => {
-        await component.loadData();
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllForCourseSpy).toHaveBeenCalledExactlyOnceWith(1);
 
-        expect(component.competencies).toHaveLength(2);
-        expect(component.prerequisites).toHaveLength(1);
+        expect(component.competencies()).toHaveLength(2);
+        expect(component.prerequisites()).toHaveLength(1);
+    });
+
+    it('should set isLoading correctly', async () => {
+        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
+    });
+
+    it('should show alert when loading course competencies fails', async () => {
+        const alertService = TestBed.inject(AlertService);
+        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+        getAllForCourseSpy.mockRejectedValueOnce();
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(alertServiceErrorSpy).toHaveBeenCalled();
+    });
+
+    it('should open course competency explanation', () => {
+        sessionStorage.setItem('lastTimeVisitedCourseCompetencyExplanation', Date.now().toString());
+        const openModalSpy = jest.spyOn(modalService, 'open');
+        fixture.detectChanges();
+
+        component.openCourseCompetencyExplanation();
+        expect(openModalSpy).toHaveBeenCalledOnce();
     });
 
     it('should open import modal and update values', async () => {
@@ -163,8 +205,7 @@ describe('CompetencyManagementComponent', () => {
 
         jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
         jest.spyOn(courseCompetencyApiService, 'importAllByCourseId').mockResolvedValue(importedCompetencies);
-        await component.loadData();
-        const existingCompetencies = component.competencies.length;
+        const existingCompetencies = component.competencies().length;
 
         const importButton = fixture.debugElement.query(By.css('#courseCompetencyImportAllButton'));
         importButton.nativeElement.click();
@@ -174,9 +215,7 @@ describe('CompetencyManagementComponent', () => {
             size: 'lg',
             backdrop: 'static',
         });
-        fixture.detectChanges();
-        await fixture.whenStable();
 
-        expect(component.competencies).toHaveLength(existingCompetencies + 2);
+        expect(component.competencies()).toHaveLength(existingCompetencies + 2);
     });
 });

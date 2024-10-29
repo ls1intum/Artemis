@@ -2,7 +2,6 @@ import { Component, OnInit, computed, effect, inject, signal, untracked } from '
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/entities/competency.model';
-import { onError } from 'app/shared/util/global.utils';
 import { firstValueFrom, map } from 'rxjs';
 import { faCircleQuestion, faEdit, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -58,7 +57,7 @@ export class CompetencyManagementComponent implements OnInit {
     competencies = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.COMPETENCY));
     prerequisites = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.PREREQUISITE));
 
-    private readonly irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo.activeProfiles.includes(PROFILE_IRIS))), {
+    private readonly irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo?.activeProfiles?.includes(PROFILE_IRIS))), {
         initialValue: false,
     });
 
@@ -93,7 +92,7 @@ export class CompetencyManagementComponent implements OnInit {
             const combinedCourseSettings = await firstValueFrom(this.irisSettingsService.getCombinedCourseSettings(this.courseId()));
             this.irisCompetencyGenerationEnabled.set(combinedCourseSettings?.irisCompetencyGenerationSettings?.enabled ?? false);
         } catch (error) {
-            onError(this.alertService, error);
+            this.alertService.error(error);
         }
     }
 
@@ -103,7 +102,7 @@ export class CompetencyManagementComponent implements OnInit {
             const courseCompetencies = await this.courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId);
             this.courseCompetencies.set(courseCompetencies);
         } catch (error) {
-            onError(this.alertService, error);
+            this.alertService.error(error);
         } finally {
             this.isLoading.set(false);
         }
@@ -145,7 +144,7 @@ export class CompetencyManagementComponent implements OnInit {
                 this.alertService.warning(`artemisApp.courseCompetency.importAll.warning`, { courseTitle: courseTitle });
             }
         } catch (error) {
-            onError(this.alertService, error);
+            this.alertService.error(error);
         }
     }
 
