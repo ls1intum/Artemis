@@ -65,6 +65,7 @@ export class MonacoEditorService {
             scrollbar: {
                 alwaysConsumeMouseWheel: false, // Prevents the editor from consuming the mouse wheel event, allowing the parent element to scroll.
             },
+            contextmenu: false,
         });
         editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
         return editor;
