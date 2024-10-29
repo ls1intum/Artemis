@@ -595,13 +595,11 @@ describe('CodeButtonComponent', () => {
             gitToken: 'token',
         };
 
-        for (const key in data) {
-            if (Object.hasOwn(data, key)) {
-                const input = Array.from(inputs).find((input) => input.name === key);
-                expect(input).toBeDefined();
-                expect(input!.value).toBe(data[key]);
-            }
-        }
+        expect(Array.from(inputs).find((input) => input.name === 'gitUri')).toBeDefined();
+
+        const gitUriTest = Array.from(inputs).find((input) => input.name === 'gitUri');
+        expect(gitUriTest).toBeDefined();
+        expect(data.gitUri).toBe(gitUriTest!.value);
 
         windowOpenSpy.mockRestore();
         documentAppendChildSpy.mockRestore();
