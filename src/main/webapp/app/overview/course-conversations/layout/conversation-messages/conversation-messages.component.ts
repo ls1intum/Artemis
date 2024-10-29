@@ -247,22 +247,21 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
     handleScrollOnNewMessage = () => {
         if ((this.posts.length > 0 && this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
-            this.scrollToBottomOfMessages();
+            this.scrollToBottomOfMessages(false);
         }
     };
 
-    scrollToBottomOfMessages() {
+    scrollToBottomOfMessages(newMessageCreated: boolean) {
         // Use setTimeout to ensure the scroll happens after the new message is rendered
         setTimeout(() => {
             const savedScrollPosition = sessionStorage.getItem(this.sessionStorageKey + this._activeConversation?.id);
-            if (savedScrollPosition) {
+            if (savedScrollPosition && !newMessageCreated) {
                 this.content.nativeElement.scrollTop = parseInt(savedScrollPosition, 10);
             } else {
                 this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
             }
         }, 0);
     }
-
     onSearchQueryInput($event: Event) {
         const searchTerm = ($event.target as HTMLInputElement).value?.trim().toLowerCase() ?? '';
         this.search$.next(searchTerm);
@@ -286,4 +285,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private saveScrollPosition = () => {
         this.scrollSubject.next(this.content.nativeElement.scrollTop);
     };
+
+    handleNewMessageCreated() {
+        this.createEmptyPost();
+        this.scrollToBottomOfMessages(true);
+    }
 }

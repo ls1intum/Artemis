@@ -96,15 +96,10 @@
                             @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
                                 <div class="pt-2">
                                     <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
-                                    <jhi-post-create-edit-modal
-                                        #createEditModal
-                                        [posting]="newPost!"
-                                        [isCommunicationPage]="true"
-                                        (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"
-                                    />
+                                    <jhi-post-create-edit-modal #createEditModal [posting]="newPost!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
                                 </div>
                             } @else {
-                                <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="createEmptyPost(); scrollToBottomOfMessages()" />
+                                <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="handleNewMessageCreated()" />
                             }
                         </div>
                     }
@@ -114,15 +109,10 @@
                         @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
                             <div class="pt-2">
                                 <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
-                                <jhi-post-create-edit-modal
-                                    #createEditModal
-                                    [posting]="newPost!"
-                                    [isCommunicationPage]="true"
-                                    (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"
-                                />
+                                <jhi-post-create-edit-modal #createEditModal [posting]="newPost!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
                             </div>
                         } @else {
-                            <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="createEmptyPost(); scrollToBottomOfMessages()" />
+                            <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="handleNewMessageCreated()" />
                         }
                     </div>
                 }
