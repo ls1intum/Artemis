@@ -39,8 +39,8 @@ public class MessageSpecs {
     }
 
     /**
-     * Specification which filters Messages according to a search string in a match-all-manner
-     * message is only kept if the search string (which is not a #id pattern) is included in the message content (all strings lowercased)
+     * Specification which filters Messages and answer posts according to a search string in a match-all-manner
+     * message and answer post are only kept if the search string (which is not a #id pattern) is included in the message content (all strings lowercased)
      *
      * @param searchText Text to be searched within messages
      * @return specification used to chain DB operations
@@ -60,8 +60,10 @@ public class MessageSpecs {
                 Expression<String> searchTextLiteral = criteriaBuilder.literal("%" + searchText.toLowerCase() + "%");
 
                 Predicate searchInMessageContent = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
+                Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
+                Predicate searchInAnswerContent = criteriaBuilder.like(criteriaBuilder.lower(answersJoin.get(AnswerPost_.CONTENT)), searchTextLiteral);
 
-                return criteriaBuilder.and(searchInMessageContent);
+                return criteriaBuilder.or(searchInMessageContent, searchInAnswerContent);
             }
         });
     }
@@ -102,7 +104,7 @@ public class MessageSpecs {
     }
 
     /**
-     * Specification to fetch Posts of the calling user
+     * Specification to fetch Posts and answer posts of the calling user
      *
      * @param filterToOwn whether only calling users own Posts should be fetched or not
      * @param userId      id of the calling user
@@ -114,7 +116,9 @@ public class MessageSpecs {
                 return null;
             }
             else {
-                return criteriaBuilder.equal(root.get(Post_.AUTHOR).get(User_.ID), userId);
+                Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
+                Predicate searchInAnswerContent = criteriaBuilder.equal(answersJoin.get(AnswerPost_.AUTHOR).get(User_.ID), userId);
+                return criteriaBuilder.or(criteriaBuilder.equal(root.get(Post_.AUTHOR).get(User_.ID), userId), searchInAnswerContent);
             }
         });
     }
