@@ -11,7 +11,7 @@ import { CourseExercisePerformanceComponent } from 'app/overview/course-dashboar
 import { CourseExerciseLatenessComponent } from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { LineChartModule } from '@swimlane/ngx-charts';
 import { IrisModule } from 'app/iris/iris.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';

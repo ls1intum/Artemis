@@ -13,6 +13,11 @@
             "scienceSettings": "Science",
             "scienceSettingsFeatureDisabled": "The science feature is currently disabled. You can still edit your settings in case the feature gets enabled again.",
             "scienceSettingsInfo": "Help Artemis to get better!",
+            "idePreferencesPage": {
+                "description": "Choose the IDEs you want to use for opening programming exercises.",
+                "default": "Default",
+                "jetbrainsHelp": "To use JetBrains IDEs, please install the JetBrains Toolbox."
+            },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",
                 "deleteSshKeyQuestion": "Are you sure you want to delete your public SSH key?",
@@ -22,11 +27,22 @@
                 "deleteFailure": "Failed to delete SSH key.",
                 "deleteSuccess": "Successfully deleted SSH key.",
                 "cancelSavingSshKey": "Cancel",
-                "editExistingSshKey": "Edit SSH key",
-                "addNewSshKey": "New SSH key",
+                "editExistingSshKey": "Edit",
+                "viewExistingSshKey": "View",
+                "addNewSshKey": "Add SSH key",
+                "sshKeyDetails": "SSH key details",
                 "deleteSshKey": "Delete",
                 "sshKeyDisplayedInformation": "This is your currently configured SSH key:",
-                "key": "SSH Key"
+                "key": "Key",
+                "noKeysHaveBeenAdded": "No SSH keys have been added",
+                "whatToUseSSHForInfo": "Use SSH keys to connect simply and securely to repositories.",
+                "learnMore": "Learn more about SSH keys",
+                "alreadyHaveKey": "Already have a key? Copy your key to the clipboard:",
+                "back": "Back",
+                "keysTablePageTitle": "SSH keys",
+                "keys": "Keys",
+                "actions": "Actions",
+                "keyName": "Key 1 (at the moment you can only have one key)"
             },
             "vcsAccessTokensSettingsPage": {
                 "addTokenTitle": "Add personal access token",
@@ -49,13 +65,16 @@
                 "login": "Login",
                 "email": "Email",
                 "joinedArtemis": "Joined Artemis on",
+                "profilePicture": "Profile Picture",
+                "addProfilePicture": "Add a profile picture",
                 "sshKey": "Public SSH Key"
             },
             "categories": {
                 "NOTIFICATION_SETTINGS": "Notification Settings",
                 "SCIENCE_SETTINGS": "Science Settings",
                 "SSH_SETTINGS": "SSH Settings",
-                "VCS_TOKEN_SETTINGS": "VCS Token Settings"
+                "VCS_TOKEN_SETTINGS": "VCS Token Settings",
+                "IDE_PREFERENCES": "IDE Preferences"
             },
             "settingGroupNames": {
                 "weeklySummary": "Weekly Summary",

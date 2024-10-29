@@ -31,5 +31,38 @@
                 <dd>{{ currentUser.createdDate | artemisDate }}</dd>
             </div>
         }
+        <div class="list-group-item">
+            <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.profilePicture"></dt>
+            <input type="file" accept="image/png, image/jpeg" #fileInput style="display: none" (change)="setUserImage($event)" />
+            @if (currentUser.imageUrl) {
+                <div class="position-relative d-inline-block rounded-3 overflow-hidden">
+                    <jhi-secured-image class="secured-image" [src]="currentUser.imageUrl" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
+
+                    <button
+                        id="delete-course-icon"
+                        type="button"
+                        class="btn icon-button-wrapper btn-danger position-absolute bottom-0 start-0 mb-1 ms-1"
+                        (click)="deleteUserImage()"
+                    >
+                        <fa-icon [icon]="faTrash" />
+                    </button>
+
+                    <button
+                        id="edit-course-icon"
+                        type="button"
+                        class="btn icon-button-wrapper btn-warning position-absolute bottom-0 end-0 mb-1 me-1"
+                        (click)="triggerUserImageFileInput()"
+                    >
+                        <fa-icon [icon]="faPen" />
+                    </button>
+                </div>
+            }
+            @if (!currentUser.imageUrl) {
+                <button (click)="triggerUserImageFileInput()" class="btn btn-primary mt-1">
+                    <fa-icon [icon]="faPlus" />
+                    <div class="d-inline" jhiTranslate="artemisApp.userSettings.accountInformationPage.addProfilePicture"></div>
+                </button>
+            }
+        </div>
     </div>
 }

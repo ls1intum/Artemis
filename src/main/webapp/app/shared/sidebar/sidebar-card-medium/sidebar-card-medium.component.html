@@ -5,12 +5,12 @@
         [ngClass]="{ 'bg-selected border-selected': itemSelected }"
         (click)="emitPageChangeForExam()"
     >
-        <jhi-sidebar-card-item [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
+        <jhi-sidebar-card-item [groupKey]="groupKey" [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
     </div>
 } @else {
     <div
         id="test-sidebar-card-medium"
-        class="pointer rounded-3 col-12 px-1 pt-2 pb-1 border-start border-5 highlight-card bg-module"
+        class="pointer rounded-3 col-12 px-1 py-2 border-start border-5 highlight-card bg-module"
         [ngClass]="{
             'border-success': sidebarItem?.difficulty === DifficultyLevel.EASY,
             'border-warning': sidebarItem?.difficulty === DifficultyLevel.MEDIUM,
@@ -21,6 +21,11 @@
         (click)="emitStoreAndRefresh(sidebarItem.id)"
         [routerLinkActive]="'bg-selected border-selected'"
     >
-        <jhi-sidebar-card-item [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
+        <jhi-sidebar-card-item
+            [unreadCount]="this.sidebarItem.conversation?.unreadMessagesCount ?? 0"
+            [groupKey]="groupKey"
+            [sidebarType]="sidebarType"
+            [sidebarItem]="sidebarItem"
+        />
     </div>
 }

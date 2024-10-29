@@ -142,7 +142,7 @@
                 <!-- LECTURE END -->
                 <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
                     @if (lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) {
-                        <router-outlet class="ms-3" (activate)="onChildActivate($event)" />
+                        <jhi-discussion-section [lecture]="lecture" />
                     }
                 </div>
             </div>

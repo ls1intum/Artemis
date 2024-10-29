@@ -13,7 +13,7 @@
 logging:
     level:
         ROOT: INFO
-        de.tum.in.www1.artemis: DEBUG
+        de.tum.cit.aet.artemis: DEBUG
         tech.jhipster: INFO
 
 artemis:
@@ -24,8 +24,8 @@ artemis:
         batch-size: 1  # wait the time below after 1 requests (make it easier to test the corresponding code)
         batch-waiting-time: 5   # 5ms (make the tests faster)
     iosAppId: "2J3C6P6X3N.de.tum.cit.artemis"
-    androidAppPackage: "de.tum.informatics.www1.artemis.native_app.android"
-    androidSha256CertFingerprints: "D4:5C:58:77:B2:4E:2F:15:60:59:BB:C0:9C:1C:B0:A9:FD:3D:D8:F3:88:A8:B3:EA:DB:05:06:3B:7E:AF:0C:4F"
+    androidAppPackage: "de.tum.cit.aet.artemis"
+    androidSha256CertFingerprints: "D2:E1:A6:6F:8C:00:55:97:9F:30:2F:3D:79:A9:5D:78:85:1F:C5:21:5A:7F:81:B3:BF:60:22:71:EF:6F:60:24"
 
     push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de
 
@@ -68,11 +68,22 @@ artemis:
                     default: "~~invalid~~"
                 rust:
                     default: "~~invalid~~"
+                javascript:
+                    default: "~~invalid~~"
+                r:
+                    default: "~~invalid~~"
+                c_plus_plus:
+                    default: "~~invalid~~"
+                typescript:
+                    default: "~~invalid~~"
+        build-agent:
+            short-name: "artemis-build-agent-test"
 
 spring:
     application:
         name: Artemis
     datasource:
+        url: jdbc:mysql://artemis-mysql:3306/
         type: com.zaxxer.hikari.HikariDataSource
         name:
         username:
@@ -177,7 +188,7 @@ zonky:
             type: H2  # Alternatives: H2 / MYSQL / POSTGRES
             postgres:
                 docker:
-                    image: "postgres:16.3-alpine"
+                    image: "postgres:17.0-alpine"
                     tmpfs:
                         enabled: true
                 server:
@@ -200,7 +211,7 @@ zonky:
                         max_parallel_maintenance_workers: 4
             mysql:
                 docker:
-                    image: "mysql:8.4.0"
+                    image: "mysql:9.0.1"
                     tmpfs:
                         enabled: true
 
@@ -251,6 +262,7 @@ info:
     # default value set to true for tests
     text-assessment-analytics-enabled: true
     student-exam-store-session-data: true
+    contact: contactEmail@contact.de
 
 jhipster:
     clientApp:
@@ -285,3 +297,10 @@ jhipster:
 
 aeolus:
     url: http://mock-aeolus-url:8090
+
+# Eureka configuration
+eureka:
+    client:
+        enabled: false
+        service-url:
+            defaultZone: http://admin:admin@localhost:8761/eureka/

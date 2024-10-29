@@ -9,7 +9,7 @@
                 "type": "Fehlertyp",
                 "VCS_PROJECT_MISSING": "Fehlendes VCS Projekt",
                 "TEMPLATE_REPO_MISSING": "Fehlendes Vorlagen-Repository",
-                "SOLUTION_REPO_MISSING": "Fehlendes Lösung-Repository",
+                "SOLUTION_REPO_MISSING": "Fehlendes Lösungs-Repository",
                 "AUXILIARY_REPO_MISSING": "Fehlendes Hilfs-Repository",
                 "TEST_REPO_MISSING": "Fehlendes Test-Repository",
                 "TEMPLATE_BUILD_PLAN_MISSING": "Fehlender Build-Plan für die Vorlage",

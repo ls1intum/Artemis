@@ -52,15 +52,15 @@
                     },
                     "format": {
                         "title": "Benötigtes Dateiformat",
-                        "text1": "Standardisierte Kompetenzen können aus einer .json-Datei in Artemis hinein importiert werden. Nachdem du eine Datei ausgewählt hast, kannst du noch überprüfen, ob die Wissensgebiete und Kompetenzen korrekt ausgelesen wurden.",
-                        "text2": "Die .json-Datei muss ein Objekt mit den Schlüsseln <code>knowledgeAreas</code> und <code>sources</code> enthalten. Ersteres enthält alle zu importierenden Wissensgebiete und standardisierten Kompetenzen, letzteres alle Quellen der importierten Kompetenzen.",
+                        "text1": "Standardisierte Kompetenzen können aus einer JSON-Datei in Artemis hinein importiert werden. Nachdem du eine Datei ausgewählt hast, kannst du noch überprüfen, ob die Wissensgebiete und Kompetenzen korrekt ausgelesen wurden.",
+                        "text2": "Die JSON-Datei muss ein Objekt mit den Schlüsseln <code>knowledgeAreas</code> und <code>sources</code> enthalten. Ersteres enthält alle zu importierenden Wissensgebiete und standardisierten Kompetenzen, letzteres alle Quellen der importierten Kompetenzen.",
                         "text3": "Beispiel für eine gültige Importdatei ( bis auf die Kommentare):"
                     },
                     "error": {
                         "fileCount": "Bitte lade nur eine Datei hoch",
                         "fileTooBig": "Die Datei ist zu groß. Bitte lade eine Datei mit maximal 20 MB hoch",
-                        "fileExtension": "Falscher Dateityp. Bitte lade eine .json Datei hoch",
-                        "fileSyntax": "Die Datei kann nicht verarbeitet werden. Bitte lade eine Datei mit gültiger .json-Syntax hoch",
+                        "fileExtension": "Falscher Dateityp. Bitte lade eine JSON-Datei hoch",
+                        "fileSyntax": "Die Datei kann nicht verarbeitet werden. Bitte lade eine Datei mit gültiger JSON-Syntax hoch",
                         "fileStructure": "Die Datei kann nicht verarbeitet werden. Bitte überprüfe, ob die erforderliche Dateistruktur eingehalten wird"
                     },
                     "success": "Erfolgreich alle standardisierte Kompetenzen und Wissensgebiete importiert"

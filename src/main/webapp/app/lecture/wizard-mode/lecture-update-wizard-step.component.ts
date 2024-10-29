@@ -19,6 +19,6 @@ export class LectureUpdateWizardStepComponent {
     @Input()
     descriptionTranslationKey: string;
 
-    faCheck = faCheck;
-    faDotCircle = faDotCircle;
+    protected readonly faCheck = faCheck;
+    protected readonly faDotCircle = faDotCircle;
 }

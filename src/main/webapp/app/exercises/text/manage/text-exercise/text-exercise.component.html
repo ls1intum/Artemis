@@ -16,7 +16,7 @@
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    @if (course.presentationScore !== 0) {
+                    @if (course.presentationScore) {
                         <th jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
@@ -53,7 +53,7 @@
                         <td>{{ textExercise.maxPoints }}</td>
                         <td>{{ textExercise.bonusPoints }}</td>
                         <td>{{ exerciseService.isIncludedInScore(textExercise) }}</td>
-                        @if (course.presentationScore !== 0) {
+                        @if (course.presentationScore) {
                             <td>{{ textExercise.presentationScoreEnabled }}</td>
                         }
                         <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="textExercise" /></td>

@@ -16,6 +16,7 @@
             [resultFormatter]="usersFormatter"
             [editable]="false"
             [focusFirst]="false"
+            (input)="onInputChange($event)"
             placement="bottom-start"
             #instance="ngbTypeahead"
         />

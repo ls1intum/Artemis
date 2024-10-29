@@ -40,6 +40,17 @@
                 <span class="d-none d-md-inline" jhiTranslate="statistics.statistics-title"></span>
             </a>
         }
+        @if (irisEnabled && exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor && exercise.course && !isExamExercise) {
+            <!-- Iris Settings -->
+            <a
+                [routerLink]="baseResource + 'iris-settings'"
+                ngbTooltip="{{ 'artemisApp.iris.settings.button.textExercise.tooltip' | artemisTranslate }}"
+                class="btn btn-warning btn-sm"
+            >
+                <fa-icon [icon]="faRobot" />
+                <span jhiTranslate="artemisApp.iris.settings.button.textExercise.title"></span>
+            </a>
+        }
         <!-- Example Submission -->
         @if (exercise.isAtLeastEditor && (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT)) {
             <a [routerLink]="baseResource + 'example-submissions'" class="btn btn-success btn-sm" id="example-submissions-button">

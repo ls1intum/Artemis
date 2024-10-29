@@ -1,10 +1,11 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { Rating } from 'app/entities/rating.model';
 import { Result } from 'app/entities/result.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Rating Service', () => {
     let service: RatingService;
@@ -12,7 +13,8 @@ describe('Rating Service', () => {
     let elemDefault: Rating;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
+            imports: [ArtemisTestModule],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(RatingService);
         httpMock = TestBed.inject(HttpTestingController);

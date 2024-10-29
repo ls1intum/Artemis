@@ -90,6 +90,8 @@ describe('EditTutorialGroupComponent', () => {
         delete exampleTutorialGroup.numberOfRegisteredUsers;
         delete exampleTutorialGroup.courseTitle;
         delete exampleTutorialGroup.teachingAssistantName;
+        delete exampleTutorialGroup.teachingAssistantId;
+        delete exampleTutorialGroup.teachingAssistantImageUrl;
 
         const changedTutorialGroup = {
             ...exampleTutorialGroup,

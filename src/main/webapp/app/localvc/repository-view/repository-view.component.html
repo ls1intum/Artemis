@@ -34,6 +34,13 @@
                         <span jhiTranslate="artemisApp.repository.commitHistory.openCommitHistory"></span>
                     </a>
                 }
+                @if (vcsAccessLogRoute && enableVcsAccessLog && allowVcsAccessLog && localVcEnabled) {
+                    <a [routerLink]="vcsAccessLogRoute" class="btn btn-primary">
+                        <fa-icon [icon]="faClockRotateLeft" />
+                        <span jhiTranslate="artemisApp.repository.vcsAccessLog.openVcsAccessLog"></span>
+                    </a>
+                }
+
                 @if (exercise?.allowOfflineIde) {
                     <jhi-code-button
                         [loading]="!!exercise.loading"

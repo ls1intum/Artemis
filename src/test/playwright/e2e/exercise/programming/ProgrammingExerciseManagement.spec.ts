@@ -33,6 +33,36 @@ test.describe('Programming Exercise Management', () => {
             await expect(courseManagementExercises.getExerciseTitle(exerciseTitle)).toBeVisible();
             await page.waitForURL(`**/programming-exercises/${exercise.id}**`);
         });
+
+        test('FormStatusBar scrolls to the correct section with headline visible after scroll', async ({
+            login,
+            page,
+            navigationBar,
+            courseManagement,
+            courseManagementExercises,
+            programmingExerciseCreation,
+        }) => {
+            await login(admin, '/');
+            await navigationBar.openCourseManagement();
+            await courseManagement.openExercisesOfCourse(course.id!);
+            await courseManagementExercises.createProgrammingExercise();
+            await page.waitForURL('**/programming-exercises/new**');
+
+            const firstSectionHeadline = 'General';
+            const firstSectionStatusBarId = 0;
+            const fourthSectionHeadline = 'Problem';
+            const fourthSectionStatusBarId = 3;
+
+            // scroll down
+            await programmingExerciseCreation.clickFormStatusBarSection(fourthSectionStatusBarId);
+            await programmingExerciseCreation.checkIsHeadlineVisibleToUser(firstSectionHeadline, false);
+            await programmingExerciseCreation.checkIsHeadlineVisibleToUser(fourthSectionHeadline, true);
+
+            // scroll up
+            await programmingExerciseCreation.clickFormStatusBarSection(firstSectionStatusBarId);
+            await programmingExerciseCreation.checkIsHeadlineVisibleToUser(firstSectionHeadline, true);
+            await programmingExerciseCreation.checkIsHeadlineVisibleToUser(fourthSectionHeadline, false);
+        });
     });
 
     test.describe('Programming exercise deletion', () => {
@@ -76,7 +106,7 @@ test.describe('Programming Exercise Management', () => {
         });
 
         test('Create an exercise team', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, exerciseTeams, programmingExerciseOverview }) => {
-            await login(instructor, '/');
+            await login(instructor);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseTeams(exercise.id!);

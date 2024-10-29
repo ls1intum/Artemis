@@ -195,7 +195,7 @@ def filter_file_changes(file_changes):
             client_file_changes[file_name[len("src/main/webapp/") :]] = change_type
             continue
         elif file_name.startswith(
-            "src/main/java/de/tum/in/www1/artemis"
+            "src/main/java/de/tum/cit/aet/artemis"
         ) and file_name.endswith(".java"):
             server_file_changes[file_name[len("src/main/java/") :]] = change_type
             continue

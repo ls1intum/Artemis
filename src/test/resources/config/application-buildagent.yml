@@ -1,0 +1,2 @@
+# this file is kept empty intentionally to avoid that the AbstractSpringIntegrationLocalCILocalVCTest has issues because the corresponding production file is defining values to
+# avoid Hibernate being active

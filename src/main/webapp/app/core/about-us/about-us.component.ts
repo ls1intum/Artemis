@@ -19,8 +19,11 @@ export class AboutUsComponent implements OnInit {
 
     email: string;
     data: AboutUsModel;
-    gitCommitId: string;
-    gitBranchName: string;
+    gitCommitId?: string;
+    gitBranchName?: string;
+    operatorName?: string;
+    operatorAdminName?: string;
+    operatorContactEmail?: string;
 
     // Array of tuple containing translation keys and translation values
     readonly SECTIONS: [string, { [key: string]: string }][] = [
@@ -61,7 +64,10 @@ export class AboutUsComponent implements OnInit {
     ngOnInit(): void {
         this.staticContentService.getStaticJsonFromArtemisServer('about-us.json').subscribe((data) => {
             // Map contributors into the model, as the returned data are just plain objects
-            this.data = { ...data, contributors: data.contributors.map((con: any) => new ContributorModel(con.fullName, con.photoDirectory, con.sortBy, con.role, con.website)) };
+            this.data = {
+                ...data,
+                contributors: data.contributors.map((con: any) => new ContributorModel(con.fullName, con.photoDirectory, con.sortBy, con.role, con.website)),
+            };
 
             // Sort by last name
             // Either the last "word" in the name, or the dedicated sortBy field, if present
@@ -74,9 +80,11 @@ export class AboutUsComponent implements OnInit {
                 this.gitCommitId = profileInfo.git.commit.id.abbrev;
                 this.gitBranchName = profileInfo.git.branch;
             }
+            this.operatorName = profileInfo.operatorName;
+            this.operatorAdminName = profileInfo.operatorAdminName;
+            this.operatorContactEmail = profileInfo.contact;
         });
     }
-
     /**
      * Create the mail reference for the contact
      */

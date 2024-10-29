@@ -1,4 +1,5 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
+import { Disposable, makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import * as monaco from 'monaco-editor';
 
 /**
@@ -11,9 +12,9 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
     private decorationsCollection: monaco.editor.IEditorDecorationsCollection;
     private readonly className: string;
 
-    private mouseMoveListener?: monaco.IDisposable;
-    private mouseDownListener?: monaco.IDisposable;
-    private mouseLeaveListener?: monaco.IDisposable;
+    private mouseMoveListener?: Disposable;
+    private mouseDownListener?: Disposable;
+    private mouseLeaveListener?: Disposable;
 
     /**
      * @param editor The editor to which to add the button.
@@ -21,7 +22,7 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
      * @param className The class name of the button. This is used to uniquely identify the button in the editor.
      * @param clickCallback The callback to be called when the button is clicked. The line number of the button is passed as an argument.
      */
-    constructor(editor: monaco.editor.ICodeEditor, id: string, className: string, clickCallback: (lineNumber: number) => void) {
+    constructor(editor: monaco.editor.IStandaloneCodeEditor, id: string, className: string, clickCallback: (lineNumber: number) => void) {
         super(editor, id);
         this.clickCallback = clickCallback;
         this.className = className;
@@ -85,7 +86,7 @@ export class MonacoEditorLineDecorationsHoverButton extends MonacoCodeEditorElem
 
     private getAssociatedDeltaDecoration(): monaco.editor.IModelDeltaDecoration {
         return {
-            range: new monaco.Range(this.currentLineNumber, 1, this.currentLineNumber, 1),
+            range: makeEditorRange(this.currentLineNumber, 1, this.currentLineNumber, 1),
             options: {
                 isWholeLine: true,
                 linesDecorationsClassName: this.className,

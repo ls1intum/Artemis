@@ -87,10 +87,12 @@ export function titleLowercase(title: string) {
 /**
  * Converts a boolean value to its related icon class.
  * @param boolean - The boolean value to be converted.
- * @returns The corresponding ".checked" or ".unchecked" string.
+ * @returns The corresponding icon class
  */
 export function convertBooleanToCheckIconClass(boolean: boolean) {
-    return boolean ? '.checked' : '.unchecked';
+    const sectionInvalidIcon = '.fa-xmark';
+    const sectionValidIcon = '.fa-circle-check';
+    return boolean ? sectionValidIcon : sectionInvalidIcon;
 }
 
 /**

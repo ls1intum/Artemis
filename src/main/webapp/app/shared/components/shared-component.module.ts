@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ChecklistCheckComponent } from 'app/shared/components/checklist-check.component';
+import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';

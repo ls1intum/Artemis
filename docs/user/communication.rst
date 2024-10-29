@@ -34,7 +34,7 @@ This video provides an overview of the course-wide channel types existing in a c
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/42164?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="450">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/47622?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Watch this video on TUM-Live.
     </iframe>
 
@@ -85,7 +85,7 @@ This video shows how link previews work in Artemis:
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/40580?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/47626?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Watch this video on TUM-Live.
     </iframe>
 
@@ -198,7 +198,7 @@ Reference Lecture Unit Slides
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/40579?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/47625?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Watch this video on TUM-Live.
     </iframe>
 
@@ -260,7 +260,7 @@ The video below provides a demonstration for the creation of a course-wide chann
 
 .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/42163?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="450">
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/47623?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Watch this video on TUM-Live.
     </iframe>
 

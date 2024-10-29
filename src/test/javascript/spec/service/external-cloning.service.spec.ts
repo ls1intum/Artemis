@@ -20,13 +20,21 @@ describe('ExternalCloningService', () => {
         expect(service.buildSourceTreeUrl(baseUrl, undefined)).toBeUndefined();
     });
 
-    it('should build JetBrains url correctly', () => {
+    it('should build ide deeplink url correctly', () => {
         const cloneUrl = baseUrl + '/git/repo.git';
-        const expectedUrl = 'jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo=https%3A%2F%2Fartemis.cit.tum.de%2Fgit%2Frepo.git';
-        expect(service.buildJetbrainsUrl(cloneUrl)).toEqual(expectedUrl);
+        const ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
+        const expectedUrl = 'vscode://vscode.git/clone?url=https%3A%2F%2Fartemis.cit.tum.de%2Fgit%2Frepo.git';
+        expect(service.buildIdeUrl(cloneUrl, ide)).toEqual(expectedUrl);
     });
 
-    it('should return undefined when the argument is undefined', () => {
-        expect(service.buildJetbrainsUrl(undefined)).toBeUndefined();
+    it('should return undefined when {cloneUrl} is not contained in ide deeplink', () => {
+        const cloneUrl = baseUrl + '/git/repo.git';
+        const ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url=cloneUrl' };
+        expect(service.buildIdeUrl(cloneUrl, ide)).toBeUndefined();
+    });
+
+    it('should return undefined when cloneUrl is undefined but ide is defined', () => {
+        const ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
+        expect(service.buildIdeUrl(undefined, ide)).toBeUndefined();
     });
 });

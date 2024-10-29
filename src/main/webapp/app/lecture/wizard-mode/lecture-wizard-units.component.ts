@@ -105,12 +105,13 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
             return;
         }
 
-        const { name, releaseDate, content } = formData;
+        const { name, releaseDate, content, competencies } = formData;
 
         this.currentlyProcessedTextUnit = this.isEditingLectureUnit ? this.currentlyProcessedTextUnit : new TextUnit();
         this.currentlyProcessedTextUnit.name = name;
         this.currentlyProcessedTextUnit.releaseDate = releaseDate;
         this.currentlyProcessedTextUnit.content = content;
+        this.currentlyProcessedTextUnit.competencies = competencies;
 
         (this.isEditingLectureUnit
             ? this.textUnitService.update(this.currentlyProcessedTextUnit, this.lecture.id!)
@@ -129,13 +130,14 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
             return;
         }
 
-        const { name, description, releaseDate, source } = formData;
+        const { name, description, releaseDate, source, competencies } = formData;
 
         this.currentlyProcessedVideoUnit = this.isEditingLectureUnit ? this.currentlyProcessedVideoUnit : new VideoUnit();
         this.currentlyProcessedVideoUnit.name = name || undefined;
         this.currentlyProcessedVideoUnit.releaseDate = releaseDate || undefined;
         this.currentlyProcessedVideoUnit.description = description || undefined;
         this.currentlyProcessedVideoUnit.source = source || undefined;
+        this.currentlyProcessedVideoUnit.competencies = competencies;
 
         (this.isEditingLectureUnit
             ? this.videoUnitService.update(this.currentlyProcessedVideoUnit, this.lecture.id!)
@@ -154,13 +156,14 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
             return;
         }
 
-        const { name, description, releaseDate, source } = formData;
+        const { name, description, releaseDate, source, competencies } = formData;
 
         this.currentlyProcessedOnlineUnit = this.isEditingLectureUnit ? this.currentlyProcessedOnlineUnit : new OnlineUnit();
         this.currentlyProcessedOnlineUnit.name = name || undefined;
         this.currentlyProcessedOnlineUnit.releaseDate = releaseDate || undefined;
         this.currentlyProcessedOnlineUnit.description = description || undefined;
         this.currentlyProcessedOnlineUnit.source = source || undefined;
+        this.currentlyProcessedOnlineUnit.competencies = competencies || undefined;
 
         (this.isEditingLectureUnit
             ? this.onlineUnitService.update(this.currentlyProcessedOnlineUnit, this.lecture.id!)
@@ -179,7 +182,7 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
             return;
         }
 
-        const { description, name, releaseDate, updateNotificationText } = attachmentUnitFormData.formProperties;
+        const { description, name, releaseDate, updateNotificationText, competencies } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         this.currentlyProcessedAttachmentUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentUnit : new AttachmentUnit();
@@ -209,6 +212,9 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
 
         if (description) {
             this.currentlyProcessedAttachmentUnit.description = description;
+        }
+        if (competencies) {
+            this.currentlyProcessedAttachmentUnit.competencies = competencies;
         }
 
         const formData = new FormData();

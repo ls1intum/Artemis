@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { PasswordStrengthBarComponent } from 'app/account/password/password-strength-bar.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('Component Tests', () => {
     describe('PasswordStrengthBarComponent', () => {
@@ -9,7 +11,8 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                declarations: [PasswordStrengthBarComponent],
+                imports: [PasswordStrengthBarComponent],
+                providers: [{ provide: TranslateService, useClass: MockTranslateService }],
             }).compileComponents();
         });
 

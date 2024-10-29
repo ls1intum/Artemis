@@ -1,4 +1,4 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,8 +22,9 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { Observable } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { EntityTitleService } from 'app/shared/layouts/navbar/entity-title.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Exercise Service', () => {
     let service: ExerciseService;
@@ -64,8 +65,10 @@ describe('Exercise Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -358,7 +361,7 @@ describe('Exercise Service', () => {
         const profileService = TestBed.inject(ProfileService);
 
         const accountServiceSpy = jest.spyOn(accountService, 'setAccessRightsForExerciseAndReferencedCourse');
-        const entityTitleServiceSpy = jest.spyOn(entityTitleService, 'setTitle');
+        const entityTitleServiceSpy = jest.spyOn(entityTitleService, 'setExerciseTitle');
         const profileServiceSpy = jest.spyOn(profileService, 'getProfileInfo');
 
         const category = {
@@ -387,7 +390,7 @@ describe('Exercise Service', () => {
         expect(accountServiceSpy).toHaveBeenCalledWith(expect.objectContaining({ id: exerciseFromServer.id }));
 
         expect(entityTitleServiceSpy).toHaveBeenCalledOnce();
-        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [exerciseFromServer.id], exerciseFromServer.title);
+        expect(entityTitleServiceSpy).toHaveBeenCalledWith(exerciseFromServer);
 
         expect(profileServiceSpy).not.toHaveBeenCalled();
     });
@@ -519,24 +522,5 @@ describe('Exercise Service', () => {
             url: `api/exercises/${exerciseId}/toggle-second-correction`,
             method: 'PUT',
         });
-    });
-
-    it('should correctly send the exercise name to the title service', () => {
-        const entityTitleService = TestBed.inject(EntityTitleService);
-        const examExerciseForStudent = { id: 1, title: 'exercise', exerciseGroup: { id: 1, title: 'exercise group' } } as Exercise;
-        const examExerciseForTutor = { ...examExerciseForStudent, isAtLeastTutor: true } as Exercise;
-        const courseExerciseForStudent = { ...examExerciseForStudent, exerciseGroup: undefined, course: { id: 2, title: 'course' } } as Exercise;
-        const courseExerciseForTutor = { ...courseExerciseForStudent, isAtLeastTutor: true } as Exercise;
-        const entityTitleServiceSpy = jest.spyOn(entityTitleService, 'setTitle');
-        service.sendExerciseTitleToTitleService(examExerciseForStudent);
-        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [1], 'exercise group');
-        service.sendExerciseTitleToTitleService(examExerciseForTutor);
-        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [1], 'exercise');
-        service.sendExerciseTitleToTitleService(courseExerciseForStudent);
-        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [1], 'exercise');
-        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.COURSE, [2], 'course');
-        service.sendExerciseTitleToTitleService(courseExerciseForTutor);
-        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.EXERCISE, [1], 'exercise');
-        expect(entityTitleServiceSpy).toHaveBeenCalledWith(EntityType.COURSE, [2], 'course');
     });
 });

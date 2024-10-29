@@ -9,8 +9,7 @@ describe('MetricsSystemComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [MetricsSystemComponent],
+            imports: [ArtemisTestModule, MetricsSystemComponent],
         })
             .compileComponents()
             .then(() => {

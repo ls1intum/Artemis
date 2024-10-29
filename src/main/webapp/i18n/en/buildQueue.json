@@ -28,7 +28,7 @@
             },
             "cancelAll": "Cancel All",
             "filter": {
-                "title": "BuildJobs Filter",
+                "title": "Build Jobs Filter",
                 "buildStatus": {
                     "title": "Build Status",
                     "cancelled": "Cancelled",

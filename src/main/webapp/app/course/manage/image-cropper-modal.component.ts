@@ -1,14 +1,17 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
+import { OutputFormat } from 'app/shared/image-cropper/interfaces/cropper-options.interface';
 
 @Component({
     selector: 'jhi-image-cropper-modal',
     templateUrl: './image-cropper-modal.component.html',
 })
 export class ImageCropperModalComponent {
-    courseImageUploadFile?: File;
+    uploadFile?: File;
     croppedImage?: string;
+    roundCropper = true;
+    fileFormat: OutputFormat = 'png';
 
     constructor(private activeModal: NgbActiveModal) {}
 

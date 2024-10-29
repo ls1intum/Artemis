@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { Lecture } from 'app/entities/lecture.model';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 
 @Component({
     selector: 'jhi-lecture-update-wizard-title',
@@ -10,7 +10,7 @@ export class LectureUpdateWizardTitleComponent {
     @Input() currentStep: number;
     @Input() lecture: Lecture;
 
-    domainActionsDescription = [new MonacoFormulaAction()];
+    domainActionsDescription = [new FormulaAction()];
 
     constructor() {}
 }

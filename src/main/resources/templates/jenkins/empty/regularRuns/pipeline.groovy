@@ -28,10 +28,13 @@ private void runTestSteps() {
  * Run unit tests
  */
 private void test() {
-    stage('Build') {
-        sh '''
-        mvn --version
-        '''
+    stage('Install dependencies') {
+        // TODO: Install dependencies not provided by the Docker image
+        sh 'echo "Install dependencies"'
+    }
+    stage('Run tests') {
+        // TODO: Run the tests and generate JUnit XMLs
+        sh 'echo "Hello World"'
     }
 }
 
@@ -45,6 +48,7 @@ void postBuildTasks() {
     rm -rf results
     mkdir results
     '''
+    // TODO: Move JUnit XMLs into the results directory
 }
 
 // very important, do not remove

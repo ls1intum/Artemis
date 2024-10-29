@@ -44,6 +44,7 @@ export class ProfileService {
                                 profileInfo.ribbonEnv = ribbonProfiles[0];
                             }
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
+                            profileInfo.inDevelopment = profileInfo.activeProfiles.includes('dev');
                             profileInfo.openApiEnabled = profileInfo.activeProfiles.includes('openapi');
                         }
                         profileInfo.ribbonEnv = profileInfo.ribbonEnv ?? '';
@@ -61,6 +62,8 @@ export class ProfileService {
                         profileInfo.externalUserManagementURL = data.externalUserManagementURL ?? '';
 
                         profileInfo.contact = data.contact;
+                        profileInfo.operatorName = data.operatorName;
+                        profileInfo.operatorAdminName = data.operatorAdminName;
                         profileInfo.registrationEnabled = data.registrationEnabled;
                         profileInfo.needsToAcceptTerms = data.needsToAcceptTerms;
                         profileInfo.allowedEmailPattern = data.allowedEmailPattern;

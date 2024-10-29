@@ -38,10 +38,10 @@
                 "notitle": "No tutorial group title",
                 "nologinorregistrationnumber": "No login or matriculation number",
                 "nouserfound": "No matching student found in course",
-                "multipleregistrations": "Multiple registrations in csv for student"
+                "multipleregistrations": "Multiple registrations in CSV for student"
             },
             "csvFile": {
-                "label": "Select a .csv file",
+                "label": "Select a CSV file",
                 "validationFailed": "Please repair the file, it is not considered valid due to the following error: ",
                 "parseCSVButton": "Parse CSV"
             },

@@ -2,9 +2,10 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angu
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { faCheck, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faCog, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-answer-post-header',
@@ -25,9 +26,13 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
     // Icons
     faCheck = faCheck;
     faPencilAlt = faPencilAlt;
+    faCog = faCog;
 
-    constructor(protected metisService: MetisService) {
-        super(metisService);
+    constructor(
+        protected metisService: MetisService,
+        protected accountService: AccountService,
+    ) {
+        super(metisService, accountService);
     }
 
     ngOnInit() {

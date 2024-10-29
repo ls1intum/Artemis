@@ -1,4 +1,4 @@
-import { Component, ContentChild, HostBinding, Input, OnChanges, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
@@ -20,6 +20,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -31,6 +32,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
+    protected readonly ButtonType = ButtonType;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -39,6 +41,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Input() courseId: number;
     @Input() smallButtons: boolean;
     @Input() examMode: boolean;
+    @Input() isGeneratingFeedback: boolean;
+
+    @Output() generatingFeedback: EventEmitter<void> = new EventEmitter<void>();
 
     // extension points, see shared/extension-point
     @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
@@ -133,8 +138,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+            });
         } else if (this.exercise.type === ExerciseType.TEXT) {
             this.editorLabel = 'openTextEditor';
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+            });
         } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
             this.editorLabel = 'uploadFile';
         }
@@ -169,7 +180,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
 
-        this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true);
+        this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
     }
 
     /**
@@ -249,27 +260,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
     }
 
-    requestFeedback() {
-        if (!this.assureConditionsSatisfied()) return;
-
-        const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
-        if (!window.confirm(confirmLockRepository)) {
-            return;
-        }
-
-        this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
-            next: (participation: StudentParticipation) => {
-                if (participation) {
-                    this.feedbackSent = true;
-                    this.alertService.success('artemisApp.exercise.feedbackRequestSent');
-                }
-            },
-            error: (error) => {
-                this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
-            },
-        });
-    }
-
     get isBeforeStartDateAndStudent(): boolean {
         return !this.exercise.isAtLeastTutor && !!this.exercise.startDate && dayjs().isBefore(this.exercise.startDate);
     }
@@ -321,51 +311,5 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
     buildPlanUrl(participation: StudentParticipation) {
         return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
-    }
-
-    /**
-     * Checks if the conditions for requesting automatic non-graded feedback are satisfied.
-     * The student can request automatic non-graded feedback under the following conditions:
-     * 1. They have a graded submission.
-     * 2. The deadline for the exercise has not been exceeded.
-     * 3. There is no already pending feedback request.
-     * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
-     */
-    assureConditionsSatisfied(): boolean {
-        this.updateParticipations();
-        const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
-        const someHiddenTestsPassed = latestResult?.score !== undefined;
-        const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.notEnoughPoints');
-        if (!someHiddenTestsPassed) {
-            window.alert(testsNotPassedWarning);
-            return false;
-        }
-
-        const afterDueDate = !this.exercise.dueDate || dayjs().isSameOrAfter(this.exercise.dueDate);
-        const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
-        if (afterDueDate) {
-            window.alert(dueDateWarning);
-            return false;
-        }
-
-        const requestAlreadySent = (this.gradedParticipation?.individualDueDate && this.gradedParticipation.individualDueDate.isBefore(Date.now())) ?? false;
-        const requestAlreadySentWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAlreadySent');
-        if (requestAlreadySent) {
-            window.alert(requestAlreadySentWarning);
-            return false;
-        }
-
-        if (this.gradedParticipation?.results) {
-            const athenaResults = this.gradedParticipation.results.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA');
-            const countOfSuccessfulRequests = athenaResults.filter((result) => result.successful === true).length;
-
-            if (countOfSuccessfulRequests >= 20) {
-                const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
-                window.alert(rateLimitExceededWarning);
-                return false;
-            }
-        }
-
-        return true;
     }
 }

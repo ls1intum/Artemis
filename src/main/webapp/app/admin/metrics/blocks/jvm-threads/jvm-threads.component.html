@@ -1,30 +1,30 @@
 <h4 jhiTranslate="metrics.jvm.threads.title"></h4>
 
-<span><span jhiTranslate="metrics.jvm.threads.runnable"></span> {{ threadStats.threadDumpRunnable }}</span>
+<span><span jhiTranslate="metrics.jvm.threads.runnable"></span> {{ threadStats().runnable }}</span>
 
-<ngb-progressbar [value]="threadStats.threadDumpRunnable" [max]="threadStats.threadDumpAll" [striped]="true" [animated]="false" type="success">
-    <span>{{ (threadStats.threadDumpRunnable * 100) / threadStats.threadDumpAll | number: '1.0-0' }}%</span>
+<ngb-progressbar [value]="threadStats().runnable" [max]="threadStats().all" [striped]="true" [animated]="false" type="success">
+    <span>{{ (threadStats().runnable * 100) / threadStats().all | number: '1.0-0' }}%</span>
 </ngb-progressbar>
 
-<span><span jhiTranslate="metrics.jvm.threads.timedwaiting"></span> ({{ threadStats.threadDumpTimedWaiting }})</span>
+<span><span jhiTranslate="metrics.jvm.threads.timedwaiting"></span> ({{ threadStats().timedWaiting }})</span>
 
-<ngb-progressbar [value]="threadStats.threadDumpTimedWaiting" [max]="threadStats.threadDumpAll" [striped]="true" [animated]="false" type="warning">
-    <span>{{ (threadStats.threadDumpTimedWaiting * 100) / threadStats.threadDumpAll | number: '1.0-0' }}%</span>
+<ngb-progressbar [value]="threadStats().timedWaiting" [max]="threadStats().all" [striped]="true" [animated]="false" type="warning">
+    <span>{{ (threadStats().timedWaiting * 100) / threadStats().all | number: '1.0-0' }}%</span>
 </ngb-progressbar>
 
-<span><span jhiTranslate="metrics.jvm.threads.waiting"></span> ({{ threadStats.threadDumpWaiting }})</span>
+<span><span jhiTranslate="metrics.jvm.threads.waiting"></span> ({{ threadStats().waiting }})</span>
 
-<ngb-progressbar [value]="threadStats.threadDumpWaiting" [max]="threadStats.threadDumpAll" [striped]="true" [animated]="false" type="warning">
-    <span>{{ (threadStats.threadDumpWaiting * 100) / threadStats.threadDumpAll | number: '1.0-0' }}%</span>
+<ngb-progressbar [value]="threadStats().waiting" [max]="threadStats().all" [striped]="true" [animated]="false" type="warning">
+    <span>{{ (threadStats().waiting * 100) / threadStats().all | number: '1.0-0' }}%</span>
 </ngb-progressbar>
 
-<span><span jhiTranslate="metrics.jvm.threads.blocked"></span> ({{ threadStats.threadDumpBlocked }})</span>
+<span><span jhiTranslate="metrics.jvm.threads.blocked"></span> ({{ threadStats().blocked }})</span>
 
-<ngb-progressbar [value]="threadStats.threadDumpBlocked" [max]="threadStats.threadDumpAll" [striped]="true" [animated]="false" type="success">
-    <span>{{ (threadStats.threadDumpBlocked * 100) / threadStats.threadDumpAll | number: '1.0-0' }}%</span>
+<ngb-progressbar [value]="threadStats().blocked" [max]="threadStats().all" [striped]="true" [animated]="false" type="success">
+    <span>{{ (threadStats().blocked * 100) / threadStats().all | number: '1.0-0' }}%</span>
 </ngb-progressbar>
 
-<div>Total: {{ threadStats.threadDumpAll }}</div>
+<div>Total: {{ threadStats().all }}</div>
 
 <button class="hand btn btn-primary btn-sm" (click)="open()" data-toggle="modal" data-target="#threadDump">
     <span>Expand</span>

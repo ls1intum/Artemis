@@ -1,80 +1,58 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation } from '@angular/core';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 
 import * as monaco from 'monaco-editor';
-import { Subscription } from 'rxjs';
+import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { MonacoEditorService } from './monaco-editor.service';
 
 export type MonacoEditorDiffText = { original: string; modified: string };
 @Component({
     selector: 'jhi-monaco-diff-editor',
     template: '',
+    standalone: true,
     styleUrls: ['monaco-diff-editor.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
 })
-export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
+export class MonacoDiffEditorComponent implements OnDestroy {
     private _editor: monaco.editor.IStandaloneDiffEditor;
     monacoDiffEditorContainerElement: HTMLElement;
-    themeSubscription?: Subscription;
-    listeners: monaco.IDisposable[] = [];
-    resizeObserver?: ResizeObserver;
 
-    @Input()
-    set allowSplitView(value: boolean) {
-        this._editor.updateOptions({
-            renderSideBySide: value,
-        });
-    }
+    allowSplitView = input<boolean>(true);
+    onReadyForDisplayChange = output<boolean>();
 
-    @Output()
-    onReadyForDisplayChange = new EventEmitter<boolean>();
+    /*
+     * Subscriptions and listeners that need to be disposed of when this component is destroyed.
+     */
+    listeners: Disposable[] = [];
 
-    constructor(
-        private themeService: ThemeService,
-        elementRef: ElementRef,
-        renderer: Renderer2,
-    ) {
+    /*
+     * Injected services and elements.
+     */
+    private readonly elementRef = inject(ElementRef);
+    private readonly renderer = inject(Renderer2);
+    private readonly monacoEditorService = inject(MonacoEditorService);
+
+    constructor() {
         /*
          * The constructor injects the editor along with its container into the empty template of this component.
          * This makes the editor available immediately (not just after ngOnInit), preventing errors when the methods
          * of this component are called.
          */
-        this.monacoDiffEditorContainerElement = renderer.createElement('div');
-        this._editor = monaco.editor.createDiffEditor(this.monacoDiffEditorContainerElement, {
-            glyphMargin: true,
-            minimap: { enabled: false },
-            readOnly: true,
-            renderSideBySide: true,
-            scrollBeyondLastLine: false,
-            stickyScroll: {
-                enabled: false,
-            },
-            renderOverviewRuler: false,
-            scrollbar: {
-                vertical: 'hidden',
-                handleMouseWheel: true,
-                alwaysConsumeMouseWheel: false,
-            },
-            hideUnchangedRegions: {
-                enabled: true,
-            },
-            fontSize: 12,
-        });
-        renderer.appendChild(elementRef.nativeElement, this.monacoDiffEditorContainerElement);
+        this.monacoDiffEditorContainerElement = this.renderer.createElement('div');
+        this._editor = this.monacoEditorService.createStandaloneDiffEditor(this.monacoDiffEditorContainerElement);
+        this.renderer.appendChild(this.elementRef.nativeElement, this.monacoDiffEditorContainerElement);
+        this.renderer.addClass(this.monacoDiffEditorContainerElement, 'diff-editor-container');
         this.setupDiffListener();
         this.setupContentHeightListeners();
-    }
 
-    ngOnInit(): void {
-        this.resizeObserver = new ResizeObserver(() => {
-            this.layout();
+        effect(() => {
+            this._editor.updateOptions({
+                renderSideBySide: this.allowSplitView(),
+            });
         });
-        this.resizeObserver.observe(this.monacoDiffEditorContainerElement);
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
 
     ngOnDestroy(): void {
-        this.themeSubscription?.unsubscribe();
-        this.resizeObserver?.disconnect();
         this.listeners.forEach((listener) => {
             listener.dispose();
         });
@@ -87,7 +65,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
      */
     setupDiffListener(): void {
         const diffListener = this._editor.onDidUpdateDiff(() => {
-            this.adjustHeightAndLayout(this.getMaximumContentHeight());
+            this.adjustContainerHeight(this.getMaximumContentHeight());
             this.onReadyForDisplayChange.emit(true);
         });
 
@@ -105,13 +83,13 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
             const contentSizeListener = editor.onDidContentSizeChange((e: monaco.editor.IContentSizeChangedEvent) => {
                 if (e.contentHeightChanged) {
                     // Using the content height of the larger editor here ensures that neither of the editors break out of the container.
-                    this.adjustHeightAndLayout(this.getMaximumContentHeight());
+                    this.adjustContainerHeight(this.getMaximumContentHeight());
                 }
             });
 
             // Called when the user reveals or collapses a hidden region.
             const hiddenAreaListener = editor.onDidChangeHiddenAreas(() => {
-                this.adjustHeightAndLayout(this.getContentHeightOfEditor(editor));
+                this.adjustContainerHeight(this.getContentHeightOfEditor(editor));
             });
 
             this.listeners.push(contentSizeListener, hiddenAreaListener);
@@ -119,30 +97,11 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Adjusts the height of the editor to fit the new content height.
+     * Adjusts the height of the editor's container to fit the new content height.
      * @param newContentHeight The new content height of the editor.
      */
-    adjustHeightAndLayout(newContentHeight: number) {
+    adjustContainerHeight(newContentHeight: number) {
         this.monacoDiffEditorContainerElement.style.height = newContentHeight + 'px';
-        this.layout();
-    }
-
-    /**
-     * Adjusts this editor to fit its container.
-     */
-    layout(): void {
-        const width = this.monacoDiffEditorContainerElement.clientWidth;
-        const height = this.monacoDiffEditorContainerElement.clientHeight;
-        this._editor.layout({ width, height });
-    }
-
-    /**
-     * Sets the theme of all Monaco editors according to the Artemis theme.
-     * As of now, it is not possible to have two editors with different themes.
-     * @param artemisTheme The active Artemis theme.
-     */
-    changeTheme(artemisTheme: Theme): void {
-        monaco.editor.setTheme(artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light');
     }
 
     /**
@@ -185,7 +144,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
      * Returns the content height of the provided editor.
      * @param editor The editor whose content height should be retrieved.
      */
-    getContentHeightOfEditor(editor: monaco.editor.ICodeEditor): number {
+    getContentHeightOfEditor(editor: monaco.editor.IStandaloneCodeEditor): number {
         return editor.getContentHeight();
     }
 

@@ -17,6 +17,9 @@ import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-
 import { metisAnnouncement, metisPostExerciseUser1, metisPostInChannel, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { UserRole } from 'app/shared/metis/metis.util';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 describe('PostHeaderComponent', () => {
     let component: PostHeaderComponent;
@@ -30,7 +33,7 @@ describe('PostHeaderComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip), MockModule(MetisModule)],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: AccountService, useClass: MockAccountService }],
             declarations: [
                 PostHeaderComponent,
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
@@ -40,6 +43,7 @@ describe('PostHeaderComponent', () => {
                 MockComponent(PostingMarkdownEditorComponent),
                 MockComponent(PostingButtonComponent),
                 MockComponent(ConfirmIconComponent),
+                MockComponent(ProfilePictureComponent),
             ],
         })
             .compileComponents()
@@ -135,9 +139,9 @@ describe('PostHeaderComponent', () => {
 
     it.each`
         input                  | expect
-        ${UserRole.INSTRUCTOR} | ${'badge-instructor'}
-        ${UserRole.TUTOR}      | ${'badge-tutor'}
-        ${UserRole.USER}       | ${'badge-student'}
+        ${UserRole.INSTRUCTOR} | ${'post-authority-icon-instructor'}
+        ${UserRole.TUTOR}      | ${'post-authority-icon-tutor'}
+        ${UserRole.USER}       | ${'post-authority-icon-student'}
     `('should display relevant icon and tooltip for author authority', (param: { input: UserRole; expect: string }) => {
         component.posting = metisAnnouncement;
         component.posting.authorRole = param.input;

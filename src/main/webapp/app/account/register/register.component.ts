@@ -1,19 +1,29 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-
 import { RegisterService } from 'app/account/register/register.service';
 import { User } from 'app/core/user/user.model';
 import { ACCOUNT_REGISTRATION_BLOCKED, EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/constants/error.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { PasswordStrengthBarComponent } from '../password/password-strength-bar.component';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-register',
     templateUrl: './register.component.html',
+    standalone: true,
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisSharedCommonModule, ArtemisSharedModule],
 })
 export class RegisterComponent implements OnInit, AfterViewInit {
+    private translateService = inject(TranslateService);
+    private registerService = inject(RegisterService);
+    private fb = inject(FormBuilder);
+    private profileService = inject(ProfileService);
+
     @ViewChild('login', { static: false })
     login?: ElementRef;
 
@@ -35,13 +45,6 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     isRegistrationEnabled = false;
     allowedEmailPattern?: string;
     allowedEmailPatternReadable?: string;
-
-    constructor(
-        private translateService: TranslateService,
-        private registerService: RegisterService,
-        private fb: FormBuilder,
-        private profileService: ProfileService,
-    ) {}
 
     ngAfterViewInit(): void {
         if (this.login) {

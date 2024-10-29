@@ -53,7 +53,12 @@
                 "utilizationHelpDetail": "Average attendance divided by capacity",
                 "averageAttendance": "Average attendance: {{ averageAttendance }}",
                 "averageAttendanceDetail": "Average Attendance",
-                "averageAttendanceHelpDetail": "Average attendance in the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session."
+                "averageAttendanceHelpDetail": "Average attendance in the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.",
+                "profilePicture": "Tutor Profile Picture",
+                "profilePictureAlt": "Profile picture of {{ user }}",
+                "name": "Name",
+                "information": "Information",
+                "isNotOnline": "Not Online"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Day of Week",
@@ -236,7 +241,7 @@
                 "useTutorialGroupChannelsInput": {
                     "label": "Use Artemis managed Tutorial Group Channels",
                     "channelDeletionWarning": "You have disabled the use of Artemis managed tutorial group channels. All channels that were created by Artemis will be deleted. Are you sure you want to do this?",
-                    "explanation": "If enabled, Artemis will create a dedicated channel for each tutorial group in the 'Communication' section of the course. The channel can still be managed manually but Artemis automatically performs some common management tasks. Artemis will automatically add and remove students from the channel when they register or unregister for the tutorial group. The assigned tutor of the tutorial group will be made a moderator of the channel. The channel will be deleted when the tutorial group is deleted. It can not be deleted manually. This option can be changed later."
+                    "explanation": "If enabled, Artemis will create a dedicated channel for each tutorial group in the 'Communication' section of the course. The channel can still be managed manually, but Artemis automatically performs some common management tasks. Artemis will automatically add and remove students from the channel when they register or unregister for the tutorial group. The assigned tutor of the tutorial group will be made a moderator of the channel. The channel will be deleted when the tutorial group is deleted. It can not be deleted manually. This option can be changed later."
                 }
             }
         },

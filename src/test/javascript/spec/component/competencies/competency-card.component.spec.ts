@@ -41,7 +41,7 @@ describe('CompetencyCardComponent', () => {
     });
 
     it('should calculate correct progress, confidence and mastery', () => {
-        competencyCardComponent.competency = {
+        const competency = {
             id: 1,
             masteryThreshold: 80,
             userProgress: [
@@ -51,6 +51,7 @@ describe('CompetencyCardComponent', () => {
                 } as CompetencyProgress,
             ],
         } as Competency;
+        competencyCardComponentFixture.componentRef.setInput('competency', competency);
 
         competencyCardComponentFixture.detectChanges();
 
@@ -60,7 +61,7 @@ describe('CompetencyCardComponent', () => {
     });
 
     it('should display competency as mastered', () => {
-        competencyCardComponent.competency = {
+        const competency = {
             id: 1,
             masteryThreshold: 40,
             userProgress: [
@@ -70,6 +71,7 @@ describe('CompetencyCardComponent', () => {
                 } as CompetencyProgress,
             ],
         } as Competency;
+        competencyCardComponentFixture.componentRef.setInput('competency', competency);
 
         competencyCardComponentFixture.detectChanges();
 
@@ -79,10 +81,11 @@ describe('CompetencyCardComponent', () => {
     });
 
     it('should display optional badge for optional competency', () => {
-        competencyCardComponent.competency = {
+        const competency = {
             id: 1,
             optional: true,
         } as Competency;
+        competencyCardComponentFixture.componentRef.setInput('competency', competency);
 
         competencyCardComponentFixture.detectChanges();
 
@@ -91,10 +94,11 @@ describe('CompetencyCardComponent', () => {
     });
 
     it('should not display optional badge for non-optional competency', () => {
-        competencyCardComponent.competency = {
+        const competency = {
             id: 1,
             optional: false,
         } as Competency;
+        competencyCardComponentFixture.componentRef.setInput('competency', competency);
 
         competencyCardComponentFixture.detectChanges();
 
@@ -104,12 +108,12 @@ describe('CompetencyCardComponent', () => {
 
     it('should detect if due date is passed', () => {
         const competencyFuture = { softDueDate: dayjs().add(1, 'days') } as Competency;
-        competencyCardComponent.competency = competencyFuture;
+        competencyCardComponentFixture.componentRef.setInput('competency', competencyFuture);
         competencyCardComponentFixture.detectChanges();
         expect(competencyCardComponent.softDueDatePassed).toBeFalse();
 
         const competencyPast = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
-        competencyCardComponent.competency = competencyPast;
+        competencyCardComponentFixture.componentRef.setInput('competency', competencyPast);
         competencyCardComponentFixture.detectChanges();
         expect(competencyCardComponent.softDueDatePassed).toBeTrue();
     });
@@ -118,7 +122,7 @@ describe('CompetencyCardComponent', () => {
         { competency: { softDueDate: dayjs().add(1, 'days') } as Competency, expectedBadge: 'success' },
         { competency: { softDueDate: dayjs().subtract(1, 'days') } as Competency, expectedBadge: 'danger' },
     ])('should have [ngClass] resolve to correct date badge', ({ competency, expectedBadge }) => {
-        competencyCardComponent.competency = competency;
+        competencyCardComponentFixture.componentRef.setInput('competency', competency);
         competencyCardComponentFixture.detectChanges();
         const badge = competencyCardComponentFixture.debugElement.query(By.css('#date-badge')).nativeElement;
         expect(badge.classList).toContain('bg-' + expectedBadge);

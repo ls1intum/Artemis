@@ -106,6 +106,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
                 details: [
                     ...defaultGradingDetails,
                     { type: DetailType.Boolean, title: 'artemisApp.exercise.feedbackSuggestionsEnabled', data: { boolean: !!exercise.feedbackSuggestionModule } },
+                    { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.timeline.manualFeedbackRequests', data: { boolean: exercise.allowFeedbackRequests } },
                     ...gradingInstructionsCriteriaDetails,
                 ],
             },

@@ -8,12 +8,9 @@
     </div>
 }
 @if (!loading && !binaryFile!! && !cannotLoadFiles) {
-    <div
-        class="text-submission-viewer"
-        [innerHTML]="fileContent || ' '"
-        [ngClass]="{ 'no-file': !fileContent, 'is-code': isProgrammingExercise }"
-        jhiTranslate="artemisApp.plagiarism.noFileSelected"
-    ></div>
+    <div class="text-submission-viewer" [innerHTML]="fileContent || ' '" [ngClass]="{ 'no-file': !fileContent, 'is-code': isProgrammingExercise }">
+        <span jhiTranslate="artemisApp.plagiarism.noFileSelected"></span>
+    </div>
 }
 @if (loading && !cannotLoadFiles) {
     <div class="plagiarism-submission-loader">

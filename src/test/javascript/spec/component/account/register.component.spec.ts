@@ -7,6 +7,7 @@ import { EMAIL_ALREADY_USED_TYPE, LOGIN_ALREADY_USED_TYPE } from 'app/shared/con
 import { RegisterService } from 'app/account/register/register.service';
 import { RegisterComponent } from 'app/account/register/register.component';
 import { User } from 'app/core/user/user.model';
+import { ElementRef } from '@angular/core';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -22,8 +23,7 @@ describe('Register Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
-                declarations: [RegisterComponent],
+                imports: [ArtemisTestModule, RegisterComponent],
                 providers: [
                     FormBuilder,
                     { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -153,5 +153,18 @@ describe('Register Component Tests', () => {
                 expect(comp.error).toBeTrue();
             }),
         ));
+
+        it('should focus login input if login is defined', () => {
+            const focusSpy = jest.fn();
+            comp.login = {
+                nativeElement: {
+                    focus: focusSpy,
+                },
+            } as ElementRef;
+
+            comp.ngAfterViewInit();
+
+            expect(focusSpy).toHaveBeenCalled();
+        });
     });
 });

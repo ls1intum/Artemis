@@ -57,9 +57,9 @@ export class CourseUpdateComponent implements OnInit {
     isSaving: boolean;
     courseImageUploadFile?: File;
     croppedImage?: string;
-    complaintsEnabled = true; // default value
-    requestMoreFeedbackEnabled = true; // default value
-    customizeGroupNames = false; // default value
+    complaintsEnabled = true;
+    requestMoreFeedbackEnabled = true;
+    customizeGroupNames = false;
     courseOrganizations: Organization[];
     isAdmin = false;
     // Icons
@@ -71,6 +71,7 @@ export class CourseUpdateComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faPen = faPen;
 
+    faqEnabled = true;
     communicationEnabled = true;
     messagingEnabled = true;
     ltiEnabled = false;
@@ -115,7 +116,7 @@ export class CourseUpdateComponent implements OnInit {
                     this.courseOrganizations = organizations;
                 });
                 this.originalTimeZone = this.course.timeZone;
-
+                this.faqEnabled = course.faqEnabled;
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
                 this.complaintsEnabled =
                     (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) &&
@@ -192,6 +193,7 @@ export class CourseUpdateComponent implements OnInit {
                 studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
+                faqEnabled: new FormControl(this.faqEnabled),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
                 maxPoints: new FormControl(this.course.maxPoints, {
                     validators: [Validators.min(1)],
@@ -284,7 +286,6 @@ export class CourseUpdateComponent implements OnInit {
         if (this.courseForm.controls['organizations'] !== undefined) {
             this.courseForm.controls['organizations'].setValue(this.courseOrganizations);
         }
-
         let file = undefined;
         if (this.courseImageUploadFile && this.croppedImage) {
             const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
@@ -506,6 +507,10 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.controls['instructorGroupName'].setValue(instructorGroupName);
     }
 
+    changeFaqEnabled() {
+        this.faqEnabled = !this.faqEnabled;
+        this.courseForm.controls['faqEnabled'].setValue(this.faqEnabled);
+    }
     /**
      * Enable or disable test course
      */
@@ -639,7 +644,7 @@ export class CourseUpdateComponent implements OnInit {
 
     openCropper(): void {
         const modalRef = this.modalService.open(ImageCropperModalComponent, { size: 'm' });
-        modalRef.componentInstance.courseImageUploadFile = this.courseImageUploadFile;
+        modalRef.componentInstance.uploadFile = this.courseImageUploadFile;
         modalRef.componentInstance.croppedImage = this.croppedImage;
         modalRef.result.then((result) => {
             if (result) {

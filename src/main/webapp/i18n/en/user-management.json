@@ -9,6 +9,13 @@
                 },
                 "deleted": "Deleted {{ param }} Users"
             },
+            "notEnrolled": {
+                "delete": {
+                    "cancel": "No not enrolled users found to delete.",
+                    "caption": "Delete not enrolled users",
+                    "question": "Are you sure you want to permanently delete these users? <br> {{ users }} <br> These are <strong>{{ title }}</strong> users! This action can NOT be undone!"
+                }
+            },
             "filter": {
                 "modal": {
                     "open": "Filter ({{ num }})",
@@ -57,7 +64,7 @@
             "home": {
                 "title": "Users",
                 "createLabel": "Create a new user",
-                "createOrEditLabel": "Create or edit a user"
+                "editLabel": "Edit user"
             },
             "created": "Created new user with identifier {{ param }}",
             "updated": "Updated User with identifier {{ param }}",
@@ -85,7 +92,7 @@
             "deactivated": "Deactivated",
             "profiles": "Profiles",
             "langKey": "Language",
-            "passwordTooltip": "You can only change passwords for internal users.",
+            "passwordTooltip": "This setting can only be changed for new users. Notice, that you can only change passwords for internal users.",
             "internal": "Internal",
             "createdBy": "Created by",
             "createdDate": "Created date",
@@ -95,7 +102,8 @@
             "search": "Search",
             "loading": "Loading...",
             "searchError": "Search term must be empty or contain at least 3 characters.",
-            "jenkinsChange": "Changing the user's login is not supported for your current setup (Jenkins). You may have to manually update the user's login in Jenkins.\nYou changed the user <i>{{ oldLogin }}</i> to <i>{{ newLogin }}</i>."
+            "jenkinsChange": "Changing the user's login is not supported for your current setup (Jenkins). You may have to manually update the user's login in Jenkins.\nYou changed the user <i>{{ oldLogin }}</i> to <i>{{ newLogin }}</i>.",
+            "profilePicture": "Profile Picture"
         }
     }
 }

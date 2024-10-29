@@ -617,7 +617,12 @@ These credentials are used to clone repositories via HTTPS. You must also add th
                 container-cleanup:
                     expiry-minutes: 5                               # Time after a hanging container will automatically be removed
                     cleanup-schedule-minutes: 60                    # Schedule for container cleanup
+                build-agent:
+                    short-name: "artemis-build-agent-X"             # Short name of the build agent. This should be unique for each build agent. Only lowercase letters, numbers and hyphens are allowed.
+                    display-name: "Artemis Build Agent X"           # This value is optional. If omitted, the short name will be used as display name. Display name of the build agent. This is shown in the Artemis UI.
 
+
+Please note that ``artemis.continuous-integration.build-agent.short-name`` must be provided. Otherwise, the build agent will not start.
 
 Build agents run as `Hazelcast Lite Members <https://docs.hazelcast.com/hazelcast/5.3/maintain-cluster/lite-members>`__ and require a full member, in our case a core node, to be running.
 Thus, before starting a build agent make sure that at least the primary node is running. You can then add and remove build agents to the cluster as desired.

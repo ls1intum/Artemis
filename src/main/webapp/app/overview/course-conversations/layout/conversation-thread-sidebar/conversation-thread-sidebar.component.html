@@ -39,6 +39,7 @@
                         <div class="message-input mx-3">
                             @if (!readOnlyMode) {
                                 <jhi-message-reply-inline-input
+                                    [activeConversation]="conversation"
                                     [posting]="createdAnswerPost"
                                     (onCreate)="createdAnswerPost = createEmptyAnswerPost()"
                                     (valueChange)="scrollEditorIntoView()"

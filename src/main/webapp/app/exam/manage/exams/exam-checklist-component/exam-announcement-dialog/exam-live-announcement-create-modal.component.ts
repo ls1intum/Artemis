@@ -6,12 +6,12 @@ import { ExamLiveEventType, ExamWideAnnouncementEvent } from 'app/exam/participa
 import { faCheckCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
-import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/monaco-bold.action';
-import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/monaco-italic.action';
-import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/monaco-underline.action';
-import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-code.action';
-import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/monaco-code-block.action';
-import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-ordered-list.action';
+import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
+import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
+import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
+import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
+import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
+import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 
 @Component({
     selector: 'jhi-exam-live-announcement-create-modal',
@@ -19,15 +19,7 @@ import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/
     styleUrls: ['./exam-live-announcement-create-modal.component.scss'],
 })
 export class ExamLiveAnnouncementCreateModalComponent {
-    actions = [
-        new MonacoBoldAction(),
-        new MonacoItalicAction(),
-        new MonacoUnderlineAction(),
-        new MonacoCodeAction(),
-        new MonacoCodeBlockAction(),
-        new MonacoOrderedListAction(),
-        new MonacoOrderedListAction(),
-    ];
+    actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new OrderedListAction()];
 
     courseId: number;
     examId: number;

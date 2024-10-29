@@ -7,6 +7,7 @@ export class ProfileInfo {
     public activeProfiles: string[];
     public ribbonEnv: string;
     public inProduction: boolean;
+    public inDevelopment: boolean;
     public openApiEnabled?: boolean;
     public sentry?: { dsn: string };
     public postHog?: {
@@ -56,6 +57,8 @@ export class ProfileInfo {
         };
     };
     public theiaPortalURL: string;
+    public operatorName: string;
+    public operatorAdminName?: string;
 }
 
 export const hasEditableBuildPlan = (profileInfo: ProfileInfo): boolean => {

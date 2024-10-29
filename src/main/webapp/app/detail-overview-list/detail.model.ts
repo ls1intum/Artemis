@@ -22,6 +22,8 @@ export type ShownDetail =
     | TextDetail
     | DateDetail
     | LinkDetail
+    | ImageDetail
+    | DefaultProfilePicture
     | BooleanDetail
     | MarkdownDetail
     | GradingCriteriaDetail
@@ -56,6 +58,16 @@ export interface DateDetail extends DetailBase {
 export interface LinkDetail extends DetailBase {
     type: DetailType.Link;
     data: { text?: string | number; href?: string | false; routerLink?: (string | number | undefined)[]; queryParams?: Record<string, string | number | undefined> };
+}
+
+export interface ImageDetail extends DetailBase {
+    type: DetailType.Image;
+    data: { altText?: string; imageUrl?: string };
+}
+
+export interface DefaultProfilePicture extends DetailBase {
+    type: DetailType.DefaultProfilePicture;
+    data: { color: string; initials: string };
 }
 
 export interface BooleanDetail extends DetailBase {
@@ -97,7 +109,7 @@ export interface ProgrammingAuxiliaryRepositoryButtonsDetail extends DetailBase 
     data: { auxiliaryRepositories: AuxiliaryRepository[]; exerciseId?: number };
 }
 
-interface ProgrammingTestStatusDetail extends DetailBase {
+export interface ProgrammingTestStatusDetail extends DetailBase {
     type: DetailType.ProgrammingTestStatus;
     data: {
         participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
@@ -108,7 +120,7 @@ interface ProgrammingTestStatusDetail extends DetailBase {
         submissionRouterLink?: (string | number | undefined)[];
     };
 }
-interface ProgrammingDiffReportDetail extends DetailBase {
+export interface ProgrammingDiffReportDetail extends DetailBase {
     type: DetailType.ProgrammingDiffReport;
     data: { addedLineCount: number; removedLineCount: number; isLoadingDiffReport?: boolean; gitDiffReport?: ProgrammingExerciseGitDiffReport };
 }

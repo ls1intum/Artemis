@@ -5,10 +5,11 @@
  * - webpack.DefinePlugin and
  * - MergeJsonWebpackPlugin
  */
-import fs from "fs";
-import path from "path";
-import { hashElement } from "folder-hash";
-import { fileURLToPath } from "url";
+import fs from 'fs';
+import path from 'path';
+import { hashElement } from 'folder-hash';
+import { fileURLToPath } from 'url';
+import * as esbuild from 'esbuild';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -110,5 +111,26 @@ for (const group of groups) {
         console.error(`Error merging JSON files for ${group.output}:`, error);
     }
 }
+
+/*
+ * The workers of the monaco editor must be bundled separately.
+ * Specialized workers are available in the vs/esm/language/ directory.
+ * Be sure to modify the MonacoConfig if you choose to add a worker here.
+ * For more details, refer to https://github.com/microsoft/monaco-editor/blob/main/samples/browser-esm-esbuild/build.js
+ */
+const workerEntryPoints = [
+    'vs/language/json/json.worker.js',
+    'vs/language/css/css.worker.js',
+    'vs/language/html/html.worker.js',
+    'vs/language/typescript/ts.worker.js',
+    'vs/editor/editor.worker.js'
+];
+await esbuild.build({
+    entryPoints: workerEntryPoints.map((entry) => `node_modules/monaco-editor/esm/${entry}`),
+    bundle: true,
+    format: 'esm',
+    outbase: 'node_modules/monaco-editor/esm',
+    outdir: 'node_modules/monaco-editor/bundles'
+});
 
 console.log("Pre-Build complete!");

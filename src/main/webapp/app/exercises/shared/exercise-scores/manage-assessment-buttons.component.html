@@ -3,7 +3,9 @@
         @if (
             (correctionRound === 0 || participation.results?.[correctionRound - 1]?.completionDate) &&
             (newManualResultAllowed ||
-                (participation.results?.[correctionRound]?.assessmentType && participation.results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC))
+                (participation.results?.[correctionRound]?.assessmentType &&
+                    participation.results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC &&
+                    participation.results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA))
         ) {
             <div>
                 <a

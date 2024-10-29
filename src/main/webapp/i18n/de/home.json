@@ -4,8 +4,8 @@
         "subtitle": "Interaktives Lernen mit Individuellem Feedback",
         "login": {
             "traditional": {
-                "pleaseSignInAccount": "Bitte melde dich mit deinen {{account}} Zugangsdaten an.",
-                "pleaseSignIn": "Bitte melde dich mit deinen Zugangsdaten an."
+                "pleaseSignInAccount": "Melde dich mit deinen {{account}} Zugangsdaten an",
+                "pleaseSignIn": "Melde dich mit deinen Zugangsdaten an"
             },
             "saml2": {
                 "pleaseSignInProvider": "Bitte melde dich via {{provider}} an.",
@@ -13,12 +13,13 @@
             }
         },
         "logged": {
-            "message": "Du bist als Nutzer:in \"{{username}}\" angemeldet."
+            "message": "Du bist als \"{{username}}\" angemeldet."
         },
         "errors": {
             "failedToLogin": "<span class='bold'>Fehler bei der Anmeldung!</span> Bitte überprüfe deinen Login und dein Passwort und versuche es erneut.",
             "usernameIncorrect": "<p class='text-primary small'>Ungültiger Login</p>",
-            "tumWarning": "<p class='text-primary small'>Wenn du Studierende:r an der TUM bist, sollte deine Kennung das Format <b>ab12xyz</b> haben.<br />Füge <b>weder</b> '<b>@mytum.de</b>' noch '<b>@tum.de</b>' hinzu.</p>",
+            "passwordIncorrect": "Das Passwort muss zwischen 8 und 50 Zeichen lang sein.",
+            "tumWarning": "An der TUM nutze z.B. <b>go42tum</b> oder <b>example@tum.de</b>",
             "loginWarning": "Scheint so, als hättest du Probleme bei der Anmeldung :-(<br />Bitte besuche <a href='{{ url }}'>{{ name }}</a> und versuche dich dort anzumelden.<br />Danach versuche es hier noch einmal.",
             "sessionExpired": "Du wurdest ausgeloggt, da die Sitzung abgelaufen ist. Bitte logge dich erneut ein, um zur vorherigen Seite zurückzukehren."
         }

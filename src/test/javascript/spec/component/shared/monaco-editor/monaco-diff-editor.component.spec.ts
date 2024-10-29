@@ -1,28 +1,21 @@
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-editor.component';
-import { BehaviorSubject } from 'rxjs';
 
 describe('MonacoDiffEditorComponent', () => {
     let fixture: ComponentFixture<MonacoDiffEditorComponent>;
     let comp: MonacoDiffEditorComponent;
-    let mockThemeService: ThemeService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorModule],
-            declarations: [MonacoDiffEditorComponent],
-            providers: [],
+            imports: [ArtemisTestModule, MonacoDiffEditorComponent],
         })
             .compileComponents()
             .then(() => {
                 global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
                     return new MockResizeObserver(callback);
                 });
-                mockThemeService = TestBed.inject(ThemeService);
                 fixture = TestBed.createComponent(MonacoDiffEditorComponent);
                 comp = fixture.componentInstance;
             });
@@ -32,37 +25,21 @@ describe('MonacoDiffEditorComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should adjust its theme to the global theme', () => {
-        const themeSubject = new BehaviorSubject<Theme>(Theme.LIGHT);
-        const subscribeStub = jest.spyOn(mockThemeService, 'getCurrentThemeObservable').mockReturnValue(themeSubject.asObservable());
-        const changeThemeSpy = jest.spyOn(comp, 'changeTheme');
-        fixture.detectChanges();
-        themeSubject.next(Theme.DARK);
-        expect(subscribeStub).toHaveBeenCalledOnce();
-        expect(changeThemeSpy).toHaveBeenCalledTimes(2);
-        expect(changeThemeSpy).toHaveBeenNthCalledWith(1, Theme.LIGHT);
-        expect(changeThemeSpy).toHaveBeenNthCalledWith(2, Theme.DARK);
-    });
-
     it('should dispose its listeners and subscriptions when destroyed', () => {
         fixture.detectChanges();
-        const resizeObserverDisconnectSpy = jest.spyOn(comp.resizeObserver!, 'disconnect');
-        const themeSubscriptionUnsubscribeSpy = jest.spyOn(comp.themeSubscription!, 'unsubscribe');
         const listenerDisposeSpies = comp.listeners.map((listener) => jest.spyOn(listener, 'dispose'));
         comp.ngOnDestroy();
-        for (const spy of [resizeObserverDisconnectSpy, themeSubscriptionUnsubscribeSpy, ...listenerDisposeSpies]) {
+        for (const spy of listenerDisposeSpies) {
             expect(spy).toHaveBeenCalledOnce();
         }
     });
 
-    it('should update the size of its container and layout the editor', () => {
-        const layoutSpy = jest.spyOn(comp, 'layout');
+    it('should update the size of its container', () => {
         fixture.detectChanges();
         const element = document.createElement('div');
         comp.monacoDiffEditorContainerElement = element;
-        comp.adjustHeightAndLayout(100);
+        comp.adjustContainerHeight(100);
         expect(element.style.height).toBe('100px');
-        expect(layoutSpy).toHaveBeenCalledOnce();
     });
 
     it('should set the text of the editor', () => {

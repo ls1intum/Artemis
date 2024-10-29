@@ -56,8 +56,7 @@ const DefaultFieldValues: { [key: string]: number } = {
     [EditableField.MAX_PENALTY]: 0,
 };
 
-export type GradingTab = 'test-cases' | 'code-analysis' | 'submission-policy';
-
+export type GradingTab = 'test-cases' | 'code-analysis' | 'submission-policy' | 'feedback-analysis';
 export type Table = 'testCases' | 'codeAnalysis';
 
 @Component({
@@ -232,7 +231,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.isLoading = false;
             }
 
-            if (params['tab'] === 'test-cases' || params['tab'] === 'code-analysis' || params['tab'] === 'submission-policy') {
+            const gradingTabs: GradingTab[] = ['test-cases', 'code-analysis', 'submission-policy', 'feedback-analysis'];
+            if (gradingTabs.includes(params['tab'])) {
                 this.selectTab(params['tab']);
             } else {
                 this.selectTab('test-cases');

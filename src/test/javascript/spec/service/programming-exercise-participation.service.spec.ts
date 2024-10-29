@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { of } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -7,6 +7,7 @@ import { Submission } from 'app/entities/submission.model';
 import { ArtemisTestModule } from '../test.module';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseParticipation Service', () => {
     let service: ProgrammingExerciseParticipationService;
@@ -20,8 +21,8 @@ describe('ProgrammingExerciseParticipation Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
-            providers: [],
+            imports: [ArtemisTestModule],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
@@ -175,6 +176,23 @@ describe('ProgrammingExerciseParticipation Service', () => {
         const expectedURL = `${resourceUrlParticipations}${participationId}/files-content/${commitId}`;
         const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
         req.flush(files);
+        tick();
+    }));
+
+    it('should make GET request to retrieve vcs access log for participation', fakeAsync(() => {
+        const participationId = 42;
+        service.getVcsAccessLogForParticipation(participationId).subscribe();
+        const expectedURL = `${resourceUrlParticipations}${participationId}/vcs-access-log`;
+        httpMock.expectOne({ method: 'GET', url: expectedURL });
+        tick();
+    }));
+
+    it('should make GET request to retrieve vcs access log for the template repository', fakeAsync(() => {
+        const exerciseId = 42;
+        const repositoryType = 'TEMPLATE';
+        service.getVcsAccessLogForRepository(exerciseId, repositoryType).subscribe();
+        const expectedURL = `${resourceUrl}${exerciseId}/vcs-access-log/${repositoryType}`;
+        httpMock.expectOne({ method: 'GET', url: expectedURL });
         tick();
     }));
 });

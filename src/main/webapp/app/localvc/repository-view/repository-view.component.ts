@@ -16,6 +16,8 @@ import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { Feedback } from 'app/entities/feedback.model';
+import { PROFILE_LOCALVC } from 'app/app.constants';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-repository-view',
@@ -40,12 +42,15 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
     routeCommitHistory: string;
+    vcsAccessLogRoute: string;
     repositoryUri: string;
     repositoryType: ProgrammingExerciseInstructorRepositoryType | 'USER';
-
+    enableVcsAccessLog = false;
+    allowVcsAccessLog = false;
     result: Result;
     resultHasInlineFeedback = false;
     showInlineFeedback = false;
+    localVcEnabled = false;
 
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub: Subscription;
@@ -55,6 +60,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         public domainService: DomainService,
         private route: ActivatedRoute,
+        private profileService: ProfileService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseService: ProgrammingExerciseService,
         private router: Router,
@@ -85,12 +91,20 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             this.participationCouldNotBeFetched = false;
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
+            const repositoryId = Number(params['repositoryId']);
             this.repositoryType = participationId ? 'USER' : params['repositoryType'];
+            this.vcsAccessLogRoute = this.router.url + '/vcs-access-log';
+            this.enableVcsAccessLog = this.router.url.includes('course-management') && params['repositoryType'] !== 'TESTS';
             if (this.repositoryType === 'USER') {
                 this.loadStudentParticipation(participationId);
+            } else if (this.repositoryType === 'AUXILIARY') {
+                this.loadAuxiliaryRepository(exerciseId, repositoryId);
             } else {
                 this.loadDifferentParticipation(this.repositoryType, exerciseId);
             }
+        });
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.localVcEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
     }
 
@@ -122,6 +136,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                         this.participationCouldNotBeFetched = true;
                         this.loadingParticipation = false;
                     }
+                    this.allowVcsAccessLog = this.accountService.isAtLeastInstructorInCourse(this.getCourseFromExercise(this.exercise));
                 }),
             )
             .subscribe({
@@ -146,6 +161,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                     this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
                     this.participation = participationWithResults;
                     this.exercise = this.participation.exercise as ProgrammingExercise;
+                    this.allowVcsAccessLog = this.accountService.isAtLeastInstructorInCourse(this.getCourseFromExercise(this.exercise));
                     this.repositoryUri = this.participation.repositoryUri!;
                 }),
             )
@@ -176,5 +192,28 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                 return participation;
             }),
         );
+    }
+
+    private loadAuxiliaryRepository(exerciseId: number, auxiliaryRepositoryId: number) {
+        this.programmingExerciseService
+            .findWithAuxiliaryRepository(exerciseId)
+            .pipe(
+                tap((exerciseResponse) => {
+                    this.exercise = exerciseResponse.body!;
+                    const auxiliaryRepo = this.exercise.auxiliaryRepositories?.find((repo) => repo.id === auxiliaryRepositoryId);
+                    if (auxiliaryRepo) {
+                        this.domainService.setDomain([DomainType.AUXILIARY_REPOSITORY, auxiliaryRepo]);
+                        this.repositoryUri = auxiliaryRepo.repositoryUri!;
+                    }
+                }),
+            )
+            .subscribe({
+                next: () => {
+                    this.loadingParticipation = false;
+                },
+                error: () => {
+                    this.participationCouldNotBeFetched = true;
+                },
+            });
     }
 }

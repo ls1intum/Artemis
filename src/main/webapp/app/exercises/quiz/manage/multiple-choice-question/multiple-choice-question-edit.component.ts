@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -8,10 +7,10 @@ import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
-import { MonacoQuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-hint.action';
-import { MonacoWrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-wrong-multiple-choice-answer.action';
-import { MonacoCorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-correct-multiple-choice-answer.action';
-import { MonacoQuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-explanation.action';
+import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
+import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
+import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
+import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 
@@ -49,10 +48,10 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     showMultipleChoiceQuestionPreview = true;
     showMultipleChoiceQuestionVisual = true;
 
-    correctAction = new MonacoCorrectMultipleChoiceAnswerAction();
-    wrongAction = new MonacoWrongMultipleChoiceAnswerAction();
-    explanationAction = new MonacoQuizExplanationAction();
-    hintAction = new MonacoQuizHintAction();
+    correctAction = new CorrectMultipleChoiceAnswerAction();
+    wrongAction = new WrongMultipleChoiceAnswerAction();
+    explanationAction = new QuizExplanationAction();
+    hintAction = new QuizHintAction();
 
     multipleChoiceActions = [this.correctAction, this.wrongAction, this.explanationAction, this.hintAction];
 
@@ -65,7 +64,6 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
 
     constructor(
-        private artemisMarkdown: ArtemisMarkdownService,
         private modalService: NgbModal,
         private changeDetector: ChangeDetectorRef,
     ) {}
@@ -131,8 +129,16 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
      * to get the newest values in the editor to update the question attributes
      */
     prepareForSave(): void {
-        this.cleanupQuestion();
-        this.markdownEditor.parseMarkdown();
+        if (this.markdownEditor.inVisualMode) {
+            /*
+             * In the visual mode, the latest question values come from the visual tab, not the markdown editor.
+             * We update the markdown editor, which triggers the parsing of the visual tab content.
+             */
+            this.markdownEditor.markdown = this.visualChild.parseQuestion();
+        } else {
+            this.cleanupQuestion();
+            this.markdownEditor.parseMarkdown();
+        }
     }
 
     onLeaveVisualTab(): void {
@@ -170,18 +176,18 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
             if (action === undefined && text.length > 0) {
                 this.question.text = text;
             }
-            if (action instanceof MonacoCorrectMultipleChoiceAnswerAction || action instanceof MonacoWrongMultipleChoiceAnswerAction) {
+            if (action instanceof CorrectMultipleChoiceAnswerAction || action instanceof WrongMultipleChoiceAnswerAction) {
                 currentAnswerOption = new AnswerOption();
-                currentAnswerOption.isCorrect = action instanceof MonacoCorrectMultipleChoiceAnswerAction;
+                currentAnswerOption.isCorrect = action instanceof CorrectMultipleChoiceAnswerAction;
                 currentAnswerOption.text = text;
                 this.question.answerOptions!.push(currentAnswerOption);
-            } else if (action instanceof MonacoQuizExplanationAction) {
+            } else if (action instanceof QuizExplanationAction) {
                 if (currentAnswerOption) {
                     currentAnswerOption.explanation = text;
                 } else {
                     this.question.explanation = text;
                 }
-            } else if (action instanceof MonacoQuizHintAction) {
+            } else if (action instanceof QuizHintAction) {
                 if (currentAnswerOption) {
                     currentAnswerOption.hint = text;
                 } else {

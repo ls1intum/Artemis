@@ -19,7 +19,6 @@ import { LectureUpdateWizardTitleComponent } from 'app/lecture/wizard-mode/lectu
 import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
 import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode/lecture-wizard-attachments.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
-import { LectureUpdateWizardCompetenciesComponent } from 'app/lecture/wizard-mode/lecture-wizard-competencies.component';
 import { LectureUpdateWizardStepComponent } from 'app/lecture/wizard-mode/lecture-update-wizard-step.component';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
@@ -53,7 +52,6 @@ const ENTITY_STATES = [...lectureRoute];
         LectureUpdateWizardPeriodComponent,
         LectureUpdateWizardAttachmentsComponent,
         LectureUpdateWizardUnitsComponent,
-        LectureUpdateWizardCompetenciesComponent,
         LectureUpdateWizardStepComponent,
         LectureTitleChannelNameComponent,
     ],

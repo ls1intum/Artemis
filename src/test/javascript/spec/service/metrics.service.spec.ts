@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MetricsService } from 'app/admin/metrics/metrics.service';
 import { ThreadDump, ThreadState } from 'app/admin/metrics/metrics.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Service Tests', () => {
     describe('Logs Service', () => {
@@ -10,7 +11,8 @@ describe('Service Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule],
+                imports: [],
+                providers: [provideHttpClient(), provideHttpClientTesting()],
             });
             service = TestBed.inject(MetricsService);
             httpMock = TestBed.inject(HttpTestingController);
@@ -53,9 +55,9 @@ describe('Service Tests', () => {
                             blockedCount: 7,
                             waitedTime: -1,
                             waitedCount: 0,
-                            lockName: null,
+                            lockName: undefined,
                             lockOwnerId: -1,
-                            lockOwnerName: null,
+                            lockOwnerName: undefined,
                             daemon: true,
                             inNative: false,
                             suspended: false,
@@ -64,7 +66,7 @@ describe('Service Tests', () => {
                             stackTrace: [],
                             lockedMonitors: [],
                             lockedSynchronizers: [],
-                            lockInfo: null,
+                            lockInfo: undefined,
                         },
                     ],
                 };

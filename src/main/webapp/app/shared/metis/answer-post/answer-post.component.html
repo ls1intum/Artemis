@@ -8,23 +8,29 @@
         [hasChannelModerationRights]="hasChannelModerationRights"
     />
     @if (!createAnswerPostModal.isInputOpen) {
-        <jhi-posting-content
-            [content]="posting.content"
-            [isEdited]="!!posting.updatedDate"
-            [author]="posting.author"
-            [posting]="posting"
-            [isReply]="true"
-            (userReferenceClicked)="userReferenceClicked.emit($event)"
-            (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-        />
+        <div class="answer-post-content-margin">
+            <jhi-posting-content
+                [content]="posting.content"
+                [isEdited]="!!posting.updatedDate"
+                [author]="posting.author"
+                [posting]="posting"
+                [isReply]="true"
+                (userReferenceClicked)="userReferenceClicked.emit($event)"
+                (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+            />
+        </div>
     }
-    <ng-container #createEditAnswerPostContainer />
-    <jhi-answer-post-footer
-        [isReadOnlyMode]="isReadOnlyMode"
-        [posting]="posting"
-        [isLastAnswer]="isLastAnswer"
-        [isThreadSidebar]="isThreadSidebar"
-        (openPostingCreateEditModal)="openPostingCreateEditModal.emit()"
-    />
+    <div class="answer-post-content-margin">
+        <ng-container #createEditAnswerPostContainer />
+    </div>
+    <div class="answer-post-content-margin">
+        <jhi-answer-post-footer
+            [isReadOnlyMode]="isReadOnlyMode"
+            [posting]="posting"
+            [isLastAnswer]="isLastAnswer"
+            [isThreadSidebar]="isThreadSidebar"
+            (openPostingCreateEditModal)="openPostingCreateEditModal.emit()"
+        />
+    </div>
 </div>
 <jhi-answer-post-create-edit-modal #createAnswerPostModal [posting]="posting" [createEditAnswerPostContainerRef]="containerRef" />

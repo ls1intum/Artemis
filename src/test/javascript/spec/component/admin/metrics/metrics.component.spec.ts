@@ -1,10 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { JvmMemoryComponent } from 'app/admin/metrics/blocks/jvm-memory/jvm-memory.component';
+import { JvmThreadsComponent } from 'app/admin/metrics/blocks/jvm-threads/jvm-threads.component';
+import { MetricsCacheComponent } from 'app/admin/metrics/blocks/metrics-cache/metrics-cache.component';
+import { MetricsDatasourceComponent } from 'app/admin/metrics/blocks/metrics-datasource/metrics-datasource.component';
+import { MetricsEndpointsRequestsComponent } from 'app/admin/metrics/blocks/metrics-endpoints-requests/metrics-endpoints-requests.component';
+import { MetricsGarbageCollectorComponent } from 'app/admin/metrics/blocks/metrics-garbagecollector/metrics-garbagecollector.component';
+import { MetricsRequestComponent } from 'app/admin/metrics/blocks/metrics-request/metrics-request.component';
+import { MetricsSystemComponent } from 'app/admin/metrics/blocks/metrics-system/metrics-system.component';
 import { of } from 'rxjs';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
 import { MetricsService } from 'app/admin/metrics/metrics.service';
 import { Metrics, ThreadDump } from 'app/admin/metrics/metrics.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockComponent } from 'ng-mocks';
 
 describe('MetricsComponent', () => {
     let comp: MetricsComponent;
@@ -14,7 +25,20 @@ describe('MetricsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [MetricsComponent],
+            providers: [provideHttpClientTesting()],
+            declarations: [
+                MetricsComponent,
+                MockComponent(FaIconComponent),
+                MockComponent(JvmMemoryComponent),
+                MockComponent(JvmThreadsComponent),
+                MockComponent(MetricsSystemComponent),
+                MockComponent(MetricsGarbageCollectorComponent),
+                MockComponent(MetricsRequestComponent),
+                MockComponent(MetricsEndpointsRequestsComponent),
+                MockComponent(MetricsCacheComponent),
+                MockComponent(MetricsCacheComponent),
+                MockComponent(MetricsDatasourceComponent),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -22,6 +46,19 @@ describe('MetricsComponent', () => {
                 comp = fixture.componentInstance;
                 service = fixture.debugElement.injector.get(MetricsService);
             });
+    });
+
+    describe('refresh', () => {
+        it('should call refresh on init', () => {
+            // GIVEN
+            jest.spyOn(service, 'getMetrics').mockReturnValue(of({} as Metrics));
+
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN
+            expect(service.getMetrics).toHaveBeenCalledOnce();
+        });
     });
 
     it('should call refresh on init', () => {

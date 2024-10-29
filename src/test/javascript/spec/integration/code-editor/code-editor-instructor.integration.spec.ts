@@ -65,6 +65,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { mockCodeEditorMonacoViewChildren } from '../../helpers/mocks/mock-instance.helper';
 
 describe('CodeEditorInstructorIntegration', () => {
     let container: CodeEditorInstructorAndEditorContainerComponent;
@@ -86,6 +87,9 @@ describe('CodeEditorInstructorIntegration', () => {
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | null>;
     let findWithParticipationsSubject: Subject<{ body: ProgrammingExercise }>;
     let routeSubject: Subject<Params>;
+
+    // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
+    mockCodeEditorMonacoViewChildren();
 
     beforeEach(() => {
         return TestBed.configureTestingModule({

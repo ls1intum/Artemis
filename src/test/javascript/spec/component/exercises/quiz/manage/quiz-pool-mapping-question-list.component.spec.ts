@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -18,6 +18,7 @@ jest.mock('@angular/cdk/drag-drop', () => {
 });
 import * as DragDrop from '@angular/cdk/drag-drop';
 import { moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('QuizPoolMappingQuestionListComponent', () => {
     let fixture: ComponentFixture<QuizPoolMappingQuestionListComponent>;
@@ -25,9 +26,9 @@ describe('QuizPoolMappingQuestionListComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, DragDrop.DragDropModule, HttpClientTestingModule],
+            imports: [ArtemisTestModule, DragDrop.DragDropModule],
             declarations: [QuizPoolMappingQuestionListComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
-            providers: [],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {

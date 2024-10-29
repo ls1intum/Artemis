@@ -13,6 +13,7 @@ import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/vide
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 
 const routes: Routes = [
     {
@@ -23,13 +24,6 @@ const routes: Routes = [
             pageTitle: 'overview.lectures',
         },
         canActivate: [UserRouteAccessService],
-        children: [
-            {
-                path: '',
-                pathMatch: 'full',
-                loadChildren: () => import('../discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
-            },
-        ],
     },
 ];
 @NgModule({
@@ -45,6 +39,7 @@ const routes: Routes = [
         TextUnitComponent,
         OnlineUnitComponent,
         AttachmentUnitComponent,
+        DiscussionSectionComponent,
     ],
     declarations: [CourseLectureDetailsComponent],
     exports: [CourseLectureDetailsComponent],

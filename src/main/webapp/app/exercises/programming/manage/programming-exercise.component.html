@@ -23,7 +23,7 @@
                     <th class="d-md-table-cell">
                         <span jhiTranslate="artemisApp.exercise.mode"></span>
                     </th>
-                    @if (course.presentationScore !== 0) {
+                    @if (course.presentationScore) {
                         <th class="d-md-table-cell" jhiSortBy="presentationScoreEnabled">
                             <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title"></span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
@@ -139,19 +139,21 @@
                         }
                         <td class="d-md-table-cell">
                             <div class="d-flex justify-content-between">
-                                <span [jhiTranslate]="'artemisApp.programmingExercise.offlineIde'"></span>:
+                                <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.offlineIde'"></span>
                                 <span [jhiTranslate]="programmingExercise.allowOfflineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <span [jhiTranslate]="'artemisApp.programmingExercise.onlineEditor'"></span>:
+                                <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineEditor'"></span>
                                 <span [jhiTranslate]="programmingExercise.allowOnlineEditor ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
                             </div>
-                            <div class="d-flex justify-content-between">
-                                <span [jhiTranslate]="'artemisApp.programmingExercise.onlineIde'"></span>:
-                                <span [jhiTranslate]="programmingExercise.allowOnlineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
-                            </div>
+                            @if (onlineIdeEnabled) {
+                                <div class="d-flex justify-content-between">
+                                    <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineIde'"></span>
+                                    <span [jhiTranslate]="programmingExercise.allowOnlineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
+                                </div>
+                            }
                         </td>
-                        @if (course.presentationScore !== 0) {
+                        @if (course.presentationScore) {
                             <td class="d-md-table-cell">{{ programmingExercise.presentationScoreEnabled }}</td>
                         }
                         <td class="d-md-table-cell">

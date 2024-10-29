@@ -24,7 +24,7 @@ import {
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -939,6 +939,49 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     translateValues: {},
                 });
             }
+        });
+
+        it('should find invalid timeout', () => {
+            comp.programmingExercise.buildConfig!.timeoutSeconds = -1;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.timeout.alert',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.buildConfig!.timeoutSeconds = 100;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.timeout.alert',
+                translateValues: {},
+            });
+        });
+
+        it('should find invalid checkoutpaths', () => {
+            comp.programmingExercise.buildConfig!.assignmentCheckoutPath = 'assignment';
+            comp.programmingExercise.buildConfig!.testCheckoutPath = 'assignment';
+            comp.programmingExercise.buildConfig!.solutionCheckoutPath = 'solution';
+
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.buildConfig!.testCheckoutPath = 'test';
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.buildConfig!.assignmentCheckoutPath = 'assignment/';
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.buildConfig!.assignmentCheckoutPath = 'assignment';
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
         });
     });
 

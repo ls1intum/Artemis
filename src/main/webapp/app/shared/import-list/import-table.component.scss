@@ -1,0 +1,14 @@
+.import-table-container {
+    height: 280px;
+    overflow-y: scroll;
+
+    table {
+        thead th {
+            position: sticky;
+            top: 0;
+            // z-index is required that the table rows scroll under the header
+            z-index: 1;
+            background-color: var(--bs-modal-bg);
+        }
+    }
+}

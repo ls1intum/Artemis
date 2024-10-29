@@ -14,25 +14,24 @@
     opacity: 1;
 }
 
-.col-12 {
-    width: 100% !important;
-}
-
-@media screen and (min-width: 992px) {
-    .col-lg-6 {
-        width: 50% !important;
+.course-grid {
+    display: grid;
+    // cards can shrink to 350px
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-gap: 1rem;
+    justify-items: center;
+    // for 4 or less cards, we let each card shrink to 325px to display more cards in smaller screens, 1751px is the breakpoint for 4 cards
+    @media screen and (max-width: 1751px) {
+        grid-template-columns: repeat(auto-fill, minmax(325px, 1fr));
     }
 }
 
-@media screen and (min-width: 1200px) {
-    .col-xl-4 {
-        width: 33.33% !important;
-    }
+.course-card-wrapper {
+    width: 100%;
+    max-width: 400px;
 }
 
-@media screen and (min-width: 1900px) {
-    .col-xl-4 {
-        flex: 0 0 25;
-        width: 25% !important;
-    }
+.container-fluid {
+    // ensure that horizontal spacing in container is consistent
+    --bs-gutter-x: 2rem;
 }
