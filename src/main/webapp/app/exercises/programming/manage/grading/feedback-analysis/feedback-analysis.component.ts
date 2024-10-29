@@ -99,7 +99,7 @@ export class FeedbackAnalysisComponent {
             this.testCaseNames.set(response.testCaseNames);
             this.errorCategories.set(response.errorCategories);
         } catch (error) {
-            this.alertService.error('artemisApp.programmingExercise.configureGrading.feedbackAnalysis.error');
+            this.alertService.error(this.TRANSLATION_BASE + '.error');
         }
     }
 

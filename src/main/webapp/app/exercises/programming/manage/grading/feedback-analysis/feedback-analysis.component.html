@@ -1,7 +1,7 @@
 <ng-template #headerTemplate let-column="column" let-label="label">
     <th scope="col" [class.clickable]="column !== 'errorCategory'" (click)="column !== 'errorCategory' && setSortedColumn(column)">
         <div class="d-flex align-items-center">
-            <span jhiTranslate="label"></span>
+            <span [jhiTranslate]="label"></span>
             @if (column !== 'errorCategory') {
                 <jhi-sort-icon [direction]="getSortDirection(column)"></jhi-sort-icon>
             }
@@ -11,16 +11,16 @@
 <ng-template #emptyTableTemplate>
     <div
         class="text-center p-3 text-muted"
-        jhiTranslate="this.selectedFiltersCount() > 0 || this.searchTerm() !== '' ? artemisApp.programmingExercise.configureGrading.feedbackAnalysis.noDataFilter : artemisApp.programmingExercise.configureGrading.feedbackAnalysis.noData"
+        [jhiTranslate]="this.selectedFiltersCount() > 0 || this.searchTerm() !== '' ? TRANSLATION_BASE + '.noDataFilter' : TRANSLATION_BASE + '.noData'"
     ></div>
 </ng-template>
 <div class="m-3">
     <div class="row m-0 justify-content-between align-items-center">
-        <h3 class="m-0 col p-0" jhiTranslate="TRANSLATION_BASE + '.title'" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
+        <h3 class="m-0 col p-0" [jhiTranslate]="TRANSLATION_BASE + '.title'" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
         <div class="col-md-auto d-flex align-items-center position-relative">
             <button class="btn me-2" (click)="openFilterModal()" [ngClass]="{ 'btn-secondary': selectedFiltersCount() == 0, 'btn-success': selectedFiltersCount() != 0 }">
                 <fa-icon [icon]="faFilter"></fa-icon>
-                <span jhiTranslate="TRANSLATION_BASE + '.filter'"></span> ({{ selectedFiltersCount() }})
+                <span [jhiTranslate]="TRANSLATION_BASE + '.filter'"></span> ({{ selectedFiltersCount() }})
             </button>
             <input
                 type="search"
@@ -87,7 +87,7 @@
         >
         </ngb-pagination>
         <div class="text-muted text-end">
-            <span jhiTranslate="TRANSLATION_BASE + '.totalItems'" [translateValues]="{ count: totalItems() }"></span>
+            <span [jhiTranslate]="TRANSLATION_BASE + '.totalItems'" [translateValues]="{ count: totalItems() }"></span>
         </div>
     </div>
 </div>

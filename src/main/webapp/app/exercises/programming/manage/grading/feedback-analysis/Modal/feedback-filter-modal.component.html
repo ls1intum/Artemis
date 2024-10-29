@@ -1,10 +1,10 @@
 <div class="modal-header">
-    <h5 class="modal-title" jhiTranslate="TRANSLATION_BASE + '.modalTitle'"></h5>
+    <h5 class="modal-title" [jhiTranslate]="TRANSLATION_BASE + '.modalTitle'"></h5>
     <button type="button" class="btn-close" (click)="closeModal()"></button>
 </div>
 <div class="modal-body">
     <div class="form-group">
-        <label jhiTranslate="TRANSLATION_BASE + '.task'"></label>
+        <label [jhiTranslate]="TRANSLATION_BASE + '.task'"></label>
         <div class="row">
             @for (task of taskArray(); track task) {
                 <div class="col-4">
@@ -24,7 +24,7 @@
         </div>
     </div>
     <div class="form-group">
-        <label jhiTranslate="TRANSLATION_BASE + '.testcase'"></label>
+        <label [jhiTranslate]="TRANSLATION_BASE + '.testcase'"></label>
         <div class="row">
             @for (testCase of testCaseNames(); track testCase) {
                 <div class="col-4">
@@ -44,7 +44,7 @@
         </div>
     </div>
     <div class="form-group">
-        <label jhiTranslate="TRANSLATION_BASE + '.errorCategory'"></label>
+        <label [jhiTranslate]="TRANSLATION_BASE + '.errorCategory'"></label>
         <div class="row">
             @for (errorCategory of errorCategories(); track errorCategory) {
                 <div class="col-4">
@@ -63,7 +63,7 @@
             }
         </div>
     </div>
-    <label jhiTranslate="TRANSLATION_BASE + '.occurrence'"></label>
+    <label [jhiTranslate]="TRANSLATION_BASE + '.occurrence'"></label>
     <jhi-range-slider
         [generalMinValue]="minCount()"
         [generalMaxValue]="maxCount()"
@@ -73,7 +73,7 @@
 </div>
 
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-secondary me-auto" (click)="clearFilter()" jhiTranslate="TRANSLATION_BASE + '.clear'"></button>
-    <button type="button" class="btn btn-secondary" (click)="closeModal()" jhiTranslate="TRANSLATION_BASE + '.cancel'"></button>
-    <button type="submit" class="btn btn-primary" (click)="applyFilter()" jhiTranslate="TRANSLATION_BASE + '.apply'"></button>
+    <button type="button" class="btn btn-outline-secondary me-auto" (click)="clearFilter()" [jhiTranslate]="TRANSLATION_BASE + '.clear'"></button>
+    <button type="button" class="btn btn-secondary" (click)="closeModal()" [jhiTranslate]="TRANSLATION_BASE + '.cancel'"></button>
+    <button type="submit" class="btn btn-primary" (click)="applyFilter()" [jhiTranslate]="TRANSLATION_BASE + '.apply'"></button>
 </div>

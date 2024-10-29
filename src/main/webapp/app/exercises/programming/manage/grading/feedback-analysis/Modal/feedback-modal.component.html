@@ -1,5 +1,5 @@
 <div class="d-flex justify-content-between align-items-center border-bottom-0 p-3">
-    <h4 class="m-0" jhiTranslate="TRANSLATION_BASE + '.feedbackModal.header'"></h4>
+    <h4 class="m-0" [jhiTranslate]="TRANSLATION_BASE + '.feedbackModal.header'"></h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.close()"></button>
 </div>
 <hr class="my-0" />
@@ -20,13 +20,13 @@
         <ng-container *ngTemplateOutlet="detailTemplate; context: { label: TRANSLATION_BASE + '.errorCategory', value: 'Student Error' }"> </ng-container>
     </div>
 
-    <h5 class="mb-3" jhiTranslate="TRANSLATION_BASE + '.feedbackModal.feedbackTitle'"></h5>
+    <h5 class="mb-3" [jhiTranslate]="TRANSLATION_BASE + '.feedbackModal.feedbackTitle'"></h5>
     <p>{{ feedbackDetail().detailText }}</p>
 </div>
 
 <ng-template #detailTemplate let-label="label" let-value="value">
     <div class="p-1 border rounded-3">
-        <span class="fw-bold" jhiTranslate="label"></span>
+        <span class="fw-bold" [jhiTranslate]="label"></span>
         <p>{{ value }}</p>
     </div>
 </ng-template>
