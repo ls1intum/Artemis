@@ -104,8 +104,8 @@ module.exports = {
             // TODO: in the future, the following values should increase to at least 90%
             statements: 87.46,
             branches: 73.56,
-            functions: 87.52,
-            lines: 82.04,
+            functions: 82.04,
+            lines: 87.52,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
