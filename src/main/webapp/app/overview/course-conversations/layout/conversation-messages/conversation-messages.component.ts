@@ -151,7 +151,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
             if (this.posts.length > 0) {
                 const savedScrollId = sessionStorage.getItem(this.sessionStorageKey + this._activeConversation?.id) ?? '';
-                setTimeout(() => this.goToLastSelectedElement(parseInt(savedScrollId!, 10)), 0);
+                setTimeout(() => this.goToLastSelectedElement(parseInt(savedScrollId, 10)), 0);
             }
         });
         this.content.nativeElement.addEventListener('scroll', () => {
@@ -319,12 +319,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private findElementsAtScrollPosition() {
         const messageArray = this.messages.toArray();
-        this.elementsAtScrollPosition = messageArray.filter((message) => {
+        const containerRect = this.content.nativeElement.getBoundingClientRect();
+        const visibleMessages = [];
+        for (const message of messageArray) {
+            if (!message.elementRef?.nativeElement || !message.post?.id) continue;
             const rect = message.elementRef.nativeElement.getBoundingClientRect();
-            const containerRect = this.content.nativeElement.getBoundingClientRect();
-            return rect.top >= containerRect.top && rect.bottom <= containerRect.bottom;
-        });
-
+            if (rect.top >= containerRect.top && rect.bottom <= containerRect.bottom) {
+                visibleMessages.push(message);
+                break; // Only need the first visible message
+            }
+        }
+        this.elementsAtScrollPosition = visibleMessages;
         if (this.elementsAtScrollPosition && this.canStartSaving) {
             this.saveScrollPosition(this.elementsAtScrollPosition[0].post.id!);
         }
