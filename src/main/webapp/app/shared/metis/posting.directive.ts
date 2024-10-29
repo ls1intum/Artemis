@@ -1,9 +1,9 @@
 import { Posting } from 'app/entities/metis/posting.model';
-import { ChangeDetectorRef, Directive, Input, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { MetisService } from 'app/shared/metis/metis.service';
 
 @Directive()
-export abstract class PostingDirective<T extends Posting> implements OnInit {
+export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
     @Input() posting: T;
     @Input() isCommunicationPage: boolean;
     @Input() showChannelReference?: boolean;
@@ -25,6 +25,16 @@ export abstract class PostingDirective<T extends Posting> implements OnInit {
 
     ngOnInit(): void {
         this.content = this.posting.content;
+    }
+
+    ngOnDestroy(): void {
+        if (this.deleteTimer !== undefined) {
+            clearTimeout(this.deleteTimer);
+        }
+
+        if (this.deleteInterval !== undefined) {
+            clearInterval(this.deleteInterval);
+        }
     }
 
     onDeleteEvent(isDelete: boolean) {

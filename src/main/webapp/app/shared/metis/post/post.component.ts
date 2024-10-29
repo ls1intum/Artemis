@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import { AfterContentChecked, ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -27,7 +27,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
         ]),
     ],
 })
-export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked, OnDestroy {
+export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() readOnlyMode: boolean;
     @Input() previewMode: boolean;
@@ -85,16 +85,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
         this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
         this.sortAnswerPosts();
-    }
-
-    ngOnDestroy(): void {
-        if (this.deleteTimer !== undefined) {
-            clearTimeout(this.deleteTimer);
-        }
-
-        if (this.deleteInterval !== undefined) {
-            clearInterval(this.deleteInterval);
-        }
     }
 
     /**
