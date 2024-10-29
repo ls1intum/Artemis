@@ -138,7 +138,6 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         } else {
             this.attachmentService.create(this.attachmentToBeCreated!, this.attachmentFile!).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
-                    attachmentRes.body!.lecture!.course = this.lecture.course;
                     this.attachments.push(attachmentRes.body!);
                     this.lectureService.findWithDetails(this.lecture.id!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
                         this.lecture = lectureResponse.body!;
