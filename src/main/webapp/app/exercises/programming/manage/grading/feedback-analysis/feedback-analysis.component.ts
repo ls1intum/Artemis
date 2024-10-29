@@ -38,6 +38,7 @@ export class FeedbackAnalysisComponent {
     readonly totalItems = signal<number>(0);
     readonly collectionsSize = computed(() => this.content().numberOfPages * this.pageSize());
 
+    readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis';
     readonly faSort = faSort;
     readonly faSortUp = faSortUp;
     readonly faSortDown = faSortDown;
@@ -118,10 +119,6 @@ export class FeedbackAnalysisComponent {
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
     }
 
-    isSortableColumn(column: string): boolean {
-        return ['count', 'detailText', 'testCaseName', 'taskName'].includes(column);
-    }
-
     setSortedColumn(column: string): void {
         if (this.sortedColumn() === column) {
             this.sortingOrder.set(this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING);
@@ -178,7 +175,7 @@ export class FeedbackAnalysisComponent {
         if (filters.testCases && filters.testCases.length > 0) {
             count += filters.testCases.length;
         }
-        if (filters.errorCategories && filters.errorCategories.length > 0) {
+        if (filters.errorCategories?.length) {
             count += filters.errorCategories.length;
         }
         if (filters.occurrence && (filters.occurrence[0] !== 0 || filters.occurrence[1] !== this.maxCount())) {
