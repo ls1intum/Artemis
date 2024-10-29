@@ -9,7 +9,8 @@
             "guide": "Formatierungen mit Markdown sind möglich",
             "color": "Farbe",
             "preview": {
-                "slideNotFound": "Referenzierte Folie wurde nicht gefunden"
+                "slideNotFound": "Referenzierte Folie wurde nicht gefunden",
+                "imageNotFound": "Referenziertes Bild wurde nicht gefunden"
             },
             "slideWithNumber": "Folie {{ number }}"
         }

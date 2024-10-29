@@ -149,7 +149,7 @@
                                 @if (hasSidebar) {
                                     <button
                                         [ngbTooltip]="'Toggle Sidebar (⇧ + Ctrl + B)'"
-                                        [ngClass]="{ 'is-collapsed': isSidebarCollapsed }"
+                                        [ngClass]="{ 'is-collapsed': isSidebarCollapsed, 'is-communication-module': pageTitle === 'communication' }"
                                         triggers="hover"
                                         class="btn btn-sidebar-collapse me-3 btn-sm rounded-3"
                                         (click)="toggleSidebar()"
@@ -166,7 +166,12 @@
                             <div class="d-flex">
                                 @if (isNotManagementView && course.isAtLeastTutor) {
                                     <div id="manage-button">
-                                        <a class="btn btn-secondary" [routerLink]="['/course-management', course.id]" jhiTranslate="artemisApp.courseOverview.manage"></a>
+                                        <a
+                                            class="btn btn-secondary"
+                                            [ngClass]="{ 'd-none d-sm-inline': pageTitle === 'communication' }"
+                                            [routerLink]="['/course-management', course.id]"
+                                            jhiTranslate="artemisApp.courseOverview.manage"
+                                        ></a>
                                     </div>
                                 }
                                 @if (showRefreshButton) {

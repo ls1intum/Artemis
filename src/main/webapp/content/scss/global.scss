@@ -306,6 +306,7 @@ Generic styles
     background-color: var(--bs-body-bg);
     padding-bottom: var(--footer-height-prod);
     @media (max-width: 768px) {
+        height: 100dvh;
         padding-bottom: var(--footer-height-prod) !important;
     }
     &.footer-height-dev {
@@ -1086,6 +1087,7 @@ body.transparent-background {
     }
     @media (max-width: 768px) {
         height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
+        height: calc(100dvh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
     }
 }
 
@@ -1129,7 +1131,7 @@ $transition-in-between-delay: 0.05s;
 }
 
 .sidebar-width {
-    width: $sidebar-width !important;
+    width: $sidebar-width;
 }
 
 .fs-xx-small {

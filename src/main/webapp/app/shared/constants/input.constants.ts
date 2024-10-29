@@ -5,6 +5,8 @@ export const DATE_TIME_FORMAT = 'YYYY-MM-DDTHH:mm';
 
 /** Maximum file size: 20 MB (Spring-Boot interprets MB as 1024^2 bytes) **/
 export const MAX_FILE_SIZE = 20 * 1024 * 1024;
+/** Maximum file size for communication: 5 MB **/
+export const MAX_FILE_SIZE_COMMUNICATION = 5 * 1024 * 1024;
 /** Maximum submission file size: 4 MB **/
 export const MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024;
 /** Maximum text exercise submission character length: 30.000 **/

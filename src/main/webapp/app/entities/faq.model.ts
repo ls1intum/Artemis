@@ -3,9 +3,9 @@ import { Course } from 'app/entities/course.model';
 import { FaqCategory } from './faq-category.model';
 
 export enum FaqState {
-    ACCEPTED,
-    REJECTED,
-    PROPOSED,
+    ACCEPTED = 'ACCEPTED',
+    REJECTED = 'REJECTED',
+    PROPOSED = 'PROPOSED',
 }
 
 export class Faq implements BaseEntity {

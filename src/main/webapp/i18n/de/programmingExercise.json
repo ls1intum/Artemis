@@ -351,7 +351,23 @@
                     "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
                     "totalItems": "Insgesamt {{count}} Elemente",
-                    "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten."
+                    "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten.",
+                    "search": "Suche ...",
+                    "filter": "Filter",
+                    "feedbackModal": {
+                        "header": "Fehlerdetails",
+                        "feedbackTitle": "Feedback zu Testfällen",
+                        "ok": "Ok"
+                    },
+                    "filterModal": {
+                        "modalTitle": "Filteroptionen",
+                        "task": "Tasks",
+                        "testcase": "Testfälle",
+                        "occurrence": "Häufigkeit",
+                        "clear": "Filter zurücksetzen",
+                        "cancel": "Abbrechen",
+                        "apply": "Filter anwenden"
+                    }
                 },
                 "help": {
                     "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",
@@ -465,7 +481,7 @@
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
                 "notSet": "nicht gesetzt",
                 "allowFeedbackRequests": "Automatische nicht bewertete Feedbackanfragen/manuelle Feedbackanfragen erlauben",
-                "allowFeedbackRequestsTooltip": "Studierende können vor dem Einreichungsfrist um Feedback bitten. Die Anfragen werden von Athena bearbeitet oder, falls Athena nicht erreicht werden kann, können Studierende manuelle Feedbackanfragen stellen.",
+                "allowFeedbackRequestsTooltip": "Studierende können vor der Einreichungsfrist um Feedback bitten. Die Anfragen werden von Athena bearbeitet oder, falls Athena nicht erreicht werden kann, können Studierende manuelle Feedbackanfragen stellen.",
                 "manualFeedbackRequests": "Anfragen nach manuellem Feedback",
                 "manualFeedbackRequestsTooltip": "Studierende können manuelle Korrekturen vor der Einreichungsfrist anfragen, um Feedback zu erhalten.",
                 "feedbackRequestsEnabled": "Korrekturanfragen sind möglich",
@@ -519,7 +535,7 @@
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
-                "usageDescription": "Du kannst Hilfsrepositorys verwenden, um zusätzlichen Code bereitzustellen, den Studierende nicht sehen oder ändern können. Der zusätzliche Code wird während des Builds der Abgabe am angegebenen Checkout-Verzeichnis eingefügt.",
+                "usageDescription": "Du kannst Hilfsrepositorien verwenden, um zusätzlichen Code bereitzustellen, den die Studierenden nicht sehen oder ändern können. Der zusätzliche Code wird im angegebenen Checkout-Verzeichnis eingefügt, bevor der Build erstellt wird. Der eingefügte Code überschreibt alles, was sich an der durch das Checkout-Verzeichnis angegebenen Stelle befindet. Wenn du die Dateien der Studierenden nur teilweise überschreiben willst, muss das Build-Skript angepasst werden.",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
                 "description": "Beschreibung",
