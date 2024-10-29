@@ -23,13 +23,15 @@ export class IrisEnabledComponent implements OnInit {
     private irisSettingsService = inject(IrisSettingsService);
 
     ngOnInit(): void {
-        if (this.exercise) {
-            this.irisSettingsService.getUncombinedExerciseSettings(this.exercise()!.id!).subscribe((settings) => {
+        const exercise = this.exercise();
+        const course = this.course();
+        if (exercise?.id) {
+            this.irisSettingsService.getUncombinedExerciseSettings(exercise.id)?.subscribe((settings) => {
                 this.irisSettings = settings;
                 this.setSubSettings();
             });
-        } else if (this.course) {
-            this.irisSettingsService.getUncombinedCourseSettings(this.course()!.id!).subscribe((settings) => {
+        } else if (course?.id) {
+            this.irisSettingsService.getUncombinedCourseSettings(course.id)?.subscribe((settings) => {
                 this.irisSettings = settings;
                 this.setSubSettings();
             });
