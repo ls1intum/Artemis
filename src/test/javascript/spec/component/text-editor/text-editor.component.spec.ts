@@ -26,7 +26,7 @@ import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text
 import { Language } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
@@ -40,6 +40,8 @@ import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { By } from '@angular/platform-browser';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
@@ -47,7 +49,6 @@ describe('TextEditorComponent', () => {
     let debugElement: DebugElement;
     let textService: TextEditorService;
     let textSubmissionService: TextSubmissionService;
-
     let getTextForParticipationStub: jest.SpyInstance;
 
     const route = { snapshot: { paramMap: convertToParamMap({ participationId: 42 }) } } as ActivatedRoute;
@@ -111,7 +112,7 @@ describe('TextEditorComponent', () => {
     it('should use inputValues if present instead of loading new details', fakeAsync(() => {
         comp.inputExercise = textExercise;
         comp.inputParticipation = participation;
-
+        comp.inputSubmission = { id: 1, text: 'test' };
         // @ts-ignore updateParticipation is private
         const updateParticipationSpy = jest.spyOn(comp, 'updateParticipation');
         // @ts-ignore setupComponentWithInputValuesSpy is private
@@ -122,6 +123,7 @@ describe('TextEditorComponent', () => {
         expect(getTextForParticipationStub).not.toHaveBeenCalled();
         expect(updateParticipationSpy).not.toHaveBeenCalled();
         expect(setupComponentWithInputValuesSpy).toHaveBeenCalled();
+        expect(comp.answer).toBeDefined();
     }));
 
     it('should not allow to submit after the due date if there is no due date', fakeAsync(() => {
@@ -246,6 +248,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should submit', () => {
+        comp.participation = { id: 1 };
         comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
         comp.textExercise = { id: 1 } as TextExercise;
         comp.answer = 'abc';
@@ -253,6 +256,34 @@ describe('TextEditorComponent', () => {
         comp.submit();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(comp.isSaving).toBeFalsy();
+    });
+
+    it('should alert successful on submit if not isAllowedToSubmitAfterDueDate', () => {
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'success');
+        comp.participation = { id: 1 };
+        comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
+        comp.textExercise = { id: 1 } as TextExercise;
+        comp.answer = 'abc';
+        comp.isAllowedToSubmitAfterDueDate = false;
+        jest.spyOn(textSubmissionService, 'update');
+        comp.submit();
+        expect(textSubmissionService.update).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should warn alert on submit if submitDueDateMissedAlert', () => {
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'warning');
+        comp.participation = { id: 1 };
+        comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
+        comp.textExercise = { id: 1 } as TextExercise;
+        comp.answer = 'abc';
+        comp.isAllowedToSubmitAfterDueDate = true;
+        jest.spyOn(textSubmissionService, 'update');
+        comp.submit();
+        expect(textSubmissionService.update).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should return submission for answer', () => {
@@ -298,6 +329,91 @@ describe('TextEditorComponent', () => {
         expect(comp.answer).toBe('abc');
     });
 
+    it('should set latest submission if submissionId is undefined in updateParticipation', () => {
+        const submissionList = [{ id: 1 }, { id: 2 }, { id: 3 }];
+
+        const exGroup = {
+            id: 1,
+        };
+        const textExercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+            exerciseGroup: exGroup,
+        } as TextExercise;
+        comp.participation = {
+            id: 2,
+            submissions: submissionList,
+            exercise: textExercise,
+        } as StudentParticipation;
+        comp['updateParticipation'](comp.participation, undefined);
+        expect(comp.submission.id).toEqual(submissionList[submissionList.length - 1].id);
+    });
+
+    it('should set the correct submission if updateParticipation is called with submission id', () => {
+        const submissionList = [{ id: 1 }, { id: 2 }, { id: 3 }];
+
+        const exGroup = {
+            id: 1,
+        };
+        const textExercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+            exerciseGroup: exGroup,
+        } as TextExercise;
+        comp.participation = {
+            id: 2,
+            submissions: submissionList,
+            exercise: textExercise,
+        } as StudentParticipation;
+        comp['updateParticipation'](comp.participation, 2);
+        expect(comp.submission.id).toBe(2);
+    });
+
+    it('should set the latest submission if updateParticipation is called with submission id that does not exist', () => {
+        const submissionList = [{ id: 1 }, { id: 3 }, { id: 4, results: [{ id: 1, assessmentType: AssessmentType.MANUAL }] }];
+
+        const exGroup = {
+            id: 1,
+        };
+        const textExercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+            exerciseGroup: exGroup,
+            course: { id: 1 },
+            assessmentDueDate: dayjs().add(6, 'minutes'),
+        } as TextExercise;
+        comp.participation = {
+            id: 2,
+            submissions: submissionList,
+            exercise: textExercise,
+            results: [{ id: 1 }, { id: 2 }],
+        } as StudentParticipation;
+        comp['updateParticipation'](comp.participation, 2);
+        expect(comp.submission.id).toBe(4);
+    });
+
+    it('should not render the submit button when isReadOnlyWithShowResult is true', () => {
+        comp.isReadOnlyWithShowResult = true;
+        comp.textExercise = textExercise;
+        fixture.detectChanges();
+
+        const submitButton = fixture.debugElement.query(By.css('#submit'));
+        expect(submitButton).toBeFalsy();
+    });
+
+    it('should render the submit button when isReadOnlyWithShowResult is false', () => {
+        comp.isOwnerOfParticipation = true;
+        comp.isReadOnlyWithShowResult = false;
+        comp.isAlwaysActive = true;
+        comp.textExercise = textExercise;
+        comp.submission = { id: 5, submitted: true };
+
+        fixture.detectChanges();
+
+        const submitButton = fixture.debugElement.query(By.css('#submit'));
+        expect(submitButton).toBeTruthy();
+    });
+
     it('should destroy', () => {
         comp.submission = { text: 'abc' } as TextSubmission;
         comp.answer = 'def';
@@ -305,5 +421,14 @@ describe('TextEditorComponent', () => {
         jest.spyOn(textSubmissionService, 'update');
         comp.ngOnDestroy();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
+    });
+
+    it('should destroy and call submission service when submission id', () => {
+        comp.submission = { id: 1, text: 'abc' } as TextSubmission;
+        comp.answer = 'def';
+        comp.textExercise = { id: 1 } as TextExercise;
+        jest.spyOn(textSubmissionService, 'update');
+        comp.ngOnDestroy();
+        expect(textSubmissionService.update).toHaveBeenCalled();
     });
 });
