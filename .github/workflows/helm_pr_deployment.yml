@@ -8,7 +8,9 @@ jobs:
   deploy:
     if: ${{ github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
     runs-on: ubuntu-latest
-    environment: k8s
+    environment:
+      name: k8s
+      url: https://pr${{ github.event.pull_request.number }}.artemis-k8s.ase.cit.tum.de
     concurrency: k8s-pr${{ github.event.pull_request.number }}
 
     steps:
