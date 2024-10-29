@@ -21,6 +21,8 @@ import com.hazelcast.map.listener.EntryUpdatedListener;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 
 /**
  * This service is responsible for sending build job queue information over websockets.
@@ -36,6 +38,10 @@ public class LocalCIQueueWebsocketService {
 
     private final LocalCIWebsocketMessagingService localCIWebsocketMessagingService;
 
+    private final ProgrammingMessagingService programmingMessagingService;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     private final SharedQueueManagementService sharedQueueManagementService;
 
     private final HazelcastInstance hazelcastInstance;
@@ -48,10 +54,13 @@ public class LocalCIQueueWebsocketService {
      * @param sharedQueueManagementService     the local ci shared build job queue service
      */
     public LocalCIQueueWebsocketService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, LocalCIWebsocketMessagingService localCIWebsocketMessagingService,
-            SharedQueueManagementService sharedQueueManagementService) {
+            SharedQueueManagementService sharedQueueManagementService, ProgrammingMessagingService programmingMessagingService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIWebsocketMessagingService = localCIWebsocketMessagingService;
         this.sharedQueueManagementService = sharedQueueManagementService;
+        this.programmingMessagingService = programmingMessagingService;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -112,6 +121,7 @@ public class LocalCIQueueWebsocketService {
         public void entryAdded(com.hazelcast.core.EntryEvent<Long, BuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
             sendProcessingJobsOverWebsocket(event.getValue().courseId());
+            notifyUserAboutBuildProcessing(event.getValue().participationId(), event.getValue().buildConfig().commitHashToBuild(), event.getValue().exerciseId());
         }
 
         @Override
@@ -140,6 +150,16 @@ public class LocalCIQueueWebsocketService {
         public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent updated: {}", event.getValue());
             sendBuildAgentInformationOverWebsocket(event.getValue().buildAgent().name());
+        }
+    }
+
+    private void notifyUserAboutBuildProcessing(Long participationId, String commitHash, Long exerciseId) {
+        var submission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participationId, commitHash);
+        if (submission != null) {
+            programmingMessagingService.notifyUserAboutSubmission(submission, exerciseId, true);
+        }
+        else {
+            log.warn("Could not find submission for participationId {} and commitHash {}", participationId, commitHash);
         }
     }
 }

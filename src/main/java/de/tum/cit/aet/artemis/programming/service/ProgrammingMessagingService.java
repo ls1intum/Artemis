@@ -76,7 +76,18 @@ public class ProgrammingMessagingService {
      * @param exerciseId used to build the correct topic
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId) {
-        var submissionDTO = SubmissionDTO.of(submission);
+        notifyUserAboutSubmission(submission, exerciseId, false);
+    }
+
+    /**
+     * Notify user on a new programming submission.
+     *
+     * @param submission   ProgrammingSubmission
+     * @param exerciseId   used to build the correct topic
+     * @param isProcessing whether the submission started processing or not
+     */
+    public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId, boolean isProcessing) {
+        var submissionDTO = SubmissionDTO.of(submission, isProcessing);
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             if (studentParticipation.getParticipant() instanceof Team team) {
                 // eager load the team with students so their information can be used for the messages below

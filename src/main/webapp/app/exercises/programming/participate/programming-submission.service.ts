@@ -602,7 +602,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             map((submission: ProgrammingSubmission | undefined) => {
                 if (submission) {
                     const queueRemainingTime = this.getExpectedRemainingTimeForQueue(submission);
-                    if (!submission.isProcessing && queueRemainingTime > 0) {
+                    if (submission.isProcessing === false && queueRemainingTime > 0) {
                         this.emitQueuedSubmission(participationId, exerciseId, submission);
                         this.startQueueEstimateTimer(participationId, exerciseId, submission, queueRemainingTime);
                         return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_QUEUED };
