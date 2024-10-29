@@ -123,9 +123,9 @@ The following members of the project management team are responsible for specifi
 | Exercises             | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Programming exercises | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Build agents          | Robert Jandow ([@robertjndw](https://github.com/robertjndw))                       |
-| Quiz exercises        | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
+| Quiz exercises        | Timor Morrien ([@Hialus](https://github.com/Hialus))                               |
 | Modeling exercises    | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
-| Text exercises        | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
+| Text exercises        | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
 | File upload exercises | Elisabeth Friesinger ([@easy-lisi](https://github.com/easy-lisi))                  |
 | Exam mode             | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Assessment            | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
@@ -193,7 +193,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.6.0.war
+./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.6.5.war
 ```
 
 ## Architecture

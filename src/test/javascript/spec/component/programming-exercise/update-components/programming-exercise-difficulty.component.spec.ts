@@ -14,6 +14,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { ArtemisTestModule } from '../../../test.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 describe('ProgrammingExerciseDifficultyComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseDifficultyComponent>;
@@ -24,7 +25,7 @@ describe('ProgrammingExerciseDifficultyComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, ArtemisSharedComponentModule],
             declarations: [
                 CheckboxControlValueAccessor,
                 DefaultValueAccessor,

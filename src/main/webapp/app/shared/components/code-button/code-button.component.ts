@@ -28,20 +28,13 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
 
-    @Input()
-    loading = false;
-    @Input()
-    useParticipationVcsAccessToken = false;
-    @Input()
-    smallButtons: boolean;
-    @Input()
-    repositoryUri?: string;
-    @Input()
-    routerLinkForRepositoryView?: string | (string | number)[];
-    @Input()
-    participations?: ProgrammingExerciseStudentParticipation[];
-    @Input()
-    exercise?: ProgrammingExercise;
+    @Input() loading = false;
+    @Input() useParticipationVcsAccessToken = false;
+    @Input() smallButtons: boolean;
+    @Input() repositoryUri?: string;
+    @Input() routerLinkForRepositoryView?: string | (string | number)[];
+    @Input() participations?: ProgrammingExerciseStudentParticipation[];
+    @Input() exercise?: ProgrammingExercise;
 
     useSsh = false;
     useToken = false;
@@ -142,7 +135,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             this.initTheia(profileInfo);
         });
 
-        this.ideSettingsService.loadIdePreferences().subscribe((programmingLanguageToIde) => {
+        this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
             if (programmingLanguageToIde.size) {
                 this.programmingLanguageToIde = programmingLanguageToIde;
             }

@@ -1,0 +1,29 @@
+.profile-picture {
+    width: 100%;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--gray-400);
+    color: var(--white);
+}
+
+.profile-picture-wrap {
+    position: relative;
+    display: inline-block;
+}
+
+.edit-profile-picture-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(#000, 0.6);
+    opacity: 0;
+    color: var(--white);
+}
+
+.edit-profile-picture-overlay:hover {
+    opacity: 1;
+}

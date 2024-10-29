@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
  * REST controller for managing {@link IrisSettings}.
  */
 @Profile(PROFILE_IRIS)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminIrisSettingsResource {
@@ -34,7 +35,6 @@ public class AdminIrisSettingsResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated settings.
      */
     @PutMapping("iris/global-iris-settings")
-    @EnforceAdmin
     public ResponseEntity<IrisSettings> updateGlobalSettings(@RequestBody IrisSettings settings) {
         var updatedSettings = irisSettingsService.saveIrisSettings(settings);
         return ResponseEntity.ok(updatedSettings);

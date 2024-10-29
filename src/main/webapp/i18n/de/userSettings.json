@@ -27,11 +27,22 @@
                 "deleteFailure": "SSH-Schlüssel konnte nicht gelöscht werden.",
                 "deleteSuccess": "SSH-Schlüssel erfolgreich gelöscht.",
                 "cancelSavingSshKey": "Abbrechen",
-                "editExistingSshKey": "SSH-Schlüssel bearbeiten",
-                "addNewSshKey": "Neuer SSH-Schlüssel",
+                "editExistingSshKey": "Bearbeiten",
+                "viewExistingSshKey": "Ansehen",
+                "addNewSshKey": "SSH-Schlüssel hinzufügen",
+                "sshKeyDetails": "SSH-Schlüssel Informationen",
                 "deleteSshKey": "Löschen",
                 "sshKeyDisplayedInformation": "Das ist dein aktuell konfigurierter SSH-Schlüssel:",
-                "key": "SSH Schlüssel"
+                "key": "Schlüssel",
+                "noKeysHaveBeenAdded": "Es wurden noch keine SSH-Schlüssel hinzugefügt",
+                "whatToUseSSHForInfo": "Verwende SSH-Schlüssel, um einfach und sicher eine Verbindung zu Repositories herzustellen.",
+                "learnMore": "Erfahre mehr über SSH-Schlüssel",
+                "alreadyHaveKey": "Du hast bereits einen Schlüssel? Kopiere deinen Schlüssel in die Zwischenablage:",
+                "back": "Zurück",
+                "keysTablePageTitle": "SSH-Schlüssel",
+                "keys": "Schlüssel",
+                "actions": "Aktionen",
+                "keyName": "Key 1 (Aktuell wird nur ein Schlüssel unterstützt)"
             },
             "vcsAccessTokensSettingsPage": {
                 "addTokenTitle": "Neues Zugriffstoken erzeugen",
@@ -56,7 +67,7 @@
                 "joinedArtemis": "Artemis beigetreten am",
                 "profilePicture": "Profilbild",
                 "addProfilePicture": "Profilbild hinzufügen",
-                "sshKey": "Öffentlicher SSH Schlüssel"
+                "sshKey": "Öffentlicher SSH-Schlüssel"
             },
             "categories": {
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
@@ -107,7 +118,7 @@
             },
             "settingDescriptions": {
                 "basicWeeklySummaryDescription": "Erhalte jeden Freitag um 17:00 Uhr eine einfache wöchentliche Zusammenfassung (bsp. welche neuen Aufgaben diese Woche veröffentlicht wurden und noch bearbeitbar sind)",
-                "exerciseCreatedOrStartedDescription": "Erhalte eine Mitteilung, wenn eine neue Aufgabe veröffentlicht wurde",
+                "exerciseReleasedDescription": "Erhalte eine Mitteilung, wenn eine Aufgabe veröffentlicht wurde",
                 "exerciseOpenForPracticeDescription": "Erhalte eine Mitteilung, wenn eine Aufgabe zum Üben freigeschaltet wurde (z.B. ein Quiz)",
                 "exerciseSubmissionAssessedDescription": "Erhalte eine Mitteilung, wenn deine eingereichten Aufgaben bewertet wurden",
                 "newExercisePostDescription": "Erhalte eine Mitteilung, wenn eine neue Nachricht zu einer Aufgabe erstellt wurde",

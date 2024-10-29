@@ -39,6 +39,7 @@
             "readAndUnderstood": "I have read and understood the instructions",
             "toRead": "to read",
             "toReview": "to review",
+            "totalExamples": "There are {{total}} example submissions: {{toRead}} to read and {{toAssess}} to assess.",
             "totalExampleSubmissions": "There are {{total}} example submissions: {{toRead}} to read and {{toAssess}} to assess.",
             "readSubmissions": "Read submissions",
             "start": "Start",

@@ -3,14 +3,14 @@ set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
 build_and_test_the_code () {
   echo '⚙️ executing build_and_test_the_code'
-  cp -R Sources assignment
+  cp -R Sources ${studentParentWorkingDirectoryName}
   # copy test files
-  cp -R Tests assignment
-  cp Package.swift assignment
+  cp -R Tests ${studentParentWorkingDirectoryName}
+  cp Package.swift ${studentParentWorkingDirectoryName}
 
-  # In order to get the correct console output we need to execute the command within the assignment directory
+  # In order to get the correct console output we need to execute the command within the ${studentParentWorkingDirectoryName} directory
   # swift build
-  cd assignment
+  cd ${studentParentWorkingDirectoryName}
   swift build || error=true
 
   if [ ! $error ]
@@ -28,10 +28,10 @@ build_and_test_the_code () {
 run_static_code_analysis () {
   echo '⚙️ executing run_static_code_analysis'
   # Copy SwiftLint rules
-  cp .swiftlint.yml assignment || true
+  cp .swiftlint.yml ${studentParentWorkingDirectoryName} || true
   # create target directory for SCA Parser
   mkdir target
-  cd assignment
+  cd ${studentParentWorkingDirectoryName}
   # Execute static code analysis
   swiftlint > ../target/swiftlint-result.xml
 }

@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -42,6 +44,9 @@ import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestSuiteD
 public class ProgrammingExerciseFactory {
 
     public static final String DEFAULT_BRANCH = "main";
+
+    @Value("${artemis.version-control.url}")
+    protected static String artemisVersionControlUrl;
 
     /**
      * Generates a programming exercise with the given release and due date. This exercise is added to the provided course.
@@ -137,7 +142,7 @@ public class ProgrammingExerciseFactory {
         }
         programmingExercise.setPackageName(programmingLanguage == ProgrammingLanguage.SWIFT ? "swiftTest" : "de.test");
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
-        String testRepoUri = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
+        String testRepoUri = String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUri(testRepoUri);
         programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
     }

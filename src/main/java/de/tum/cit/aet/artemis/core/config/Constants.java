@@ -93,6 +93,8 @@ public final class Constants {
     // Used to cut off CI specific path segments when receiving static code analysis reports
     public static final String ASSIGNMENT_DIRECTORY = "/" + ASSIGNMENT_REPO_NAME + "/";
 
+    public static final String TEST_WORKING_DIRECTORY = "test";
+
     // Used as a value for <sourceDirectory> for the Java template pom.xml
     public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
 
@@ -105,6 +107,9 @@ public final class Constants {
     // TODO: the following numbers should be configurable in the yml files
 
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
+
+    // Note: The values in input.constants.ts (client) need to be the same
+    public static final long MAX_FILE_SIZE_COMMUNICATION = 5 * 1024 * 1024; // 5 MB
 
     // Note: The values in input.constants.ts (client) need to be the same
     public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
@@ -389,6 +394,18 @@ public final class Constants {
      * Minimum score for a result to be considered partially successful and shown in orange
      */
     public static final int MIN_SCORE_ORANGE = 40;
+
+    public static final String ASSIGNMENT_REPO_PLACEHOLDER = "${studentWorkingDirectory}";
+
+    public static final String TEST_REPO_PLACEHOLDER = "${testWorkingDirectory}";
+
+    public static final String SOLUTION_REPO_PLACEHOLDER = "${solutionWorkingDirectory}";
+
+    public static final String ASSIGNMENT_REPO_PARENT_PLACEHOLDER = "${studentParentWorkingDirectoryName}";
+
+    public static final String ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH = "${studentWorkingDirectoryNoSlash}";
+
+    public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
     private Constants() {
     }

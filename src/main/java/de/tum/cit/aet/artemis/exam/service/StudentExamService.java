@@ -9,7 +9,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -797,16 +796,17 @@ public class StudentExamService {
     }
 
     /**
-     * Generates a new test exam for the student and stores it in the database
+     * Generates a new individual StudentExam for the specified student and stores it in the database.
      *
-     * @param exam    the exam with loaded exercise groups and exercises for which the StudentExam should be created
-     * @param student the corresponding student
-     * @return a StudentExam for the student and exam
+     * @param exam    The exam with eagerly loaded users, exercise groups, and exercises.
+     * @param student The student for whom the StudentExam should be created.
+     * @return The generated StudentExam.
      */
-    public StudentExam generateTestExam(Exam exam, User student) {
+    public StudentExam generateIndividualStudentExam(Exam exam, User student) {
         // To create a new StudentExam, the Exam with loaded ExerciseGroups and Exercises is needed
         long start = System.nanoTime();
-        StudentExam studentExam = generateIndividualStudentExam(exam, student);
+        Set<User> userSet = Collections.singleton(student);
+        StudentExam studentExam = studentExamRepository.createRandomStudentExams(exam, userSet, examQuizQuestionsGenerator).getFirst();
         // we need to break a cycle for the serialization
         studentExam.getExam().setExerciseGroups(null);
         studentExam.getExam().setStudentExams(null);
@@ -814,20 +814,6 @@ public class StudentExamService {
         log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), exam.getId());
 
         return studentExam;
-    }
-
-    /**
-     * Generates an individual StudentExam
-     *
-     * @param exam    with eagerly loaded users, exerciseGroups and exercises loaded
-     * @param student the student for which the StudentExam should be created
-     * @return the generated StudentExam
-     */
-    private StudentExam generateIndividualStudentExam(Exam exam, User student) {
-        // StudentExams are saved in the called method
-        HashSet<User> userHashSet = new HashSet<>();
-        userHashSet.add(student);
-        return studentExamRepository.createRandomStudentExams(exam, userHashSet, examQuizQuestionsGenerator).getFirst();
     }
 
     /**

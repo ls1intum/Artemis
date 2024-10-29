@@ -351,6 +351,8 @@ Update exercise code in repositories
 - In case of a |build_failed| result, some configuration is wrong, please check the build errors on the corresponding build plan.
 - **Hints:** Test cases should only reference code, that is available in the template repository. In case this is **not** possible, please try out the option **Sequential Test Runs**
 
+.. _adapt_build_script:
+
 Adapt the build script
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -360,8 +362,7 @@ You can activate the option `Customize Build Script` in the programming exercise
 All changes in the configuration will be considered for all builds (template, solution, student submissions).
 
 There are predefined build scripts in bash for all programming languages, project types and configurations (e.g. with or without static code analysis).
-Notice that the checkout paths for the test and the assignment (template, solution or student) repo cannot be customized at the moment and are determined
-by the chosen programming language. Most programming languages clone the test repos into the root folder and the assignment repo into the `assignment` folder.
+Most programming languages clone the test repos into the root folder and the assignment repo into the `assignment` folder.
 This means that build files in the test repo (e.g. Gradle, Maven) typically refer to the `assignment` folder.
 
 You can also use a custom docker image for the build. Make sure to publish the docker image in a publicly available repository (e.g. DockerHub). Ideally build it
@@ -372,7 +373,44 @@ The default Java Docker image can be found on https://github.com/ls1intum/artemi
 Hint: Try out the build of a custom programming exercise locally before you publish a custom docker image and before you upload the code to Artemis, because the
 development and debugging experience is much better.
 
+Edit Repositories Checkout Paths
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**This option is only available when using** :ref:`integrated code lifecycle<integrated code lifecycle>`
+
+This section is optional. In most cases, the preconfigured checkout paths do not need to be changed.
+The checkout paths depend on the chosen programming language and project type. The paths are shown in the preview:
+
+.. figure:: programming/checkout-paths-preview.png
+          :align: center
+
+By checkout paths, we mean the paths where the repositories are cloned during the build process. For example, in Java exercises, the assignment repository is cloned into the `assignment` folder, the test repository is cloned into the root folder. All paths are relative to the working directory of the build plan.
+If you want to change the checkout paths, you can do so by clicking on the `edit repositories checkout path` button. The following dialog will open:
+
+.. figure:: programming/checkout-paths-edit.png
+          :align: center
+
+You must then change the paths in the build script if necessary. Please refer to the :ref:`adapt_build_script` section on how to do this.
+
+.. warning::
+  - Changing the checkout paths can only be done in the exercise creation process. After the exercise has been created, the checkout paths cannot be changed.
+  - Depending on the programming language and project type, the checkout paths are predefined and cannot be changed. For example, for Java exercises, only the assignment repository path can be changed. For Ocaml exercises, the assignment, test, and solution repository paths can be changed.
+  - Changing the checkout paths can lead to build errors if the build script is not adapted accordingly.
+  - For C programming exercises, if used with the default docker image, changing the checkout paths will lead to build errors. The default docker image is configured to work with the default checkout paths.
+
 .. _configure_static_code_analysis_tools:
+
+Edit Maximum Build Duration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**This option is only available when using** :ref:`integrated code lifecycle<integrated code lifecycle>`
+This section is optional. In most cases, the preconfigured build script does not need to be changed.
+
+The maximum build duration is the time limit for the build plan to execute. If the build plan exceeds this time limit, it will be terminated. The default value is 120 seconds.
+You can change the maximum build duration by using the slider.
+
+.. figure:: programming/timeout-slider.png
+          :align: center
 
 Configure static code analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

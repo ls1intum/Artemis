@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -11,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -58,6 +60,9 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final ProgrammingMessagingService programmingMessagingService;
+
+    @Value("${artemis.athena.allowed-feedback-attempts:20}")
+    private int allowedFeedbackAttempts;
 
     public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService,
             Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, SubmissionService submissionService, ResultService resultService,
@@ -111,14 +116,14 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         var submissionOptional = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participation.getId())
                 .findLatestSubmission();
         if (submissionOptional.isEmpty()) {
-            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmission");
+            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionExists");
         }
         var submission = submissionOptional.get();
 
         // save result and transmit it over websockets to notify the client about the status
         var automaticResult = this.submissionService.saveNewEmptyResult(submission);
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
-        automaticResult.setRated(false);
+        automaticResult.setRated(true); // we want to use this feedback to give the grade in the future
         automaticResult.setScore(100.0);
         automaticResult.setSuccessful(null);
         automaticResult.setCompletionDate(ZonedDateTime.now().plusMinutes(5)); // we do not want to show dates without a completion date, but we want the students to know their
@@ -127,7 +132,6 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
         try {
 
-            setIndividualDueDateAndLockRepository(participation, programmingExercise, false);
             this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
             // now the client should be able to see new result
 
@@ -158,9 +162,10 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                         feedback.setDetailText(individualFeedbackItem.description());
                         feedback.setHasLongFeedbackText(false);
                         feedback.setType(FeedbackType.AUTOMATIC);
-                        feedback.setCredits(0.0);
+                        feedback.setCredits(individualFeedbackItem.credits());
                         return feedback;
-                    }).toList();
+                    }).sorted(Comparator.comparing(Feedback::getCredits, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
+            ;
 
             automaticResult.setSuccessful(true);
             automaticResult.setCompletionDate(ZonedDateTime.now());
@@ -175,9 +180,6 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             automaticResult.setCompletionDate(ZonedDateTime.now());
             this.resultRepository.save(automaticResult);
             this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
-        }
-        finally {
-            unlockRepository(participation, programmingExercise);
         }
     }
 
@@ -225,15 +227,10 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
         List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
 
-        long countOfAthenaResultsInProcessOrSuccessful = athenaResults.stream().filter(result -> result.isSuccessful() == null || result.isSuccessful() == Boolean.TRUE).count();
-
         long countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();
 
-        if (countOfAthenaResultsInProcessOrSuccessful >= 3) {
-            throw new BadRequestAlertException("Cannot send additional AI feedback requests now. Try again later!", "participation", "preconditions not met");
-        }
-        if (countOfSuccessfulRequests >= 20) {
-            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditions not met");
+        if (countOfSuccessfulRequests >= this.allowedFeedbackAttempts) {
+            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "maxAthenaResultsReached", true);
         }
     }
 }

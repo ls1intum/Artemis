@@ -50,7 +50,13 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     private boolean checkoutSolutionRepository = false;
 
     @Column(name = "checkout_path")
-    private String checkoutPath;
+    private String testCheckoutPath;
+
+    @Column(name = "assignment_checkout_path")
+    private String assignmentCheckoutPath;
+
+    @Column(name = "solution_checkout_path")
+    private String solutionCheckoutPath;
 
     @Column(name = "timeout_seconds")
     private int timeoutSeconds;
@@ -85,7 +91,9 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     public ProgrammingExerciseBuildConfig(ProgrammingExerciseBuildConfig originalBuildConfig) {
         this.setBranch(originalBuildConfig.getBranch());
         this.setBuildPlanConfiguration(originalBuildConfig.getBuildPlanConfiguration());
-        this.setCheckoutPath(originalBuildConfig.getCheckoutPath());
+        this.setTestCheckoutPath(originalBuildConfig.getTestCheckoutPath());
+        this.setAssignmentCheckoutPath(originalBuildConfig.getAssignmentCheckoutPath());
+        this.setSolutionCheckoutPath(originalBuildConfig.getSolutionCheckoutPath());
         this.setCheckoutSolutionRepository(originalBuildConfig.getCheckoutSolutionRepository());
         this.setDockerFlags(originalBuildConfig.getDockerFlags());
         this.setSequentialTestRuns(originalBuildConfig.hasSequentialTestRuns());
@@ -166,12 +174,12 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.checkoutSolutionRepository = checkoutSolutionRepository;
     }
 
-    public String getCheckoutPath() {
-        return checkoutPath;
+    public String getTestCheckoutPath() {
+        return testCheckoutPath;
     }
 
-    public void setCheckoutPath(String checkoutPath) {
-        this.checkoutPath = checkoutPath;
+    public void setTestCheckoutPath(String testCheckoutPath) {
+        this.testCheckoutPath = testCheckoutPath;
     }
 
     public int getTimeoutSeconds() {
@@ -268,11 +276,27 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         buildPlanAccessSecret = UUID.randomUUID().toString();
     }
 
+    public String getAssignmentCheckoutPath() {
+        return assignmentCheckoutPath;
+    }
+
+    public void setAssignmentCheckoutPath(String assignmentCheckoutPath) {
+        this.assignmentCheckoutPath = assignmentCheckoutPath;
+    }
+
+    public String getSolutionCheckoutPath() {
+        return solutionCheckoutPath;
+    }
+
+    public void setSolutionCheckoutPath(String solutionCheckoutPath) {
+        this.solutionCheckoutPath = solutionCheckoutPath;
+    }
+
     @Override
     public String toString() {
         return "BuildJobConfig{" + "id=" + getId() + ", sequentialTestRuns=" + sequentialTestRuns + ", branch='" + branch + '\'' + ", buildPlanConfiguration='"
                 + buildPlanConfiguration + '\'' + ", buildScript='" + buildScript + '\'' + ", checkoutSolutionRepository=" + checkoutSolutionRepository + ", checkoutPath='"
-                + checkoutPath + '\'' + ", timeoutSeconds=" + timeoutSeconds + ", dockerFlags='" + dockerFlags + '\'' + ", testwiseCoverageEnabled=" + testwiseCoverageEnabled
+                + testCheckoutPath + '\'' + ", timeoutSeconds=" + timeoutSeconds + ", dockerFlags='" + dockerFlags + '\'' + ", testwiseCoverageEnabled=" + testwiseCoverageEnabled
                 + ", theiaImage='" + theiaImage + '\'' + ", allowBranching=" + allowBranching + ", branchRegex='" + branchRegex + '\'' + '}';
     }
 }

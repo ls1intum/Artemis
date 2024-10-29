@@ -1,0 +1,45 @@
+<div class="mb-2">
+    <div class="mb-2">
+        <label>
+            <span jhiTranslate="artemisApp.programmingExercise.dockerImage"></span>
+        </label>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeDockerImage" />
+        <input
+            #dockerImageField="ngModel"
+            required
+            type="text"
+            class="form-control"
+            name="dockerImage"
+            id="field_dockerImage"
+            [ngModel]="dockerImage()"
+            (ngModelChange)="dockerImageChange.emit($event)"
+        />
+    </div>
+    @if (!isAeolus()) {
+        <div class="d-flex align-items-center justify-content-start gap-4 mb-3">
+            <div>
+                <label>
+                    <span jhiTranslate="artemisApp.programmingExercise.timeout.title"></span>
+                </label>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeout.customize" />
+            </div>
+            <div class="w-50">
+                <input
+                    class="w-100 mt-1"
+                    #timeoutField="ngModel"
+                    type="range"
+                    min="0"
+                    max="120"
+                    step="1"
+                    value="120"
+                    id="field_timeout"
+                    [ngModel]="timeout()"
+                    (ngModelChange)="timeoutChange!.emit($event)"
+                />
+            </div>
+            <span class="slider-label">
+                <span class="slider-value">{{ timeout() }} s</span>
+            </span>
+        </div>
+    }
+</div>

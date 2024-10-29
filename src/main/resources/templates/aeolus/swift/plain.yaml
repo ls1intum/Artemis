@@ -3,12 +3,12 @@ actions:
   - name: build_and_test_the_code
     script: |-
       # copy test files
-      cp -R Tests assignment
-      cp Package.swift assignment
+      cp -R Tests ${studentParentWorkingDirectoryName}
+      cp Package.swift ${studentParentWorkingDirectoryName}
 
-      # In order to get the correct console output we need to execute the command within the assignment directory
+      # In order to get the correct console output we need to execute the command within the ${studentParentWorkingDirectoryName} directory
       # swift build
-      cd assignment
+      cd ${studentParentWorkingDirectoryName}
       swift build || error=true
 
       if [ ! $error ]
@@ -24,6 +24,6 @@ actions:
     runAlways: false
     results:
       - name: junit_tests.xml
-        path: assignment/tests.xml
+        path: ${studentParentWorkingDirectoryName}/tests.xml
         type: junit
         before: true

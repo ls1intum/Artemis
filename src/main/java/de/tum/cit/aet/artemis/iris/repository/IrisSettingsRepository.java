@@ -28,8 +28,8 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
             SELECT irisSettings
             FROM IrisGlobalSettings irisSettings
                 LEFT JOIN FETCH irisSettings.irisChatSettings
+                LEFT JOIN FETCH irisSettings.irisTextExerciseChatSettings
                 LEFT JOIN FETCH irisSettings.irisLectureIngestionSettings
-                LEFT JOIN FETCH irisSettings.irisHestiaSettings
                 LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings
             """)
     Set<IrisGlobalSettings> findAllGlobalSettings();
@@ -42,8 +42,8 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
             SELECT irisSettings
             FROM IrisCourseSettings irisSettings
                 LEFT JOIN FETCH irisSettings.irisChatSettings
+                LEFT JOIN FETCH irisSettings.irisTextExerciseChatSettings
                 LEFT JOIN FETCH irisSettings.irisLectureIngestionSettings
-                LEFT JOIN FETCH irisSettings.irisHestiaSettings
                 LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings
             WHERE irisSettings.course.id = :courseId
             """)
@@ -59,6 +59,7 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
             SELECT irisSettings
             FROM IrisExerciseSettings irisSettings
                 LEFT JOIN FETCH irisSettings.irisChatSettings
+                LEFT JOIN FETCH irisSettings.irisTextExerciseChatSettings
             WHERE irisSettings.exercise.id = :exerciseId
             """)
     Optional<IrisExerciseSettings> findExerciseSettings(@Param("exerciseId") long exerciseId);

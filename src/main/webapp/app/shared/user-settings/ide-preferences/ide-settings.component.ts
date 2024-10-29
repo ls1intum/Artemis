@@ -29,7 +29,7 @@ export class IdeSettingsComponent implements OnInit {
             this.PREDEFINED_IDE = predefinedIde;
         });
 
-        this.ideSettingsService.loadIdePreferences().subscribe((programmingLanguageToIdeMap) => {
+        this.ideSettingsService.loadIdePreferences(true).then((programmingLanguageToIdeMap) => {
             if (!programmingLanguageToIdeMap.has(ProgrammingLanguage.EMPTY)) {
                 programmingLanguageToIdeMap.set(ProgrammingLanguage.EMPTY, this.PREDEFINED_IDE[0]);
             }

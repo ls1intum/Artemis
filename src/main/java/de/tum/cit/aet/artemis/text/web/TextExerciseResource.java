@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +78,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
@@ -154,6 +156,8 @@ public class TextExerciseResource {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final Optional<IrisSettingsService> irisSettingsService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
@@ -162,7 +166,7 @@ public class TextExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
             ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressService competencyProgressService, Optional<IrisSettingsService> irisSettingsService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -188,6 +192,7 @@ public class TextExerciseResource {
         this.channelRepository = channelRepository;
         this.athenaModuleService = athenaModuleService;
         this.competencyProgressService = competencyProgressService;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -229,6 +234,8 @@ public class TextExerciseResource {
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(textExercise);
         competencyProgressService.updateProgressByLearningObjectAsync(result);
 
+        irisSettingsService.ifPresent(iss -> iss.setEnabledForExerciseByCategories(result, new HashSet<>()));
+
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);
     }
 
@@ -259,7 +266,7 @@ public class TextExerciseResource {
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Important: use the original exercise for permission check
-        final TextExercise textExerciseBeforeUpdate = textExerciseRepository.findWithEagerCompetenciesByIdElseThrow(textExercise.getId());
+        final TextExercise textExerciseBeforeUpdate = textExerciseRepository.findWithEagerCompetenciesAndCategoriesByIdElseThrow(textExercise.getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExerciseBeforeUpdate, user);
 
         // Forbid changing the course the exercise belongs to.
@@ -287,6 +294,8 @@ public class TextExerciseResource {
         exerciseService.notifyAboutExerciseChanges(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise));
+
+        irisSettingsService.ifPresent(iss -> iss.setEnabledForExerciseByCategories(textExercise, textExerciseBeforeUpdate.getCategories()));
 
         return ResponseEntity.ok(updatedTextExercise);
     }
@@ -413,44 +422,49 @@ public class TextExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
-        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
+        if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
+            // We want to have the preliminary feedback before the assessment due date too
+            Set<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
+                    .collect(Collectors.toSet());
+            participation.setResults(athenaResults);
+        }
+
+        Set<Submission> submissions = participation.getSubmissions();
         participation.setSubmissions(new HashSet<>());
 
-        if (optionalSubmission.isPresent()) {
-            TextSubmission textSubmission = (TextSubmission) optionalSubmission.get();
+        for (Submission submission : submissions) {
+            if (submission != null) {
+                TextSubmission textSubmission = (TextSubmission) submission;
 
-            // set reference to participation to null, since we are already inside a participation
-            textSubmission.setParticipation(null);
+                // set reference to participation to null, since we are already inside a participation
+                textSubmission.setParticipation(null);
 
-            if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
-                // We want to have the preliminary feedback before the assessment due date too
-                List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
-                textSubmission.setResults(athenaResults);
-                Set<Result> athenaResultsSet = new HashSet<Result>(athenaResults);
-                participation.setResults(athenaResultsSet);
-            }
-
-            Result result = textSubmission.getLatestResult();
-            if (result != null) {
-                // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
-                final var textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
-                textSubmission.setBlocks(textBlocks);
-
-                if (textSubmission.isSubmitted() && result.getCompletionDate() != null) {
-                    List<Feedback> assessments = feedbackRepository.findByResult(result);
-                    result.setFeedbacks(assessments);
+                if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
+                    // We want to have the preliminary feedback before the assessment due date too
+                    List<Result> athenaResults = submission.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+                    textSubmission.setResults(athenaResults);
                 }
 
-                if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
-                    result.filterSensitiveInformation();
+                Result result = textSubmission.getLatestResult();
+                if (result != null) {
+                    // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
+                    final var textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
+                    textSubmission.setBlocks(textBlocks);
+
+                    if (textSubmission.isSubmitted() && result.getCompletionDate() != null) {
+                        List<Feedback> assessments = feedbackRepository.findByResult(result);
+                        result.setFeedbacks(assessments);
+                    }
+
+                    if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
+                        result.filterSensitiveInformation();
+                    }
+
+                    // only send the one latest result to the client
+                    textSubmission.setResults(List.of(result));
                 }
-
-                // only send the one latest result to the client
-                textSubmission.setResults(List.of(result));
-                participation.setResults(Set.of(result));
+                participation.addSubmission(textSubmission);
             }
-
-            participation.addSubmission(textSubmission);
         }
 
         if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {

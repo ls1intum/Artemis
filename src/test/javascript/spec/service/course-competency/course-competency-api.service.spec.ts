@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
-import { CompetencyRelation, CourseCompetencyImportOptionsDTO } from 'app/entities/competency.model';
+import { CompetencyRelation, CompetencyRelationType, CourseCompetencyImportOptionsDTO, UpdateCourseCompetencyRelationDTO } from 'app/entities/competency.model';
 
 describe('CourseCompetencyApiService', () => {
     let httpClient: HttpTestingController;
@@ -37,6 +37,18 @@ describe('CourseCompetencyApiService', () => {
         const response = httpClient.expectOne({
             method: 'POST',
             url: `${getBasePath(courseId)}/import-all`,
+        });
+        response.flush({});
+        await methodCall;
+    });
+
+    it('should update course competency relation', async () => {
+        const relationId = 1;
+        const relationType = CompetencyRelationType.EXTENDS;
+        const methodCall = courseCompetencyApiService.updateCourseCompetencyRelation(courseId, relationId, <UpdateCourseCompetencyRelationDTO>{ newRelationType: relationType });
+        const response = httpClient.expectOne({
+            method: 'PATCH',
+            url: `${baseUrl}/courses/${courseId}/course-competencies/relations/${relationId}`,
         });
         response.flush({});
         await methodCall;

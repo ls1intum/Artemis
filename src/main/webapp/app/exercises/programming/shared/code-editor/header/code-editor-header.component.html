@@ -1,12 +1,12 @@
 <div class="d-flex justify-content-between card-header bg-primary text-white">
     <h3 class="mt-1 card-title">
         <fa-icon [icon]="farFileAlt" />
-        <span> &nbsp;{{ filename }}</span>
-        @if (isLoading) {
+        <span> &nbsp;{{ fileName() }}</span>
+        @if (isLoading()) {
             <fa-icon [icon]="faCircleNotch" animation="spin" class="ms-2" title="{{ 'artemisApp.editor.loadingFile' | artemisTranslate }}" />
         }
     </h3>
-    @if (showTabSizeSelector) {
+    @if (showTabSizeSelector()) {
         <div ngbDropdown class="ms-2" placement="bottom-end auto" [autoClose]="'outside'" aria-label="Code Editor Settings">
             <button ngbDropdownToggle class="btn btn-sm btn-primary" type="button" id="dropdownCodeEditorSettings" aria-expanded="false">
                 <fa-icon [icon]="faGear" />
