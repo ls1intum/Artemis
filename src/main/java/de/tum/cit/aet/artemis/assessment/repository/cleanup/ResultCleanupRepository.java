@@ -64,7 +64,7 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
                 AND r.id NOT IN (
                     SELECT max_id
                     FROM (
-                        SELECT MAX(r2.id) as max_id
+                        SELECT MAX(r2.id) AS max_id
                         FROM Result r2
                         WHERE r2.rated = FALSE
                         GROUP BY r2.participation.id
@@ -100,7 +100,7 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
                 AND r.id NOT IN (
                     SELECT max_id
                     FROM (
-                        SELECT MAX(r2.id) as max_id
+                        SELECT MAX(r2.id) AS max_id
                         FROM Result r2
                         WHERE r2.rated = TRUE
                         GROUP BY r2.participation.id
