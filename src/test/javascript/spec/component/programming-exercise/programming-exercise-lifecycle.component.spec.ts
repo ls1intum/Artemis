@@ -59,6 +59,19 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                     buildAndTestStudentSubmissionsAfterDueDate: afterDueDate,
                     exampleSolutionPublicationDate,
                 } as ProgrammingExercise;
+
+                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+                    releaseDate: true,
+                    startDate: true,
+                    dueDate: true,
+                    runTestsAfterDueDate: true,
+                    assessmentDueDate: true,
+                    exampleSolutionPublicationDate: true,
+                    complaintOnAutomaticAssessment: true,
+                    manualFeedbackRequests: true,
+                    showTestNamesToStudents: true,
+                    includeTestsIntoExampleSolution: true,
+                });
             });
     });
 
@@ -331,8 +344,17 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should calculate form validation status', fakeAsync(() => {
-        const datePicker = { dateInput: { valueChanges: new Subject(), valid: true, value: new Date() } } as any as ProgrammingExerciseTestScheduleDatePickerComponent;
-        comp.datePickerComponents = { changes: new Subject(), toArray: () => [datePicker] } as any as QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
+        const datePicker = {
+            dateInput: {
+                valueChanges: new Subject(),
+                valid: true,
+                value: new Date(),
+            },
+        } as any as ProgrammingExerciseTestScheduleDatePickerComponent;
+        comp.datePickerComponents = {
+            changes: new Subject(),
+            toArray: () => [datePicker],
+        } as any as QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
         comp.ngAfterViewInit();
         (comp.datePickerComponents.changes as Subject<any>).next({ toArray: () => [datePicker] });
         (datePicker.dateInput.valueChanges as Subject<boolean>).next(true);
