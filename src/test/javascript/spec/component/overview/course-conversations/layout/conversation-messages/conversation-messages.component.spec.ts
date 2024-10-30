@@ -14,7 +14,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { BehaviorSubject } from 'rxjs';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
-import { Directive, EventEmitter, Input, Output } from '@angular/core';
+import { Directive, EventEmitter, Input, Output, QueryList } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -86,6 +86,15 @@ examples.forEach((activeConversation) => {
             fixture = TestBed.createComponent(ConversationMessagesComponent);
             component = fixture.componentInstance;
             component.course = course;
+            component.messages = {
+                toArray: jest.fn().mockReturnValue([]),
+            } as any;
+            component.content = {
+                nativeElement: {
+                    getBoundingClientRect: jest.fn().mockReturnValue({ top: 0, bottom: 100 }),
+                },
+            } as any;
+            component.canStartSaving = true;
             fixture.detectChanges();
         });
 
@@ -141,6 +150,65 @@ examples.forEach((activeConversation) => {
             expect(setItemSpy).toHaveBeenCalledWith(expectedKey, expectedValue);
             expect(setItemSpy).toHaveBeenCalledTimes(2);
         }));
+
+        it('should scroll to the last selected element or fetch next page if not found', fakeAsync(() => {
+            const mockMessages = [
+                { post: { id: 1 }, elementRef: { nativeElement: { scrollIntoView: jest.fn() } } },
+                { post: { id: 2 }, elementRef: { nativeElement: { scrollIntoView: jest.fn() } } },
+            ] as unknown as PostingThreadComponent[];
+            component.messages = {
+                toArray: () => mockMessages,
+            } as QueryList<PostingThreadComponent>;
+
+            const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage').mockImplementation(() => {});
+            const existingScrollPosition = 1;
+
+            component.goToLastSelectedElement(existingScrollPosition);
+            tick();
+            expect(mockMessages[0].elementRef.nativeElement.scrollIntoView).toHaveBeenCalled();
+            expect(fetchNextPageSpy).not.toHaveBeenCalled();
+
+            const nonExistingScrollPosition = 999;
+            component.goToLastSelectedElement(nonExistingScrollPosition);
+            tick();
+
+            expect(fetchNextPageSpy).toHaveBeenCalled();
+        }));
+
+        it('should find visible elements at the scroll position and save scroll position', () => {
+            // Mock des Containers
+            component.content.nativeElement = {
+                getBoundingClientRect: jest.fn().mockReturnValue({ top: 0, bottom: 100 }),
+                scrollTop: 0,
+                scrollHeight: 200,
+                removeEventListener: jest.fn(),
+            };
+            const mockMessages = [
+                { post: { id: 1 }, elementRef: { nativeElement: { getBoundingClientRect: jest.fn().mockReturnValue({ top: 10, bottom: 90 }) } } },
+                { post: { id: 2 }, elementRef: { nativeElement: { getBoundingClientRect: jest.fn().mockReturnValue({ top: 100, bottom: 200 }) } } },
+            ] as unknown as PostingThreadComponent[];
+            component.messages.toArray = jest.fn().mockReturnValue(mockMessages);
+            component.canStartSaving = true;
+            const nextSpy = jest.spyOn(component.scrollSubject, 'next');
+            component.findElementsAtScrollPosition();
+            expect(component.elementsAtScrollPosition).toEqual([mockMessages[0]]);
+            expect(nextSpy).toHaveBeenCalledWith(1);
+        });
+
+        it('should not save scroll position if no elements are visible', () => {
+            const mockMessages = [
+                {
+                    post: { id: 1 },
+                    elementRef: { nativeElement: { getBoundingClientRect: jest.fn().mockReturnValue({ top: 200, bottom: 300 }) } },
+                },
+            ] as unknown as PostingThreadComponent[];
+
+            component.messages.toArray = jest.fn().mockReturnValue(mockMessages);
+            const nextSpy = jest.spyOn(component.scrollSubject, 'next');
+            component.findElementsAtScrollPosition();
+            expect(component.elementsAtScrollPosition).toEqual([]);
+            expect(nextSpy).not.toHaveBeenCalled();
+        });
 
         it('should scroll to the bottom when a new message is created', fakeAsync(() => {
             component.content.nativeElement.scrollTop = 100;

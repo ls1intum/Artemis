@@ -47,8 +47,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     readonly ButtonType = ButtonType;
 
     private scrollDebounceTime = 100; // ms
-    private scrollSubject = new Subject<number>();
-    private canStartSaving = false;
+    scrollSubject = new Subject<number>();
+    canStartSaving = false;
 
     @Output() openThread = new EventEmitter<Post>();
 
@@ -162,7 +162,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
-        this.content.nativeElement.removeEventListener('scroll', this.saveScrollPosition);
+        this.scrollSubject.complete();
+        this.content?.nativeElement.removeEventListener('scroll', this.saveScrollPosition);
     }
 
     private onActiveConversationChange() {
@@ -285,9 +286,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private setupScrollDebounce(): void {
-        this.scrollSubject.pipe(debounceTime(this.scrollDebounceTime), takeUntil(this.ngUnsubscribe)).subscribe((scrollTop) => {
+        this.scrollSubject.pipe(debounceTime(this.scrollDebounceTime), takeUntil(this.ngUnsubscribe)).subscribe((postId) => {
             if (this._activeConversation?.id) {
-                sessionStorage.setItem(this.sessionStorageKey + this._activeConversation.id, scrollTop.toString());
+                sessionStorage.setItem(this.sessionStorageKey + this._activeConversation.id, postId.toString());
             }
         });
     }
@@ -300,7 +301,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.createEmptyPost();
         this.scrollToBottomOfMessages();
     }
-    private async goToLastSelectedElement(lastScrollPosition: number) {
+
+    async goToLastSelectedElement(lastScrollPosition: number) {
         if (!lastScrollPosition) {
             this.scrollToBottomOfMessages();
             this.canStartSaving = true;
@@ -317,7 +319,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
     }
 
-    private findElementsAtScrollPosition() {
+    findElementsAtScrollPosition() {
         const messageArray = this.messages.toArray();
         const containerRect = this.content.nativeElement.getBoundingClientRect();
         const visibleMessages = [];
