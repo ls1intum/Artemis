@@ -168,8 +168,9 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             final var lectureUnit = lectureUtilService.createTextUnit();
             lectureUtilService.addLectureUnitsToLecture(lecture, List.of(lectureUnit));
             competencyUtilService.linkLectureUnitToCompetency(competency, lectureUnit);
-            final var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+            var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
             exercise.setReleaseDate(null);
+            exercise = exerciseRepository.save(exercise);
             competencyUtilService.linkExerciseToCompetency(competency, exercise);
             final var startNodeId = LearningPathNgxService.getCompetencyStartNodeId(competency.getId());
             final var endNodeId = LearningPathNgxService.getCompetencyEndNodeId(competency.getId());
@@ -504,6 +505,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
             generateLectureUnits(1);
             generateExercises(1);
+            exerciseRepository.save(exercises[0]);
 
             addNodes(lectureUnits);
             addNodes(exercises);
@@ -600,8 +602,8 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
             exercises = new Exercise[numberOfExercises];
             for (int i = 0; i < exercises.length; i++) {
                 exercises[i] = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-                exercises[i].setReleaseDate(null);
                 exercises[i] = competencyUtilService.linkExerciseToCompetency(competency, exercises[i]);
+                exercises[i].setReleaseDate(null);
             }
         }
 

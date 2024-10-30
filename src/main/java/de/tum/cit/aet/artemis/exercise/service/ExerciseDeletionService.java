@@ -16,7 +16,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -80,6 +81,8 @@ public class ExerciseDeletionService {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+
     private final Optional<IrisSettingsService> irisSettingsService;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
@@ -87,7 +90,7 @@ public class ExerciseDeletionService {
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
             LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
             ChannelRepository channelRepository, ChannelService channelService, CompetencyProgressService competencyProgressService,
-            Optional<IrisSettingsService> irisSettingsService) {
+            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, Optional<IrisSettingsService> irisSettingsService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -103,6 +106,7 @@ public class ExerciseDeletionService {
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.competencyProgressService = competencyProgressService;
+        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
         this.irisSettingsService = irisSettingsService;
     }
 
@@ -149,7 +153,7 @@ public class ExerciseDeletionService {
      */
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
-        Set<CourseCompetency> competencies = exercise.getCompetencies();
+        Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         long start = System.nanoTime();
@@ -214,7 +218,7 @@ public class ExerciseDeletionService {
             exerciseRepository.delete(exercise);
         }
 
-        competencies.forEach(competencyProgressService::updateProgressByCompetencyAsync);
+        competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(competencyProgressService::updateProgressByCompetencyAsync);
     }
 
     /**
