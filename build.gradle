@@ -155,6 +155,7 @@ private excludedClassFilesForReport(classDirectories) {
             exclude: [
                 "**/de/tum/cit/aet/artemis/**/domain/**/*_*",
                 "**/de/tum/cit/aet/artemis/core/config/migration/entries/**",
+                "**/de/tum/cit/aet/artemis/programming/service/localci/scaparser/format/sarif/**",
                 "**/gradle-wrapper.jar/**"
             ]
         )

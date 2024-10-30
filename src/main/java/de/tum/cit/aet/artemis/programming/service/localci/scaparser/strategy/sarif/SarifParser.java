@@ -13,6 +13,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.ArtifactLocation;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.GlobalMessageStrings;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.Location;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.MessageStrings;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.PhysicalLocation;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.Region;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.ReportingDescriptor;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.ReportingDescriptorReference;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.Result;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.Run;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.SarifLog;
+import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.ToolComponent;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.ParserStrategy;
 
 /**
