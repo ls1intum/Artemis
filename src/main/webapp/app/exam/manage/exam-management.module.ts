@@ -88,7 +88,6 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisMarkdownEditorModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
-        ArtemisTextExerciseModule,
         ArtemisFileUploadExerciseManagementModule,
         ArtemisProgrammingExerciseManagementModule,
         ArtemisQuizManagementModule,
