@@ -1,8 +1,27 @@
 <div class="update-footer gap-4">
+    <div class="text-start">
+        @if (isSimpleMode() !== undefined && switchEditMode !== undefined && !isImport()) {
+            <div class="d-flex align-items-center">
+                <div
+                    ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.invalidConfigurationPreventsSwitchingEditMode' | artemisTranslate }}"
+                    [disableTooltip]="areAuxiliaryRepositoriesValid()"
+                >
+                    <jhi-switch-edit-mode-button
+                        class="me-1"
+                        [isSimpleMode]="isSimpleMode()!"
+                        (switchEditMode)="switchEditMode()"
+                        [buttonSize]="ButtonSize.SMALL"
+                        [disabled]="!areAuxiliaryRepositoriesValid()"
+                    />
+                </div>
+                <jhi-help-icon [text]="isSimpleMode() ? 'artemisApp.programmingExercise.home.advancedModeTooltip' : 'artemisApp.programmingExercise.home.simpleModeTooltip'" />
+            </div>
+        }
+    </div>
     @if (!isCreation() && !isImport()) {
-        <jhi-exercise-update-notification class="flex-grow-1" [notificationText]="notificationText" (notificationTextChange)="notificationTextChange.next($event)" />
+        <jhi-exercise-update-notification class="flex-grow-1 w-100" [notificationText]="notificationText" (notificationTextChange)="notificationTextChange.next($event)" />
     }
-    <div class="update-footer-content d-flex gap-2">
+    <div class="d-flex gap-2 text-end">
         @if (isSaving) {
             <span jhiTranslate="entity.action.saving" class="badge bg-secondary align-content-center"></span>
         }
@@ -21,7 +40,7 @@
                 <span class="d-none d-md-inline">({{ invalidReasons.length }})</span>
             </div>
         }
-        <button type="button" id="cancel-save" class="btn btn-sm btn-secondary" (click)="cancel.next()">
+        <button type="button" id="cancel-save" class="btn btn-sm btn-secondary" (click)="onCancel.next()">
             <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
             <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
         </button>

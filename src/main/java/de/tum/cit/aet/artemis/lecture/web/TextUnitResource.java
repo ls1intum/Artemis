@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
+import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
 @Profile(PROFILE_CORE)
 @RestController
@@ -46,12 +47,15 @@ public class TextUnitResource {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final LectureUnitService lectureUnitService;
+
     public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, AuthorizationCheckService authorizationCheckService,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.competencyProgressService = competencyProgressService;
+        this.lectureUnitService = lectureUnitService;
     }
 
     /**
@@ -101,7 +105,8 @@ public class TextUnitResource {
 
         textUnitForm.setId(existingTextUnit.getId());
         textUnitForm.setLecture(existingTextUnit.getLecture());
-        TextUnit result = textUnitRepository.save(textUnitForm);
+
+        TextUnit result = lectureUnitService.saveWithCompetencyLinks(textUnitForm, textUnitRepository::save);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingTextUnit, Optional.of(textUnitForm));
 
@@ -133,7 +138,9 @@ public class TextUnitResource {
 
         // persist lecture unit before lecture to prevent "null index column for collection" error
         textUnit.setLecture(null);
-        textUnit = textUnitRepository.saveAndFlush(textUnit);
+
+        textUnit = lectureUnitService.saveWithCompetencyLinks(textUnit, textUnitRepository::saveAndFlush);
+
         textUnit.setLecture(lecture);
         lecture.addLectureUnit(textUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
@@ -141,6 +148,7 @@ public class TextUnitResource {
 
         competencyProgressService.updateProgressByLearningObjectAsync(persistedTextUnit);
 
+        lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedTextUnit);
         return ResponseEntity.created(new URI("/api/text-units/" + persistedTextUnit.getId())).body(persistedTextUnit);
     }
 }

@@ -1,22 +1,29 @@
 <div>
-    <div class="form-group">
-        @if (!hideTitleLabel) {
-            <label [class]="'form-control-label' + (emphasizeLabels ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.title" for="field_title"></label>
-        }
-        <input
-            #field_title="ngModel"
-            required
-            [minlength]="minTitleLength"
-            [pattern]="titlePattern"
-            type="text"
-            class="form-control"
-            name="title"
-            id="field_title"
-            [ngModel]="title"
-            (ngModelChange)="updateTitle($event)"
-        />
-    </div>
-    @if (!hideChannelName) {
+    @if (!this.isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.title) {
+        <div class="form-group">
+            @if (!hideTitleLabel) {
+                <label [class]="'form-control-label' + (emphasizeLabels ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.title" for="field_title"></label>
+            }
+            <input
+                #field_title="ngModel"
+                required
+                [minlength]="minTitleLength"
+                [pattern]="titlePattern"
+                type="text"
+                class="form-control"
+                name="title"
+                id="field_title"
+                [ngModel]="title"
+                (ngModelChange)="updateTitle($event)"
+                notIncludedIn
+                [disallowedValues]="alreadyUsedTitles()"
+            />
+            @if (field_title?.control?.errors?.disallowedValue) {
+                <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.form.title.disallowedValue"></div>
+            }
+        </div>
+    }
+    @if (isChannelFieldDisplayed()) {
         <div class="form-group">
             <div>
                 <label [class]="'form-control-label' + (emphasizeLabels ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.channelName" for="field_channel_name"

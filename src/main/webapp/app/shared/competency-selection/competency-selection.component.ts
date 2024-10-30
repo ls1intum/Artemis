@@ -1,7 +1,16 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { Competency, CourseCompetency, getIcon } from 'app/entities/competency.model';
+import {
+    CompetencyLearningObjectLink,
+    CourseCompetency,
+    HIGH_COMPETENCY_LINK_WEIGHT,
+    LOW_COMPETENCY_LINK_WEIGHT,
+    LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF,
+    MEDIUM_COMPETENCY_LINK_WEIGHT,
+    MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF,
+    getIcon,
+} from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { finalize } from 'rxjs';
@@ -27,9 +36,9 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
 
     disabled: boolean;
     // selected competencies
-    selectedCompetencies?: Competency[];
+    selectedCompetencyLinks?: CompetencyLearningObjectLink[];
     // all course competencies
-    competencies?: CourseCompetency[];
+    competencyLinks?: CompetencyLearningObjectLink[];
 
     isLoading = false;
     checkboxStates: Record<number, boolean>;
@@ -40,6 +49,12 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (value: any) => {};
 
+    protected readonly HIGH_COMPETENCY_LINK_WEIGHT = HIGH_COMPETENCY_LINK_WEIGHT;
+    protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT = MEDIUM_COMPETENCY_LINK_WEIGHT;
+    protected readonly LOW_COMPETENCY_LINK_WEIGHT = LOW_COMPETENCY_LINK_WEIGHT;
+    protected readonly LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF = LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF; // halfway between low and medium
+    protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF; // halfway between medium and high
+
     constructor(
         private route: ActivatedRoute,
         private courseStorageService: CourseStorageService,
@@ -49,11 +64,11 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
 
     ngOnInit(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        if (!this.competencies && courseId) {
+        if (!this.competencyLinks && courseId) {
             const course = this.courseStorageService.getCourse(courseId);
             // an empty array is used as fallback, if a course is cached, where no competencies have been queried
             if (course?.competencies?.length || course?.prerequisites?.length) {
-                this.setCompetencies([...(course.competencies ?? []), ...(course.prerequisites ?? [])]);
+                this.setCompetencyLinks([...(course.competencies ?? []), ...(course.prerequisites ?? [])]);
             } else {
                 this.isLoading = true;
                 this.courseCompetencyService
@@ -69,8 +84,8 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
                     )
                     .subscribe({
                         next: (response) => {
-                            this.setCompetencies(response.body!);
-                            this.writeValue(this.selectedCompetencies);
+                            this.setCompetencyLinks(response.body!);
+                            this.writeValue(this.selectedCompetencyLinks);
                         },
                         error: () => {
                             this.disabled = true;
@@ -81,20 +96,20 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     }
 
     /**
-     * Set the available competencies for selection
+     * Set the available competencyLinks for selection
      * @param competencies The competencies of the course
      */
-    setCompetencies(competencies: CourseCompetency[]) {
-        this.competencies = competencies.map((competency) => {
+    setCompetencyLinks(competencies: CourseCompetency[]) {
+        this.competencyLinks = competencies.map((competency) => {
             // Remove unnecessary properties
             competency.course = undefined;
             competency.userProgress = undefined;
-            return competency;
+            return new CompetencyLearningObjectLink(competency, MEDIUM_COMPETENCY_LINK_WEIGHT);
         });
-        this.checkboxStates = this.competencies.reduce(
-            (states, competency) => {
-                if (competency.id) {
-                    states[competency.id] = !!this.selectedCompetencies?.find((value) => value.id === competency.id);
+        this.checkboxStates = this.competencyLinks.reduce(
+            (states, competencyLink) => {
+                if (competencyLink.competency?.id) {
+                    states[competencyLink.competency.id] = !!this.selectedCompetencyLinks?.find((value) => value.competency?.id === competencyLink.competency?.id);
                 }
                 return states;
             },
@@ -102,33 +117,45 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         );
     }
 
-    toggleCompetency(newValue: Competency) {
-        if (newValue.id) {
-            if (this.checkboxStates[newValue.id]) {
-                this.selectedCompetencies = this.selectedCompetencies?.filter((value) => value.id !== newValue.id);
+    toggleCompetency(newValue: CompetencyLearningObjectLink) {
+        if (newValue.competency?.id) {
+            if (this.checkboxStates[newValue.competency.id]) {
+                this.selectedCompetencyLinks = this.selectedCompetencyLinks?.filter((value) => value.competency?.id !== newValue.competency?.id);
             } else {
-                this.selectedCompetencies = [...(this.selectedCompetencies ?? []), newValue];
+                this.selectedCompetencyLinks = [...(this.selectedCompetencyLinks ?? []), newValue];
             }
 
-            this.checkboxStates[newValue.id] = !this.checkboxStates[newValue.id];
+            this.checkboxStates[newValue.competency.id] = !this.checkboxStates[newValue.competency.id];
 
             // make sure to do not send an empty list to server
-            if (!this.selectedCompetencies?.length) {
-                this.selectedCompetencies = undefined;
+            if (!this.selectedCompetencyLinks?.length) {
+                this.selectedCompetencyLinks = undefined;
             }
 
-            this._onChange(this.selectedCompetencies);
-            this.valueChange.emit(this.selectedCompetencies);
+            this._onChange(this.selectedCompetencyLinks);
+            this.valueChange.emit(this.selectedCompetencyLinks);
         }
     }
 
-    writeValue(value?: Competency[]): void {
-        if (value && this.competencies) {
+    updateLinkWeight(link: CompetencyLearningObjectLink, value: number) {
+        link.weight = value;
+
+        this._onChange(this.selectedCompetencyLinks);
+        this.valueChange.emit(this.selectedCompetencyLinks);
+    }
+
+    writeValue(value?: CompetencyLearningObjectLink[]): void {
+        this.competencyLinks?.forEach((link) => {
+            const selectedLink = value?.find((value) => value.competency?.id === link.competency?.id);
+            link.weight = selectedLink?.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT;
+        });
+
+        if (value && this.competencyLinks) {
             // Compare the ids of the competencies instead of the whole objects
-            const ids = value.map((el) => el.id);
-            this.selectedCompetencies = this.competencies.filter((competency) => ids.includes(competency.id));
+            const ids = value.map((el) => el.competency?.id);
+            this.selectedCompetencyLinks = this.competencyLinks.filter((competencyLink) => ids.includes(competencyLink.competency?.id));
         } else {
-            this.selectedCompetencies = value ?? [];
+            this.selectedCompetencyLinks = value ?? [];
         }
     }
 
