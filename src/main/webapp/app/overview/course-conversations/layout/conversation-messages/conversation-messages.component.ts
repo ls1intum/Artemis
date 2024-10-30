@@ -41,7 +41,7 @@ import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
-    sessionStorageKey = 'conversationId.scrollPosition.';
+    readonly sessionStorageKey = 'conversationId.scrollPosition.';
 
     readonly PageType = PageType;
     readonly ButtonType = ButtonType;
