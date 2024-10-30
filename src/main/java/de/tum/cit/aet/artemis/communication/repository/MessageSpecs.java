@@ -118,7 +118,8 @@ public class MessageSpecs {
             else {
                 Join<Post, AnswerPost> answersJoin = root.join(Post_.ANSWERS, JoinType.LEFT);
                 Predicate searchInAnswerContent = criteriaBuilder.equal(answersJoin.get(AnswerPost_.AUTHOR).get(User_.ID), userId);
-                return criteriaBuilder.or(criteriaBuilder.equal(root.get(Post_.AUTHOR).get(User_.ID), userId), searchInAnswerContent);
+                Predicate isPostOwner = criteriaBuilder.equal(root.get(Post_.AUTHOR).get(User_.ID), userId);
+                return criteriaBuilder.or(isPostOwner, searchInAnswerContent);
             }
         });
     }
