@@ -1637,7 +1637,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private static List<ProgrammingExerciseTestCaseDTO> transformTestCasesToDto(Collection<ProgrammingExerciseTestCase> testCases) {
         return testCases.stream().map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getWeight(), testCase.getBonusMultiplier(),
-                testCase.getBonusPoints(), testCase.getVisibility())).toList();
+                testCase.getBonusPoints(), testCase.getVisibility())).collect(Collectors.toCollection(ArrayList::new));
     }
 
     void resetTestCaseWeights_asInstructor() throws Exception {
