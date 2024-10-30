@@ -1,20 +1,17 @@
 package de.tum.cit.aet.artemis.assessment.repository.cleanup;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.ZonedDateTime;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 /**
  * Spring Data JPA repository for cleaning up old and orphaned participant scores.
@@ -49,6 +46,7 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
                     WHERE r2.participation.id = p.id
                         AND r2.rated = TRUE
                     )
+                    AND r.rated = TRUE
                     AND c.endDate < :deleteTo
                     AND c.startDate > :deleteFrom
                 )
@@ -80,8 +78,9 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
                     WHERE r2.participation.id = p.id
                         AND r2.rated = TRUE
                     )
-                AND c.endDate < :deleteTo
-                AND c.startDate > :deleteFrom
+                    AND r.rated = TRUE
+                    AND c.endDate < :deleteTo
+                    AND c.startDate > :deleteFrom
                 )
             """)
     void deleteParticipantScoresForNonLatestLastRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
@@ -105,7 +104,13 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
                     LEFT JOIN r.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
-                WHERE r.rated = FALSE
+                WHERE r.id NOT IN (
+                    SELECT MAX(r2.id)
+                    FROM Result r2
+                    WHERE r2.participation.id = p.id
+                        AND r2.rated = FALSE
+                    )
+                    AND r.rated = FALSE
                     AND c.endDate < :deleteTo
                     AND c.startDate > :deleteFrom                                                                       )
             """)
@@ -131,7 +136,13 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
                     LEFT JOIN r.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
-                WHERE r.rated = FALSE
+                WHERE r.id NOT IN (
+                    SELECT MAX(r2.id)
+                    FROM Result r2
+                    WHERE r2.participation.id = p.id
+                        AND r2.rated = FALSE
+                    )
+                    AND r.rated = FALSE
                     AND c.endDate < :deleteTo
                     AND c.startDate > :deleteFrom
                 )

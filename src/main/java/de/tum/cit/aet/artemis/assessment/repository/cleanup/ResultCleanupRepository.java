@@ -1,20 +1,17 @@
 package de.tum.cit.aet.artemis.assessment.repository.cleanup;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.ZonedDateTime;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 /**
  * Spring Data JPA repository for cleaning up old and orphaned results.
@@ -60,13 +57,16 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
                     WHERE e = r.participation.exercise
                         AND c.endDate < :deleteTo
                         AND c.startDate > :deleteFrom
-                )
+                    )
                 AND r.id NOT IN (
-                    SELECT MAX(r2.id)
-                    FROM Result r2
-                    WHERE r2.participation = r.participation
-                        AND r2.rated = FALSE
-                )
+                    SELECT max_id
+                    FROM (
+                        SELECT MAX(r2.id) as max_id
+                        FROM Result r2
+                        WHERE r2.rated = FALSE
+                        GROUP BY r2.participation.id
+                        )
+                    )
             """)
     void deleteNonLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
@@ -93,13 +93,16 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
                     WHERE e = r.participation.exercise
                         AND c.endDate < :deleteTo
                         AND c.startDate > :deleteFrom
-                )
+                    )
                 AND r.id NOT IN (
-                    SELECT MAX(r2.id)
-                    FROM Result r2
-                    WHERE r2.participation = r.participation
-                        AND r2.rated = TRUE
-                )
+                    SELECT max_id
+                    FROM (
+                        SELECT MAX(r2.id) as max_id
+                        FROM Result r2
+                        WHERE r2.rated = TRUE
+                        GROUP BY r2.participation.id
+                        )
+                    )
             """)
     void deleteNonLatestRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

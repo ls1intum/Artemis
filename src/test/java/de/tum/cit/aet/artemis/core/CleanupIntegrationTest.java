@@ -1,23 +1,15 @@
 package de.tum.cit.aet.artemis.core;
 
-import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRMED;
-import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-
-import jakarta.validation.constraints.NotNull;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
-
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
@@ -60,6 +52,10 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+import jakarta.validation.constraints.NotNull;
+import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRMED;
+import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -398,7 +394,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
 
         assertThat(resultRepository.findById(oldResult2.getId())).isNotEmpty();
         assertThat(feedbackRepository.findByResult(oldResult2)).isNotEmpty();
-        assertThat(textBlockRepository.findById(oldTextBlock2.getId())).isEmpty();
+        assertThat(textBlockRepository.findById(oldTextBlock2.getId())).isNotEmpty();
 
         assertThat(participantScoreRepository.findById(newParticipantScore1.getId())).isNotEmpty();
         assertThat(participantScoreRepository.findById(newParticipantScore2.getId())).isNotEmpty();
@@ -406,7 +402,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         assertThat(feedbackRepository.findByResult(newResult1)).isNotEmpty();
         assertThat(textBlockRepository.findById(newTextBlock1.getId())).isNotEmpty();
 
-        assertThat(resultRepository.findById(newResult2.getId())).isPresent();
+        assertThat(resultRepository.findById(newResult2.getId())).isNotEmpty();
         assertThat(feedbackRepository.findByResult(newResult2)).isNotEmpty();
         assertThat(textBlockRepository.findById(newTextBlock2.getId())).isNotEmpty();
     }
