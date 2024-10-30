@@ -152,6 +152,21 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(alertSpy).toHaveBeenCalledOnce();
     }));
 
+    it('should set the upload callback on the attachment actions', () => {
+        const attachmentAction = new AttachmentAction();
+        const setUploadCallbackSpy = jest.spyOn(attachmentAction, 'setUploadCallback');
+        const embedFilesStub = jest.spyOn(comp, 'embedFiles').mockImplementation();
+        comp.defaultActions = [attachmentAction];
+        comp.enableFileUpload = true;
+        fixture.detectChanges();
+        expect(setUploadCallbackSpy).toHaveBeenCalledOnce();
+        // Check if the correct function is passed to the action.
+        const argument = setUploadCallbackSpy.mock.calls[0][0];
+        expect(argument).toBeDefined();
+        argument!([]);
+        expect(embedFilesStub).toHaveBeenCalledExactlyOnceWith([]);
+    });
+
     it('should embed image and .pdf files', fakeAsync(() => {
         const urlAction = new UrlAction();
         const urlStub = jest.spyOn(urlAction, 'executeInCurrentEditor').mockImplementation();

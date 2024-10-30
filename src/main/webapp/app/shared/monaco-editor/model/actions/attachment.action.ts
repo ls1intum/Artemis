@@ -35,6 +35,9 @@ export class AttachmentAction extends TextEditorAction {
     register(editor: TextEditor, translateService: TranslateService) {
         super.register(editor, translateService);
         this.disposablePasteListener = editor.addPasteListener(async () => {
+            if (!this.uploadCallback) {
+                return;
+            }
             const clipboardItems = await navigator.clipboard.read();
             const files: File[] = [];
             for (const clipboardItem of clipboardItems) {
@@ -48,7 +51,7 @@ export class AttachmentAction extends TextEditorAction {
                     }
                 }
             }
-            this.uploadCallback?.(files);
+            this.uploadCallback(files);
         });
     }
 

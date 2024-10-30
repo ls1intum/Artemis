@@ -330,7 +330,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                     // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
                     action.element = this.isInitialHeightExternal() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
                 } else if (this.enableFileUpload && action instanceof AttachmentAction) {
-                    action.setUploadCallback((files) => this.embedFiles(files));
+                    action.setUploadCallback(this.embedFiles.bind(this));
                 }
                 this.monacoEditor.registerAction(action);
             });
