@@ -81,7 +81,7 @@ describe('MonacoEditorActionIntegration', () => {
         expect(addPasteListenerSpy).toHaveBeenCalled();
         const pasteListener = addPasteListenerSpy.mock.calls[0][0];
         expect(pasteListener).toBeDefined();
-        await pasteListener();
+        await pasteListener('');
         expect(clipboardReadSpy).not.toHaveBeenCalled();
     });
 
@@ -107,7 +107,7 @@ describe('MonacoEditorActionIntegration', () => {
         comp.registerAction(action);
         const pasteListener = addPasteListenerSpy.mock.calls[0][0];
         expect(pasteListener).toBeDefined();
-        await pasteListener();
+        await pasteListener('');
         expect(clipboardReadSpy).toHaveBeenCalledOnce();
         expect(uploadCallback).toHaveBeenCalledExactlyOnceWith([new File([imageBlob], 'image.png', { type: 'image/png' })]);
     });

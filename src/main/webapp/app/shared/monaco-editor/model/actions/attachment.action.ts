@@ -34,8 +34,9 @@ export class AttachmentAction extends TextEditorAction {
 
     register(editor: TextEditor, translateService: TranslateService) {
         super.register(editor, translateService);
-        this.disposablePasteListener = editor.addPasteListener(async () => {
-            if (!this.uploadCallback) {
+        this.disposablePasteListener = editor.addPasteListener(async (insertedText: string) => {
+            // We do not read from the clipboard if the user pasted text. This prevents an unnecessary prompt on Firefox.
+            if (!this.uploadCallback || insertedText) {
                 return;
             }
             const clipboardItems = await navigator.clipboard.read();

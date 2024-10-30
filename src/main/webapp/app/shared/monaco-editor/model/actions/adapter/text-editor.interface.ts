@@ -112,5 +112,5 @@ export interface TextEditor {
      * @param callback The callback to execute after the user has pasted something.
      * @return A disposable that can be used to remove the listener from the editor.
      */
-    addPasteListener(callback: () => void | Promise<void>): Disposable;
+    addPasteListener(callback: (insertedText: string) => void | Promise<void>): Disposable;
 }
