@@ -3,7 +3,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
+import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -23,6 +23,8 @@ import { NgbAlertsMocksModule } from '../../../helpers/mocks/directive/ngbAlerts
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
 describe('ProgrammingExerciseGradingComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;
@@ -48,6 +50,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 MockComponent(PresentationScoreComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
+                MockComponent(GradingInstructionsDetailsComponent),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -64,6 +67,15 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 comp = fixture.componentInstance;
 
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
+                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+                    includeExerciseInCourseScoreCalculation: true,
+                    points: true,
+                    bonusPoints: true,
+                    submissionPolicy: true,
+                    timeline: true,
+                    assessmentInstructions: true,
+                    presentationScore: true,
+                });
 
                 const exercise = new ProgrammingExercise(undefined, undefined);
                 exercise.maxPoints = 10;
@@ -110,7 +122,11 @@ describe('ProgrammingExerciseGradingComponent', () => {
     it('should create a grading summary with exceeding penalty', fakeAsync(() => {
         fixture.detectChanges();
 
-        comp.programmingExercise.submissionPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY, exceedingPenalty: 10, submissionLimit: 5 };
+        comp.programmingExercise.submissionPolicy = {
+            type: SubmissionPolicyType.SUBMISSION_PENALTY,
+            exceedingPenalty: 10,
+            submissionLimit: 5,
+        };
         comp.programmingExercise.maxStaticCodeAnalysisPenalty = 5;
 
         fixture.whenStable().then(() => {
@@ -178,5 +194,83 @@ describe('ProgrammingExerciseGradingComponent', () => {
         comp.lifecycleComponent.formValidChanges.next(false);
 
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
+    });
+
+    const generateFieldVisibilityTests = (
+        testCases: {
+            name: string;
+            selector: string;
+            field: ProgrammingExerciseInputField;
+            extraCondition?: () => void;
+        }[],
+    ) => {
+        const checkFieldVisibility = (selector: string, isVisible: boolean) => {
+            fixture.detectChanges();
+            const field = fixture.debugElement.nativeElement.querySelector(selector);
+            if (isVisible) {
+                expect(field).not.toBeNull();
+            } else {
+                expect(field).toBeNull();
+            }
+        };
+
+        testCases.forEach(({ name, selector, field, extraCondition }) => {
+            describe('should handle input field ' + name + ' properly', () => {
+                it('should be displayed', () => {
+                    extraCondition?.();
+                    checkFieldVisibility(selector, true);
+                });
+
+                it('should NOT be displayed', () => {
+                    extraCondition?.();
+                    comp.isEditFieldDisplayedRecord()[field] = false;
+                    checkFieldVisibility(selector, false);
+                });
+            });
+        });
+    };
+
+    describe('should handle field visibility', () => {
+        const testCases: {
+            name: string;
+            selector: string;
+            field: ProgrammingExerciseInputField;
+            extraCondition?: () => void;
+        }[] = [
+            {
+                name: 'jhi-included-in-overall-score-picker',
+                selector: 'jhi-included-in-overall-score-picker',
+                field: ProgrammingExerciseInputField.INCLUDE_EXERCISE_IN_COURSE_SCORE_CALCULATION,
+            },
+            { name: 'points field', selector: '#field_points', field: ProgrammingExerciseInputField.POINTS },
+            {
+                name: 'bonusPoints field',
+                selector: '#field_bonusPoints',
+                field: ProgrammingExerciseInputField.BONUS_POINTS,
+            },
+            {
+                name: 'submission policy field',
+                selector: 'jhi-submission-policy-update',
+                field: ProgrammingExerciseInputField.SUBMISSION_POLICY,
+            },
+            {
+                name: 'timeline',
+                selector: 'jhi-programming-exercise-lifecycle',
+                field: ProgrammingExerciseInputField.TIMELINE,
+            },
+            {
+                name: 'assessment instructions',
+                selector: 'jhi-grading-instructions-details',
+                field: ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS,
+                extraCondition: () => (comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC),
+            },
+            {
+                name: 'presentation score',
+                selector: 'jhi-presentation-score-checkbox',
+                field: ProgrammingExerciseInputField.PRESENTATION_SCORE,
+            },
+        ];
+
+        generateFieldVisibilityTests(testCases);
     });
 });
