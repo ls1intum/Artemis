@@ -117,7 +117,13 @@
             "link": {
                 "title": "Linked Competencies",
                 "lectureUnit": "Optionally link this lecture unit to one or more competencies.",
-                "exercise": "Optionally link this exercise to one or more competencies."
+                "exercise": "Optionally link this exercise to one or more competencies.",
+                "weightTooltip": "The relevance of this learning object for the competency.",
+                "weightLabels": {
+                    "low": "Low",
+                    "medium": "Medium",
+                    "high": "High"
+                }
             },
             "competencyCard": {
                 "connectedLectureUnits": "Linked Lecture Units",
