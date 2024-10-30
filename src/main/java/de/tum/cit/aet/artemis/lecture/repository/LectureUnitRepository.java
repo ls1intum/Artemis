@@ -24,9 +24,11 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     @Query("""
             SELECT lu
             FROM LectureUnit lu
-                LEFT JOIN FETCH lu.competencies
-                LEFT JOIN FETCH lu.exercise exercise
-                LEFT JOIN FETCH exercise.competencies
+                LEFT JOIN FETCH lu.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH lu.exercise e
+                LEFT JOIN FETCH e.competencyLinks ecl
+                LEFT JOIN FETCH ecl.competency
                 LEFT JOIN FETCH lu.slides
             WHERE lu.id = :lectureUnitId
             """)
@@ -35,10 +37,13 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     @Query("""
             SELECT lu
             FROM LectureUnit lu
-                LEFT JOIN FETCH lu.competencies c
-                LEFT JOIN FETCH c.lectureUnits
-                LEFT JOIN FETCH lu.exercise ex
-                LEFT JOIN FETCH ex.competencies
+                LEFT JOIN FETCH lu.competencyLinks cl
+                LEFT JOIN FETCH cl.competency c
+                LEFT JOIN FETCH c.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit
+                LEFT JOIN FETCH lu.exercise e
+                LEFT JOIN FETCH e.competencyLinks ecl
+                LEFT JOIN FETCH ecl.competency
             WHERE lu.id = :lectureUnitId
             """)
     Optional<LectureUnit> findByIdWithCompetenciesBidirectional(@Param("lectureUnitId") long lectureUnitId);
@@ -46,10 +51,13 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     @Query("""
             SELECT lu
             FROM LectureUnit lu
-                LEFT JOIN FETCH lu.competencies c
-                LEFT JOIN FETCH c.lectureUnits
-                LEFT JOIN FETCH lu.exercise ex
-                LEFT JOIN FETCH ex.competencies
+                LEFT JOIN FETCH lu.competencyLinks cl
+                LEFT JOIN FETCH cl.competency c
+                LEFT JOIN FETCH c.lectureUnitLinks lul
+                LEFT JOIN FETCH lul.lectureUnit
+                LEFT JOIN FETCH lu.exercise e
+                LEFT JOIN FETCH e.competencyLinks ecl
+                LEFT JOIN FETCH ecl.competency
             WHERE lu.id IN :lectureUnitIds
             """)
     Set<LectureUnit> findAllByIdWithCompetenciesBidirectional(@Param("lectureUnitIds") Iterable<Long> longs);
@@ -75,7 +83,8 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
     @Query("""
             SELECT lu
             FROM LectureUnit lu
-                LEFT JOIN FETCH lu.competencies
+                LEFT JOIN FETCH lu.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
             WHERE lu.name = :name
                 AND lu.lecture.title = :lectureTitle
                 AND lu.lecture.course.id = :courseId

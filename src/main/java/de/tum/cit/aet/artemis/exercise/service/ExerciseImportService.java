@@ -63,7 +63,7 @@ public abstract class ExerciseImportService {
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
         newExercise.setGradingCriteria(importedExercise.copyGradingCriteria(gradingInstructionCopyTracker));
-        newExercise.setCompetencies(importedExercise.getCompetencies());
+        newExercise.setCompetencyLinks(importedExercise.getCompetencyLinks());
 
         if (importedExercise.getPlagiarismDetectionConfig() != null) {
             newExercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(importedExercise.getPlagiarismDetectionConfig()));
