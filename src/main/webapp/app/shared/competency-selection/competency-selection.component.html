@@ -1,4 +1,4 @@
-@if (isLoading || (competencies && competencies.length)) {
+@if (isLoading || competencyLinks?.length) {
     <div>
         @if (labelName) {
             <label for="competency-selector">
@@ -18,19 +18,19 @@
             </div>
         } @else {
             <div class="competency-selector p-2" id="competency-selector">
-                @for (competency of competencies; track competency) {
-                    @if (competency.id) {
+                @for (competencyLink of competencyLinks; track competencyLink) {
+                    @if (competencyLink && competencyLink.competency && competencyLink.competency.id) {
                         <div>
                             <input
-                                id="competency-{{ competency.id }}"
+                                id="competency-{{ competencyLink.competency.id }}"
                                 type="checkbox"
-                                [ngModel]="checkboxStates[competency.id]"
-                                (ngModelChange)="toggleCompetency(competency)"
+                                [ngModel]="checkboxStates[competencyLink.competency.id]"
+                                (ngModelChange)="toggleCompetency(competencyLink)"
                                 [disabled]="disabled"
                             />
-                            <label for="competency-{{ competency.id }}">
-                                <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
-                                {{ competency.title }}
+                            <label for="competency-{{ competencyLink.competency.id }}">
+                                <fa-icon [icon]="getIcon(competencyLink.competency.taxonomy)" [fixedWidth]="true" />
+                                {{ competencyLink.competency.title }}
                             </label>
                         </div>
                     }
