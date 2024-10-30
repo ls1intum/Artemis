@@ -823,7 +823,18 @@ public class ProgrammingExercise extends Exercise {
      */
     public void validateDockerFlags() {
         ProgrammingExerciseBuildConfig buildConfig = getBuildConfig();
-        DockerRunConfig dockerRunConfig = buildConfig.getDockerRunConfig();
+
+        List<List<String>> flags = buildConfig.parseDockerFlags();
+
+        if (flags != null) {
+            String envFlag = getEnvFlag(flags);
+
+            if (envFlag != null && envFlag.length() > 1000) {
+                throw new BadRequestAlertException("The environment variables are too long. Max 1000chars", "Exercise", "envVariablesTooLong");
+            }
+        }
+
+        DockerRunConfig dockerRunConfig = buildConfig.getDockerRunConfigFromParsedList(flags);
 
         if (dockerRunConfig == null) {
             return;
@@ -832,10 +843,16 @@ public class ProgrammingExercise extends Exercise {
         if (List.of(ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL).contains(getProgrammingLanguage()) && dockerRunConfig.isNetworkDisabled()) {
             throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");
         }
+    }
 
-        if (dockerRunConfig.env() != null && dockerRunConfig.env().stream().mapToInt(String::length).sum() > 1000) {
-            throw new BadRequestAlertException("The environment variables are too long. Max 1000chars", "Exercise", "envVariablesTooLong");
+    private String getEnvFlag(List<List<String>> flags) {
+        List<String> envVars = flags.stream().filter(flag -> flag.getFirst().equals(DockerRunConfig.AllowedDockerFlags.ENV.flag())).findFirst().orElse(null);
+
+        if (envVars == null) {
+            return null;
         }
+
+        return envVars.get(1);
     }
 
     public Set<ExerciseHint> getExerciseHints() {

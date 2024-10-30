@@ -317,16 +317,22 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
      */
     @Nullable
     public DockerRunConfig getDockerRunConfig() {
-        if (StringUtils.isBlank(dockerFlags)) {
+        List<List<String>> parsedList = parseDockerFlags();
+        if (parsedList == null) {
             return null;
         }
+        return getDockerRunConfigFromParsedList(parsedList);
+    }
 
+    /**
+     * Converts a list of key-value pairs representing Docker flags into a {@link DockerRunConfig} instance. @see {@link #getDockerRunConfig()}
+     *
+     * @param list the list of key-value pairs
+     * @return a {@link DockerRunConfig} object initialized with the parsed flags, or {@code null} if an error occurs
+     */
+    @Nullable
+    DockerRunConfig getDockerRunConfigFromParsedList(List<List<String>> list) {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-
-            List<List<String>> list = objectMapper.readValue(dockerFlags, new TypeReference<>() {
-            });
-
             boolean networkDisabled = false;
             List<String> env = null;
             for (List<String> entry : list) {
@@ -348,6 +354,30 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
             }
             return new DockerRunConfig(networkDisabled, env);
+        }
+        catch (Exception e) {
+            log.error("Failed to parse DockerRunConfig from JSON string: {}. Using default settings.", dockerFlags, e);
+        }
+
+        return null;
+    }
+
+    /**
+     * Parses the JSON string representing Docker flags into a list of key-value pairs.
+     *
+     * @return a list of key-value pairs, or {@code null} if an error occurs
+     */
+    @Nullable
+    List<List<String>> parseDockerFlags() {
+        if (StringUtils.isBlank(dockerFlags)) {
+            return null;
+        }
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            return objectMapper.readValue(dockerFlags, new TypeReference<>() {
+            });
         }
         catch (Exception e) {
             log.error("Failed to parse DockerRunConfig from JSON string: {}. Using default settings.", dockerFlags, e);
