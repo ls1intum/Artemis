@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH;
 import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING;
 
 import java.net.URISyntaxException;
@@ -829,7 +830,7 @@ public class ProgrammingExercise extends Exercise {
         if (flags != null) {
             String envFlag = getEnvFlag(flags);
 
-            if (envFlag != null && envFlag.length() > 1000) {
+            if (envFlag != null && envFlag.length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
                 throw new BadRequestAlertException("The environment variables are too long. Max 1000chars", "Exercise", "envVariablesTooLong");
             }
         }
