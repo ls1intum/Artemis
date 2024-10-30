@@ -132,7 +132,6 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should save the scroll position in sessionStorage', fakeAsync(() => {
-            // Überwache sessionStorage.setItem
             const setItemSpy = jest.spyOn(sessionStorage, 'setItem');
             component.ngOnInit();
             component.saveScrollPosition(15);
@@ -140,6 +139,7 @@ examples.forEach((activeConversation) => {
             const expectedKey = `${component.sessionStorageKey}${component._activeConversation?.id}`;
             const expectedValue = '15';
             expect(setItemSpy).toHaveBeenCalledWith(expectedKey, expectedValue);
+            expect(setItemSpy).toHaveBeenCalledTimes(2);
         }));
 
         it('should scroll to the bottom when a new message is created', fakeAsync(() => {
