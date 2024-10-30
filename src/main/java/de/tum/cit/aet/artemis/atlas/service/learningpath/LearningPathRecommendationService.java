@@ -468,6 +468,7 @@ public class LearningPathRecommendationService {
 
     /**
      * Analyzes the current progress within the learning path and generates a recommended ordering of uncompleted learning objects in a competency.
+     * The ordering is based on the competency link weights in decreasing order
      *
      * @param user                    the user that should be analyzed
      * @param competency              the competency
@@ -489,11 +490,14 @@ public class LearningPathRecommendationService {
 
         final var numberOfRequiredExercisePointsToMaster = calculateNumberOfExercisePointsRequiredToMaster(user, competency, weightedConfidence);
 
-        final var pendingExercises = competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise)
-                .filter(exercise -> !learningObjectService.isCompletedByUser(exercise, user)).collect(Collectors.toSet());
+        // First sort exercises based on title to ensure consistent ordering over multiple calls then prefer higher weighted exercises
+        final var pendingExercises = competency.getExerciseLinks().stream().filter(link -> !learningObjectService.isCompletedByUser(link.getExercise(), user))
+                .sorted(Comparator.comparing(link -> link.getExercise().getTitle())).sorted(Comparator.comparingDouble(CompetencyExerciseLink::getWeight).reversed())
+                .map(CompetencyExerciseLink::getExercise).toList();
+
         final var pendingExercisePoints = pendingExercises.stream().mapToDouble(BaseExercise::getMaxPoints).sum();
 
-        Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(pendingExercises);
+        Map<DifficultyLevel, List<Exercise>> difficultyLevelMap = generateDifficultyLevelMap(pendingExercises);
         if (numberOfRequiredExercisePointsToMaster >= pendingExercisePoints) {
             scheduleAllExercises(recommendedOrder, difficultyLevelMap);
             return recommendedOrder;
@@ -510,7 +514,7 @@ public class LearningPathRecommendationService {
      * @param recommendedOrder   the list storing the recommended order of learning objects
      * @param difficultyLevelMap a map from difficulty level to a set of corresponding exercises
      */
-    private void scheduleAllExercises(List<LearningObject> recommendedOrder, Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap) {
+    private void scheduleAllExercises(List<LearningObject> recommendedOrder, Map<DifficultyLevel, List<Exercise>> difficultyLevelMap) {
         for (var difficulty : DifficultyLevel.values()) {
             recommendedOrder.addAll(difficultyLevelMap.get(difficulty));
         }
@@ -524,10 +528,10 @@ public class LearningPathRecommendationService {
      * @param difficultyMap                        a map from difficulty level to a set of corresponding exercises
      */
     private void scheduleExercisesByDistribution(List<LearningObject> recommendedOrder, double[] recommendedExercisePointDistribution,
-            Map<DifficultyLevel, Set<Exercise>> difficultyMap) {
-        final var easyExercises = new HashSet<Exercise>();
-        final var mediumExercises = new HashSet<Exercise>();
-        final var hardExercises = new HashSet<Exercise>();
+            Map<DifficultyLevel, List<Exercise>> difficultyMap) {
+        final var easyExercises = new ArrayList<Exercise>();
+        final var mediumExercises = new ArrayList<Exercise>();
+        final var hardExercises = new ArrayList<Exercise>();
 
         // choose as many exercises from the correct difficulty level as possible
         final var missingEasy = selectExercisesWithDifficulty(difficultyMap, DifficultyLevel.EASY, recommendedExercisePointDistribution[0], easyExercises);
@@ -566,8 +570,8 @@ public class LearningPathRecommendationService {
      * @param exercises      the set to store the selected exercises
      * @return amount of points that are missing, if negative the amount of points that are selected too much
      */
-    private static double selectExercisesWithDifficulty(Map<DifficultyLevel, Set<Exercise>> difficultyMap, DifficultyLevel difficulty, double exercisePoints,
-            Set<Exercise> exercises) {
+    private static double selectExercisesWithDifficulty(Map<DifficultyLevel, List<Exercise>> difficultyMap, DifficultyLevel difficulty, double exercisePoints,
+            List<Exercise> exercises) {
         var remainingExercisePoints = new AtomicDouble(exercisePoints);
         var selectedExercises = difficultyMap.get(difficulty).stream().takeWhile(exercise -> remainingExercisePoints.getAndAdd(-exercise.getMaxPoints()) >= 0)
                 .collect(Collectors.toSet());
@@ -632,10 +636,10 @@ public class LearningPathRecommendationService {
      * @param exercises the exercises that should be contained in the map
      * @return a map from difficulty level to a set of corresponding exercises
      */
-    private static Map<DifficultyLevel, Set<Exercise>> generateDifficultyLevelMap(Set<Exercise> exercises) {
-        Map<DifficultyLevel, Set<Exercise>> difficultyLevelMap = new HashMap<>();
+    private static Map<DifficultyLevel, List<Exercise>> generateDifficultyLevelMap(List<Exercise> exercises) {
+        Map<DifficultyLevel, List<Exercise>> difficultyLevelMap = new HashMap<>();
         for (var difficulty : DifficultyLevel.values()) {
-            difficultyLevelMap.put(difficulty, new HashSet<>());
+            difficultyLevelMap.put(difficulty, new ArrayList<>());
         }
 
         exercises.forEach(exercise -> {
