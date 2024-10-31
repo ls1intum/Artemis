@@ -6,13 +6,13 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Competency } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 
 export interface TextUnitFormData {
     name?: string;
     releaseDate?: dayjs.Dayjs;
     content?: string;
-    competencies?: Competency[];
+    competencyLinks?: CompetencyLectureUnitLink[];
 }
 
 @Component({
@@ -95,7 +95,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
         this.form = this.fb.group({
             name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
             releaseDate: [undefined as dayjs.Dayjs | undefined],
-            competencies: [undefined as Competency[] | undefined],
+            competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
         });
     }
 

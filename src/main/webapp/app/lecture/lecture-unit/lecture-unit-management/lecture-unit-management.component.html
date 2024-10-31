@@ -92,9 +92,13 @@
                                 </button>
                             </div>
                         } @else {
-                            @if (lecture.course?.id && showCompetencies) {
-                                <jhi-competencies-popover [courseId]="lecture.course!.id!" [competencies]="lectureUnit.competencies || []" [navigateTo]="'competencyManagement'" />
-                            }
+                          
+                        @if (lecture.course?.id && showCompetencies) {
+                            <jhi-competencies-popover
+                                [courseId]="lecture.course!.id!"
+                                [competencyLinks]="lectureUnit.competencyLinks || []"
+                                [navigateTo]="'competencyManagement'"
+                            />
                         }
                         @if (viewButtonAvailable[lectureUnit.id!]) {
                             <a
