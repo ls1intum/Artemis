@@ -79,10 +79,13 @@ public class PyrisConnectorService {
      */
     public void executePipeline(String feature, String variant, Object executionDTO) {
         var endpoint = "/api/v1/pipelines/" + feature + "/" + variant + "/run";
+        System.out.println("endpoint: " + pyrisUrl + endpoint);
+        System.out.println(objectMapper.valueToTree(executionDTO));
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
         }
         catch (HttpStatusCodeException e) {
+            System.out.println("Message: " + e.getMessage());
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {

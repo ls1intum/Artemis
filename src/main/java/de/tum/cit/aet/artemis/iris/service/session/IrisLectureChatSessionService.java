@@ -9,6 +9,8 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -17,6 +19,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
@@ -66,6 +69,7 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
         irisChatWebsocketService.sendMessage(session, message, null);
     }
 
+    // This is the message from the user sent to Iris
     @Override
     public void requestAndHandleResponse(IrisLectureChatSession lectureChatSession) {
         var session = (IrisLectureChatSession) irisSessionRepository.findByIdWithMessagesAndContents(lectureChatSession.getId());
@@ -91,6 +95,32 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
         }
 
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, session.getLecture(), user);
+    }
+
+    public boolean hasAccess(User user, IrisLectureChatSession session) {
+        try {
+            checkHasAccessTo(user, session);
+            return true;
+        }
+        catch (AccessForbiddenException e) {
+            return false;
+        }
+    }
+
+    public LectureChatJob handleStatusUpdate(LectureChatJob job, PyrisLectureChatStatusUpdateDTO statusUpdate) {
+        // TODO: LLM Token Tracking - or better, make this class a subclass of AbstractIrisChatSessionService
+        var session = (IrisLectureChatSession) irisSessionRepository.findByIdElseThrow(job.sessionId());
+        if (statusUpdate.result() != null) {
+            var message = session.newMessage();
+            message.addContent(new IrisTextMessageContent(statusUpdate.result()));
+            IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
+        }
+        else {
+            irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages());
+        }
+
+        return job;
     }
 
     @Override

@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 
@@ -126,7 +128,7 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
-     * {@code POST /api/public/pyris/pipelines/text-exercise-chat/runs/{runId}/status} : Set the status of a Text Exercise Chat job.
+     * {@code POST /api/public/pyris/pipelines/lecture-chat/runs/{runId}/status} : Set the status of a Lecture Chat job.
      *
      * @param runId           the ID of the job
      * @param statusUpdateDTO the status update
@@ -140,6 +142,30 @@ public class PublicPyrisStatusUpdateResource {
     public ResponseEntity<Void> respondInTextExerciseChat(@PathVariable String runId, @RequestBody PyrisTextExerciseChatStatusUpdateDTO statusUpdateDTO,
             HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, TextExerciseChatJob.class);
+        if (!Objects.equals(job.jobId(), runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
+
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * {@code POST /api/public/pyris/pipelines/text-exercise-chat/runs/{runId}/status} : Set the status of a Text Exercise Chat job.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     */
+    @PostMapping("pipelines/lecture-chat/runs/{runId}/status")
+    @EnforceNothing
+    public ResponseEntity<Void> respondInLectureChat(@PathVariable String runId, @RequestBody PyrisLectureChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, LectureChatJob.class);
+        System.out.println("Job-IDs: " + job.jobId() + " - " + runId);
         if (!Objects.equals(job.jobId(), runId)) {
             throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
         }
