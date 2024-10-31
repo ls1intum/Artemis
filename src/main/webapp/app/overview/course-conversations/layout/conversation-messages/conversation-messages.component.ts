@@ -151,7 +151,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
             if (this.posts.length > 0) {
                 const savedScrollId = sessionStorage.getItem(this.sessionStorageKey + this._activeConversation?.id) ?? '';
-                setTimeout(() => this.goToLastSelectedElement(parseInt(savedScrollId, 10)), 0);
+                setTimeout(() => this.goToLastSelectedElement(parseInt(savedScrollId, 10)), 200);
             }
         });
         this.content.nativeElement.addEventListener('scroll', () => {
