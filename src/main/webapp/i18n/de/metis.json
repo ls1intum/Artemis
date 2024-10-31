@@ -127,7 +127,7 @@
                 "showContent": "Inhalt ausklappen",
                 "collapseContent": "Inhalt einklappen",
                 "deletedContent": "Beitrag wird in {{ progress }} Sekunde(n) gelöscht.",
-                "undoDelete": "Löschen rückgängig machen"
+                "undoDelete": "Löschen umkehren"
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
