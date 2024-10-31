@@ -5,18 +5,19 @@ namespace test;
 public class BehaviorTest
 {
     private readonly Assembly assignment = Assembly.Load("assignment");
+    private readonly List<DateTime> unorderedDates = [
+        new(2018, 11, 08),
+        new(2017, 04, 15),
+        new(2016, 02, 15),
+        new(2017, 09, 15),
+    ];
     private List<DateTime> dates;
 
 
     [SetUp]
     public void Setup()
     {
-        dates = [
-            new(2018, 11, 08), 
-            new(2017, 04, 15), 
-            new(2016, 02, 15), 
-            new(2017, 09, 15),
-        ];
+        dates = new List<DateTime>(unorderedDates);
     }
 
     [Test, Timeout(1000)]
@@ -26,7 +27,11 @@ public class BehaviorTest
 
         bubbleSort.PerformSort(dates);
 
-        Assert.That(dates, Is.Ordered);
+        Assert.Multiple(() =>
+        {
+            Assert.That(dates, Is.Ordered);
+            Assert.That(dates, Is.EquivalentTo(unorderedDates));
+        });
     }
 
     [Test, Timeout(1000)]
@@ -36,14 +41,18 @@ public class BehaviorTest
 
         mergeSort.PerformSort(dates);
 
-        Assert.That(dates, Is.Ordered);
+        Assert.Multiple(() =>
+        {
+            Assert.That(dates, Is.Ordered);
+            Assert.That(dates, Is.EquivalentTo(unorderedDates));
+        });
     }
 
     [Test, Timeout(1000)]
     public void TestUseMergeSortForBigList()
     {
         List<DateTime> bigList = Enumerable.Repeat(new DateTime(), 11).ToList();
-        
+
         object? sortStrategy = ConfigurePolicyAndContext(bigList);
 
         Assert.That(sortStrategy, Is.InstanceOf<MergeSort>());
@@ -53,7 +62,7 @@ public class BehaviorTest
     public void TestUseBubbleSortForSmallList()
     {
         List<DateTime> smallList = Enumerable.Repeat(new DateTime(), 3).ToList();
-        
+
         object? sortStrategy = ConfigurePolicyAndContext(smallList);
 
         Assert.That(sortStrategy, Is.InstanceOf<BubbleSort>());
