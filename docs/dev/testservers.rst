@@ -53,6 +53,9 @@ Test Servers
 |                                            | - 1 Node                    |                |                     |                |
 |                                            | - LTI                       |                |                     |                |
 +--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
+| https://pr*.artemis-k8s.ase.cit.tum.de     | - Integrated Code Lifecycle |     GitHub     | - Admin             |     Always     |
+|                                            | - MySQL                     |                |                     |                |
++--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
 | **Legacy Testservers**: See on confluence below                                                                                  |
 +--------------------------------------------+-----------------------------+----------------+---------------------+----------------+
 
@@ -110,6 +113,22 @@ GitHub Deployment
 
     .. figure:: testservers/github/remove-lock-label.png
         :alt: GitHub Actions UI: Remove lock label
+
+GitHub Deployment
+-----------------
+
+1. Label your PR with deploy:k8s to initialize a deployment to Kubernetes.
+
+2. Once the server is deployed you get a message from GitHub Actions
+
+    .. figure:: testservers/github/k8s-deploy-complete.png
+        :alt: GitHub Actions Comment: successful deployment
+
+2. Perform your testing
+
+    a) For logs, log in to Rancher: https://rancher.ase.cit.tum.de
+
+3. As soon as you're done with this PR, close or merge it and the deployment will be destroyed. Don't remove the label!
 
 Bamboo Deployment
 -----------------
