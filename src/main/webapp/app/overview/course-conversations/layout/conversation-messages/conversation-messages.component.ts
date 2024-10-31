@@ -270,7 +270,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         // Use setTimeout to ensure the scroll happens after the new message is rendered
         setTimeout(() => {
             this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
-        }, 0);
+        }, 200);
     }
 
     onSearchQueryInput($event: Event) {
@@ -314,7 +314,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (!element) {
             this.fetchNextPage();
         } else {
-            await this.renderer.selectRootElement(element.elementRef.nativeElement, true).scrollIntoView({ behavior: 'instant', block: 'center' });
+            await this.renderer.selectRootElement(element.elementRef.nativeElement, true).scrollIntoView({ behavior: 'instant', block: 'start' });
             this.canStartSaving = true;
         }
     }
