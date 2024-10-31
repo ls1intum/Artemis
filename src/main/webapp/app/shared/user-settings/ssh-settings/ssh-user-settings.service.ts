@@ -3,6 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
+import { firstValueFrom } from 'rxjs';
 
 export interface IASshUserSettingsService {
     getCachedSshKeys: () => Promise<UserSshPublicKey[] | undefined>;
@@ -14,6 +15,8 @@ export interface IASshUserSettingsService {
 
 @Injectable({ providedIn: 'root' })
 export class SshUserSettingsService implements IASshUserSettingsService {
+    error?: string;
+
     private http = inject(HttpClient);
 
     private userSshKeysValue?: UserSshPublicKey[];
@@ -25,6 +28,10 @@ export class SshUserSettingsService implements IASshUserSettingsService {
 
     set sshKeys(sshKeys: UserSshPublicKey[] | undefined) {
         this.userSshKeysValue = sshKeys;
+    }
+
+    public async getSshFingerprints(): Promise<{ [key: string]: string }> {
+        return await firstValueFrom(this.http.get<{ [key: string]: string }>('api/ssh-fingerprints'));
     }
 
     /**
