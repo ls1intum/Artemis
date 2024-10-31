@@ -44,7 +44,7 @@ export default defineConfig({
         {
             name: 'fast-tests',
             testDir: 'e2e',
-            grepInvert: /@fast|^(?!.*@)/,
+            grep: /@fast|\^(?!.\*@).\*\$/,
             timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 45) * 1000,
             use: { ...devices['Desktop Chrome'] },
         },
