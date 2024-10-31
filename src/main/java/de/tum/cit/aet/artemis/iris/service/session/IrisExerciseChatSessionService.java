@@ -159,7 +159,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         pyrisPipelineService.executePipeline(
                 "tutor-chat", // TODO: Rename this to 'programming-exercise-chat'
                 variant,
-                token -> new ExerciseChatJob(token, course.getId(), exercise.getId(), session.getId()),
+                token -> new ExerciseChatJob(token, course.getId(), exercise.getId(), session.getId(), null),
                 executionDto -> new PyrisExerciseChatPipelineExecutionDTO(
                         latestSubmissionDTO,
                         exerciseDTO,

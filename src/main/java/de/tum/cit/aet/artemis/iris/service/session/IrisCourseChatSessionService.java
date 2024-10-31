@@ -157,7 +157,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         pyrisPipelineService.executePipeline(
                 "course-chat",
                 variant,
-                token -> new CourseChatJob(token, courseId, session.getId()),
+                token -> new CourseChatJob(token, courseId, session.getId(), null),
                 executionDto -> new PyrisCourseChatPipelineExecutionDTO(
                         courseDTO,
                         metricsDTO,
