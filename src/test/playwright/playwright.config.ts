@@ -36,7 +36,7 @@ export default defineConfig({
         {
             name: 'slow-tests',
             testDir: 'e2e',
-            grep: /@slow/,
+            grep: new RegExp('@slow'),
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
             use: { ...devices['Desktop Chrome'] },
         },
@@ -44,7 +44,7 @@ export default defineConfig({
         {
             name: 'fast-tests',
             testDir: 'e2e',
-            grep: /@fast|\^(?!.\*@).\*\$/,
+            grep: new RegExp('@fast|^(?!.*@).*$'),
             timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 45) * 1000,
             use: { ...devices['Desktop Chrome'] },
         },
