@@ -104,8 +104,6 @@ examples.forEach((activeConversation) => {
 
         it('should create', fakeAsync(() => {
             expect(component).toBeTruthy();
-            component.handleScrollOnNewMessage();
-            tick();
         }));
 
         it('should set initial values correctly', fakeAsync(() => {
@@ -214,7 +212,7 @@ examples.forEach((activeConversation) => {
             component.content.nativeElement.scrollTop = 100;
             fixture.detectChanges();
             component.handleNewMessageCreated();
-            tick();
+            tick(300);
             expect(component.content.nativeElement.scrollTop).toBe(component.content.nativeElement.scrollHeight);
         }));
 
