@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\assignment\assignment.csproj" />
+    <ProjectReference Include="../${studentParentWorkingDirectoryName}/assignment.csproj" />
   </ItemGroup>
 
 </Project>

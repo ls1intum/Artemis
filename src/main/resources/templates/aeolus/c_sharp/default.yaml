@@ -4,10 +4,10 @@ metadata:
   id: c_sharp
 actions:
   - name: build
-    script: dotnet build "./tests"
+    script: dotnet build "${testWorkingDirectory}"
   - name: test
-    script: dotnet test --logger=junit "./tests"
+    script: dotnet test --logger=junit "${testWorkingDirectory}"
     results:
       - name: NUnit Test Results
-        path: tests/TestResults/TestResults.xml
+        path: "${testWorkingDirectory}/TestResults/TestResults.xml"
         type: junit

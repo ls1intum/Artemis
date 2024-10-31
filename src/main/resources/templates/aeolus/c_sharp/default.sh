@@ -3,12 +3,12 @@ set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
 build () {
   echo '⚙️ executing build'
-  dotnet build "./tests"
+  dotnet build "${testWorkingDirectory}"
 }
 
 test () {
   echo '⚙️ executing test'
-  dotnet test --logger=junit "./tests"
+  dotnet test --logger=junit "${testWorkingDirectory}"
 }
 
 main () {
