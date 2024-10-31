@@ -25,12 +25,10 @@ public class Policy
 
         if (this.context.Dates.Count > DATES_SIZE_THRESHOLD)
         {
-            Console.WriteLine("More than " + DATES_SIZE_THRESHOLD + " dates, choosing merge sort!");
             this.context.SortAlgorithm = new MergeSort();
         }
         else
         {
-            Console.WriteLine("Less or equal than " + DATES_SIZE_THRESHOLD + " dates. choosing quick sort!");
             this.context.SortAlgorithm = new BubbleSort();
         }
     }
