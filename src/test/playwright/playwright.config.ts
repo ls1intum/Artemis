@@ -35,7 +35,7 @@ export default defineConfig({
         // Tests with @slow tag
         {
             name: 'slow-tests',
-            testDir: './e2e',
+            testDir: 'e2e',
             grep: /@slow/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
             use: { ...devices['Desktop Chrome'] },
@@ -43,7 +43,7 @@ export default defineConfig({
         // Tests with @fast tag or without any tags
         {
             name: 'fast-tests',
-            testDir: './e2e',
+            testDir: 'e2e',
             grepInvert: /@fast|^(?!.*@)/,
             timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 45) * 1000,
             use: { ...devices['Desktop Chrome'] },
