@@ -68,6 +68,11 @@ public class BehaviorTest
         Assert.That(sortStrategy, Is.InstanceOf<BubbleSort>());
     }
 
+    /// <summary>
+    /// Configures the sorting policy and context using reflection.
+    /// </summary>
+    /// <param name="dates">The list of dates to be sorted</param>
+    /// <returns>The configured sorting algorithm instance</returns>
     private object? ConfigurePolicyAndContext(List<DateTime> dates)
     {
         Type? contextType = assignment.GetType("assignment.Context");
