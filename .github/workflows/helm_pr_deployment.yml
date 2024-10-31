@@ -11,7 +11,9 @@ jobs:
     environment:
       name: k8s
       url: https://pr${{ github.event.pull_request.number }}.artemis-k8s.ase.cit.tum.de
-    concurrency: k8s-pr${{ github.event.pull_request.number }}
+    concurrency:
+      group: k8s-pr${{ github.event.pull_request.number }}
+      cancel-in-progress: true
 
     steps:
       - name: Checkout repository
