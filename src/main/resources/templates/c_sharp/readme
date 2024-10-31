@@ -18,7 +18,7 @@ Implement the method `PerformSort(List<DateTime>)` in the class `MergeSort`. Mak
 
 We want the application to apply different algorithms for sorting a `List` of `DateTime` objects.
 Use the strategy pattern to select the right sorting algorithm at runtime.
-Implement public C# properties for the UML attributes and associations.
+Implement public readable and writable C# properties for the UML attributes and associations.
 
 **You have the following tasks:**
 

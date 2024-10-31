@@ -63,7 +63,12 @@ public class StructuralTest
         PropertyInfo? datesProperty = type?.GetProperty("Dates", BindingFlags.Instance | BindingFlags.Public);
 
         Assert.That(datesProperty, Is.Not.Null);
-        Assert.That(datesProperty.PropertyType, Is.EqualTo(typeof(List<DateTime>)));
+        Assert.Multiple(() =>
+        {
+            Assert.That(datesProperty.PropertyType, Is.EqualTo(typeof(List<DateTime>)));
+            Assert.That(datesProperty.CanRead, Is.True);
+            Assert.That(datesProperty.CanWrite, Is.True);
+        });
     }
 
     [Test]
@@ -74,7 +79,12 @@ public class StructuralTest
         PropertyInfo? sortAlgorithmProperty = type?.GetProperty("SortAlgorithm", BindingFlags.Instance | BindingFlags.Public);
 
         Assert.That(sortAlgorithmProperty, Is.Not.Null);
-        Assert.That(sortAlgorithmProperty.PropertyType, Is.EqualTo(sortStrategyType));
+        Assert.Multiple(() =>
+        {
+            Assert.That(sortAlgorithmProperty.PropertyType, Is.EqualTo(sortStrategyType));
+            Assert.That(sortAlgorithmProperty.CanRead, Is.True);
+            Assert.That(sortAlgorithmProperty.CanWrite, Is.True);
+        });
     }
 
     [Test]
@@ -108,7 +118,12 @@ public class StructuralTest
         PropertyInfo? contextProperty = type?.GetProperty("Context", BindingFlags.Instance | BindingFlags.Public);
 
         Assert.That(contextProperty, Is.Not.Null);
-        Assert.That(contextProperty.PropertyType, Is.EqualTo(contextType));
+        Assert.Multiple(() =>
+        {
+            Assert.That(contextProperty.PropertyType, Is.EqualTo(contextType));
+            Assert.That(contextProperty.CanRead, Is.True);
+            Assert.That(contextProperty.CanWrite, Is.True);
+        });
     }
 
     [Test]
