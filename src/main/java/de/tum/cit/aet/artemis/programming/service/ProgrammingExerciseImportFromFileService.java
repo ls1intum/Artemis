@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -174,7 +175,7 @@ public class ProgrammingExerciseImportFromFileService {
         Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTestRepositoryUri()), false);
         List<Repository> auxiliaryRepositories = new ArrayList<>();
         for (AuxiliaryRepository auxiliaryRepository : newExercise.getAuxiliaryRepositories()) {
-            auxiliaryRepositories.add(gitService.getOrCheckoutRepository(new VcsRepositoryUri(auxiliaryRepository.getRepositoryUri()), false));
+            auxiliaryRepositories.add(gitService.getOrCheckoutRepository(auxiliaryRepository.getVcsRepositoryUri(), false));
         }
 
         copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, auxiliaryRepositories, basePath);
@@ -216,8 +217,9 @@ public class ProgrammingExerciseImportFromFileService {
         copyExerciseContentToRepository(solutionRepo, RepositoryType.SOLUTION.getName(), basePath);
         copyExerciseContentToRepository(testRepo, RepositoryType.TESTS.getName(), basePath);
         for (Repository auxRepo : auxiliaryRepositories) {
-            String auxRepoSuffix = auxRepo.getLocalPath().toString().split("-")[1];
-            copyExerciseContentToRepository(auxRepo, auxRepoSuffix, basePath);
+            String[] parts = auxRepo.getLocalPath().toString().split("-");
+            var auxRepoName = String.join("-", Arrays.copyOfRange(parts, 1, parts.length));
+            copyExerciseContentToRepository(auxRepo, auxRepoName, basePath);
         }
     }
 
