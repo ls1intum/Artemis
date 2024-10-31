@@ -36,8 +36,8 @@ artemis:
         batch-size: 50  # wait the time below after 50 requests
         batch-waiting-time: 30000   # in ms = 30s
     iosAppId: "2J3C6P6X3N.de.tum.cit.artemis"
-    androidAppPackage: "de.tum.informatics.www1.artemis.native_app.android"
-    androidSha256CertFingerprints: "1F:EB:DD:BA:A1:72:BF:A8:23:DF:72:A0:96:41:5E:10:75:2D:88:90:00:F3:EE:AC:CF:B7:3C:9C:21:86:EC:CF"
+    androidAppPackage: "de.tum.cit.aet.artemis"
+    androidSha256CertFingerprints: "D2:E1:A6:6F:8C:00:55:97:9F:30:2F:3D:79:A9:5D:78:85:1F:C5:21:5A:7F:81:B3:BF:60:22:71:EF:6F:60:24"
 
     # activate the following line if you want to support push notifications for the mobile clients.
     # More information about the TUM hosted hermes service can be found here: https://github.com/ls1intum/Hermes
@@ -97,6 +97,15 @@ artemis:
                     default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.0.0"
                 typescript:
                   default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
+
+        # The following properties are used to configure the Artemis build agent.
+        # The build agent is responsible for executing the buildJob to test student submissions.
+        build-agent:
+            # Name of the build agent. Only lowercase letters, numbers and hyphens are allowed. ([a-z0-9-]+)
+            short-name: "artemis-build-agent-1"
+            display-name: "Artemis Build Agent 1"
+
+
 
 management:
     endpoints:

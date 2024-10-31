@@ -1041,4 +1041,29 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
     void testFindAllOnlineCoursesForLtiDashboard() throws Exception {
         courseTestService.testFindAllOnlineCoursesForLtiDashboard();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAllCoursesForCourseArchiveWithNonNullSemesters() throws Exception {
+        courseTestService.testGetAllCoursesForCourseArchiveWithNonNullSemestersAndEndDate();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAllCoursesForCourseArchiveForUnenrolledStudent() throws Exception {
+        courseTestService.testGetAllCoursesForCourseArchiveForUnenrolledStudent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExistingExerciseDetails_asTutor() throws Exception {
+        courseTestService.testGetExistingExerciseDetails_asTutor();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetExistingExerciseDetails_asEditor() throws Exception {
+        String username = TEST_PREFIX + "tutor1";
+        courseTestService.testGetExistingExerciseDetails_asEditor(username);
+    }
 }

@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -272,7 +273,9 @@ public class ProgrammingExerciseService {
         // We save once in order to generate an id for the programming exercise
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         programmingExercise.setBuildConfig(savedBuildConfig);
-        var savedProgrammingExercise = programmingExerciseRepository.saveForCreation(programmingExercise);
+
+        var savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(programmingExercise, programmingExerciseRepository::saveForCreation);
+
         savedProgrammingExercise.getBuildConfig().setProgrammingExercise(savedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
         // Step 1: Setting constant facts for a programming exercise
@@ -337,6 +340,11 @@ public class ProgrammingExerciseService {
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
         // Step 12d: Update student competency progress
         competencyProgressService.updateProgressByLearningObjectAsync(savedProgrammingExercise);
+
+        // Step 13: Set Iris settings
+        if (irisSettingsService.isPresent()) {
+            irisSettingsService.get().setEnabledForExerciseByCategories(savedProgrammingExercise, new HashSet<>());
+        }
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
@@ -604,7 +612,9 @@ public class ProgrammingExerciseService {
         String problemStatementWithTestNames = updatedProgrammingExercise.getProblemStatement();
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
+
+        ProgrammingExercise savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(updatedProgrammingExercise, programmingExerciseRepository::save);
+
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
 
@@ -618,6 +628,9 @@ public class ProgrammingExerciseService {
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
         competencyProgressService.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
+
+        irisSettingsService
+                .ifPresent(settingsService -> settingsService.setEnabledForExerciseByCategories(savedProgrammingExercise, programmingExerciseBeforeUpdate.getCategories()));
 
         return savedProgrammingExercise;
     }
@@ -1004,7 +1017,7 @@ public class ProgrammingExerciseService {
      * @param exerciseId of the exercise
      */
     public void deleteTasksWithSolutionEntries(Long exerciseId) {
-        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
+        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
         Set<ProgrammingExerciseSolutionEntry> solutionEntries = tasks.stream().map(ProgrammingExerciseTask::getTestCases).flatMap(Collection::stream)
                 .map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).collect(Collectors.toSet());
         programmingExerciseTaskRepository.deleteAll(tasks);

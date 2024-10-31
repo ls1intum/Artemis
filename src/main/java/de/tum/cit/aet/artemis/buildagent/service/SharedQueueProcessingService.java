@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.PreDestroy;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -45,6 +46,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
@@ -116,8 +118,14 @@ public class SharedQueueProcessingService {
      */
     private final AtomicBoolean processResults = new AtomicBoolean(true);
 
-    @Value("${artemis.continuous-integration.pause-grace-period-seconds:15}")
+    @Value("${artemis.continuous-integration.pause-grace-period-seconds:60}")
     private int pauseGracePeriodSeconds;
+
+    @Value("${artemis.continuous-integration.build-agent.short-name}")
+    private String buildAgentShortName;
+
+    @Value("${artemis.continuous-integration.build-agent.display-name:}")
+    private String buildAgentDisplayName;
 
     public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService, TaskScheduler taskScheduler) {
@@ -134,6 +142,17 @@ public class SharedQueueProcessingService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
+        if (!buildAgentShortName.matches("^[a-z0-9-]+$")) {
+            String errorMessage = "Build agent short name must not be empty and only contain lowercase letters, numbers and hyphens."
+                    + " Build agent short name should be changed in the application properties under 'artemis.continuous-integration.build-agent.short-name'.";
+            log.error(errorMessage);
+            throw new IllegalArgumentException(errorMessage);
+        }
+
+        if (StringUtils.isBlank(buildAgentDisplayName)) {
+            buildAgentDisplayName = buildAgentShortName;
+        }
+
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
@@ -154,14 +173,14 @@ public class SharedQueueProcessingService {
 
         ITopic<String> pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
         pauseBuildAgentTopic.addMessageListener(message -> {
-            if (message.getMessageObject().equals(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
+            if (buildAgentShortName.equals(message.getMessageObject())) {
                 pauseBuildAgent();
             }
         });
 
         ITopic<String> resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
         resumeBuildAgentTopic.addMessageListener(message -> {
-            if (message.getMessageObject().equals(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
+            if (buildAgentShortName.equals(message.getMessageObject())) {
                 resumeBuildAgent();
             }
         });
@@ -201,6 +220,7 @@ public class SharedQueueProcessingService {
             log.debug("There are only lite member in the cluster. Not updating build agent information.");
             return;
         }
+
         // Remove build agent information of offline nodes
         removeOfflineNodes();
 
@@ -253,7 +273,7 @@ public class SharedQueueProcessingService {
             if (buildJob != null) {
                 processingJobs.remove(buildJob.id());
 
-                buildJob = new BuildJobQueueItem(buildJob, "");
+                buildJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO("", "", ""));
                 log.info("Adding build job back to the queue: {}", buildJob);
                 queue.add(buildJob);
                 localProcessingJobs.decrementAndGet();
@@ -275,7 +295,7 @@ public class SharedQueueProcessingService {
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
 
-            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, hazelcastMemberAddress);
+            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO(buildAgentShortName, hazelcastMemberAddress, buildAgentDisplayName));
 
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
@@ -297,10 +317,10 @@ public class SharedQueueProcessingService {
             // Add/update
             BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob);
             try {
-                buildAgentInformation.put(info.name(), info);
+                buildAgentInformation.put(info.buildAgent().memberAddress(), info);
             }
             catch (Exception e) {
-                log.error("Error while updating build agent information for agent {}", info.name(), e);
+                log.error("Error while updating build agent information for agent {} with address {}", info.buildAgent().name(), info.buildAgent().memberAddress(), e);
             }
         }
         finally {
@@ -334,11 +354,13 @@ public class SharedQueueProcessingService {
 
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
-        return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs, publicSshKey);
+        BuildAgentDTO agentInfo = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
+
+        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs, publicSshKey);
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
-        return processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgentAddress(), memberAddress)).toList();
+        return processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgent().memberAddress(), memberAddress)).toList();
     }
 
     private void removeOfflineNodes() {
@@ -371,7 +393,7 @@ public class SharedQueueProcessingService {
             log.debug("Build job completed: {}", buildJob);
             JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
 
-            BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(), buildJob.courseId(),
+            BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgent(), buildJob.participationId(), buildJob.courseId(),
                     buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
                     null);
 
