@@ -7,6 +7,7 @@ import { firstValueFrom } from 'rxjs';
 
 export interface IASshUserSettingsService {
     getCachedSshKeys: () => Promise<UserSshPublicKey[] | undefined>;
+    getSshFingerprints: () => Promise<{ [key: string]: string }>;
     getSshPublicKeys: () => Observable<UserSshPublicKey[]>;
     getSshPublicKey: (keyId: number) => Observable<UserSshPublicKey>;
     addNewSshPublicKey: (userKey: UserSshPublicKey) => Observable<HttpResponse<UserSshPublicKey>>;
