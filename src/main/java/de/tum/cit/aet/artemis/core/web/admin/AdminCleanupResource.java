@@ -78,7 +78,7 @@ public class AdminCleanupResource {
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteNonRatedResults(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
             @RequestParam("deleteTo") ZonedDateTime deleteTo) {
         log.debug("REST request to delete non-rated results between {} and {}", deleteFrom, deleteTo);
-        CleanupServiceExecutionRecordDTO result = dataCleanupService.deleteNonRatedResults(deleteFrom, deleteTo);
+        CleanupServiceExecutionRecordDTO result = dataCleanupService.deleteNonLatestNonRatedResults(deleteFrom, deleteTo);
         return ResponseEntity.ok().body(result);
     }
 

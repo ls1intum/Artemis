@@ -89,7 +89,7 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
     void deleteParticipantScoresForNonLatestLastRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
-     * Deletes {@link ParticipantScore} entries where the associated {@link Result} is the latest result and is non-rated,
+     * Deletes {@link ParticipantScore} entries where the associated {@link Result} is not the latest result and is non-rated,
      * and the course's start and end dates are between the specified date range.
      * This query deletes participant scores for non-rated results within courses whose end date is before
      * {@code deleteTo} and start date is after {@code deleteFrom}.
@@ -120,7 +120,7 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
     void deleteParticipantScoresForLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
-     * Deletes {@link ParticipantScore} entries where the associated {@link Result} is non-rated, even though
+     * Deletes {@link ParticipantScore} entries where the associated {@link Result} is not latest and is non-rated, even though
      * it is marked as the last rated result, to prevent potential integrity violations.
      * The deletion is based on courses whose start and end dates fall within the specified range.
      * This scenario should not normally occur, as non-rated results cannot be marked as rated, but the

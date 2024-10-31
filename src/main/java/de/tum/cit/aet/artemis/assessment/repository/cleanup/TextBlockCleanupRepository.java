@@ -92,7 +92,8 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     void deleteTextBlockForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
-     * Deletes {@link TextBlock} entries linked to non-rated {@link Result} where the associated course's start and end dates
+     * Deletes {@link TextBlock} entries linked to non-rated {@link Result} that are not the latest non-rated result
+     * for a {@link Participation}, where the associated course's start and end dates
      * are between the specified date range.
      * This query deletes text blocks for feedback associated with results that are not rated, within the courses
      * whose end date is before {@code deleteTo} and start date is after {@code deleteFrom}.

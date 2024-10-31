@@ -92,7 +92,7 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
     void deleteLongFeedbackTextForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
-     * Deletes {@link LongFeedbackText} entries linked to non-rated {@link Feedback} that are not the latest rated result where the associated course's start
+     * Deletes {@link LongFeedbackText} entries linked to non-rated {@link Feedback} that are not the latest non-rated result where the associated course's start
      * and end dates are between the specified date range.
      * This query deletes long feedback text for feedback associated with non-rated results, within courses whose
      * end date is before {@code deleteTo} and start date is after {@code deleteFrom}.
