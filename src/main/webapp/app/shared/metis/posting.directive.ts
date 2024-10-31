@@ -59,6 +59,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
                         this.metisService.deletePost(this.posting);
                     }
                 },
+                // We add a tiny buffer to make it possible for the user to react a bit longer than the ui displays (+1000)
                 this.deleteTimerInSeconds * 1000 + 1000,
             );
 

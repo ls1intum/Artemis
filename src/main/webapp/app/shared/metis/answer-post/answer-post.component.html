@@ -9,7 +9,7 @@
         [isDeleted]="isDeleted"
         (isDeleteEvent)="onDeleteEvent(true)"
     />
-    @if (!isDeleted && !createAnswerPostModal.isInputOpen) {
+    @if (!createAnswerPostModal.isInputOpen) {
         <div class="answer-post-content-margin">
             <jhi-posting-content
                 [content]="posting.content"
@@ -17,18 +17,13 @@
                 [author]="posting.author"
                 [posting]="posting"
                 [isReply]="true"
+                [isDeleted]="isDeleted"
+                [deleteTimerInSeconds]="deleteTimerInSeconds"
+                (onUndoDeleteEvent)="onDeleteEvent(false)"
                 (userReferenceClicked)="userReferenceClicked.emit($event)"
                 (channelReferenceClicked)="channelReferenceClicked.emit($event)"
             />
         </div>
-    } @else if (isDeleted) {
-        <span class="d-inline-flex align-items-center">
-            <span class="text-secondary" jhiTranslate="artemisApp.metis.post.deletedContent" [translateValues]="{ progress: deleteTimerInSeconds }"></span>
-            <button class="btn btn-outline-primary btn-sm ms-2 position-relative">
-                <span class="post-delete-button-label" jhiTranslate="artemisApp.metis.post.undoDelete" (click)="onDeleteEvent(false)"></span>
-                <span class="post-delete-button-background"></span>
-            </button>
-        </span>
     }
     <div class="answer-post-content-margin">
         <ng-container #createEditAnswerPostContainer />

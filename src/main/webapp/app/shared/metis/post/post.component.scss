@@ -1,7 +1,5 @@
 @import 'src/main/webapp/app/shared/metis/metis.component';
 
-$delete-delay-duration: 6s;
-
 .linked-context-information,
 .context-information,
 .post-title {
@@ -15,30 +13,4 @@ $delete-delay-duration: 6s;
 
 .reference-hash {
     color: inherit;
-}
-
-@import 'src/main/webapp/content/scss/artemis-variables';
-
-.post-delete-button-background {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 0;
-    background-color: rgba($primary, 0.3);
-    animation: increaseWidth $delete-delay-duration forwards linear;
-}
-
-.post-delete-button-label {
-    position: relative;
-    z-index: 1;
-}
-
-@keyframes increaseWidth {
-    from {
-        width: 0;
-    }
-    to {
-        width: 100%;
-    }
 }

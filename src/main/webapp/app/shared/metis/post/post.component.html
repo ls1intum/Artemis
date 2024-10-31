@@ -51,7 +51,7 @@
                     </span>
                 }
             </div>
-            @if (!isDeleted && !displayInlineInput) {
+            @if (!displayInlineInput) {
                 <jhi-posting-content
                     [previewMode]="previewMode"
                     [content]="posting.content"
@@ -59,17 +59,12 @@
                     [isEdited]="!!posting.updatedDate"
                     [posting]="posting"
                     [isReply]="false"
+                    [isDeleted]="isDeleted"
+                    [deleteTimerInSeconds]="deleteTimerInSeconds"
+                    (onUndoDeleteEvent)="onDeleteEvent(false)"
                     (userReferenceClicked)="onUserReferenceClicked($event)"
                     (channelReferenceClicked)="onChannelReferenceClicked($event)"
                 />
-            } @else if (isDeleted) {
-                <span class="d-inline-flex align-items-center">
-                    <span class="text-secondary" jhiTranslate="artemisApp.metis.post.deletedContent" [translateValues]="{ progress: deleteTimerInSeconds }"></span>
-                    <button class="btn btn-outline-primary btn-sm ms-2 position-relative">
-                        <span class="post-delete-button-label" jhiTranslate="artemisApp.metis.post.undoDelete" (click)="onDeleteEvent(false)"></span>
-                        <span class="post-delete-button-background"></span>
-                    </button>
-                </span>
             }
         </div>
     </div>
