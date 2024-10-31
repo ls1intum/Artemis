@@ -15,4 +15,13 @@ export const textEditorRoute: Routes = [
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
     },
+    {
+        path: 'participate/:participationId/submission/:submissionId',
+        component: TextEditorComponent,
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.textExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
 ];

@@ -90,6 +90,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseExistingExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
@@ -3436,4 +3437,15 @@ public class CourseTestService {
         assertThat(actualCoursesForStudent).as("Course archive does not show any courses to the user removed from these courses").hasSize(0);
     }
 
+    // Test
+    public void testGetExistingExerciseDetails_asTutor() throws Exception {
+        Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
+        request.getList("/api/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.FORBIDDEN, CourseExistingExerciseDetailsDTO.class);
+    }
+
+    // Test
+    public void testGetExistingExerciseDetails_asEditor(String username) throws Exception {
+        Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
+        request.get("/api/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK, CourseExistingExerciseDetailsDTO.class);
+    }
 }
