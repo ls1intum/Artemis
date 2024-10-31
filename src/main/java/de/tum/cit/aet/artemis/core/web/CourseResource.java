@@ -96,6 +96,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
@@ -1452,5 +1453,14 @@ public class CourseResource {
         }
         long unacceptedComplaints = complaintService.countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
         return ResponseEntity.ok(Math.max(complaintService.getMaxComplaintsPerParticipant(course, participant) - unacceptedComplaints, 0));
+    }
+
+    @PostMapping("courses/{courseId}/general-information")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> updateGeneralInformation(@PathVariable long courseId, @RequestBody String generalInformation) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        course.setGeneralInformation(generalInformation);
+        courseRepository.save(course);
+        return ResponseEntity.ok().build();
     }
 }

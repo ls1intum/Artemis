@@ -268,6 +268,9 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties(value = "course", allowSetters = true)
     private Set<Faq> faqs = new HashSet<>();
 
+    @Column(name = "general_information")
+    private String generalInformation;
+
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
     private Long numberOfInstructorsTransient;
@@ -1085,5 +1088,9 @@ public class Course extends DomainObject {
     public void addFaq(Faq faq) {
         this.faqs.add(faq);
         faq.setCourse(this);
+    }
+
+    public void setGeneralInformation(String generalInformation) {
+        this.generalInformation = generalInformation;
     }
 }
