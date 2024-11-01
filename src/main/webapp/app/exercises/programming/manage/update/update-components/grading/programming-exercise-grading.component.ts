@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, ViewChild, input, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
@@ -11,28 +11,32 @@ import { NgModel } from '@angular/forms';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { ImportOptions } from 'app/types/programming-exercises';
+import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
     templateUrl: './programming-exercise-grading.component.html',
-    styleUrls: ['../../programming-exercise-form.scss'],
+    styleUrls: ['../../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDestroy {
-    readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly AssessmentType = AssessmentType;
-    readonly faQuestionCircle = faQuestionCircle;
+    protected readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly AssessmentType = AssessmentType;
+    protected readonly faQuestionCircle = faQuestionCircle;
 
     private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     @Input() importOptions: ImportOptions;
+    isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent?: SubmissionPolicyUpdateComponent;
     @ViewChild(ProgrammingExerciseLifecycleComponent) lifecycleComponent?: ProgrammingExerciseLifecycleComponent;
     @ViewChild('maxScore') maxScoreField?: NgModel;
     @ViewChild('bonusPoints') bonusPointsField?: NgModel;
     @ViewChild('maxPenalty') maxPenaltyField?: NgModel;
+
+    formValidSignal = signal<boolean>(false);
 
     formValid: boolean;
     formEmpty: boolean;
@@ -60,13 +64,16 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     }
 
     calculateFormStatus() {
-        this.formValid = Boolean(
+        const newFormValidValue = Boolean(
             this.maxScoreField?.valid &&
                 this.bonusPointsField?.valid &&
                 (this.maxPenaltyField?.valid || !this.programmingExercise.staticCodeAnalysisEnabled) &&
                 !this.submissionPolicyUpdateComponent?.invalid &&
                 this.lifecycleComponent?.formValid,
         );
+
+        this.formValidSignal.set(newFormValidValue);
+        this.formValid = newFormValidValue;
         this.formEmpty = this.lifecycleComponent?.formEmpty ?? false;
         this.formValidChanges.next(this.formValid);
     }

@@ -10,60 +10,67 @@
             <jhi-help-icon text="artemisApp.programmingExercise.titleTooltip" />
         </div>
         <jhi-exercise-title-channel-name
-            [exercise]="programmingExercise"
-            [course]="programmingExercise.course"
+            #titleChannelNameComponent
+            [exercise]="programmingExercise()"
+            [course]="programmingExercise().course"
             [minTitleLength]="3"
             [titlePattern]="programmingExerciseCreationConfig.titleNamePattern"
             [hideTitleLabel]="true"
-            [isExamMode]="isExamMode"
-            [isImport]="isImport"
+            [isExamMode]="isExamMode()"
+            [isImport]="isImport()"
+            [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+            [courseId]="courseId()"
         />
     </div>
-    <div class="form-group">
-        <div>
-            <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label>
-            <jhi-help-icon text="artemisApp.programmingExercise.shortNameTooltip" />
-        </div>
-        <input
-            required
-            type="text"
-            class="form-control"
-            name="shortName"
-            id="field_shortName"
-            minlength="3"
-            [pattern]="programmingExerciseCreationConfig.shortNamePattern"
-            [(ngModel)]="programmingExercise.shortName"
-            [readOnly]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise.id"
-            [disabled]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise.id"
-            #shortName="ngModel"
-        />
-        @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error) {
-            @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
-                <div class="alert alert-danger">
-                    <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
-                </div>
+    @if (isEditFieldDisplayedRecord().shortName) {
+        <div class="form-group">
+            <div>
+                <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label>
+                <jhi-help-icon text="artemisApp.programmingExercise.shortNameTooltip" />
+            </div>
+            <input
+                required
+                type="text"
+                class="form-control"
+                name="shortName"
+                id="field_shortName"
+                minlength="3"
+                [pattern]="programmingExerciseCreationConfig.shortNamePattern"
+                [(ngModel)]="programmingExercise().shortName"
+                [readOnly]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise().id"
+                [disabled]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise().id"
+                notIncludedIn
+                [disallowedValues]="alreadyUsedShortNames()"
+                #shortName="ngModel"
+            />
+            @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error.key) {
+                @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
+                    <div class="alert alert-danger">
+                        <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
+                    </div>
+                }
             }
-        }
-    </div>
-    @if (programmingExercise.shortName && !shortName.invalid) {
+        </div>
+    }
+    @if (programmingExercise().shortName && isShortNameFieldValid()) {
         <div class="form-group">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
-                <jhi-help-icon [text]="isLocal ? 'artemisApp.programmingExercise.preview.tooltipLocalVC' : 'artemisApp.programmingExercise.preview.tooltip'" />
+                <jhi-help-icon [text]="isLocal() ? 'artemisApp.programmingExercise.preview.tooltipLocalVC' : 'artemisApp.programmingExercise.preview.tooltip'" />
             </div>
             <jhi-programming-exercise-repository-and-build-plan-details
-                [programmingExercise]="programmingExercise"
+                [programmingExercise]="programmingExercise()"
                 [programmingLanguage]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
-                [isLocal]="isLocal"
-                [checkoutSolutionRepository]="programmingExercise.buildConfig?.checkoutSolutionRepository"
+                [isLocal]="isLocal()"
+                [checkoutSolutionRepository]="programmingExercise().buildConfig?.checkoutSolutionRepository"
                 (submissionBuildPlanEvent)="updateSubmissionBuildPlanCheckoutDirectories($event)"
                 [isCreateOrEdit]="true"
                 [isEditMode]="programmingExerciseCreationConfig.isEdit"
-                [programmingExerciseBuildConfig]="programmingExercise.buildConfig"
+                [programmingExerciseBuildConfig]="programmingExercise().buildConfig"
             />
-            @if (editRepositoryCheckoutPath && isLocal && !isImport && !programmingExerciseCreationConfig.isEdit) {
+            @if (editRepositoryCheckoutPath && isLocal() && !isImport() && !programmingExerciseCreationConfig.isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
                 <jhi-programming-exercise-edit-checkout-directories
-                    [programmingExercise]="programmingExercise"
+                    [programmingExercise]="programmingExercise()"
                     [submissionBuildPlanCheckoutRepositories]="submissionBuildPlanCheckoutRepositories"
                     (assignmentCheckoutPathEvent)="onAssigmentRepositoryCheckoutPathChange($event)"
                     (testCheckoutPathEvent)="onTestRepositoryCheckoutPathChange($event)"
@@ -73,7 +80,11 @@
             }
             @if (!programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExerciseCreationConfig.auxiliaryRepositoriesSupported) {
                 <div class="form-group">
-                    @if (programmingExercise.auxiliaryRepositories && programmingExercise.auxiliaryRepositories.length > 0) {
+                    @if (
+                        programmingExercise().auxiliaryRepositories &&
+                        programmingExercise().auxiliaryRepositories!.length > 0 &&
+                        isEditFieldDisplayedRecord().addAuxiliaryRepository
+                    ) {
                         <ngx-datatable
                             id="auxiliaryRepositoryTable"
                             class="bootstrap"
@@ -82,7 +93,7 @@
                             [limit]="20"
                             [columnMode]="'force'"
                             [rowHeight]="'auto'"
-                            [rows]="programmingExercise.auxiliaryRepositories"
+                            [rows]="programmingExercise().auxiliaryRepositories"
                         >
                             <ngx-datatable-column [name]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryName' | artemisTranslate" prop="repositoryName">
                                 <ng-template ngx-datatable-cell-template let-row="row">
@@ -117,7 +128,7 @@
                                 <ng-template ngx-datatable-cell-template let-row="row">
                                     <jhi-remove-auxiliary-repository-button
                                         placement="right auto"
-                                        [programmingExercise]="programmingExercise"
+                                        [programmingExercise]="programmingExercise()"
                                         (onRefresh)="programmingExerciseCreationConfig.refreshAuxiliaryRepositoryChecks()"
                                         [row]="row"
                                         class="ml-2"
@@ -136,12 +147,12 @@
                             }
                         </ngb-alert>
                     }
-                    @if (programmingExerciseCreationConfig && !isLocal) {
+                    @if (programmingExerciseCreationConfig && !isLocal()) {
                         <ngb-alert [dismissible]="false" [type]="'info'">
                             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
                         </ngb-alert>
                     }
-                    @if (isLocal && !isImport && !programmingExerciseCreationConfig.isEdit) {
+                    @if (isLocal() && !isImport() && !programmingExerciseCreationConfig.isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
                         <jhi-button
                             [btnType]="ButtonType.WARNING"
                             [btnSize]="ButtonSize.SMALL"
@@ -150,12 +161,14 @@
                             (onClick)="toggleEditRepositoryCheckoutPath()"
                         />
                     }
-                    <jhi-add-auxiliary-repository-button
-                        [programmingExercise]="programmingExercise"
-                        (onRefresh)="programmingExerciseCreationConfig.refreshAuxiliaryRepositoryChecks()"
-                        class="ml-2"
-                    />
-                    <jhi-help-icon text="artemisApp.programmingExercise.auxiliaryRepository.usageDescription" />
+                    @if (isEditFieldDisplayedRecord().addAuxiliaryRepository) {
+                        <jhi-add-auxiliary-repository-button
+                            [programmingExercise]="programmingExercise()"
+                            (onRefresh)="programmingExerciseCreationConfig.refreshAuxiliaryRepositoryChecks()"
+                            class="ml-2"
+                        />
+                        <jhi-help-icon text="artemisApp.programmingExercise.auxiliaryRepository.usageDescription" />
+                    }
                 </div>
             }
         </div>
@@ -170,7 +183,7 @@
                         type="checkbox"
                         name="recreateBuildPlans"
                         id="field_recreateBuildPlans"
-                        [(ngModel)]="importOptions.recreateBuildPlans"
+                        [(ngModel)]="importOptions().recreateBuildPlans"
                         (change)="programmingExerciseCreationConfig.recreateBuildPlanOrUpdateTemplateChange()"
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title"></span>
@@ -180,8 +193,8 @@
         }
         @if (
             programmingExerciseCreationConfig.isImportFromExistingExercise &&
-            programmingExercise.projectType !== ProjectType.PLAIN_GRADLE &&
-            programmingExercise.projectType !== ProjectType.GRADLE_GRADLE
+            programmingExercise().projectType !== ProjectType.PLAIN_GRADLE &&
+            programmingExercise().projectType !== ProjectType.GRADLE_GRADLE
         ) {
             <div class="form-check">
                 <label class="form-check-label" for="field_updateTemplateFiles">
@@ -191,7 +204,7 @@
                         type="checkbox"
                         name="updateTemplateFiles"
                         id="field_updateTemplateFiles"
-                        [(ngModel)]="importOptions.updateTemplate"
+                        [(ngModel)]="importOptions().updateTemplate"
                         (change)="programmingExerciseCreationConfig.recreateBuildPlanOrUpdateTemplateChange()"
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.updateTemplate.title"></span>
@@ -200,7 +213,7 @@
             </div>
         }
     </div>
-    @if (!programmingExerciseCreationConfig.isExamMode) {
+    @if (!programmingExerciseCreationConfig.isExamMode && isEditFieldDisplayedRecord().categories) {
         <div id="creation-config-selector">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories"></label>
@@ -212,5 +225,8 @@
                 (selectedCategories)="programmingExerciseCreationConfig.updateCategories($event)"
             />
         </div>
+    }
+    @if (isSimpleMode()) {
+        <jhi-programming-exercise-difficulty [programmingExercise]="programmingExercise()" />
     }
 </section>
