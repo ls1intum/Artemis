@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.web.localvc.ssh;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
-import java.io.IOException;
 import java.util.Map;
 
 import org.springframework.context.annotation.Profile;
@@ -12,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshFingerprintsProviderService;
@@ -27,7 +26,7 @@ public class SshFingerprintsProviderResource {
 
     SshFingerprintsProviderService sshFingerprintsProviderService;
 
-    SshFingerprintsProviderResource(SshFingerprintsProviderService sshFingerprintsProviderService) {
+    public SshFingerprintsProviderResource(SshFingerprintsProviderService sshFingerprintsProviderService) {
         this.sshFingerprintsProviderService = sshFingerprintsProviderService;
     }
 
@@ -37,9 +36,9 @@ public class SshFingerprintsProviderResource {
      * @return the SSH fingerprints for the keys a user uses
      */
     @GetMapping(value = "ssh-fingerprints", produces = MediaType.APPLICATION_JSON_VALUE)
-    @EnforceNothing
+    @EnforceAtLeastStudent
     @FeatureToggle(Feature.Exports)
-    public ResponseEntity<Map<String, String>> getSshFingerprints() throws IOException {
+    public ResponseEntity<Map<String, String>> getSshFingerprints() {
         return ResponseEntity.ok().body(sshFingerprintsProviderService.getSshFingerPrints());
     }
 }

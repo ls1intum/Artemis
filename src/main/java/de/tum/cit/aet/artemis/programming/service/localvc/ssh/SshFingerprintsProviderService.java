@@ -7,6 +7,8 @@ import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
 
+import jakarta.ws.rs.BadRequestException;
+
 import org.apache.sshd.common.keyprovider.KeyPairProvider;
 import org.apache.sshd.server.SshServer;
 import org.slf4j.Logger;
@@ -40,6 +42,7 @@ public class SshFingerprintsProviderService {
             }
             catch (IOException | GeneralSecurityException e) {
                 log.info("Could not load keys from the ssh server while trying to get SSH key fingerprints", e);
+                throw new BadRequestException("Could not load keys from the ssh server");
             }
         }
         return fingerprints;
