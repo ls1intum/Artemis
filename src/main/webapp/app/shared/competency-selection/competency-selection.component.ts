@@ -1,7 +1,16 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { CompetencyLearningObjectLink, CourseCompetency, MEDIUM_COMPETENCY_LINK_WEIGHT, getIcon } from 'app/entities/competency.model';
+import {
+    CompetencyLearningObjectLink,
+    CourseCompetency,
+    HIGH_COMPETENCY_LINK_WEIGHT,
+    LOW_COMPETENCY_LINK_WEIGHT,
+    LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF,
+    MEDIUM_COMPETENCY_LINK_WEIGHT,
+    MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF,
+    getIcon,
+} from 'app/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { finalize } from 'rxjs';
@@ -39,6 +48,12 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (value: any) => {};
+
+    protected readonly HIGH_COMPETENCY_LINK_WEIGHT = HIGH_COMPETENCY_LINK_WEIGHT;
+    protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT = MEDIUM_COMPETENCY_LINK_WEIGHT;
+    protected readonly LOW_COMPETENCY_LINK_WEIGHT = LOW_COMPETENCY_LINK_WEIGHT;
+    protected readonly LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF = LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF; // halfway between low and medium
+    protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF; // halfway between medium and high
 
     constructor(
         private route: ActivatedRoute,
@@ -122,7 +137,19 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         }
     }
 
+    updateLinkWeight(link: CompetencyLearningObjectLink, value: number) {
+        link.weight = value;
+
+        this._onChange(this.selectedCompetencyLinks);
+        this.valueChange.emit(this.selectedCompetencyLinks);
+    }
+
     writeValue(value?: CompetencyLearningObjectLink[]): void {
+        this.competencyLinks?.forEach((link) => {
+            const selectedLink = value?.find((value) => value.competency?.id === link.competency?.id);
+            link.weight = selectedLink?.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT;
+        });
+
         if (value && this.competencyLinks) {
             // Compare the ids of the competencies instead of the whole objects
             const ids = value.map((el) => el.competency?.id);
