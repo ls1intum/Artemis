@@ -26,14 +26,14 @@
                     [deleteQuestion]="allPagesSelected() ? 'artemisApp.attachment.pdfPreview.deleteAllPagesQuestion' : 'artemisApp.attachment.pdfPreview.deletePagesQuestion'"
                     (delete)="allPagesSelected() ? deleteAttachmentFile() : deleteSelectedSlides()"
                     [dialogError]="dialogError$"
-                    [disabled]="selectedPages()!.size === 0"
+                    [disabled]="isPdfLoading() || selectedPages().size === 0"
                     aria-label="Delete selected pages"
                 >
                     <fa-icon [icon]="faTrash" />
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.removePageButton"></span>
                 </button>
                 <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" />
-                <button (click)="triggerFileInput()" class="btn btn-primary text-truncate" aria-label="Append PDF file">
+                <button (click)="triggerFileInput()" class="btn btn-primary text-truncate" aria-label="Append PDF file" [disabled]="isPdfLoading()">
                     <fa-icon [icon]="faFileImport" />
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.appendPDFButton"></span>
                 </button>
@@ -66,7 +66,7 @@
                 </a>
             </div>
             <div>
-                <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="isPdfLoading() || totalPages() === 0">
+                <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="isPdfLoading() || totalPages() === 0 || !isFileChanged()">
                     <fa-icon [icon]="faSave" [ngbTooltip]="'entity.action.save' | artemisTranslate"></fa-icon>
                     <span jhiTranslate="entity.action.save"></span>
                 </button>
