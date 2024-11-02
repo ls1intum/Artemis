@@ -1,7 +1,7 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, effect, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from './lecture.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
@@ -14,17 +14,17 @@ import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { UPLOAD_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { LectureUpdatePeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
+import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 
 @Component({
     selector: 'jhi-lecture-update',
     templateUrl: './lecture-update.component.html',
     styleUrls: ['./lecture-update.component.scss'],
 })
-export class LectureUpdateComponent implements OnInit, AfterViewInit, OnDestroy {
+export class LectureUpdateComponent implements OnInit {
     protected readonly documentationType: DocumentationType = 'Lecture';
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSave = faSave;
@@ -37,8 +37,8 @@ export class LectureUpdateComponent implements OnInit, AfterViewInit, OnDestroy 
     protected readonly acceptedFileExtensionsFileBrowser = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
 
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
-    @ViewChild(ProgrammingExerciseInformationComponent) lectureTitleComponent?: LectureUpdateTitleComponent;
     @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdatePeriodComponent;
+    titleSection = viewChild.required(LectureTitleChannelNameComponent);
 
     lecture: Lecture;
     isSaving: boolean;
@@ -47,7 +47,6 @@ export class LectureUpdateComponent implements OnInit, AfterViewInit, OnDestroy 
     isShowingWizardMode: boolean;
 
     formStatusSections: FormSectionStatus[];
-    inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
     courses: Course[];
 
@@ -66,7 +65,18 @@ export class LectureUpdateComponent implements OnInit, AfterViewInit, OnDestroy 
         protected activatedRoute: ActivatedRoute,
         private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,
-    ) {}
+    ) {
+        effect(() => {
+            // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+            const updatedFormStatusSections: FormSectionStatus[] = [
+                {
+                    title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
+                    valid: Boolean(this.titleSection().titleChannelNameComponent().formValidSignal()),
+                },
+            ];
+            this.formStatusSections = updatedFormStatusSections;
+        });
+    }
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
@@ -91,17 +101,6 @@ export class LectureUpdateComponent implements OnInit, AfterViewInit, OnDestroy 
                 this.isShowingWizardMode = params.shouldBeInWizardMode;
             }
         });
-    }
-
-    ngAfterViewInit() {
-        this.inputFieldSubscriptions.push(this.lectureTitleComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
-        this.inputFieldSubscriptions.push(this.lecturePeriodComponent?.formValidChanges?.subscribe(() => this.calculateFormStatusSections()));
-    }
-
-    ngOnDestroy() {
-        for (const subscription of this.inputFieldSubscriptions) {
-            subscription?.unsubscribe();
-        }
     }
 
     calculateFormStatusSections() {
