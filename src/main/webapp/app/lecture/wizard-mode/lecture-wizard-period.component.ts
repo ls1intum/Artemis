@@ -5,10 +5,8 @@ import { Lecture } from 'app/entities/lecture.model';
     selector: 'jhi-lecture-update-wizard-period',
     templateUrl: './lecture-wizard-period.component.html',
 })
-export class LectureUpdateWizardPeriodComponent {
+export class LectureUpdatePeriodComponent {
     @Input() currentStep: number;
     @Input() lecture: Lecture;
     @Input() validateDatesFunction: () => void;
-
-    constructor() {}
 }
