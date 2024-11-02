@@ -26,7 +26,8 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
-import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
+import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
+import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { faAngleDown, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
@@ -159,13 +160,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         new BoldAction(),
         new ItalicAction(),
         new UnderlineAction(),
+        new StrikethroughAction(),
         new QuoteAction(),
         new CodeAction(),
         new CodeBlockAction('java'),
         new UrlAction(),
         new AttachmentAction(),
         new OrderedListAction(),
-        new UnorderedListAction(),
+        new BulletedListAction(),
     ];
 
     @Input()

@@ -110,7 +110,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     convertTextToEmoji(text: string): string {
-        return this.emojiConvertor.replace_emoticons(text);
+        if (text.startsWith(':')) {
+            return this.emojiConvertor.replace_emoticons(text);
+        } else {
+            return text;
+        }
     }
 
     ngOnInit(): void {

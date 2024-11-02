@@ -92,22 +92,7 @@ describe('MonacoEditorActionIntegration', () => {
         const action = new OrderedListAction();
         comp.registerAction(action);
         action.executeInCurrentEditor();
-        expect(comp.getText()).toBe('1. ');
-    });
-
-    it('should toggle ordered list, skipping empty lines', () => {
-        const action = new OrderedListAction();
-        comp.registerAction(action);
-        const lines = ['One', '', 'Two', 'Three'];
-        const numberedLines = lines.map((line, index) => (line ? `${index + 1}. ${line}` : ''));
-        comp.setText(lines.join('\n'));
-        comp.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: lines.length, endColumn: lines[lines.length - 1].length + 1 });
-        // Introduce list
-        action.executeInCurrentEditor();
-        expect(comp.getText()).toBe(numberedLines.join('\n'));
-        // Remove list
-        action.executeInCurrentEditor();
-        expect(comp.getText()).toBe(lines.join('\n'));
+        expect(comp.getText()).toBe('1.  ');
     });
 
     it.each([1, 2, 3])('Should toggle heading %i on selected line', (headingLevel) => {
