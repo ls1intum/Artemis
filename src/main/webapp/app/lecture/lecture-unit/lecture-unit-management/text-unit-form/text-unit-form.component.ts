@@ -32,17 +32,18 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     @Input() hasCancelButton: boolean;
     @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
 
+    // not included in reactive form
+    content: string | undefined;
+    contentLoadedFromCache = false;
+    firstMarkdownChangeHappened = false;
+
     private readonly formBuilder = inject(FormBuilder);
+
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
         releaseDate: [undefined as dayjs.Dayjs | undefined],
         competencies: [undefined as Competency[] | undefined],
     });
-
-    // not included in reactive form
-    content: string | undefined;
-    contentLoadedFromCache = false;
-    firstMarkdownChangeHappened = false;
 
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
     isFormValid = computed(() => this.statusChanges() === 'VALID');
