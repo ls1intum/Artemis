@@ -9,12 +9,11 @@
                 [isSaving]="isSaving"
             />
         } @else {
-            <jhi-form-status-bar [formStatusSections]="formStatusSections" />
             <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
                 <div class="d-flex">
                     <div class="flex-grow-1">
                         <div class="d-flex align-items-center">
-                            <h2 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel"></h2>
+                            <h1 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel"></h1>
                             <jhi-documentation-button [type]="documentationType" />
                         </div>
                     </div>
@@ -26,6 +25,8 @@
                         </div>
                     </div>
                 </div>
+                <jhi-form-status-bar [formStatusSections]="formStatusSections" />
+                <!--                TODO fix attachment if lecture is not created yet (no course exists), see https://github.com/ls1intum/Artemis/commit/1668b1a441a78b2e9c843f6cf83ab0cee97f6d09-->
                 <div>
                     <jhi-lecture-title-channel-name [lecture]="lecture" />
                     <div class="form-group" id="field_description">

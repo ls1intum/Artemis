@@ -70,8 +70,20 @@ export class LectureUpdateComponent implements OnInit {
             // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
             const updatedFormStatusSections: FormSectionStatus[] = [
                 {
-                    title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
+                    title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
                     valid: Boolean(this.titleSection().titleChannelNameComponent().formValidSignal()),
+                },
+                {
+                    title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
+                    valid: true, // TODO retrieve the valid status from the datepickeres
+                },
+                {
+                    title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
+                    valid: true, // TODO retrieve the valid status
+                },
+                {
+                    title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
+                    valid: true, // TODO retrieve the valid status
                 },
             ];
             this.formStatusSections = updatedFormStatusSections;
@@ -101,33 +113,6 @@ export class LectureUpdateComponent implements OnInit {
                 this.isShowingWizardMode = params.shouldBeInWizardMode;
             }
         });
-    }
-
-    calculateFormStatusSections() {
-        this.formStatusSections = [
-            // {
-            //     title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
-            //     valid: this.exerciseInfoComponent?.formValid ?? false,
-            // },
-            // {
-            //     title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
-            //     valid: (this.exerciseDifficultyComponent?.teamConfigComponent.formValid && this.validIdeSelection()) ?? false,
-            // },
-            // {
-            //     title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
-            //     valid: this.exerciseLanguageComponent?.formValid ?? false,
-            // },
-            // {
-            //     title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
-            //     valid: true,
-            //     empty: !this.programmingExercise.problemStatement,
-            // },
-            // {
-            //     title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
-            //     valid: Boolean(this.exerciseGradingComponent?.formValid && (this.isExamMode || this.exercisePlagiarismComponent?.formValid)),
-            //     empty: this.exerciseGradingComponent?.formEmpty,
-            // },
-        ];
     }
 
     /**

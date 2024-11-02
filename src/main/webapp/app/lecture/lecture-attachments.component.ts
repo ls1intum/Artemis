@@ -1,8 +1,7 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import dayjs from 'dayjs/esm';
 import { Subject } from 'rxjs';
 import { FileService } from 'app/shared/http/file.service';
@@ -18,6 +17,14 @@ import { LectureService } from 'app/lecture/lecture.service';
     styleUrls: ['./lecture-attachments.component.scss'],
 })
 export class LectureAttachmentsComponent implements OnInit, OnDestroy {
+    protected readonly faSpinner = faSpinner;
+    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faPaperclip = faPaperclip;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faEye = faEye;
+
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     @Input() lectureId: number | undefined;
     @Input() showHeader = true;
@@ -41,21 +48,10 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    // Icons
-    faSpinner = faSpinner;
-    faTimes = faTimes;
-    faTrash = faTrash;
-    faPencilAlt = faPencilAlt;
-    faPaperclip = faPaperclip;
-    faQuestionCircle = faQuestionCircle;
-    faEye = faEye;
-
     constructor(
         protected activatedRoute: ActivatedRoute,
         private attachmentService: AttachmentService,
         private lectureService: LectureService,
-        private httpClient: HttpClient,
-        private fileUploaderService: FileUploaderService,
         private fileService: FileService,
     ) {}
 
