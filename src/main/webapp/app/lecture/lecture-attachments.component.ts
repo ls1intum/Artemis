@@ -1,15 +1,14 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import dayjs from 'dayjs/esm';
 import { Subject } from 'rxjs';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { faEye, faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { UPLOAD_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { LectureService } from 'app/lecture/lecture.service';
 
 @Component({
@@ -18,6 +17,16 @@ import { LectureService } from 'app/lecture/lecture.service';
     styleUrls: ['./lecture-attachments.component.scss'],
 })
 export class LectureAttachmentsComponent implements OnInit, OnDestroy {
+    protected readonly faSpinner = faSpinner;
+    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faPaperclip = faPaperclip;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faEye = faEye;
+    protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
+    protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
+
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     @Input() lectureId: number | undefined;
     @Input() showHeader = true;
@@ -33,29 +42,13 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     errorMessage?: string;
     viewButtonAvailable: Record<number, boolean> = {};
 
-    // A human-readable list of allowed file extensions
-    readonly allowedFileExtensions = UPLOAD_FILE_EXTENSIONS.join(', ');
-    // The list of file extensions for the "accept" attribute of the file input field
-    readonly acceptedFileExtensionsFileBrowser = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
-
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    // Icons
-    faSpinner = faSpinner;
-    faTimes = faTimes;
-    faTrash = faTrash;
-    faPencilAlt = faPencilAlt;
-    faPaperclip = faPaperclip;
-    faQuestionCircle = faQuestionCircle;
-    faEye = faEye;
 
     constructor(
         protected activatedRoute: ActivatedRoute,
         private attachmentService: AttachmentService,
         private lectureService: LectureService,
-        private httpClient: HttpClient,
-        private fileUploaderService: FileUploaderService,
         private fileService: FileService,
     ) {}
 
