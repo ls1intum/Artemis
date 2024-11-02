@@ -93,6 +93,8 @@ export class LectureUpdateComponent implements OnInit {
                     valid: Boolean(this.isPeriodSectionValid()),
                 },
             ];
+
+            // only in edit mode we have the lecture id which is currently required to store units and attachments
             if (this.isEditMode()) {
                 updatedFormStatusSections = [
                     ...updatedFormStatusSections,
