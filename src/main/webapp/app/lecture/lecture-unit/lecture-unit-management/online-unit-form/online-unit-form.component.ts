@@ -1,13 +1,13 @@
 import dayjs from 'dayjs/esm';
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, computed, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { HttpResponse } from '@angular/common/http';
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
-import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
-import { Subscription, map } from 'rxjs';
-
+import { Competency, CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 export interface OnlineUnitFormData {
     name?: string;
     description?: string;
@@ -32,7 +32,7 @@ function urlValidator(control: AbstractControl) {
     selector: 'jhi-online-unit-form',
     templateUrl: './online-unit-form.component.html',
 })
-export class OnlineUnitFormComponent implements OnInit, OnChanges, OnDestroy {
+export class OnlineUnitFormComponent implements OnChanges {
     protected faTimes = faTimes;
     protected faArrowLeft = faArrowLeft;
 
@@ -40,20 +40,25 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     @Input() isEditMode = false;
 
     @Output() formSubmitted: EventEmitter<OnlineUnitFormData> = new EventEmitter<OnlineUnitFormData>();
-    form: FormGroup;
 
     @Input() hasCancelButton: boolean;
     @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
 
     urlValidator = urlValidator;
 
-    isFormValid = signal<boolean>(false);
-    private formValidityChangesSubscription: Subscription;
+    private readonly formBuilder = inject(FormBuilder);
+    form: FormGroup = this.formBuilder.group({
+        name: [undefined, [Validators.required, Validators.maxLength(255)]],
+        description: [undefined, [Validators.maxLength(1000)]],
+        releaseDate: [undefined],
+        source: [undefined, [Validators.required, this.urlValidator]],
+        competencies: [undefined as Competency[] | undefined],
+    });
 
-    constructor(
-        private fb: FormBuilder,
-        private onlineUnitService: OnlineUnitService,
-    ) {}
+    private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
+    isFormValid = computed(() => this.statusChanges() === 'VALID');
+
+    constructor(private onlineUnitService: OnlineUnitService) {}
 
     get nameControl() {
         return this.form.get('name');
@@ -72,38 +77,9 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges(): void {
-        this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }
-    }
-
-    ngOnInit(): void {
-        this.initializeForm();
-    }
-
-    ngOnDestroy() {
-        this.formValidityChangesSubscription.unsubscribe();
-    }
-
-    private initializeForm() {
-        if (this.form) {
-            return;
-        }
-        this.form = this.fb.group({
-            name: [undefined, [Validators.required, Validators.maxLength(255)]],
-            description: [undefined, [Validators.maxLength(1000)]],
-            releaseDate: [undefined],
-            source: [undefined, [Validators.required, this.urlValidator]],
-            competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
-        });
-
-        if (this.formValidityChangesSubscription) {
-            this.formValidityChangesSubscription.unsubscribe();
-        }
-        this.formValidityChangesSubscription = this.form.statusChanges.subscribe(() => {
-            this.isFormValid.set(this.form.valid);
-        });
     }
 
     private setFormValues(formData: OnlineUnitFormData) {
