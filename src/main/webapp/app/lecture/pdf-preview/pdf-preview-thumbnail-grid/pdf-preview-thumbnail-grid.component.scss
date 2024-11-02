@@ -1,5 +1,4 @@
 .pdf-container {
-    position: relative;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
     gap: 10px;
@@ -23,4 +22,5 @@
 
 .enlarged-canvas {
     display: contents;
+    position: absolute;
 }
