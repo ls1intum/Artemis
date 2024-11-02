@@ -1,4 +1,11 @@
 <div class="enlarged-container" (click)="closeIfOutside($event)">
+    @if (isEnlargedCanvasLoading()) {
+        <div class="d-flex justify-content-center position-absolute">
+            <div class="spinner-border" role="status">
+                <span class="sr-only" jhiTranslate="loading"></span>
+            </div>
+        </div>
+    }
     <canvas #enlargedCanvas></canvas>
     <button class="btn btn-close" (click)="closeEnlargedView($event)"></button>
     @if (currentPage() !== 1) {

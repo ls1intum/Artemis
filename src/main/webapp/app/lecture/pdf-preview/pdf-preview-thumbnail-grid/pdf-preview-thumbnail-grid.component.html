@@ -1,7 +1,7 @@
 <div class="pdf-container" #pdfContainer>
     @if (isEnlargedView()) {
         <jhi-pdf-preview-enlarged-canvas-component
-            [style]="{ display: 'contents' }"
+            class="enlarged-canvas"
             [pdfContainer]="pdfContainer"
             [totalPages]="totalPages()"
             [originalCanvas]="originalCanvas()"

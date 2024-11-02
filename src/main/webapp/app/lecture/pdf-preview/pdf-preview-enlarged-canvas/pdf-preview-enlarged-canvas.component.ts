@@ -22,6 +22,7 @@ export class PdfPreviewEnlargedCanvasComponent {
 
     // Signals
     currentPage = signal<number>(1);
+    isEnlargedCanvasLoading = signal<boolean>(false);
 
     //Outputs
     isEnlargedViewOutput = output<boolean>();
@@ -68,6 +69,7 @@ export class PdfPreviewEnlargedCanvasComponent {
     };
 
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
+        this.isEnlargedCanvasLoading.set(true);
         this.currentPage.set(Number(originalCanvas.id));
         this.toggleBodyScroll(true);
         setTimeout(() => {
@@ -92,6 +94,7 @@ export class PdfPreviewEnlargedCanvasComponent {
             this.resizeCanvas(originalCanvas, scaleFactor);
             this.redrawCanvas(originalCanvas);
             this.positionCanvas();
+            this.isEnlargedCanvasLoading.set(false);
         });
     }
 
