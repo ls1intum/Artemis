@@ -194,6 +194,20 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(urlStub).toHaveBeenCalledExactlyOnceWith({ url: fileInformation[1].url, text: fileInformation[1].file.name });
     }));
 
+    it('should not embed files if file upload is disabled', () => {
+        const urlAction = new UrlAction();
+        const urlStub = jest.spyOn(urlAction, 'executeInCurrentEditor').mockImplementation();
+        const attachmentAction = new AttachmentAction();
+        const attachmentStub = jest.spyOn(attachmentAction, 'executeInCurrentEditor').mockImplementation();
+        const files = [new File([''], 'test.png'), new File([''], 'test.pdf')];
+        comp.defaultActions = [urlAction, attachmentAction];
+        comp.enableFileUpload = false;
+        fixture.detectChanges();
+        comp.embedFiles(files);
+        expect(urlStub).not.toHaveBeenCalled();
+        expect(attachmentStub).not.toHaveBeenCalled();
+    });
+
     it('should open the color selector', () => {
         fixture.detectChanges();
         const openColorSelectorSpy = jest.spyOn(comp.colorSelector, 'openColorSelector');

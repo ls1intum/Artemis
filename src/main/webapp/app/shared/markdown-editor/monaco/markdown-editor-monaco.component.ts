@@ -490,6 +490,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param inputElement The input element that contains the files. If provided, the input element will be reset.
      */
     embedFiles(files: File[], inputElement?: HTMLInputElement): void {
+        if (!this.enableFileUpload) {
+            return;
+        }
         files.forEach((file) => {
             (this.useCommunicationForFileUpload()
                 ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(
