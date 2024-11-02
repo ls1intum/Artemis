@@ -6,12 +6,13 @@ import { CompetencyGraphComponent } from 'app/course/learning-paths/components/c
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CompetencyGraphDTO } from 'app/entities/competency/learning-path.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-competency-graph-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FontAwesomeModule, CompetencyGraphComponent],
+    imports: [FontAwesomeModule, CompetencyGraphComponent, TranslateDirective],
     templateUrl: './competency-graph-modal.component.html',
     styleUrl: './competency-graph-modal.component.scss',
 })

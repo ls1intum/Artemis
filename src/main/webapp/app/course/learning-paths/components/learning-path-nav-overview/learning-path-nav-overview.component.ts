@@ -9,12 +9,13 @@ import { LearningPathApiService } from 'app/course/learning-paths/services/learn
 import { CompetencyGraphModalComponent } from 'app/course/learning-paths/components/competency-graph-modal/competency-graph-modal.component';
 import { LearningPathNavOverviewLearningObjectsComponent } from 'app/course/learning-paths/components/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-nav-overview',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FontAwesomeModule, CommonModule, NgbDropdownModule, NgbAccordionModule, LearningPathNavOverviewLearningObjectsComponent],
+    imports: [FontAwesomeModule, CommonModule, NgbDropdownModule, NgbAccordionModule, LearningPathNavOverviewLearningObjectsComponent, TranslateDirective],
     templateUrl: './learning-path-nav-overview.component.html',
     styleUrl: './learning-path-nav-overview.component.scss',
 })

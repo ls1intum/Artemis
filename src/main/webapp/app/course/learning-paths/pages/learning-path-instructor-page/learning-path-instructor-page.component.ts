@@ -11,12 +11,13 @@ import { LearningPathsStateComponent } from 'app/course/learning-paths/component
 import { LearningPathsTableComponent } from 'app/course/learning-paths/components/learning-paths-table/learning-paths-table.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LearningPathsAnalyticsComponent } from 'app/course/learning-paths/components/learning-paths-analytics/learning-paths-analytics.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-instructor-page',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LearningPathsConfigurationComponent, LearningPathsStateComponent, LearningPathsTableComponent, LearningPathsAnalyticsComponent],
+    imports: [LearningPathsConfigurationComponent, LearningPathsStateComponent, LearningPathsTableComponent, LearningPathsAnalyticsComponent, TranslateDirective],
     templateUrl: './learning-path-instructor-page.component.html',
     styleUrl: './learning-path-instructor-page.component.scss',
 })

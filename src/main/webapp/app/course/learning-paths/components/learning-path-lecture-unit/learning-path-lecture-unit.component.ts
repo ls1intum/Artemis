@@ -12,12 +12,13 @@ import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 import { isCommunicationEnabled } from 'app/entities/course.model';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisLectureUnitsModule, VideoUnitComponent, TextUnitComponent, AttachmentUnitComponent, OnlineUnitComponent, DiscussionSectionComponent],
+    imports: [ArtemisLectureUnitsModule, VideoUnitComponent, TextUnitComponent, AttachmentUnitComponent, OnlineUnitComponent, DiscussionSectionComponent, TranslateDirective],
     templateUrl: './learning-path-lecture-unit.component.html',
 })
 export class LearningPathLectureUnitComponent {
