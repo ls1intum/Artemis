@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
-import { Competency, CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -62,7 +62,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
         releaseDate: [undefined as dayjs.Dayjs | undefined],
         version: [{ value: 1, disabled: true }],
         updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
-        competencies: [undefined as Competency[] | undefined],
+        competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 
