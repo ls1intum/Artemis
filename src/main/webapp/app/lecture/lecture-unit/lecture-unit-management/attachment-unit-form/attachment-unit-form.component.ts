@@ -1,11 +1,11 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, computed, signal } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, ViewChild, computed, inject, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { UPLOAD_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
-import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { Competency, CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { Subscription } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;
@@ -32,7 +32,7 @@ export interface FileProperties {
     selector: 'jhi-attachment-unit-form',
     templateUrl: './attachment-unit-form.component.html',
 })
-export class AttachmentUnitFormComponent implements OnInit, OnChanges {
+export class AttachmentUnitFormComponent implements OnChanges {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     // A human-readable list of allowed file extensions
@@ -44,7 +44,6 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @Input() isEditMode = false;
 
     @Output() formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
-    form: FormGroup;
 
     @Input() hasCancelButton: boolean;
     @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
@@ -57,45 +56,28 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
 
     fileName = signal<string | undefined>(undefined);
     isFileTooBig = signal<boolean>(false);
-    isFormValidWithoutExtraValidation = signal<boolean>(false);
-    isFormValid = computed(() => {
-        return (this.isFormValidWithoutExtraValidation() || this.fileName()) && !this.isFileTooBig();
-    });
 
-    private formValidityChangesSubscription: Subscription;
+    private readonly formBuilder = inject(FormBuilder);
+    form: FormGroup = this.formBuilder.group({
+        name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
+        description: [undefined as string | undefined, [Validators.maxLength(1000)]],
+        releaseDate: [undefined as dayjs.Dayjs | undefined],
+        version: [{ value: 1, disabled: true }],
+        updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
+        competencies: [undefined as Competency[] | undefined],
+    });
+    private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
+
+    isFormValid = computed(() => {
+        return (this.statusChanges() === 'VALID' || this.fileName()) && !this.isFileTooBig();
+    });
 
     constructor(private fb: FormBuilder) {}
 
     ngOnChanges(): void {
-        this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }
-
-        if (this.formValidityChangesSubscription) {
-            this.formValidityChangesSubscription.unsubscribe();
-        }
-        this.formValidityChangesSubscription = this.form.statusChanges.subscribe(() => {
-            this.isFormValidWithoutExtraValidation.set(this.form.valid);
-        });
-    }
-
-    ngOnInit(): void {
-        this.initializeForm();
-    }
-
-    private initializeForm() {
-        if (this.form) {
-            return;
-        }
-        this.form = this.fb.group({
-            name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
-            description: [undefined as string | undefined, [Validators.maxLength(1000)]],
-            releaseDate: [undefined as dayjs.Dayjs | undefined],
-            version: [{ value: 1, disabled: true }],
-            updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
-            competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
-        });
     }
 
     onFileChange(event: Event): void {
