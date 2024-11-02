@@ -1,13 +1,13 @@
-import { Component, Input, OnInit, ViewChild, computed, signal } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, computed, signal, viewChild } from '@angular/core';
 import { Lecture } from 'app/entities/lecture.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
-import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
-import { OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
-import { AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
+import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
+import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
+import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
+import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { onError } from 'app/shared/util/global.utils';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
@@ -21,6 +21,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
+import { CreateExerciseUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
 
 @Component({
     selector: 'jhi-lecture-update-wizard-units',
@@ -32,7 +33,14 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
 
     @ViewChild(LectureUnitManagementComponent, { static: false }) unitManagementComponent: LectureUnitManagementComponent;
 
-    isUnitConfigurationValid = signal<boolean>(false);
+    textUnitForm = viewChild(TextUnitFormComponent);
+    videoUnitForm = viewChild(VideoUnitFormComponent);
+    onlineUnitForm = viewChild(OnlineUnitFormComponent);
+    attachmentUnitForm = viewChild(AttachmentUnitFormComponent);
+    exerciseUnitForm = viewChild(CreateExerciseUnitComponent);
+    isUnitConfigurationValid = computed(() => {
+        return this.textUnitForm()?.isFormValid() && this.videoUnitForm()?.isFormValid();
+    });
 
     isEditingLectureUnit: boolean;
     isTextUnitFormOpen = signal<boolean>(false);
