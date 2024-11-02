@@ -12,8 +12,7 @@
         <div class="form-group w-100 d-flex justify-content-start">
             <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)" />
         </div>
-    }
-    @if (isAnyUnitFormOpen()) {
+    } @else {
         <div class="form-group">
             @if (!isEditingLectureUnit) {
                 <h4><span jhiTranslate="artemisApp.lecture.wizardMode.newLectureUnit"></span></h4>

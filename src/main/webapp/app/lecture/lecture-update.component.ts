@@ -18,6 +18,7 @@ import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programmin
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { LectureUpdatePeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
+import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -39,6 +40,7 @@ export class LectureUpdateComponent implements OnInit {
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
     @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdatePeriodComponent;
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
+    unitSection = viewChild.required(LectureUpdateWizardUnitsComponent);
 
     lecture: Lecture;
     isSaving: boolean;
@@ -71,7 +73,7 @@ export class LectureUpdateComponent implements OnInit {
             const updatedFormStatusSections: FormSectionStatus[] = [
                 {
                     title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
-                    valid: Boolean(this.titleSection().titleChannelNameComponent().formValidSignal()),
+                    valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
                 },
                 {
                     title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
@@ -83,7 +85,7 @@ export class LectureUpdateComponent implements OnInit {
                 },
                 {
                     title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
-                    valid: true, // TODO retrieve the valid status
+                    valid: Boolean(this.unitSection()),
                 },
             ];
             this.formStatusSections = updatedFormStatusSections;
