@@ -208,6 +208,15 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(attachmentStub).not.toHaveBeenCalled();
     });
 
+    it('should execute the action when clicked', () => {
+        const action = new UrlAction();
+        const executeInCurrentEditorStub = jest.spyOn(action, 'executeInCurrentEditor').mockImplementation();
+        comp.defaultActions = [action];
+        fixture.detectChanges();
+        comp.handleActionClick(new MouseEvent('click'), action);
+        expect(executeInCurrentEditorStub).toHaveBeenCalledOnce();
+    });
+
     it('should open the color selector', () => {
         fixture.detectChanges();
         const openColorSelectorSpy = jest.spyOn(comp.colorSelector, 'openColorSelector');
