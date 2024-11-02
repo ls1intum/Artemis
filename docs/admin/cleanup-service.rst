@@ -7,10 +7,11 @@ Artemis provides a feature to delete data from older courses.
 
 .. _cleanup-menu:
 
-.. image:: cleanup/cleanup-menu.png
-   :alt: Cleanup view
+.. figure:: cleanup/cleanup-menu.png
+    :align: center
+    :alt: Cleanup view
 
-As shown in :ref:`cleanup-menu`, administrators can delete the following data types:
+As shown in the image, administrators can delete the following data types:
 
 * Plagiarism results with an undecided outcome
 * Orphaned data
@@ -42,4 +43,4 @@ When a cleanup operation is performed with specified "from" and "to" dates, all 
    - For each type, only the latest valid result within a participation is retained, while all others are deleted.
    - Because direct result deletion is restricted due to data integrity reasons, Artemis first removes associated data for results scheduled for deletion, including Long Feedback Text, Text Block, Feedback, Student Score, and Team Score.
 
-Artemis also records the date of the last cleanup operation, as seen in the last column of the table shown in :ref:`cleanup-menu`.
+Artemis also records the date of the last cleanup operation, as seen in the last column of the table shown in the image.
