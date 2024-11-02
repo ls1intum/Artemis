@@ -28,9 +28,9 @@ describe('CourseChatbotComponent', () => {
 
     it('should call switchTo when courseId changes', () => {
         const switchToSpy = jest.spyOn(chatService, 'switchTo');
-        component.courseId = 2;
-        component.ngOnChanges({ courseId: new SimpleChange(null, component.courseId, true) });
+        fixture.componentRef.setInput('courseId', 2);
+        component.ngOnChanges({ courseId: new SimpleChange(null, component.courseId(), true) });
 
-        expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.COURSE, component.courseId);
+        expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.COURSE, component.courseId());
     });
 });

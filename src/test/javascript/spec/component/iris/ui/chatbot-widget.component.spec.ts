@@ -15,7 +15,7 @@ describe('IrisChatbotWidgetComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [IrisChatbotWidgetComponent, MockComponent(IrisBaseChatbotComponent)],
+            imports: [IrisChatbotWidgetComponent, MockComponent(IrisBaseChatbotComponent)],
             providers: [MockProvider(IrisChatService), { provide: MatDialog, useValue: { closeAll: jest.fn() } }, { provide: Router, useValue: { events: of() } }],
         }).compileComponents();
 
@@ -27,7 +27,7 @@ describe('IrisChatbotWidgetComponent', () => {
     });
 
     it('should create', () => {
-        expect(component).toBeTruthy();
+        expect(fixture).toBeTruthy();
     });
 
     it('should call closeAll on dialog when closeChat is called', () => {
