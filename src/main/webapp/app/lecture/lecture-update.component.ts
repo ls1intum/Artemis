@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, effect, viewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, effect, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -37,6 +37,8 @@ export class LectureUpdateComponent implements OnInit {
     // The list of file extensions for the "accept" attribute of the file input field
     protected readonly acceptedFileExtensionsFileBrowser = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
 
+    isEditMode = signal<boolean>(false);
+
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
     @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdatePeriodComponent;
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
@@ -70,7 +72,7 @@ export class LectureUpdateComponent implements OnInit {
     ) {
         effect(() => {
             // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-            const updatedFormStatusSections: FormSectionStatus[] = [
+            let updatedFormStatusSections: FormSectionStatus[] = [
                 {
                     title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
                     valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
@@ -79,15 +81,21 @@ export class LectureUpdateComponent implements OnInit {
                     title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
                     valid: true, // TODO retrieve the valid status from the datepickeres
                 },
-                {
-                    title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
-                    valid: true, // TODO retrieve the valid status
-                },
-                {
-                    title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
-                    valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
-                },
             ];
+            if (this.isEditMode()) {
+                updatedFormStatusSections = [
+                    ...updatedFormStatusSections,
+                    {
+                        title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
+                        valid: true, // TODO retrieve the valid status
+                    },
+                    {
+                        title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
+                        valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
+                    },
+                ];
+            }
+
             this.formStatusSections = updatedFormStatusSections;
         });
     }
@@ -115,6 +123,8 @@ export class LectureUpdateComponent implements OnInit {
                 this.isShowingWizardMode = params.shouldBeInWizardMode;
             }
         });
+
+        this.isEditMode.set(this.lecture.id !== undefined);
     }
 
     /**
