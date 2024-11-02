@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild, forwardRef, input } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild, computed, forwardRef, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -39,11 +39,23 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     private onChange?: (val?: dayjs.Dayjs) => void;
 
+    protected isInputValid = signal<boolean>(false);
+    protected dateInputValue = signal<string>('');
+    isValid = computed(() => {
+        const isInvalid = this.error() || !this.isInputValid() || (this.requiredField() && !this.dateInputValue()) || this.warning();
+        return !isInvalid;
+    });
+    updateSignals(): void {
+        this.isInputValid.set(!Boolean(this.dateInput.invalid));
+        this.dateInputValue.set(this.dateInput.value);
+    }
+
     /**
      * Emits the value change from component.
      */
     valueChanged() {
         this.valueChange.emit();
+        this.updateSignals();
     }
 
     /**
@@ -57,6 +69,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         } else {
             this.value = value;
         }
+        this.updateSignals();
     }
 
     /**
@@ -117,5 +130,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     clearDate() {
         this.dateInput.reset(undefined);
+        this.updateSignals();
     }
 }
