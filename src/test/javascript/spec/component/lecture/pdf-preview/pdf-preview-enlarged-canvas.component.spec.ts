@@ -42,7 +42,7 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
         component.enlargedCanvas = signal({ nativeElement: mockEnlargedCanvas });
 
         mockContainer = document.createElement('div');
-        component.pdfContainer = signal(mockContainer);
+        fixture.componentRef.setInput('pdfContainer', mockContainer);
 
         mockCanvasElement = document.createElement('canvas');
 
@@ -164,7 +164,7 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
             Object.defineProperty(mockPdfContainer, 'scrollTop', { value: 500, writable: true });
 
             // Assign pdfContainer and enlargedCanvas on the component with the mock structure
-            component.pdfContainer = signal({ nativeElement: mockPdfContainer });
+            fixture.componentRef.setInput('pdfContainer', mockPdfContainer);
 
             // Create a canvas and set it as enlargedCanvas with width and height
             const canvasElem = document.createElement('canvas');
