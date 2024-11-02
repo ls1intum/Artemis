@@ -60,13 +60,13 @@
                         />
                     </div>
                 </div>
-                @if (isFileTooBig) {
+                @if (isFileTooBig()) {
                     <div class="alert alert-danger">
                         {{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileTooBig' | artemisTranslate }}
                         {{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }}
                     </div>
                 }
-                @if (!fileName && fileInputTouched) {
+                @if (!fileName() && fileInputTouched) {
                     <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError"></div>
                 }
             </div>
@@ -105,7 +105,7 @@
             </div>
             <div class="row">
                 <div class="col-12">
-                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isFormValid()">
                         <span jhiTranslate="entity.action.submit"></span>
                     </button>
                     @if (hasCancelButton) {

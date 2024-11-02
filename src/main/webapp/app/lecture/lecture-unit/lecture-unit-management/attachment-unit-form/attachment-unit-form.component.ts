@@ -1,11 +1,11 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, computed, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { TranslateService } from '@ngx-translate/core';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { UPLOAD_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { Subscription } from 'rxjs';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;
@@ -33,47 +33,51 @@ export interface FileProperties {
     templateUrl: './attachment-unit-form.component.html',
 })
 export class AttachmentUnitFormComponent implements OnInit, OnChanges {
-    @Input()
-    formData: AttachmentUnitFormData;
-    @Input()
-    isEditMode = false;
-
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faTimes = faTimes;
     // A human-readable list of allowed file extensions
-    readonly allowedFileExtensions = UPLOAD_FILE_EXTENSIONS.join(', ');
+    protected readonly allowedFileExtensions = UPLOAD_FILE_EXTENSIONS.join(', ');
     // The list of file extensions for the "accept" attribute of the file input field
-    readonly acceptedFileExtensionsFileBrowser = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+    protected readonly acceptedFileExtensionsFileBrowser = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
 
-    faQuestionCircle = faQuestionCircle;
+    @Input() formData: AttachmentUnitFormData;
+    @Input() isEditMode = false;
 
-    @Output()
-    formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
+    @Output() formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
     form: FormGroup;
 
-    @Input()
-    hasCancelButton: boolean;
-    @Output()
-    onCancel: EventEmitter<any> = new EventEmitter<any>();
-
-    faTimes = faTimes;
+    @Input() hasCancelButton: boolean;
+    @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
 
     // have to handle the file input as a special case at is not part of the reactive form
     @ViewChild('fileInput', { static: false })
     fileInput: ElementRef;
     file: File;
-    fileName?: string;
     fileInputTouched = false;
-    isFileTooBig: boolean;
 
-    constructor(
-        private translateService: TranslateService,
-        private fb: FormBuilder,
-    ) {}
+    fileName = signal<string | undefined>(undefined);
+    isFileTooBig = signal<boolean>(false);
+    isFormValidWithoutExtraValidation = signal<boolean>(false);
+    isFormValid = computed(() => {
+        return (this.isFormValidWithoutExtraValidation() || this.fileName()) && !this.isFileTooBig();
+    });
+
+    private formValidityChangesSubscription: Subscription;
+
+    constructor(private fb: FormBuilder) {}
 
     ngOnChanges(): void {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }
+
+        if (this.formValidityChangesSubscription) {
+            this.formValidityChangesSubscription.unsubscribe();
+        }
+        this.formValidityChangesSubscription = this.form.statusChanges.subscribe(() => {
+            this.isFormValidWithoutExtraValidation.set(this.form.valid);
+        });
     }
 
     ngOnInit(): void {
@@ -100,7 +104,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             return;
         }
         this.file = input.files[0];
-        this.fileName = this.file.name;
+        this.fileName.set(this.file.name);
         // automatically set the name in case it is not yet specified
         if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
             this.form.patchValue({
@@ -108,7 +112,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
                 name: this.file.name.replace(/\.[^/.]+$/, ''),
             });
         }
-        this.isFileTooBig = this.file.size > MAX_FILE_SIZE;
+        this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
     }
 
     get nameControl() {
@@ -131,16 +135,12 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         return this.form.get('version');
     }
 
-    get isSubmitPossible() {
-        return !(this.form.invalid || !this.fileName) && !this.isFileTooBig;
-    }
-
     submitForm() {
         const formValue = this.form.value;
         const formProperties: FormProperties = { ...formValue };
         const fileProperties: FileProperties = {
             file: this.file,
-            fileName: this.fileName,
+            fileName: this.fileName(),
         };
 
         this.formSubmitted.emit({
@@ -157,7 +157,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             this.file = formData?.fileProperties?.file;
         }
         if (formData?.fileProperties?.fileName) {
-            this.fileName = formData?.fileProperties?.fileName;
+            this.fileName.set(formData?.fileProperties?.fileName);
         }
     }
 
