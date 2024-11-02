@@ -180,7 +180,8 @@ const routes: Routes = [
             },
             {
                 path: 'dashboard',
-                loadChildren: () => import('./course-dashboard/course-dashboard.module').then((m) => m.CourseDashboardModule),
+                loadComponent: () =>
+                    import('./course-dashboard/pages/course-dashboard-student-page/course-dashboard-student-page.component').then((c) => c.CourseDashboardStudentPageComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.dashboard',

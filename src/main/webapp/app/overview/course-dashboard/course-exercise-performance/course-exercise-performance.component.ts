@@ -1,10 +1,10 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, effect, inject, input, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { round } from 'app/shared/util/utils';
-import { Subscription } from 'rxjs';
 
 export interface ExercisePerformance {
     exerciseId: number;
@@ -22,8 +22,10 @@ const AVERAGE_GRAPH_COLOR = GraphColors.YELLOW;
     templateUrl: './course-exercise-performance.component.html',
     styleUrls: ['./course-exercise-performance.component.scss'],
 })
-export class CourseExercisePerformanceComponent implements OnInit, OnChanges, OnDestroy {
-    @Input() exercisePerformance: ExercisePerformance[] = [];
+export class CourseExercisePerformanceComponent {
+    readonly exercisePerformance = input.required<ExercisePerformance[]>();
+
+    private readonly translateService = inject(TranslateService);
 
     yourScoreLabel: string;
     averageScoreLabel: string;
@@ -36,27 +38,23 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges, On
     };
     yScaleMax = 100;
 
-    private translateServiceSubscription: Subscription;
+    private readonly langChange = toSignal(this.translateService.onLangChange);
 
     protected readonly YOUR_GRAPH_COLOR = YOUR_GRAPH_COLOR;
     protected readonly AVERAGE_GRAPH_COLOR = AVERAGE_GRAPH_COLOR;
 
-    constructor(private translateService: TranslateService) {
-        this.translateServiceSubscription = this.translateService.onLangChange.subscribe(() => {
-            this.setupChart();
+    constructor() {
+        // setup chart whenever exercise performance changes
+        effect(() => this.setupChart(this.exercisePerformance()));
+        // setup chart whenever language changes
+        effect(() => {
+            const langChanged = this.langChange();
+            untracked(() => {
+                if (langChanged) {
+                    this.setupChart(this.exercisePerformance());
+                }
+            });
         });
-    }
-
-    ngOnInit(): void {
-        this.setupChart();
-    }
-
-    ngOnDestroy(): void {
-        this.translateServiceSubscription.unsubscribe();
-    }
-
-    ngOnChanges(): void {
-        this.setupChart();
     }
 
     /**
@@ -72,14 +70,14 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges, On
      * This method is responsible for setting up the chart that displays the performance of the exercises.
      * It translates the labels for the chart, prepares the data for the chart, and calculates the maximum value for the y-axis.
      */
-    private setupChart(): void {
+    private setupChart(exercisePerformance: ExercisePerformance[]): void {
         this.yourScoreLabel = this.translateService.instant('artemisApp.courseStudentDashboard.exercisePerformance.yourScoreLabel');
         this.averageScoreLabel = this.translateService.instant('artemisApp.courseStudentDashboard.exercisePerformance.averageScoreLabel');
 
         this.ngxData = [
             {
                 name: this.yourScoreLabel,
-                series: this.exercisePerformance.map((performance) => {
+                series: exercisePerformance.map((performance) => {
                     return {
                         name: performance.shortName?.toUpperCase() || performance.title,
                         value: round(performance.score || 0, 1), // If the score is undefined, set it to 0
@@ -91,7 +89,7 @@ export class CourseExercisePerformanceComponent implements OnInit, OnChanges, On
             },
             {
                 name: this.averageScoreLabel,
-                series: this.exercisePerformance.map((performance) => {
+                series: exercisePerformance.map((performance) => {
                     return {
                         name: performance.shortName?.toUpperCase() || performance.title,
                         value: round(performance.averageScore || 0, 1),

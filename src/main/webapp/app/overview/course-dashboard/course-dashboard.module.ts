@@ -32,7 +32,7 @@ const routes: Routes = [
 
 @NgModule({
     declarations: [CourseDashboardComponent, CourseExercisePerformanceComponent, CourseExerciseLatenessComponent],
-    exports: [CourseDashboardComponent],
+    exports: [CourseDashboardComponent, CourseExercisePerformanceComponent],
     imports: [
         CommonModule,
         RouterModule.forChild(routes),

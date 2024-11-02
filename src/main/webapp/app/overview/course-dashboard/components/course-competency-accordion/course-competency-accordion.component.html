@@ -1,0 +1,53 @@
+<div ngbAccordion class="course-competency-accordion">
+    @for (courseCompetency of courseCompetencies(); let last = $last; track courseCompetency.id) {
+        <div ngbAccordionItem [class.mb-3]="!last">
+            <h2 ngbAccordionHeader>
+                <button ngbAccordionButton class="px-3">
+                    <div class="d-flex w-100 justify-content-between align-items-center">
+                        <div class="d-flex justify-content-center align-items-center">
+                            <fa-icon [icon]="getIcon(courseCompetency.taxonomy)" size="lg" />
+                            @if (courseCompetency.optional) {
+                                <span class="ms-2 badge text-bg-secondary">Optional</span>
+                            }
+                            <strong class="ms-2">{{ courseCompetency.title }}</strong>
+                            <h5 class="m-0 ms-2"><span class="badge text-bg-success text-white">3 / 3</span></h5>
+                        </div>
+                        @if (courseCompetency.softDueDate) {
+                            <div class="me-2">
+                                <small>Recommend in:</small>
+                                <span class="badge text-bg-secondary">
+                                    {{ courseCompetency.softDueDate! | artemisTimeAgo }}
+                                </span>
+                            </div>
+                        }
+                    </div>
+                </button>
+            </h2>
+            <div ngbAccordionCollapse>
+                <div ngbAccordionBody class="p-0">
+                    <hr class="mt-0 mb-2" />
+                    <div class="px-3 py-2 row">
+                        <div class="col-4">
+                            <jhi-judgement-of-learning-rating [competencyId]="1" [courseId]="courseId()" [mastery]="10" [rating]="1" />
+                        </div>
+                        <div class="col-8 learning-objects-container">
+                            <div class="clickable">
+                                <span>Lecture Unit 1</span>
+                                <fa-icon [icon]="faCheckCircle" class="ms-1 text-success" />
+                            </div>
+                            <hr class="my-2" />
+                            <div class="clickable">
+                                <span>Lecture Unit 2</span>
+                                <fa-icon [icon]="faCheckCircle" class="ms-1 text-success" />
+                            </div>
+                            <hr class="my-2" />
+                            <div class="clickable">
+                                <span>Lecture Unit 2</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
