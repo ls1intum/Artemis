@@ -191,13 +191,11 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
 
         it('should not close the enlarged view if the click is on the canvas itself', () => {
             const mockEvent = createMockEvent(mockEnlargedCanvas);
-
             component.isEnlargedViewOutput.emit(true);
 
             const closeSpy = jest.spyOn(component, 'closeEnlargedView');
 
             component.closeIfOutside(mockEvent as unknown as MouseEvent);
-
             expect(closeSpy).not.toHaveBeenCalled();
         });
     });

@@ -270,7 +270,7 @@ describe('PdfPreviewComponent', () => {
     describe('PDF Merging', () => {
         it('should merge PDF files correctly and update the component state', async () => {
             const mockFile = new File(['new pdf'], 'test.pdf', { type: 'application/pdf' });
-            mockFile.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8)); // Return an empty ArrayBuffer for simplicity
+            mockFile.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8));
             const mockEvent = { target: { files: [mockFile] } };
 
             const existingPdfDoc = {
@@ -289,9 +289,9 @@ describe('PdfPreviewComponent', () => {
                 .mockImplementationOnce(() => Promise.resolve(newPdfDoc));
 
             component.currentPdfBlob.set(new Blob(['existing pdf'], { type: 'application/pdf' }));
-            component.currentPdfBlob()!.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8)); // Return an empty ArrayBuffer for simplicity
+            component.currentPdfBlob()!.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8));
 
-            component.selectedPages.set(new Set([1])); // Assume there is initially a selected page
+            component.selectedPages.set(new Set([1]));
 
             await component.mergePDF(mockEvent as any);
 
@@ -308,20 +308,18 @@ describe('PdfPreviewComponent', () => {
         it('should handle errors when merging PDFs fails', async () => {
             const mockFile = new File(['new pdf'], 'test.pdf', { type: 'application/pdf' });
 
-            // Mock the arrayBuffer method for the file object
-            mockFile.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8)); // Return an empty ArrayBuffer for simplicity
+            mockFile.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8));
 
             const mockEvent = { target: { files: [mockFile] } };
             const error = new Error('Error loading PDF');
 
             component.currentPdfBlob.set(new Blob(['existing pdf'], { type: 'application/pdf' }));
-            component.currentPdfBlob()!.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8)); // Return an empty ArrayBuffer for simp
+            component.currentPdfBlob()!.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8));
 
-            // Mock PDFDocument.load to throw an error on the first call
             PDFDocument.load = jest
                 .fn()
-                .mockImplementationOnce(() => Promise.reject(error)) // First call throws an error
-                .mockImplementationOnce(() => Promise.resolve({})); // Second call (not actually needed here)
+                .mockImplementationOnce(() => Promise.reject(error))
+                .mockImplementationOnce(() => Promise.resolve({}));
 
             await component.mergePDF(mockEvent as any);
 
@@ -342,7 +340,7 @@ describe('PdfPreviewComponent', () => {
 
             component.currentPdfBlob.set(new Blob(['existing pdf'], { type: 'application/pdf' }));
             component.currentPdfBlob()!.arrayBuffer = jest.fn().mockResolvedValue(mockArrayBuffer);
-            component.selectedPages.set(new Set([1, 2])); // Pages 1 and 2 selected
+            component.selectedPages.set(new Set([1, 2]));
 
             const alertServiceErrorSpy = jest.spyOn(alertServiceMock, 'error');
 

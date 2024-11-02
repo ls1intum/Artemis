@@ -61,15 +61,12 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     it('should load PDF and render pages', async () => {
         const spyCreateCanvas = jest.spyOn(component, 'createCanvas');
         const spyCreateCanvasContainer = jest.spyOn(component, 'createCanvasContainer');
-        //const spyAppendChild = jest.spyOn(mockContainer, 'appendChild');
 
         await component.loadOrAppendPdf('fake-url');
 
         expect(spyCreateCanvas).toHaveBeenCalled();
         expect(spyCreateCanvasContainer).toHaveBeenCalled();
-        //expect(spyAppendChild).toHaveBeenCalled();
         expect(component.totalPages()).toBe(1);
-        //expect(component.isPdfLoading()).toBeFalsy();
     });
 
     it('should toggle enlarged view state', () => {
@@ -86,11 +83,9 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         const container = component.createCanvasContainer(mockCanvas, 1);
         const overlay = container.querySelector('div');
 
-        // Trigger mouseenter
         container.dispatchEvent(new Event('mouseenter'));
         expect(overlay!.style.opacity).toBe('1');
 
-        // Trigger mouseleave
         container.dispatchEvent(new Event('mouseleave'));
         expect(overlay!.style.opacity).toBe('0');
     });
