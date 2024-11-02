@@ -22,7 +22,8 @@ Since orphaned data has no connections to other data by nature, it is deleted wi
 For other types, administrators can track the related exercises and courses.
 When a cleanup operation is performed with specified "from" and "to" dates, all data associated with that type and related to courses that started after the "from" date and ended before the "to" date is deleted.
 
-### Data Deletion by Operation Type
+Data Deletion by Operation Type
+------------------------------------------
 
 1. **Orphaned Data**:
    - Long Feedback Text with feedback that has no results
