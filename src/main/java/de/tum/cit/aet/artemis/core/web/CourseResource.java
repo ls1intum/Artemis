@@ -72,6 +72,8 @@ import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseExistingExerciseDetailsDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
@@ -96,6 +98,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
@@ -106,6 +109,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
@@ -553,6 +557,25 @@ public class CourseResource {
     @EnforceAtLeastTutor
     public ResponseEntity<List<Course>> getCoursesForManagementOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
         return ResponseEntity.ok(courseService.getAllCoursesForManagementOverview(onlyActive));
+    }
+
+    /**
+     * GET /courses/for-archive : get all courses for course archive
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body containing
+     *         a set of DTOs, which contain the courses with id, title, semester, color, icon
+     */
+    @GetMapping("courses/for-archive")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<CourseForArchiveDTO>> getCoursesForArchive() {
+        long start = System.nanoTime();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get all inactive courses from previous semesters user {} has access to", user.getLogin());
+        Set<CourseForArchiveDTO> courses = courseService.getAllCoursesForCourseArchive();
+        log.debug("courseService.getAllCoursesForCourseArchive done");
+
+        log.info("GET /courses/for-archive took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
+        return ResponseEntity.ok(courses);
     }
 
     /**
@@ -1452,5 +1475,36 @@ public class CourseResource {
         }
         long unacceptedComplaints = complaintService.countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
         return ResponseEntity.ok(Math.max(complaintService.getMaxComplaintsPerParticipant(course, participant) - unacceptedComplaints, 0));
+    }
+
+    /**
+     * GET courses/{courseId}/existing-exercise-details: Get the exercise names (and shortNames for {@link ExerciseType#PROGRAMMING} exercises)
+     * of all exercises with the given type in the given course.
+     *
+     * @param courseId     of the course for which all exercise names should be fetched
+     * @param exerciseType for which the details should be fetched, as the name of an exercise only needs to be unique for each exercise type
+     * @return {@link CourseExistingExerciseDetailsDTO} with the exerciseNames (and already used shortNames if a {@link ExerciseType#PROGRAMMING} exercise is requested)
+     */
+    @GetMapping("courses/{courseId}/existing-exercise-details")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<CourseExistingExerciseDetailsDTO> getExistingExerciseDetails(@PathVariable Long courseId, @RequestParam String exerciseType) {
+        log.debug("REST request to get details of existing exercises in course : {}", courseId);
+        Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
+
+        Set<String> alreadyTakenExerciseNames = new HashSet<>();
+        Set<String> alreadyTakenShortNames = new HashSet<>();
+
+        boolean includeShortNames = exerciseType.equals(ExerciseType.PROGRAMMING.toString());
+
+        course.getExercises().forEach((exercise -> {
+            if (exercise.getType().equals(exerciseType)) {
+                alreadyTakenExerciseNames.add(exercise.getTitle());
+                if (includeShortNames && exercise.getShortName() != null) {
+                    alreadyTakenShortNames.add(exercise.getShortName());
+                }
+            }
+        }));
+
+        return ResponseEntity.ok(new CourseExistingExerciseDetailsDTO(alreadyTakenExerciseNames, alreadyTakenShortNames));
     }
 }

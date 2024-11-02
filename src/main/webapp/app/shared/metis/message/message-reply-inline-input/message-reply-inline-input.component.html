@@ -2,6 +2,7 @@
     <div class="message-inline-input-form__wrapper mb-3 me-1">
         <jhi-posting-markdown-editor
             formControlName="content"
+            [activeConversation]="activeConversation()"
             [editorHeight]="editorHeight"
             [maxContentLength]="maxContentLength"
             [isInputLengthDisplayed]="false"

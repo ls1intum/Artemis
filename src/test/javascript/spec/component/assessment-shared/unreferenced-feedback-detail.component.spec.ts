@@ -15,10 +15,12 @@ import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unrefere
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { QuotePipe } from 'app/shared/pipes/quote.pipe';
 import { FeedbackContentPipe } from 'app/shared/pipes/feedback-content.pipe';
+import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
 
 describe('Unreferenced Feedback Detail Component', () => {
     let comp: UnreferencedFeedbackDetailComponent;
     let fixture: ComponentFixture<UnreferencedFeedbackDetailComponent>;
+    let feedbackService: FeedbackService;
     let sgiService: StructuredGradingCriterionService;
 
     beforeEach(() => {
@@ -36,14 +38,28 @@ describe('Unreferenced Feedback Detail Component', () => {
                 MockDirective(DeleteButtonDirective),
                 MockComponent(AssessmentCorrectionRoundBadgeComponent),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService), MockProvider(FeedbackService)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(UnreferencedFeedbackDetailComponent);
                 comp = fixture.componentInstance;
-                sgiService = fixture.debugElement.injector.get(StructuredGradingCriterionService);
+                feedbackService = TestBed.inject(FeedbackService);
+                sgiService = TestBed.inject(StructuredGradingCriterionService); // Add this line to inject sgiService
             });
+    });
+
+    it('should call getLongFeedbackText on init if feedback has long text', async () => {
+        const feedbackId = 42;
+        const resultId = 1;
+        const exampleText = 'This is a long feedback text';
+
+        comp.feedback = { id: feedbackId, hasLongFeedbackText: true } as Feedback;
+        fixture.componentRef.setInput('resultId', resultId);
+        const getLongFeedbackTextSpy = jest.spyOn(feedbackService, 'getLongFeedbackText').mockResolvedValue(exampleText);
+
+        comp.ngOnInit();
+        expect(getLongFeedbackTextSpy).toHaveBeenCalledWith(fixture.componentInstance.resultId, feedbackId);
     });
 
     it('should update feedback with SGI and emit to parent', () => {
@@ -53,12 +69,12 @@ describe('Unreferenced Feedback Detail Component', () => {
             detailText: 'feedback1',
             credits: 1.5,
         } as Feedback;
-        // Fake call as a DragEvent
+
         jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
             comp.feedback.gradingInstruction = instruction;
             comp.feedback.credits = instruction.credits;
         });
-        // Call spy function with empty event
+
         comp.updateFeedbackOnDrop(new Event(''));
 
         expect(comp.feedback.gradingInstruction).toBe(instruction);

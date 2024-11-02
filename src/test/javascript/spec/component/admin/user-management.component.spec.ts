@@ -14,7 +14,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { Subscription, of } from 'rxjs';
-import { AbstractControl, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -168,7 +168,7 @@ describe('UserManagementComponent', () => {
 
                 // THEN
                 expect(userService.update).toHaveBeenCalledWith({ ...user, activated: true });
-                expect(userService.query).toHaveBeenCalledOnce();
+                expect(userService.query).toHaveBeenCalledTimes(2);
                 expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
                 expect(profileSpy).toHaveBeenCalledOnce();
             }),
@@ -243,14 +243,17 @@ describe('UserManagementComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should validate user search correctly', () => {
-        expect(comp.validateUserSearch({ value: [] } as AbstractControl)).toBeNull();
-        expect(comp.validateUserSearch({ value: [0] } as AbstractControl)).toEqual({ searchControl: true });
-        expect(comp.validateUserSearch({ value: [0, 0] } as AbstractControl)).toEqual({ searchControl: true });
-        expect(comp.validateUserSearch({ value: [0, 0, 0] } as AbstractControl)).toBeNull();
-    });
-
     it('should call initFilters', () => {
+        const headers = new HttpHeaders().append('link', 'link;link');
+        const user = new User(123);
+        jest.spyOn(userService, 'query').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [user],
+                    headers,
+                }),
+            ),
+        );
         const spy = jest.spyOn(comp, 'initFilters');
         const initSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
 
@@ -258,6 +261,7 @@ describe('UserManagementComponent', () => {
 
         expect(spy).toHaveBeenCalledOnce();
         expect(initSpy).toHaveBeenCalledOnce();
+        expect(userService.query).toHaveBeenCalledTimes(0);
     });
 
     it.each`

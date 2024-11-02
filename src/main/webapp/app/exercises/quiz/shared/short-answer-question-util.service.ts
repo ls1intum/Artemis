@@ -373,6 +373,7 @@ export class ShortAnswerQuestionUtil {
             if (firstWord === '') {
                 continue;
             }
+
             const firstWordIndex = element.indexOf(firstWord);
             const whitespace = '&nbsp;'.repeat(this.getIndentation(originalTextParts[i][0]).length);
             formattedTextParts[i][0] = [element.substring(0, firstWordIndex), whitespace, element.substring(firstWordIndex).trim()].join('');

@@ -20,8 +20,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { catchError } from 'rxjs/operators';
-import { getBackgroundColorHue } from 'app/utils/color.utils';
-import { getInitialsFromString } from 'app/utils/text.utils';
 
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector
@@ -58,9 +56,9 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     canBeRevokedChannelModeratorRole = false;
 
     userLabel: string;
+    userName: string | undefined;
+    userId: number | undefined;
     userImageUrl: string | undefined;
-    userDefaultPictureHue: string;
-    userInitials: string;
     // icons
     userIcon: IconProp = faUser;
     userTooltip = '';
@@ -94,9 +92,9 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
                 }
 
                 this.userImageUrl = this.conversationMember.imageUrl;
+                this.userId = this.conversationMember.id;
+                this.userName = this.conversationMember.name;
                 this.userLabel = getUserLabel(this.conversationMember);
-                this.userInitials = getInitialsFromString(this.conversationMember.name ?? 'NA');
-                this.userDefaultPictureHue = getBackgroundColorHue(this.conversationMember.id ? this.conversationMember.id.toString() : 'default');
                 this.setUserAuthorityIconAndTooltip();
                 // the creator of a channel can not be removed from the channel
                 this.canBeRemovedFromConversation = !this.isCurrentUser && this.canRemoveUsersFromConversation(this.activeConversation);

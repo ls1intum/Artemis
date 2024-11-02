@@ -58,7 +58,7 @@ public class BuildJobManagementService {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    @Value("${artemis.continuous-integration.timeout-seconds:120}")
+    @Value("${artemis.continuous-integration.build-timeout-seconds.max:240}")
     private int timeoutSeconds;
 
     @Value("${artemis.continuous-integration.asynchronous:true}")
@@ -152,7 +152,7 @@ public class BuildJobManagementService {
         }
 
         int buildJobTimeoutSeconds;
-        if (buildJobItem.buildConfig().timeoutSeconds() != 0 && buildJobItem.buildConfig().timeoutSeconds() < this.timeoutSeconds) {
+        if (buildJobItem.buildConfig().timeoutSeconds() > 0 && buildJobItem.buildConfig().timeoutSeconds() < this.timeoutSeconds) {
             buildJobTimeoutSeconds = buildJobItem.buildConfig().timeoutSeconds();
         }
         else {
