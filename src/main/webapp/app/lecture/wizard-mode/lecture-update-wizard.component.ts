@@ -2,7 +2,6 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Lecture } from 'app/entities/lecture.model';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faArrowRight, faCheck, faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { take } from 'rxjs/operators';
@@ -13,6 +12,10 @@ import { take } from 'rxjs/operators';
     styleUrls: ['./lecture-update-wizard.component.scss'],
 })
 export class LectureUpdateWizardComponent implements OnInit {
+    protected readonly faCheck = faCheck;
+    protected readonly faHandShakeAngle = faHandshakeAngle;
+    protected readonly faArrowRight = faArrowRight;
+
     @Input() toggleModeFunction: () => void;
     @Input() saveLectureFunction: () => void;
     @Input() validateDatesFunction: () => void;
@@ -28,21 +31,12 @@ export class LectureUpdateWizardComponent implements OnInit {
 
     currentStep: number;
 
-    // Icons
-    faCheck = faCheck;
-    faHandShakeAngle = faHandshakeAngle;
-    faArrowRight = faArrowRight;
-
     constructor(
         protected courseService: CourseManagementService,
         protected activatedRoute: ActivatedRoute,
-        private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,
     ) {}
 
-    /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
-     */
     ngOnInit() {
         this.isSaving = false;
 
