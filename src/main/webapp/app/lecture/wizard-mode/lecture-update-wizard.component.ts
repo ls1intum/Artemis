@@ -12,9 +12,9 @@ import { take } from 'rxjs/operators';
     styleUrls: ['./lecture-update-wizard.component.scss'],
 })
 export class LectureUpdateWizardComponent implements OnInit {
-    protected readonly faCheck = faCheck;
-    protected readonly faHandShakeAngle = faHandshakeAngle;
-    protected readonly faArrowRight = faArrowRight;
+    readonly faCheck = faCheck;
+    readonly faHandShakeAngle = faHandshakeAngle;
+    readonly faArrowRight = faArrowRight;
 
     @Input() toggleModeFunction: () => void;
     @Input() saveLectureFunction: () => void;
