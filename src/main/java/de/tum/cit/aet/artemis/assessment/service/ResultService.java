@@ -12,15 +12,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -28,7 +31,9 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackPageableDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
@@ -40,10 +45,12 @@ import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -53,11 +60,14 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -110,6 +120,8 @@ public class ResultService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
             FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
@@ -118,7 +130,7 @@ public class ResultService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
             BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -139,6 +151,7 @@ public class ResultService {
         this.buildLogEntryService = buildLogEntryService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -482,45 +495,49 @@ public class ResultService {
 
     @NotNull
     private List<Feedback> saveFeedbackWithHibernateWorkaround(@NotNull Result result, List<Feedback> feedbackList) {
-        // Avoid hibernate exception
         List<Feedback> savedFeedbacks = new ArrayList<>();
-        // Collect ids of feedbacks that have long feedback.
-        List<Long> feedbackIdsWithLongFeedback = feedbackList.stream().filter(feedback -> feedback.getId() != null && feedback.getHasLongFeedbackText()).map(Feedback::getId)
-                .toList();
-        // Get long feedback list from the database.
-        List<LongFeedbackText> longFeedbackTextList = longFeedbackTextRepository.findByFeedbackIds(feedbackIdsWithLongFeedback);
 
-        // Convert list to map for accessing later.
-        Map<Long, LongFeedbackText> longLongFeedbackTextMap = longFeedbackTextList.stream()
-                .collect(Collectors.toMap(longFeedbackText -> longFeedbackText.getFeedback().getId(), longFeedbackText -> longFeedbackText));
+        // Fetch long feedback texts associated with the provided feedback list
+        Map<Long, LongFeedbackText> longFeedbackTextMap = longFeedbackTextRepository
+                .findByFeedbackIds(feedbackList.stream().filter(feedback -> feedback.getId() != null && feedback.getHasLongFeedbackText()).map(Feedback::getId).toList()).stream()
+                .collect(Collectors.toMap(longFeedbackText -> longFeedbackText.getFeedback().getId(), Function.identity()));
+
         feedbackList.forEach(feedback -> {
-            // cut association to parent object
-            feedback.setResult(null);
-            LongFeedbackText longFeedback = null;
-            // look for long feedback that parent feedback has and cut the association between them.
-            if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
-                longFeedback = longLongFeedbackTextMap.get(feedback.getId());
-                if (longFeedback != null) {
-                    feedback.clearLongFeedback();
-                }
-            }
-            // persist the child object without an association to the parent object.
-            feedback = feedbackRepository.saveAndFlush(feedback);
-            // restore the association to the parent object
-            feedback.setResult(result);
-
-            // restore the association of the long feedback to the parent feedback
-            if (longFeedback != null) {
-                feedback.setDetailText(longFeedback.getText());
-            }
+            handleFeedbackPersistence(feedback, result, longFeedbackTextMap);
             savedFeedbacks.add(feedback);
         });
+
         return savedFeedbacks;
+    }
+
+    private void handleFeedbackPersistence(Feedback feedback, Result result, Map<Long, LongFeedbackText> longFeedbackTextMap) {
+        // Temporarily detach feedback from the parent result to avoid Hibernate issues
+        feedback.setResult(null);
+
+        // Clear the long feedback if it exists in the map
+        if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
+            LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
+            if (longFeedback != null) {
+                feedback.clearLongFeedback();
+            }
+        }
+
+        // Persist the feedback entity without the parent association
+        feedback = feedbackRepository.saveAndFlush(feedback);
+
+        // Restore associations to the result and long feedback after persistence
+        feedback.setResult(result);
+        LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
+        if (longFeedback != null) {
+            feedback.setDetailText(longFeedback.getText());
+        }
     }
 
     @NotNull
     private Result shouldSaveResult(@NotNull Result result, boolean shouldSave) {
         if (shouldSave) {
+            // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with {@link resultRepository.save}
+            deleteLongFeedback(result.getFeedbacks(), result);
             // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
             return resultRepository.save(result);
         }
@@ -530,31 +547,113 @@ public class ResultService {
     }
 
     /**
-     * Retrieves aggregated feedback details for a given exercise, calculating relative counts based on the total number of distinct results.
-     * The task numbers are assigned based on the associated test case names, using the set of tasks fetched from the database.
+     * Retrieves paginated and filtered aggregated feedback details for a given exercise.
      * <br>
      * For each feedback detail:
      * 1. The relative count is calculated as a percentage of the total number of distinct results for the exercise.
-     * 2. The task number is determined by matching the test case name with the tasks.
+     * 2. The task numbers are assigned based on the associated test case names. A mapping between test cases and tasks is created using the set of tasks retrieved from the
+     * database.
+     * <br>
+     * Filtering:
+     * - **Search term**: Filters feedback details by the search term (case-insensitive).
+     * - **Test case names**: Filters feedback based on specific test case names (if provided).
+     * - **Task names**: Maps provided task numbers to task names and filters feedback based on the test cases associated with those tasks.
+     * - **Occurrences**: Filters feedback where the number of occurrences (COUNT) is between the provided minimum and maximum values (inclusive).
+     * <br>
+     * Pagination and sorting:
+     * - Sorting is applied based on the specified column and order (ascending or descending).
+     * - The result is paginated based on the provided page number and page size.
      *
      * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
-     * @return A list of FeedbackDetailDTO objects, each containing:
-     *         - feedback count,
-     *         - relative count (as a percentage of distinct results),
-     *         - detail text,
-     *         - test case name,
-     *         - determined task number (based on the test case name).
+     * @param data       The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters (task names, test cases,
+     *                       occurrence range).
+     * @return A {@link FeedbackAnalysisResponseDTO} object containing:
+     *         - A {@link SearchResultPageDTO} of paginated feedback details.
+     *         - The total number of distinct results for the exercise.
+     *         - The total number of tasks associated with the feedback.
+     *         - A list of test case names included in the feedback.
      */
-    public List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(long exerciseId) {
-        long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
-        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
-        List<FeedbackDetailDTO> feedbackDetails = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId);
+    public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, FeedbackPageableDTO data) {
 
-        return feedbackDetails.stream().map(detail -> {
-            double relativeCount = (detail.count() * 100.0) / distinctResultCount;
-            int taskNumber = tasks.stream().filter(task -> task.getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(detail.testCaseName()))).findFirst()
-                    .map(task -> tasks.stream().toList().indexOf(task) + 1).orElse(0);
-            return new FeedbackDetailDTO(detail.count(), relativeCount, detail.detailText(), detail.testCaseName(), taskNumber);
+        // 1. Fetch programming exercise with associated test cases
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesByIdElseThrow(exerciseId);
+
+        long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
+
+        // 2. Extract test case names using streams
+        List<String> testCaseNames = programmingExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
+
+        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
+
+        // 3. Generate filter task names directly
+        List<String> filterTaskNames = data.getFilterTasks().stream().map(index -> {
+            int idx = Integer.parseInt(index);
+            return (idx > 0 && idx <= tasks.size()) ? tasks.get(idx - 1).getTaskName() : null;
+        }).filter(Objects::nonNull).toList();
+
+        // 4. Set minOccurrence and maxOccurrence based on filterOccurrence
+        long minOccurrence = data.getFilterOccurrence().length == 2 ? Long.parseLong(data.getFilterOccurrence()[0]) : 0;
+        long maxOccurrence = data.getFilterOccurrence().length == 2 ? Long.parseLong(data.getFilterOccurrence()[1]) : Integer.MAX_VALUE;
+
+        // 5. Create pageable object for pagination
+        final var pageable = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
+
+        // 6. Fetch filtered feedback from the repository
+        final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
+                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), filterTaskNames, minOccurrence, maxOccurrence,
+                pageable);
+
+        // 7. Process feedback details
+        // Map to index (+1 for 1-based indexing)
+        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> {
+            String taskIndex = tasks.stream().filter(task -> task.getTaskName().equals(detail.taskNumber())).findFirst().map(task -> String.valueOf(tasks.indexOf(task) + 1))
+                    .orElse("0");
+            return new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), taskIndex, "StudentError");
         }).toList();
+
+        // 8. Return the response DTO containing feedback details, total elements, and test case/task info
+        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), tasks.size(),
+                testCaseNames);
+    }
+
+    /**
+     * Retrieves the maximum feedback count for a given exercise.
+     * <br>
+     * This method calls the repository to fetch the maximum number of feedback occurrences across all feedback items for a specific exercise.
+     * This is used for filtering feedback based on the number of occurrences.
+     *
+     * @param exerciseId The ID of the exercise for which the maximum feedback count is to be retrieved.
+     * @return The maximum count of feedback occurrences for the given exercise.
+     */
+    public long getMaxCountForExercise(long exerciseId) {
+        return studentParticipationRepository.findMaxCountForExercise(exerciseId);
+    }
+
+    /**
+     * Deletes long feedback texts for the provided list of feedback items to prevent duplicate entries in the {@link LongFeedbackTextRepository}.
+     * <br>
+     * This method processes the provided list of feedback items, identifies those with associated long feedback texts, and removes them in bulk
+     * from the repository to avoid potential duplicate entry errors when saving new feedback entries.
+     * <p>
+     * Primarily used to ensure data consistency in the {@link LongFeedbackTextRepository}, especially during operations where feedback entries are
+     * overridden or updated. The deletion is performed only for feedback items with a non-null ID and an associated long feedback text.
+     * <p>
+     * This approach reduces the need for individual deletion calls and performs batch deletion in a single database operation.
+     *
+     * @param feedbackList The list of {@link Feedback} objects for which the long feedback texts are to be deleted. Only feedback items that have long feedback texts and a
+     *                         non-null ID will be processed.
+     * @param result       The {@link Result} object associated with the feedback items, used to update feedback list before processing.
+     */
+    public void deleteLongFeedback(List<Feedback> feedbackList, Result result) {
+        if (feedbackList == null) {
+            return;
+        }
+
+        List<Long> feedbackIdsWithLongText = feedbackList.stream().filter(feedback -> feedback.getHasLongFeedbackText() && feedback.getId() != null).map(Feedback::getId).toList();
+
+        longFeedbackTextRepository.deleteByFeedbackIds(feedbackIdsWithLongText);
+
+        List<Feedback> feedbacks = new ArrayList<>(feedbackList);
+        result.updateAllFeedbackItems(feedbacks, false);
     }
 }

@@ -17,7 +17,7 @@ dependencies {
     implementation "com.github.javaparser:javaparser-core:${project.java_parser_version}"
     implementation "com.github.javaparser:javaparser-core-serialization:${project.java_parser_version}"
     implementation "com.fasterxml.jackson.core:jackson-databind:${project.fasterxml_version}"
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${project.fasterxml_version}'
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${project.fasterxml_version}"
     implementation rootProject.ext.springBootStarterWeb
     implementation "org.slf4j:slf4j-api:${project.slf4j_version}"
     implementation "ch.qos.logback:logback-classic:${project.logback_version}"

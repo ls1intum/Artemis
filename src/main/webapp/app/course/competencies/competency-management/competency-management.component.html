@@ -14,6 +14,10 @@
                     <span jhiTranslate="artemisApp.competency.manage.generateButton"></span>
                 </a>
             }
+            <button class="btn btn-primary" id="openCourseCompetencyRelationsButton" (click)="openCourseCompetenciesRelationModal()">
+                <fa-icon [icon]="faEdit" />
+                <span jhiTranslate="artemisApp.courseCompetency.manage.editRelationsButton"></span>
+            </button>
             <button class="btn btn-primary" id="courseCompetencyImportAllButton" (click)="openImportAllModal()">
                 <fa-icon [icon]="faFileImport" />
                 <span jhiTranslate="artemisApp.courseCompetency.manage.importAllButton"></span>
@@ -27,16 +31,9 @@
             </div>
         </div>
     }
-    <jhi-competency-relation-graph
-        [competencies]="courseCompetencies"
-        [relations]="relations"
-        (onCreateRelation)="createRelation($event)"
-        (onRemoveRelation)="onRemoveRelation($event)"
-    />
     <jhi-competency-management-table
         [courseId]="courseId"
         [courseCompetencies]="competencies"
-        [relations]="relations"
         [competencyType]="CourseCompetencyType.COMPETENCY"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
         (competencyDeleted)="onRemoveCompetency($event)"
@@ -44,7 +41,6 @@
     <jhi-competency-management-table
         [courseId]="courseId"
         [courseCompetencies]="prerequisites"
-        [relations]="relations"
         [competencyType]="CourseCompetencyType.PREREQUISITE"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
         (competencyDeleted)="onRemoveCompetency($event)"

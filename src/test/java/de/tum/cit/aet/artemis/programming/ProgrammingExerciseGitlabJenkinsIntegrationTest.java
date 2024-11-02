@@ -32,7 +32,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -44,19 +43,10 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
-class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "progexgitlabjenkins";
-
-    @Autowired
-    private ProgrammingExerciseTestService programmingExerciseTestService;
-
-    @Autowired
-    private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     @BeforeEach
     void setup() throws Exception {

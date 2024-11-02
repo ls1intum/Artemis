@@ -126,45 +126,41 @@ For Artemis to find the key set `artemis.version-control.ssh-host-key-path` to t
 Adapting Nginx to Enable SSH Routing
 """"""""""""""""""""""""""""""""""""
 
-To enable SSH routing through Nginx, you can set up an SSH proxy. However, Nginx by itself does
-not support SSH, but you can use Nginx to reverse proxy an SSH service (e.g., using sslh to multiplex SSH and HTTPS).
+To enable SSH routing through Nginx, you can set up an SSH proxy.
 
-Configure sslh to listen on port 443 (to handle both HTTPS and SSH), by editing the sslh configuration
-file (e.g., /etc/default/sslh):
-
-.. code-block:: text
-
-    RUN=yes
-    DAEMON=/usr/sbin/sslh
-    DAEMON_OPTS="--user sslh --listen 0.0.0.0:443 --ssh 127.0.0.1:22 --ssl 127.0.0.1:8443"
-
-
-
-Configure Nginx to proxy HTTPS traffic, by adapting the configuration file to listen on port 8443 for HTTPS:
+Configure Nginx to proxy HTTPS traffic on port 443 and SSH traffic on port 7921.
 
 .. code-block:: nginx
 
-    server {
-        listen 8443 ssl;
-        server_name yourdomain.com;
+    http {
+        server {
+            listen 443 ssl;
+            server_name yourdomain.com;
 
-        ssl_certificate /etc/nginx/ssl/nginx.crt;
-        ssl_certificate_key /etc/nginx/ssl/nginx.key;
+            ssl_certificate /etc/nginx/ssl/nginx.crt;
+            ssl_certificate_key /etc/nginx/ssl/nginx.key;
 
-        location / {
-            proxy_pass http://127.0.0.1:8080;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
+            location / {
+                proxy_pass http://127.0.0.1:8080;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
         }
     }
 
-Restart sslh and Nginx:
+    stream {
+        server {
+            listen 7921;
+            proxy_pass 127.0.0.1:7921;
+        }
+    }
+
+Restart Nginx:
 
 .. code-block:: bash
 
-    sudo systemctl restart sslh
     sudo systemctl restart nginx
 
 By following these steps, you ensure that your key pairs are properly generated and distributed across all
