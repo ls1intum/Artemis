@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, computed, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,7 +6,8 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { Competency, CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 export interface TextUnitFormData {
     name?: string;
@@ -31,20 +32,25 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     @Input() hasCancelButton: boolean;
     @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
 
-    form: FormGroup;
+    private readonly formBuilder = inject(FormBuilder);
+    form: FormGroup = this.formBuilder.group({
+        name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
+        releaseDate: [undefined as dayjs.Dayjs | undefined],
+        competencies: [undefined as Competency[] | undefined],
+    });
+
     // not included in reactive form
     content: string | undefined;
     contentLoadedFromCache = false;
     firstMarkdownChangeHappened = false;
 
-    isFormValid = signal<boolean>(false);
+    private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
+    isFormValid = computed(() => this.statusChanges() === 'VALID');
 
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;
-    private formValidityChangesSubscription: Subscription;
 
     constructor(
-        private fb: FormBuilder,
         private router: Router,
         private translateService: TranslateService,
     ) {}
@@ -58,7 +64,6 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges(): void {
-        this.initializeForm();
         if (this.isEditMode && this.formData) {
             this.setFormValues(this.formData);
         }
@@ -66,7 +71,6 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnDestroy() {
         this.markdownChangesSubscription.unsubscribe();
-        this.formValidityChangesSubscription.unsubscribe();
     }
 
     ngOnInit(): void {
@@ -85,25 +89,6 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
             } else {
                 this.firstMarkdownChangeHappened = true;
             }
-        });
-        this.initializeForm();
-    }
-
-    private initializeForm() {
-        if (this.form) {
-            return;
-        }
-        this.form = this.fb.group({
-            name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
-            releaseDate: [undefined as dayjs.Dayjs | undefined],
-            competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
-        });
-
-        if (this.formValidityChangesSubscription) {
-            this.formValidityChangesSubscription.unsubscribe();
-        }
-        this.formValidityChangesSubscription = this.form.statusChanges.subscribe(() => {
-            this.isFormValid.set(this.form.valid);
         });
     }
 
