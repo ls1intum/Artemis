@@ -61,10 +61,7 @@ export class LectureUpdateWizardComponent implements OnInit {
         });
     }
 
-    /**
-     * Progress to the next step of the wizard mode
-     */
-    next() {
+    progressToNextStep() {
         if (this.currentStep === this.LECTURE_UPDATE_WIZARD_PERIOD_STEP || this.currentStep === this.LECTURE_UPDATE_WIZARD_UNIT_STEP) {
             this.saveLectureFunction();
             return;

@@ -120,7 +120,7 @@ describe('LectureWizardComponent', () => {
 
         wizardComponentFixture.whenStable().then(() => {
             expect(wizardComponent.currentStep).toBe(1);
-            wizardComponent.next();
+            wizardComponent.progressToNextStep();
             expect(wizardComponent.currentStep).toBe(2);
         });
     }));
@@ -133,7 +133,7 @@ describe('LectureWizardComponent', () => {
 
         wizardComponentFixture.whenStable().then(() => {
             expect(wizardComponent.currentStep).toBe(4);
-            wizardComponent.next();
+            wizardComponent.progressToNextStep();
             expect(saveStub).toHaveBeenCalledOnce();
         });
     }));

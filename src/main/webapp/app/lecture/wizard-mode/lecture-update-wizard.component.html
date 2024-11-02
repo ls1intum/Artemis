@@ -46,7 +46,13 @@
             </div>
         </div>
         <div class="ms-3">
-            <button type="button" id="next" [disabled]="(currentStep === LECTURE_UPDATE_WIZARD_PERIOD_STEP && !lecture.title) || isSaving" class="btn btn-primary" (click)="next()">
+            <button
+                type="button"
+                id="next"
+                [disabled]="(currentStep === LECTURE_UPDATE_WIZARD_PERIOD_STEP && !lecture.title) || isSaving"
+                class="btn btn-primary"
+                (click)="progressToNextStep()"
+            >
                 <fa-icon [icon]="getNextIcon()" />&nbsp;<span [jhiTranslate]="getNextText()">Next</span>
             </button>
         </div>
