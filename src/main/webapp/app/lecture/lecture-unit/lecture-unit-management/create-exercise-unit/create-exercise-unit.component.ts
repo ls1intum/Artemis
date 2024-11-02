@@ -18,25 +18,18 @@ import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./create-exercise-unit.component.scss'],
 })
 export class CreateExerciseUnitComponent implements OnInit {
-    @Input()
-    hasCancelButton: boolean;
-    @Input()
-    hasCreateExerciseButton: boolean;
-    @Input()
-    shouldNavigateOnSubmit = true;
-    @Input()
-    lectureId: number | undefined;
-    @Input()
-    courseId: number | undefined;
-    @Input()
-    currentWizardStep: number;
+    protected readonly faTimes = faTimes;
+    protected readonly faSort = faSort;
 
-    @Output()
-    onCancel: EventEmitter<any> = new EventEmitter<any>();
-    @Output()
-    onExerciseUnitCreated: EventEmitter<any> = new EventEmitter<any>();
+    @Input() hasCancelButton: boolean;
+    @Input() hasCreateExerciseButton: boolean;
+    @Input() shouldNavigateOnSubmit = true;
+    @Input() lectureId: number | undefined;
+    @Input() courseId: number | undefined;
+    @Input() currentWizardStep: number;
 
-    faTimes = faTimes;
+    @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
+    @Output() onExerciseUnitCreated: EventEmitter<any> = new EventEmitter<any>();
 
     predicate = 'type';
     reverse = false;
@@ -44,9 +37,6 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     exercisesAvailableForUnitCreation: Exercise[] = [];
     exercisesToCreateUnitFor: Exercise[] = [];
-
-    // Icons
-    faSort = faSort;
 
     constructor(
         private activatedRoute: ActivatedRoute,
