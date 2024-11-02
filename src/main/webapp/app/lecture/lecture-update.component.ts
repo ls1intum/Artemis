@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, effect, signal, viewChild } from '@angular/core';
+import { Component, OnInit, Signal, ViewChild, computed, effect, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -19,6 +19,7 @@ import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.com
 import { LectureUpdatePeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -42,7 +43,17 @@ export class LectureUpdateComponent implements OnInit {
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
     @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdatePeriodComponent;
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
+    periodSectionDatepickers = viewChildren(FormDateTimePickerComponent);
     unitSection = viewChild(LectureUpdateWizardUnitsComponent);
+
+    isPeriodSectionValid: Signal<boolean> = computed(() => {
+        for (const periodSectionDatepicker of this.periodSectionDatepickers()) {
+            if (!periodSectionDatepicker.isValid()) {
+                return false;
+            }
+        }
+        return true;
+    });
 
     lecture: Lecture;
     isSaving: boolean;
@@ -79,7 +90,7 @@ export class LectureUpdateComponent implements OnInit {
                 },
                 {
                     title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
-                    valid: true, // TODO retrieve the valid status from the datepickeres
+                    valid: Boolean(this.isPeriodSectionValid()),
                 },
             ];
             if (this.isEditMode()) {
