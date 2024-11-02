@@ -648,7 +648,6 @@ public class ResultService {
         if (feedbackList == null) {
             return;
         }
-
         List<Long> feedbackIdsWithLongText = feedbackList.stream().filter(feedback -> feedback.getHasLongFeedbackText() && feedback.getId() != null).map(Feedback::getId).toList();
         longFeedbackTextRepository.deleteByFeedbackIds(feedbackIdsWithLongText);
         List<Feedback> feedbacks = new ArrayList<>(feedbackList);
