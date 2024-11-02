@@ -1,17 +1,17 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
 import { CommonModule } from '@angular/common';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faChevronDown, faChevronLeft, faChevronRight, faFlag, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LearningPathNavOverviewComponent } from 'app/course/learning-paths/components/learning-path-nav-overview/learning-path-nav-overview.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 
 @Component({
     selector: 'jhi-learning-path-student-nav',
     standalone: true,
-    imports: [CommonModule, NgbDropdownModule, NgbAccordionModule, FontAwesomeModule, LearningPathNavOverviewComponent, ArtemisSharedModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [CommonModule, NgbDropdownModule, NgbAccordionModule, FontAwesomeModule, LearningPathNavOverviewComponent],
     templateUrl: './learning-path-student-nav.component.html',
     styleUrl: './learning-path-student-nav.component.scss',
 })
