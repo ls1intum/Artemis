@@ -21,7 +21,7 @@ import com.hazelcast.map.listener.EntryUpdatedListener;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 
 /**
@@ -40,8 +40,6 @@ public class LocalCIQueueWebsocketService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
     private final SharedQueueManagementService sharedQueueManagementService;
 
     private final HazelcastInstance hazelcastInstance;
@@ -54,13 +52,11 @@ public class LocalCIQueueWebsocketService {
      * @param sharedQueueManagementService     the local ci shared build job queue service
      */
     public LocalCIQueueWebsocketService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, LocalCIWebsocketMessagingService localCIWebsocketMessagingService,
-            SharedQueueManagementService sharedQueueManagementService, ProgrammingMessagingService programmingMessagingService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository) {
+            SharedQueueManagementService sharedQueueManagementService, ProgrammingMessagingService programmingMessagingService) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIWebsocketMessagingService = localCIWebsocketMessagingService;
         this.sharedQueueManagementService = sharedQueueManagementService;
         this.programmingMessagingService = programmingMessagingService;
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -121,7 +117,7 @@ public class LocalCIQueueWebsocketService {
         public void entryAdded(com.hazelcast.core.EntryEvent<Long, BuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
             sendProcessingJobsOverWebsocket(event.getValue().courseId());
-            notifyUserAboutBuildProcessing(event.getValue().participationId(), event.getValue().buildConfig().commitHashToBuild(), event.getValue().exerciseId());
+            notifyUserAboutBuildProcessing(event.getValue().exerciseId(), event.getValue().participationId(), event.getValue().buildConfig().commitHashToBuild());
         }
 
         @Override
@@ -153,13 +149,8 @@ public class LocalCIQueueWebsocketService {
         }
     }
 
-    private void notifyUserAboutBuildProcessing(Long participationId, String commitHash, Long exerciseId) {
-        var submission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participationId, commitHash);
-        if (submission != null) {
-            programmingMessagingService.notifyUserAboutSubmission(submission, exerciseId, true);
-        }
-        else {
-            log.warn("Could not find submission for participationId {} and commitHash {}", participationId, commitHash);
-        }
+    private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash) {
+        var submissionProcessingDTO = new SubmissionProcessingDTO(exerciseId, participationId, commitHash);
+        programmingMessagingService.notifyUserAboutSubmissionProcessing(submissionProcessingDTO, exerciseId, participationId);
     }
 }

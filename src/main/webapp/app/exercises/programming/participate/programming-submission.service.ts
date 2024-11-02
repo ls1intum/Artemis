@@ -13,6 +13,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { SubmissionProcessingDTO } from 'app/entities/programming/submission-processing-dto';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -37,6 +38,10 @@ type ProgrammingSubmissionError = { error: string; participationId: number };
  */
 const checkIfSubmissionIsError = (toBeDetermined: ProgrammingSubmission | ProgrammingSubmissionError): toBeDetermined is ProgrammingSubmissionError => {
     return !!(toBeDetermined as ProgrammingSubmissionError).error;
+};
+
+const checkIfSubmissionIsProcessing = (dto: ProgrammingSubmission | SubmissionProcessingDTO): dto is SubmissionProcessingDTO => {
+    return !!(dto as SubmissionProcessingDTO).participationId;
 };
 
 export interface IProgrammingSubmissionService {
@@ -81,6 +86,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private exerciseBuildStateValue: { [exerciseId: number]: ExerciseSubmissionState } = {};
     private currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA;
     private currentExpectedQueueEstimate = this.DEFAULT_EXPECTED_QUEUE_ESTIMATE;
+
+    private startedProcessingCache: Map<string, boolean> = new Map<string, boolean>();
 
     constructor(
         private websocketService: JhiWebsocketService,
@@ -226,28 +233,46 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 this.websocketService
                     .receive(newSubmissionTopic)
                     .pipe(
-                        tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
-                            if (!this.isNewestSubmission(submission as ProgrammingSubmission, exerciseId, participationId)) {
-                                return;
-                            }
+                        tap((submission: ProgrammingSubmission | SubmissionProcessingDTO | ProgrammingSubmissionError) => {
                             if (checkIfSubmissionIsError(submission)) {
                                 const programmingSubmissionError = submission as ProgrammingSubmissionError;
                                 this.emitFailedSubmission(programmingSubmissionError.participationId, exerciseId);
                                 return;
                             }
-                            const programmingSubmission = submission as ProgrammingSubmission;
 
-                            if (!programmingSubmission.isProcessing) {
+                            if (checkIfSubmissionIsProcessing(submission)) {
+                                const submissionProcessing = submission as SubmissionProcessingDTO;
+                                const programmingSubmission = this.getSubmissionByCommitHash(submissionProcessing);
+                                // It is possible that the submission started processing before it got saved to the database and the message was sent to the client.
+                                // In this case, we cache that the submission started processing and do not emit the building state.
+                                // When the submission message arrives, we check if the submission is already in the cache.
+                                if (!programmingSubmission) {
+                                    this.startedProcessingCache.set(submission.commitHash!, true);
+                                    return;
+                                }
+                                programmingSubmission.isProcessing = true;
+                                submission = programmingSubmission;
+                            }
+
+                            const programmingSubmission = submission as ProgrammingSubmission;
+                            const submissionParticipationId = programmingSubmission.participation!.id!;
+
+                            if (!this.isNewestSubmission(programmingSubmission, exerciseId, submissionParticipationId)) {
+                                return;
+                            }
+
+                            if (!programmingSubmission.isProcessing && !this.didSubmissionStartProcessing(programmingSubmission.commitHash!)) {
                                 const queueRemainingTime = this.getExpectedRemainingTimeForQueue(programmingSubmission);
                                 if (queueRemainingTime > 0) {
-                                    this.emitQueuedSubmission(participationId, exerciseId, programmingSubmission);
-                                    this.startQueueEstimateTimer(participationId, exerciseId, programmingSubmission, queueRemainingTime);
+                                    this.emitQueuedSubmission(submissionParticipationId, exerciseId, programmingSubmission);
+                                    this.startQueueEstimateTimer(submissionParticipationId, exerciseId, programmingSubmission, queueRemainingTime);
                                     return;
                                 }
                             }
-                            this.resetQueueEstimateTimer(participationId);
-                            const submissionParticipationId = programmingSubmission.participation!.id!;
-                            this.emitBuildingSubmission(submissionParticipationId, this.participationIdToExerciseId.get(submissionParticipationId)!, submission);
+
+                            this.removeSubmissionFromProcessingCache(submission.commitHash!);
+                            this.resetQueueEstimateTimer(submissionParticipationId);
+                            this.emitBuildingSubmission(submissionParticipationId, this.participationIdToExerciseId.get(submissionParticipationId)!, programmingSubmission);
                             // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
                             this.startResultWaitingTimer(submissionParticipationId);
                         }),
@@ -264,7 +289,17 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (!currentSubmission?.id) return true;
         if (!newSubmission?.id) return false;
 
-        return newSubmission.id > currentSubmission.id;
+        return newSubmission.id >= currentSubmission.id;
+    }
+
+    private getSubmissionByCommitHash(submissionProcessing: SubmissionProcessingDTO): ProgrammingSubmission | undefined {
+        if (submissionProcessing.exerciseId && submissionProcessing.participationId && submissionProcessing.commitHash) {
+            const submission = this.exerciseBuildState[submissionProcessing.exerciseId]?.[submissionProcessing.participationId]?.submission;
+            if (submission && submission.commitHash === submissionProcessing.commitHash) {
+                return submission;
+            }
+        }
+        return undefined;
     }
 
     /**
@@ -602,11 +637,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             map((submission: ProgrammingSubmission | undefined) => {
                 if (submission) {
                     const queueRemainingTime = this.getExpectedRemainingTimeForQueue(submission);
-                    if (submission.isProcessing === false && queueRemainingTime > 0) {
+                    if (submission.isProcessing === false && queueRemainingTime > 0 && !this.didSubmissionStartProcessing(submission.commitHash!)) {
                         this.emitQueuedSubmission(participationId, exerciseId, submission);
                         this.startQueueEstimateTimer(participationId, exerciseId, submission, queueRemainingTime);
                         return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_QUEUED };
                     } else {
+                        this.removeSubmissionFromProcessingCache(submission.commitHash!);
                         const remainingTime = this.getExpectedRemainingTimeForBuild(submission);
                         if (remainingTime > 0) {
                             this.emitBuildingSubmission(participationId, exerciseId, submission);
@@ -640,6 +676,16 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         }
         const { participationId, submission, submissionState } = val;
         return { ...acc, [participationId]: { participationId, submissionState, submission } };
+    }
+
+    private didSubmissionStartProcessing(commitHash: string): boolean {
+        return !!this.startedProcessingCache.get(commitHash);
+    }
+
+    private removeSubmissionFromProcessingCache(commitHash: string): void {
+        if (this.startedProcessingCache.has(commitHash)) {
+            this.startedProcessingCache.delete(commitHash);
+        }
     }
 
     /**

@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildRunState;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 
 @Profile(PROFILE_CORE)
@@ -48,13 +50,17 @@ public class ProgrammingMessagingService {
 
     private final TeamRepository teamRepository;
 
+    private final ParticipationRepository participationRepository;
+
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository) {
+            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
+            ParticipationRepository participationRepository) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
         this.ltiNewResultService = ltiNewResultService;
         this.teamRepository = teamRepository;
+        this.participationRepository = participationRepository;
     }
 
     public void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
@@ -181,6 +187,23 @@ public class ProgrammingMessagingService {
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && ltiNewResultService.isPresent()) {
             // do not try to report results for template or solution participations
             ltiNewResultService.get().onNewResult(studentParticipation);
+        }
+    }
+
+    public void notifyUserAboutSubmissionProcessing(SubmissionProcessingDTO submission, long exerciseId, long participationId) {
+        Participation participation = participationRepository.findWithProgrammingExerciseWithBuildConfigById(participationId).orElseThrow();
+        if (participation instanceof StudentParticipation studentParticipation) {
+            if (studentParticipation.getParticipant() instanceof Team team) {
+                // eager load the team with students so their information can be used for the messages below
+                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
+            }
+            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
+        }
+
+        // send an update to tutors, editors and instructors about submissions for template and solution participations
+        if (!(participation instanceof StudentParticipation)) {
+            var topicDestination = getExerciseTopicForTAAndAbove(exerciseId);
+            websocketMessagingService.sendMessage(topicDestination, submission);
         }
     }
 }
