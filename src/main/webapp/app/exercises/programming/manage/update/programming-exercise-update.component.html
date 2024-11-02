@@ -9,7 +9,7 @@
         }
         <jhi-documentation-button [type]="documentationType" />
     </div>
-    <jhi-form-status-bar [formStatusSections]="formStatusSections" />
+    <jhi-form-status-bar [formStatusSections]="formStatusSections()" />
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
         <div class="update-programming-exercise">
             <jhi-programming-exercise-info
@@ -19,19 +19,33 @@
                 [isImport]="isImportFromExistingExercise || isImportFromFile"
                 [isLocal]="isLocal"
                 [importOptions]="importOptions"
+                [isSimpleMode]="isSimpleMode()"
+                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+                [courseId]="courseId"
+                [(isAuxiliaryRepositoryInputValid)]="isAuxiliaryRepositoryInputValid"
             />
             <hr class="mb-5" />
-            <jhi-programming-exercise-difficulty
+            @if (!isSimpleMode()) {
+                <!-- The mode section would only contain the difficulty in the simple mode,
+                in the simple mode the difficulty will be part of the general section -->
+                <jhi-programming-exercise-mode
+                    [programmingExercise]="programmingExercise"
+                    [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                    [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+                    (triggerValidation)="calculateFormStatusSections()"
+                />
+                <hr class="mb-5" />
+            }
+            <jhi-programming-exercise-language
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                (triggerValidation)="calculateFormStatusSections()"
+                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
-            <hr class="mb-5" />
-            <jhi-programming-exercise-language [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()" />
             <hr class="mb-5" />
             <jhi-programming-exercise-problem
                 [(exercise)]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
                 (problemStatementChange)="calculateFormStatusSections()"
             />
             <hr class="mb-5" />
@@ -40,18 +54,22 @@
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [importOptions]="importOptions"
+                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
-            @if (!isExamMode) {
+            @if (isEditFieldDisplayedRecord().plagiarismControl && !isExamMode) {
                 <jhi-exercise-update-plagiarism [exercise]="programmingExercise" />
             }
             <jhi-form-footer
                 [isCreation]="!programmingExercise.id"
                 [isImport]="isImportFromExistingExercise || isImportFromFile"
                 [isSaving]="isSaving"
+                [(notificationText)]="notificationText"
+                [isSimpleMode]="isSimpleMode()"
+                [switchEditMode]="switchEditMode"
+                [areAuxiliaryRepositoriesValid]="isAuxiliaryRepositoryInputValid()"
                 [invalidReasons]="getInvalidReasons()"
                 (save)="save()"
-                (cancel)="previousState()"
-                [(notificationText)]="notificationText"
+                (onCancel)="previousState()"
             />
         </div>
     </form>

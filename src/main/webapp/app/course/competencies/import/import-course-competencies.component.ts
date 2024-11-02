@@ -4,7 +4,7 @@ import { CourseCompetency, CourseCompetencyType } from 'app/entities/competency.
 import { AlertService } from 'app/core/util/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Component, HostListener, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { faBan, faFileImport, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -203,15 +203,5 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
 
     get canDeactivateWarning(): string {
         return this.translateService.instant('pendingChanges');
-    }
-
-    /**
-     * Displays the alert for confirming refreshing or closing the page if there are unsaved changes
-     */
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification(event: any) {
-        if (!this.canDeactivate()) {
-            event.returnValue = this.canDeactivateWarning;
-        }
     }
 }
