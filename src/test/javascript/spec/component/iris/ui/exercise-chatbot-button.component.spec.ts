@@ -107,7 +107,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         const mockExerciseId = 123;
         const spy = jest.spyOn(chatService, 'switchTo');
 
-        component.mode = ChatServiceMode.EXERCISE;
+        fixture.componentRef.setInput('mode', ChatServiceMode.EXERCISE);
         fixture.detectChanges();
 
         mockParamsSubject.next({
@@ -125,7 +125,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         const mockExerciseId = 123;
         const spy = jest.spyOn(chatService, 'switchTo');
 
-        component.mode = ChatServiceMode.TEXT_EXERCISE;
+        fixture.componentRef.setInput('mode', ChatServiceMode.TEXT_EXERCISE);
         fixture.detectChanges();
 
         mockParamsSubject.next({
