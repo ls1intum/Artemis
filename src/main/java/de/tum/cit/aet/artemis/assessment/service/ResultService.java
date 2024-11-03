@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
@@ -494,45 +495,49 @@ public class ResultService {
 
     @NotNull
     private List<Feedback> saveFeedbackWithHibernateWorkaround(@NotNull Result result, List<Feedback> feedbackList) {
-        // Avoid hibernate exception
         List<Feedback> savedFeedbacks = new ArrayList<>();
-        // Collect ids of feedbacks that have long feedback.
-        List<Long> feedbackIdsWithLongFeedback = feedbackList.stream().filter(feedback -> feedback.getId() != null && feedback.getHasLongFeedbackText()).map(Feedback::getId)
-                .toList();
-        // Get long feedback list from the database.
-        List<LongFeedbackText> longFeedbackTextList = longFeedbackTextRepository.findByFeedbackIds(feedbackIdsWithLongFeedback);
 
-        // Convert list to map for accessing later.
-        Map<Long, LongFeedbackText> longLongFeedbackTextMap = longFeedbackTextList.stream()
-                .collect(Collectors.toMap(longFeedbackText -> longFeedbackText.getFeedback().getId(), longFeedbackText -> longFeedbackText));
+        // Fetch long feedback texts associated with the provided feedback list
+        Map<Long, LongFeedbackText> longFeedbackTextMap = longFeedbackTextRepository
+                .findByFeedbackIds(feedbackList.stream().filter(feedback -> feedback.getId() != null && feedback.getHasLongFeedbackText()).map(Feedback::getId).toList()).stream()
+                .collect(Collectors.toMap(longFeedbackText -> longFeedbackText.getFeedback().getId(), Function.identity()));
+
         feedbackList.forEach(feedback -> {
-            // cut association to parent object
-            feedback.setResult(null);
-            LongFeedbackText longFeedback = null;
-            // look for long feedback that parent feedback has and cut the association between them.
-            if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
-                longFeedback = longLongFeedbackTextMap.get(feedback.getId());
-                if (longFeedback != null) {
-                    feedback.clearLongFeedback();
-                }
-            }
-            // persist the child object without an association to the parent object.
-            feedback = feedbackRepository.saveAndFlush(feedback);
-            // restore the association to the parent object
-            feedback.setResult(result);
-
-            // restore the association of the long feedback to the parent feedback
-            if (longFeedback != null) {
-                feedback.setDetailText(longFeedback.getText());
-            }
+            handleFeedbackPersistence(feedback, result, longFeedbackTextMap);
             savedFeedbacks.add(feedback);
         });
+
         return savedFeedbacks;
+    }
+
+    private void handleFeedbackPersistence(Feedback feedback, Result result, Map<Long, LongFeedbackText> longFeedbackTextMap) {
+        // Temporarily detach feedback from the parent result to avoid Hibernate issues
+        feedback.setResult(null);
+
+        // Clear the long feedback if it exists in the map
+        if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
+            LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
+            if (longFeedback != null) {
+                feedback.clearLongFeedback();
+            }
+        }
+
+        // Persist the feedback entity without the parent association
+        feedback = feedbackRepository.saveAndFlush(feedback);
+
+        // Restore associations to the result and long feedback after persistence
+        feedback.setResult(result);
+        LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
+        if (longFeedback != null) {
+            feedback.setDetailText(longFeedback.getText());
+        }
     }
 
     @NotNull
     private Result shouldSaveResult(@NotNull Result result, boolean shouldSave) {
         if (shouldSave) {
+            // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with {@link resultRepository.save}
+            deleteLongFeedback(result.getFeedbacks(), result);
             // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
             return resultRepository.save(result);
         }
@@ -622,5 +627,33 @@ public class ResultService {
      */
     public long getMaxCountForExercise(long exerciseId) {
         return studentParticipationRepository.findMaxCountForExercise(exerciseId);
+    }
+
+    /**
+     * Deletes long feedback texts for the provided list of feedback items to prevent duplicate entries in the {@link LongFeedbackTextRepository}.
+     * <br>
+     * This method processes the provided list of feedback items, identifies those with associated long feedback texts, and removes them in bulk
+     * from the repository to avoid potential duplicate entry errors when saving new feedback entries.
+     * <p>
+     * Primarily used to ensure data consistency in the {@link LongFeedbackTextRepository}, especially during operations where feedback entries are
+     * overridden or updated. The deletion is performed only for feedback items with a non-null ID and an associated long feedback text.
+     * <p>
+     * This approach reduces the need for individual deletion calls and performs batch deletion in a single database operation.
+     *
+     * @param feedbackList The list of {@link Feedback} objects for which the long feedback texts are to be deleted. Only feedback items that have long feedback texts and a
+     *                         non-null ID will be processed.
+     * @param result       The {@link Result} object associated with the feedback items, used to update feedback list before processing.
+     */
+    public void deleteLongFeedback(List<Feedback> feedbackList, Result result) {
+        if (feedbackList == null) {
+            return;
+        }
+
+        List<Long> feedbackIdsWithLongText = feedbackList.stream().filter(feedback -> feedback.getHasLongFeedbackText() && feedback.getId() != null).map(Feedback::getId).toList();
+
+        longFeedbackTextRepository.deleteByFeedbackIds(feedbackIdsWithLongText);
+
+        List<Feedback> feedbacks = new ArrayList<>(feedbackList);
+        result.updateAllFeedbackItems(feedbacks, false);
     }
 }
