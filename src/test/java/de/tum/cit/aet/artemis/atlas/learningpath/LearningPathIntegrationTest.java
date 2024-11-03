@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -39,9 +38,7 @@ import de.tum.cit.aet.artemis.atlas.dto.LearningPathInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
-import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
-import de.tum.cit.aet.artemis.atlas.web.LearningPathResource;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -131,7 +128,6 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.FORBIDDEN, LearningPath.class, pageableSearchUtilService.searchMapping(search));
         request.get("/api/courses/" + course.getId() + "/learning-path-health", HttpStatus.FORBIDDEN, LearningPathHealthDTO.class);
-        request.get("/api/courses/" + course.getId() + "/learning-path/competency-instructor-graph", HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
     }
 
     private void enableLearningPathsRESTCall(Course course) throws Exception {
@@ -384,24 +380,6 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @Test
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
-    void testGetLearningPathWithOwner() throws Exception {
-        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
-        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.OK, NgxLearningPathDTO.class);
-    }
-
-    @Test
-    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
-    void testGetLearningPathOfOtherUser() throws Exception {
-        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var otherStudent = userTestRepository.findOneByLogin(SECOND_STUDENT_OF_COURSE).orElseThrow();
-        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), otherStudent.getId());
-        request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
-    }
-
-    @Test
-    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathCompetencyGraphOfOtherUser() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var otherStudent = userTestRepository.findOneByLogin(SECOND_STUDENT_OF_COURSE).orElseThrow();
@@ -435,92 +413,6 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         assertThat(response.edges()).hasSameSizeAs(relations);
         assertThat(response.edges()).allMatch(relationDTO -> relations.stream().anyMatch(relation -> relation.getId() == Long.parseLong(relationDTO.id())
                 && relation.getTailCompetency().getId() == Long.parseLong(relationDTO.target()) && relation.getHeadCompetency().getId() == Long.parseLong(relationDTO.source())));
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(LearningPathResource.NgxRequestType.class)
-    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
-    void testGetLearningPathNgxForLearningPathsDisabled(LearningPathResource.NgxRequestType type) throws Exception {
-        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
-        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        course.setLearningPathsEnabled(false);
-        courseRepository.save(course);
-        request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.BAD_REQUEST, NgxLearningPathDTO.class);
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(LearningPathResource.NgxRequestType.class)
-    @WithMockUser(username = SECOND_STUDENT_OF_COURSE, roles = "USER")
-    void testGetLearningPathNgxForOtherStudent(LearningPathResource.NgxRequestType type) throws Exception {
-        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
-        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
-    }
-
-    /**
-     * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
-     *
-     * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
-     */
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(LearningPathResource.NgxRequestType.class)
-    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
-    void testGetLearningPathNgxAsStudent(LearningPathResource.NgxRequestType type) throws Exception {
-        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
-        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.OK, NgxLearningPathDTO.class);
-    }
-
-    /**
-     * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
-     *
-     * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
-     */
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(LearningPathResource.NgxRequestType.class)
-    @WithMockUser(username = TUTOR_OF_COURSE, roles = "TA")
-    void testGetLearningPathNgxAsTutor(LearningPathResource.NgxRequestType type) throws Exception {
-        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var tutor = userTestRepository.findOneByLogin(TUTOR_OF_COURSE).orElseThrow();
-        final var learningPath = learningPathUtilService.createLearningPathInCourseForUser(course, tutor);
-        request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.OK, NgxLearningPathDTO.class);
-    }
-
-    /**
-     * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
-     *
-     * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
-     */
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(LearningPathResource.NgxRequestType.class)
-    @WithMockUser(username = EDITOR_OF_COURSE, roles = "EDITOR")
-    void testGetLearningPathNgxAsEditor(LearningPathResource.NgxRequestType type) throws Exception {
-        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var editor = userTestRepository.findOneByLogin(EDITOR_OF_COURSE).orElseThrow();
-        final var learningPath = learningPathUtilService.createLearningPathInCourseForUser(course, editor);
-        request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.OK, NgxLearningPathDTO.class);
-    }
-
-    /**
-     * This only tests if the end point successfully retrieves the graph representation. The correctness of the response is tested in LearningPathServiceTest.
-     *
-     * @throws Exception the request failed
-     * @see de.tum.cit.aet.artemis.atlas.service.LearningPathServiceTest
-     */
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(LearningPathResource.NgxRequestType.class)
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
-    void testGetLearningPathNgxAsInstructor(LearningPathResource.NgxRequestType type) throws Exception {
-        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
-        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.OK, NgxLearningPathDTO.class);
     }
 
     @Nested

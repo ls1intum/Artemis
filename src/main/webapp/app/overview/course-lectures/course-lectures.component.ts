@@ -42,12 +42,12 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     course?: Course;
     courseId: number;
 
-    lectureSelected: boolean = true;
+    lectureSelected = true;
     sidebarData: SidebarData;
     accordionLectureGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sortedLectures: Lecture[] = [];
     sidebarLectures: SidebarCardElement[] = [];
-    isCollapsed: boolean = false;
+    isCollapsed = false;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
@@ -84,7 +84,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         } else if (!lectureId && upcomingLecture) {
             this.router.navigate([upcomingLecture.id], { relativeTo: this.route, replaceUrl: true });
         } else {
-            this.lectureSelected = lectureId ? true : false;
+            this.lectureSelected = !!lectureId;
         }
     }
 
