@@ -1013,8 +1013,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         });
         assertThat(storedResult.getAssessmentType()).as("type of result is SEMI_AUTOMATIC").isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         assertThat(manualFeedback).as("number of manual feedback elements is correct").hasSameSizeAs(newFeedback);
-        assertThat(automaticFeedback).as("number of automatic feedback elements is correct").hasSize(existingFeedback.size() - 2);
-        assertThat(adaptedFeedback).as("number of adapted feedback elements is correct").hasSize(2);
+        assertThat(automaticFeedback).as("number of automatic feedback elements is correct").hasSize(existingFeedback.size());
+        assertThat(adaptedFeedback).as("number of adapted feedback elements is correct").isEmpty();
         assertThat(manualUnreferencedFeedback).as("number of manual unreferenced feedback elements is correct").isEmpty();
     }
 
