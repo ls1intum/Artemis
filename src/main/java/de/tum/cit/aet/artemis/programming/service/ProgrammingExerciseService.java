@@ -1084,6 +1084,7 @@ public class ProgrammingExerciseService {
      * Validates the network access feature for the given programming language.
      * Currently, SWIFT and HASKELL do not support disabling the network access feature.
      *
+     * @param programmingExercise the programming exercise to validate
      */
     public void validateDockerFlags(ProgrammingExercise programmingExercise) {
         ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();

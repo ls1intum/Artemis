@@ -125,6 +125,14 @@ describe('ProgrammingExercise Docker Image', () => {
     });
 
     it('should parse existing docker flags', () => {
+        profileServiceMock.getProfileInfo.mockReturnValue(
+            of({
+                buildTimeoutMin: undefined,
+                buildTimeoutMax: undefined,
+                buildTimeoutDefault: undefined,
+            }),
+        );
+
         programmingExercise.buildConfig!.dockerFlags = '[["network","none"],["env","key=value"]]';
         comp.ngOnInit();
         expect(comp.isNetworkDisabled).toBeTrue();
