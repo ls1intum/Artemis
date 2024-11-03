@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
@@ -118,6 +119,11 @@ public class ProgrammingExerciseBuildConfigService {
                 // match key-value pairs, where the key can be a single word or a string in single or double quotes
                 // key-value pairs are separated by commas
                 "(?:'([^']+)'|\"([^\"]+)\"|(\\w+))=(?:'([^']*)'|\"([^\"]*)\"|([^,]+))");
+
+        if (envVariableString.length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
+            log.warn("The environment variables string is too long. It will be truncated to {} characters.", MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH);
+            envVariableString = envVariableString.substring(0, MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH);
+        }
 
         Matcher matcher = pattern.matcher(envVariableString);
 
