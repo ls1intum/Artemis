@@ -331,6 +331,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 if (action instanceof FullscreenAction) {
                     // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
                     action.element = this.isInitialHeightExternal() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
+                } else if (this.enableFileUpload && action instanceof AttachmentAction) {
+                    action.setUploadCallback(this.embedFiles.bind(this));
                 }
                 this.monacoEditor.registerAction(action);
             });
@@ -490,6 +492,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param inputElement The input element that contains the files. If provided, the input element will be reset.
      */
     embedFiles(files: File[], inputElement?: HTMLInputElement): void {
+        if (!this.enableFileUpload) {
+            return;
+        }
         files.forEach((file) => {
             (this.useCommunicationForFileUpload()
                 ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(

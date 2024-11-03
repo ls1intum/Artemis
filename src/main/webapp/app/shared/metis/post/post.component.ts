@@ -1,19 +1,6 @@
-import {
-    AfterContentChecked,
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    Input,
-    OnChanges,
-    OnInit,
-    Output,
-    ViewChild,
-    ViewContainerRef,
-} from '@angular/core';
+import { AfterContentChecked, ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
@@ -26,12 +13,19 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { animate, style, transition, trigger } from '@angular/animations';
 
 @Component({
     selector: 'jhi-post',
     templateUrl: './post.component.html',
     styleUrls: ['./post.component.scss', './../metis.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    animations: [
+        trigger('fade', [
+            transition(':enter', [style({ opacity: 0 }), animate('300ms ease-in', style({ opacity: 1 }))]),
+            transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
+        ]),
+    ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
     @Input() lastReadDate?: dayjs.Dayjs;
@@ -64,8 +58,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     faCheckSquare = faCheckSquare;
 
     constructor(
-        private metisService: MetisService,
-        protected changeDetector: ChangeDetectorRef,
         private oneToOneChatService: OneToOneChatService,
         private metisConversationService: MetisConversationService,
         private router: Router,
