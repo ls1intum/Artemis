@@ -130,19 +130,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isExamStarted = false;
     private examStartedSubscription: Subscription;
     readonly MIN_DISPLAYED_COURSES: number = 6;
-    isLti: boolean = false;
+    isLti = false;
     private ltiSubscription: Subscription;
 
     // Properties to track hidden items for dropdown menu
-    dropdownOpen: boolean = false;
-    anyItemHidden: boolean = false;
+    anyItemHidden = false;
     hiddenItems: SidebarItem[] = [];
-    thresholdsForEachSidebarItem: number[] = [];
-    dropdownOffset: number;
-    dropdownClickNumber: number = 0;
     readonly WINDOW_OFFSET: number = 300;
     readonly ITEM_HEIGHT: number = 38;
-    readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 88;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;

@@ -50,12 +50,12 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     sortedExercises?: Exercise[];
     exerciseForGuidedTour?: Exercise;
 
-    exerciseSelected: boolean = true;
+    exerciseSelected = true;
     accordionExerciseGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sidebarData: SidebarData;
     sidebarExercises: SidebarCardElement[] = [];
-    isCollapsed: boolean = false;
-    isLti: boolean = false;
+    isCollapsed = false;
+    isLti = false;
 
     protected readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
@@ -115,7 +115,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         } else if (!exerciseId && upcomingExercise) {
             this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
         } else {
-            this.exerciseSelected = exerciseId ? true : false;
+            this.exerciseSelected = !!exerciseId;
         }
     }
 
@@ -151,6 +151,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private onCourseLoad() {
         this.programmingSubmissionService.initializeCacheForStudent(this.course?.exercises, true);
     }
+
     onSubRouteDeactivate() {
         if (this.route.firstChild) {
             return;
