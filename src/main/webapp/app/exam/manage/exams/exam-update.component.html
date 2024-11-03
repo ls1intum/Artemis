@@ -5,8 +5,7 @@
                 <div class="d-flex align-items-center">
                     @if (!isImport) {
                         <h4 jhiTranslate="artemisApp.examManagement.createExam"></h4>
-                    }
-                    @if (isImport) {
+                    } @else {
                         <h4 jhiTranslate="artemisApp.examManagement.importExam"></h4>
                     }
                     <jhi-documentation-button [type]="documentationType" />

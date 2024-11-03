@@ -1,5 +1,6 @@
-import { Component, OnInit, effect, input, output, viewChild } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, viewChild } from '@angular/core';
 import { NgModel } from '@angular/forms';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 
 const ALLOWED_DOCKER_FLAG_OPTIONS = ['network', 'env'];
@@ -12,6 +13,8 @@ const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.SWIFT, Pro
     styleUrls: ['../../../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
+    private profileService = inject(ProfileService);
+
     programmingExercise = input<ProgrammingExercise>();
     dockerImage = input.required<string>();
     dockerImageChange = output<string>();
@@ -27,19 +30,30 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     dockerImageField = viewChild<NgModel>('dockerImageField');
     timeoutField = viewChild<NgModel>('timeoutField');
 
-    isLanguageSupported: boolean = false;
-
-    readonly NETWORK_KEY: string = 'network';
-    readonly ENV_KEY: string = 'env';
-    readonly ENV_VAR_REGEX = /(?:'([^']+)'|"([^"]+)"|(\w+))=(?:'([^']*)'|"([^"]*)"|([^,]+))/;
-
-    constructor() {
-        effect(() => {
-            this.setIsLanguageSupported();
-        });
-    }
+    timeoutMinValue?: number;
+    timeoutMaxValue?: number;
+    timeoutDefaultValue?: number;
 
     ngOnInit() {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo) {
+                this.timeoutMinValue = profileInfo.buildTimeoutMin ?? 10;
+
+                // Set the maximum timeout value to 240 if it is not set in the profile or if it is less than the minimum value
+                this.timeoutMaxValue = profileInfo.buildTimeoutMax && profileInfo.buildTimeoutMax > this.timeoutMinValue ? profileInfo.buildTimeoutMax : 240;
+
+                // Set the default timeout value to 120 if it is not set in the profile or if it is not in the valid range
+                this.timeoutDefaultValue = 120;
+                if (profileInfo.buildTimeoutDefault && profileInfo.buildTimeoutDefault >= this.timeoutMinValue && profileInfo.buildTimeoutDefault <= this.timeoutMaxValue) {
+                    this.timeoutDefaultValue = profileInfo.buildTimeoutDefault;
+                }
+
+                if (!this.timeout) {
+                    this.timeoutChange.emit(this.timeoutDefaultValue);
+                }
+            }
+        });
+
         if (this.programmingExercise()?.buildConfig?.dockerFlags) {
             const dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags || '[]') as [string, string][];
             dockerFlags.forEach(([key, value]) => {
@@ -50,6 +64,18 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
                 }
             });
         }
+    }
+
+    isLanguageSupported: boolean = false;
+
+    readonly NETWORK_KEY: string = 'network';
+    readonly ENV_KEY: string = 'env';
+    readonly ENV_VAR_REGEX = /(?:'([^']+)'|"([^"]+)"|(\w+))=(?:'([^']*)'|"([^"]*)"|([^,]+))/;
+
+    constructor() {
+        effect(() => {
+            this.setIsLanguageSupported();
+        });
     }
 
     onDisableNetworkAccessChange(event: any) {

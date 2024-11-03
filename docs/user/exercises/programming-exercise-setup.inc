@@ -398,7 +398,7 @@ You must then change the paths in the build script if necessary. Please refer to
   - Changing the checkout paths can lead to build errors if the build script is not adapted accordingly.
   - For C programming exercises, if used with the default docker image, changing the checkout paths will lead to build errors. The default docker image is configured to work with the default checkout paths.
 
-.. _configure_static_code_analysis_tools:
+.. _edit_build_duration:
 
 Edit Maximum Build Duration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -435,6 +435,9 @@ We plan to add more options to the container configuration in the future.
 
 .. warning::
   - Disabling internet access is not currently supported for Swift and Haskell exercises.
+
+
+.. _configure_static_code_analysis_tools:
 
 Configure static code analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

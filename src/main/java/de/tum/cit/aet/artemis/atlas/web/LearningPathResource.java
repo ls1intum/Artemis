@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO.LearningObjectType;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
-import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathNavigationService;
@@ -219,32 +218,6 @@ public class LearningPathResource {
     }
 
     /**
-     * GET learning-path/:learningPathId/graph : Gets the ngx representation of the learning path as a graph.
-     *
-     * @param learningPathId the id of the learning path that should be fetched
-     * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
-     */
-    @GetMapping("learning-path/{learningPathId}/graph")
-    @EnforceAtLeastStudent
-    public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxGraph(@PathVariable long learningPathId) {
-        log.debug("REST request to get ngx graph representation of learning path with id: {}", learningPathId);
-        return getLearningPathNgx(learningPathId, NgxRequestType.GRAPH);
-    }
-
-    /**
-     * GET learning-path/:learningPathId/path : Gets the ngx representation of the learning path as a sequential path.
-     *
-     * @param learningPathId the id of the learning path that should be fetched
-     * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
-     */
-    @GetMapping("learning-path/{learningPathId}/path")
-    @EnforceAtLeastStudent
-    public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxPath(@PathVariable long learningPathId) {
-        log.debug("REST request to get ngx path representation of learning path with id: {}", learningPathId);
-        return getLearningPathNgx(learningPathId, NgxRequestType.PATH);
-    }
-
-    /**
      * GET learning-path/:learningPathId/relative-navigation : Gets the navigation information for the learning path relative to a learning object.
      *
      * @param learningPathId     the id of the learning path for which the navigation should be fetched
@@ -291,20 +264,6 @@ public class LearningPathResource {
     public ResponseEntity<LearningPathNavigationOverviewDTO> getLearningPathNavigationOverview(@PathVariable @Valid long learningPathId) {
         log.debug("REST request to get navigation overview for learning path with id: {}", learningPathId);
         return ResponseEntity.ok(learningPathService.getLearningPathNavigationOverview(learningPathId));
-    }
-
-    private ResponseEntity<NgxLearningPathDTO> getLearningPathNgx(@PathVariable long learningPathId, NgxRequestType type) {
-        LearningPath learningPath = learningPathService.findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
-        Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
-        courseService.checkLearningPathsEnabledElseThrow(course);
-
-        checkLearningPathAccessElseThrow(Optional.of(course), learningPath, Optional.empty());
-
-        NgxLearningPathDTO ngxLearningPathDTO = switch (type) {
-            case GRAPH -> learningPathService.generateNgxGraphRepresentation(learningPath);
-            case PATH -> learningPathService.generateNgxPathRepresentation(learningPath);
-        };
-        return ResponseEntity.ok(ngxLearningPathDTO);
     }
 
     /**

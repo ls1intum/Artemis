@@ -69,7 +69,11 @@
                     </div>
                     <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
                         @if (lecture.course?.id && showCompetencies) {
-                            <jhi-competencies-popover [courseId]="lecture.course!.id!" [competencies]="lectureUnit.competencies || []" [navigateTo]="'competencyManagement'" />
+                            <jhi-competencies-popover
+                                [courseId]="lecture.course!.id!"
+                                [competencyLinks]="lectureUnit.competencyLinks || []"
+                                [navigateTo]="'competencyManagement'"
+                            />
                         }
                         @if (viewButtonAvailable[lectureUnit.id!]) {
                             <a
