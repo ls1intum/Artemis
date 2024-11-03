@@ -1,4 +1,4 @@
-<div class="enlarged-container" (click)="closeIfOutside($event)">
+<div #enlargedContainer class="enlarged-container" (click)="closeIfOutside($event)">
     @if (isEnlargedCanvasLoading()) {
         <div class="d-flex justify-content-center position-absolute">
             <div class="spinner-border" role="status">

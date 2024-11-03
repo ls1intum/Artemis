@@ -155,34 +155,7 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
         });
     });
 
-    describe('Positioning and Layout', () => {
-        it('should correctly position the canvas', () => {
-            // Mock the container and necessary dimensions
-            const mockPdfContainer = document.createElement('div');
-            Object.defineProperty(mockPdfContainer, 'clientWidth', { value: 1000 });
-            Object.defineProperty(mockPdfContainer, 'clientHeight', { value: 800 });
-            Object.defineProperty(mockPdfContainer, 'scrollTop', { value: 500, writable: true });
-
-            // Assign pdfContainer and enlargedCanvas on the component with the mock structure
-            fixture.componentRef.setInput('pdfContainer', mockPdfContainer);
-
-            // Create a canvas and set it as enlargedCanvas with width and height
-            const canvasElem = document.createElement('canvas');
-            canvasElem.width = 500;
-            canvasElem.height = 400;
-
-            component.enlargedCanvas = signal({ nativeElement: canvasElem });
-            mockPdfContainer.appendChild(canvasElem); // Ensure canvas is part of the container
-
-            // Run positionCanvas and check positioning
-            component.positionCanvas();
-
-            // Verify the expected styles for positioning
-            //expect(canvasElem.style.left).toBe('250px');
-            //expect(canvasElem.style.top).toBe('200px');
-            //expect(mockPdfContainer.style.top).toBe('500px');
-        });
-
+    describe('Layout', () => {
         it('should prevent scrolling when enlarged view is active', () => {
             component.toggleBodyScroll(true);
             expect(mockContainer.style.overflow).toBe('hidden');

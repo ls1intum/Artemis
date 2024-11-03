@@ -21,7 +21,6 @@ import { PDFDocument } from 'pdf-lib';
 @Component({
     selector: 'jhi-pdf-preview-component',
     templateUrl: './pdf-preview.component.html',
-    styleUrls: ['./pdf-preview.component.scss'],
     standalone: true,
     imports: [ArtemisSharedModule, PdfPreviewThumbnailGridComponent],
 })

@@ -11,6 +11,7 @@ type NavigationDirection = 'next' | 'prev';
     imports: [ArtemisSharedModule],
 })
 export class PdfPreviewEnlargedCanvasComponent {
+    enlargedContainer = viewChild.required<ElementRef<HTMLDivElement>>('enlargedContainer');
     enlargedCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('enlargedCanvas');
 
     readonly DEFAULT_ENLARGED_SLIDE_HEIGHT = 800;
@@ -30,6 +31,7 @@ export class PdfPreviewEnlargedCanvasComponent {
     constructor() {
         effect(
             () => {
+                this.enlargedContainer().nativeElement.style.top = `${this.pdfContainer().scrollTop}px`;
                 this.displayEnlargedCanvas(this.originalCanvas()!);
             },
             { allowSignalWrites: true },
@@ -93,7 +95,6 @@ export class PdfPreviewEnlargedCanvasComponent {
             const scaleFactor = this.calculateScaleFactor(originalCanvas);
             this.resizeCanvas(originalCanvas, scaleFactor);
             this.redrawCanvas(originalCanvas);
-            this.positionCanvas();
             this.isEnlargedCanvasLoading.set(false);
         });
     }
@@ -150,22 +151,6 @@ export class PdfPreviewEnlargedCanvasComponent {
         const context = enlargedCanvas.getContext('2d');
         context!.clearRect(0, 0, enlargedCanvas.width, enlargedCanvas.height);
         context!.drawImage(originalCanvas, 0, 0, enlargedCanvas.width, enlargedCanvas.height);
-    }
-
-    /**
-     * Adjusts the position of the enlarged canvas to center it within the viewport of the PDF container.
-     * This method ensures that the canvas is both vertically and horizontally centered, providing a consistent
-     * and visually appealing layout.
-     */
-    positionCanvas(): void {
-        const enlargedCanvas = this.enlargedCanvas().nativeElement;
-        const containerWidth = this.pdfContainer().clientWidth;
-        const containerHeight = this.pdfContainer().clientHeight;
-
-        enlargedCanvas.style.position = 'absolute';
-        enlargedCanvas.style.left = `${(containerWidth - enlargedCanvas.width) / 2}px`;
-        enlargedCanvas.style.top = `${(containerHeight - enlargedCanvas.height) / 2}px`;
-        enlargedCanvas.parentElement!.style.top = `${this.pdfContainer().scrollTop}px`;
     }
 
     /**
