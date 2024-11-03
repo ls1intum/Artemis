@@ -92,7 +92,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @ViewChild(PostReactionsBarComponent) private reactionsBarComponent!: PostReactionsBarComponent;
 
     constructor(
-        private metisService: MetisService,
+        public metisService: MetisService,
         public changeDetector: ChangeDetectorRef,
         private oneToOneChatService: OneToOneChatService,
         private metisConversationService: MetisConversationService,

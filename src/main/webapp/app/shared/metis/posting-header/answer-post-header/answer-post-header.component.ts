@@ -41,11 +41,4 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
         this.setUserProperties();
         this.setUserAuthorityIconAndTooltip();
     }
-
-    /**
-     * invokes the metis service to delete an answer post
-     */
-    deletePosting(): void {
-        this.isDeleteEvent.emit(true);
-    }
 }

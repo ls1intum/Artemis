@@ -1,4 +1,4 @@
-import { Directive, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, output } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -57,6 +57,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     @Output() isModalOpen = new EventEmitter<void>();
+    isDeleteEvent = output<boolean>();
 
     /*
      * icons (as svg paths) to be used as category preview image in emoji mart selector

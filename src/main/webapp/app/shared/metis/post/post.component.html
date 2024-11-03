@@ -9,7 +9,6 @@
             [hasChannelModerationRights]="hasChannelModerationRights"
             (isModalOpen)="displayInlineInput = true"
             [lastReadDate]="lastReadDate"
-            (isDeleteEvent)="onDeleteEvent(true)"
         />
     }
     <div class="align-items-center post-content-margin">
@@ -82,6 +81,7 @@
                                     (openThread)="openThread.emit()"
                                     (isModalOpen)="displayInlineInput = true"
                                     (mayEditOrDeleteOutput)="onMayEditOrDelete($event)"
+                                    (isDeleteEvent)="onDeleteEvent(true)"
                                 />
                             }
                         </div>

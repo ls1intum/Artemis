@@ -52,12 +52,5 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
         this.postCreateEditModal?.modalRef?.close();
     }
 
-    /**
-     * invokes the metis service to delete a post
-     */
-    deletePosting(): void {
-        this.isDeleteEvent.emit(true);
-    }
-
     protected readonly CachingStrategy = CachingStrategy;
 }

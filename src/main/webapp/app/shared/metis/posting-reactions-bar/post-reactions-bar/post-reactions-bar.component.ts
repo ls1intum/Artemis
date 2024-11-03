@@ -168,8 +168,11 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         this.pinTooltip = this.getPinTooltip();
     }
 
+    /**
+     * invokes the metis service to delete a post
+     */
     deletePosting(): void {
-        this.metisService.deletePost(this.posting);
+        this.isDeleteEvent.emit(true);
     }
 
     editPosting() {

@@ -46,8 +46,11 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
         return Object.values(this.reactionMetaDataMap).some((reaction) => reaction.count >= 1);
     }
 
+    /**
+     * invokes the metis service to delete an answer post
+     */
     deletePosting(): void {
-        this.metisService.deleteAnswerPost(this.posting);
+        this.isDeleteEvent.emit(true);
     }
 
     /**

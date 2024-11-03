@@ -7,7 +7,6 @@
             [lastReadDate]="lastReadDate"
             [hasChannelModerationRights]="hasChannelModerationRights"
             [isDeleted]="isDeleted"
-            (isDeleteEvent)="onDeleteEvent(true)"
         />
     }
     @if (!createAnswerPostModal.isInputOpen) {
@@ -34,6 +33,7 @@
                         (openPostingCreateEditModal)="createAnswerPostModal.open()"
                         (reactionsUpdated)="onReactionsUpdated($event)"
                         (mayEditOrDeleteOutput)="onMayEditOrDelete($event)"
+                        (isDeleteEvent)="onDeleteEvent(true)"
                     />
                 </div>
             </div>
