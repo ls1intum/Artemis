@@ -18,9 +18,9 @@ import java.util.stream.Collectors;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -84,7 +84,7 @@ public class LectureUnitService {
         this.competencyProgressService = competencyProgressService;
         this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
     }
-  
+
     /**
      * Set the completion status of the lecture unit for the give user
      * If the user completed the unit and completion status already exists, nothing happens
@@ -248,6 +248,8 @@ public class LectureUnitService {
         }
         boolean isIngested = pyrisWebhookService.get().addLectureUnitToPyrisDB((AttachmentUnit) lectureUnit) != null;
         return ResponseEntity.status(isIngested ? HttpStatus.OK : HttpStatus.BAD_REQUEST).build();
+    }
+
     /**
      * Disconnects the competency exercise links from the exercise before the cycle is broken by the deserialization.
      *
