@@ -78,6 +78,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly PageType = PageType;
     readonly DisplayPriority = DisplayPriority;
     mayEditOrDelete: boolean = false;
+    canPin: boolean = false;
 
     // Icons
     readonly faBullhorn = faBullhorn;
@@ -113,6 +114,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
     onMayEditOrDelete(value: boolean) {
         this.mayEditOrDelete = value;
+    }
+
+    onCanPin(value: boolean) {
+        this.canPin = value;
     }
 
     onRightClick(event: MouseEvent) {

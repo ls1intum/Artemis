@@ -81,6 +81,7 @@
                                     (openThread)="openThread.emit()"
                                     (isModalOpen)="displayInlineInput = true"
                                     (mayEditOrDeleteOutput)="onMayEditOrDelete($event)"
+                                    (canPinOutput)="onCanPin($event)"
                                     (isDeleteEvent)="onDeleteEvent(true)"
                                 />
                             }
@@ -141,10 +142,12 @@
         <fa-icon [icon]="faSmile" class="item-icon"></fa-icon>
         <span jhiTranslate="artemisApp.metis.post.addReaction"></span>
     </button>
-    <button class="dropdown-item d-flex" (click)="togglePin()">
-        <fa-icon [icon]="faThumbtack" class="item-icon"></fa-icon>
-        <span [jhiTranslate]="checkIfPinned() === DisplayPriority.PINNED ? 'artemisApp.metis.post.unpinMessage' : 'artemisApp.metis.post.pinMessage'"></span>
-    </button>
+    @if (canPin) {
+        <button class="dropdown-item d-flex" (click)="togglePin()">
+            <fa-icon [icon]="faThumbtack" class="item-icon"></fa-icon>
+            <span [jhiTranslate]="checkIfPinned() === DisplayPriority.PINNED ? 'artemisApp.metis.post.unpinMessage' : 'artemisApp.metis.post.pinMessage'"></span>
+        </button>
+    }
     @if (mayEditOrDelete) {
         <button class="dropdown-item d-flex" (click)="editPosting()">
             <fa-icon [icon]="faPencilAlt" class="item-icon"></fa-icon>

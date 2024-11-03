@@ -45,6 +45,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     @Input() previewMode: boolean;
     isAtLeastInstructorInCourse: boolean;
     @Output() mayEditOrDeleteOutput = new EventEmitter<boolean>();
+    @Output() canPinOutput = new EventEmitter<boolean>();
     mayEditOrDelete: boolean;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     @Input() isEmojiCount = false;
@@ -96,6 +97,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         } else if (isOneToOneChatDTO(currentConversation)) {
             this.canPin = true;
         }
+        this.canPinOutput.emit(this.canPin);
     }
 
     /**
