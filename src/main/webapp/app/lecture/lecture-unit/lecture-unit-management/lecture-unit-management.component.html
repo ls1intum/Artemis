@@ -72,9 +72,8 @@
                             <div class="d-flex gap-1">
                                 @if (lecture.course?.id && showCompetencies) {
                                     <jhi-competencies-popover
-                                        [style.flex-grow]="1"
                                         [courseId]="lecture.course!.id!"
-                                        [competencies]="lectureUnit.competencies || []"
+                                        [competencyLinks]="lectureUnit.competencyLinks || []"
                                         [navigateTo]="'competencyManagement'"
                                     />
                                 }
@@ -99,60 +98,60 @@
                                     [navigateTo]="'competencyManagement'"
                                 />
                             }
-                            @if (viewButtonAvailable[lectureUnit.id!]) {
-                                <a
-                                    type="button"
-                                    class="btn btn-primary btn-sm flex-grow-1"
-                                    [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', lectureUnit.id, 'view']"
-                                    [ngbTooltip]="'entity.action.view' | artemisTranslate"
-                                >
-                                    <fa-icon [icon]="faEye" />
-                                </a>
-                            }
-                            <div class="d-flex gap-1 w-100">
-                                @if (this.emitEditEvents) {
-                                    @if (editButtonAvailable(lectureUnit)) {
-                                        <button
-                                            type="button"
-                                            class="btn btn-primary btn-sm edit flex-grow-1"
-                                            (click)="onEditButtonClicked(lectureUnit)"
-                                            [ngbTooltip]="'entity.action.edit' | artemisTranslate"
-                                        >
-                                            <fa-icon [icon]="faPencilAlt" />
-                                        </button>
-                                    }
-                                } @else {
-                                    @if (editButtonAvailable(lectureUnit)) {
-                                        <a
-                                            type="button"
-                                            class="btn btn-primary btn-sm edit flex-grow-1"
-                                            [routerLink]="['./', routerEditLinksBase[lectureUnit.type!], lectureUnit.id, 'edit']"
-                                            [ngbTooltip]="'entity.action.edit' | artemisTranslate"
-                                        >
-                                            <fa-icon [icon]="faPencilAlt" />
-                                        </a>
-                                    }
-                                }
-                                @if (lecture.isAtLeastInstructor) {
+                        }
+                        @if (viewButtonAvailable[lectureUnit.id!]) {
+                            <a
+                                type="button"
+                                class="btn btn-primary btn-sm flex-grow-1"
+                                [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', lectureUnit.id, 'view']"
+                                [ngbTooltip]="'entity.action.view' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faEye" />
+                            </a>
+                        }
+                        <div class="d-flex gap-1 w-100">
+                            @if (this.emitEditEvents) {
+                                @if (editButtonAvailable(lectureUnit)) {
                                     <button
                                         type="button"
-                                        class="btn btn-danger btn-sm flex-grow-1"
-                                        jhiDeleteButton
-                                        [renderButtonStyle]="false"
-                                        [renderButtonText]="false"
-                                        [ngbTooltip]="'entity.action.' + getActionType(lectureUnit) | artemisTranslate"
-                                        [actionType]="getActionType(lectureUnit)"
-                                        [entityTitle]="lectureUnitService.getLectureUnitName(lectureUnit) || ''"
-                                        [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
-                                        [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
-                                        (delete)="deleteLectureUnit(lectureUnit.id!)"
-                                        [dialogError]="dialogError$"
+                                        class="btn btn-primary btn-sm edit flex-grow-1"
+                                        (click)="onEditButtonClicked(lectureUnit)"
+                                        [ngbTooltip]="'entity.action.edit' | artemisTranslate"
                                     >
-                                        <fa-icon [icon]="faTrash" />
+                                        <fa-icon [icon]="faPencilAlt" />
                                     </button>
                                 }
-                            </div>
-                        }
+                            } @else {
+                                @if (editButtonAvailable(lectureUnit)) {
+                                    <a
+                                        type="button"
+                                        class="btn btn-primary btn-sm edit flex-grow-1"
+                                        [routerLink]="['./', routerEditLinksBase[lectureUnit.type!], lectureUnit.id, 'edit']"
+                                        [ngbTooltip]="'entity.action.edit' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="faPencilAlt" />
+                                    </a>
+                                }
+                            }
+                            @if (lecture.isAtLeastInstructor) {
+                                <button
+                                    type="button"
+                                    class="btn btn-danger btn-sm flex-grow-1"
+                                    jhiDeleteButton
+                                    [renderButtonStyle]="false"
+                                    [renderButtonText]="false"
+                                    [ngbTooltip]="'entity.action.' + getActionType(lectureUnit) | artemisTranslate"
+                                    [actionType]="getActionType(lectureUnit)"
+                                    [entityTitle]="lectureUnitService.getLectureUnitName(lectureUnit) || ''"
+                                    [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
+                                    [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
+                                    (delete)="deleteLectureUnit(lectureUnit.id!)"
+                                    [dialogError]="dialogError$"
+                                >
+                                    <fa-icon [icon]="faTrash" />
+                                </button>
+                            }
+                        </div>
                     </div>
                 </div>
             }
