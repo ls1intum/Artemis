@@ -32,6 +32,12 @@ export default defineConfig({
 
     /* Configure projects for fast and slow tests */
     projects: [
+        // All tests
+        {
+            name: 'all-tests',
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
+            use: { ...devices['Desktop Chrome'] },
+        },
         // Tests with @slow tag
         {
             name: 'slow-tests',
