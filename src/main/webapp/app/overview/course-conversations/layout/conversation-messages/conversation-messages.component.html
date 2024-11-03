@@ -67,7 +67,17 @@
                 <div
                     id="scrollableDiv"
                     #container
-                    [ngClass]="{ 'posting-infinite-scroll-container': posts.length !== 0, 'content-height-dev': contentHeightDev, 'is-fetching-posts': isFetchingPosts }"
+                    [ngClass]="{
+                        'posting-infinite-scroll-container': posts.length !== 0,
+                        'content-height-dev': contentHeightDev,
+                        'is-fetching-posts': isFetchingPosts,
+                        'hide-input-full':
+                            getAsChannel(_activeConversation)?.isAnnouncementChannel &&
+                            _activeConversation !== undefined &&
+                            !canCreateNewMessageInConversation(_activeConversation),
+                        'hide-input':
+                            getAsChannel(_activeConversation)?.isAnnouncementChannel && _activeConversation !== undefined && canCreateNewMessageInConversation(_activeConversation),
+                    }"
                     infinite-scroll
                     class="conversation-messages-message-list"
                     [scrollWindow]="false"
