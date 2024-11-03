@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
-import { MockComponent, MockPipe, ngMocks } from 'ng-mocks';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
+import { MockComponent, MockModule, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { By } from '@angular/platform-browser';
 import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answer-post-header/answer-post-header.component';
@@ -12,6 +12,9 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { DOCUMENT } from '@angular/common';
 import { Reaction } from '../../../../../../../main/webapp/app/entities/metis/reaction.model';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -24,8 +27,8 @@ describe('AnswerPostComponent', () => {
         mainContainer.classList.add('thread-answer-post');
         document.body.appendChild(mainContainer);
 
-        await TestBed.configureTestingModule({
-            imports: [OverlayModule],
+        return TestBed.configureTestingModule({
+            imports: [OverlayModule, MockModule(BrowserAnimationsModule)],
             declarations: [
                 AnswerPostComponent,
                 MockPipe(HtmlForMarkdownPipe),
@@ -34,14 +37,17 @@ describe('AnswerPostComponent', () => {
                 MockComponent(AnswerPostCreateEditModalComponent),
                 MockComponent(AnswerPostReactionsBarComponent),
             ],
-            providers: [{ provide: DOCUMENT, useValue: document }],
-        }).compileComponents();
-    });
-
-    beforeEach(() => {
-        fixture = TestBed.createComponent(AnswerPostComponent);
-        component = fixture.componentInstance;
-        debugElement = fixture.debugElement;
+            providers: [
+                { provide: DOCUMENT, useValue: document },
+                { provide: MetisService, useClass: MockMetisService },
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(AnswerPostComponent);
+                component = fixture.componentInstance;
+                debugElement = fixture.debugElement;
+            });
     });
 
     it('should contain an answer post header when isConsecutive is false', () => {

@@ -15,6 +15,7 @@ import {
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import dayjs from 'dayjs/esm';
+import { animate, style, transition, trigger } from '@angular/animations';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -26,6 +27,12 @@ import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reacti
     templateUrl: './answer-post.component.html',
     styleUrls: ['./answer-post.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    animations: [
+        trigger('fade', [
+            transition(':enter', [style({ opacity: 0 }), animate('300ms ease-in', style({ opacity: 1 }))]),
+            transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
+        ]),
+    ],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @Input() lastReadDate?: dayjs.Dayjs;
@@ -33,6 +40,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
+    isAnswerPost = true;
 
     @Input()
     isReadOnlyMode = false;

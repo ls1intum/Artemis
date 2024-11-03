@@ -7,6 +7,7 @@
                     fontSizeInRem="0.9"
                     imageId="post-profile-picture"
                     defaultPictureId="post-default-profile-picture"
+                    [isGray]="isDeleted()"
                     [authorId]="posting.author?.id"
                     [authorName]="posting.author?.name"
                     [imageUrl]="posting.author?.imageUrl"

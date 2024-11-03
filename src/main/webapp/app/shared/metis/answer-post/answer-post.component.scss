@@ -2,6 +2,8 @@
 @import 'bootstrap/scss/variables';
 @import 'bootstrap/scss/mixins';
 
+@import 'src/main/webapp/app/shared/metis/metis.component';
+
 .answer-post {
     background-color: var(--metis-answer-post-background-color);
     border-radius: 7px;

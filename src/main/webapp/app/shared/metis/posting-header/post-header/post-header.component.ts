@@ -56,7 +56,7 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
      * invokes the metis service to delete a post
      */
     deletePosting(): void {
-        this.metisService.deletePost(this.posting);
+        this.isDeleteEvent.emit(true);
     }
 
     protected readonly CachingStrategy = CachingStrategy;
