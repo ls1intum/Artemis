@@ -125,7 +125,9 @@
                 "exerciseOrLecture": "Übung / Vorlesung",
                 "showAllPosts": "Zeige alle Nachrichten",
                 "showContent": "Inhalt ausklappen",
-                "collapseContent": "Inhalt einklappen"
+                "collapseContent": "Inhalt einklappen",
+                "deletedContent": "Beitrag wird in {{ progress }} Sekunde(n) gelöscht.",
+                "undoDelete": "Löschen umkehren"
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
