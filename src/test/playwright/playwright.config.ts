@@ -19,7 +19,7 @@ export default defineConfig({
     retries: parseNumber(process.env.TEST_RETRIES) ?? 2,
     workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 3,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-    reporter: [['junit', { outputFile: './test-reports/results.xml' }]],
+    reporter: [['junit', { outputFile: process.env.PLAYWRIGHT_JUNIT_OUTPUT_NAME ?? './test-reports/results.xml' }]],
 
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
@@ -32,12 +32,6 @@ export default defineConfig({
 
     /* Configure projects for fast and slow tests */
     projects: [
-        // All tests
-        {
-            name: 'all-tests',
-            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
-            use: { ...devices['Desktop Chrome'] },
-        },
         // Tests with @slow tag
         {
             name: 'slow-tests',
