@@ -31,6 +31,13 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
             """)
     Set<String> findAllCategoriesByCourseId(@Param("courseId") Long courseId);
 
+    @Query("""
+            SELECT DISTINCT faq.categories
+            FROM Faq faq
+            WHERE faq.course.id = :courseId AND faq.faqState = :faqState
+            """)
+    Set<String> findAllCategoriesByCourseIdAndState(@Param("courseId") Long courseId, @Param("faqState") FaqState faqState);
+
     Set<Faq> findAllByCourseIdAndFaqState(Long courseId, FaqState faqState);
 
     @Transactional // ok because of delete
