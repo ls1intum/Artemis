@@ -39,14 +39,14 @@ export class IrisEnabledComponent implements OnInit {
     }
 
     setEnabled(enabled: boolean) {
-        if (!this.disabled && this.irisSubSettings) {
+        if (!this.disabled() && this.irisSubSettings) {
             this.irisSubSettings.enabled = enabled;
-            if (this.exercise) {
+            if (this.exercise()) {
                 this.irisSettingsService.setExerciseSettings(this.exercise()!.id!, this.irisSettings!).subscribe((response) => {
                     this.irisSettings = response.body ?? this.irisSettings;
                     this.setSubSettings();
                 });
-            } else if (this.course) {
+            } else if (this.course()) {
                 this.irisSettingsService.setCourseSettings(this.course()!.id!, this.irisSettings!).subscribe((response) => {
                     this.irisSettings = response.body ?? this.irisSettings;
                     this.setSubSettings();
