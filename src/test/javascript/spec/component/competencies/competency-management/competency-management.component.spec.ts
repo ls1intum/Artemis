@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { Competency, CompetencyWithTailRelationDTO, CourseCompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
+import { Competency, CompetencyLectureUnitLink, CompetencyWithTailRelationDTO, CourseCompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
 import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -85,7 +85,7 @@ describe('CompetencyManagementComponent', () => {
                 const textUnit = new TextUnit();
                 competency.id = 1;
                 competency.description = 'test';
-                competency.lectureUnits = [textUnit];
+                competency.lectureUnitLinks = [new CompetencyLectureUnitLink(competency, textUnit, 1)];
                 const courseCompetencyProgress = new CourseCompetencyProgress();
                 courseCompetencyProgress.competencyId = 1;
                 courseCompetencyProgress.numberOfStudents = 8;

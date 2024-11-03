@@ -42,6 +42,11 @@ export type ExerciseDetailsType = {
     activatedExerciseHints?: ExerciseHint[];
 };
 
+export type CourseExistingExerciseDetailsType = {
+    exerciseTitles?: Set<string>;
+    shortNames?: Set<string>;
+};
+
 export interface ExerciseServicable<T extends Exercise> {
     create(exercise: T): Observable<HttpResponse<T>>;
 
@@ -56,6 +61,7 @@ export interface ExerciseServicable<T extends Exercise> {
 export class ExerciseService {
     public resourceUrl = 'api/exercises';
     public adminResourceUrl = 'api/admin/exercises';
+    public courseResourceUrl = 'api/courses';
 
     constructor(
         private http: HttpClient,
@@ -244,6 +250,22 @@ export class ExerciseService {
                     return exerciseA.dueDate.isBefore(exerciseB.dueDate) ? -1 : 1;
                 }
             });
+    }
+
+    getExistingExerciseDetailsInCourse(courseId: number, exerciseType: ExerciseType): Observable<CourseExistingExerciseDetailsType> {
+        return this.http
+            .get<CourseExistingExerciseDetailsType>(`${this.courseResourceUrl}/${courseId}/existing-exercise-details?exerciseType=${exerciseType}`, {
+                observe: 'response',
+            })
+            .pipe(
+                map((response) => {
+                    const details = response.body!;
+                    return {
+                        exerciseTitles: new Set(details.exerciseTitles ?? []),
+                        shortNames: new Set(details.shortNames ?? []),
+                    } as CourseExistingExerciseDetailsType;
+                }),
+            );
     }
 
     isActiveQuiz(exercise: QuizExercise) {
