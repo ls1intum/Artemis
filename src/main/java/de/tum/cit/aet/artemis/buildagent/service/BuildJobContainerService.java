@@ -45,10 +45,8 @@ import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
-import de.tum.cit.aet.artemis.programming.service.ci.DependencyDownloadScript;
 
 /**
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
@@ -300,12 +298,10 @@ public class BuildJobContainerService {
      *                                                   would be used.
      * @param solutionCheckoutPath                   The directory within the container where the solution repository should be checked out; can be null if not applicable, default
      *                                                   would be used.
-     * @param projectType                            The type of project being built, which influences the dependency download script.
-     * @param isNetworkDisabled                      Whether the network should be disabled for the container.
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
             Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage, String assignmentCheckoutPath,
-            String testCheckoutPath, String solutionCheckoutPath, ProjectType projectType, boolean isNetworkDisabled) {
+            String testCheckoutPath, String solutionCheckoutPath) {
 
         assignmentCheckoutPath = (!StringUtils.isBlank(assignmentCheckoutPath)) ? assignmentCheckoutPath
                 : RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
@@ -333,17 +329,10 @@ public class BuildJobContainerService {
                     LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
         }
 
-        createScriptFile(buildJobContainerId, isNetworkDisabled, programmingLanguage, projectType);
+        createScriptFile(buildJobContainerId);
     }
 
-    private void createScriptFile(String buildJobContainerId, boolean isNetworkDisabled, ProgrammingLanguage programmingLanguage, ProjectType projectType) {
-        if (isNetworkDisabled) {
-            String preScript = getDependencyDownloadScript(programmingLanguage, projectType);
-
-            executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "echo '" + preScript + "' > " + LOCALCI_WORKING_DIRECTORY + "/preScript.sh");
-            executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "chmod +x " + LOCALCI_WORKING_DIRECTORY + "/preScript.sh");
-        }
-
+    private void createScriptFile(String buildJobContainerId) {
         executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "echo \"$SCRIPT\" > " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
         executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "chmod +x " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
     }
@@ -479,18 +468,5 @@ public class BuildJobContainerService {
     private String getParentFolderPath(String path) {
         Path parentPath = Paths.get(path).normalize().getParent();
         return parentPath != null ? parentPath.toString() : "";
-    }
-
-    private String getDependencyDownloadScript(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
-        return switch (programmingLanguage) {
-            case JAVA -> switch (projectType) {
-                case PLAIN_MAVEN, MAVEN_BLACKBOX, MAVEN_MAVEN -> DependencyDownloadScript.MAVEN.getScript();
-                case PLAIN_GRADLE, GRADLE_GRADLE -> DependencyDownloadScript.GRADLE.getScript();
-                default -> DependencyDownloadScript.OTHER.getScript();
-            };
-            case RUST -> DependencyDownloadScript.RUST.getScript();
-            case JAVASCRIPT -> DependencyDownloadScript.JAVASCRIPT.getScript();
-            default -> DependencyDownloadScript.OTHER.getScript();
-        };
     }
 }

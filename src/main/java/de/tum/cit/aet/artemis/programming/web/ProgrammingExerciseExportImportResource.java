@@ -78,6 +78,7 @@ import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
@@ -130,13 +131,15 @@ public class ProgrammingExerciseExportImportResource {
 
     private final Optional<AthenaModuleService> athenaModuleService;
 
+    private final ProgrammingExerciseService programmingExerciseService;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService, CourseRepository courseRepository,
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService,
-            Optional<AthenaModuleService> athenaModuleService, CompetencyProgressService competencyProgressService) {
+            Optional<AthenaModuleService> athenaModuleService, CompetencyProgressService competencyProgressService, ProgrammingExerciseService programmingExerciseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -153,6 +156,7 @@ public class ProgrammingExerciseExportImportResource {
         this.consistencyCheckService = consistencyCheckService;
         this.athenaModuleService = athenaModuleService;
         this.competencyProgressService = competencyProgressService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -199,7 +203,7 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
         newExercise.validateSettingsForFeedbackRequest();
-        newExercise.validateDockerFlags();
+        programmingExerciseService.validateDockerFlags(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
