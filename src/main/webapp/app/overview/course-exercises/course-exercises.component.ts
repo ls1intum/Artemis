@@ -55,7 +55,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     sidebarData: SidebarData;
     sidebarExercises: SidebarCardElement[] = [];
     isCollapsed = false;
-    isLti = false;
+    isShownViaLti = false;
 
     protected readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
@@ -88,8 +88,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
 
-        this.ltiSubscription = this.ltiService.isLti$.subscribe((isLti) => {
-            this.isLti = isLti;
+        this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
+            this.isShownViaLti = isShownViaLti;
         });
 
         // If no exercise is selected navigate to the lastSelected or upcoming exercise
