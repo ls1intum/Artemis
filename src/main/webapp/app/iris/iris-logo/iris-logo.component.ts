@@ -28,7 +28,6 @@ export class IrisLogoComponent implements OnInit {
     classList: string;
 
     ngOnInit() {
-        console.log(this.size());
         if (this.size() === IrisLogoSize.SMALL) {
             this.logoUrl = 'public/images/iris/iris-logo-small.png';
             this.classList = 'small';

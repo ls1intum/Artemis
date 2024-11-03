@@ -4,9 +4,12 @@ import { IrisChatService } from 'app/iris/iris-chat.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
+import { TranslateFakeLoader, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
+import { SessionStorageService } from 'ngx-webstorage';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
 describe('IrisChatbotWidgetComponent', () => {
     let component: IrisChatbotWidgetComponent;
@@ -15,8 +18,56 @@ describe('IrisChatbotWidgetComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [IrisChatbotWidgetComponent, MockComponent(IrisBaseChatbotComponent)],
-            providers: [MockProvider(IrisChatService), { provide: MatDialog, useValue: { closeAll: jest.fn() } }, { provide: Router, useValue: { events: of() } }],
+            imports: [
+                MockComponent(IrisChatbotWidgetComponent),
+                HttpClientTestingModule,
+                TranslateModule.forRoot({
+                    loader: {
+                        provide: TranslateLoader,
+                        useClass: TranslateFakeLoader,
+                    },
+                }),
+                MatDialog,
+            ],
+            declarations: [IrisChatbotWidgetComponent],
+            providers: [
+                //MockProvider(IrisChatService),
+                MockProvider(SessionStorageService),
+                { provide: MatDialog, useValue: { closeAll: jest.fn() } },
+                {
+                    provide: Router,
+                    useValue: {
+                        events: of(),
+                        createUrlTree: jest.fn(() => ({})),
+                        navigateByUrl: jest.fn(),
+                        serializeUrl: jest.fn(() => 'mockUrl'),
+                    },
+                },
+                {
+                    provide: IrisChatService,
+                    useValue: {
+                        currentMessages: () => of([]), // Mocking currentMessages() to return an empty observable
+                        currentStages: () => of([]),
+                        currentError: () => of([]),
+                        currentNumNewMessages: () => of([]),
+                        currentSuggestions: () => of([]),
+                    },
+                },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ id: '123' }), // Mock any parameters you need
+                        queryParams: of({}), // Mock query parameters if necessary
+                        snapshot: {
+                            // Provide snapshot properties if used in your component
+                            paramMap: {
+                                get: () => '123', // Mock getting route parameters
+                            },
+                        },
+                    },
+                },
+                TranslateService,
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(IrisChatbotWidgetComponent);
@@ -27,7 +78,7 @@ describe('IrisChatbotWidgetComponent', () => {
     });
 
     it('should create', () => {
-        expect(fixture).toBeTruthy();
+        expect(component).toBeTruthy();
     });
 
     it('should call closeAll on dialog when closeChat is called', () => {
@@ -46,9 +97,9 @@ describe('IrisChatbotWidgetComponent', () => {
 
     it('should add or remove cdk-global-scroll class when toggleScrollLock is called', () => {
         component.toggleScrollLock(true);
-        expect(document.body.classList.contains('cdk-global-scroll')).toBeTrue();
+        expect(document.body.classList.contains('cdk-global-scroll')).toBeTruthy();
         component.toggleScrollLock(false);
-        expect(document.body.classList.contains('cdk-global-scroll')).toBeFalse();
+        expect(document.body.classList.contains('cdk-global-scroll')).toBeFalsy();
     });
 
     it('should call onResize when window is resized', () => {
@@ -69,12 +120,12 @@ describe('IrisChatbotWidgetComponent', () => {
 
         container.triggerEventHandler('mouseenter', null);
         fixture.detectChanges();
-        expect(document.body.classList.contains('cdk-global-scroll')).toBeTrue();
+        expect(document.body.classList.contains('cdk-global-scroll')).toBeTruthy();
         expect(spy).toHaveBeenCalledWith(true);
 
         container.triggerEventHandler('mouseleave', null);
         fixture.detectChanges();
-        expect(document.body.classList.contains('cdk-global-scroll')).toBeFalse();
+        expect(document.body.classList.contains('cdk-global-scroll')).toBeFalsy();
         expect(spy).toHaveBeenCalledWith(false);
     });
 });

@@ -151,6 +151,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     }
 
     ngOnDestroy() {
+        this.navigationSubscription?.unsubscribe();
         this.toggleScrollLock(false);
     }
 
