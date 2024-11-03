@@ -136,25 +136,6 @@ describe('PostReactionsBarComponent', () => {
         });
     });
 
-    it('should invoke metis service when delete icon is clicked', () => {
-        component.readOnlyMode = false;
-        component.previewMode = false;
-        jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
-        const deletePostSpy = jest.spyOn(metisService, 'deletePost');
-        component.posting = { id: 1 } as Post;
-
-        component.ngOnInit();
-        fixture.detectChanges();
-        const confirmIconDebugElement = debugElement.query(By.directive(ConfirmIconComponent));
-        expect(confirmIconDebugElement).not.toBeNull();
-
-        confirmIconDebugElement.componentInstance.confirmEvent.emit();
-        fixture.detectChanges();
-
-        expect(deletePostSpy).toHaveBeenCalledOnce();
-        expect(deletePostSpy).toHaveBeenCalledWith(component.posting);
-    });
-
     it('should display edit and delete options to the author when not in read-only or preview mode', () => {
         component.readOnlyMode = false;
         component.previewMode = false;

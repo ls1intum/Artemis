@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Posting } from 'app/entities/metis/posting.model';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
+import { MetisService } from 'app/shared/metis/metis.service';
 
 class MockPosting implements Posting {
     content: string;
@@ -19,6 +20,8 @@ class MockReactionsBar {
     checkIfPinned = jest.fn().mockReturnValue(DisplayPriority.NONE);
     selectReaction = jest.fn();
 }
+
+class MockMetisService {}
 
 @Component({
     template: `<div jhiPosting></div>`,
@@ -43,6 +46,7 @@ describe('PostingDirective', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             declarations: [TestPostingComponent],
+            providers: [{ provide: MetisService, useClass: MockMetisService }],
         }).compileComponents();
     });
 

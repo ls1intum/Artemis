@@ -43,7 +43,6 @@ describe('AnswerPostReactionsBarComponent', () => {
     let metisServiceUserIsAtLeastTutorMock: jest.SpyInstance;
     let metisServiceUserIsAtLeastInstructorMock: jest.SpyInstance;
     let metisServiceUserPostingAuthorMock: jest.SpyInstance;
-    let metisServiceDeleteAnswerPostMock: jest.SpyInstance;
     let metisServiceUpdateAnswerPostMock: jest.SpyInstance;
 
     beforeEach(() => {
@@ -78,7 +77,6 @@ describe('AnswerPostReactionsBarComponent', () => {
                 metisServiceUserIsAtLeastTutorMock = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
                 metisServiceUserIsAtLeastInstructorMock = jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
                 metisServiceUserPostingAuthorMock = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting');
-                metisServiceDeleteAnswerPostMock = jest.spyOn(metisService, 'deleteAnswerPost');
                 metisServiceUpdateAnswerPostMock = jest.spyOn(metisService, 'updateAnswerPost');
                 component = fixture.componentInstance;
                 answerPost = new AnswerPost();
@@ -160,22 +158,6 @@ describe('AnswerPostReactionsBarComponent', () => {
         fixture.detectChanges();
         expect(getEditButton()).toBeNull();
         expect(getDeleteButton()).toBeNull();
-    });
-
-    it('should invoke metis service when delete icon is clicked', () => {
-        metisServiceUserPostingAuthorMock.mockReturnValue(true);
-        component.ngOnInit();
-        fixture.detectChanges();
-
-        expect(getDeleteButton()).toBeDefined();
-        expect(getDeleteButton()).not.toBeNull();
-
-        const confirmIconComponent = getDeleteButton()!.query(By.directive(ConfirmIconComponent));
-        expect(confirmIconComponent).not.toBeNull();
-        confirmIconComponent.triggerEventHandler('confirmEvent', null);
-        fixture.detectChanges();
-
-        expect(metisServiceDeleteAnswerPostMock).toHaveBeenCalledOnce();
     });
 
     it('should emit event to create embedded view when edit icon is clicked', () => {
