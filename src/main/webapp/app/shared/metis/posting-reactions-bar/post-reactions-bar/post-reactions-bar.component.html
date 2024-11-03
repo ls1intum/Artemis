@@ -76,34 +76,37 @@
         }
     }
     <div [hidden]="readOnlyMode">
-        <ng-container *ngIf="(isAnyReactionCountAboveZero() && isEmojiCount) || !isEmojiCount">
-            <button
-                class="reaction-button clickable px-2 fs-small"
-                (click)="showReactionSelector = !showReactionSelector"
-                cdkOverlayOrigin
-                #trigger="cdkOverlayOrigin"
-                [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
-            >
-                <fa-icon [icon]="faSmile" [class.open-selector]="showReactionSelector" [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"></fa-icon>
-            </button>
+        @if ((isAnyReactionCountAboveZero() && isEmojiCount) || !isEmojiCount) {
+            <ng-container>
+                <button
+                    class="reaction-button clickable px-2 fs-small"
+                    (click)="showReactionSelector = !showReactionSelector"
+                    cdkOverlayOrigin
+                    #trigger="cdkOverlayOrigin"
+                    [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
+                >
+                    <fa-icon [icon]="faSmile" [class.open-selector]="showReactionSelector" [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"></fa-icon>
+                </button>
 
-            <ng-template
-                cdkConnectedOverlay
-                [cdkConnectedOverlayHasBackdrop]="true"
-                [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
-                [cdkConnectedOverlayOrigin]="trigger"
-                [cdkConnectedOverlayOpen]="showReactionSelector"
-                (backdropClick)="toggleEmojiSelect()"
-            >
-                <jhi-emoji-picker
-                    *ngIf="!readOnlyMode"
-                    [emojisToShowFilter]="emojisToShowFilter"
-                    (emojiSelect)="selectReaction($event)"
-                    [categoriesIcons]="categoriesIcons"
-                    [recent]="selectedCourseEmojis"
-                ></jhi-emoji-picker>
-            </ng-template>
-        </ng-container>
+                <ng-template
+                    cdkConnectedOverlay
+                    [cdkConnectedOverlayHasBackdrop]="true"
+                    [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
+                    [cdkConnectedOverlayOrigin]="trigger"
+                    [cdkConnectedOverlayOpen]="showReactionSelector"
+                    (backdropClick)="toggleEmojiSelect()"
+                >
+                    @if (!readOnlyMode) {
+                        <jhi-emoji-picker
+                            [emojisToShowFilter]="emojisToShowFilter"
+                            (emojiSelect)="selectReaction($event)"
+                            [categoriesIcons]="categoriesIcons"
+                            [recent]="selectedCourseEmojis"
+                        ></jhi-emoji-picker>
+                    }
+                </ng-template>
+            </ng-container>
+        }
 
         @if (!isEmojiCount && mayEditOrDelete) {
             <button

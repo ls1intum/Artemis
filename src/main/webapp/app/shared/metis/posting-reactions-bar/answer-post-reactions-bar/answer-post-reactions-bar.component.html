@@ -49,7 +49,7 @@
             </ng-container>
         }
         @if (!isEmojiCount && mayEditOrDelete) {
-            @if (!isAnswerOfAnnouncement) {
+            @if (!isAnswerOfAnnouncement && (isAtLeastTutorInCourse || isAuthorOfOriginalPost)) {
                 <button
                     class="reaction-button clickable px-2 fs-small resolve"
                     id="toggleElement"

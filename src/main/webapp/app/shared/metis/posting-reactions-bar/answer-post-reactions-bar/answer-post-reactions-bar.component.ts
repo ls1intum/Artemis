@@ -22,7 +22,7 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
-    mayEditOrDelete = false;
+    @Output() mayEditOrDelete = new EventEmitter<boolean>();
     readonly faPencilAlt = faPencilAlt;
     @Input() isEmojiCount: boolean = false;
     @Output() postingUpdated = new EventEmitter<void>();
@@ -68,7 +68,8 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
         const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
         const mayEditOrDeleteOtherUsersAnswer =
             (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
-        this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
+        const canEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
+        this.mayEditOrDelete.emit(canEditOrDelete);
     }
 
     editPosting() {

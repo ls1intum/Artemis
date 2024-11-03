@@ -44,9 +44,9 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     @Output() openThread = new EventEmitter<void>();
     @Input() previewMode: boolean;
     isAtLeastInstructorInCourse: boolean;
-    mayEditOrDelete = false;
+    @Output() mayEditOrDelete = new EventEmitter<boolean>();
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
-    @Input() isEmojiCount: boolean = false;
+    @Input() isEmojiCount = false;
     @Input() hoverBar: boolean = true;
     @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
 
@@ -184,6 +184,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         const isCourseWideChannel = getAsChannelDTO(this.posting.conversation)?.isCourseWide ?? false;
         const mayEditOrDeleteOtherUsersAnswer =
             (isCourseWideChannel && this.isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
-        this.mayEditOrDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
+        const canEditOrDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
+        this.mayEditOrDelete.emit(canEditOrDelete);
     }
 }

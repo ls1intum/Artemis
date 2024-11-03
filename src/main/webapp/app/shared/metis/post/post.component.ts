@@ -70,6 +70,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     contextInformation: ContextInformation;
     readonly PageType = PageType;
     readonly DisplayPriority = DisplayPriority;
+    mayEditOrDelete: boolean = false;
 
     // Icons
     readonly faBullhorn = faBullhorn;
@@ -101,6 +102,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
     isPinned(): boolean {
         return this.posting.displayPriority === DisplayPriority.PINNED;
+    }
+
+    onMayEditOrDelete(value: boolean) {
+        this.mayEditOrDelete = value;
     }
 
     onRightClick(event: MouseEvent) {

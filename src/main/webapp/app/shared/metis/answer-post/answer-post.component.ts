@@ -44,6 +44,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;
     static activeDropdownPost: AnswerPostComponent | null = null;
+    mayEditOrDelete: boolean = false;
     @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
 
     constructor(
@@ -84,6 +85,10 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
         if (mainContainer) {
             this.renderer.setStyle(mainContainer, 'overflow-y', 'auto');
         }
+    }
+
+    onMayEditOrDelete(value: boolean) {
+        this.mayEditOrDelete = value;
     }
 
     onRightClick(event: MouseEvent) {
