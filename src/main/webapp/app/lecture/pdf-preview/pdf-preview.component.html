@@ -41,7 +41,6 @@
         </div>
         @if (currentPdfUrl()) {
             <jhi-pdf-preview-thumbnail-grid-component
-                class="thumbnail-grid"
                 [currentPdfUrl]="currentPdfUrl()"
                 [appendFile]="appendFile()"
                 (isPdfLoading)="isPdfLoading.set($event)"
