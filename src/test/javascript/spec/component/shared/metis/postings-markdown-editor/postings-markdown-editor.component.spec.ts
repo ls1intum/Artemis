@@ -104,6 +104,10 @@ describe('PostingsMarkdownEditor', () => {
             location: { nativeElement: document.createElement('div') },
         };
 
+        mockEditor.getDomNode.mockReturnValue({
+            addEventListener: jest.fn(),
+        } as any);
+
         jest.clearAllMocks();
         (ListAction as any).editorsWithListener = new WeakMap<TextEditor, boolean>();
 
@@ -330,6 +334,55 @@ describe('PostingsMarkdownEditor', () => {
 
         expect(mockOverlayRef.dispose).toHaveBeenCalled();
         expect(emojiAction['overlayRef']).toBeNull();
+    });
+
+    const simulateKeydownEvent = (editor: TextEditor, key: string, modifiers: { shiftKey?: boolean; metaKey?: boolean } = {}) => {
+        const event = new KeyboardEvent('keydown', { key, ...modifiers });
+        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        const stopPropagationSpy = jest.spyOn(event, 'stopPropagation');
+
+        const addEventListenerMock = (mockEditor.getDomNode()?.addEventListener as jest.Mock).mock;
+        const keydownListener = addEventListenerMock.calls.find((call: any) => call[0] === 'keydown')[1];
+        keydownListener(event);
+
+        return { event, preventDefaultSpy, stopPropagationSpy };
+    };
+
+    it('should handle Shift+Enter correctly by inserting a single line break with prefix', () => {
+        const bulletedListAction = component.defaultActions.find((action) => action instanceof BulletedListAction) as BulletedListAction;
+
+        mockEditor.getPosition.mockReturnValue({
+            getLineNumber: () => 1,
+            getColumn: () => 6,
+        } as TextEditorPosition);
+        mockEditor.getLineText.mockReturnValue('•  First line');
+
+        bulletedListAction.run(mockEditor);
+
+        const { preventDefaultSpy } = simulateKeydownEvent(mockEditor, 'Enter', { shiftKey: true });
+
+        expect(preventDefaultSpy).toHaveBeenCalled();
+        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '\n•  ');
+        expect(mockEditor.setPosition).toHaveBeenCalledWith(new TextEditorPosition(2, 4));
+    });
+
+    it('should handle Cmd+Enter correctly without inserting double line breaks', () => {
+        const bulletedListAction = component.defaultActions.find((action) => action instanceof BulletedListAction) as BulletedListAction;
+
+        mockEditor.getPosition.mockReturnValue({
+            getLineNumber: () => 1,
+            getColumn: () => 6,
+        } as TextEditorPosition);
+        mockEditor.getLineText.mockReturnValue('•  First line');
+
+        bulletedListAction.run(mockEditor);
+
+        const { preventDefaultSpy, stopPropagationSpy } = simulateKeydownEvent(mockEditor, 'Enter', { metaKey: true });
+
+        expect(preventDefaultSpy).toHaveBeenCalled();
+        expect(stopPropagationSpy).toHaveBeenCalled();
+        expect(mockEditor.replaceTextAtRange).toHaveBeenCalledWith(expect.any(TextEditorRange), '\n•  ');
+        expect(mockEditor.setPosition).toHaveBeenCalledWith(new TextEditorPosition(2, 4));
     });
 
     const simulateListAction = (action: TextEditorAction, selectedText: string, expectedText: string, startLineNumber: number = 1) => {

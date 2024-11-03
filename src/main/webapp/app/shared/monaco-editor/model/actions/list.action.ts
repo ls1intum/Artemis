@@ -8,7 +8,7 @@ import { TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/ada
 /**
  * Abstract class representing a list action in a text editor.
  * This class handles adding and removing list prefixes and supports event listeners
- * for features like continuing lists with Shift+Enter.
+ * for features like continuing lists with Shift/Cmd+Enter.
  *
  * @abstract
  * @extends TextEditorAction
@@ -49,7 +49,7 @@ export abstract class ListAction extends TextEditorAction {
 
     /**
      * Adds or removes a list prefix from the selected text.
-     * Also handles the Shift+Enter key combination to continue the list.
+     * Also handles the Shift/Cmd+Enter key combination to continue the list.
      * @param {TextEditor} editor - The editor instance where the action is applied.
      */
     run(editor: TextEditor) {
@@ -59,6 +59,10 @@ export abstract class ListAction extends TextEditorAction {
             editor.getDomNode()?.addEventListener('keydown', (event: KeyboardEvent) => {
                 if (event.key === 'Enter' && event.shiftKey) {
                     event.preventDefault();
+                    this.handleShiftEnter(editor);
+                } else if (event.key === 'Enter' && event.metaKey) {
+                    event.preventDefault();
+                    event.stopPropagation();
                     this.handleShiftEnter(editor);
                 } else if (event.key === 'Backspace') {
                     this.handleBackspace(editor, event);
@@ -75,9 +79,16 @@ export abstract class ListAction extends TextEditorAction {
         const lines = selectedText.split('\n');
 
         // Check if the cursor is at the end of the line to add or remove the prefix
-        const position = editor.getPosition();
+        let position = editor.getPosition();
         if (position) {
             const currentLineText = editor.getLineText(position.getLineNumber());
+
+            if (!selectedText && position.getColumn() <= currentLineText.length) {
+                const endPosition = new TextEditorPosition(position.getLineNumber(), currentLineText.length + 1);
+                editor.setPosition(endPosition);
+                editor.focus();
+                position = endPosition;
+            }
 
             if (position.getColumn() === currentLineText.length + 1) {
                 const lineWithoutPrefix = this.stripAnyListPrefix(currentLineText);
