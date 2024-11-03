@@ -171,3 +171,7 @@ export function roundToNextMultiple(value: number, multiple: number, roundUp: bo
 
     return Math.floor(value / multiple) * multiple;
 }
+
+export function removeSpecialCharacters(input: string): string {
+    return input.replace(/[^a-zA-Z0-9]/g, '');
+}
