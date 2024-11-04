@@ -190,10 +190,10 @@
                         @if (!hasSidebar) {
                             <ng-container class="d-flex ms-auto" #controlsViewContainer />
                         }
-                        <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
-                        <div class="refresh-overlay" [class.active]="refreshingCourse">
-                            <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />
-                        </div>
+                        <!-- Check for !isLTI to render the router outlet only once and avoid side effects on route updates. -->
+                        @if (!isLti) {
+                            <ng-template *ngTemplateOutlet="routerOutlet" />
+                        }
                     </div>
                 }
             </mat-sidenav-content>
@@ -204,13 +204,20 @@
     @if (!hasSidebar) {
         <ng-container class="d-flex ms-auto" #controlsViewContainer />
     }
+    <!-- Check isLTI to render the router outlet only once and avoid side effects on route updates. -->
+    @if (isLti) {
+        <ng-template *ngTemplateOutlet="routerOutlet" />
+    }
+</div>
+
+<!-- TEMPLATES -->
+
+<ng-template #routerOutlet>
     <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
     <div class="refresh-overlay" [class.active]="refreshingCourse">
         <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />
     </div>
-</div>
-
-<!-- TEMPLATES -->
+</ng-template>
 
 <ng-template #courseImage let-courseImage let-courseTitle="courseTitle">
     @if (courseImage) {
