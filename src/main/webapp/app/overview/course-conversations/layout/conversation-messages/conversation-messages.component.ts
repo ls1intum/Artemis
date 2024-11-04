@@ -49,6 +49,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private scrollDebounceTime = 100; // ms
     scrollSubject = new Subject<number>();
     canStartSaving = false;
+    createdNewMessage = false;
 
     @Output() openThread = new EventEmitter<Post>();
 
@@ -149,9 +150,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     ngAfterViewInit() {
         this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
         this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
-            if (this.posts.length > 0) {
+            if (!this.createdNewMessage && this.posts.length > 0) {
                 const savedScrollId = sessionStorage.getItem(this.sessionStorageKey + this._activeConversation?.id) ?? '';
-                setTimeout(() => this.goToLastSelectedElement(parseInt(savedScrollId, 10)), 200);
+                requestAnimationFrame(() => this.goToLastSelectedElement(parseInt(savedScrollId, 10)));
+            } else {
+                this.createdNewMessage = false;
             }
         });
         this.content.nativeElement.addEventListener('scroll', () => {
@@ -268,9 +271,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     scrollToBottomOfMessages() {
         // Use setTimeout to ensure the scroll happens after the new message is rendered
-        setTimeout(() => {
+        requestAnimationFrame(() => {
             this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
-        }, 200);
+        });
     }
 
     onSearchQueryInput($event: Event) {
@@ -298,6 +301,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     };
 
     handleNewMessageCreated() {
+        this.createdNewMessage = true;
         this.createEmptyPost();
         this.scrollToBottomOfMessages();
     }
@@ -314,7 +318,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (!element) {
             this.fetchNextPage();
         } else {
-            await this.renderer.selectRootElement(element.elementRef.nativeElement, true).scrollIntoView({ behavior: 'instant', block: 'start' });
+            // We scroll to the element with a slight buffer to ensure its fully visible (-10)
+            this.content.nativeElement.scrollTop = element.elementRef.nativeElement.offsetTop - 10;
             this.canStartSaving = true;
         }
     }

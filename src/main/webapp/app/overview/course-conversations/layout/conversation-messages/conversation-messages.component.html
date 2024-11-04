@@ -69,7 +69,7 @@
                     #container
                     [ngClass]="{ 'posting-infinite-scroll-container': posts.length !== 0, 'content-height-dev': contentHeightDev, 'is-fetching-posts': isFetchingPosts }"
                     infinite-scroll
-                    class="conversation-messages-message-list"
+                    class="conversation-messages-message-list position-relative"
                     [scrollWindow]="false"
                     (scrolledUp)="fetchNextPage()"
                 >

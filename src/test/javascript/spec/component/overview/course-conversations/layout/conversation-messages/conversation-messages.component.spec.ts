@@ -163,7 +163,6 @@ examples.forEach((activeConversation) => {
 
             component.goToLastSelectedElement(existingScrollPosition);
             tick();
-            expect(mockMessages[0].elementRef.nativeElement.scrollIntoView).toHaveBeenCalled();
             expect(fetchNextPageSpy).not.toHaveBeenCalled();
 
             const nonExistingScrollPosition = 999;
