@@ -9,8 +9,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +30,10 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.command.CreateContainerResponse;
@@ -71,12 +77,46 @@ public class BuildJobExecutionService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
+    private static final Duration TEMP_DIR_RETENTION_PERIOD = Duration.ofMinutes(5);
+
     public BuildJobExecutionService(BuildJobContainerService buildJobContainerService, BuildJobGitService buildJobGitService, BuildAgentDockerService buildAgentDockerService,
             BuildLogsMap buildLogsMap) {
         this.buildJobContainerService = buildJobContainerService;
         this.buildJobGitService = buildJobGitService;
         this.buildAgentDockerService = buildAgentDockerService;
         this.buildLogsMap = buildLogsMap;
+    }
+
+    /**
+     * This method is responsible for cleaning up temporary directories that were used for checking out repositories.
+     * It is triggered when the application is ready and runs asynchronously.
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    @Async
+    public void initAsync() {
+        final ZonedDateTime currentTime = ZonedDateTime.now();
+        cleanUpTempDirectoriesAsync(currentTime);
+    }
+
+    private void cleanUpTempDirectoriesAsync(ZonedDateTime currentTime) {
+        log.info("Cleaning up temporary directories in {}", CHECKED_OUT_REPOS_TEMP_DIR);
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Path.of(CHECKED_OUT_REPOS_TEMP_DIR))) {
+            for (Path path : directoryStream) {
+                try {
+                    ZonedDateTime lastModifiedTime = ZonedDateTime.ofInstant(Files.getLastModifiedTime(path).toInstant(), currentTime.getZone());
+                    if (Files.isDirectory(path) && lastModifiedTime.isBefore(currentTime.minus(TEMP_DIR_RETENTION_PERIOD))) {
+                        FileUtils.deleteDirectory(path.toFile());
+                    }
+                }
+                catch (IOException e) {
+                    log.error("Could not delete temporary directory {}", path, e);
+                }
+            }
+        }
+        catch (IOException e) {
+            log.error("Could not delete temporary directories", e);
+        }
+        log.info("Clean up of temporary directories in {} completed.", CHECKED_OUT_REPOS_TEMP_DIR);
     }
 
     /**
@@ -512,15 +552,16 @@ public class BuildJobExecutionService {
             }
             buildJobGitService.deleteLocalRepository(repository);
         }
+        // Do not throw an exception if deletion fails. If an exception occurs, clean up will happen in the next server start.
         catch (EntityNotFoundException e) {
             msg = "Error while checking out repository";
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
-            throw new LocalCIException(msg, e);
+            log.error("Error while deleting repository with URI {} and Path {}", repositoryUri, repositoryPath, e);
         }
         catch (IOException e) {
             msg = "Error while deleting repository";
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
-            throw new LocalCIException(msg, e);
+            log.error("Error while deleting repository with URI {} and Path {}", repositoryUri, repositoryPath, e);
         }
     }
 

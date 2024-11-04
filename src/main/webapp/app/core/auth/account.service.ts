@@ -41,6 +41,7 @@ export class AccountService implements IAccountService {
     private websocketService = inject(JhiWebsocketService);
     private featureToggleService = inject(FeatureToggleService);
 
+    // cached value of the user to avoid unnecessary requests to the server
     private userIdentityValue?: User;
     private authenticated = false;
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);

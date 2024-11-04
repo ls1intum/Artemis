@@ -1,6 +1,7 @@
 import { faLink } from '@fortawesome/free-solid-svg-icons';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
+import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
 
 interface UrlArguments {
     text: string;
@@ -35,7 +36,7 @@ export class UrlAction extends TextEditorAction {
         if (!args?.text || !args?.url) {
             this.replaceTextAtCurrentSelection(editor, UrlAction.DEFAULT_INSERT_TEXT);
         } else {
-            this.replaceTextAtCurrentSelection(editor, `[${args.text}](${args.url})`);
+            this.replaceTextAtCurrentSelection(editor, `[${sanitizeStringForMarkdownEditor(args.text)}](${args.url})`);
         }
         editor.focus();
     }

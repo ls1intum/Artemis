@@ -16,7 +16,6 @@ export class FaqService {
 
     create(courseId: number, faq: Faq): Observable<EntityResponseType> {
         const copy = FaqService.convertFaqFromClient(faq);
-        copy.faqState = FaqState.ACCEPTED;
         return this.http.post<Faq>(`${this.resourceUrl}/${courseId}/faqs`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 return res;
@@ -42,6 +41,14 @@ export class FaqService {
     findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Faq[]>(`${this.resourceUrl}/${courseId}/faqs`, {
+                observe: 'response',
+            })
+            .pipe(map((res: EntityArrayResponseType) => FaqService.convertFaqCategoryArrayFromServer(res)));
+    }
+
+    findAllByCourseIdAndState(courseId: number, faqState: FaqState): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Faq[]>(`${this.resourceUrl}/${courseId}/faq-state/${faqState}`, {
                 observe: 'response',
             })
             .pipe(map((res: EntityArrayResponseType) => FaqService.convertFaqCategoryArrayFromServer(res)));
@@ -145,5 +152,11 @@ export class FaqService {
         const tokens = searchTerm.toLowerCase().split(' ');
         const faqText = `${faq.questionTitle ?? ''} ${faq.questionAnswer ?? ''}`.toLowerCase();
         return tokens.every((token) => faqText.includes(token));
+    }
+
+    findAllCategoriesByCourseIdAndCategory(courseId: number, faqState: FaqState) {
+        return this.http.get<string[]>(`${this.resourceUrl}/${courseId}/faq-categories/${faqState}`, {
+            observe: 'response',
+        });
     }
 }

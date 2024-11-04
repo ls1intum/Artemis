@@ -52,6 +52,7 @@
                         }
                     },
                     "enabled-disabled": "Enabled/Disabled",
+                    "enabledForCategories": "Automatically enable for categories",
                     "variants": {
                         "title": "Variants",
                         "allowedVariants": {

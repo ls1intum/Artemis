@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,9 +96,12 @@ public class AdminBuildJobQueueResource {
     @GetMapping("build-agent")
     public ResponseEntity<BuildAgentInformation> getBuildAgentDetails(@RequestParam String agentName) {
         log.debug("REST request to get information on build agent {}", agentName);
-        BuildAgentInformation buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream().filter(agent -> agent.name().equals(agentName)).findFirst()
-                .orElse(null);
-        return ResponseEntity.ok(buildAgentDetails);
+        Optional<BuildAgentInformation> buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream()
+                .filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst();
+        if (buildAgentDetails.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(buildAgentDetails.get());
     }
 
     /**

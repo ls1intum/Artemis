@@ -51,7 +51,7 @@ export const userManagementRoute: Route[] = [
                         path: 'edit',
                         component: UserManagementUpdateComponent,
                         data: {
-                            pageTitle: 'artemisApp.userManagement.home.createOrEditLabel',
+                            pageTitle: 'artemisApp.userManagement.home.editLabel',
                         },
                     },
                 ],

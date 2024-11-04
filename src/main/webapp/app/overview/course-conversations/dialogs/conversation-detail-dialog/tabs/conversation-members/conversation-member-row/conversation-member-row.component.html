@@ -1,16 +1,16 @@
 @if (activeConversation && course) {
     <div class="d-flex justify-content-between align-items-center conversation-member-row" (mouseleave)="$event.stopPropagation(); userDropdown.close()">
         <span class="d-inline-block">
-            @if (userImageUrl) {
-                <img
-                    [alt]="userLabel"
-                    class="conversation-member-row-profile-picture rounded-3 me-1"
-                    [src]="userImageUrl"
-                    [ngStyle]="{ 'background-color': userDefaultPictureHue }"
-                />
-            } @else {
-                <strong class="conversation-member-row-default-profile-picture rounded-3 me-1" [ngStyle]="{ 'background-color': userDefaultPictureHue }">{{ userInitials }}</strong>
-            }
+            <jhi-profile-picture
+                imageSizeInRem="2"
+                fontSizeInRem="0.8"
+                imageId="user-profile-picture"
+                defaultPictureId="user-default-profile-picture"
+                [authorId]="userId"
+                [authorName]="userName"
+                [imageUrl]="userImageUrl"
+            >
+            </jhi-profile-picture>
             @if (isChannel(activeConversation) && conversationMember?.isChannelModerator) {
                 <fa-icon [icon]="faUserGear" [ngbTooltip]="'artemisApp.dialogs.conversationDetail.memberTab.memberRow.channelModeratorTooltip' | artemisTranslate" />
             }

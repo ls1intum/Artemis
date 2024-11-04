@@ -22,6 +22,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IconCardComponent } from 'app/shared/icon-card/icon-card.component';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {
@@ -69,6 +70,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 MockComponent(FaIconComponent),
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockDirective(TranslateDirective),
+                MockComponent(ProfilePictureComponent),
             ],
             providers: [
                 provideHttpClient(),
@@ -119,6 +121,7 @@ describe('TutorialGroupDetailComponent', () => {
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockPipe(RemoveSecondsPipe),
                 MockDirective(TranslateDirective),
+                MockComponent(ProfilePictureComponent),
             ],
             providers: [MockProvider(ArtemisMarkdownService), { provide: TranslateService, useClass: MockTranslateService }, MockProvider(ChangeDetectorRef)],
         })

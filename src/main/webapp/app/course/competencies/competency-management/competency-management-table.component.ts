@@ -1,15 +1,7 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
-import {
-    CompetencyRelation,
-    CompetencyRelationDTO,
-    CompetencyWithTailRelationDTO,
-    CourseCompetency,
-    CourseCompetencyType,
-    dtoToCompetencyRelation,
-    getIcon,
-} from 'app/entities/competency.model';
+import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
@@ -30,7 +22,6 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     @Input() courseId: number;
     @Input() courseCompetencies: CourseCompetency[];
-    @Input() relations: CompetencyRelation[];
     @Input() competencyType: CourseCompetencyType;
     @Input() standardizedCompetenciesEnabled: boolean;
 
@@ -103,14 +94,7 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
      */
     updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
         const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is CourseCompetency => !!element);
-
-        const importedRelations = res
-            .map((dto) => dto.tailRelations)
-            .flat()
-            .filter((element): element is CompetencyRelationDTO => !!element)
-            .map((dto) => dtoToCompetencyRelation(dto));
         this.courseCompetencies.push(...importedCompetencies);
-        this.relations.push(...importedRelations);
     }
 
     /**

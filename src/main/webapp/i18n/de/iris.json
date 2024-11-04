@@ -52,6 +52,7 @@
                         }
                     },
                     "enabled-disabled": "Aktiviert/Deaktiviert",
+                    "enabledForCategories": "Automatisch aktivieren für Kategorien",
                     "variants": {
                         "title": "Varianten",
                         "allowedVariants": {

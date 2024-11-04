@@ -1,5 +1,5 @@
 import { Posting } from 'app/entities/metis/posting.model';
-import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnInit, Output, input, output } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UserRole } from 'app/shared/metis/metis.util';
@@ -8,8 +8,6 @@ import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
-import { getBackgroundColorHue } from 'app/utils/color.utils';
-import { getInitialsFromString } from 'app/utils/text.utils';
 
 @Directive()
 export abstract class PostingHeaderDirective<T extends Posting> implements OnInit {
@@ -18,6 +16,9 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
 
     @Input() hasChannelModerationRights = false;
     @Output() isModalOpen = new EventEmitter<void>();
+
+    isDeleted = input<boolean>(false);
+    isDeleteEvent = output<boolean>();
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     postingIsOfToday: boolean;
@@ -26,8 +27,6 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     userAuthority: string;
     userRoleBadge: string;
     userAuthorityTooltip: string;
-    userProfilePictureBackgroundColor: string;
-    userProfilePictureInitials: string;
     currentUser?: User;
 
     protected constructor(
@@ -81,8 +80,6 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     setUserAuthorityIconAndTooltip(): void {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
         const roleBadgeTranslationPath = 'artemisApp.metis.userRoles.';
-        this.userProfilePictureInitials = this.posting.author?.name === undefined ? 'NA' : getInitialsFromString(this.posting.author?.name);
-        this.userProfilePictureBackgroundColor = getBackgroundColorHue(this.posting.author?.id?.toString());
         this.userAuthorityIcon = faUser;
         if (this.posting.authorRole === UserRole.USER) {
             this.userAuthority = 'student';

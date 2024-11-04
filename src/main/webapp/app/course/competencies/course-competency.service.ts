@@ -3,6 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
     Competency,
+    CompetencyExerciseLink,
     CompetencyJol,
     CompetencyProgress,
     CompetencyRelation,
@@ -17,7 +18,6 @@ import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.uti
 import { CompetencyPageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { HttpParams } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Prerequisite } from 'app/entities/prerequisite.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { CompetencyRecommendation } from 'app/course/competencies/generate-competencies/generate-competencies.component';
@@ -192,34 +192,50 @@ export class CourseCompetencyService {
         if (res.body?.softDueDate) {
             res.body.softDueDate = convertDateFromServer(res.body.softDueDate);
         }
-        if (res.body?.lectureUnits) {
-            res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
-        }
+        res.body?.lectureUnitLinks?.forEach((lectureUnitLink) => {
+            if (lectureUnitLink.lectureUnit) {
+                lectureUnitLink.lectureUnit = this.lectureUnitService.convertLectureUnitDateFromServer(lectureUnitLink.lectureUnit);
+            }
+        });
         if (res.body?.course) {
             this.accountService.setAccessRightsForCourse(res.body.course);
         }
-        if (res.body?.exercises) {
-            res.body.exercises = ExerciseService.convertExercisesDateFromServer(res.body.exercises);
-            res.body.exercises.forEach((exercise) => {
-                ExerciseService.parseExerciseCategories(exercise);
-                this.accountService.setAccessRightsForExercise(exercise);
-            });
-        }
+        this.convertExerciseLinksFromServer(res.body?.exerciseLinks);
 
         return res;
     }
 
-    protected convertCompetencyFromClient(prerequisite: Prerequisite): Prerequisite {
-        const copy = Object.assign({}, prerequisite, {
-            softDueDate: convertDateFromClient(prerequisite.softDueDate),
+    private convertExerciseLinksFromServer(exerciseLinks: CompetencyExerciseLink[] | undefined) {
+        exerciseLinks?.forEach((exerciseLink) => {
+            exerciseLink.exercise = ExerciseService.convertExerciseDatesFromServer(exerciseLink.exercise);
+            ExerciseService.parseExerciseCategories(exerciseLink.exercise);
+            if (exerciseLink.exercise) {
+                this.accountService.setAccessRightsForExercise(exerciseLink.exercise);
+            }
         });
-        if (copy.lectureUnits) {
-            copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
-        }
-        if (copy.exercises) {
-            copy.exercises = copy.exercises.map((exercise) => ExerciseService.convertExerciseFromClient(exercise));
-        }
+    }
+
+    protected convertCompetencyFromClient(courseCompetency: CourseCompetency): CourseCompetency {
+        const copy = Object.assign({}, courseCompetency, {
+            softDueDate: convertDateFromClient(courseCompetency.softDueDate),
+        });
+
+        this.convertCompetencyLinksFromClient(copy);
+
         return copy;
+    }
+
+    private convertCompetencyLinksFromClient(courseCompetency: CourseCompetency) {
+        courseCompetency.lectureUnitLinks?.forEach((lectureUnitLink) => {
+            if (lectureUnitLink.lectureUnit) {
+                lectureUnitLink.lectureUnit = this.lectureUnitService.convertLectureUnitDatesFromClient(lectureUnitLink.lectureUnit);
+            }
+        });
+        courseCompetency.exerciseLinks?.forEach((exerciseLink) => {
+            if (exerciseLink.exercise) {
+                exerciseLink.exercise = ExerciseService.convertExerciseFromClient(exerciseLink.exercise);
+            }
+        });
     }
 
     /**
