@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, input } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
 import { IrisModule } from 'app/iris/iris.module';
 import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
@@ -10,14 +10,12 @@ import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbo
     standalone: true,
     imports: [IrisModule, IrisBaseChatbotComponent],
 })
-export class CourseChatbotComponent implements OnChanges {
-    courseId = input<number>();
+export class CourseChatbotComponent {
+    courseId = input.required<number>();
 
-    constructor(public chatService: IrisChatService) {}
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.courseId) {
+    constructor(public chatService: IrisChatService) {
+        effect(() => {
             this.chatService.switchTo(ChatServiceMode.COURSE, this.courseId());
-        }
+        });
     }
 }

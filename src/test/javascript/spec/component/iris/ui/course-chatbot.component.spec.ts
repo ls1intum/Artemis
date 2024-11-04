@@ -3,7 +3,12 @@ import { CourseChatbotComponent } from 'app/iris/course-chatbot/course-chatbot.c
 import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
-import { SimpleChange } from '@angular/core';
+import { Router } from '@angular/router';
+import { TranslateFakeLoader, TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
+import { SessionStorageService } from 'ngx-webstorage';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
 describe('CourseChatbotComponent', () => {
     let component: CourseChatbotComponent;
@@ -12,14 +17,53 @@ describe('CourseChatbotComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [CourseChatbotComponent, MockComponent(IrisBaseChatbotComponent)],
-            providers: [MockProvider(IrisChatService)],
-        }).compileComponents();
+            imports: [
+                HttpClientTestingModule,
+                TranslateModule.forRoot({
+                    loader: {
+                        provide: TranslateLoader,
+                        useClass: TranslateFakeLoader,
+                    },
+                }),
+                CourseChatbotComponent,
+            ],
+            providers: [
+                MockProvider(SessionStorageService),
+                MockComponent(IrisBaseChatbotComponent),
+                {
+                    provide: Router,
+                    useValue: {
+                        events: of(),
+                        createUrlTree: jest.fn(() => ({})),
+                        navigateByUrl: jest.fn(),
+                        serializeUrl: jest.fn(() => 'mockUrl'),
+                    },
+                },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ id: '123' }),
+                        queryParams: of({}),
+                        snapshot: {
+                            paramMap: {
+                                get: () => '123',
+                            },
+                        },
+                    },
+                },
+                TranslateService,
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(CourseChatbotComponent);
+                component = fixture.componentInstance;
 
-        fixture = TestBed.createComponent(CourseChatbotComponent);
-        component = fixture.componentInstance;
-        chatService = TestBed.inject(IrisChatService);
-        fixture.detectChanges();
+                fixture.componentRef.setInput('courseId', 2);
+
+                chatService = TestBed.inject(IrisChatService);
+                fixture.detectChanges();
+            });
     });
 
     it('should create', () => {
@@ -28,9 +72,8 @@ describe('CourseChatbotComponent', () => {
 
     it('should call switchTo when courseId changes', () => {
         const switchToSpy = jest.spyOn(chatService, 'switchTo');
-        fixture.componentRef.setInput('courseId', 2);
-        component.ngOnChanges({ courseId: new SimpleChange(null, component.courseId(), true) });
-
+        fixture.componentRef.setInput('courseId', 4);
+        fixture.detectChanges();
         expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.COURSE, component.courseId());
     });
 });
