@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, computed, inject } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, computed, inject, input, output } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -24,13 +24,13 @@ export interface TextUnitFormData {
 export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly faTimes = faTimes;
 
-    @Input() formData: TextUnitFormData;
+    formData = input<TextUnitFormData>();
 
-    @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<TextUnitFormData> = new EventEmitter<TextUnitFormData>();
+    isEditMode = input<boolean>(false);
+    formSubmitted = output<TextUnitFormData>();
 
-    @Input() hasCancelButton: boolean;
-    @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
+    hasCancelButton = input<boolean>(false);
+    onCancel = output<void>();
 
     // not included in reactive form
     content: string | undefined;
@@ -65,8 +65,8 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges(): void {
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+        if (this.isEditMode() && this.formData()) {
+            this.setFormValues(this.formData()!);
         }
     }
 
