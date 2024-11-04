@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSe
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
 /**
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.
@@ -71,10 +72,18 @@ public class SharedQueueManagementService {
 
     private ITopic<String> resumeBuildAgentTopic;
 
-    public SharedQueueManagementService(BuildJobRepository buildJobRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProfileService profileService) {
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    private long buildAgentsCapacity;
+
+    private long buildAgentsRunning;
+
+    public SharedQueueManagementService(BuildJobRepository buildJobRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProfileService profileService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.buildJobRepository = buildJobRepository;
         this.hazelcastInstance = hazelcastInstance;
         this.profileService = profileService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -289,4 +298,8 @@ public class SharedQueueManagementService {
         return new PageImpl<>(orderedBuildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.getTotalElements());
     }
 
+    public long getBuildJobEstimatedDuration(BuildJobQueueItem buildJob) {
+        var buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseIdElseThrow(buildJob.exerciseId());
+        return buildConfig.getBuildDurationSeconds();
+    }
 }

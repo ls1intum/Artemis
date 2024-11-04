@@ -85,6 +85,12 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "build_plan_access_secret", length = 36)
     private String buildPlanAccessSecret;
 
+    @Column(name = "build_duration_seconds")
+    private long buildDurationSeconds = 0;
+
+    @Column(name = "successful_build_count")
+    private long successfulBuildCount = 0;
+
     public ProgrammingExerciseBuildConfig() {
     }
 
@@ -104,6 +110,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.setAllowBranching(originalBuildConfig.isAllowBranching());
         this.setBranchRegex(originalBuildConfig.getBranchRegex());
         this.setProgrammingExercise(null);
+        this.buildDurationSeconds = originalBuildConfig.buildDurationSeconds;
         this.buildPlanAccessSecret = null;
     }
 
@@ -290,6 +297,22 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     public void setSolutionCheckoutPath(String solutionCheckoutPath) {
         this.solutionCheckoutPath = solutionCheckoutPath;
+    }
+
+    public long getBuildDurationSeconds() {
+        return buildDurationSeconds;
+    }
+
+    public void setBuildDurationSeconds(long buildDurationSeconds) {
+        this.buildDurationSeconds = buildDurationSeconds;
+    }
+
+    public long getSuccessfulBuildCount() {
+        return successfulBuildCount;
+    }
+
+    public void setSuccessfulBuildCount(long successfulBuildCount) {
+        this.successfulBuildCount = successfulBuildCount;
     }
 
     @Override
