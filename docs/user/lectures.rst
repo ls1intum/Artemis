@@ -178,15 +178,15 @@ See :ref:`Adaptive Learning <adaptive-learning>` for more information.
 .. |units-management| image:: lectures/units-management.png
     :width: 800
 .. |create-online-unit| image:: lectures/create-online-unit.png
-    :width: 800
+    :width: 1000
 .. |create-text-unit| image:: lectures/create-text-unit.png
-    :width: 800
+    :width: 1000
 .. |create-video-unit| image:: lectures/create-video-unit.png
-    :width: 800
+    :width: 1000
 .. |create-attachment-unit| image:: lectures/create-attachment-unit.png
-    :width: 800
+    :width: 1000
 .. |create-exercise-unit| image:: lectures/create-exercise-unit.png
-    :width: 800
+    :width: 1000
 .. |process-units-checkbox| image:: lectures/process-units-checkbox.png
    :width: 120
 .. |process-units-btn| image:: lectures/process-units-btn.png
