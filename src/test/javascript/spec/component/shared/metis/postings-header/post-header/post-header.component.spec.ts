@@ -29,7 +29,6 @@ describe('PostHeaderComponent', () => {
     let metisServiceUserIsAtLeastTutorStub: jest.SpyInstance;
     let metisServiceUserIsAtLeastInstructorStub: jest.SpyInstance;
     let metisServiceUserIsAuthorOfPostingStub: jest.SpyInstance;
-    let metisServiceDeletePostMock: jest.SpyInstance;
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip), MockModule(MetisModule)],
@@ -54,7 +53,6 @@ describe('PostHeaderComponent', () => {
                 metisServiceUserIsAtLeastTutorStub = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
                 metisServiceUserIsAtLeastInstructorStub = jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
                 metisServiceUserIsAuthorOfPostingStub = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting');
-                metisServiceDeletePostMock = jest.spyOn(metisService, 'deletePost');
                 debugElement = fixture.debugElement;
                 component.posting = metisPostLectureUser1;
                 component.ngOnInit();
@@ -111,14 +109,6 @@ describe('PostHeaderComponent', () => {
         expect(getElement(debugElement, '.deleteIcon')).toBeNull();
     });
 
-    it('should invoke metis service when delete icon is clicked', () => {
-        metisServiceUserIsAtLeastTutorStub.mockReturnValue(true);
-        fixture.detectChanges();
-        expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
-        component.deletePosting();
-        expect(metisServiceDeletePostMock).toHaveBeenCalledOnce();
-    });
-
     it('should not display edit and delete options to tutor if posting is announcement', () => {
         metisServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
         component.posting = metisAnnouncement;
@@ -135,6 +125,15 @@ describe('PostHeaderComponent', () => {
         fixture.detectChanges();
         expect(getElement(debugElement, '.editIcon')).not.toBeNull();
         expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
+    });
+
+    it('should not display edit and delete options when post is deleted', () => {
+        fixture.componentRef.setInput('isDeleted', true);
+        component.ngOnInit();
+        fixture.detectChanges();
+        expect(getElement(debugElement, '.editIcon')).toBeNull();
+        expect(getElement(debugElement, '.deleteIcon')).toBeNull();
+        fixture.componentRef.setInput('isDeleted', false);
     });
 
     it.each`

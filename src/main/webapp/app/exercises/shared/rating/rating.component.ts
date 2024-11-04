@@ -15,6 +15,7 @@ export class RatingComponent implements OnInit, OnChanges {
     public rating: number;
     public disableRating = false;
     @Input() result?: Result;
+    private previousResultId?: number;
 
     constructor(
         private ratingService: RatingService,
@@ -26,7 +27,8 @@ export class RatingComponent implements OnInit, OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes['result'] && !changes['result'].isFirstChange()) {
+        if (changes['result'] && changes['result'].currentValue?.id !== this.previousResultId) {
+            this.previousResultId = changes['result'].currentValue?.id;
             this.loadRating();
         }
     }
