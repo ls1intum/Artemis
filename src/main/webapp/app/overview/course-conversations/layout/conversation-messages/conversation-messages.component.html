@@ -71,12 +71,8 @@
                         'posting-infinite-scroll-container': posts.length !== 0,
                         'content-height-dev': contentHeightDev,
                         'is-fetching-posts': isFetchingPosts,
-                        'hide-input-full':
-                            getAsChannel(_activeConversation)?.isAnnouncementChannel &&
-                            _activeConversation !== undefined &&
-                            !canCreateNewMessageInConversation(_activeConversation),
-                        'hide-input':
-                            getAsChannel(_activeConversation)?.isAnnouncementChannel && _activeConversation !== undefined && canCreateNewMessageInConversation(_activeConversation),
+                        'hide-input-full': isHiddenInputFull,
+                        'hide-input': isHiddenInputWithCallToAction,
                     }"
                     infinite-scroll
                     class="conversation-messages-message-list"
