@@ -316,6 +316,7 @@
                 "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint.",
                 "presented": "Presented",
                 "presentation": "Presentation",
+                "selectExercise": "Please select an Exercise.",
                 "status": "Status"
             }
         }

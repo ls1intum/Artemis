@@ -152,10 +152,15 @@
                                     class="btn btn-sidebar-collapse me-3 btn-sm rounded-3"
                                     (click)="toggleSidebar()"
                                 >
-                                    <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary" size="lg" />
-                                    <div class="btn-sidebar-collapse-chevron">
-                                        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="text-secondary btn-sidebar-collapse-chevron-start" size="xs" />
-                                        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="text-secondary" size="xs" />
+                                    <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary d-flex justify-content-center align-items-center" size="lg" />
+                                    <div class="btn-sidebar-collapse-chevron d-flex gap-1">
+                                        <fa-icon
+                                            [fixedWidth]="true"
+                                            [icon]="faChevronRight"
+                                            class="text-secondary btn-sidebar-collapse-chevron-start d-flex justify-content-center align-items-center"
+                                            size="xs"
+                                        />
+                                        <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="text-secondary d-flex justify-content-center align-items-center" size="xs" />
                                     </div>
                                 </button>
                             }
