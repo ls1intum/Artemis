@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, EventEmitter, Input, OnChanges, Output, computed, inject } from '@angular/core';
+import { Component, OnChanges, computed, inject, input, output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { map } from 'rxjs';
@@ -37,13 +37,13 @@ export class OnlineUnitFormComponent implements OnChanges {
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faTimes = faTimes;
 
-    @Input() formData: OnlineUnitFormData;
-    @Input() isEditMode = false;
+    formData = input<OnlineUnitFormData>();
+    isEditMode = input<boolean>(false);
 
-    @Output() formSubmitted: EventEmitter<OnlineUnitFormData> = new EventEmitter<OnlineUnitFormData>();
+    formSubmitted = output<OnlineUnitFormData>();
 
-    @Input() hasCancelButton: boolean;
-    @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
+    hasCancelButton = input<boolean>(false);
+    onCancel = output<void>();
 
     urlValidator = urlValidator;
 
@@ -78,8 +78,8 @@ export class OnlineUnitFormComponent implements OnChanges {
     }
 
     ngOnChanges(): void {
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+        if (this.isEditMode() && this.formData()) {
+            this.setFormValues(this.formData()!);
         }
     }
 

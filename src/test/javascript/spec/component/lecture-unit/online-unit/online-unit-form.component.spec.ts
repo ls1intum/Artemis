@@ -121,7 +121,7 @@ describe('OnlineUnitFormComponent', () => {
     });
 
     it('should correctly set form values in edit mode', () => {
-        onlineUnitFormComponent.isEditMode = true;
+        onlineUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
         const formData: OnlineUnitFormData = {
             name: 'test',
             description: 'lorem ipsum',
@@ -130,7 +130,7 @@ describe('OnlineUnitFormComponent', () => {
         };
         onlineUnitFormComponentFixture.detectChanges();
 
-        onlineUnitFormComponent.formData = formData;
+        onlineUnitFormComponentFixture.componentRef.setInput('formData', formData);
         onlineUnitFormComponent.ngOnChanges();
 
         expect(onlineUnitFormComponent.nameControl?.value).toEqual(formData.name);
@@ -151,10 +151,10 @@ describe('OnlineUnitFormComponent', () => {
         const getOnlineResourceStub = jest.spyOn(onlineUnitService, 'getOnlineResource').mockReturnValue(of(response));
 
         onlineUnitFormComponentFixture.detectChanges();
-        onlineUnitFormComponent.isEditMode = true;
-        onlineUnitFormComponent.formData = {
+        onlineUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+        onlineUnitFormComponentFixture.componentRef.setInput('formData', {
             source: 'example.com',
-        };
+        });
         onlineUnitFormComponent.ngOnChanges();
 
         // WHEN
