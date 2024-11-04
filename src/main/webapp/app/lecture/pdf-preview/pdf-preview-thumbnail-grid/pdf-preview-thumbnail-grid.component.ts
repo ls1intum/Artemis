@@ -135,15 +135,19 @@ export class PdfPreviewThumbnailGridComponent {
 
         const overlay = this.createOverlay(pageIndex);
         const checkbox = this.createCheckbox(pageIndex);
+        const hideShowIcon = this.createHideShowIcon(pageIndex);
         container.appendChild(canvas);
         container.appendChild(overlay);
         container.appendChild(checkbox);
+        container.appendChild(hideShowIcon);
 
         container.addEventListener('mouseenter', () => {
             overlay.style.opacity = '1';
+            hideShowIcon.style.opacity = '1';
         });
         container.addEventListener('mouseleave', () => {
             overlay.style.opacity = '0';
+            hideShowIcon.style.opacity = '0';
         });
         overlay.addEventListener('click', () => this.displayEnlargedCanvas(canvas));
 
@@ -165,6 +169,11 @@ export class PdfPreviewThumbnailGridComponent {
         return overlay;
     }
 
+    /**
+     * Generates a checkbox for each PDF page to allow for selection of pages.
+     * @param pageIndex The index of the page.
+     * @returns An input element styled as a checkbox.
+     */
     private createCheckbox(pageIndex: number): HTMLDivElement {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -183,9 +192,19 @@ export class PdfPreviewThumbnailGridComponent {
         return checkbox;
     }
 
+    private createHideShowIcon(pageIndex: number): HTMLAnchorElement {
+        const icon = document.createElement('a');
+        icon.type = 'button';
+        icon.id = `hide-icon-${String(pageIndex)}`;
+        icon.className = 'btn btn-secondary';
+        icon.innerHTML = `<i class="fa fa-eye-slash" style="color: white"></i>`;
+        icon.style.cssText = `opacity: 0; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); color: gray; cursor: pointer; z-index: 4;`;
+        return icon;
+    }
+
     /**
      * Displays the selected PDF page in an enlarged view for detailed examination.
-     * @param originalCanvas - The original canvas element of the PDF page to be enlarged.
+     * @param originalCanvas - The originala canvas element of the PDF page to be enlarged.
      * */
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         this.originalCanvas.set(originalCanvas);
