@@ -88,4 +88,8 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     openCreateAnswerPostModal() {
         this.createAnswerPostModalComponent.open();
     }
+
+    protected postsTrackByFn(index: number, post: Post): number {
+        return post.id!;
+    }
 }

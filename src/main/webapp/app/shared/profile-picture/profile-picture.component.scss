@@ -4,8 +4,12 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--gray-400);
+    background-color: var(--gray-600);
     color: var(--white);
+
+    &.is-grayscale {
+        filter: grayscale(100%);
+    }
 }
 
 .profile-picture-wrap {
