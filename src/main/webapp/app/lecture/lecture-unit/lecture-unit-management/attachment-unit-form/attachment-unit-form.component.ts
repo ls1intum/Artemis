@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnChanges, ViewChild, computed, inject, input, output, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -38,13 +38,13 @@ export class AttachmentUnitFormComponent implements OnChanges {
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
-    @Input() formData: AttachmentUnitFormData;
-    @Input() isEditMode = false;
+    formData = input<AttachmentUnitFormData>();
+    isEditMode = input<boolean>(false);
 
-    @Output() formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
+    formSubmitted = output<AttachmentUnitFormData>();
 
-    @Input() hasCancelButton: boolean;
-    @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
+    hasCancelButton = input<boolean>(false);
+    onCancel = output<void>();
 
     // have to handle the file input as a special case at is not part of the reactive form
     @ViewChild('fileInput', { static: false })
@@ -71,8 +71,8 @@ export class AttachmentUnitFormComponent implements OnChanges {
     });
 
     ngOnChanges(): void {
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+        if (this.isEditMode() && this.formData()) {
+            this.setFormValues(this.formData()!);
         }
     }
 

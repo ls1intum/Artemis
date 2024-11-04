@@ -45,7 +45,7 @@ describe('AttachmentUnitFormComponent', () => {
     it('should correctly set form values in edit mode', () => {
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
-        attachmentUnitFormComponent.isEditMode = true;
+        attachmentUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
         const formData: AttachmentUnitFormData = {
             formProperties: {
                 name: 'test',
@@ -61,7 +61,7 @@ describe('AttachmentUnitFormComponent', () => {
         };
         attachmentUnitFormComponentFixture.detectChanges();
 
-        attachmentUnitFormComponent.formData = formData;
+        attachmentUnitFormComponentFixture.componentRef.setInput('formData', formData);
         attachmentUnitFormComponent.ngOnChanges();
 
         expect(attachmentUnitFormComponent.nameControl?.value).toEqual(formData.formProperties.name);
