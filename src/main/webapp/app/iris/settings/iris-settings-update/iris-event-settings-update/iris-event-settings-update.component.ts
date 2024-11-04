@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, computed, signal } from '@angular/core';
+import { Component, EventEmitter, Output, computed, input, signal } from '@angular/core';
 import { IrisEventSettings } from 'app/entities/iris/settings/iris-event-settings.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,29 +12,19 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     templateUrl: './iris-event-settings-update.component.html',
 })
 export class IrisEventSettingsUpdateComponent {
-    @Input({ required: true }) set eventSettings(value: IrisEventSettings) {
-        this.settingsSignal.set(value);
-    }
+    private settingsSignal = input.required<IrisEventSettings>({});
 
-    @Input({ required: true }) set proactivityDisabled(value: boolean) {
-        this.proactivityDisabledSignal.set(value);
-    }
-    @Input() settingsType!: IrisSettingsType;
-    @Input() parentEventSettings?: IrisEventSettings;
+    proactivityDisabled = input.required<boolean>();
+    settingsType = input.required<IrisSettingsType>();
+    parentEventSettings = input<IrisEventSettings>();
 
     @Output() eventSettingsChange = new EventEmitter<IrisEventSettings>();
 
-    private settingsSignal = signal<IrisEventSettings>({} as IrisEventSettings);
-    private proactivityDisabledSignal = signal(false);
-
-    inheritDisabled = computed(() =>
-        this.parentEventSettings !== undefined ? this.proactivityDisabledSignal() || !this.parentEventSettings.enabled : this.proactivityDisabledSignal(),
-    );
-    isSettingsSwitchDisabled = computed(() => (!this.isAdmin() && this.settingsType !== IrisSettingsType.EXERCISE) || this.inheritDisabled());
+    inheritDisabled = computed(() => (this.parentEventSettings() !== undefined ? !this.parentEventSettings()!.enabled : false));
+    isSettingsSwitchDisabled = computed(() => (!this.isAdmin() && this.settingsType() !== IrisSettingsType.EXERCISE) || this.inheritDisabled());
 
     // Computed properties
-    settings = computed(() => this.settingsSignal());
-    enabled = computed(() => this.settings().enabled);
+    enabled = computed(() => this.settingsSignal().enabled);
     isAdmin = signal(false);
 
     // Constants
@@ -45,8 +35,7 @@ export class IrisEventSettingsUpdateComponent {
     }
 
     updateSetting(key: keyof IrisEventSettings, value: any) {
-        const updatedSettings = { ...this.settings(), [key]: value };
-        this.settingsSignal.set(updatedSettings);
+        const updatedSettings = { ...this.settingsSignal(), [key]: value };
         this.eventSettingsChange.emit(updatedSettings);
     }
 }
