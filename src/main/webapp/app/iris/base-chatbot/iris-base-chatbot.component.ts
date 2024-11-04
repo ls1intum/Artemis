@@ -126,10 +126,10 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     closeClicked = output<void>();
 
     // ViewChildren
-    messagesElement = viewChild<ElementRef>('messagesElement');
-    scrollArrow = viewChild<ElementRef>('scrollArrow');
-    messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
-    acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
+    messagesElement = viewChild.required<ElementRef>('messagesElement');
+    scrollArrow = viewChild.required<ElementRef>('scrollArrow');
+    messageTextarea = viewChild.required<ElementRef<HTMLTextAreaElement>>('messageTextarea');
+    acceptButton = viewChild.required<ElementRef<HTMLButtonElement>>('acceptButton');
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
