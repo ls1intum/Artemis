@@ -21,24 +21,30 @@ import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachm
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
 import * as monaco from 'monaco-editor';
+import { MockClipboardItem } from '../../../helpers/mocks/service/mock-clipboard-item';
 
 describe('MonacoEditorActionIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let comp: MonacoEditorComponent;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MonacoEditorComponent],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(MonacoEditorComponent);
-                comp = fixture.componentInstance;
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-                fixture.detectChanges();
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(MonacoEditorComponent);
+        comp = fixture.componentInstance;
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
+
+        Object.assign(navigator, {
+            clipboard: {
+                read: jest.fn(),
+            },
+        });
+
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -64,6 +70,46 @@ describe('MonacoEditorActionIntegration', () => {
         comp.setText('');
         action.executeInCurrentEditor();
         expect(comp.getText()).toBe(defaultText);
+    });
+
+    it('should not access the clipboard if no upload callback is specified', async () => {
+        const clipboardReadSpy = jest.spyOn(navigator.clipboard, 'read');
+        const addPasteListenerSpy = jest.spyOn(comp['textEditorAdapter'], 'addPasteListener');
+        const action = new AttachmentAction();
+        comp.registerAction(action);
+        // The addPasteListenerSpy should have received a function that does not result in the clipboard being read when called.
+        expect(addPasteListenerSpy).toHaveBeenCalled();
+        const pasteListener = addPasteListenerSpy.mock.calls[0][0];
+        expect(pasteListener).toBeDefined();
+        await pasteListener('');
+        expect(clipboardReadSpy).not.toHaveBeenCalled();
+    });
+
+    it('should process files from the clipboard', async () => {
+        const imageBlob = new Blob([]);
+        const imageClipboardItem: MockClipboardItem = {
+            types: ['image/png'],
+            getType: jest.fn().mockResolvedValue(imageBlob),
+        };
+
+        const nonImageBlob = new Blob(['Sample text content']);
+        const textClipboardItem: MockClipboardItem = {
+            types: ['text/plain'],
+            getType: jest.fn().mockResolvedValue(nonImageBlob),
+        };
+
+        // Mock the clipboard read function to return the created ClipboardItems
+        const clipboardReadSpy = jest.spyOn(navigator.clipboard, 'read').mockResolvedValue([imageClipboardItem, textClipboardItem]);
+        const addPasteListenerSpy = jest.spyOn(comp['textEditorAdapter'], 'addPasteListener');
+        const uploadCallback = jest.fn();
+        const action = new AttachmentAction();
+        action.setUploadCallback(uploadCallback);
+        comp.registerAction(action);
+        const pasteListener = addPasteListenerSpy.mock.calls[0][0];
+        expect(pasteListener).toBeDefined();
+        await pasteListener('');
+        expect(clipboardReadSpy).toHaveBeenCalledOnce();
+        expect(uploadCallback).toHaveBeenCalledExactlyOnceWith([new File([imageBlob], 'image.png', { type: 'image/png' })]);
     });
 
     it('should insert unordered list', () => {
