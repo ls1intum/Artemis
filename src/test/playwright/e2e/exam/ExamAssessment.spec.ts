@@ -222,7 +222,7 @@ test.describe('Exam grading', () => {
     });
 });
 
-test.describe('Exam statistics', () => {
+test.describe('Exam statistics', { tag: '@slow' }, () => {
     let exercise: Exercise;
     const students = [studentOne, studentTwo, studentThree, studentFour];
 
