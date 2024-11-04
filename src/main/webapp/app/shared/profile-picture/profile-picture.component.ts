@@ -24,6 +24,7 @@ export class ProfilePictureComponent implements OnInit, OnChanges {
     readonly imageId = input<string>('');
     readonly defaultPictureId = input<string>('');
     readonly isEditable = input<boolean>(false);
+    readonly isGray = input<boolean>(false);
 
     profilePictureBackgroundColor: string;
     userProfilePictureInitials: string;
