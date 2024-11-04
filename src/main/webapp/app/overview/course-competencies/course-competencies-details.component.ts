@@ -1,7 +1,18 @@
 import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Competency, CompetencyJol, CompetencyProgress, ConfidenceReason, getConfidence, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
+import {
+    Competency,
+    CompetencyJol,
+    CompetencyLectureUnitLink,
+    CompetencyProgress,
+    ConfidenceReason,
+    MEDIUM_COMPETENCY_LINK_WEIGHT,
+    getConfidence,
+    getIcon,
+    getMastery,
+    getProgress,
+} from 'app/entities/competency.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -107,22 +118,30 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                     }
                 }
 
-                if (this.competency && this.competency.exercises) {
-                    // Add exercises as lecture units for display
-                    this.competency.lectureUnits = this.competency.lectureUnits ?? [];
-                    this.competency.lectureUnits.push(
-                        ...this.competency.exercises.map((exercise) => {
-                            const exerciseUnit = new ExerciseUnit();
-                            exerciseUnit.id = exercise.id;
-                            exerciseUnit.exercise = exercise;
-                            return exerciseUnit as LectureUnit;
-                        }),
-                    );
-                }
+                this.handleExerciseLinks();
+
                 this.isLoading = false;
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
+    }
+
+    /**
+     * Add exercises as lecture units for display
+     * @private
+     */
+    private handleExerciseLinks() {
+        if (this.competency.exerciseLinks) {
+            this.competency.lectureUnitLinks = this.competency.lectureUnitLinks ?? [];
+            this.competency.lectureUnitLinks.push(
+                ...this.competency.exerciseLinks.map((exerciseLink) => {
+                    const exerciseUnit = new ExerciseUnit();
+                    exerciseUnit.id = exerciseLink.exercise?.id;
+                    exerciseUnit.exercise = exerciseLink.exercise;
+                    return new CompetencyLectureUnitLink(this.competency, exerciseUnit as LectureUnit, MEDIUM_COMPETENCY_LINK_WEIGHT);
+                }),
+            );
+        }
     }
 
     showFireworksIfMastered() {
