@@ -422,8 +422,8 @@ This section is optional. In most cases, the default container configuration doe
 
 Currently, instructors can only change whether the container has internet access and to add additional environment variables.
 Disabling internet access can be useful if instructors want to prevent students from downloading additional dependencies during the build process.
-If internet access is disabled, the container will still be able to download dependencies before the build process starts. Therefore, if the exercise requires external dependencies, they can still be downloaded.
-After downloading the dependencies, the internet connection will be disabled for the rest of the build process.
+If internet access is disabled, the container will not be able to access the internet during the build process. Thus it will not be able to download additional dependencies.
+The dependencies must then be included/cached in the docker image.
 
 Additional environment variables can be added to the container configuration. This can be useful if the build process requires additional environment variables to be set.
 Keys and values can be wrapped in single or double quotes. The keys and values must be separated by an equal sign. Multiple key-value pairs can be added by separating them with a comma with no space in between.
