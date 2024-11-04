@@ -48,7 +48,7 @@
                 }
             </ng-container>
         }
-        @if (!isEmojiCount && mayEditOrDelete) {
+        @if (!isEmojiCount) {
             @if (!isAnswerOfAnnouncement && (isAtLeastTutorInCourse || isAuthorOfOriginalPost)) {
                 <button
                     class="reaction-button clickable px-2 fs-small resolve"
@@ -73,18 +73,20 @@
                     }
                 </button>
             }
-            <button class="reaction-button clickable px-2 fs-small edit" (click)="editPosting()" [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate">
-                <fa-icon [icon]="faPencilAlt" cdkOverlayOrigin></fa-icon>
-            </button>
+            @if (mayEditOrDelete) {
+                <button class="reaction-button clickable px-2 fs-small edit" (click)="editPosting()" [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate">
+                    <fa-icon [icon]="faPencilAlt" cdkOverlayOrigin></fa-icon>
+                </button>
 
-            <button class="reaction-button clickable px-2 fs-small delete">
-                <jhi-confirm-icon
-                    iconSize="sm"
-                    (confirmEvent)="deletePosting()"
-                    [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
-                    [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
-                />
-            </button>
+                <button class="reaction-button clickable px-2 fs-small delete">
+                    <jhi-confirm-icon
+                        iconSize="sm"
+                        (confirmEvent)="deletePosting()"
+                        [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
+                        [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
+                    />
+                </button>
+            }
         }
     </div>
     <!-- add new answer to expanded discussion -->
