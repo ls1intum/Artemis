@@ -7,7 +7,7 @@
 }
 @if (asQuizExercise(exercise).isActiveQuiz && showTags.quizLive) {
     <span [ngClass]="isSmall ? 'small' : 'fw-medium h4'">
-        <span class="badge bg-success">{{ 'artemisApp.courseOverview.exerciseList.live' | artemisTranslate }}</span>
+        <span class="badge bg-success" jhiTranslate="artemisApp.courseOverview.exerciseList.live"></span>
     </span>
 }
 @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY && showTags.includedInScore) {

@@ -15,7 +15,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
 import { DateContent, InformationBox, StringNumberContent } from 'app/shared/information-box/information-box.component';
 

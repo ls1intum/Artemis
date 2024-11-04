@@ -104,8 +104,8 @@ export class ExamStartInformationComponent implements OnInit {
         const informationBoxTotalWorkingTime = this.buildInformationBox('artemisApp.exam.workingTime', boxContentExamWorkingTime, true);
         this.examInformationBoxData.push(informationBoxTotalWorkingTime);
         const boxContentTotalPoints: InformationBoxContent = {
-            type: 'dateTime',
-            value: this.totalPoints?.toString(),
+            type: 'string',
+            value: this.totalPoints?.toString() ?? '',
         };
 
         const informationBoxTotalPoints = this.buildInformationBox('artemisApp.exam.points', boxContentTotalPoints);
