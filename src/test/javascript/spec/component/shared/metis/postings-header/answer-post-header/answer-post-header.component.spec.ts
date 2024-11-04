@@ -32,7 +32,6 @@ describe('AnswerPostHeaderComponent', () => {
     let metisServiceUserIsAtLeastTutorMock: jest.SpyInstance;
     let metisServiceUserIsAtLeastInstructorMock: jest.SpyInstance;
     let metisServiceUserPostingAuthorMock: jest.SpyInstance;
-    let metisServiceDeleteAnswerPostMock: jest.SpyInstance;
     let metisServiceUpdateAnswerPostMock: jest.SpyInstance;
 
     const yesterday: dayjs.Dayjs = dayjs().subtract(1, 'day');
@@ -70,7 +69,6 @@ describe('AnswerPostHeaderComponent', () => {
                 metisServiceUserIsAtLeastTutorMock = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
                 metisServiceUserIsAtLeastInstructorMock = jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
                 metisServiceUserPostingAuthorMock = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting');
-                metisServiceDeleteAnswerPostMock = jest.spyOn(metisService, 'deleteAnswerPost');
                 metisServiceUpdateAnswerPostMock = jest.spyOn(metisService, 'updateAnswerPost');
                 debugElement = fixture.debugElement;
                 component.posting = metisResolvingAnswerPostUser1;
@@ -190,12 +188,13 @@ describe('AnswerPostHeaderComponent', () => {
         expect(openPostingCreateEditModalEmitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should invoke metis service when delete icon is clicked', () => {
-        metisServiceUserIsAtLeastTutorMock.mockReturnValue(true);
+    it('should not display edit and delete options when post is deleted', () => {
+        fixture.componentRef.setInput('isDeleted', true);
+        component.ngOnInit();
         fixture.detectChanges();
-        expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
-        component.deletePosting();
-        expect(metisServiceDeleteAnswerPostMock).toHaveBeenCalledOnce();
+        expect(getElement(debugElement, '.editIcon')).toBeNull();
+        expect(getElement(debugElement, '.deleteIcon')).toBeNull();
+        fixture.componentRef.setInput('isDeleted', false);
     });
 
     it('should invoke metis service when toggle resolve is clicked as tutor', () => {
@@ -207,13 +206,5 @@ describe('AnswerPostHeaderComponent', () => {
         component.toggleResolvesPost();
         expect(component.posting.resolvesPost).toEqual(!previousState);
         expect(metisServiceUpdateAnswerPostMock).toHaveBeenCalledOnce();
-    });
-
-    it('should invoke metis service when toggle resolve is clicked as post author', () => {
-        metisServiceUserIsAtLeastTutorMock.mockReturnValue(true);
-        fixture.detectChanges();
-        expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
-        component.deletePosting();
-        expect(metisServiceDeleteAnswerPostMock).toHaveBeenCalledOnce();
     });
 });

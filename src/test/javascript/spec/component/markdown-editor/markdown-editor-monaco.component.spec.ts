@@ -152,6 +152,21 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(alertSpy).toHaveBeenCalledOnce();
     }));
 
+    it('should set the upload callback on the attachment actions', () => {
+        const attachmentAction = new AttachmentAction();
+        const setUploadCallbackSpy = jest.spyOn(attachmentAction, 'setUploadCallback');
+        const embedFilesStub = jest.spyOn(comp, 'embedFiles').mockImplementation();
+        comp.defaultActions = [attachmentAction];
+        comp.enableFileUpload = true;
+        fixture.detectChanges();
+        expect(setUploadCallbackSpy).toHaveBeenCalledOnce();
+        // Check if the correct function is passed to the action.
+        const argument = setUploadCallbackSpy.mock.calls[0][0];
+        expect(argument).toBeDefined();
+        argument!([]);
+        expect(embedFilesStub).toHaveBeenCalledExactlyOnceWith([]);
+    });
+
     it('should embed image and .pdf files', fakeAsync(() => {
         const urlAction = new UrlAction();
         const urlStub = jest.spyOn(urlAction, 'executeInCurrentEditor').mockImplementation();
@@ -178,6 +193,29 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(attachmentStub).toHaveBeenCalledExactlyOnceWith({ url: fileInformation[0].url, text: fileInformation[0].file.name });
         expect(urlStub).toHaveBeenCalledExactlyOnceWith({ url: fileInformation[1].url, text: fileInformation[1].file.name });
     }));
+
+    it('should not embed files if file upload is disabled', () => {
+        const urlAction = new UrlAction();
+        const urlStub = jest.spyOn(urlAction, 'executeInCurrentEditor').mockImplementation();
+        const attachmentAction = new AttachmentAction();
+        const attachmentStub = jest.spyOn(attachmentAction, 'executeInCurrentEditor').mockImplementation();
+        const files = [new File([''], 'test.png'), new File([''], 'test.pdf')];
+        comp.defaultActions = [urlAction, attachmentAction];
+        comp.enableFileUpload = false;
+        fixture.detectChanges();
+        comp.embedFiles(files);
+        expect(urlStub).not.toHaveBeenCalled();
+        expect(attachmentStub).not.toHaveBeenCalled();
+    });
+
+    it('should execute the action when clicked', () => {
+        const action = new UrlAction();
+        const executeInCurrentEditorStub = jest.spyOn(action, 'executeInCurrentEditor').mockImplementation();
+        comp.defaultActions = [action];
+        fixture.detectChanges();
+        comp.handleActionClick(new MouseEvent('click'), action);
+        expect(executeInCurrentEditorStub).toHaveBeenCalledOnce();
+    });
 
     it('should open the color selector', () => {
         fixture.detectChanges();

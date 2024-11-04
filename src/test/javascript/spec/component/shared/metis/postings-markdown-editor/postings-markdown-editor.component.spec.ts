@@ -70,6 +70,7 @@ describe('PostingsMarkdownEditor', () => {
         setSelection: jest.fn(),
         revealRange: jest.fn(),
         addCompleter: jest.fn(),
+        addPasteListener: jest.fn(),
     };
 
     const mockPositionStrategy = {
