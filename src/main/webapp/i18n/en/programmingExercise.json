@@ -601,7 +601,7 @@
                     },
                     "submission_penalty": {
                         "title": "Submission Penalty",
-                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. The penalty for this exercise is -{{points}} points"
+                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. The penalty for this exercise is -{{points}} points."
                     }
                 },
                 "submissionLimitTitle": "Submissions",
