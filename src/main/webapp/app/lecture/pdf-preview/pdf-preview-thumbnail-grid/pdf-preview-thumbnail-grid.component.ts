@@ -135,20 +135,22 @@ export class PdfPreviewThumbnailGridComponent {
 
         const overlay = this.createOverlay(pageIndex);
         const checkbox = this.createCheckbox(pageIndex);
-        const hideShowIcon = this.createHideShowIcon(pageIndex);
+        const hideButton = this.createHideButton(pageIndex);
         container.appendChild(canvas);
         container.appendChild(overlay);
         container.appendChild(checkbox);
-        container.appendChild(hideShowIcon);
+        container.appendChild(hideButton);
 
         container.addEventListener('mouseenter', () => {
             overlay.style.opacity = '1';
-            hideShowIcon.style.opacity = '1';
+            hideButton.style.opacity = '1';
         });
         container.addEventListener('mouseleave', () => {
             overlay.style.opacity = '0';
-            hideShowIcon.style.opacity = '0';
+            hideButton.style.opacity = '0';
         });
+
+        hideButton.addEventListener('click', () => this.toggleVisibility(container, hideButton));
         overlay.addEventListener('click', () => this.displayEnlargedCanvas(canvas));
 
         return container;
@@ -165,7 +167,7 @@ export class PdfPreviewThumbnailGridComponent {
         /* Dynamically created elements are not detected by DOM, that is why we need to set the styles manually.
          * See: https://stackoverflow.com/a/70911189
          */
-        overlay.style.cssText = `position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 24px; color: white; z-index: 1; transition: opacity 0.3s ease; opacity: 0; cursor: pointer; background-color: var(--pdf-preview-container-overlay)`;
+        overlay.style.cssText = `position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 24px; color: white; z-index: 2; transition: opacity 0.3s ease; opacity: 0; cursor: pointer; background-color: var(--pdf-preview-container-overlay)`;
         return overlay;
     }
 
@@ -192,19 +194,40 @@ export class PdfPreviewThumbnailGridComponent {
         return checkbox;
     }
 
-    private createHideShowIcon(pageIndex: number): HTMLAnchorElement {
-        const icon = document.createElement('a');
-        icon.type = 'button';
-        icon.id = `hide-icon-${String(pageIndex)}`;
-        icon.className = 'btn btn-secondary';
-        icon.innerHTML = `<i class="fa fa-eye-slash" style="color: white"></i>`;
-        icon.style.cssText = `opacity: 0; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); color: gray; cursor: pointer; z-index: 4;`;
-        return icon;
+    private createHideButton(pageIndex: number): HTMLAnchorElement {
+        const hideButton = document.createElement('a');
+        hideButton.type = 'button';
+        hideButton.id = `hide-icon-${pageIndex}`;
+        hideButton.className = 'btn btn-secondary';
+        hideButton.style.cssText = `opacity: 0; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); cursor: pointer; z-index: 4;`;
+        hideButton.innerHTML = `<i class="fa fa-eye-slash"></i>`;
+
+        return hideButton;
+    }
+
+    private toggleVisibility(container: HTMLDivElement, hideButton: HTMLAnchorElement): void {
+        const overlay = document.createElement('div');
+        overlay.id = 'pdf-page-overlay';
+        overlay.style.cssText = `position: absolute; top: 0; width: 100%; height: 100%; z-index: 1; transition: opacity 0.3s ease; background-color: var(--pdf-preview-container-overlay)`;
+
+        const diagonalLine = document.createElement('div');
+        diagonalLine.style.cssText = `position: absolute; top: 0; left: 0; width: 115%; height: 2px; background-color: white; transform: rotate(29deg); transform-origin: top left;`;
+        overlay.appendChild(diagonalLine);
+
+        if (hideButton.className === 'btn btn-secondary') {
+            container.appendChild(overlay);
+            hideButton.className = 'btn btn-success';
+            hideButton.children[0].className = 'fa fa-eye';
+        } else {
+            container.removeChild(container.querySelector(`#pdf-page-overlay`)!);
+            hideButton.className = 'btn btn-secondary';
+            hideButton.children[0].className = 'fa fa-eye-slash';
+        }
     }
 
     /**
      * Displays the selected PDF page in an enlarged view for detailed examination.
-     * @param originalCanvas - The originala canvas element of the PDF page to be enlarged.
+     * @param originalCanvas - The original canvas element of the PDF page to be enlarged.
      * */
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         this.originalCanvas.set(originalCanvas);
