@@ -16,6 +16,7 @@ export enum ProgrammingLanguage {
     EMPTY = 'EMPTY',
     ASSEMBLER = 'ASSEMBLER',
     C = 'C',
+    C_PLUS_PLUS = 'C_PLUS_PLUS',
     HASKELL = 'HASKELL',
     JAVA = 'JAVA',
     JAVASCRIPT = 'JAVASCRIPT',
@@ -25,6 +26,7 @@ export enum ProgrammingLanguage {
     R = 'R',
     RUST = 'RUST',
     SWIFT = 'SWIFT',
+    TYPESCRIPT = 'TYPESCRIPT',
     VHDL = 'VHDL',
 }
 

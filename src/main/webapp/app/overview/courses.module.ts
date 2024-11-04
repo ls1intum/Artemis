@@ -37,16 +37,9 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
         NgxChartsModule,
         PieChartModule,
         ArtemisSidebarModule,
+        CourseCardComponent,
         SearchFilterComponent,
     ],
-    declarations: [
-        CoursesComponent,
-        CourseOverviewComponent,
-        CourseCardComponent,
-        CourseExercisesComponent,
-        CourseLecturesComponent,
-        CourseLectureRowComponent,
-        CourseUnenrollmentModalComponent,
-    ],
+    declarations: [CoursesComponent, CourseOverviewComponent, CourseExercisesComponent, CourseLecturesComponent, CourseLectureRowComponent, CourseUnenrollmentModalComponent],
 })
 export class ArtemisCoursesModule {}

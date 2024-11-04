@@ -7,9 +7,10 @@
                 "editLabel": "Programmieraufgabe bearbeiten",
                 "importLabel": "Programmieraufgabe importieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
-                "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
-                "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
-                "nextStepLabel": "Weiter"
+                "switchToSimpleMode": "Zum einfachen Modus wechseln",
+                "simpleModeTooltip": "Der einfache Modus reduziert die Ansicht auf Konfigurationsoptionen die für eine grundlegende Programmieraufgabe benötigt werden. Änderungen aus dem erweiterten Modus werden beim Speichern übernommen.",
+                "switchToAdvancedMode": "Zum erweiterten Modus wechseln",
+                "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten."
             },
             "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
@@ -56,6 +57,7 @@
                 "steps": {
                     "generalInfoStepTitle": "Informationen",
                     "difficultyStepTitle": "Modus",
+                    "buildPlansTitle": "Build-Pläne",
                     "languageStepTitle": "Sprache",
                     "gradingStepTitle": "Benotung",
                     "problemStepTitle": "Problem",
@@ -65,6 +67,7 @@
                     "generalInfoStepTitle": "Allgemein",
                     "generalInfoStepMessage": "Eingabe von Informationen, die die Grundlage für die Programmieraufgabe bilden",
                     "difficultyStepTitle": "Modus",
+                    "buildPlansTitle": "Build-Pläne",
                     "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
                     "languageStepTitle": "Sprache",
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Build Umgebung",
@@ -135,18 +138,21 @@
             "workdir": "Verzeichnis",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
+                "description": "Ein Online-Texteditor mit Datei-Explorer und Code-Hervorhebungsfunktionen, jedoch ohne die Möglichkeit, Code zu kompilieren oder auszuführen.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Offline-IDE erlauben",
+                "description": "Erlaubt Studierenden die Übung mit Git herunterzuladen und diese lokal mit der bevorzugten IDE zu bearbeiten.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "offlineIde": "IDE",
             "allowOnlineIde": {
                 "title": "Online-IDE erlauben",
+                "description": "Eine auf Visual Studio Code basierende Online-Entwicklungsumgebung mit Code-Hervorhebungs- und Formatierungsfunktionen. Vorkonfiguriert für die Sprache der Übung und mit der Möglichkeit, Code online zu kompilieren oder auszuführen.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein.",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
@@ -346,7 +352,23 @@
                     "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
                     "totalItems": "Insgesamt {{count}} Elemente",
-                    "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten."
+                    "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten.",
+                    "search": "Suche ...",
+                    "filter": "Filter",
+                    "feedbackModal": {
+                        "header": "Fehlerdetails",
+                        "feedbackTitle": "Feedback zu Testfällen",
+                        "ok": "Ok"
+                    },
+                    "filterModal": {
+                        "modalTitle": "Filteroptionen",
+                        "task": "Tasks",
+                        "testcase": "Testfälle",
+                        "occurrence": "Häufigkeit",
+                        "clear": "Filter zurücksetzen",
+                        "cancel": "Abbrechen",
+                        "apply": "Filter anwenden"
+                    }
                 },
                 "help": {
                     "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",
@@ -460,7 +482,7 @@
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
                 "notSet": "nicht gesetzt",
                 "allowFeedbackRequests": "Automatische nicht bewertete Feedbackanfragen/manuelle Feedbackanfragen erlauben",
-                "allowFeedbackRequestsTooltip": "Studierende können vor dem Einreichungsfrist um Feedback bitten. Die Anfragen werden von Athena bearbeitet oder, falls Athena nicht erreicht werden kann, können Studierende manuelle Feedbackanfragen stellen.",
+                "allowFeedbackRequestsTooltip": "Studierende können vor der Einreichungsfrist um Feedback bitten. Die Anfragen werden von Athena bearbeitet oder, falls Athena nicht erreicht werden kann, können Studierende manuelle Feedbackanfragen stellen.",
                 "manualFeedbackRequests": "Anfragen nach manuellem Feedback",
                 "manualFeedbackRequestsTooltip": "Studierende können manuelle Korrekturen vor der Einreichungsfrist anfragen, um Feedback zu erhalten.",
                 "feedbackRequestsEnabled": "Korrekturanfragen sind möglich",
@@ -514,20 +536,23 @@
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
-                "usageDescription": "Du kannst Hilfsrepositorys verwenden, um zusätzlichen Code bereitzustellen, den Studierende nicht sehen oder ändern können. Der zusätzliche Code wird während des Builds der Abgabe am angegebenen Checkout-Verzeichnis eingefügt.",
+                "usageDescription": "Du kannst Hilfsrepositorien verwenden, um zusätzlichen Code bereitzustellen, den die Studierenden nicht sehen oder ändern können. Der zusätzliche Code wird im angegebenen Checkout-Verzeichnis eingefügt, bevor der Build erstellt wird. Der eingefügte Code überschreibt alles, was sich an der durch das Checkout-Verzeichnis angegebenen Stelle befindet. Wenn du die Dateien der Studierenden nur teilweise überschreiben willst, muss das Build-Skript angepasst werden.",
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
                 "description": "Beschreibung",
+                "invalidRepositoryName": "Es existiert bereits ein Repository mit diesem Namen in der Aufgabe.",
                 "duplicateRepositoryNames": "Verschiedene Hilfs-Repositories dürfen nicht den gleichen Namen haben.",
                 "duplicateDirectoryNames": "Verschiedene Hilfs-Repositories dürfen nicht das gleiche Checkout-Verzeichnis haben.",
                 "warning": "Hilfs-Repositories können hinzugefügt, editiert und gelöscht werden. Editierungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
                 "editedWarning": "Du hast die Hilfs-Repositories verändert. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
+                "editedWarningLocalCI": "Du hast die Hilfs-Repositories verändert. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
                 "repositoryNameRequired": {
                     "pattern": "Der Name eines Hilfs-Repositories darf nicht 'exercise', 'solution', 'tests', oder 'auxiliary' sein. Außerdem darf der Name nur Wörter und die Sonderzeichen '-' und '_' enthalten."
                 },
                 "invalidDirectoryName": {
                     "pattern": "Checkout-Verzeichnisse dürfen nur Wörter, '_', '-', und '/' Zeichen beinhalten, aber nicht mit '/' beginnen oder enden."
-                }
+                },
+                "invalidConfigurationPreventsSwitchingEditMode": "Bitte ändere die Hilfs-Repository-Konfiguration zu einer validen Konfiguration um zum Simple Mode zu wechseln."
             },
             "submissionPolicy": {
                 "title": "Abgaberichtlinie",
@@ -690,7 +715,8 @@
             }
         },
         "error": {
-            "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben."
+            "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
+            "shortNameGenerationFailed": "Der Kurzname konnte nicht generiert werden, bitte wechsle zum erweiterten Modus und setze den Kurznamen manuell."
         }
     }
 }

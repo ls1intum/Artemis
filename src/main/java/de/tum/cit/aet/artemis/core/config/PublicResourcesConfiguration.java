@@ -54,12 +54,15 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
         // Add caching for course icons, user profile pictures, and drag and drop quiz pictures
         // Add resource handlers for dynamic image paths based on fileUploadPath
         // TODO: those paths have to be the same as in FilePathService, ideally we reuse the constants and define them only once
-        registry.addResourceHandler("/images/course/icons/**").addResourceLocations("file:" + fileUploadPath + "/images/course/icons/").setCacheControl(defaultCacheControl);
+        registry.addResourceHandler("/course/icons/**").addResourceLocations("file:" + fileUploadPath + "/images/course/icons/").setCacheControl(defaultCacheControl);
 
-        registry.addResourceHandler("/images/user/profile-pictures/**").addResourceLocations("file:" + fileUploadPath + "/images/user/profile-pictures/")
+        registry.addResourceHandler("/user/profile-pictures/**").addResourceLocations("file:" + fileUploadPath + "/images/user/profile-pictures/")
                 .setCacheControl(defaultCacheControl);
 
-        registry.addResourceHandler("/images/drag-and-drop/**").addResourceLocations("file:" + fileUploadPath + "/images/drag-and-drop/").setCacheControl(defaultCacheControl);
+        registry.addResourceHandler("/drag-and-drop/**").addResourceLocations("file:" + fileUploadPath + "/images/drag-and-drop/").setCacheControl(defaultCacheControl);
+
+        // e.g. public/videos/course-competencies/create-competencies.gif
+        addResourceHandlerForPath(registry, "videos", "course-competencies").setCacheControl(defaultCacheControl);
     }
 
     /**

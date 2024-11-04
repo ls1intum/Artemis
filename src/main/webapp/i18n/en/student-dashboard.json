@@ -12,10 +12,14 @@
             "cardTitle": "Your overall points:",
             "noStatistics": "No statistics available",
             "cardNoExerciseLabel": "No exercise planned",
-            "cardExerciseLabel": "Next Exercise",
+            "cardExerciseLabel": "Next Exercise:",
             "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Points",
             "cardScore": "Score",
             "cardManageCourse": "Manage Course",
+            "archive": {
+                "oldCourses": "Looking for old courses? Click",
+                "here": "here"
+            },
             "noCoursesFound": "No Courses Found",
             "enroll": {
                 "title": "Course Enrollment",
@@ -70,6 +74,8 @@
                 "examChannels": "Exams",
                 "createChannel": "Create channel",
                 "browseChannels": "Browse channels",
+                "createGroupChat": "Create group chat",
+                "createDirectChat": "Create direct chat",
                 "groupChats": "Group Chats",
                 "directMessages": "Direct Messages",
                 "filterConversationPlaceholder": "Filter conversations"
@@ -103,6 +109,7 @@
                 "achievedScore": "Achieved Score",
                 "achievablePoints": "Achievable Points",
                 "applyFilter": "Apply filter",
+                "resetFilter": "Reset filter",
                 "clearFilter": "Clear filter",
                 "noFilterAvailable": "There are no distinguishing filter options for the existing exercises",
                 "noMoreOptions": "No more options"

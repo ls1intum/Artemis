@@ -19,7 +19,6 @@ import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/c
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
-import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-badge.component';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -37,6 +36,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
         MonacoEditorComponent,
         ArtemisSharedComponentModule,
         RequestFeedbackButtonComponent,
+        CodeEditorMonacoComponent,
     ],
     declarations: [
         CodeEditorGridComponent,
@@ -54,8 +54,6 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
         CodeEditorResolveConflictModalComponent,
         CodeEditorConfirmRefreshModalComponent,
         CodeEditorContainerComponent,
-        CodeEditorHeaderComponent,
-        CodeEditorMonacoComponent,
     ],
     exports: [
         CodeEditorGridComponent,
@@ -65,8 +63,6 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
         CodeEditorInstructionsComponent,
         CodeEditorBuildOutputComponent,
         CodeEditorContainerComponent,
-        CodeEditorHeaderComponent,
-        CodeEditorMonacoComponent,
     ],
     providers: [],
 })

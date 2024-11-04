@@ -7,7 +7,7 @@ import { courseExerciseOverviewTour } from 'app/guided-tour/tours/course-exercis
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 import { LtiService } from 'app/shared/service/lti.service';
 
@@ -27,6 +27,14 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     noDate: true,
 };
 
+const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
+    future: false,
+    current: false,
+    dueSoon: false,
+    past: false,
+    noDate: false,
+};
+
 @Component({
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
@@ -42,13 +50,15 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     sortedExercises?: Exercise[];
     exerciseForGuidedTour?: Exercise;
 
-    exerciseSelected: boolean = true;
+    exerciseSelected = true;
     accordionExerciseGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sidebarData: SidebarData;
     sidebarExercises: SidebarCardElement[] = [];
-    isCollapsed: boolean = false;
-    readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
-    isLti: boolean = false;
+    isCollapsed = false;
+    isShownViaLti = false;
+
+    protected readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
+    protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -78,8 +88,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
 
-        this.ltiSubscription = this.ltiService.isLti$.subscribe((isLti) => {
-            this.isLti = isLti;
+        this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
+            this.isShownViaLti = isShownViaLti;
         });
 
         // If no exercise is selected navigate to the lastSelected or upcoming exercise
@@ -105,7 +115,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         } else if (!exerciseId && upcomingExercise) {
             this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
         } else {
-            this.exerciseSelected = exerciseId ? true : false;
+            this.exerciseSelected = !!exerciseId;
         }
     }
 
@@ -141,6 +151,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private onCourseLoad() {
         this.programmingSubmissionService.initializeCacheForStudent(this.course?.exercises, true);
     }
+
     onSubRouteDeactivate() {
         if (this.route.firstChild) {
             return;

@@ -58,7 +58,7 @@ public class BuildJobManagementService {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    @Value("${artemis.continuous-integration.timeout-seconds:120}")
+    @Value("${artemis.continuous-integration.build-timeout-seconds.max:240}")
     private int timeoutSeconds;
 
     @Value("${artemis.continuous-integration.asynchronous:true}")
@@ -73,6 +73,8 @@ public class BuildJobManagementService {
      * This map is unique for each node and contains only the build jobs that are running on this node.
      */
     private final Map<String, Future<BuildResult>> runningFutures = new ConcurrentHashMap<>();
+
+    private final Map<String, CompletableFuture<BuildResult>> runningFuturesWrapper = new ConcurrentHashMap<>();
 
     /**
      * A set that contains all build jobs that were cancelled by the user.
@@ -150,7 +152,7 @@ public class BuildJobManagementService {
         }
 
         int buildJobTimeoutSeconds;
-        if (buildJobItem.buildConfig().timeoutSeconds() != 0 && buildJobItem.buildConfig().timeoutSeconds() < this.timeoutSeconds) {
+        if (buildJobItem.buildConfig().timeoutSeconds() > 0 && buildJobItem.buildConfig().timeoutSeconds() < this.timeoutSeconds) {
             buildJobTimeoutSeconds = buildJobItem.buildConfig().timeoutSeconds();
         }
         else {
@@ -178,9 +180,20 @@ public class BuildJobManagementService {
                 }
             }
         });
-        futureResult.whenComplete(((result, throwable) -> runningFutures.remove(buildJobItem.id())));
 
-        return futureResult;
+        runningFuturesWrapper.put(buildJobItem.id(), futureResult);
+        return futureResult.whenComplete(((result, throwable) -> {
+            runningFutures.remove(buildJobItem.id());
+            runningFuturesWrapper.remove(buildJobItem.id());
+        }));
+    }
+
+    Set<String> getRunningBuildJobIds() {
+        return Set.copyOf(runningFutures.keySet());
+    }
+
+    CompletableFuture<BuildResult> getRunningBuildJobFutureWrapper(String buildJobId) {
+        return runningFuturesWrapper.get(buildJobId);
     }
 
     /**
@@ -235,7 +248,7 @@ public class BuildJobManagementService {
      *
      * @param buildJobId The id of the build job that should be cancelled.
      */
-    private void cancelBuildJob(String buildJobId) {
+    void cancelBuildJob(String buildJobId) {
         Future<BuildResult> future = runningFutures.get(buildJobId);
         if (future != null) {
             try {

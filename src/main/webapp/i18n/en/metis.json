@@ -92,7 +92,9 @@
                 "RANDOM": "Random",
                 "ANNOUNCEMENT": "Announcement",
                 "allPublicMessages": "All Public Messages",
-                "searchResults": "Search Results for '{{ search }}'"
+                "searchResults": "Search Results for '{{ search }}'",
+                "mobileDisclaimer": "Please select a conversation first.",
+                "mobileDisclaimerCallToAction": "Select conversation"
             },
             "post": {
                 "context": "Context",
@@ -123,7 +125,9 @@
                 "exerciseOrLecture": "Exercise / Lecture",
                 "showAllPosts": "Show all messages",
                 "showContent": "Show content",
-                "collapseContent": "Collapse content"
+                "collapseContent": "Collapse content",
+                "deletedContent": "Post is being deleted in {{ progress }} second(s).",
+                "undoDelete": "Undo delete"
             },
             "answerPost": {
                 "created": "New reply successfully created",
