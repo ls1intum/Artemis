@@ -74,6 +74,10 @@
             <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>
         </button>
     }
+    <button class="dropdown-item d-flex" (click)="forwardMessage()">
+        <fa-icon [icon]="faShare" class="item-icon"></fa-icon>
+        <span jhiTranslate="artemisApp.metis.post.forwardMessage"></span>
+    </button>
 </div>
 
 <div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin [ngStyle]="{ position: 'fixed', 'top.px': clickPosition.y, 'left.px': clickPosition.x }"></div>

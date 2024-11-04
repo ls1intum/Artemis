@@ -5,7 +5,9 @@ import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reaction
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons';
-import { faArrowRight, faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faPencilAlt, faShare, faSmile } from '@fortawesome/free-solid-svg-icons';
+//import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+//import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, map, takeUntil } from 'rxjs';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
 import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -14,6 +16,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+//import { onError } from 'app/shared/util/global.utils';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
@@ -27,10 +31,11 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     readonly DisplayPriority = DisplayPriority;
 
     // Icons
-    faSmile = faSmile;
-    faArrowRight = faArrowRight;
-    faPencilAlt = faPencilAlt;
-    faTrash = faTrashAlt;
+    readonly faSmile = faSmile;
+    readonly faArrowRight = faArrowRight;
+    readonly faPencilAlt = faPencilAlt;
+    readonly faTrash = faTrashAlt;
+    readonly faShare = faShare;
 
     @Input()
     readOnlyMode = false;
@@ -55,6 +60,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     constructor(
         metisService: MetisService,
         private accountService: AccountService,
+        private channelService: ChannelService,
     ) {
         super(metisService);
     }
@@ -78,6 +84,32 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     ngOnDestroy() {
         this.postCreateEditModal?.modalRef?.close();
     }
+
+    forwardMessage(): void {
+        console.log('post u forwardlayacakk');
+    }
+
+    /*loadChannelsOfCourse() {
+        //this.isLoading = true;
+        this.channelService
+            .getChannelsOfCourse(this.course.id!)
+            .pipe(
+                map((res: HttpResponse<ChannelDTO[]>) => res.body),
+                finalize(() => {
+                    //this.isLoading = false;
+                }),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe({
+                next: (channels: ChannelDTO[]) => {
+                    this.channels = channels;
+                    this.noOfChannels = this.channels.length;
+                },
+                error: (errorResponse: HttpErrorResponse) => {
+                    onError(this.alertService, errorResponse);
+                },
+            });
+    }*/
 
     /**
      * Checks whether the user can pin the message in the conversation

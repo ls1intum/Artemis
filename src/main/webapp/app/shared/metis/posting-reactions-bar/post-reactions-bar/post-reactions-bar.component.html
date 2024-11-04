@@ -140,6 +140,16 @@
                 <jhi-emoji class="fs-x-small" [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'" />
             </button>
         }
+        @if (!isEmojiCount) {
+            <button
+                class="reaction-button clickable px-2 fs-small edit"
+                [disabled]="readOnlyMode"
+                (click)="forwardMessage()"
+                [ngbTooltip]="'artemisApp.metis.post.forwardMessage' | artemisTranslate"
+            >
+                <fa-icon [icon]="faShare" cdkOverlayOrigin></fa-icon>
+            </button>
+        }
     </div>
     <div>
         @if (getShowNewMessageIcon()) {

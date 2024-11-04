@@ -18,7 +18,7 @@ import dayjs from 'dayjs/esm';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT } from '@angular/common';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 
@@ -48,6 +48,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     isConsecutive = input<boolean>(false);
     readonly faPencilAlt = faPencilAlt;
+    readonly faShare = faShare;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;

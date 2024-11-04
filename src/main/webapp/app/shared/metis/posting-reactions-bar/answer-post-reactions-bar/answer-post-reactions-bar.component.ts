@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angu
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { faCheck, faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faPencilAlt, faShare, faSmile } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
@@ -19,6 +19,7 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
     // Icons
     readonly farSmile = faSmile;
     readonly faCheck = faCheck;
+    readonly faShare = faShare;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
@@ -44,6 +45,10 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
 
     isAnyReactionCountAboveZero(): boolean {
         return Object.values(this.reactionMetaDataMap).some((reaction) => reaction.count >= 1);
+    }
+
+    forwardMessage(): void {
+        console.log('answer i forwardlayacakk');
     }
 
     /**

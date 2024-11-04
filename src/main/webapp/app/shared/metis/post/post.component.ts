@@ -20,7 +20,7 @@ import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBullhorn, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBullhorn, faComments, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
@@ -87,6 +87,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;
+    readonly faShare = faShare;
 
     isConsecutive = input<boolean>(false);
     dropdownPosition = { x: 0, y: 0 };
