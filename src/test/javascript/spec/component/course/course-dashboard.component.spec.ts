@@ -16,7 +16,6 @@ import { CourseExerciseLatenessComponent } from 'app/overview/course-dashboard/c
 import { CourseExercisePerformanceComponent } from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-
 import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CourseDashboardComponent', () => {
@@ -36,7 +35,7 @@ describe('CourseDashboardComponent', () => {
                 MockDirective(FeatureToggleDirective),
                 MockDirective(FeatureToggleHideDirective),
             ],
-            imports: [], // Include necessary Angular modules and dependencies
+            imports: [],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -70,20 +69,6 @@ describe('CourseDashboardComponent', () => {
         const spinner = debugElement.query(By.css('.spinner-border'));
         expect(spinner).toBeTruthy();
     });
-
-    // it('should display progress bar when hasExercises is true and points are available', () => {
-    //     component.isLoading = false;
-    //     component.hasExercises = true;
-    //     component.points = 50;
-    //     component.maxPoints = 100;
-    //     fixture.detectChanges();
-
-    //     const progressBar = debugElement.query(By.css('ngb-progressbar'));
-    //     expect(progressBar).toBeTruthy();
-
-    //     const progressText = progressBar.query(By.css('span')).nativeElement.textContent;
-    //     expect(progressText).toContain('50 / 100');
-    // });
 
     it('should show learning paths button if course has learningPathsEnabled', () => {
         component.course = { learningPathsEnabled: true };
