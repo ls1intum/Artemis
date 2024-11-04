@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -13,6 +13,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { metisCourse, metisCoursePosts, metisExercisePosts, metisGeneralCourseWidePosts, metisLecturePosts } from '../../../../helpers/sample/metis-sample-data';
 import { Params } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('PostingContentComponent', () => {
     let component: PostingContentComponent;
@@ -23,7 +24,13 @@ describe('PostingContentComponent', () => {
         return TestBed.configureTestingModule({
             imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MetisService, useClass: MockMetisService }],
-            declarations: [PostingContentComponent, MockComponent(PostingContentPartComponent), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [
+                PostingContentComponent,
+                MockComponent(PostingContentPartComponent),
+                MockComponent(FaIconComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -115,6 +122,13 @@ describe('PostingContentComponent', () => {
         component.content = 'I do want to reference [channel]test(1)[/channel]!';
         const firstMatch = { startIndex: 23, endIndex: 49, referenceType: ReferenceType.CHANNEL } as PatternMatch;
         expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
+    it('should display undo delete prompt when isDeleted is set to true', () => {
+        fixture.componentRef.setInput('isDeleted', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.posting-content-undo-delete')).not.toBeNull();
+        fixture.componentRef.setInput('isDeleted', false);
     });
 
     it('should calculate correct pattern matches for content with post, multiple exercise, lecture and attachment references', () => {
