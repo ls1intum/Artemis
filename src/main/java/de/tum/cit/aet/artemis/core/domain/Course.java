@@ -1093,4 +1093,8 @@ public class Course extends DomainObject {
     public void setGeneralInformation(String generalInformation) {
         this.generalInformation = generalInformation;
     }
+
+    public String getGeneralInformation() {
+        return generalInformation;
+    }
 }

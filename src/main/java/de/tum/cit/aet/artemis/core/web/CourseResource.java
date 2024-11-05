@@ -1517,4 +1517,11 @@ public class CourseResource {
         courseRepository.save(course);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("courses/{courseId}/general-information")
+    @EnforceAtLeastStudent
+    public ResponseEntity<String> getGeneralInformation(@PathVariable long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        return ResponseEntity.ok(course.getGeneralInformation());
+    }
 }
