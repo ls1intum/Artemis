@@ -1,5 +1,5 @@
 @if (exercise) {
-    <div id="exercise-headers-information" class="d-flex flex-row flex-wrap column-gap-3 overflow-auto">
+    <div id="exercise-headers-information" class="d-flex flex-row flex-wrap gap-2 overflow-auto">
         @for (informationBoxItem of informationBoxItems; track informationBoxItem) {
             <jhi-information-box [informationBoxData]="informationBoxItem">
                 @switch (informationBoxItem.content.type) {
