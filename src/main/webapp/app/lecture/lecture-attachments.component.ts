@@ -24,6 +24,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     protected readonly faPaperclip = faPaperclip;
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faEye = faEye;
+
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
