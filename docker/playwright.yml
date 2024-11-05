@@ -30,10 +30,10 @@ services:
           chmod 777 /root &&
           npm ci &&
           npm run playwright:setup &&
-          PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-fast.xml playwright test e2e --project=fast-tests;
-          PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-slow.xml playwright test e2e --project=slow-tests --workers 1;
-          junit-merge ./test-reports/results-fast.xml ./test-reports/results-slow.xml -o ./test-reports/results.xml;
-          rm ./test-reports/results-fast.xml ./test-reports/results-slow.xml;
+          npm run playwright:test:fast;
+          npm run playwright:test:slow;
+          npm run merge-reports &&
+          rm ./test-reports/results-fast.xml ./test-reports/results-slow.xml
           '
         volumes:
             - ..:/app/artemis
