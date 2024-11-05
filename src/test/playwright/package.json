@@ -18,7 +18,7 @@
         "playwright:test:slow": "PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-slow.xml playwright test e2e --project=slow-tests --workers 1",
         "playwright:open": "playwright test e2e --ui",
         "playwright:setup": "npx playwright install --with-deps chromium && playwright test init",
-        "merge-reports": "junit-merge ./test-reports/results-fast.xml ./test-reports/results-slow.xml -o ./test-reports/results.xml; rm ./test-reports/results-fast.xml; rm ./test-reports/results-slow.xml",
+        "merge-reports": "junit-merge ./test-reports/results-fast.xml ./test-reports/results-slow.xml -o ./test-reports/results.xml",
         "update": "ncu -i --format group"
     }
 }
