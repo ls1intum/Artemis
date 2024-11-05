@@ -9,7 +9,7 @@ import jakarta.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.core.domain.Course;
 
 /**
  * An {@link IrisSettings} implementation for lecture specific settings.
@@ -21,8 +21,8 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 public class IrisLectureSettings extends IrisSettings {
 
     @OneToOne(optional = false)
-    @JoinColumn(name = "lecture_id", unique = true, nullable = false)
-    private Lecture lecture;
+    @JoinColumn(name = "course_id", unique = true, nullable = false)
+    private Course course;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "iris_chat_settings_id")
@@ -32,12 +32,12 @@ public class IrisLectureSettings extends IrisSettings {
     @JoinColumn(name = "iris_lecture_chat_settings_id")
     private IrisLectureChatSubSettings irisLectureChatSettings;
 
-    public Lecture getLecture() {
-        return lecture;
+    public Course getCourse() {
+        return course;
     }
 
-    public void setLecture(Lecture lecture) {
-        this.lecture = lecture;
+    public void setCourse(Course course) {
+        this.course = course;
     }
 
     @Override

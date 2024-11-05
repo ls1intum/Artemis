@@ -28,8 +28,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     public courseId?: number;
     @Input()
     public exerciseId?: number;
-    @Input()
-    public lectureId?: number;
     public irisSettings?: IrisSettings;
     public parentIrisSettings?: IrisSettings;
 
@@ -169,7 +167,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             case IrisSettingsType.COURSE:
                 return this.irisSettingsService.getUncombinedCourseSettings(this.courseId!);
             case IrisSettingsType.LECTURE:
-                return this.irisSettingsService.getUncombinedLectureSettings(this.lectureId!);
+                return this.irisSettingsService.getUncombinedLectureSettings(this.courseId!);
             case IrisSettingsType.EXERCISE:
                 return this.irisSettingsService.getUncombinedExerciseSettings(this.exerciseId!);
         }
@@ -182,7 +180,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             case IrisSettingsType.COURSE:
                 return this.irisSettingsService.setCourseSettings(this.courseId!, this.irisSettings!);
             case IrisSettingsType.LECTURE:
-                return this.irisSettingsService.setLectureSettings(this.lectureId!, this.irisSettings!);
+                return this.irisSettingsService.setLectureSettings(this.courseId!, this.irisSettings!);
             case IrisSettingsType.EXERCISE:
                 return this.irisSettingsService.setExerciseSettings(this.exerciseId!, this.irisSettings!);
         }

@@ -5,13 +5,6 @@
     <!-- Add iris lecture chat session support -->
     <changeSet id="20241104163050" author="sebastianloose">
         <addColumn tableName="iris_settings">
-            <column name="lecture_id" type="bigint"/>
-        </addColumn>
-        <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="iris_settings"
-                                 constraintName="FK_IRIS_SETTINGS_ON_LECTURE" referencedColumnNames="id"
-                                 referencedTableName="lecture"/>
-
-        <addColumn tableName="iris_settings">
             <column name="iris_lecture_chat_settings_id" type="bigint"/>
         </addColumn>
         <addForeignKeyConstraint baseColumnNames="iris_lecture_chat_settings_id" baseTableName="iris_settings"

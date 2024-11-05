@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedLectureChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedLectureIngestionSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedTextExerciseChatSubSettingsDTO;
 
@@ -155,6 +157,37 @@ public class IrisSubSettingsService {
     }
 
     /**
+     * Updates a Lecture Chat sub settings object.
+     * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
+     * Special notes:
+     *
+     * @param currentSettings Current Lecture Ingestion sub settings.
+     * @param newSettings     Updated Lecture Ingestion sub settings.
+     * @param parentSettings  Parent Lecture Ingestion sub settings.
+     * @param settingsType    Type of the settings the sub settings belong to.
+     * @return Updated Lecture Ingestion sub settings.
+     */
+    public IrisLectureChatSubSettings update(IrisLectureChatSubSettings currentSettings, IrisLectureChatSubSettings newSettings,
+            IrisCombinedLectureChatSubSettingsDTO parentSettings, IrisSettingsType settingsType) {
+        if (newSettings == null) {
+            if (parentSettings == null) {
+                throw new IllegalArgumentException("Cannot delete the Lecture Ingestion settings");
+            }
+            return null;
+        }
+        if (currentSettings == null) {
+            currentSettings = new IrisLectureChatSubSettings();
+        }
+
+        if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
+            currentSettings.setEnabled(newSettings.isEnabled());
+
+        }
+
+        return currentSettings;
+    }
+
+    /**
      * Updates a Competency Generation sub settings object.
      * If the new settings are null, the current settings will be deleted (except if the parent settings are null == if the settings are global).
      * Special notes:
@@ -240,6 +273,24 @@ public class IrisSubSettingsService {
         var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings) : null;
         var enabledForCategories = !minimal ? getCombinedEnabledForCategories(settingsList, IrisSettings::getIrisChatSettings) : null;
         return new IrisCombinedTextExerciseChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant, enabledForCategories);
+    }
+
+    /**
+     * Combines the lecture chat settings of multiple {@link IrisSettings} objects.
+     * If minimal is true, the returned object will only contain the enabled and rateLimit fields.
+     * The minimal version can safely be sent to students.
+     *
+     * @param settingsList List of {@link IrisSettings} objects to combine.
+     * @param minimal      Whether to return a minimal version of the combined settings.
+     * @return Combined lecture chat settings.
+     */
+    public IrisCombinedLectureChatSubSettingsDTO combineLectureChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisLectureChatSettings);
+        var rateLimit = getCombinedRateLimit(settingsList);
+        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var enabledForCategories = !minimal ? getCombinedEnabledForCategories(settingsList, IrisSettings::getIrisChatSettings) : null;
+        return new IrisCombinedLectureChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant, enabledForCategories);
     }
 
     /**

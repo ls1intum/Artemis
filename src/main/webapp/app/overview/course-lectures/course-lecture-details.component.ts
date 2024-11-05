@@ -21,6 +21,8 @@ import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ChatServiceMode } from 'app/iris/iris-chat.service';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -40,7 +42,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     isDownloadingLink?: string;
     lectureUnits: LectureUnit[] = [];
     hasPdfLectureUnit: boolean;
-
+    irisSettings?: IrisSettings;
     paramsSubscription: Subscription;
     profileSubscription?: Subscription;
     isProduction = true;
@@ -57,6 +59,8 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
 
     constructor(
         private alertService: AlertService,
+        private route: ActivatedRoute,
+        private irisSettingsService: IrisSettingsService,
         private lectureService: LectureService,
         private lectureUnitService: LectureUnitService,
         private activatedRoute: ActivatedRoute,
@@ -108,6 +112,13 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
                                 ).length > 0;
                         }
                         this.endsSameDay = !!this.lecture?.startDate && !!this.lecture.endDate && dayjs(this.lecture.startDate).isSame(this.lecture.endDate, 'day');
+                        console.log('lecture?: ' + this.lecture);
+                        console.log('course?: ' + this.lecture?.course);
+                        console.log('courseID: ' + this.lecture?.course?.id);
+                        this.irisSettingsService.getCombinedCourseSettings(this.lecture?.course?.id!).subscribe((irisSettings) => {
+                            this.irisSettings = irisSettings;
+                            console.log('settings: ' + irisSettings);
+                        });
                     },
                     error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
                 });
