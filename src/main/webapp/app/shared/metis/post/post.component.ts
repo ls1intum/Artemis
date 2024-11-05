@@ -24,7 +24,7 @@ import { faBullhorn, faComments, faPencilAlt, faShare, faSmile, faThumbtack, faT
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -91,6 +91,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
     isConsecutive = input<boolean>(false);
     dropdownPosition = { x: 0, y: 0 };
+    course: Course;
     @ViewChild(PostReactionsBarComponent) private reactionsBarComponent!: PostReactionsBarComponent;
 
     constructor(
@@ -103,6 +104,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         @Inject(DOCUMENT) private document: Document,
     ) {
         super();
+        this.course = this.metisService.getCourse();
     }
 
     get reactionsBar() {
@@ -241,13 +243,12 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      * @param referencedUserLogin login of the referenced user
      */
     onUserReferenceClicked(referencedUserLogin: string) {
-        const course = this.metisService.getCourse();
-        if (isMessagingEnabled(course)) {
+        if (isMessagingEnabled(this.course)) {
             if (this.isCommunicationPage) {
                 this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
             } else {
-                this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
-                    this.router.navigate(['courses', course.id, 'communication'], {
+                this.oneToOneChatService.create(this.course.id!, referencedUserLogin).subscribe((res) => {
+                    this.router.navigate(['courses', this.course.id, 'communication'], {
                         queryParams: {
                             conversationId: res.body!.id,
                         },

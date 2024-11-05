@@ -32,6 +32,7 @@ import { CourseConversationsCodeOfConductComponent } from 'app/overview/course-c
 import { CourseWideSearchComponent } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ForwardMessageDialogComponent } from 'app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
 
 const routes: Routes = [
     {
@@ -81,6 +82,7 @@ const routes: Routes = [
         GroupChatCreateDialogComponent,
         GroupChatIconComponent,
         CourseWideSearchComponent,
+        ForwardMessageDialogComponent,
     ],
 })
 export class CourseConversationsModule {}

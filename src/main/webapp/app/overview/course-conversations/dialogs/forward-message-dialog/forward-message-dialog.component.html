@@ -1,0 +1,25 @@
+<div class="modal-header">
+    <h4 class="modal-title">Forward this message</h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+</div>
+<div class="modal-body">
+    <input type="text" class="form-control mb-2" placeholder="Search channels or names" (input)="filterItems($event)" />
+    <h5>Channels</h5>
+    <ul class="list-group mb-3" style="max-height: 200px; overflow-y: auto">
+        <li *ngFor="let channel of filteredChannels" class="list-group-item d-flex justify-content-between align-items-center">
+            {{ channel.name }}
+            <button type="button" class="btn btn-primary btn-sm" (click)="selectChannel(channel)">Forward</button>
+        </li>
+    </ul>
+
+    <h5>Chats</h5>
+    <ul class="list-group" style="max-height: 200px; overflow-y: auto">
+        <li *ngFor="let chat of filteredChats" class="list-group-item d-flex justify-content-between align-items-center">
+            {{ chat.otherUserName }}
+            <button type="button" class="btn btn-primary btn-sm" (click)="selectChat(chat)">Forward</button>
+        </li>
+    </ul>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="activeModal.dismiss()">Close</button>
+</div>

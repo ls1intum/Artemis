@@ -69,6 +69,7 @@
                         <div class="hover-actions post-content-margin" [ngClass]="{ 'mb-2': previewMode }">
                             @if (!previewMode) {
                                 <jhi-post-reactions-bar
+                                    [course]="course"
                                     [lastReadDate]="lastReadDate"
                                     [readOnlyMode]="readOnlyMode"
                                     [previewMode]="previewMode"
