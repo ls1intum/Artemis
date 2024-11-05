@@ -35,14 +35,14 @@ export default defineConfig({
         // Tests with @slow tag
         {
             name: 'slow-tests',
-            grep: new RegExp('@slow'),
+            grep: /@slow/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
             use: { ...devices['Desktop Chrome'] },
         },
         // Tests with @fast tag or without any tags
         {
             name: 'fast-tests',
-            grep: new RegExp('@fast|^(?!.*@).*$'),
+            grep: /@fast|^[^@]*$/,
             timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 45) * 1000,
             use: { ...devices['Desktop Chrome'] },
         },
