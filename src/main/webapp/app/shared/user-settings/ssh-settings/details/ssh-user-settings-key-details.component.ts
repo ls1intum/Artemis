@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, concatMap, filter, tap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -9,6 +8,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { getOS } from 'app/shared/util/os-detector.util';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
+import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 
 @Component({
     selector: 'jhi-account-information',
@@ -16,7 +16,7 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['../../user-settings.scss', '../ssh-user-settings.component.scss'],
 })
 export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
-    readonly accountService = inject(AccountService);
+    private sshUserSettingsService = inject(SshUserSettingsService);
     readonly route = inject(ActivatedRoute);
     readonly router = inject(Router);
     readonly alertService = inject(AlertService);
@@ -71,7 +71,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
                     }
                 }),
                 concatMap((params) => {
-                    return this.accountService.getSshPublicKey(Number(params['keyId']));
+                    return this.sshUserSettingsService.getSshPublicKey(Number(params['keyId']));
                 }),
                 tap((publicKey: UserSshPublicKey) => {
                     this.displayedSshKey = publicKey.publicKey;
@@ -96,7 +96,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
             publicKey: this.displayedSshKey,
             expiryDate: this.displayedExpiryDate,
         } as UserSshPublicKey;
-        this.accountService.addNewSshPublicKey(newUserSshKey).subscribe({
+        this.sshUserSettingsService.addNewSshPublicKey(newUserSshKey).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.userSettings.sshSettingsPage.saveSuccess');
                 this.goBack();

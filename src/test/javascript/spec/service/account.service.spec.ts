@@ -18,7 +18,6 @@ import { Team } from 'app/entities/team.model';
 import { SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
-import dayjs from 'dayjs/esm';
 
 describe('AccountService', () => {
     let accountService: AccountService;
@@ -575,63 +574,9 @@ describe('AccountService', () => {
         });
     });
 
-    describe('test SSH and access token related logic', () => {
-        let userSshPublicKey: UserSshPublicKey;
-        beforeEach(() => {
-            userSshPublicKey = new UserSshPublicKey();
-            userSshPublicKey.publicKey = 'ssh-key 1234';
-            userSshPublicKey.label = 'key 1';
-            userSshPublicKey.id = 1;
-            userSshPublicKey.expiryDate = dayjs().subtract(5, 'day');
-        });
-
+    describe('test vcs token related logic', () => {
         afterEach(() => {
             httpMock.verify();
-        });
-
-        it('should send a new SSH public key', () => {
-            accountService.addNewSshPublicKey(userSshPublicKey).subscribe((response) => {
-                expect(response.body).toEqual(userSshPublicKey);
-            });
-
-            const req = httpMock.expectOne({ method: 'POST', url: 'api/account/ssh-public-key' });
-            req.flush({});
-
-            expect(req.request.method).toBe('POST');
-        });
-
-        it('should retrieve all SSH public keys', () => {
-            accountService.getAllSshPublicKeys().subscribe(() => {});
-
-            const req = httpMock.expectOne({ method: 'GET', url: 'api/account/ssh-public-keys' });
-            req.flush({});
-            expect(req.request.method).toBe('GET');
-        });
-
-        it('should check if user has SSH public keys', () => {
-            accountService.hasUserSshPublicKeys().subscribe(() => {});
-
-            const req = httpMock.expectOne({ method: 'GET', url: 'api/account/has-ssh-public-keys' });
-            req.flush({});
-            expect(req.request.method).toBe('GET');
-        });
-
-        it('should retrieve a specific SSH public key', () => {
-            const keyId = 1;
-            accountService.getSshPublicKey(keyId).subscribe(() => {});
-
-            const req = httpMock.expectOne({ method: 'GET', url: `api/account/ssh-public-key/${keyId}` });
-            req.flush({});
-            expect(req.request.method).toBe('GET');
-        });
-
-        it('should delete a specific SSH public key', () => {
-            const keyId = 1;
-
-            accountService.deleteSshPublicKey(keyId).subscribe(() => {});
-
-            const req = httpMock.expectOne({ method: 'DELETE', url: `api/account/ssh-public-key/${keyId}` });
-            req.flush(null);
         });
 
         it('should delete user VCS access token', () => {

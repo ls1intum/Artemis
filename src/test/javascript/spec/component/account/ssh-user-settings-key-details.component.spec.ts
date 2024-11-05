@@ -1,6 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ArtemisTestModule } from '../../test.module';
@@ -13,6 +12,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
+import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
 
 describe('SshUserSettingsComponent', () => {
     let fixture: ComponentFixture<SshUserSettingsKeyDetailsComponent>;
@@ -27,7 +27,7 @@ describe('SshUserSettingsComponent', () => {
         keyHash: 'Key hash',
     } as UserSshPublicKey;
     let router: Router;
-    let accountServiceMock: {
+    let sshServiceMock: {
         getSshPublicKey: jest.Mock;
         addSshPublicKey: jest.Mock;
         addNewSshPublicKey: jest.Mock;
@@ -40,7 +40,7 @@ describe('SshUserSettingsComponent', () => {
     let activatedRoute: MockActivatedRoute;
 
     beforeEach(async () => {
-        accountServiceMock = {
+        sshServiceMock = {
             getSshPublicKey: jest.fn(),
             addSshPublicKey: jest.fn(),
             addNewSshPublicKey: jest.fn(),
@@ -58,7 +58,7 @@ describe('SshUserSettingsComponent', () => {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({}),
                 },
-                { provide: AccountService, useValue: accountServiceMock },
+                { provide: SshUserSettingsService, useValue: sshServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useValue: routerMock },
@@ -75,9 +75,9 @@ describe('SshUserSettingsComponent', () => {
     });
 
     it('should initialize view for adding new keys and save new key', () => {
-        accountServiceMock.addNewSshPublicKey.mockReturnValue(of({}));
+        sshServiceMock.addNewSshPublicKey.mockReturnValue(of({}));
         comp.ngOnInit();
-        expect(accountServiceMock.getSshPublicKey).not.toHaveBeenCalled();
+        expect(sshServiceMock.getSshPublicKey).not.toHaveBeenCalled();
         expect(comp.isLoading).toBeFalse();
         comp.displayedSshKey = mockKey;
         comp.displayedExpiryDate = dayjs();
@@ -98,9 +98,9 @@ describe('SshUserSettingsComponent', () => {
             error: { errorKey: keyAlreadyExists },
             status: 400,
         });
-        accountServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError1));
+        sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError1));
         comp.ngOnInit();
-        expect(accountServiceMock.getSshPublicKey).not.toHaveBeenCalled();
+        expect(sshServiceMock.getSshPublicKey).not.toHaveBeenCalled();
         expect(comp.isLoading).toBeFalse();
         comp.displayedSshKey = mockKey;
         comp.displayedExpiryDate = dayjs();
@@ -108,17 +108,17 @@ describe('SshUserSettingsComponent', () => {
         comp.validateExpiryDate();
         expect(comp.isExpiryDateValid).toBeTrue();
         comp.saveSshKey();
-        accountServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError2));
+        sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError2));
         comp.saveSshKey();
         expect(alertServiceMock.error).toHaveBeenCalled();
         expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should initialize key details view with key loaded', async () => {
-        accountServiceMock.getSshPublicKey.mockReturnValue(of(mockedUserSshKeys));
+        sshServiceMock.getSshPublicKey.mockReturnValue(of(mockedUserSshKeys));
         activatedRoute.setParameters({ keyId: 1 });
         comp.ngOnInit();
-        expect(accountServiceMock.getSshPublicKey).toHaveBeenCalled();
+        expect(sshServiceMock.getSshPublicKey).toHaveBeenCalled();
         expect(comp.isLoading).toBeFalse();
         expect(comp.displayedSshKey).toEqual(mockKey);
         comp.goBack();
