@@ -35,6 +35,7 @@ export interface FileProperties {
 export class AttachmentUnitFormComponent implements OnChanges {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
+
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
