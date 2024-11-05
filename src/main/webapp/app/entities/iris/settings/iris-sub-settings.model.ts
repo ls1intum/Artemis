@@ -5,6 +5,7 @@ export enum IrisSubSettingsType {
     CHAT = 'chat', // TODO: Split into PROGRAMMING_EXERCISE_CHAT and COURSE_CHAT
     COMPETENCY_GENERATION = 'competency-generation',
     LECTURE_INGESTION = 'lecture-ingestion',
+    LECTURE = 'lecture-chat',
 }
 
 export abstract class IrisSubSettings implements BaseEntity {
@@ -24,6 +25,12 @@ export class IrisChatSubSettings extends IrisSubSettings {
 
 export class IrisTextExerciseChatSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.TEXT_EXERCISE_CHAT;
+    rateLimit?: number;
+    rateLimitTimeframeHours?: number;
+}
+
+export class IrisLectureChatSubSettings extends IrisSubSettings {
+    type = IrisSubSettingsType.LECTURE;
     rateLimit?: number;
     rateLimitTimeframeHours?: number;
 }

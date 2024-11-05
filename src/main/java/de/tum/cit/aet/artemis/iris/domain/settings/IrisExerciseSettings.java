@@ -50,6 +50,15 @@ public class IrisExerciseSettings extends IrisSettings {
     }
 
     @Override
+    public IrisLectureChatSubSettings getIrisLectureChatSettings() {
+        return null;
+    }
+
+    @Override
+    public void setIrisLectureChatSettings(IrisLectureChatSubSettings irisLectureChatSettings) {
+    }
+
+    @Override
     public IrisChatSubSettings getIrisChatSettings() {
         return irisChatSettings;
     }

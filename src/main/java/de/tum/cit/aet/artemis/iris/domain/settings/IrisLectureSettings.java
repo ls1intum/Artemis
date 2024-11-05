@@ -9,57 +9,44 @@ import jakarta.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 /**
- * An {@link IrisSettings} implementation for course specific settings.
- * Course settings are used to override global settings and allows all sub setting types.
+ * An {@link IrisSettings} implementation for lecture specific settings.
+ * Lecture settings are used to override course settings and currently only allow setting the {@link IrisChatSubSettings}.
  */
 @Entity
-@DiscriminatorValue("COURSE")
+@DiscriminatorValue("LECTURE")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class IrisCourseSettings extends IrisSettings {
+public class IrisLectureSettings extends IrisSettings {
 
     @OneToOne(optional = false)
-    @JoinColumn(name = "course_id", unique = true, nullable = false)
-    private Course course;
+    @JoinColumn(name = "lecture_id", unique = true, nullable = false)
+    private Lecture lecture;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "iris_chat_settings_id")
     private IrisChatSubSettings irisChatSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_text_exercise_chat_settings_id")
-    private IrisTextExerciseChatSubSettings irisTextExerciseChatSettings;
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_lecture_ingestion_settings_id")
-    private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "iris_lecture_chat_settings_id")
     private IrisLectureChatSubSettings irisLectureChatSettings;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "iris_competency_generation_settings_id")
-    private IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings;
-
-    public Course getCourse() {
-        return course;
+    public Lecture getLecture() {
+        return lecture;
     }
 
-    public void setCourse(Course course) {
-        this.course = course;
+    public void setLecture(Lecture lecture) {
+        this.lecture = lecture;
     }
 
     @Override
     public IrisLectureIngestionSubSettings getIrisLectureIngestionSettings() {
-        return irisLectureIngestionSettings;
+        return null;
     }
 
     @Override
     public void setIrisLectureIngestionSettings(IrisLectureIngestionSubSettings irisLectureIngestionSettings) {
-        this.irisLectureIngestionSettings = irisLectureIngestionSettings;
     }
 
     @Override
@@ -74,12 +61,11 @@ public class IrisCourseSettings extends IrisSettings {
 
     @Override
     public IrisTextExerciseChatSubSettings getIrisTextExerciseChatSettings() {
-        return irisTextExerciseChatSettings;
+        return null;
     }
 
     @Override
     public void setIrisTextExerciseChatSettings(IrisTextExerciseChatSubSettings irisTextExerciseChatSettings) {
-        this.irisTextExerciseChatSettings = irisTextExerciseChatSettings;
     }
 
     @Override
@@ -94,11 +80,10 @@ public class IrisCourseSettings extends IrisSettings {
 
     @Override
     public IrisCompetencyGenerationSubSettings getIrisCompetencyGenerationSettings() {
-        return irisCompetencyGenerationSettings;
+        return null;
     }
 
     @Override
     public void setIrisCompetencyGenerationSettings(IrisCompetencyGenerationSubSettings irisCompetencyGenerationSubSettings) {
-        this.irisCompetencyGenerationSettings = irisCompetencyGenerationSubSettings;
     }
 }

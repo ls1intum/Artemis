@@ -4,6 +4,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { Course } from 'app/entities/course.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { Lecture } from 'app/entities/lecture.model';
 
 @Component({
     selector: 'jhi-iris-enabled',
@@ -12,6 +13,7 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 export class IrisEnabledComponent implements OnInit {
     @Input() exercise?: Exercise;
     @Input() course?: Course;
+    @Input() lecture?: Lecture;
     @Input() irisSubSettingsType: IrisSubSettingsType;
     @Input() disabled? = false;
 
@@ -31,6 +33,11 @@ export class IrisEnabledComponent implements OnInit {
                 this.irisSettings = settings;
                 this.setSubSettings();
             });
+        } else if (this.lecture) {
+            this.irisSettingsService.getUncombinedLectureSettings(this.lecture.id!).subscribe((settings) => {
+                this.irisSettings = settings;
+                this.setSubSettings();
+            });
         }
     }
 
@@ -44,6 +51,11 @@ export class IrisEnabledComponent implements OnInit {
                 });
             } else if (this.course) {
                 this.irisSettingsService.setCourseSettings(this.course.id!, this.irisSettings!).subscribe((response) => {
+                    this.irisSettings = response.body ?? this.irisSettings;
+                    this.setSubSettings();
+                });
+            } else if (this.lecture) {
+                this.irisSettingsService.setLectureSettings(this.lecture.id!, this.irisSettings!).subscribe((response) => {
                     this.irisSettings = response.body ?? this.irisSettings;
                     this.setSubSettings();
                 });

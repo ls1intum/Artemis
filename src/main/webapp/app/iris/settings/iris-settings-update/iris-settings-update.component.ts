@@ -11,6 +11,7 @@ import { cloneDeep, isEqual } from 'lodash-es';
 import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
+    IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
@@ -27,6 +28,8 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     public courseId?: number;
     @Input()
     public exerciseId?: number;
+    @Input()
+    public lectureId?: number;
     public irisSettings?: IrisSettings;
     public parentIrisSettings?: IrisSettings;
 
@@ -50,6 +53,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     GLOBAL = IrisSettingsType.GLOBAL;
     COURSE = IrisSettingsType.COURSE;
     EXERCISE = IrisSettingsType.EXERCISE;
+    LECTURE = IrisSettingsType.LECTURE;
 
     constructor(
         private irisSettingsService: IrisSettingsService,
@@ -107,6 +111,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         if (!this.irisSettings.irisTextExerciseChatSettings) {
             this.irisSettings.irisTextExerciseChatSettings = new IrisTextExerciseChatSubSettings();
         }
+        if (!this.irisSettings.irisLectureChatSettings) {
+            this.irisSettings.irisLectureChatSettings = new IrisLectureChatSubSettings();
+        }
         if (!this.irisSettings.irisLectureIngestionSettings) {
             this.irisSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
         }
@@ -148,6 +155,8 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 return new Observable<IrisSettings | undefined>();
             case IrisSettingsType.COURSE:
                 return this.irisSettingsService.getGlobalSettings();
+            case IrisSettingsType.LECTURE:
+                return this.irisSettingsService.getCombinedCourseSettings(this.courseId!);
             case IrisSettingsType.EXERCISE:
                 return this.irisSettingsService.getCombinedCourseSettings(this.courseId!);
         }
@@ -159,6 +168,8 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 return this.irisSettingsService.getGlobalSettings();
             case IrisSettingsType.COURSE:
                 return this.irisSettingsService.getUncombinedCourseSettings(this.courseId!);
+            case IrisSettingsType.LECTURE:
+                return this.irisSettingsService.getUncombinedLectureSettings(this.lectureId!);
             case IrisSettingsType.EXERCISE:
                 return this.irisSettingsService.getUncombinedExerciseSettings(this.exerciseId!);
         }
@@ -170,6 +181,8 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 return this.irisSettingsService.setGlobalSettings(this.irisSettings!);
             case IrisSettingsType.COURSE:
                 return this.irisSettingsService.setCourseSettings(this.courseId!, this.irisSettings!);
+            case IrisSettingsType.LECTURE:
+                return this.irisSettingsService.setLectureSettings(this.lectureId!, this.irisSettings!);
             case IrisSettingsType.EXERCISE:
                 return this.irisSettingsService.setExerciseSettings(this.exerciseId!, this.irisSettings!);
         }

@@ -2,6 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
+    IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
@@ -10,6 +11,7 @@ export enum IrisSettingsType {
     GLOBAL = 'global',
     COURSE = 'course',
     EXERCISE = 'exercise',
+    LECTURE = 'lecture',
 }
 
 export abstract class IrisSettings implements BaseEntity {
@@ -17,6 +19,7 @@ export abstract class IrisSettings implements BaseEntity {
     type: IrisSettingsType;
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
+    irisLectureChatSettings?: IrisLectureChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
@@ -26,6 +29,7 @@ export class IrisGlobalSettings implements IrisSettings {
     type = IrisSettingsType.GLOBAL;
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
+    irisLectureChatSettings?: IrisLectureChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
@@ -36,6 +40,7 @@ export class IrisCourseSettings implements IrisSettings {
     courseId?: number;
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
+    irisLectureChatSettings?: IrisLectureChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
 }
@@ -46,4 +51,12 @@ export class IrisExerciseSettings implements IrisSettings {
     exerciseId?: number;
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
+}
+
+export class IrisLectureSettings implements IrisSettings {
+    id?: number;
+    type = IrisSettingsType.LECTURE;
+    lectureId?: number;
+    irisChatSettings?: IrisChatSubSettings;
+    irisLectureChatSettings?: IrisLectureChatSubSettings;
 }

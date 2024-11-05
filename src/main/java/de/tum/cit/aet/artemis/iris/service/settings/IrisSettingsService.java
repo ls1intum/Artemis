@@ -35,7 +35,9 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSe
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisGlobalSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
@@ -657,6 +659,21 @@ public class IrisSettingsService {
         settings.setExercise(exercise);
         settings.setIrisChatSettings(new IrisChatSubSettings());
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
+        return settings;
+    }
+
+    /**
+     * Get the default Iris settings for an exercise.
+     * The default settings are used if no Iris settings for the exercise exist.
+     *
+     * @param lecture The exercise to get the default Iris settings for
+     * @return The default Iris settings for the exercise
+     */
+    public IrisLectureSettings getDefaultSettingsFor(Lecture lecture) {
+        var settings = new IrisLectureSettings();
+        settings.setLecture(lecture);
+        settings.setIrisChatSettings(new IrisChatSubSettings());
+        settings.setIrisLectureChatSettings(new IrisLectureChatSubSettings());
         return settings;
     }
 
