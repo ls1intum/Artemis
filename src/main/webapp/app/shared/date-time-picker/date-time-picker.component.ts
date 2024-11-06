@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
+import { Component, Input, ViewChild, computed, forwardRef, input, output } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -16,26 +16,26 @@ import dayjs from 'dayjs/esm';
     ],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor {
-    @ViewChild('dateInput', { static: false }) dateInput: NgModel;
-    @Input() labelName: string;
-    @Input() labelTooltip: string;
-    @Input() value: any;
-    @Input() disabled: boolean;
-    @Input() error: boolean;
-    @Input() warning: boolean;
-    @Input() requiredField: boolean = false;
-    @Input() startAt?: dayjs.Dayjs; // Default selected date. By default, this sets it to the current time without seconds or milliseconds;
-    @Input() min?: dayjs.Dayjs; // Dates before this date are not selectable.
-    @Input() max?: dayjs.Dayjs; // Dates after this date are not selectable.
-    @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
-    @Output() valueChange = new EventEmitter();
+    protected readonly faCalendarAlt = faCalendarAlt;
+    protected readonly faGlobe = faGlobe;
+    protected readonly faClock = faClock;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faCircleXmark = faCircleXmark;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
 
-    readonly faCalendarAlt = faCalendarAlt;
-    readonly faGlobe = faGlobe;
-    readonly faClock = faClock;
-    readonly faQuestionCircle = faQuestionCircle;
-    readonly faCircleXmark = faCircleXmark;
-    readonly faTriangleExclamation = faTriangleExclamation;
+    @ViewChild('dateInput', { static: false }) dateInput: NgModel;
+    labelName = input<string>();
+    labelTooltip = input<string>();
+    @Input() value: any;
+    disabled = input<boolean>();
+    error = input<boolean>();
+    warning = input<boolean>();
+    requiredField = input<boolean>(false);
+    startAt? = input<dayjs.Dayjs>(); // Default selected date. By default, this sets it to the current time without seconds or milliseconds;
+    min? = input<dayjs.Dayjs>(); // Dates before this date are not selectable.
+    max? = input<dayjs.Dayjs>(); // Dates after this date are not selectable.
+    shouldDisplayTimeZoneWarning = input<boolean>(true); // Displays a warning that the current time zone might differ from the participants'.
+    valueChange = output<void>();
 
     private onChange?: (val?: dayjs.Dayjs) => void;
 
@@ -91,17 +91,17 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
 
-    get startDate(): Date | null {
-        return this.convertToDate(this.startAt ?? dayjs().startOf('minutes'));
-    }
+    startDate = computed(() => {
+        return this.convertToDate(this.startAt?.() ?? dayjs().startOf('minutes'));
+    });
 
-    get minDate(): Date | null {
-        return this.convertToDate(this.min);
-    }
+    minDate = computed(() => {
+        return this.convertToDate(this.min?.());
+    });
 
-    get maxDate(): Date | null {
-        return this.convertToDate(this.max);
-    }
+    maxDate = computed(() => {
+        return this.convertToDate(this.max?.());
+    });
 
     /**
      * Function that converts a possibly undefined dayjs value to a date or null.
