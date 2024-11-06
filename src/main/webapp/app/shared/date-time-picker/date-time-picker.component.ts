@@ -46,8 +46,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     });
 
     private updateSignals(): void {
-        this.isInputValid.set(!Boolean(this.dateInput.invalid));
-        this.dateInputValue.set(this.dateInput.value);
+        this.isInputValid.set(!Boolean(this.dateInput?.invalid));
+        this.dateInputValue.set(this.dateInput?.value);
     }
 
     private onChange?: (val?: dayjs.Dayjs) => void;
