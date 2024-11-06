@@ -1,4 +1,4 @@
-<hr class="mt-0 mb-2" />
+<hr class="m-0 mb-2" />
 @if (isLoading()) {
     <div class="row justify-content-center align-items-center h-100">
         <div class="spinner-border text-primary" role="status">
@@ -14,8 +14,9 @@
         }
         <div class="col-8 learning-objects-container" [ngClass]="{ 'pe-0': learningObjects().length > 0, 'p-0': learningObjects().length == 0 }">
             @for (learningObject of learningObjects(); track learningObject.id; let last = $last) {
-                <div class="clickable">
-                    <span>{{ learningObject.name }}</span>
+                <div class="clickable d-flex justify-content-start align-items-center">
+                    <fa-icon [icon]="learningObject.type == LearningObjectType.EXERCISE ? faListCheck : faChalkboardUser" />
+                    <span class="ms-2">{{ learningObject.name }}</span>
                     @if (learningObject.completed) {
                         <fa-icon [icon]="faCheckCircle" class="ms-1 text-success" />
                     }

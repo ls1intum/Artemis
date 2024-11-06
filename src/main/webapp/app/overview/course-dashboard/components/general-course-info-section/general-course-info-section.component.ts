@@ -4,12 +4,13 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseDashboardService } from 'app/overview/course-dashboard/course-dashboard.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @Component({
     selector: 'jhi-general-course-info-section',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FontAwesomeModule],
+    imports: [TranslateDirective, FontAwesomeModule, ArtemisMarkdownModule],
     templateUrl: './general-course-info-section.component.html',
     styleUrl: './general-course-info-section.component.scss',
 })

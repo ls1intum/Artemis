@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
-import { faCheckCircle, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faCheckCircle, faCircleInfo, faListCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
-import { LearningPathCompetencyDTO, LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
+import { LearningObjectType, LearningPathCompetencyDTO, LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 import { CompetencyJol, CompetencyJolResponseType, CompetencyProgress, getConfidence, getMastery, getProgress } from 'app/entities/competency.model';
@@ -18,8 +18,12 @@ import { CommonModule } from '@angular/common';
     styleUrl: './course-competency-body.component.scss',
 })
 export class CourseCompetencyBodyComponent {
+    protected readonly LearningObjectType = LearningObjectType;
+
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly faCheckCircle = faCheckCircle;
+    protected readonly faListCheck = faListCheck;
+    protected readonly faChalkboardUser = faChalkboardUser;
 
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);

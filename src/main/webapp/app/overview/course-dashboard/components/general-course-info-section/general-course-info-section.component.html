@@ -20,7 +20,7 @@
             <span class="placeholder col-8"></span>
         </p>
     } @else if (generalCourseInformation()) {
-        <span>{{ generalCourseInformation() }}</span>
+        <span [innerHTML]="generalCourseInformation() | htmlForMarkdown"></span>
     } @else {
         <em class="text-secondary">No general course information has been set!</em>
     }
