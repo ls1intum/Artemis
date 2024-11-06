@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSe
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
@@ -189,4 +190,14 @@ public class BuildJobQueueResource {
         BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
         return ResponseEntity.ok(buildJobStatistics);
     }
+
+    @GetMapping("queued-jobs/queue-duration-estimation")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ZonedDateTime> getBuildJobQueueDurationEstimation(@RequestParam long participationId) {
+        if (participationId == 0) {
+            ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(localCIBuildJobQueueService.getBuildJobEstimatedQueueReleaseDate(participationId));
+    }
+
 }

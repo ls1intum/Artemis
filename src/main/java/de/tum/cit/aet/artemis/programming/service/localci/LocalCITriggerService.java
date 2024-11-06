@@ -189,9 +189,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         String buildJobId = String.valueOf(participation.getId()) + submissionDate.toInstant().toEpochMilli();
 
-        JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null);
-
         var programmingExerciseBuildConfig = loadBuildConfig(programmingExercise);
+
+        long estimatedDuration = programmingExerciseBuildConfig.getBuildDurationSeconds() == 0 ? 20 : programmingExerciseBuildConfig.getBuildDurationSeconds();
+
+        JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null, null, estimatedDuration);
 
         RepositoryInfo repositoryInfo = getRepositoryInfo(participation, triggeredByPushTo, programmingExerciseBuildConfig);
 

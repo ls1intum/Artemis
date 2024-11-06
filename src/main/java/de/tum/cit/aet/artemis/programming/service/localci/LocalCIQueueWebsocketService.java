@@ -117,7 +117,8 @@ public class LocalCIQueueWebsocketService {
         public void entryAdded(com.hazelcast.core.EntryEvent<Long, BuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
             sendProcessingJobsOverWebsocket(event.getValue().courseId());
-            notifyUserAboutBuildProcessing(event.getValue().exerciseId(), event.getValue().participationId(), event.getValue().buildConfig().commitHashToBuild());
+            notifyUserAboutBuildProcessing(event.getValue().exerciseId(), event.getValue().participationId(), event.getValue().buildConfig().commitHashToBuild(),
+                    event.getValue().jobTimingInfo().estimatedDuration());
         }
 
         @Override
@@ -149,8 +150,8 @@ public class LocalCIQueueWebsocketService {
         }
     }
 
-    private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash) {
-        var submissionProcessingDTO = new SubmissionProcessingDTO(exerciseId, participationId, commitHash);
+    private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, long estimatedDuration) {
+        var submissionProcessingDTO = new SubmissionProcessingDTO(exerciseId, participationId, commitHash, estimatedDuration);
         programmingMessagingService.notifyUserAboutSubmissionProcessing(submissionProcessingDTO, exerciseId, participationId);
     }
 }

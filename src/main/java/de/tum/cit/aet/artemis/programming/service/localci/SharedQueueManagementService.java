@@ -5,9 +5,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,6 +30,9 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+import com.hazelcast.map.listener.EntryAddedListener;
+import com.hazelcast.map.listener.EntryRemovedListener;
+import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
@@ -38,7 +43,6 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSe
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
 /**
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.
@@ -72,18 +76,14 @@ public class SharedQueueManagementService {
 
     private ITopic<String> resumeBuildAgentTopic;
 
-    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+    private int buildAgentsCapacity;
 
-    private long buildAgentsCapacity;
+    private int runningBuildJobCount;
 
-    private long buildAgentsRunning;
-
-    public SharedQueueManagementService(BuildJobRepository buildJobRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProfileService profileService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+    public SharedQueueManagementService(BuildJobRepository buildJobRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProfileService profileService) {
         this.buildJobRepository = buildJobRepository;
         this.hazelcastInstance = hazelcastInstance;
         this.profileService = profileService;
-        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -98,6 +98,7 @@ public class SharedQueueManagementService {
         this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
         this.pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
         this.resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
+        this.buildAgentInformation.addEntryListener(new BuildAgentListener(), false);
     }
 
     /**
@@ -298,8 +299,93 @@ public class SharedQueueManagementService {
         return new PageImpl<>(orderedBuildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.getTotalElements());
     }
 
-    public long getBuildJobEstimatedDuration(BuildJobQueueItem buildJob) {
-        var buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseIdElseThrow(buildJob.exerciseId());
-        return buildConfig.getBuildDurationSeconds();
+    private String getIdOfQueuedJobFromParticipation(long participationId) {
+        return queue.stream().filter(job -> job.participationId() == participationId).map(BuildJobQueueItem::id).toList().getLast();
+    }
+
+    public ZonedDateTime getBuildJobEstimatedQueueReleaseDate(long participationId) {
+        if (queue.isEmpty() || this.buildAgentsCapacity > this.runningBuildJobCount + queue.size()) {
+            return ZonedDateTime.now();
+        }
+
+        String buildJobId = getIdOfQueuedJobFromParticipation(participationId);
+
+        if (buildJobId == null) {
+            return ZonedDateTime.now();
+        }
+
+        List<BuildJobQueueItem> jobsQueuedBefore = queue.stream().sorted(new LocalCIPriorityQueueComparator()).takeWhile(job -> !job.id().equals(buildJobId)).toList();
+
+        ZonedDateTime now = ZonedDateTime.now();
+
+        List<Long> agentAvailabilities = new ArrayList<>(processingJobs.values().stream().map(job -> buildJobRemainingDuration(job, now)).sorted().toList());
+
+        if (agentAvailabilities.size() < this.buildAgentsCapacity) {
+            int agentsToAdd = this.buildAgentsCapacity - agentAvailabilities.size();
+            agentAvailabilities.addAll(Collections.nCopies(agentsToAdd, 0L));
+        }
+        else {
+            agentAvailabilities = agentAvailabilities.subList(0, this.buildAgentsCapacity);
+            log.warn("There are more agents available than expected. This should not happen. Processing jobs: {}, Build agents: {}", processingJobs, buildAgentInformation);
+        }
+
+        if (jobsQueuedBefore.size() < agentAvailabilities.size()) {
+            return now.plusSeconds(agentAvailabilities.get(jobsQueuedBefore.size()));
+        }
+        else {
+            return now.plusSeconds(calculateNextJobQueueDuration(agentAvailabilities, jobsQueuedBefore));
+        }
+
+    }
+
+    private Long calculateNextJobQueueDuration(List<Long> agentAvailabilities, List<BuildJobQueueItem> jobsQueuedBefore) {
+        PriorityQueue<Long> agentAvailabilitiesQueue = new PriorityQueue<>(agentAvailabilities);
+        for (BuildJobQueueItem job : jobsQueuedBefore) {
+            Long agentRemainingTimeObj = agentAvailabilitiesQueue.poll();
+            long agentRemainingTime = agentRemainingTimeObj == null ? 0 : agentRemainingTimeObj;
+            agentRemainingTime = Math.max(0, agentRemainingTime);
+            agentAvailabilitiesQueue.add(agentRemainingTime + job.jobTimingInfo().estimatedDuration());
+        }
+        Long agentRemainingTimeObj = agentAvailabilitiesQueue.poll();
+        return agentRemainingTimeObj == null ? 0 : agentRemainingTimeObj;
+    }
+
+    private long buildJobRemainingDuration(BuildJobQueueItem buildJob, ZonedDateTime now) {
+        ZonedDateTime estimatedCompletionDate = buildJob.jobTimingInfo().estimatedCompletionDate();
+        if (estimatedCompletionDate == null) {
+            return 0;
+        }
+        if (estimatedCompletionDate.isBefore(now)) {
+            return 0;
+        }
+        return Duration.between(now, estimatedCompletionDate).toSeconds();
+
+    }
+
+    private class BuildAgentListener
+            implements EntryAddedListener<String, BuildAgentInformation>, EntryRemovedListener<String, BuildAgentInformation>, EntryUpdatedListener<String, BuildAgentInformation> {
+
+        @Override
+        public void entryAdded(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
+            log.debug("Build agent added: {}", event.getValue());
+            getBuildAgentsCapacity();
+        }
+
+        @Override
+        public void entryRemoved(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
+            log.debug("Build agent removed: {}", event.getOldValue());
+            getBuildAgentsCapacity();
+        }
+
+        @Override
+        public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
+            log.debug("Build agent updated: {}", event.getValue());
+            getBuildAgentsCapacity();
+        }
+    }
+
+    private void getBuildAgentsCapacity() {
+        buildAgentsCapacity = buildAgentInformation.values().stream().mapToInt(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).sum();
+        runningBuildJobCount = buildAgentInformation.values().stream().mapToInt(BuildAgentInformation::numberOfCurrentBuildJobs).sum();
     }
 }
