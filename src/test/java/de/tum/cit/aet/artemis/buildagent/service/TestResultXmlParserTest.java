@@ -240,10 +240,77 @@ class TestResultXmlParserTest {
                 """;
 
         TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
-        assertThat(successfulTests).hasSize(12).extracting(BuildResult.LocalCITestJobDTO::getName).containsExactlyInAnyOrder("Testing filtering in A", "Testing mapping in A",
-                "Testing filtering in B", "Testing mapping in B", "Testing filtering in C", "Testing mapping in C", "Testing A against sample solution",
-                "Testing B against sample solution", "Testing C against sample solution", "Testing selectAndReflectA (0,0) []", "Testing selectAndReflectB (0,1) [(0,0)]",
-                "Testing selectAndReflectC (0,1) [(-1,-1)]");
+
+        // @formatter:off
+        assertThat(successfulTests).extracting(BuildResult.LocalCITestJobDTO::getName).containsExactlyInAnyOrder(
+            "Properties.Checked by SmallCheck.Testing filtering in A",
+                "Properties.Checked by SmallCheck.Testing mapping in A",
+                "Properties.Checked by SmallCheck.Testing filtering in B",
+                "Properties.Checked by SmallCheck.Testing mapping in B",
+                "Properties.Checked by SmallCheck.Testing filtering in C",
+                "Properties.Checked by SmallCheck.Testing mapping in C",
+                "Properties.Checked by QuickCheck.Testing A against sample solution",
+                "Properties.Checked by QuickCheck.Testing B against sample solution",
+                "Properties.Checked by QuickCheck.Testing C against sample solution",
+                "Unit Tests.Testing selectAndReflectA (0,0) []",
+                "Unit Tests.Testing selectAndReflectB (0,1) [(0,0)]",
+                "Unit Tests.Testing selectAndReflectC (0,1) [(-1,-1)]");
+        // @formatter:on
+        assertThat(failedTests).isEmpty();
+    }
+
+    @Test
+    void testMultipleTestsuite() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuites>
+                    <testsuite name="SuiteA" tests="3">
+                        <testcase name="Test1"/>
+                        <testcase name="Test2"/>
+                        <testcase name="Test3"/>
+                    </testsuite>
+                    <testsuite name="SuiteB" tests="3">
+                        <testcase name="Test1"/>
+                        <testcase name="Test2"/>
+                        <testcase name="Test3"/>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        // @formatter:off
+        assertThat(successfulTests).extracting(BuildResult.LocalCITestJobDTO::getName).containsExactlyInAnyOrder(
+            "SuiteA.Test1",
+                "SuiteA.Test2",
+                "SuiteA.Test3",
+                "SuiteB.Test1",
+                "SuiteB.Test2",
+                "SuiteB.Test3");
+        // @formatter:on
+        assertThat(failedTests).isEmpty();
+    }
+
+    @Test
+    void testNestedTestsuiteMissingNames() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuites>
+                    <testsuite>
+                        <testsuite>
+                            <testsuite>
+                                <testcase name="Test1"/>
+                                <testcase name="Test2"/>
+                                <testcase name="Test3"/>
+                            </testsuite>
+                        </testsuite>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        assertThat(successfulTests).extracting(BuildResult.LocalCITestJobDTO::getName).containsExactlyInAnyOrder("Test1", "Test2", "Test3");
         assertThat(failedTests).isEmpty();
     }
 }

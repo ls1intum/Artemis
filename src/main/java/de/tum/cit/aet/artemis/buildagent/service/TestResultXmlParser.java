@@ -22,6 +22,9 @@ public class TestResultXmlParser {
 
     /**
      * Parses the test result file and extracts failed and successful tests.
+     * The name of nested testsuite elements are prepended with dots to the testcase name.
+     * A singular top-level testsuite is not included in the name.
+     * If multiple top-level testsuite elements are present, their names will be included.
      *
      * @param testResultFileString The content of the test result file as a String.
      * @param failedTests          A list of failed tests. This list will be populated by the method.
@@ -33,31 +36,63 @@ public class TestResultXmlParser {
         testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
         TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);
 
-        // A toplevel <testsuites> element is parsed like a <testsuite>
-        processTestSuite(testSuite, failedTests, successfulTests);
+        // The toplevel element can be <testsuites> or <testsuite>
+        if (testResultFileString.contains("<testsuites")) {
+            if (testSuite.testSuites().size() == 1) {
+                TestSuite suite = testSuite.testSuites().getFirst();
+                processTopLevelTestSuite(failedTests, successfulTests, suite);
+            }
+            else {
+                for (TestSuite suite : testSuite.testSuites()) {
+                    processInnerTestSuite(suite, failedTests, successfulTests, "");
+                }
+            }
+        }
+        else {
+            processTopLevelTestSuite(failedTests, successfulTests, testSuite);
+        }
     }
 
-    private static void processTestSuite(TestSuite testSuite, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests) {
+    private static void processTopLevelTestSuite(List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests, TestSuite suite) {
+        processTestSuiteWithNamePrefix(suite, failedTests, successfulTests, "");
+    }
+
+    private static void processInnerTestSuite(TestSuite testSuite, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests,
+            String outerNamePrefix) {
+        String namePrefix;
+        if (testSuite.name() != null) {
+            namePrefix = outerNamePrefix + testSuite.name() + ".";
+        }
+        else {
+            namePrefix = outerNamePrefix;
+        }
+
+        processTestSuiteWithNamePrefix(testSuite, failedTests, successfulTests, namePrefix);
+    }
+
+    private static void processTestSuiteWithNamePrefix(TestSuite testSuite, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests,
+            String namePrefix) {
         for (TestCase testCase : testSuite.testCases()) {
             if (testCase.isSkipped()) {
                 continue;
             }
             Failure failure = testCase.extractFailure();
             if (failure != null) {
-                failedTests.add(new BuildResult.LocalCITestJobDTO(testCase.name(), List.of(failure.extractMessage())));
+                failedTests.add(new BuildResult.LocalCITestJobDTO(namePrefix + testCase.name(), List.of(failure.extractMessage())));
             }
             else {
-                successfulTests.add(new BuildResult.LocalCITestJobDTO(testCase.name(), List.of()));
+                successfulTests.add(new BuildResult.LocalCITestJobDTO(namePrefix + testCase.name(), List.of()));
             }
         }
 
         for (TestSuite suite : testSuite.testSuites()) {
-            processTestSuite(suite, failedTests, successfulTests);
+            processInnerTestSuite(suite, failedTests, successfulTests, namePrefix);
         }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record TestSuite(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testcase") List<TestCase> testCases,
+    record TestSuite(@JacksonXmlProperty(isAttribute = true, localName = "name") String name,
+            @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testcase") List<TestCase> testCases,
             @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testsuite") List<TestSuite> testSuites) {
 
         TestSuite {
