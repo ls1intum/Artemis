@@ -6,6 +6,8 @@
         [isCommunicationPage]="isCommunicationPage"
         [lastReadDate]="lastReadDate"
         [hasChannelModerationRights]="hasChannelModerationRights"
+        [isDeleted]="isDeleted"
+        (isDeleteEvent)="onDeleteEvent(true)"
     />
     @if (!createAnswerPostModal.isInputOpen) {
         <div class="answer-post-content-margin">
@@ -15,6 +17,9 @@
                 [author]="posting.author"
                 [posting]="posting"
                 [isReply]="true"
+                [isDeleted]="isDeleted"
+                [deleteTimerInSeconds]="deleteTimerInSeconds"
+                (onUndoDeleteEvent)="onDeleteEvent(false)"
                 (userReferenceClicked)="userReferenceClicked.emit($event)"
                 (channelReferenceClicked)="channelReferenceClicked.emit($event)"
             />
@@ -23,14 +28,16 @@
     <div class="answer-post-content-margin">
         <ng-container #createEditAnswerPostContainer />
     </div>
-    <div class="answer-post-content-margin">
-        <jhi-answer-post-footer
-            [isReadOnlyMode]="isReadOnlyMode"
-            [posting]="posting"
-            [isLastAnswer]="isLastAnswer"
-            [isThreadSidebar]="isThreadSidebar"
-            (openPostingCreateEditModal)="openPostingCreateEditModal.emit()"
-        />
-    </div>
+    @if (!isDeleted) {
+        <div class="answer-post-content-margin" @fade>
+            <jhi-answer-post-footer
+                [isReadOnlyMode]="isReadOnlyMode"
+                [posting]="posting"
+                [isLastAnswer]="isLastAnswer"
+                [isThreadSidebar]="isThreadSidebar"
+                (openPostingCreateEditModal)="openPostingCreateEditModal.emit()"
+            />
+        </div>
+    }
 </div>
 <jhi-answer-post-create-edit-modal #createAnswerPostModal [posting]="posting" [createEditAnswerPostContainerRef]="containerRef" />

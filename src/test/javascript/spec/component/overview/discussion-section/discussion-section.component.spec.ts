@@ -45,6 +45,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @Directive({
     // eslint-disable-next-line @angular-eslint/directive-selector
@@ -66,7 +67,7 @@ describe('DiscussionSectionComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule), DiscussionSectionComponent],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule), DiscussionSectionComponent, MockModule(BrowserAnimationsModule)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
