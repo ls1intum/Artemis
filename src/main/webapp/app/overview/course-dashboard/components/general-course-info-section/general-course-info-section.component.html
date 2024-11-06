@@ -1,7 +1,7 @@
 <div>
     <div class="d-flex justify-content-between align-items-center">
         <h5 class="m-0">General</h5>
-        <button class="btn btn-secondary btn-sm col-md-auto">
+        <button class="btn btn-secondary btn-sm col-md-auto" (click)="loadGeneralCourseInformation(courseId())">
             @if (isLoading()) {
                 <fa-icon [icon]="faSpinner" animation="spin" />
             }
@@ -19,7 +19,9 @@
             <span class="placeholder col-10"></span>
             <span class="placeholder col-8"></span>
         </p>
+    } @else if (generalCourseInformation()) {
+        <span>{{ generalCourseInformation() }}</span>
     } @else {
-        <section>Text Lorem ipsum</section>
+        <em class="text-secondary">No general course information has been set!</em>
     }
 </div>

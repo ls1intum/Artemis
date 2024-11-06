@@ -6,6 +6,7 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faBrain, faComments, faCubesStacked, faMagnifyingGlass, faPenFancy, faPlusMinus, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { StandardizedCompetency } from 'app/entities/competency/standardized-competency.model';
+import { LearningPathCompetencyDTO } from 'app/entities/competency/learning-path.model';
 
 /**
  * The available competency types (based on Bloom's Taxonomy)
@@ -117,6 +118,11 @@ export class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
     }
 }
 
+export interface CompetencyJolResponseType {
+    current: CompetencyJol;
+    prior?: CompetencyJol;
+}
+
 export class CompetencyJol {
     competencyId: number;
     jolValue: number;
@@ -124,7 +130,11 @@ export class CompetencyJol {
     competencyProgress: number;
     competencyConfidence: number;
 
-    static shouldPromptForJol(competency: Competency, progress: CompetencyProgress | undefined, courseCompetencies: Competency[]): boolean {
+    static shouldPromptForJol(
+        competency: CourseCompetency | LearningPathCompetencyDTO,
+        progress: CompetencyProgress | undefined,
+        courseCompetencies: CourseCompetency[] | LearningPathCompetencyDTO[],
+    ): boolean {
         const currentDate = dayjs();
         const softDueDateMinusOneDay = competency.softDueDate?.subtract(1, 'day');
         const competencyProgress = progress?.progress ?? 0;

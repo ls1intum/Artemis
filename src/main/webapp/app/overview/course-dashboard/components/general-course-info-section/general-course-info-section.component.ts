@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, effect, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseDashboardService } from 'app/overview/course-dashboard/course-dashboard.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-general-course-info-section',
@@ -14,9 +16,13 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export class GeneralCourseInfoSectionComponent {
     protected readonly faSpinner = faSpinner;
 
+    private readonly courseDashboardService = inject(CourseDashboardService);
+    private readonly alertService = inject(AlertService);
+
     readonly courseId = input.required<number>();
 
     readonly isLoading = signal<boolean>(true);
+    readonly generalCourseInformation = signal<string | undefined>(undefined);
 
     constructor() {
         effect(() => {
@@ -25,7 +31,15 @@ export class GeneralCourseInfoSectionComponent {
         });
     }
 
-    private loadGeneralCourseInformation(courseId: number) {
-        console.log(`load general information ${courseId}`);
+    protected async loadGeneralCourseInformation(courseId: number) {
+        try {
+            this.isLoading.set(true);
+            const generalCourseInformation = await this.courseDashboardService.getGeneralCourseInformation(courseId);
+            this.generalCourseInformation.set(generalCourseInformation);
+        } catch (error) {
+            this.alertService.error(error);
+        } finally {
+            this.isLoading.set(false);
+        }
     }
 }

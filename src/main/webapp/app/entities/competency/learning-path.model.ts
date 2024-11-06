@@ -1,9 +1,10 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
 import { User, UserNameAndLoginDTO } from 'app/core/user/user.model';
-import { CompetencyRelationType, CourseCompetency } from 'app/entities/competency.model';
+import { CompetencyProgress, CompetencyRelationType, CompetencyTaxonomy, CourseCompetency } from 'app/entities/competency.model';
 import { Edge, Node, NodeDimension } from '@swimlane/ngx-graph';
 import { faCheckCircle, faCircle, faFlag, faFlagCheckered, faPlayCircle, faSignsPost } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 export class LearningPath implements BaseEntity {
     public id?: number;
@@ -30,6 +31,10 @@ export interface LearningPathCompetencyDTO {
     id: number;
     title: string;
     masteryProgress: number;
+    optional: boolean;
+    taxonomy: CompetencyTaxonomy;
+    softDueDate?: dayjs.Dayjs;
+    userProgress?: CompetencyProgress[];
 }
 
 export interface LearningPathDTO {

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable, lastValueFrom, map } from 'rxjs';
 import { CompetencyMetrics, ExerciseInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -13,6 +13,10 @@ export class CourseDashboardService {
     public resourceUrl = 'api/metrics';
 
     constructor(private http: HttpClient) {}
+
+    async getGeneralCourseInformation(courseId: number): Promise<string> {
+        return await lastValueFrom(this.http.get(`api/courses/${courseId}/general-information`, { observe: 'body', responseType: 'text' }));
+    }
 
     getCourseMetricsForUser(courseId: number): Observable<HttpResponse<StudentMetrics>> {
         return this.http.get<StudentMetrics>(`${this.resourceUrl}/course/${courseId}/student`, { observe: 'response' }).pipe(
@@ -63,7 +67,9 @@ export class CourseDashboardService {
         );
     }
 
-    private convertToLectureUnitInformation(lectureUnitInformation: { [key: string]: any }): { [key: string]: LectureUnitInformation } {
+    private convertToLectureUnitInformation(lectureUnitInformation: { [key: string]: any }): {
+        [key: string]: LectureUnitInformation;
+    } {
         return Object.keys(lectureUnitInformation).reduce(
             (acc, key) => {
                 const lectureUnit = lectureUnitInformation[key];
