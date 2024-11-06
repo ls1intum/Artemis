@@ -60,20 +60,23 @@ public class ProgrammingExerciseBuildConfigService {
      */
     @Nullable
     DockerRunConfig getDockerRunConfigFromParsedList(List<List<String>> list) {
+        final int keyIndex = 0;
+        final int valueIndex = 1;
         try {
             boolean networkDisabled = false;
             List<String> env = null;
             for (List<String> entry : list) {
-                if (entry.size() != 2 || StringUtils.isBlank(entry.get(1)) || StringUtils.isBlank(entry.get(0)) || !DockerRunConfig.AllowedDockerFlags.isAllowed(entry.get(0))) {
+                if (entry.size() != 2 || StringUtils.isBlank(entry.get(valueIndex)) || StringUtils.isBlank(entry.get(keyIndex))
+                        || !DockerRunConfig.AllowedDockerFlags.isAllowed(entry.get(keyIndex))) {
                     log.warn("Invalid Docker flag entry: {}. Skipping.", entry);
                     continue;
                 }
-                switch (entry.get(0)) {
+                switch (entry.get(keyIndex)) {
                     case "network":
-                        networkDisabled = entry.get(1).equalsIgnoreCase("none");
+                        networkDisabled = entry.get(valueIndex).equalsIgnoreCase("none");
                         break;
                     case "env":
-                        env = parseEnvVariableString(entry.get(1));
+                        env = parseEnvVariableString(entry.get(valueIndex));
                         break;
                     default:
                         log.error("Invalid Docker flag entry: {}. Skipping.", entry);
@@ -127,15 +130,32 @@ public class ProgrammingExerciseBuildConfigService {
 
         Matcher matcher = pattern.matcher(envVariableString);
 
+        return extractEnvVariablesKeyValues(matcher);
+    }
+
+    /**
+     * Extracts the key-value pairs from the matcher and returns them as a list of strings
+     * The key/value can be a single word, a string in single quotes, or a string in double quotes
+     *
+     * @param matcher the matcher that contains the key-value pairs
+     * @return a list of strings containing the key-value pairs
+     */
+    private List<String> extractEnvVariablesKeyValues(Matcher matcher) {
         List<String> envVars = new ArrayList<>();
         while (matcher.find()) {
+            // The key can be a single word, a string in single quotes, or a string in double quotes, if matched to group1, the key is in single quotes, if matched to group2, the
+            // key is in double quotes, otherwise it is a single word
+            // if all groups are null, the key is a single word
             String key = matcher.group(1) != null ? matcher.group(1) : matcher.group(2) != null ? matcher.group(2) : matcher.group(3);
 
+            // The value can be a single word, a string in single quotes, or a string in double quotes, if matched to group4, the value is in single quotes, if matched to group5,
+            // the value is in double quotes, otherwise it is a single word
+            // if all groups are null, the value is a single word
             String value = matcher.group(4) != null ? matcher.group(4) : matcher.group(5) != null ? matcher.group(5) : matcher.group(6);
 
+            // Add the key-value pair to the list
             envVars.add(key + "=" + value);
         }
-
         return envVars;
     }
 }

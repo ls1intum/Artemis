@@ -462,9 +462,4 @@ public class BuildJobContainerService {
         List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
         return containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst().orElse(null);
     }
-
-    private String getParentFolderPath(String path) {
-        Path parentPath = Paths.get(path).normalize().getParent();
-        return parentPath != null ? parentPath.toString() : "";
-    }
 }

@@ -7,6 +7,10 @@ const ALLOWED_DOCKER_FLAG_OPTIONS = ['network', 'env'];
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL, ProgrammingLanguage.EMPTY];
 
+const NETWORK_KEY: string = 'network';
+const ENV_KEY: string = 'env';
+export const ENV_VAR_REGEX = /(?:'([^']+)'|"([^"]+)"|(\w+))=(?:'([^']*)'|"([^"]*)"|([^,]+))/;
+
 @Component({
     selector: 'jhi-programming-exercise-build-configuration',
     templateUrl: './programming-exercise-build-configuration.component.html',
@@ -34,6 +38,16 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     timeoutMaxValue?: number;
     timeoutDefaultValue?: number;
 
+    isLanguageSupported: boolean = false;
+
+    protected readonly envVarRegex = ENV_VAR_REGEX;
+
+    constructor() {
+        effect(() => {
+            this.setIsLanguageSupported();
+        });
+    }
+
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
@@ -55,37 +69,29 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         });
 
         if (this.programmingExercise()?.buildConfig?.dockerFlags) {
-            const dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags || '[]') as [string, string][];
-            dockerFlags.forEach(([key, value]) => {
-                if (key === this.NETWORK_KEY) {
-                    this.isNetworkDisabled = value === 'none';
-                } else if (key === this.ENV_KEY) {
-                    this.envVars = value;
-                }
-            });
+            this.initDockerFlags();
         }
     }
 
-    isLanguageSupported: boolean = false;
-
-    readonly NETWORK_KEY: string = 'network';
-    readonly ENV_KEY: string = 'env';
-    readonly ENV_VAR_REGEX = /(?:'([^']+)'|"([^"]+)"|(\w+))=(?:'([^']*)'|"([^"]*)"|([^,]+))/;
-
-    constructor() {
-        effect(() => {
-            this.setIsLanguageSupported();
+    initDockerFlags() {
+        const dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags || '[]') as [string, string][];
+        dockerFlags.forEach(([key, value]) => {
+            if (key === NETWORK_KEY) {
+                this.isNetworkDisabled = value === 'none';
+            } else if (key === ENV_KEY) {
+                this.envVars = value;
+            }
         });
     }
 
     onDisableNetworkAccessChange(event: any) {
         this.isNetworkDisabled = event.target.checked;
-        this.updateDockerFlags(this.NETWORK_KEY, event.target.checked ? 'none' : '');
+        this.updateDockerFlags(NETWORK_KEY, event.target.checked ? 'none' : '');
     }
 
     onEnvVarsChange(event: any) {
         this.envVars = event;
-        this.updateDockerFlags(this.ENV_KEY, event);
+        this.updateDockerFlags(ENV_KEY, event);
     }
 
     updateDockerFlags(key: string, value: string) {

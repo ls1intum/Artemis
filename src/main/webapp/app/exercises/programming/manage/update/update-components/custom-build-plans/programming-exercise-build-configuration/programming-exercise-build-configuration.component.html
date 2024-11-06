@@ -51,7 +51,7 @@
                 maxlength="1000"
                 [ngModel]="envVars"
                 (ngModelChange)="onEnvVarsChange($event)"
-                [pattern]="ENV_VAR_REGEX"
+                [pattern]="envVarRegex"
                 #envVarsInput="ngModel"
             />
             @if (envVarsInput.invalid && (envVarsInput.dirty || envVarsInput.touched)) {

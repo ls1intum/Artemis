@@ -1095,7 +1095,8 @@ public class ProgrammingExerciseService {
             String envFlag = getEnvFlag(flags);
 
             if (envFlag != null && envFlag.length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
-                throw new BadRequestAlertException("The environment variables are too long. Max 1000chars", "Exercise", "envVariablesTooLong");
+                throw new BadRequestAlertException("The environment variables are too long. Max " + MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH + " chars", "Exercise",
+                        "envVariablesTooLong");
             }
         }
 
