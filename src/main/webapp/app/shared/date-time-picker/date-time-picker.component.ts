@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, computed, forwardRef, input, output } from '@angular/core';
+import { Component, Input, ViewChild, computed, forwardRef, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -37,6 +37,19 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     shouldDisplayTimeZoneWarning = input<boolean>(true); // Displays a warning that the current time zone might differ from the participants'.
     valueChange = output<void>();
 
+    protected isInputValid = signal<boolean>(false);
+    protected dateInputValue = signal<string>('');
+
+    isValid = computed(() => {
+        const isInvalid = this.error() || !this.isInputValid() || (this.requiredField() && !this.dateInputValue()) || this.warning();
+        return !isInvalid;
+    });
+
+    private updateSignals(): void {
+        this.isInputValid.set(!Boolean(this.dateInput.invalid));
+        this.dateInputValue.set(this.dateInput.value);
+    }
+
     private onChange?: (val?: dayjs.Dayjs) => void;
 
     /**
@@ -44,6 +57,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     valueChanged() {
         this.valueChange.emit();
+        this.updateSignals();
     }
 
     /**
@@ -57,6 +71,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         } else {
             this.value = value;
         }
+        this.updateSignals();
     }
 
     /**
@@ -117,5 +132,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     clearDate() {
         this.dateInput.reset(undefined);
+        this.updateSignals();
     }
 }
