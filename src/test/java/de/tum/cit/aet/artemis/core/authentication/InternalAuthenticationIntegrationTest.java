@@ -227,6 +227,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
+        AuthenticationIntegrationTestHelper.authenticationBearerTokenAssertions(response.getHeader("Authorization"));
     }
 
     @Test
