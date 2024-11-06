@@ -27,8 +27,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 @Service
 public class UserSshPublicKeyService {
 
-    private static final String KEY_DEFAULT_LABEL = "Key 1";
-
     private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
     public UserSshPublicKeyService(UserSshPublicKeyRepository userSshPublicKeyRepository) {
@@ -79,7 +77,7 @@ public class UserSshPublicKeyService {
                 label = String.join(" ", Arrays.copyOfRange(parts, 2, parts.length));
             }
             else {
-                label = KEY_DEFAULT_LABEL;
+                label = "Key " + (userSshPublicKeyRepository.findAllByUserId(newSshPublicKey.getUserId()).size() + 1);
             }
         }
         if (label.length() <= 50) {
