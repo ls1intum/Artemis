@@ -114,7 +114,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         newExercise.setRandomizeQuestionOrder(importedExercise.isRandomizeQuestionOrder());
         newExercise.setAllowedNumberOfAttempts(importedExercise.getAllowedNumberOfAttempts());
         newExercise.setRemainingNumberOfAttempts(importedExercise.getRemainingNumberOfAttempts());
-        newExercise.setIsOpenForPractice(importedExercise.isIsOpenForPractice());
+        newExercise.setIsOpenForPractice(false);
         newExercise.setQuizMode(importedExercise.getQuizMode());
         newExercise.setDuration(importedExercise.getDuration());
         return newExercise;
