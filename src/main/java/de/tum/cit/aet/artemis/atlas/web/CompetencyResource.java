@@ -338,7 +338,7 @@ public class CompetencyResource {
 
     private void checkCompetencyAttributes(Competency competency) {
         if (competency.getTitle() == null || competency.getTitle().trim().isEmpty() || competency.getMasteryThreshold() < 1 || competency.getMasteryThreshold() > 100) {
-            throw new BadRequestAlertException("The attributes of the competency are invalid!", ENTITY_NAME, "invalidPrerequisiteAttributes");
+            throw new BadRequestAlertException("The attributes of the competency are invalid!", ENTITY_NAME, "invalidCompetencyAttributes");
         }
     }
 
