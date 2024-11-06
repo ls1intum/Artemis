@@ -98,6 +98,7 @@
         "notAllowedInExam": "Diese Aktion ist in einer Klausur nicht erlaubt.",
         "profilePictureFilesizeTooBig": "Die Dateigröße des hochgeladenen Bilds ist zu groß, bitte lade ein kleineres Bild hoch.",
         "profilePictureFileFormatNotSupported": "Das Dateiformat wird nicht unterstützt, bitte lade eine .png oder .jpg Datei hoch.",
-        "envVariablesTooLong": "Die Umgebungsvariablen sind zu lang. Bitte stelle sicher, dass die Gesamtlänge aller Umgebungsvariablen 1000 Zeichen nicht überschreitet."
+        "envVariablesTooLong": "Die Umgebungsvariablen sind zu lang. Bitte stelle sicher, dass die Gesamtlänge aller Umgebungsvariablen 1000 Zeichen nicht überschreitet.",
+        "networkAccessNotSupported": "Netzwerkzugriff wird für diese Programmiersprache nicht unterstützt."
     }
 }
