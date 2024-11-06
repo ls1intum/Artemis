@@ -98,16 +98,18 @@ describe('FormDateTimePickerComponent', () => {
     });
 
     it('should have working getters', () => {
-        component.min = normalDate;
-        component.max = normalDate;
-        component.startAt = normalDate;
+        const expectedMinDate = normalDate.subtract(2, 'day');
+        const expectedMaxDate = normalDate.add(2, 'day');
+        const expectedStartDate = normalDate.add(1, 'day');
+
+        fixture.componentRef.setInput('min', expectedMinDate);
+        fixture.componentRef.setInput('max', expectedMaxDate);
+        fixture.componentRef.setInput('startAt', expectedStartDate);
         const timeZone = component.currentTimeZone;
-        const minDate = component.minDate;
-        const maxDate = component.maxDate;
-        const startDate = component.startDate;
+
         expect(timeZone).toBeDefined();
-        expect(minDate).toBeDefined();
-        expect(maxDate).toBeDefined();
-        expect(startDate).toBeDefined();
+        expect(dayjs(component.minDate())).toEqual(expectedMinDate);
+        expect(dayjs(component.maxDate())).toEqual(expectedMaxDate);
+        expect(dayjs(component.startDate())).toEqual(expectedStartDate);
     });
 });
