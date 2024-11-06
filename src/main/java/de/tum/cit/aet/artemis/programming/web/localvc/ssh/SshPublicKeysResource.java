@@ -73,19 +73,6 @@ public class SshPublicKeysResource {
     }
 
     /**
-     * GET has-ssh-public-key : gets the ssh public key
-     *
-     * @return the ResponseEntity containing true if the User has SSH keys, and false if it does not, with status 200 (OK)
-     */
-    @GetMapping("has-public-keys")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Boolean> hasUserSSHkeys() {
-        User user = userRepository.getUser();
-        boolean hasKeys = userSshPublicKeyService.hasUserSSHkeys(user.getId());
-        return ResponseEntity.ok(hasKeys);
-    }
-
-    /**
      * POST ssh-public-key : creates a new ssh public key for a user
      *
      * @param sshPublicKey the ssh public key to create

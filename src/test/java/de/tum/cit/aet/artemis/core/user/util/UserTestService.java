@@ -18,9 +18,7 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
@@ -52,9 +50,7 @@ import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
-import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
-import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
@@ -104,9 +100,6 @@ public class UserTestService {
     private ScienceEventTestRepository scienceEventRepository;
 
     @Autowired
-    private UserSshPublicKeyRepository userSshPublicKeyRepository;
-
-    @Autowired
     private MockMvc mockMvc;
 
     private String TEST_PREFIX;
@@ -124,10 +117,6 @@ public class UserTestService {
     private static final int NUMBER_OF_EDITORS = 1;
 
     private static final int NUMBER_OF_INSTRUCTORS = 1;
-
-    private static final String sshKey1 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJxKWdvcbNTWl4vBjsijoY5HN5dpjxU40huy1PFpdd2o keyComment1 many comments";
-
-    private static final String sshKey2 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i";
 
     @Autowired
     private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
@@ -158,8 +147,6 @@ public class UserTestService {
 
     public void tearDown() throws IOException {
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-        this.userSshPublicKeyRepository.deleteAll();
-
     }
 
     public User getStudent() {
@@ -874,116 +861,6 @@ public class UserTestService {
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isFalse();
-    }
-
-    public void getUserSshPublicKeys() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-        User user = userTestRepository.getUser();
-
-        var validKey = createNewValidSSHKey(user, sshKey1);
-        request.postWithResponseBody("/api/account/ssh-public-key", validKey, String.class, HttpStatus.OK);
-
-        List<UserSshPublicKey> response = request.getList("/api/account/ssh-public-keys", HttpStatus.OK, UserSshPublicKey.class);
-        assertThat(response.size()).isEqualTo(1);
-        UserSshPublicKey userKey = response.getFirst();
-
-        request.get("/api/account/ssh-public-key/" + userKey.getId(), HttpStatus.OK, UserSshPublicKey.class);
-        var hasSSHkeys = request.get("/api/account/has-ssh-public-keys", HttpStatus.OK, Boolean.class);
-        assertThat(hasSSHkeys).isTrue();
-    }
-
-    // Test
-    public void addUserSshPublicKey() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-        User user = userTestRepository.getUser();
-
-        var validKey = createNewValidSSHKey(user, sshKey1);
-        request.postWithResponseBody("/api/account/ssh-public-key", validKey, String.class, HttpStatus.OK);
-
-        var storedUserKey = userSshPublicKeyRepository.findAllByUserId(user.getId()).getFirst();
-        assertThat(storedUserKey).isNotNull();
-        assertThat(storedUserKey.getPublicKey()).isEqualTo(validKey.getPublicKey());
-    }
-
-    // Test
-    public void addUserSshPublicKeyWithOutLabel() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-        User user = userTestRepository.getUser();
-
-        var validKey = createNewValidSSHKey(user, sshKey1);
-        validKey.setLabel(null);
-        request.postWithResponseBody("/api/account/ssh-public-key", validKey, String.class, HttpStatus.OK);
-
-        var validKey2 = createNewValidSSHKey(user, sshKey2);
-        validKey.setLabel("");
-        request.postWithResponseBody("/api/account/ssh-public-key", validKey2, String.class, HttpStatus.OK);
-
-        var storedUserKeys = userSshPublicKeyRepository.findAllByUserId(user.getId());
-        assertThat(storedUserKeys.size()).isEqualTo(2);
-    }
-
-    // Test
-    public void failToAddPublicSSHkeyTwice() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-        User user = userTestRepository.getUser();
-
-        var validKey = createNewValidSSHKey(user, sshKey1);
-
-        request.postWithResponseBody("/api/account/ssh-public-key", validKey, String.class, HttpStatus.OK);
-        request.postWithResponseBody("/api/account/ssh-public-key", validKey, String.class, HttpStatus.BAD_REQUEST);
-    }
-
-    // Test
-    public void failToAddOrDeleteWithInvalidKeyId() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-        User user = userTestRepository.getUser();
-
-        var validKey = createNewValidSSHKey(user, sshKey1);
-        request.postWithResponseBody("/api/account/ssh-public-key", validKey, String.class, HttpStatus.OK);
-        var userKey = userSshPublicKeyRepository.findAll().getFirst();
-        userKey.setUserId(12L);
-        userSshPublicKeyRepository.save(userKey);
-
-        request.delete("/api/account/ssh-public-key/3443", HttpStatus.FORBIDDEN);
-        request.get("/api/account/ssh-public-key/43443", HttpStatus.FORBIDDEN, UserSshPublicKeyDTO.class);
-        request.get("/api/account/ssh-public-key/" + userKey.getId(), HttpStatus.FORBIDDEN, UserSshPublicKeyDTO.class);
-
-    }
-
-    // Test
-    public void failToAddInvalidPublicSSHkey() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-
-        User user = userTestRepository.getUser();
-        var userKey = createNewValidSSHKey(user, sshKey1);
-        userKey.setPublicKey("Invalid Key");
-
-        request.postWithResponseBody("/api/account/ssh-public-key", userKey, String.class, HttpStatus.BAD_REQUEST);
-    }
-
-    // Test
-    public void addAndDeleteSshPublicKey() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-        User user = userTestRepository.getUser();
-
-        var validKey = createNewValidSSHKey(user, sshKey1);
-
-        request.postWithResponseBody("/api/account/ssh-public-key", validKey, String.class, HttpStatus.OK);
-
-        var storedUserKey = userSshPublicKeyRepository.findAllByUserId(user.getId()).getFirst();
-        assertThat(storedUserKey).isNotNull();
-        assertThat(storedUserKey.getPublicKey()).isEqualTo(validKey.getPublicKey());
-
-        // deleting the key should work correctly
-        request.delete("/api/account/ssh-public-key/" + storedUserKey.getId(), HttpStatus.OK);
-        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
     }
 
     // Test
