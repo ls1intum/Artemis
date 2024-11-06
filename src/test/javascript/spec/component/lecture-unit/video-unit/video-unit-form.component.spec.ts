@@ -7,6 +7,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+
 describe('VideoUnitFormComponent', () => {
     const validYouTubeUrl = 'https://www.youtube.com/watch?v=8iU8LPEa4o0';
     const validYouTubeUrlInEmbeddableFormat = 'https://www.youtube.com/embed/8iU8LPEa4o0';
@@ -161,7 +162,7 @@ describe('VideoUnitFormComponent', () => {
     });
 
     it('should correctly set form values in edit mode', () => {
-        videoUnitFormComponent.isEditMode = true;
+        videoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
         const formData: VideoUnitFormData = {
             name: 'test',
             description: 'lorem ipsum',
@@ -170,8 +171,8 @@ describe('VideoUnitFormComponent', () => {
         };
         videoUnitFormComponentFixture.detectChanges();
 
-        videoUnitFormComponent.formData = formData;
-        videoUnitFormComponent.ngOnChanges();
+        videoUnitFormComponentFixture.componentRef.setInput('formData', formData);
+        videoUnitFormComponentFixture.detectChanges();
 
         expect(videoUnitFormComponent.nameControl?.value).toEqual(formData.name);
         expect(videoUnitFormComponent.releaseDateControl?.value).toEqual(formData.releaseDate);
