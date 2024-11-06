@@ -27,13 +27,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     labelName = input<string>();
     labelTooltip = input<string>();
     @Input() value: any;
-    disabled = input<boolean>();
+    disabled = input<boolean>(false);
     error = input<boolean>();
     warning = input<boolean>();
     requiredField = input<boolean>(false);
-    startAt? = input<dayjs.Dayjs>(); // Default selected date. By default, this sets it to the current time without seconds or milliseconds;
-    min? = input<dayjs.Dayjs>(); // Dates before this date are not selectable.
-    max? = input<dayjs.Dayjs>(); // Dates after this date are not selectable.
+    startAt = input<dayjs.Dayjs | undefined>(); // Default selected date. By default, this sets it to the current time without seconds or milliseconds;
+    min = input<dayjs.Dayjs>(); // Dates before this date are not selectable.
+    max = input<dayjs.Dayjs>(); // Dates after this date are not selectable.
     shouldDisplayTimeZoneWarning = input<boolean>(true); // Displays a warning that the current time zone might differ from the participants'.
     valueChange = output<void>();
 
