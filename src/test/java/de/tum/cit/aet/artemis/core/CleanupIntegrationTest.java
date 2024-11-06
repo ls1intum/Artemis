@@ -398,7 +398,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
 
         assertThat(resultRepository.findById(oldResult2.getId())).isNotEmpty();
         assertThat(feedbackRepository.findByResult(oldResult2)).isNotEmpty();
-        assertThat(textBlockRepository.findById(oldTextBlock2.getId())).isEmpty();
+        assertThat(textBlockRepository.findById(oldTextBlock2.getId())).isNotEmpty();
 
         assertThat(participantScoreRepository.findById(newParticipantScore1.getId())).isNotEmpty();
         assertThat(participantScoreRepository.findById(newParticipantScore2.getId())).isNotEmpty();
@@ -406,7 +406,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         assertThat(feedbackRepository.findByResult(newResult1)).isNotEmpty();
         assertThat(textBlockRepository.findById(newTextBlock1.getId())).isNotEmpty();
 
-        assertThat(resultRepository.findById(newResult2.getId())).isPresent();
+        assertThat(resultRepository.findById(newResult2.getId())).isNotEmpty();
         assertThat(feedbackRepository.findByResult(newResult2)).isNotEmpty();
         assertThat(textBlockRepository.findById(newTextBlock2.getId())).isNotEmpty();
     }

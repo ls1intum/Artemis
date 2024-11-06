@@ -78,6 +78,7 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
                     WHERE r2.participation.id = p.id
                         AND r2.rated = TRUE
                     )
+                    AND r.rated = TRUE
                     AND c.endDate < :deleteTo
                     AND c.startDate > :deleteFrom
                 )
@@ -98,7 +99,7 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
     @Query("""
             DELETE FROM Feedback f
             WHERE f.result IN (
-            SELECT r
+                SELECT r
                 FROM Result r
                     LEFT JOIN r.participation p
                     LEFT JOIN p.exercise e
@@ -106,10 +107,11 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
                 WHERE r.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
-                    WHERE r2.participation.id = p.id)
-                        AND r.rated = FALSE
-                        AND c.endDate < :deleteTo
-                        AND c.startDate > :deleteFrom
+                    WHERE r2.participation.id = p.id
+                    )
+                    AND r.rated = FALSE
+                    AND c.endDate < :deleteTo
+                    AND c.startDate > :deleteFrom
                 )
             """)
     void deleteOldNonRatedFeedbackWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);

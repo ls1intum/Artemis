@@ -39,7 +39,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                     LEFT JOIN f.result r
                 WHERE r.submission IS NULL
                     AND r.participation IS NULL
-            )
+                )
             """)
     void deleteTextBlockForOrphanResults();
 
@@ -54,7 +54,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                 SELECT f
                 FROM Feedback f
                 WHERE f.result IS NULL
-            )
+                )
             """)
     void deleteTextBlockForEmptyFeedback();
 
@@ -84,6 +84,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                     WHERE r2.participation.id = p.id
                         AND r2.rated = TRUE
                 )
+                    AND r.rated = TRUE
                     AND c.endDate < :deleteTo
                     AND c.startDate > :deleteFrom
             )
@@ -91,7 +92,8 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     void deleteTextBlockForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
-     * Deletes {@link TextBlock} entries linked to non-rated {@link Result} where the associated course's start and end dates
+     * Deletes {@link TextBlock} entries linked to non-rated {@link Result} that are not the latest non-rated result
+     * for a {@link Participation}, where the associated course's start and end dates
      * are between the specified date range.
      * This query deletes text blocks for feedback associated with results that are not rated, within the courses
      * whose end date is before {@code deleteTo} and start date is after {@code deleteFrom}.
@@ -110,10 +112,16 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                     LEFT JOIN r.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
-                WHERE r.rated = FALSE
+                WHERE f.result.id NOT IN (
+                    SELECT MAX(r2.id)
+                    FROM Result r2
+                    WHERE r2.participation.id = p.id
+                        AND r2.rated = FALSE
+                    )
+                    AND r.rated = FALSE
                     AND c.endDate < :deleteTo
                     AND c.startDate > :deleteFrom
-            )
+                )
             """)
     void deleteTextBlockForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }
