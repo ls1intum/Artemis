@@ -31,6 +31,7 @@
             "readSuccessfully": "You have successfully read and understood this example submission",
             "createNew": "Create new",
             "pageHeader": "Example Text Submission for Exercise",
+            "usedForTutorial": "Use in Tutorial",
             "assessmentTraining": "Assessment Training",
             "selectModel": "Select Assessment Training Mode:",
             "selectModelExplanation": "You can select the assessment training mode here. The assessment training mode defines how the tutor has to confirm that the example was understood.",

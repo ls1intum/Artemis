@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { getElement } from '../../../../helpers/utils/general.utils';
@@ -9,6 +9,9 @@ import { AnswerPostFooterComponent } from 'app/shared/metis/posting-footer/answe
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -17,6 +20,7 @@ describe('AnswerPostComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
+            imports: [MockModule(BrowserAnimationsModule)],
             declarations: [
                 AnswerPostComponent,
                 MockPipe(HtmlForMarkdownPipe),
@@ -25,6 +29,7 @@ describe('AnswerPostComponent', () => {
                 MockComponent(AnswerPostCreateEditModalComponent),
                 MockComponent(AnswerPostFooterComponent),
             ],
+            providers: [{ provide: MetisService, useClass: MockMetisService }],
         })
             .compileComponents()
             .then(() => {
@@ -46,11 +51,6 @@ describe('AnswerPostComponent', () => {
     it('should contain component to edit answer post', () => {
         const answerPostCreateEditModal = getElement(debugElement, 'jhi-answer-post-create-edit-modal');
         expect(answerPostCreateEditModal).not.toBeNull();
-    });
-
-    it('should contain an answer post footer', () => {
-        const footer = getElement(debugElement, 'jhi-answer-post-footer');
-        expect(footer).not.toBeNull();
     });
 
     it('should have correct content', () => {

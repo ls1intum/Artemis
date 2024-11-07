@@ -152,8 +152,8 @@ export class MonacoTextEditorAdapter implements TextEditor {
         return this.editor.getDomNode() ?? undefined;
     }
 
-    typeText(text: string) {
-        this.editor.trigger('MonacoTextEditorAdapter::typeText', 'type', { text });
+    triggerCompletion(): void {
+        this.editor.trigger('MonacoTextEditorAdapter::triggerCompletion', 'editor.action.triggerSuggest', {});
     }
 
     getTextAtRange(range: TextEditorRange): string {
@@ -192,6 +192,12 @@ export class MonacoTextEditorAdapter implements TextEditor {
 
     revealRange(range: TextEditorRange): void {
         this.editor.revealRangeInCenter(this.toMonacoRange(range));
+    }
+
+    addPasteListener(callback: (insertedText: string) => void | Promise<void>): Disposable {
+        return this.editor.onDidPaste((pasteEvent) => {
+            callback(this.getTextAtRange(this.fromMonacoRange(pasteEvent.range)));
+        });
     }
 
     private toMonacoPosition(position: TextEditorPosition): monaco.IPosition {

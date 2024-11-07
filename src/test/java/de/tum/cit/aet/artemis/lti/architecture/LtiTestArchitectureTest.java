@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.lti.architecture;
 
+import java.util.Set;
+
 import de.tum.cit.aet.artemis.lti.AbstractLtiIntegrationTest;
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleTestArchitectureTest;
 
-class LtiTestArchitectureTest extends AbstractModuleTestArchitectureTest<AbstractLtiIntegrationTest> {
+class LtiTestArchitectureTest extends AbstractModuleTestArchitectureTest {
 
     @Override
     public String getModulePackage() {
@@ -11,7 +13,7 @@ class LtiTestArchitectureTest extends AbstractModuleTestArchitectureTest<Abstrac
     }
 
     @Override
-    protected Class<AbstractLtiIntegrationTest> getAbstractModuleIntegrationTestClass() {
-        return AbstractLtiIntegrationTest.class;
+    protected Set<Class<?>> getAbstractModuleIntegrationTestClasses() {
+        return Set.of(AbstractLtiIntegrationTest.class);
     }
 }

@@ -64,7 +64,6 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -309,8 +308,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
                 if (exerciseRepository.isExamExercise(exerciseId)) {
-                    Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-                    return authorizationCheckService.isAtLeastInstructorInCourse(login, exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+                    return authorizationCheckService.isAtLeastInstructorInExercise(login, exerciseId);
                 }
                 else {
                     return authorizationCheckService.isAtLeastTeachingAssistantInExercise(login, exerciseId);

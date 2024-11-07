@@ -55,7 +55,10 @@
                 "averageAttendanceDetail": "Average Attendance",
                 "averageAttendanceHelpDetail": "Average attendance in the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.",
                 "profilePicture": "Tutor Profile Picture",
-                "profilePictureAlt": "Profile picture of {{ user }}"
+                "profilePictureAlt": "Profile picture of {{ user }}",
+                "name": "Name",
+                "information": "Information",
+                "isNotOnline": "Not Online"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Day of Week",

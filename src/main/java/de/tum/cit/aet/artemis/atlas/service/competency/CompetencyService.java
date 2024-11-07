@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.LearningObjectImportService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
@@ -41,9 +43,10 @@ public class CompetencyService extends CourseCompetencyService {
             LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService,
             CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService,
-            LearningObjectImportService learningObjectImportService) {
+            LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository) {
         super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, lectureUnitService,
-                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService);
+                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService,
+                competencyLectureUnitLinkRepository, courseRepository);
         this.competencyRepository = competencyRepository;
     }
 
@@ -78,18 +81,6 @@ public class CompetencyService extends CourseCompetencyService {
      */
     public List<CourseCompetency> importStandardizedCompetencies(List<Long> competencyIdsToImport, Course course) {
         return super.importStandardizedCompetencies(competencyIdsToImport, course, Competency::new);
-    }
-
-    /**
-     * Creates a new competency and links it to a course and lecture units.
-     *
-     * @param competency the competency to create
-     * @param course     the course to link the competency to
-     * @return the persisted competency
-     */
-    public Competency createCompetency(CourseCompetency competency, Course course) {
-        Competency competencyToCreate = new Competency(competency);
-        return createCourseCompetency(competencyToCreate, course);
     }
 
     /**

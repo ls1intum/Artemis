@@ -14,17 +14,12 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsInternalUrlService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
-class JenkinsInternalUriServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
-
-    @Autowired
-    private JenkinsInternalUrlService jenkinsInternalUrlService;
+class JenkinsInternalUriServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private VcsRepositoryUri vcsRepositoryUri;
 

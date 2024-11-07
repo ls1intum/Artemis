@@ -1,3 +1,12 @@
+.diff-editor-container {
+    .monaco-diff-editor {
+        .monaco-editor {
+            // Disables the focus border around the editor.
+            outline: none;
+        }
+    }
+}
+
 /*
  * Hide the drag handles of the hidden lines, as this feature would result in unintuitive behavior.
  */

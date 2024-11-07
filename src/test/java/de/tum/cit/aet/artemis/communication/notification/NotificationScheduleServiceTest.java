@@ -6,7 +6,6 @@ import static java.time.ZonedDateTime.now;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anySet;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -32,7 +31,6 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
@@ -43,9 +41,6 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private InstanceMessageReceiveService instanceMessageReceiveService;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private NotificationRepository notificationRepository;
@@ -85,7 +80,6 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
         exercise.setMaxPoints(5.0);
         exerciseRepository.saveAndFlush(exercise);
 
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
         sizeBefore = notificationRepository.count();
     }
 

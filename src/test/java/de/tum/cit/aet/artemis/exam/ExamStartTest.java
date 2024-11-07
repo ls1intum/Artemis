@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -64,9 +63,6 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "examstarttest";
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private ExamRepository examRepository;
@@ -116,7 +112,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         exam = examUtilService.addExamWithExerciseGroup(course1, true);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
-        participantScoreScheduleService.activate();
 
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
@@ -153,7 +148,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         exerciseGroup.addExercise(textExercise);
         exerciseGroupRepository.save(exerciseGroup);
-        textExercise = exerciseRepo.save(textExercise);
+        textExercise = exerciseRepository.save(textExercise);
 
         createStudentExams(textExercise);
 
@@ -176,7 +171,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exam.getExerciseGroups().getFirst());
         exam.getExerciseGroups().getFirst().addExercise(modelingExercise);
         exerciseGroupRepository.save(exam.getExerciseGroups().getFirst());
-        modelingExercise = exerciseRepo.save(modelingExercise);
+        modelingExercise = exerciseRepository.save(modelingExercise);
 
         createStudentExams(modelingExercise);
 
@@ -271,7 +266,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     private ProgrammingExercise createProgrammingExercise() {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exam.getExerciseGroups().getFirst());
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
-        programmingExercise = exerciseRepo.save(programmingExercise);
+        programmingExercise = exerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         exam.getExerciseGroups().getFirst().addExercise(programmingExercise);
         exerciseGroupRepository.save(exam.getExerciseGroups().getFirst());

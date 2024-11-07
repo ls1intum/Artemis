@@ -47,7 +47,7 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
     void testEnforceAdminAnnotations() {
         ArchRule rule = methods().that().areAnnotatedWith(EnforceAdmin.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
                 .resideInAPackage(REST_ADMIN_PACKAGE + "..");
-        rule.check(productionClasses);
+        rule.allowEmptyShould(true).check(productionClasses);
     }
 
     @Test

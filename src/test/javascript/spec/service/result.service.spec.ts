@@ -307,8 +307,10 @@ describe('ResultService', () => {
         it('should return correct string for Athena non graded successful feedback', () => {
             programmingExercise.assessmentDueDate = dayjs().subtract(5, 'minutes');
 
-            expect(resultService.getResultString(result6, programmingExercise)).toBe('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
-            expect(translateServiceSpy).toHaveBeenCalledOnce();
+            expect(resultService.getResultString(result6, programmingExercise)).toBe(
+                'artemisApp.result.resultString.automaticAIFeedbackSuccessful (artemisApp.result.preliminary)',
+            );
+            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
         });
 
         it('should return correct string for Athena non graded unsuccessful feedback', () => {

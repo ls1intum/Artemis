@@ -70,8 +70,6 @@ describe('PrerequisiteFormComponent', () => {
 
         prerequisiteFormComponentFixture.detectChanges();
 
-        const commonCourseCompetencyFormComponent = prerequisiteFormComponentFixture.debugElement.query(By.directive(CommonCourseCompetencyFormComponent)).componentInstance;
-
         const exampleTitle = 'uniqueName';
         prerequisiteFormComponent.titleControl!.setValue(exampleTitle);
         const exampleDescription = 'lorem ipsum';
@@ -83,11 +81,6 @@ describe('PrerequisiteFormComponent', () => {
         exampleLecture.id = 1;
         exampleLecture.lectureUnits = [exampleLectureUnit];
 
-        commonCourseCompetencyFormComponent.selectLectureInDropdown(exampleLecture);
-        prerequisiteFormComponentFixture.detectChanges();
-        // selecting the lecture unit in the table
-        const lectureUnitRow = prerequisiteFormComponentFixture.debugElement.nativeElement.querySelector('.lectureUnitRow');
-        lectureUnitRow.click();
         prerequisiteFormComponentFixture.detectChanges();
         tick(250); // async validator fires after 250ms and fully filled in form should now be valid!
         expect(prerequisiteFormComponent.form.valid).toBeTrue();
@@ -114,20 +107,17 @@ describe('PrerequisiteFormComponent', () => {
             title: 'test',
             description: 'lorem ipsum',
             softDueDate: dayjs(),
-            connectedLectureUnits: [textUnit],
             taxonomy: CompetencyTaxonomy.ANALYZE,
             optional: true,
         };
         prerequisiteFormComponentFixture.detectChanges();
         prerequisiteFormComponent.formData = formData;
-        prerequisiteFormComponent['onLectureUnitSelectionChange']([textUnit]);
         prerequisiteFormComponent.ngOnChanges();
 
         expect(prerequisiteFormComponent.titleControl?.value).toEqual(formData.title);
         expect(prerequisiteFormComponent.descriptionControl?.value).toEqual(formData.description);
         expect(prerequisiteFormComponent.softDueDateControl?.value).toEqual(formData.softDueDate);
         expect(prerequisiteFormComponent.optionalControl?.value).toEqual(formData.optional);
-        expect(prerequisiteFormComponent.selectedLectureUnitsInTable).toEqual(formData.connectedLectureUnits);
     });
 
     it('should suggest taxonomy when title changes', () => {

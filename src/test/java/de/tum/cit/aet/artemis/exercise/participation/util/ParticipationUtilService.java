@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -91,7 +91,7 @@ public class ParticipationUtilService {
     private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
+    private ExerciseTestRepository exerciseRepository;
 
     @Autowired
     private SubmissionTestRepository submissionRepository;
@@ -132,6 +132,9 @@ public class ParticipationUtilService {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
+    @Value("${artemis.version-control.url}")
+    protected String artemisVersionControlUrl;
+
     /**
      * Creates and saves a Result for a ProgrammingExerciseStudentParticipation associated with the given ProgrammingExercise and login. If no corresponding
      * ProgrammingExerciseStudentParticipation exists, it will be created and saved as well.
@@ -153,7 +156,7 @@ public class ParticipationUtilService {
             participation.setBuildPlanId(buildPlanId);
             participation.setProgrammingExercise(exercise);
             participation.setInitializationState(InitializationState.INITIALIZED);
-            participation.setRepositoryUri(String.format("http://some.test.url/%s/%s.git", exercise.getProjectKey(), repoName));
+            participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
@@ -177,14 +180,14 @@ public class ParticipationUtilService {
      * @return The created Result
      */
     public Result createParticipationSubmissionAndResult(long exerciseId, Participant participant, Double points, Double bonusPoints, long scoreAwarded, boolean rated) {
-        Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow();
+        Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow();
         if (!exercise.getMaxPoints().equals(points)) {
             exercise.setMaxPoints(points);
         }
         if (!exercise.getBonusPoints().equals(bonusPoints)) {
             exercise.setBonusPoints(bonusPoints);
         }
-        exercise = exerciseRepo.saveAndFlush(exercise);
+        exercise = exerciseRepository.saveAndFlush(exercise);
         StudentParticipation studentParticipation = participationService.startExercise(exercise, participant, false);
         return createSubmissionAndResult(studentParticipation, scoreAwarded, rated);
     }
@@ -315,7 +318,7 @@ public class ParticipationUtilService {
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
-        participation.setRepositoryUri(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
+        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
         participationVCSAccessTokenService.createParticipationVCSAccessToken(userUtilService.getUserByLogin(login), participation);
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -337,7 +340,7 @@ public class ParticipationUtilService {
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateTeamProgrammingExerciseStudentParticipation(exercise, team);
         final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase();
-        participation.setRepositoryUri(String.format("http://some.test.url/scm/%s/%s.git", exercise.getProjectKey(), repoName));
+        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();

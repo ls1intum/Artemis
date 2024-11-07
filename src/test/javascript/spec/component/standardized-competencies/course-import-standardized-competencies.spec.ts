@@ -205,14 +205,14 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
     });
 
     it('should not deactivate with pending changes', () => {
-        const deactivateWarningSpy = jest.spyOn(component as any, 'canDeactivateWarning', 'get');
+        let canDeactivate;
 
         component['isLoading'] = false;
-        component['unloadNotification']({ returnValue: '' });
-        expect(deactivateWarningSpy).not.toHaveBeenCalled();
+        canDeactivate = component.canDeactivate();
+        expect(canDeactivate).toBeTrue();
 
         component['isLoading'] = true;
-        component['unloadNotification']({ returnValue: '' });
-        expect(deactivateWarningSpy).toHaveBeenCalled();
+        canDeactivate = component.canDeactivate();
+        expect(canDeactivate).toBeFalse();
     });
 });

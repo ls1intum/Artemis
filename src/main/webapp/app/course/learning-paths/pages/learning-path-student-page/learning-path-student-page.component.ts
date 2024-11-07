@@ -10,13 +10,14 @@ import { LearningPathExerciseComponent } from 'app/course/learning-paths/compone
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
 import { onError } from 'app/shared/util/global.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-learning-path-student-page',
     templateUrl: './learning-path-student-page.component.html',
     styleUrl: './learning-path-student-page.component.scss',
     standalone: true,
-    imports: [LearningPathNavComponent, LearningPathLectureUnitComponent, LearningPathExerciseComponent],
+    imports: [LearningPathNavComponent, LearningPathLectureUnitComponent, LearningPathExerciseComponent, TranslateDirective],
 })
 export class LearningPathStudentPageComponent {
     protected readonly LearningObjectType = LearningObjectType;
@@ -28,7 +29,7 @@ export class LearningPathStudentPageComponent {
 
     readonly isLearningPathLoading = signal(false);
     readonly learningPath = signal<LearningPathDTO | undefined>(undefined);
-    readonly courseId = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
+    readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly currentLearningObject = this.learningPathNavigationService.currentLearningObject;
     readonly isLearningPathNavigationLoading = this.learningPathNavigationService.isLoading;
 

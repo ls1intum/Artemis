@@ -1,13 +1,13 @@
 <div class="my-2 ps-1 file-path-with-badge">
-    {{ title }}
-    @if (fileStatus !== FileStatus.UNCHANGED) {
+    {{ title() }}
+    @if (fileStatus() !== FileStatus.UNCHANGED) {
         <span
-            [jhiTranslate]="'artemisApp.programmingExercise.diffReport.fileChange.' + fileStatus"
+            [jhiTranslate]="'artemisApp.programmingExercise.diffReport.fileChange.' + fileStatus()"
             [ngClass]="{
                 badge: true,
-                'bg-success': fileStatus === FileStatus.CREATED,
-                'bg-warning': fileStatus === FileStatus.RENAMED,
-                'bg-danger': fileStatus === FileStatus.DELETED,
+                'bg-success': fileStatus() === FileStatus.CREATED,
+                'bg-warning': fileStatus() === FileStatus.RENAMED,
+                'bg-danger': fileStatus() === FileStatus.DELETED,
             }"
         ></span>
     }

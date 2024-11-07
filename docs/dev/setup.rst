@@ -32,7 +32,7 @@ following dependencies/tools on your machine:
 2. `MySQL Database Server 9 <https://dev.mysql.com/downloads/mysql>`__, or `PostgreSQL 17 <https://www.postgresql.org/>`_:
    Artemis uses Hibernate to store entities in an SQL database and Liquibase to
    automatically apply schema transformations when updating Artemis.
-3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=20.16.0 < 21) to compile
+3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=22.10.0 < 23) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
 4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=10.8.0) to

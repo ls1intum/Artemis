@@ -22,6 +22,7 @@ import { metisAnswerPostUser2, metisPostInChannel, metisResolvingAnswerPostUser1
 import { UserRole } from 'app/shared/metis/metis.util';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 describe('AnswerPostHeaderComponent', () => {
     let component: AnswerPostHeaderComponent;
@@ -31,7 +32,6 @@ describe('AnswerPostHeaderComponent', () => {
     let metisServiceUserIsAtLeastTutorMock: jest.SpyInstance;
     let metisServiceUserIsAtLeastInstructorMock: jest.SpyInstance;
     let metisServiceUserPostingAuthorMock: jest.SpyInstance;
-    let metisServiceDeleteAnswerPostMock: jest.SpyInstance;
     let metisServiceUpdateAnswerPostMock: jest.SpyInstance;
 
     const yesterday: dayjs.Dayjs = dayjs().subtract(1, 'day');
@@ -58,6 +58,7 @@ describe('AnswerPostHeaderComponent', () => {
                 MockComponent(PostingButtonComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(ConfirmIconComponent),
+                MockComponent(ProfilePictureComponent),
             ],
         })
             .compileComponents()
@@ -68,7 +69,6 @@ describe('AnswerPostHeaderComponent', () => {
                 metisServiceUserIsAtLeastTutorMock = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
                 metisServiceUserIsAtLeastInstructorMock = jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
                 metisServiceUserPostingAuthorMock = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting');
-                metisServiceDeleteAnswerPostMock = jest.spyOn(metisService, 'deleteAnswerPost');
                 metisServiceUpdateAnswerPostMock = jest.spyOn(metisService, 'updateAnswerPost');
                 debugElement = fixture.debugElement;
                 component.posting = metisResolvingAnswerPostUser1;
@@ -81,11 +81,6 @@ describe('AnswerPostHeaderComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    it('should display default profile picture', () => {
-        fixture.detectChanges();
-        expect(getElement(debugElement, '#post-default-profile-picture')).not.toBeNull();
     });
 
     it('should set author information correctly', () => {
@@ -193,12 +188,13 @@ describe('AnswerPostHeaderComponent', () => {
         expect(openPostingCreateEditModalEmitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should invoke metis service when delete icon is clicked', () => {
-        metisServiceUserIsAtLeastTutorMock.mockReturnValue(true);
+    it('should not display edit and delete options when post is deleted', () => {
+        fixture.componentRef.setInput('isDeleted', true);
+        component.ngOnInit();
         fixture.detectChanges();
-        expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
-        component.deletePosting();
-        expect(metisServiceDeleteAnswerPostMock).toHaveBeenCalledOnce();
+        expect(getElement(debugElement, '.editIcon')).toBeNull();
+        expect(getElement(debugElement, '.deleteIcon')).toBeNull();
+        fixture.componentRef.setInput('isDeleted', false);
     });
 
     it('should invoke metis service when toggle resolve is clicked as tutor', () => {
@@ -210,13 +206,5 @@ describe('AnswerPostHeaderComponent', () => {
         component.toggleResolvesPost();
         expect(component.posting.resolvesPost).toEqual(!previousState);
         expect(metisServiceUpdateAnswerPostMock).toHaveBeenCalledOnce();
-    });
-
-    it('should invoke metis service when toggle resolve is clicked as post author', () => {
-        metisServiceUserIsAtLeastTutorMock.mockReturnValue(true);
-        fixture.detectChanges();
-        expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
-        component.deletePosting();
-        expect(metisServiceDeleteAnswerPostMock).toHaveBeenCalledOnce();
     });
 });

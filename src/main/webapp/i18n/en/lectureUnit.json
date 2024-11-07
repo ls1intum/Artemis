@@ -149,6 +149,7 @@
                     "endPage": "End page must be less or equal to {{ max }}."
                 },
                 "split": {
+                    "empty": "",
                     "unit": "Lecture Units",
                     "unitName": "Unit Name",
                     "releaseDate": "Release Date",

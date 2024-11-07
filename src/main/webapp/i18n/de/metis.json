@@ -90,7 +90,11 @@
                 "TECH_SUPPORT": "Technische Hilfe",
                 "ORGANIZATION": "Organisation",
                 "RANDOM": "Sonstiges",
-                "ANNOUNCEMENT": "Ankündigung"
+                "ANNOUNCEMENT": "Ankündigung",
+                "allPublicMessages": "Alle öffentlichen Nachrichten",
+                "searchResults": "Suchergebnisse für {{ search }}",
+                "mobileDisclaimer": "Bitte erst eine Konversation auswählen.",
+                "mobileDisclaimerCallToAction": "Konversation wählen"
             },
             "post": {
                 "context": "Kontext",
@@ -121,7 +125,9 @@
                 "exerciseOrLecture": "Übung / Vorlesung",
                 "showAllPosts": "Zeige alle Nachrichten",
                 "showContent": "Inhalt ausklappen",
-                "collapseContent": "Inhalt einklappen"
+                "collapseContent": "Inhalt einklappen",
+                "deletedContent": "Beitrag wird in {{ progress }} Sekunde(n) gelöscht.",
+                "undoDelete": "Löschen umkehren"
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",

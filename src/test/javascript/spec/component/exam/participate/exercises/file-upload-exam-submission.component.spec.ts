@@ -77,10 +77,9 @@ describe('FileUploadExamSubmissionComponent', () => {
             expect(FileUploadExamSubmissionComponent).not.toBeNull();
         });
 
-        it('should show exercise group title', () => {
-            comp.exercise.exerciseGroup = { title: 'Test Group' } as ExerciseGroup;
+        it('should show static text in header', () => {
             fixture.detectChanges();
-            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === comp.exercise.exerciseGroup?.title);
+            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === 'artemisApp.exam.yourSolution');
             expect(el).not.toBeNull();
         });
 

@@ -99,7 +99,7 @@
             />
         </div>
     </div>
-    @if (units && units.length < 1) {
+    @if (units.length < 1) {
         <div class="alert alert-danger mt-3">
             <fa-icon [icon]="faExclamationTriangle" />
             {{ 'artemisApp.attachmentUnit.createAttachmentUnits.noUnitDetected' | artemisTranslate }}

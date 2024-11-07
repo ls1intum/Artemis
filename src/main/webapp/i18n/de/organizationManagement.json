@@ -7,7 +7,7 @@
             "url": "URL",
             "description": "Beschreibung",
             "logoUrl": "Logo URL",
-            "Nutzer:innens": "Nutzer:innen",
+            "users": "Nutzer:innen",
             "courses": "Kurse",
             "emailPattern": "E-Mail-Muster",
             "delete": {

@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
@@ -9,7 +9,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { FaqService } from 'app/faq/faq.service';
-import { Faq } from 'app/entities/faq.model';
+import { Faq, FaqState } from 'app/entities/faq.model';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -18,6 +18,8 @@ import { FaqCategory } from 'app/entities/faq-category.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();
@@ -25,6 +27,7 @@ function createFaq(id: number, category: string, color: string): Faq {
     faq.questionTitle = 'questionTitle';
     faq.questionAnswer = 'questionAnswer';
     faq.categories = [new FaqCategory(category, color)];
+    faq.faqState = FaqState.PROPOSED;
     return faq;
 }
 
@@ -57,12 +60,11 @@ describe('FaqComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
+                { provide: AccountService, useClass: MockAccountService },
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        parent: {
-                            data: of({ course: { id: 1 } }),
-                        },
+                        data: of({ course: { id: 1 } }),
                         snapshot: {
                             paramMap: convertToParamMap({
                                 courseId: '1',
@@ -92,6 +94,9 @@ describe('FaqComponent', () => {
                     },
                     applyFilters: () => {
                         return [faq2, faq3];
+                    },
+                    hasSearchTokens: () => {
+                        return true;
                     },
                 }),
             ],
@@ -158,20 +163,65 @@ describe('FaqComponent', () => {
         expect(faqComponent.filteredFaqs).toEqual([faq2, faq3]);
     });
 
-    it('should catch error if no categories are found', fakeAsync(() => {
+    it('should catch error if no categories are found', () => {
         alertServiceStub = jest.spyOn(alertService, 'error');
         const error = { status: 404 };
         jest.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
         expect(alertServiceStub).toHaveBeenCalledOnce();
-        flush();
-    }));
+    });
+
+    it('should search through already filtered array', () => {
+        const searchSpy = jest.spyOn(faqService, 'hasSearchTokens');
+        const applyFilterSpy = jest.spyOn(faqService, 'applyFilters');
+        faqComponent.setSearchValue('questionTitle');
+        faqComponent.refreshFaqList(faqComponent.searchInput.getValue());
+        expect(applyFilterSpy).toHaveBeenCalledOnce();
+        expect(searchSpy).toHaveBeenCalledTimes(2);
+        expect(searchSpy).toHaveBeenCalledWith(faq2, 'questionTitle');
+        expect(searchSpy).toHaveBeenCalledWith(faq3, 'questionTitle');
+        expect(faqComponent.filteredFaqs).toHaveLength(2);
+        expect(faqComponent.filteredFaqs).not.toContain(faq1);
+        expect(faqComponent.filteredFaqs).toEqual([faq2, faq3]);
+    });
 
     it('should call sortService when sortRows is called', () => {
         jest.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
-
         faqComponent.sortRows();
-
         expect(sortService.sortByProperty).toHaveBeenCalledOnce();
+    });
+
+    it('should reject faq properly', () => {
+        jest.spyOn(faqService, 'update').mockReturnValue(of(new HttpResponse({ body: faq1 })));
+        faqComponentFixture.detectChanges();
+        faqComponent.rejectFaq(courseId, faq1);
+        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(faq1.faqState).toEqual(FaqState.REJECTED);
+    });
+
+    it('should not change status if rejection fails', () => {
+        const error = { status: 500 };
+        jest.spyOn(faqService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        faqComponentFixture.detectChanges();
+        faqComponent.rejectFaq(courseId, faq1);
+        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(faq1.faqState).toEqual(FaqState.PROPOSED);
+    });
+
+    it('should accepts proposed faq properly', () => {
+        jest.spyOn(faqService, 'update').mockReturnValue(of(new HttpResponse({ body: faq1 })));
+        faqComponentFixture.detectChanges();
+        faqComponent.acceptProposedFaq(courseId, faq1);
+        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(faq1.faqState).toEqual(FaqState.ACCEPTED);
+    });
+
+    it('should not change status if acceptance fails', () => {
+        const error = { status: 500 };
+        jest.spyOn(faqService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        faqComponentFixture.detectChanges();
+        faqComponent.acceptProposedFaq(courseId, faq1);
+        expect(faqService.update).toHaveBeenCalledExactlyOnceWith(courseId, faq1);
+        expect(faq1.faqState).toEqual(FaqState.PROPOSED);
     });
 });

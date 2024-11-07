@@ -2,6 +2,9 @@ import { Injectable, effect, inject } from '@angular/core';
 import * as monaco from 'monaco-editor';
 import { CUSTOM_MARKDOWN_CONFIG, CUSTOM_MARKDOWN_LANGUAGE, CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { MONACO_LIGHT_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-light.theme';
+import { MonacoEditorTheme } from 'app/shared/monaco-editor/model/themes/monaco-editor-theme.model';
+import { MONACO_DARK_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-dark.theme';
 
 /**
  * Service providing shared functionality for the Monaco editor.
@@ -16,7 +19,26 @@ export class MonacoEditorService {
     private readonly themeService: ThemeService = inject(ThemeService);
     private readonly currentTheme = this.themeService.currentTheme;
 
+    private lightTheme: MonacoEditorTheme;
+    private darkTheme: MonacoEditorTheme;
+
     constructor() {
+        this.registerCustomThemes();
+        this.registerCustomMarkdownLanguage();
+
+        effect(() => {
+            this.applyTheme(this.currentTheme());
+        });
+    }
+
+    private registerCustomThemes(): void {
+        this.lightTheme = new MonacoEditorTheme(MONACO_LIGHT_THEME_DEFINITION);
+        this.darkTheme = new MonacoEditorTheme(MONACO_DARK_THEME_DEFINITION);
+        this.lightTheme.register();
+        this.darkTheme.register();
+    }
+
+    private registerCustomMarkdownLanguage(): void {
         monaco.languages.register({ id: CUSTOM_MARKDOWN_LANGUAGE_ID });
         monaco.languages.setLanguageConfiguration(CUSTOM_MARKDOWN_LANGUAGE_ID, CUSTOM_MARKDOWN_CONFIG);
         monaco.languages.setMonarchTokensProvider(CUSTOM_MARKDOWN_LANGUAGE_ID, CUSTOM_MARKDOWN_LANGUAGE);
@@ -32,7 +54,7 @@ export class MonacoEditorService {
      * @private
      */
     private applyTheme(artemisTheme: Theme): void {
-        monaco.editor.setTheme(artemisTheme === Theme.LIGHT ? MonacoEditorService.LIGHT_THEME_ID : MonacoEditorService.DARK_THEME_ID);
+        monaco.editor.setTheme(artemisTheme === Theme.LIGHT ? this.lightTheme.getId() : this.darkTheme.getId());
     }
 
     /**
@@ -60,6 +82,7 @@ export class MonacoEditorService {
      */
     createStandaloneDiffEditor(domElement: HTMLElement): monaco.editor.IStandaloneDiffEditor {
         return monaco.editor.createDiffEditor(domElement, {
+            automaticLayout: true,
             glyphMargin: true,
             minimap: { enabled: false },
             readOnly: true,
@@ -77,6 +100,10 @@ export class MonacoEditorService {
             hideUnchangedRegions: {
                 enabled: true,
             },
+            guides: {
+                indentation: false,
+            },
+            renderLineHighlight: 'none',
             fontSize: 12,
         });
     }

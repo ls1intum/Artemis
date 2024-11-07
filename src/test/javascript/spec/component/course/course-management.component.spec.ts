@@ -11,7 +11,6 @@ import { Course } from 'app/entities/course.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
-import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -25,6 +24,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { provideRouter } from '@angular/router';
 
 describe('CourseManagementComponent', () => {
     let fixture: ComponentFixture<CourseManagementComponent>;
@@ -90,7 +90,7 @@ describe('CourseManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule],
             declarations: [
                 CourseManagementComponent,
                 MockDirective(OrionFilterDirective),
@@ -104,6 +104,7 @@ describe('CourseManagementComponent', () => {
                 MockComponent(DocumentationButtonComponent),
             ],
             providers: [
+                provideRouter([]),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 MockProvider(TranslateService),

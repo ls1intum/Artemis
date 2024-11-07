@@ -12,6 +12,7 @@ import {
     ViewChild,
     ViewChildren,
     ViewContainerRef,
+    inject,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -66,6 +67,8 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
+import { LtiService } from 'app/shared/service/lti.service';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 
 interface CourseActionItem {
     title: string;
@@ -95,6 +98,9 @@ interface SidebarItem {
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private ngUnsubscribe = new Subject<void>();
+    private closeSidebarEventSubscription: Subscription;
+    private openSidebarEventSubscription: Subscription;
+    private toggleSidebarEventSubscription: Subscription;
 
     // course id of the course that is currently displayed
     private courseId: number;
@@ -124,17 +130,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isExamStarted = false;
     private examStartedSubscription: Subscription;
     readonly MIN_DISPLAYED_COURSES: number = 6;
+    isShownViaLti = false;
+    private ltiSubscription: Subscription;
 
     // Properties to track hidden items for dropdown menu
-    dropdownOpen: boolean = false;
-    anyItemHidden: boolean = false;
+    anyItemHidden = false;
     hiddenItems: SidebarItem[] = [];
-    thresholdsForEachSidebarItem: number[] = [];
-    dropdownOffset: number;
-    dropdownClickNumber: number = 0;
     readonly WINDOW_OFFSET: number = 300;
     readonly ITEM_HEIGHT: number = 38;
-    readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 88;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -183,6 +186,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly isCommunicationEnabled = isCommunicationEnabled;
 
+    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
+
     constructor(
         private courseService: CourseManagementService,
         private courseExerciseService: CourseExerciseService,
@@ -199,9 +204,21 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private profileService: ProfileService,
         private modalService: NgbModal,
         private examParticipationService: ExamParticipationService,
+        private ltiService: LtiService,
     ) {}
 
     async ngOnInit() {
+        this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
+            this.isSidebarCollapsed = true;
+        });
+
+        this.closeSidebarEventSubscription = this.courseSidebarService.closeSidebar$.subscribe(() => {
+            this.isSidebarCollapsed = false;
+        });
+
+        this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
+            this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? !this.isSidebarCollapsed;
+        });
         this.subscription = this.route.params.subscribe((params) => {
             this.courseId = Number(params.courseId);
         });
@@ -216,16 +233,20 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.isNotManagementView = !this.router.url.startsWith('/course-management');
         // Notify the course access storage service that the course has been accessed
-        this.courseAccessStorageService.onCourseAccessed(
-            this.courseId,
-            CourseAccessStorageService.STORAGE_KEY,
-            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
-        );
-        this.courseAccessStorageService.onCourseAccessed(
-            this.courseId,
-            CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
-            CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
-        );
+        // If course is not active, it means that it is accessed from course archive, which should not
+        // be stored in local storage and therefore displayed in recently accessed
+        if (this.course && this.isCourseActive(this.course)) {
+            this.courseAccessStorageService.onCourseAccessed(
+                this.courseId,
+                CourseAccessStorageService.STORAGE_KEY,
+                CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_OVERVIEW,
+            );
+            this.courseAccessStorageService.onCourseAccessed(
+                this.courseId,
+                CourseAccessStorageService.STORAGE_KEY_DROPDOWN,
+                CourseAccessStorageService.MAX_DISPLAYED_RECENTLY_ACCESSED_COURSES_DROPDOWN,
+            );
+        }
 
         await firstValueFrom(this.loadCourse());
         await this.initAfterCourseLoad();
@@ -234,13 +255,18 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
         this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
+        this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
+            this.isShownViaLti = isShownViaLti;
+        });
     }
 
     /** Listen window resize event by height */
     @HostListener('window: resize', ['$event'])
     onResize() {
-        this.updateVisibleNavbarItems(window.innerHeight);
-        if (!this.anyItemHidden) this.itemsDrop.close();
+        if (this.itemsDrop) {
+            this.updateVisibleNavbarItems(window.innerHeight);
+            if (!this.anyItemHidden) this.itemsDrop.close();
+        }
     }
 
     /** Update sidebar item's hidden property based on the window height to display three-dots */
@@ -738,8 +764,12 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.dashboardSubscription?.unsubscribe();
+        this.closeSidebarEventSubscription?.unsubscribe();
+        this.openSidebarEventSubscription?.unsubscribe();
+        this.toggleSidebarEventSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.ltiSubscription?.unsubscribe();
     }
 
     subscribeForQuizChanges() {
@@ -816,5 +846,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     toggleCollapseState() {
         this.isNavbarCollapsed = !this.isNavbarCollapsed;
         localStorage.setItem('navbar.collapseState', JSON.stringify(this.isNavbarCollapsed));
+    }
+
+    /**
+     * A course is active if the end date is after the current date or
+     * end date is not set at all
+     *
+     * @param course The given course to be checked if it is active
+     * @returns true if the course is active, otherwise false
+     */
+    isCourseActive(course: Course): boolean {
+        return course.endDate ? dayjs(course.endDate).isAfter(dayjs()) : true;
     }
 }

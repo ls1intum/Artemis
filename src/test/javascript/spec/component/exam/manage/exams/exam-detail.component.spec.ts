@@ -3,8 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Data, Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, Data, Router, RouterModule } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
@@ -62,7 +61,7 @@ describe('ExamDetailComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                RouterTestingModule.withRoutes([
+                RouterModule.forRoot([
                     { path: 'course-management/:courseId/exams/:examId/edit', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/exercise-groups', component: DummyComponent },
                     {

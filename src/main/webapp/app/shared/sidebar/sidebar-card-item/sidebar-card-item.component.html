@@ -1,6 +1,6 @@
 <!-- TODO: Refactor Special Case 'Exercise' -->
 @if (sidebarItem) {
-    <div class="mx-1 mb-1">
+    <div class="mx-1">
         @if (sidebarType === 'exam') {
             <div class="d-flex justify-content-between align-items-baseline">
                 <span id="test-sidebar-card-title" class="me-2 mb-2" [title]="sidebarItem.title">
@@ -46,8 +46,14 @@
                 </small>
             </div>
         } @else {
-            <div class="d-flex justify-content-between mb-1 align-items-baseline">
-                <span id="test-sidebar-card-title" class="small fw-semibold text-truncate me-2" [title]="sidebarItem.title" [class.muted]="sidebarItem.conversation?.isMuted">
+            <div class="d-flex justify-content-between align-items-baseline">
+                <span
+                    id="test-sidebar-card-title"
+                    class="small text-truncate me-2"
+                    [title]="sidebarItem.title"
+                    [class.muted]="sidebarItem.conversation?.isMuted"
+                    [ngClass]="unreadCount() > 0 ? 'fw-bold' : 'fw-normal'"
+                >
                     @if (sidebarItem.icon) {
                         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
                     }
@@ -58,8 +64,11 @@
                         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.rightIcon" />
                     }
                 </span>
+                @if (unreadCount() > 0) {
+                    <span class="unread-count me-n2">{{ formattedUnreadCount }}</span>
+                }
             </div>
-            <div class="d-flex justify-content-between align-items-baseline small">
+            <div class="d-flex justify-content-between align-items-baseline small" [ngClass]="{ 'mt-1': sidebarItem.subtitleLeft }">
                 <small class="me-2 text-truncate">
                     {{ sidebarItem.subtitleLeft }}
                 </small>

@@ -39,8 +39,8 @@
         [correctionRound]="correctionRound"
         [isProgrammingExercise]="true"
         (save)="save()"
-        (submit)="submit()"
-        (cancel)="cancel()"
+        (onSubmit)="submit()"
+        (onCancel)="cancel()"
         (nextSubmission)="nextSubmission()"
         (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
     >
@@ -138,15 +138,18 @@
         </ng-template>
         <ng-template #editorBottom>
             <div class="row mt-3">
-                <jhi-unreferenced-feedback
-                    [(feedbacks)]="unreferencedFeedback"
-                    [feedbackSuggestions]="unreferencedFeedbackSuggestions"
-                    (feedbacksChange)="validateFeedback()"
-                    [readOnly]="readOnly()"
-                    [highlightDifferences]="highlightDifferences"
-                    (onAcceptSuggestion)="removeSuggestion($event)"
-                    (onDiscardSuggestion)="removeSuggestion($event)"
-                />
+                @if (manualResult && manualResult.id) {
+                    <jhi-unreferenced-feedback
+                        [(feedbacks)]="unreferencedFeedback"
+                        [feedbackSuggestions]="unreferencedFeedbackSuggestions"
+                        (feedbacksChange)="validateFeedback()"
+                        [readOnly]="readOnly()"
+                        [highlightDifferences]="highlightDifferences"
+                        (onAcceptSuggestion)="removeSuggestion($event)"
+                        (onDiscardSuggestion)="removeSuggestion($event)"
+                        [resultId]="manualResult.id"
+                    />
+                }
             </div>
         </ng-template>
     </ng-template>

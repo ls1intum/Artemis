@@ -8,11 +8,10 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TranslateModule } from '@ngx-translate/core';
-import { RouterTestingModule } from '@angular/router/testing';
 import { NgForm, NgModel, ReactiveFormsModule } from '@angular/forms';
 import { Exercise } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -128,7 +127,7 @@ describe('StudentExamDetailComponent', () => {
         } as StudentExamWithGradeDTO;
 
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgbModule, NgxDatatableModule, ReactiveFormsModule, TranslateModule.forRoot()],
+            imports: [ArtemisTestModule, NgbModule, NgxDatatableModule, ReactiveFormsModule, TranslateModule.forRoot(), RouterModule.forRoot([])],
             declarations: [
                 StudentExamDetailComponent,
                 MockComponent(DataTableComponent),

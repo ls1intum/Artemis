@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationHeaderComponent } from 'app/overview/course-conversations/layout/conversation-header/conversation-header.component';
 import { Location } from '@angular/common';
-import { RouterTestingModule } from '@angular/router/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
@@ -28,6 +27,7 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import { MetisModule } from 'app/shared/metis/metis.module';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { provideRouter } from '@angular/router';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -54,14 +54,14 @@ examples.forEach((activeConversation) => {
                     MockComponent(GroupChatIconComponent),
                     MockComponent(FaIconComponent),
                     MockPipe(ArtemisTranslatePipe),
-                    RouterTestingModule.withRoutes([
+                ],
+                imports: [MetisModule],
+                providers: [
+                    provideRouter([
                         { path: 'courses/:courseId/lectures/:lectureId', component: CourseLectureDetailsComponent },
                         { path: 'courses/:courseId/exercises/:exerciseId', component: CourseExerciseDetailsComponent },
                         { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
                     ]),
-                ],
-                imports: [MetisModule],
-                providers: [
                     MockProvider(NgbModal),
                     MockProvider(MetisConversationService),
                     MockProvider(ConversationService),
