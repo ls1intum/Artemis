@@ -88,7 +88,9 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         this.useToken = this.localStorage.retrieve('useToken') || false;
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
         this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
-
+        if (this.useSsh) {
+            this.useSshUrl();
+        }
         if (this.useToken) {
             this.useHttpsUrlWithToken();
         }
