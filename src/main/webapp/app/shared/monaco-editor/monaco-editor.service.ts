@@ -13,9 +13,6 @@ import { MONACO_DARK_THEME_DEFINITION } from 'app/shared/monaco-editor/model/the
  */
 @Injectable({ providedIn: 'root' })
 export class MonacoEditorService {
-    static readonly LIGHT_THEME_ID = 'vs';
-    static readonly DARK_THEME_ID = 'vs-dark';
-
     private readonly themeService: ThemeService = inject(ThemeService);
     private readonly currentTheme = this.themeService.currentTheme;
 
@@ -42,10 +39,6 @@ export class MonacoEditorService {
         monaco.languages.register({ id: CUSTOM_MARKDOWN_LANGUAGE_ID });
         monaco.languages.setLanguageConfiguration(CUSTOM_MARKDOWN_LANGUAGE_ID, CUSTOM_MARKDOWN_CONFIG);
         monaco.languages.setMonarchTokensProvider(CUSTOM_MARKDOWN_LANGUAGE_ID, CUSTOM_MARKDOWN_LANGUAGE);
-
-        effect(() => {
-            this.applyTheme(this.currentTheme());
-        });
     }
 
     /**

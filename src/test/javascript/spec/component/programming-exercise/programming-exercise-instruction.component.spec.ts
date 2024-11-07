@@ -157,7 +157,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.problemStatement).toBeUndefined();
         expect(loadInitialResultStub).not.toHaveBeenCalled();
         expect(comp.latestResult).toBeUndefined();
-        expect(updateMarkdownStub).not.toHaveBeenCalled();
+        // Fist call is because of effect() within toObservable
+        expect(updateMarkdownStub).not.toHaveBeenCalledTimes(2);
         expect(noInstructionsAvailableSpy).toHaveBeenCalledOnce();
         expect(comp.isInitial).toBeFalse();
         expect(comp.isLoading).toBeFalse();
@@ -189,7 +190,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
             firstChange: false,
         });
-        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+        // Fist call is because of effect() within toObservable
+        expect(updateMarkdownStub).toHaveBeenCalledTimes(2);
         expect(loadInitialResult).not.toHaveBeenCalled();
     });
 
@@ -212,7 +214,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         triggerChanges(comp, { property: 'exercise', currentValue: { ...comp.exercise, problemStatement: newProblemStatement }, firstChange: false });
         fixture.detectChanges();
         expect(comp.markdownExtensions).toHaveLength(2);
-        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+        // Fist call is because of effect() within toObservable
+        expect(updateMarkdownStub).toHaveBeenCalledTimes(2);
         expect(loadInitialResult).not.toHaveBeenCalled();
     });
 
@@ -241,7 +244,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledOnce();
         // result should have been fetched with the submission as this is required to show details for it
         expect(getLatestResultWithFeedbacks).toHaveBeenCalledWith(participation.id, true);
-        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+        expect(updateMarkdownStub).toHaveBeenCalledTimes(2);
         expect(comp.isInitial).toBeFalse();
         expect(comp.isLoading).toBeFalse();
     });
