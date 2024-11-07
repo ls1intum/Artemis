@@ -80,20 +80,29 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     ) {}
 
     async ngOnInit() {
-        this.user = (await this.accountService.identity())!;
+        const user = await this.accountService.identity();
+        if (!user) {
+            return;
+        }
+        this.user = user;
+
         this.refreshTokenState();
 
         this.copyEnabled = true;
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
         this.useToken = this.localStorage.retrieve('useToken') || false;
-        this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
-        this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
-        if (this.useSsh) {
-            this.useSshUrl();
-        }
-        if (this.useToken) {
-            this.useHttpsUrlWithToken();
-        }
+        this.localStorage.observe('useSsh').subscribe((useSsh) => {
+            this.useSsh = useSsh || false;
+            if (this.useSsh) {
+                this.useSshUrl();
+            }
+        });
+        this.localStorage.observe('useToken').subscribe((useToken) => {
+            this.useToken = useToken || false;
+            if (this.useToken) {
+                this.useHttpsUrlWithToken();
+            }
+        });
         this.loadParticipationVcsAccessTokens();
 
         // Get ssh information from the user
