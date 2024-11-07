@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
+import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -15,8 +16,11 @@ public class LearnerProfileService {
 
     private final LearnerProfileRepository learnerProfileRepository;
 
-    public LearnerProfileService(LearnerProfileRepository learnerProfileRepository) {
+    private final CourseLearnerProfileRepository courseLearnerProfileRepository;
+
+    public LearnerProfileService(LearnerProfileRepository learnerProfileRepository, CourseLearnerProfileRepository courseLearnerProfileRepository) {
         this.learnerProfileRepository = learnerProfileRepository;
+        this.courseLearnerProfileRepository = courseLearnerProfileRepository;
     }
 
     public LearnerProfile createProfile(User user) {
@@ -27,5 +31,6 @@ public class LearnerProfileService {
 
     public void deleteProfile(User user) {
         learnerProfileRepository.deleteByUser(user);
+        courseLearnerProfileRepository.deleteAllByUser(user);
     }
 }
