@@ -79,27 +79,20 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         private ideSettingsService: IdeSettingsService,
     ) {}
 
-    ngOnInit() {
-        this.accountService
-            .identity()
-            .then((user) => {
-                this.user = user!;
-                this.refreshTokenState();
+    async ngOnInit() {
+        this.user = (await this.accountService.identity())!;
+        this.refreshTokenState();
 
-                this.copyEnabled = true;
-                this.useSsh = this.localStorage.retrieve('useSsh') || false;
-                this.useToken = this.localStorage.retrieve('useToken') || false;
-                this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
-                this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
+        this.copyEnabled = true;
+        this.useSsh = this.localStorage.retrieve('useSsh') || false;
+        this.useToken = this.localStorage.retrieve('useToken') || false;
+        this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
+        this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
 
-                if (this.useSsh) {
-                    this.useSshUrl();
-                }
-                if (this.useToken) {
-                    this.useHttpsUrlWithToken();
-                }
-            })
-            .then(() => this.loadParticipationVcsAccessTokens());
+        if (this.useToken) {
+            this.useHttpsUrlWithToken();
+        }
+        this.loadParticipationVcsAccessTokens();
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
