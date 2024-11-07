@@ -273,7 +273,7 @@ public class SharedQueueProcessingService {
             if (buildJob != null) {
                 processingJobs.remove(buildJob.id());
 
-                buildJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO("", "", ""));
+                buildJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO("", "", ""), null);
                 log.info("Adding build job back to the queue: {}", buildJob);
                 queue.add(buildJob);
                 localProcessingJobs.decrementAndGet();
@@ -295,7 +295,9 @@ public class SharedQueueProcessingService {
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
 
-            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO(buildAgentShortName, hazelcastMemberAddress, buildAgentDisplayName));
+            ZonedDateTime estimatedCompletionDate = ZonedDateTime.now().plusSeconds(buildJob.jobTimingInfo().estimatedDuration());
+            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO(buildAgentShortName, hazelcastMemberAddress, buildAgentDisplayName),
+                    estimatedCompletionDate);
 
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();

@@ -64,6 +64,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     @Input() isInSidebarCard = false;
     @Input() missingResultInfo = MissingResultInformation.NONE;
     @Input() exercise?: Exercise;
+    @Input() estimatedCompletionDate?: dayjs.Dayjs;
 
     textColorClass: string;
     resultIconClass: IconProp;
@@ -73,6 +74,8 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     badge: Badge;
     resultTooltip?: string;
     latestDueDate: dayjs.Dayjs | undefined;
+    estimatedDuration: number;
+    estimatedDurationInterval: ReturnType<typeof setInterval>;
 
     // Icons
     readonly faCircleNotch = faCircleNotch;
@@ -163,6 +166,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         if (this.resultUpdateSubscription) {
             clearTimeout(this.resultUpdateSubscription);
         }
+        if (this.estimatedDurationInterval) {
+            clearInterval(this.estimatedDurationInterval);
+        }
     }
 
     /**
@@ -188,6 +194,16 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             // we evaluate the result status.
 
             this.evaluate();
+        }
+
+        if (changes.estimatedCompletionDate && this.estimatedCompletionDate) {
+            clearInterval(this.estimatedDurationInterval);
+            this.estimatedDurationInterval = setInterval(() => {
+                this.estimatedDuration = Math.max(0, dayjs(this.estimatedCompletionDate).diff(dayjs(), 'seconds'));
+                if (this.estimatedDuration <= 0) {
+                    clearInterval(this.estimatedDurationInterval);
+                }
+            }, 1000); // 1 second
         }
     }
 

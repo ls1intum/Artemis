@@ -279,7 +279,8 @@ public class LocalCIResultProcessingService {
 
     private void updateExerciseBuildDuration(ProgrammingExercise exercise, BuildJobQueueItem queueItem) {
         try {
-            long buildDuration = Duration.between(queueItem.jobTimingInfo().buildCompletionDate(), queueItem.jobTimingInfo().buildStartDate()).toSeconds();
+            long buildDuration = Duration.between(queueItem.jobTimingInfo().buildStartDate(), queueItem.jobTimingInfo().buildCompletionDate()).toSeconds();
+            buildDuration = Math.max(0, buildDuration);
             ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
             long exerciseBuildDuration = buildConfig.getBuildDurationSeconds();
             long exerciseBuildCount = buildConfig.getSuccessfulBuildCount();

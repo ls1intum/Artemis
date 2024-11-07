@@ -45,6 +45,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     result?: Result;
     isBuilding: boolean;
     isQueued: boolean;
+    estimatedCompletionTime?: dayjs.Dayjs;
     missingResultInfo = MissingResultInformation.NONE;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
@@ -134,7 +135,8 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             .getLatestPendingSubmissionByParticipationId(this.participation.id!, this.exercise.id!, this.personalParticipation)
             .pipe(
                 filter(({ submission }) => this.shouldUpdateSubmissionState(submission)),
-                tap(({ submissionState }) => this.updateSubmissionState(submissionState)),
+                tap((submission) => console.log('UpdatingResultComponent: submission', submission)),
+                tap(({ submissionState, estimatedCompletionDate }) => this.updateSubmissionState(submissionState, estimatedCompletionDate)),
             )
             .subscribe();
     }
@@ -169,10 +171,24 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      * Updates the shown status based on the given state of a submission.
      *
      * @param submissionState the submission is currently in.
+     * @param estimatedCompletionTime the estimated time when the submission will be completed.
      */
-    private updateSubmissionState(submissionState: ProgrammingSubmissionState) {
+    private updateSubmissionState(submissionState: ProgrammingSubmissionState, estimatedCompletionTime?: dayjs.Dayjs) {
         this.isQueued = submissionState === ProgrammingSubmissionState.IS_QUEUED;
         this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
+
+        if (submissionState === ProgrammingSubmissionState.IS_QUEUED) {
+            this.estimatedCompletionTime = undefined;
+            this.submissionService.fetchQueueReleaseDateEstimationByParticipationId(this.participation.id!).subscribe((releaseDate) => {
+                if (releaseDate) {
+                    console.log('UpdatingResultComponent: estimatedCompletionTime QUEUE', releaseDate);
+                    this.estimatedCompletionTime = releaseDate;
+                }
+            });
+        } else if (submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION && estimatedCompletionTime && dayjs(estimatedCompletionTime).isAfter(dayjs())) {
+            console.log('UpdatingResultComponent: estimatedCompletionTime BUILD', estimatedCompletionTime);
+            this.estimatedCompletionTime = estimatedCompletionTime;
+        }
 
         if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {
             this.missingResultInfo = this.generateMissingResultInfoForFailedProgrammingExerciseSubmission();

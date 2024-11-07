@@ -40,10 +40,10 @@ public record BuildJobQueueItem(String id, String name, BuildAgentDTO buildAgent
      * @param queueItem  The queued build job
      * @param buildAgent The build agent that will process the build job
      */
-    public BuildJobQueueItem(BuildJobQueueItem queueItem, BuildAgentDTO buildAgent) {
+    public BuildJobQueueItem(BuildJobQueueItem queueItem, BuildAgentDTO buildAgent, ZonedDateTime estimatedCompletionDate) {
         this(queueItem.id(), queueItem.name(), buildAgent, queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(), queueItem.priority(),
-                null, queueItem.repositoryInfo(), new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null,
-                        ZonedDateTime.now().plusSeconds(queueItem.jobTimingInfo.estimatedDuration()), queueItem.jobTimingInfo.estimatedDuration()),
+                null, queueItem.repositoryInfo(),
+                new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null, estimatedCompletionDate, queueItem.jobTimingInfo.estimatedDuration()),
                 queueItem.buildConfig(), null);
     }
 

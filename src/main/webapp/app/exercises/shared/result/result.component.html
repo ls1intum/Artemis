@@ -8,12 +8,18 @@
             <span class="text-primary">
                 <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
                 <span id="test-queued" jhiTranslate="artemisApp.editor.queued"></span>
+                @if (estimatedDuration && estimatedDuration > 0) {
+                    <span id="test-estimated-duration-queue"> {{ estimatedDuration | artemisDurationFromSeconds }}</span>
+                }
             </span>
         }
         @case (ResultTemplateStatus.IS_BUILDING) {
             <span class="text-primary">
                 <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
                 <span id="test-building" jhiTranslate="artemisApp.editor.building"></span>
+                @if (estimatedDuration && estimatedDuration > 0) {
+                    <span id="test-estimated-duration-build"> {{ estimatedDuration | artemisDurationFromSeconds }}</span>
+                }
             </span>
         }
         @case (ResultTemplateStatus.FEEDBACK_GENERATION_FAILED) {

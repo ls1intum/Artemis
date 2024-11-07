@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localci;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
@@ -118,7 +119,7 @@ public class LocalCIQueueWebsocketService {
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
             sendProcessingJobsOverWebsocket(event.getValue().courseId());
             notifyUserAboutBuildProcessing(event.getValue().exerciseId(), event.getValue().participationId(), event.getValue().buildConfig().commitHashToBuild(),
-                    event.getValue().jobTimingInfo().estimatedDuration());
+                    event.getValue().jobTimingInfo().estimatedCompletionDate());
         }
 
         @Override
@@ -150,8 +151,8 @@ public class LocalCIQueueWebsocketService {
         }
     }
 
-    private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, long estimatedDuration) {
-        var submissionProcessingDTO = new SubmissionProcessingDTO(exerciseId, participationId, commitHash, estimatedDuration);
+    private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime estimatedCompletionDate) {
+        var submissionProcessingDTO = new SubmissionProcessingDTO(exerciseId, participationId, commitHash, estimatedCompletionDate);
         programmingMessagingService.notifyUserAboutSubmissionProcessing(submissionProcessingDTO, exerciseId, participationId);
     }
 }
