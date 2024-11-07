@@ -21,7 +21,7 @@
         id="date-input-field"
         [ngClass]="{ 'is-invalid': !isValid(), 'border-warning': warning() }"
         [class.ng-invalid]="!isValid()"
-        [ngModel]="value"
+        [ngModel]="value()"
         [disabled]="disabled()"
         [min]="minDate()"
         [max]="maxDate()"

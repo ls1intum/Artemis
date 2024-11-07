@@ -5,6 +5,8 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import dayjs from 'dayjs/esm';
 import { MockDirective, MockModule } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTranslatePipe } from '../../../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('FormDateTimePickerComponent', () => {
     let component: FormDateTimePickerComponent;
@@ -15,7 +17,7 @@ describe('FormDateTimePickerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(OwlDateTimeModule)],
+            imports: [ArtemisTestModule, MockModule(OwlDateTimeModule), ArtemisTranslatePipe, NgbTooltipModule],
             declarations: [FormDateTimePickerComponent, MockDirective(NgModel)],
         })
             .compileComponents()
@@ -62,13 +64,13 @@ describe('FormDateTimePickerComponent', () => {
         it('should write the correct date if date is dayjs object', () => {
             component.writeValue(normalDate);
 
-            expect(component.value).toEqual(normalDateAsDateObject);
+            expect(component.value()).toEqual(normalDateAsDateObject);
         });
 
         it('should write the correct date if date is date object', () => {
             component.writeValue(normalDateAsDateObject);
 
-            expect(component.value).toEqual(normalDateAsDateObject);
+            expect(component.value()).toEqual(normalDateAsDateObject);
         });
     });
 
@@ -87,11 +89,12 @@ describe('FormDateTimePickerComponent', () => {
         component.registerOnChange(onChangeSpy);
         const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
         const newDate = normalDate.add(2, 'days');
-        component.value = normalDate;
+        fixture.componentRef.setInput('value', normalDate);
+        fixture.detectChanges();
 
         component.updateField(newDate);
 
-        expect(component.value).toEqual(newDate);
+        expect(component.value()).toEqual(newDate);
         expect(onChangeSpy).toHaveBeenCalledOnce();
         expect(onChangeSpy).toHaveBeenCalledWith(newDate);
         expect(valueChangedStub).toHaveBeenCalledOnce();
