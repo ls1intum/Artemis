@@ -343,11 +343,13 @@ public class LearningPathResource {
         log.debug("REST request to get competency order for learning path: {}", learningPathId);
         final var learningPath = learningPathService.findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
 
-        checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.empty());
+        User user = userRepository.getUser();
+        checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));
 
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
         List<CompetencyNameDTO> competencyNames = recommendationState.recommendedOrderOfCompetencies().stream()
-                .map(competencyId -> recommendationState.competencyIdMap().get(competencyId)).map(CompetencyNameDTO::of).toList();
+                .map(competencyId -> recommendationState.competencyIdMap().get(competencyId))
+                .map(competency -> CompetencyNameDTO.of(competency, learningObjectService.countCompletionsByUser(user))).toList();
         return ResponseEntity.ok(competencyNames);
     }
 
