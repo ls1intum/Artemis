@@ -13,7 +13,9 @@ import {
     ViewChild,
     ViewChildren,
     ViewEncapsulation,
+    effect,
     inject,
+    input,
 } from '@angular/core';
 import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
@@ -66,6 +68,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     searchbarCollapsed = false;
     @Input()
     contentHeightDev: boolean = false;
+    readonly focusPostId = input<number | undefined>(undefined);
+    readonly openThreadOnFocus = input<boolean>(false);
 
     getAsChannel = getAsChannelDTO;
 
@@ -91,6 +95,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     faEnvelope = faEnvelope;
     faCircleNotch = faCircleNotch;
     isMobile = false;
+    focusOnPostId: number | undefined = undefined;
+    isOpenThreadOnFocus: boolean = false;
 
     private layoutService: LayoutService = inject(LayoutService);
     private renderer = inject(Renderer2);
@@ -99,7 +105,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         public metisService: MetisService, // instance from course-conversations.component
         public metisConversationService: MetisConversationService, // instance from course-conversations.component
         public cdr: ChangeDetectorRef,
-    ) {}
+    ) {
+        effect(() => {
+            this.focusOnPostId = this.focusPostId();
+            this.isOpenThreadOnFocus = this.openThreadOnFocus();
+        });
+    }
 
     ngOnInit(): void {
         this.subscribeToSearch();
@@ -151,8 +162,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
         this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
             if (!this.createdNewMessage && this.posts.length > 0) {
-                const savedScrollId = sessionStorage.getItem(this.sessionStorageKey + this._activeConversation?.id) ?? '';
-                requestAnimationFrame(() => this.goToLastSelectedElement(parseInt(savedScrollId, 10)));
+                let savedScrollId;
+                if (this.focusOnPostId) {
+                    savedScrollId = this.focusOnPostId + '';
+                } else {
+                    savedScrollId = sessionStorage.getItem(this.sessionStorageKey + this._activeConversation?.id) ?? '';
+                }
+                requestAnimationFrame(() => this.goToLastSelectedElement(parseInt(savedScrollId, 10), this.isOpenThreadOnFocus));
             } else {
                 this.createdNewMessage = false;
             }
@@ -306,7 +322,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.scrollToBottomOfMessages();
     }
 
-    async goToLastSelectedElement(lastScrollPosition: number) {
+    async goToLastSelectedElement(lastScrollPosition: number, isOpenThread: boolean) {
         if (!lastScrollPosition) {
             this.scrollToBottomOfMessages();
             this.canStartSaving = true;
@@ -321,6 +337,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             // We scroll to the element with a slight buffer to ensure its fully visible (-10)
             this.content.nativeElement.scrollTop = element.elementRef.nativeElement.offsetTop - 10;
             this.canStartSaving = true;
+            if (isOpenThread) {
+                this.openThread.emit(element.post);
+            }
+            this.focusOnPostId = undefined;
+            this.isOpenThreadOnFocus = false;
         }
     }
 

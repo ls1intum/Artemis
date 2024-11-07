@@ -18,6 +18,7 @@ export enum PostingType {
 
 export abstract class Posting implements BaseEntity {
     public id?: number;
+    public referencePostId?: number;
     public author?: User;
     public authorRole?: UserRole;
     public creationDate?: dayjs.Dayjs;

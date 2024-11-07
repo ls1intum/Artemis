@@ -57,12 +57,14 @@
                         (openThread)="postInThread = $event"
                         [course]="course"
                         [searchbarCollapsed]="channelSearchCollapsed"
+                        [focusPostId]="focusPostId"
+                        [openThreadOnFocus]="openThreadOnFocus"
                     />
                 } @else {
                     @if (!selectedSavedPostStatus) {
                         <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
                     } @else {
-                        <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus" [courseId]="course.id"></jhi-saved-posts>
+                        <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus" [courseId]="course.id" (onNavigateToPost)="onNavigateToPost($event)"></jhi-saved-posts>
                     }
                 }
             </div>

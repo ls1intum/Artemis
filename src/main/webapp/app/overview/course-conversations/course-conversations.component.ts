@@ -39,7 +39,7 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
-import { SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -130,6 +130,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isProduction = true;
     isTestServer = false;
     isMobile = false;
+    focusPostId: number | undefined = undefined;
+    openThreadOnFocus = false;
     selectedSavedPostStatus: null | SavedPostStatus = null;
 
     readonly CHANNEL_TYPE_SHOW_ADD_OPTION = CHANNEL_TYPE_SHOW_ADD_OPTION;
@@ -281,9 +283,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                     this.selectedSavedPostStatus = queryParams.conversationId as SavedPostStatus;
                 } else {
                     this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
-
                     this.closeSidebarOnMobile();
                 }
+            }
+            if (queryParams.focusPostId) {
+                this.focusPostId = Number(queryParams.focusPostId);
+            }
+            if (queryParams.openThreadOnFocus) {
+                this.openThreadOnFocus = queryParams.openThreadOnFocus;
             }
             if (queryParams.messageId) {
                 this.postInThread = { id: Number(queryParams.messageId) } as Post;
@@ -293,6 +300,16 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.postInThread = undefined;
             }
         });
+    }
+
+    onNavigateToPost(post: Posting) {
+        if (post.referencePostId === undefined || post.conversation?.id === undefined) {
+            return;
+        }
+
+        this.focusPostId = post.referencePostId;
+        this.openThreadOnFocus = (post.postingType as PostingType) === PostingType.ANSWER;
+        this.metisConversationService.setActiveConversation(post.conversation!.id!);
     }
 
     updateQueryParameters() {
@@ -417,6 +434,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                     .includes(conversationId)
             ) {
                 this.selectedSavedPostStatus = conversationId as SavedPostStatus;
+                this.postInThread = undefined;
                 this.metisConversationService.setActiveConversation(undefined);
                 this.activeConversation = undefined;
                 this.updateQueryParameters();

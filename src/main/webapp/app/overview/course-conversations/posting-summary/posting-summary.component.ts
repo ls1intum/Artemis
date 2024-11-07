@@ -14,6 +14,7 @@ export class PostingSummaryComponent {
     readonly isShowSavedPostOptions = input<boolean>(false);
 
     readonly onChangeSavedPostStatus = output<SavedPostStatus>();
+    readonly onNavigateToPost = output<Posting>();
 
     protected readonly ConversationType = ConversationType;
     protected readonly SavedPostStatus = SavedPostStatus;
@@ -42,5 +43,10 @@ export class PostingSummaryComponent {
         this.onChangeSavedPostStatus.emit(status);
     }
 
-    protected readonly PostingType = PostingType;
+    protected onTriggerNavigateToPost() {
+        if (this.post() === undefined) {
+            return;
+        }
+        this.onNavigateToPost.emit(this.post()!);
+    }
 }

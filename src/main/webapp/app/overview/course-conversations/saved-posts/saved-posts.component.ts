@@ -1,4 +1,4 @@
-import { Component, effect, inject, input } from '@angular/core';
+import { Component, effect, inject, input, output } from '@angular/core';
 import { Posting, SavedPostStatus } from 'app/entities/metis/posting.model';
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
@@ -11,6 +11,8 @@ import { faBookmark } from '@fortawesome/free-solid-svg-icons';
 export class SavedPostsComponent {
     readonly savedPostStatus = input<SavedPostStatus>();
     readonly courseId = input<number>();
+
+    readonly onNavigateToPost = output<Posting>();
 
     private readonly savedPostService = inject(SavedPostService);
 
@@ -47,5 +49,9 @@ export class SavedPostsComponent {
             next: () => {},
         });
         this.hiddenPosts.push(post.id!);
+    }
+
+    protected onTriggerNavigateToPost(post: Posting) {
+        this.onNavigateToPost.emit(post);
     }
 }

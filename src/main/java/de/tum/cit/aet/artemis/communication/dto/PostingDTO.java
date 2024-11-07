@@ -12,11 +12,12 @@ import de.tum.cit.aet.artemis.communication.domain.UserRole;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PostingDTO(Long id, AuthorDTO author, UserRole role, ZonedDateTime creationDate, ZonedDateTime updatedDate, String content, boolean isSaved, String savedPostStatus,
-        List<ReactionDTO> reactions, PostingConversationDTO conversation, String postingType) {
+        List<ReactionDTO> reactions, PostingConversationDTO conversation, String postingType, Long referencePostId) {
 
     public PostingDTO(Posting post, boolean isSaved, String savedPostStatus) {
         this(post.getId(), new AuthorDTO(post.getAuthor()), post.getAuthorRole(), post.getCreationDate(), post.getUpdatedDate(), post.getContent(), isSaved, savedPostStatus,
-                post.getReactions().stream().map(ReactionDTO::new).toList(), new PostingConversationDTO(post.getConversation()), getSavedPostType(post).getDatabaseKey());
+                post.getReactions().stream().map(ReactionDTO::new).toList(), new PostingConversationDTO(post.getConversation()), getSavedPostType(post).getDatabaseKey(),
+                getReferencePostId(post));
     }
 
     static PostingType getSavedPostType(Posting posting) {
@@ -25,6 +26,15 @@ public record PostingDTO(Long id, AuthorDTO author, UserRole role, ZonedDateTime
         }
         else {
             return PostingType.POST;
+        }
+    }
+
+    static Long getReferencePostId(Posting posting) {
+        if (posting instanceof AnswerPost) {
+            return ((AnswerPost) posting).getPost().getId();
+        }
+        else {
+            return posting.getId();
         }
     }
 }

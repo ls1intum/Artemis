@@ -1,4 +1,4 @@
-<div class="posting-summary rounded p-2">
+<div class="posting-summary rounded p-2" (click)="onTriggerNavigateToPost()">
     @if (post() !== undefined) {
         @if (post()!.conversation !== undefined && post()!.conversation!.type !== undefined && post()!.conversation!.title !== undefined) {
             <div class="posting-summary-conversation fs-x-small text-secondary d-flex align-items-center mb-1">

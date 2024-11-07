@@ -9,7 +9,12 @@
         @if (posts && posts.length > 0) {
             @for (post of posts; track trackPostFunction($index, post)) {
                 @if (!hiddenPosts.includes(post.id!)) {
-                    <jhi-posting-summary [post]="post" [isShowSavedPostOptions]="true" (onChangeSavedPostStatus)="changeSavedPostStatus(post, $event)"></jhi-posting-summary>
+                    <jhi-posting-summary
+                        [post]="post"
+                        [isShowSavedPostOptions]="true"
+                        (onChangeSavedPostStatus)="changeSavedPostStatus(post, $event)"
+                        (onNavigateToPost)="onTriggerNavigateToPost(post)"
+                    ></jhi-posting-summary>
                 }
             }
         } @else {
