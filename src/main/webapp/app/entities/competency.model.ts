@@ -161,7 +161,7 @@ export class CompetencyJol {
 
         // Calculate the average progress of all previous competencies
         const totalPreviousProgress = previousCompetencies.reduce((sum, c) => {
-            const progress = c.userProgress?.first()?.progress ?? 0;
+            const progress = (c instanceof CourseCompetency ? c.userProgress?.first()?.progress : (c as LearningPathCompetencyDTO).userProgress?.progress) ?? 0;
             return sum + progress;
         }, 0);
         const avgPreviousProgress = totalPreviousProgress / previousCompetencies.length;

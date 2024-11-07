@@ -32,9 +32,11 @@ export interface LearningPathCompetencyDTO {
     title: string;
     masteryProgress: number;
     optional: boolean;
+    numberOfLearningObjects: number;
+    numberOfCompletedLearningObjects: number;
     taxonomy: CompetencyTaxonomy;
     softDueDate?: dayjs.Dayjs;
-    userProgress?: CompetencyProgress[];
+    userProgress?: CompetencyProgress;
 }
 
 export interface LearningPathDTO {

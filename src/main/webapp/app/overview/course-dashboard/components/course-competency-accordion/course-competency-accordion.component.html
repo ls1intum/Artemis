@@ -18,7 +18,17 @@
                                 }
                                 <strong class="ms-2">{{ courseCompetency.title }}</strong>
                                 <h5 class="m-0 ms-2">
-                                    <span class="badge text-white" [ngClass]="{ 'text-bg-success': false, 'text-bg-secondary': true, 'text-bg-warning': false }">3 / 3</span>
+                                    <span
+                                        class="badge text-white"
+                                        [ngClass]="{
+                                            'text-bg-success':
+                                                courseCompetency.numberOfCompletedLearningObjects == courseCompetency.numberOfLearningObjects &&
+                                                courseCompetency.numberOfLearningObjects !== 0,
+                                            'text-bg-secondary': true,
+                                            'text-bg-warning': courseCompetency.numberOfCompletedLearningObjects !== courseCompetency.numberOfLearningObjects,
+                                        }"
+                                        >{{ courseCompetency.numberOfCompletedLearningObjects }} / {{ courseCompetency.numberOfLearningObjects }}</span
+                                    >
                                 </h5>
                             </div>
                             @if (courseCompetency.softDueDate) {

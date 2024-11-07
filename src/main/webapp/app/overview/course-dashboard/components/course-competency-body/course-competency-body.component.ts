@@ -42,7 +42,7 @@ export class CourseCompetencyBodyComponent {
 
     readonly userProgress = computed(
         () =>
-            this.courseCompetency()?.userProgress?.first() ??
+            this.courseCompetency()?.userProgress ??
             <CompetencyProgress>{
                 progress: 0,
                 confidence: 1,
