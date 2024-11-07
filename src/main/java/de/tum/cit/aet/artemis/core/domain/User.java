@@ -226,7 +226,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "iris_accepted")
     private ZonedDateTime irisAccepted = null;
 
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("user")
     private LearnerProfile learnerProfile;
 

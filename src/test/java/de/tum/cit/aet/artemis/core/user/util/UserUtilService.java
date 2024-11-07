@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
+import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
@@ -62,6 +65,9 @@ public class UserUtilService {
 
     @Autowired
     private UserTestRepository userTestRepository;
+
+    @Autowired
+    private LearnerProfileRepository learnerProfileRepository;
 
     /**
      * Changes the currently authorized User to the User with the given username.
@@ -538,5 +544,14 @@ public class UserUtilService {
             user.setGroups(Set.of(userPrefix + "instructor" + userSuffix));
             userTestRepository.save(user);
         }
+    }
+
+    public void createLearnerProfilesForUsers(String userPrefix) {
+        Set<LearnerProfile> learnerProfiles = userTestRepository.findAllByUserPrefix(userPrefix).stream().map(user -> {
+            LearnerProfile learnerProfile = new LearnerProfile();
+            learnerProfile.setUser(user);
+            return learnerProfile;
+        }).collect(Collectors.toSet());
+        learnerProfileRepository.saveAll(learnerProfiles);
     }
 }
