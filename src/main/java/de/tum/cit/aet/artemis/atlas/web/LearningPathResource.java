@@ -349,7 +349,7 @@ public class LearningPathResource {
         var recommendationState = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
         List<CompetencyNameDTO> competencyNames = recommendationState.recommendedOrderOfCompetencies().stream()
                 .map(competencyId -> recommendationState.competencyIdMap().get(competencyId))
-                .map(competency -> CompetencyNameDTO.of(competency, learningObjectService.countCompletionsByUser(user))).toList();
+                .map(competency -> CompetencyNameDTO.of(competency, learningObjectService.countCompletionsByUser(competency, user))).toList();
         return ResponseEntity.ok(competencyNames);
     }
 
