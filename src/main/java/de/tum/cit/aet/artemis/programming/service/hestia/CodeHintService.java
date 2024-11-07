@@ -13,8 +13,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisHestiaSession;
-import de.tum.cit.aet.artemis.iris.service.session.IrisHestiaSessionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
@@ -29,17 +27,14 @@ public class CodeHintService {
 
     private static final Logger log = LoggerFactory.getLogger(CodeHintService.class);
 
-    private final Optional<IrisHestiaSessionService> irisHestiaSessionService;
-
     private final CodeHintRepository codeHintRepository;
 
     private final ProgrammingExerciseTaskRepository taskRepository;
 
     private final ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
-    public CodeHintService(Optional<IrisHestiaSessionService> irisHestiaSessionService, CodeHintRepository codeHintRepository, ProgrammingExerciseTaskRepository taskRepository,
+    public CodeHintService(CodeHintRepository codeHintRepository, ProgrammingExerciseTaskRepository taskRepository,
             ProgrammingExerciseSolutionEntryRepository solutionEntryRepository) {
-        this.irisHestiaSessionService = irisHestiaSessionService;
         this.codeHintRepository = codeHintRepository;
         this.taskRepository = taskRepository;
         this.solutionEntryRepository = solutionEntryRepository;
@@ -188,18 +183,5 @@ public class CodeHintService {
         solutionEntryRepository.saveAll(removedEntries);
 
         codeHintRepository.save(hint);
-    }
-
-    /**
-     * Generates a description and content for a code hint using the Iris subsystem.
-     * See {@link IrisHestiaSessionService#executeRequest(IrisHestiaSession)} for more information.
-     *
-     * @param codeHint The code hint to be generated
-     * @return The code hint with description and content
-     */
-    public CodeHint generateDescriptionWithIris(CodeHint codeHint) {
-        var irisService = irisHestiaSessionService.orElseThrow();
-        var session = irisService.getOrCreateSession(codeHint);
-        return irisService.executeRequest(session);
     }
 }

@@ -107,7 +107,7 @@ describe('AttachmentUnitFormComponent', () => {
                 name: exampleName,
                 description: exampleDescription,
                 releaseDate: exampleReleaseDate,
-                competencies: null,
+                competencyLinks: null,
                 version: exampleVersion,
                 updateNotificationText: exampleUpdateNotificationText,
             },

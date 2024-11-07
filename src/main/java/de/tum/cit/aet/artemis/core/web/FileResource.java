@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +39,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -51,6 +54,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -160,6 +164,48 @@ public class FileResource {
         String responseBody = "{\"path\":\"" + responsePath + "\"}";
 
         return ResponseEntity.created(new URI(responsePath)).body(responseBody);
+    }
+
+    /**
+     * POST /files/courses/{courseId}/conversations/{conversationId} : Upload a new file for use in a conversation.
+     *
+     * @param file           The file to save. The size must not exceed Constants.MAX_FILE_SIZE_COMMUNICATION.
+     * @param courseId       The ID of the course the conversation belongs to.
+     * @param conversationId The ID of the conversation the file is used in.
+     * @return The path of the file.
+     * @throws URISyntaxException If the response path can't be converted into a URI.
+     */
+    @PostMapping("files/courses/{courseId}/conversations/{conversationId}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<String> saveMarkdownFileForConversation(@RequestParam(value = "file") MultipartFile file, @PathVariable Long courseId, @PathVariable Long conversationId)
+            throws URISyntaxException {
+        log.debug("REST request to upload file for markdown in conversation: {} for conversation {} in course {}", file.getOriginalFilename(), conversationId, courseId);
+        if (file.getSize() > Constants.MAX_FILE_SIZE_COMMUNICATION) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
+        }
+        String responsePath = fileService.handleSaveFileInConversation(file, courseId, conversationId).toString();
+
+        // return path for getting the file
+        String responseBody = "{\"path\":\"" + responsePath + "\"}";
+
+        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
+    }
+
+    /**
+     * GET /files/courses/{courseId}/conversations/{conversationId}/{filename} : Get the markdown file with the given filename for the given conversation.
+     *
+     * @param courseId       The ID of the course the conversation belongs to.
+     * @param conversationId The ID of the conversation the file is used in.
+     * @param filename       The filename of the file to get.
+     * @return The requested file, or 404 if the file doesn't exist. The response will enable caching.
+     */
+    @GetMapping("files/courses/{courseId}/conversations/{conversationId}/{filename}")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<byte[]> getMarkdownFileForConversation(@PathVariable Long courseId, @PathVariable Long conversationId, @PathVariable String filename) {
+        // TODO: Improve the access check
+        log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
+        sanitizeFilenameElseThrow(filename);
+        return buildFileResponse(FilePathService.getMarkdownFilePathForConversation(courseId, conversationId), filename, true);
     }
 
     /**
@@ -482,7 +528,7 @@ public class FileResource {
     }
 
     /**
-     * GET files/attachments/slides/attachment-unit/:attachmentUnitId/slide/:slideNumber : Get the lecture unit attachment slide by slide number
+     * GET files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideNumber} : Get the lecture unit attachment slide by slide number
      *
      * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
      * @param slideNumber      the slideNumber of the file
@@ -646,7 +692,8 @@ public class FileResource {
             if (file == null) {
                 return ResponseEntity.notFound().build();
             }
-            return ResponseEntity.ok(file);
+            return ResponseEntity.ok().cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS)) // Cache for 30 days;
+                    .contentType(getMediaTypeFromFilename(filePath.getFileName().toString())).body(file);
         }
         catch (IOException e) {
             log.error("Failed to return requested file with path {}", filePath, e);

@@ -9,25 +9,24 @@ import { ButtonSize } from 'app/shared/components/button.component';
     styleUrls: ['form-footer.component.scss'],
 })
 export class FormFooterComponent {
-    @Output() save = new EventEmitter<void>();
-    @Output() cancel = new EventEmitter<void>();
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
+    protected readonly faExclamationCircle = faExclamationCircle;
 
     @Input() isSaving: boolean = false;
     @Input() isDisabled: boolean = false;
-
     @Input() invalidReasons: ValidationReason[] = [];
-
     @Input() notificationText?: string;
-    @Output() notificationTextChange = new EventEmitter<string>();
-
-    ButtonSize = ButtonSize;
-
+    @Input() switchEditMode?: () => void;
     isImport = input<boolean>();
     isCreation = input<boolean>();
+    isSimpleMode = input<boolean>();
+    areAuxiliaryRepositoriesValid = input<boolean>(true);
+
+    @Output() notificationTextChange = new EventEmitter<string>();
+    @Output() save = new EventEmitter<void>();
+    @Output() onCancel = new EventEmitter<void>();
 
     saveTitle = computed<string>(() => (this.isImport() ? 'entity.action.import' : this.isCreation() ? 'entity.action.generate' : 'entity.action.save'));
-
-    faSave = faSave;
-    faBan = faBan;
-    faExclamationCircle = faExclamationCircle;
 }

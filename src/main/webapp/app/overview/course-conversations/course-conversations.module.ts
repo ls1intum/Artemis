@@ -31,6 +31,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { CourseConversationsCodeOfConductComponent } from 'app/overview/course-conversations/code-of-conduct/course-conversations-code-of-conduct.component';
 import { CourseWideSearchComponent } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 const routes: Routes = [
     {
@@ -54,6 +55,7 @@ const routes: Routes = [
         ArtemisSidebarModule,
         InfiniteScrollModule,
         CourseUsersSelectorModule,
+        ProfilePictureComponent,
     ],
     declarations: [
         CourseConversationsComponent,

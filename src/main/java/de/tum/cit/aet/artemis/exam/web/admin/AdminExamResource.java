@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
  * REST controller for administrating Exam.
  */
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminExamResource {
@@ -38,7 +39,6 @@ public class AdminExamResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exams.
      */
     @GetMapping("courses/upcoming-exams")
-    @EnforceAdmin
     public ResponseEntity<List<Exam>> getCurrentAndUpcomingExams() {
         log.debug("REST request to get all upcoming exams");
 

@@ -96,7 +96,7 @@ let checkFile fn =
     violation := true;
     Location.report_exception Format.err_formatter exn
 
-let studentDir = "assignment"
+let studentDir = "${studentParentWorkingDirectoryName}"
 
 (** check all student files for violations *)
 let _ =

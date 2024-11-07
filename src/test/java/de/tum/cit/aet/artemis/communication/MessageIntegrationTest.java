@@ -44,6 +44,7 @@ import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -517,6 +518,51 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // get amount of posts with that certain
         assertThat(returnedPosts)
                 .hasSize(existingConversationMessages.stream().filter(post -> Objects.equals(post.getConversation().getId(), courseWideChannelId)).toList().size());
+        assertThat(returnedPosts.size()).isLessThan(courseWidePosts.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_WithOwnWithCourseWideContentAndSearchText() throws Exception {
+        // conversation set will fetch all posts of conversation if the user is involved
+        var params = new LinkedMultiValueMap<String, String>();
+        var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
+        var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
+        params.add("courseWideChannelIds", courseWideChannelId.toString());
+        params.add("filterToOwn", "true");
+        params.add("size", "50");
+        params.add("searchText", "Content");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        // get amount of posts with that certain
+        assertThat(returnedPosts).hasSize(existingCourseWideMessages.stream().filter(post -> post.getConversation().getId().equals(courseWideChannelId)
+                && post.getAuthor().getLogin().equals(TEST_PREFIX + "student1") && (post.getContent().contains("Content") || answerHasContext(post.getAnswers(), "Content")))
+                .toList().size());
+        assertThat(returnedPosts.size()).isLessThan(courseWidePosts.size());
+    }
+
+    private boolean answerHasContext(Set<AnswerPost> answers, String searchText) {
+        return answers.stream().anyMatch(answerPost -> answerPost.getContent().contains(searchText));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_WithOwnWithCourseWideContentAndSearchTextInAnswer() throws Exception {
+        // conversation set will fetch all posts of conversation if the user is involved
+        var params = new LinkedMultiValueMap<String, String>();
+        var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
+        var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
+        courseWidePosts.getFirst().getAnswers().forEach(answer -> answer.setContent("AnswerPost"));
+        params.add("courseWideChannelIds", courseWideChannelId.toString());
+        params.add("filterToOwn", "true");
+        params.add("size", "50");
+        params.add("searchText", "Answer");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        // get amount of posts with that certain
+        assertThat(returnedPosts).hasSize(existingCourseWideMessages.stream().filter(post -> post.getConversation().getId().equals(courseWideChannelId)
+                && post.getAuthor().getLogin().equals(TEST_PREFIX + "student1") && (post.getContent().contains("answer") || answerHasContext(post.getAnswers(), "Content")))
+                .toList().size());
         assertThat(returnedPosts.size()).isLessThan(courseWidePosts.size());
     }
 

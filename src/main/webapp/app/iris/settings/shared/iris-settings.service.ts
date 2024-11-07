@@ -3,7 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { IrisCourseSettings, IrisExerciseSettings, IrisGlobalSettings } from 'app/entities/iris/settings/iris-settings.model';
-import { IrisModel } from 'app/entities/iris/settings/iris-model';
+import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
+import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 
 /**
  * Service for calling the Iris settings endpoints on the server
@@ -44,22 +45,22 @@ export class IrisSettingsService {
     }
 
     /**
-     * Get the uncombined Iris settings for a programming exercise
-     * @param exerciseId the id of the programming exercise
+     * Get the uncombined Iris settings for an exercise
+     * @param exerciseId the id of the exercise
      */
-    getUncombinedProgrammingExerciseSettings(exerciseId: number): Observable<IrisExerciseSettings | undefined> {
+    getUncombinedExerciseSettings(exerciseId: number): Observable<IrisExerciseSettings | undefined> {
         return this.http
-            .get<IrisExerciseSettings>(`${this.resourceUrl}/programming-exercises/${exerciseId}/raw-iris-settings`, { observe: 'response' })
+            .get<IrisExerciseSettings>(`${this.resourceUrl}/exercises/${exerciseId}/raw-iris-settings`, { observe: 'response' })
             .pipe(map((res: HttpResponse<IrisExerciseSettings>) => res.body ?? undefined));
     }
 
     /**
-     * Get the combined Iris settings for a programming exercise
-     * @param exerciseId the id of the programming exercise
+     * Get the combined Iris settings for an exercise
+     * @param exerciseId the id of the exercise
      */
-    getCombinedProgrammingExerciseSettings(exerciseId: number): Observable<IrisExerciseSettings | undefined> {
+    getCombinedExerciseSettings(exerciseId: number): Observable<IrisExerciseSettings | undefined> {
         return this.http
-            .get<IrisExerciseSettings>(`${this.resourceUrl}/programming-exercises/${exerciseId}/iris-settings`, { observe: 'response' })
+            .get<IrisExerciseSettings>(`${this.resourceUrl}/exercises/${exerciseId}/iris-settings`, { observe: 'response' })
             .pipe(map((res: HttpResponse<IrisExerciseSettings>) => res.body ?? undefined));
     }
 
@@ -81,18 +82,20 @@ export class IrisSettingsService {
     }
 
     /**
-     * Update the Iris settings for a programming exercise
-     * @param exerciseId the id of the programming exercise
+     * Update the Iris settings for an exercise
+     * @param exerciseId the id of the exercise
      * @param settings the settings to set
      */
-    setProgrammingExerciseSettings(exerciseId: number, settings: IrisExerciseSettings): Observable<HttpResponse<IrisExerciseSettings>> {
-        return this.http.put<IrisExerciseSettings>(`${this.resourceUrl}/programming-exercises/${exerciseId}/raw-iris-settings`, settings, { observe: 'response' });
+    setExerciseSettings(exerciseId: number, settings: IrisExerciseSettings): Observable<HttpResponse<IrisExerciseSettings>> {
+        return this.http.put<IrisExerciseSettings>(`${this.resourceUrl}/exercises/${exerciseId}/raw-iris-settings`, settings, { observe: 'response' });
     }
 
     /**
-     * Get the global Iris settings
+     * Get the available variants for a feature
      */
-    getIrisModels(): Observable<IrisModel[] | undefined> {
-        return this.http.get<IrisModel[]>(`${this.resourceUrl}/iris/models`, { observe: 'response' }).pipe(map((res: HttpResponse<IrisModel[]>) => res.body ?? []));
+    getVariantsForFeature(feature: IrisSubSettingsType): Observable<IrisVariant[] | undefined> {
+        return this.http
+            .get<IrisVariant[]>(`${this.resourceUrl}/iris/variants/${feature}`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<IrisVariant[]>) => res.body ?? []));
     }
 }

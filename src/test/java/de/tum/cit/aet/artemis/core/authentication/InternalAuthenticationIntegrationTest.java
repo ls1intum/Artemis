@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.cit.aet.artemis.tutorialgroups.util.TutorialGroupUtilService;
+import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
 class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

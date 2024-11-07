@@ -18,8 +18,8 @@ import { FormsModule } from '@angular/forms';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
-import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
+import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
 
 @NgModule({
     imports: [
@@ -39,8 +39,8 @@ import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programmi
         ArtemisHeaderExercisePageWithDetailsModule,
         SubmissionResultStatusModule,
         ArtemisProgrammingExerciseModule,
-        GitDiffReportModule,
         ArtemisProgrammingExerciseActionsModule,
+        GitDiffReportComponent,
     ],
     declarations: [RepositoryViewComponent, CommitHistoryComponent, CommitDetailsViewComponent],
     exports: [RepositoryViewComponent],

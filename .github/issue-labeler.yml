@@ -1,0 +1,144 @@
+assessment:
+  - assessment
+  - bonus
+  - complaint
+  - submission
+  - grading
+  - grade
+  - score
+  - caseSensitive: false
+
+athena:
+  - athena
+  - caseSensitive: false
+
+atlas:
+  - atlas
+  - competency
+  - competencies
+  - knowledge area
+  - learning path
+  - learner profile
+  - science event
+  - adaptive learning
+  - caseSensitive: false
+
+buildagent:
+  - buildagent
+  - build agent
+  - buildjob
+  - build job
+  - build result
+  - caseSensitive: false
+
+communication:
+  - communication
+  - conversation
+  - notification
+  - agreement
+  - faq
+  - post
+  - reaction
+  - chat
+  - message
+  - caseSensitive: false
+
+core:
+  - user-management
+  - authority
+  - data export
+  - migration
+  - user
+  - group
+  - caseSensitive: false
+
+exam:
+  - exam
+  - exercisegroup
+  - student exam
+  - suspicious behavior
+  - suspicious behaviour
+  - caseSensitive: false
+
+exercise:
+  - exercise
+  - participation
+  - participant
+  - difficulty
+  - lifecycle
+  - team
+  - assignment
+  - caseSensitive: false
+
+fileupload:
+  - fileupload
+  - upload
+  - caseSensitive: false
+
+iris:
+  - iris
+  - llm
+  - chatbot
+  - ai
+  - caseSensitive: false
+
+lecture:
+  - lecture
+  - attachment
+  - online
+  - slide
+  - video
+  - text unit
+  - caseSensitive: false
+
+lti:
+  - lti
+  - online course
+  - caseSensitive: false
+
+modeling:
+  - modeling
+  - diagram
+  - uml
+  - caseSensitive: false
+
+plagiarism:
+  - plagiarism
+  - caseSensitive: false
+
+programming:
+  - programming
+  - build
+  - build plan
+  - code hint
+  - git
+  - testwise coverage
+  - ide
+  - submission policy
+  - aeolus
+  - penalty
+  - auxilary
+  - commit
+  - project
+  - static code analysis
+  - caseSensitive: false
+
+quiz:
+  - quiz
+  - drag
+  - drop
+  - single choice
+  - multiple choice
+  - batch
+  - short answer
+  - caseSensitive: false
+
+text:
+  - text
+  - block
+  - caseSensitive: false
+
+tutorialgroup:
+  - tutorialgroup
+  - session
+  - caseSensitive: false

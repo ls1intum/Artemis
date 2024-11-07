@@ -149,15 +149,6 @@ export abstract class TextEditorAction implements Disposable {
     }
 
     /**
-     * Types the given text in the editor at the current cursor position. You can use this e.g. to trigger a suggestion.
-     * @param editor The editor to type the text in.
-     * @param text The text to type.
-     */
-    typeText(editor: TextEditor, text: string): void {
-        editor.typeText(text);
-    }
-
-    /**
      * Replaces the text at the current selection with the given text. If there is no selection, the text is inserted at the current cursor position.
      * @param editor The editor to replace the text in.
      * @param text The text to replace the current selection with.

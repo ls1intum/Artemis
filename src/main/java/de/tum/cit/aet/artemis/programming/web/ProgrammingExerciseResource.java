@@ -298,8 +298,7 @@ public class ProgrammingExerciseResource {
 
         checkProgrammingExerciseForError(updatedProgrammingExercise);
 
-        var programmingExerciseBeforeUpdate = programmingExerciseRepository
-                .findByIdWithAuxiliaryRepositoriesCompetenciesAndBuildConfigElseThrow(updatedProgrammingExercise.getId());
+        var programmingExerciseBeforeUpdate = programmingExerciseRepository.findForUpdateByIdElseThrow(updatedProgrammingExercise.getId());
         if (!Objects.equals(programmingExerciseBeforeUpdate.getShortName(), updatedProgrammingExercise.getShortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
@@ -326,6 +325,9 @@ public class ProgrammingExerciseResource {
                         "noParticipationModeAllowed");
             }
         }
+
+        // Verify that the checkout directories have not been changed. This is required since the buildScript and result paths are determined during the creation of the exercise.
+        programmingExerciseService.validateCheckoutDirectoriesUnchanged(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         // Verify that a theia image is provided when the online IDE is enabled
         if (updatedProgrammingExercise.isAllowOnlineIde() && updatedProgrammingExercise.getBuildConfig().getTheiaImage() == null) {
@@ -503,7 +505,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithSetupParticipations(@PathVariable long exerciseId) {
         log.debug("REST request to get ProgrammingExercise with setup participations : {}", exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         var assignmentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithLatestResult(programmingExercise.getId(), user.getId(), false);
         Set<StudentParticipation> participations = new HashSet<>();
@@ -528,6 +530,21 @@ public class ProgrammingExerciseResource {
             @RequestParam(defaultValue = "false") boolean withSubmissionResults, @RequestParam(defaultValue = "false") boolean withGradingCriteria) {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExercise(exerciseId, withSubmissionResults, withGradingCriteria);
+        return ResponseEntity.ok(programmingExercise);
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/with-auxiliary-repository
+     *
+     * @param exerciseId the id of the programmingExercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
+     */
+    @GetMapping("programming-exercises/{exerciseId}/with-auxiliary-repository")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAuxiliaryRepository(@PathVariable long exerciseId) {
+
+        log.debug("REST request to get programming exercise with auxiliary repositories: {}", exerciseId);
+        final var programmingExercise = programmingExerciseService.loadProgrammingExerciseWithAuxiliaryRepositories(exerciseId);
         return ResponseEntity.ok(programmingExercise);
     }
 

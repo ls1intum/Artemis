@@ -1,4 +1,4 @@
-assignment/
+${studentParentWorkingDirectoryName}/
 
 # Taken from https://github.com/github/gitignore
 
@@ -22,6 +22,8 @@ assignment/
 *.rar
 
 ### Eclipse
+.project
+.classpath
 .metadata
 bin/
 tmp/

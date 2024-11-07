@@ -1,10 +1,11 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
 import { PrivacyStatement } from 'app/entities/privacy-statement.model';
 import { Imprint } from 'app/entities/imprint.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('LegalDocumentService', () => {
     let service: LegalDocumentService;
@@ -12,7 +13,8 @@ describe('LegalDocumentService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(LegalDocumentService);
         httpMock = TestBed.inject(HttpTestingController);

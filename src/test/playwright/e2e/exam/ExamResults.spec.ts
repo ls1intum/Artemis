@@ -82,7 +82,7 @@ test.describe('Exam Results', () => {
                     }
                     exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, testCase.exerciseType, additionalData);
                     await examAPIRequests.registerStudentForExam(exam, studentOne);
-                    const studentExams = await examAPIRequests.generateMissingIndividualExams(exam);
+                    const studentExams = await examAPIRequests.getAllStudentExams(exam);
                     studentExam = studentExams[0];
                     await examAPIRequests.prepareExerciseStartForExam(exam);
                 });

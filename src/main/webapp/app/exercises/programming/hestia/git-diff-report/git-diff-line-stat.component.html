@@ -1,11 +1,11 @@
 <span class="diff-line-stat">
-    <span class="text-success">+{{ addedLineCount }}</span>
-    <span class="text-danger">-{{ removedLineCount }}</span>
+    <span class="text-success">+{{ addedLineCount() }}</span>
+    <span class="text-danger">-{{ removedLineCount() }}</span>
     <span class="diff-block-bar">
-        @for (i of [].constructor(addedSquareCount); track $index) {
+        @for (i of addedSquareArray(); track $index) {
             <span class="diff-block bg-success"></span>
         }
-        @for (i of [].constructor(removedSquareCount); track $index) {
+        @for (i of removedSquareArray(); track $index) {
             <span class="diff-block bg-danger"></span>
         }
     </span>

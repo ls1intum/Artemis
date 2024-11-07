@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../test.module';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
@@ -7,6 +7,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { take } from 'rxjs/operators';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Exercise Scores Chart Service', () => {
     let service: ExerciseScoresChartService;
@@ -15,8 +16,10 @@ describe('Exercise Scores Chart Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
+            imports: [ArtemisTestModule],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],

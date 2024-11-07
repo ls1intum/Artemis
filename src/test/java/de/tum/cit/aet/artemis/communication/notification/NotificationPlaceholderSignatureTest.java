@@ -66,7 +66,7 @@ class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationInde
     }
 
     private String readPlaceholderText(URL url) throws URISyntaxException, IOException {
-        return Files.readString(Paths.get(url.toURI()));
+        return Files.readString(Paths.get(url.toURI())).strip();
     }
 
     private record ClassSignature(String notificationType, List<NotificationPlaceholderSignatureTest.FieldDescription> fieldDescriptions) implements Comparable<ClassSignature> {

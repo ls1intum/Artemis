@@ -3,7 +3,7 @@ import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TutorEffortStatisticsComponent } from 'app/exercises/text/manage/tutor-effort/tutor-effort-statistics.component';
 import { ArtemisTestModule } from '../../test.module';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
@@ -16,6 +16,7 @@ import { BarChartModule } from '@swimlane/ngx-charts';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('TutorEffortStatisticsComponent', () => {
     let fixture: ComponentFixture<TutorEffortStatisticsComponent>;
@@ -49,9 +50,11 @@ describe('TutorEffortStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule, MockModule(BarChartModule)],
+            imports: [ArtemisTestModule, MockModule(BarChartModule)],
             declarations: [TutorEffortStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(MockHasAnyAuthorityDirective), MockComponent(HelpIconComponent)],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ActivatedRoute,

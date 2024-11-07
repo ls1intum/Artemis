@@ -6,14 +6,14 @@ import { map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
-import { Competency } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 
 export interface OnlineUnitFormData {
     name?: string;
     description?: string;
     releaseDate?: dayjs.Dayjs;
     source?: string;
-    competencies?: Competency[];
+    competencyLinks?: CompetencyLectureUnitLink[];
 }
 
 function urlValidator(control: AbstractControl) {
@@ -95,7 +95,7 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
             description: [undefined, [Validators.maxLength(1000)]],
             releaseDate: [undefined],
             source: [undefined, [Validators.required, this.urlValidator]],
-            competencies: [undefined as Competency[] | undefined],
+            competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
         });
     }
 

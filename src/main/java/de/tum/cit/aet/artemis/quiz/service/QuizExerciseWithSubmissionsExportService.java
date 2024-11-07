@@ -57,7 +57,7 @@ public class QuizExerciseWithSubmissionsExportService {
      * @return the path to the directory where the quiz exercise was exported to
      */
     public Path exportExerciseWithSubmissions(QuizExercise quizExercise, Path exerciseExportDir, List<String> exportErrors, List<ArchivalReportEntry> reportEntries) {
-        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesElseThrow(quizExercise.getId());
+        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(quizExercise.getId());
         // do not store unnecessary information in the JSON file
         quizExercise.setCourse(null);
         quizExercise.setExerciseGroup(null);

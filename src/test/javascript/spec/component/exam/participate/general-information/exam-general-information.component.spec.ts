@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
+import { provideRouter } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -35,7 +35,6 @@ describe('ExamGeneralInformationComponent', () => {
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([])],
             declarations: [
                 ExamGeneralInformationComponent,
                 MockComponent(StudentExamWorkingTimeComponent),
@@ -43,6 +42,7 @@ describe('ExamGeneralInformationComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisDurationFromSecondsPipe),
             ],
+            providers: [provideRouter([])],
         })
             .compileComponents()
             .then(() => {

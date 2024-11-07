@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS, PROFILE_AEOLUS, PROFILE_THEIA,
         PROFILE_LTI })
-@TestPropertySource(properties = { "artemis.user-management.use-external=false" })
+@TestPropertySource(properties = { "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);

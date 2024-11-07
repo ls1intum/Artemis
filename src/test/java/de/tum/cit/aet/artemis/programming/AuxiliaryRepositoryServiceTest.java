@@ -8,38 +8,16 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class AuxiliaryRepositoryServiceTest extends AbstractSpringIntegrationIndependentTest {
+class AuxiliaryRepositoryServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_INVALID_LENGTH_STRING = "a".repeat(AuxiliaryRepository.MAX_NAME_LENGTH + 1);
 
     private static final String TEST_INVALID_DESCRIPTION_LENGTH_STRING = "a".repeat(AuxiliaryRepository.MAX_DESCRIPTION_LENGTH + 1);
-
-    @Autowired
-    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
-
-    @Autowired
-    private AuxiliaryRepositoryService auxiliaryRepositoryService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     private static ProgrammingExercise programmingExerciseBeforeUpdate;
 

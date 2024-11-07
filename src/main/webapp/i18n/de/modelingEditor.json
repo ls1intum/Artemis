@@ -31,7 +31,7 @@
                 "title": "So verwendet man den Modellierungseditor",
                 "createElement": {
                     "title": "Elemente hinzufügen",
-                    "text": "Um ein Element hinzuzufügen, ziehe es einfach von der rechten Seite per Drag & Drop in den Editorbereich auf der linken Seite."
+                    "text": "Um ein Element hinzuzufügen, ziehe es einfach von der rechten Seite per Drag-and-Drop in den Editorbereich auf der linken Seite."
                 },
                 "createRelationship": {
                     "title": "Beziehungen hinzufügen",
@@ -47,15 +47,15 @@
                 },
                 "moveElement": {
                     "title": "Elemente verschieben",
-                    "text": "Um ein Element zu verschieben, wähle dieses mit einem Klick aus und verwende entweder die Pfeiltasten der Tastatur oder bewege es per Drag & Drop."
+                    "text": "Um ein Element zu verschieben, wähle dieses mit einem Klick aus und verwende entweder die Pfeiltasten der Tastatur oder bewege es per Drag-and-Drop."
                 },
                 "resizeElement": {
                     "title": "Größe von Elementen verändern",
-                    "text": "Um die Größe eines Elements zu verändern, bewege per Drag & Drop die rechte, untere Ecke des Elements."
+                    "text": "Um die Größe eines Elements zu verändern, bewege per Drag-and-Drop die rechte, untere Ecke des Elements."
                 },
                 "reconnectRelationship": {
                     "title": "Beziehungen neu verbinden",
-                    "text": "Um eine Beziehung neu zu verbinden, bewege per Drag & Drop eine der Beziehungsenden."
+                    "text": "Um eine Beziehung neu zu verbinden, bewege per Drag-and-Drop eine der Beziehungsenden."
                 },
                 "select": {
                     "title": "Multi-Selektion",

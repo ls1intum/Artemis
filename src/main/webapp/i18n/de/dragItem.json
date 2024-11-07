@@ -16,10 +16,10 @@
             },
             "pictureFilePath": "Picture File Path",
             "text": "Text",
-            "correctScore": "Correct Score",
-            "incorrectScore": "Incorrect Score",
-            "correctLocation": "Correct Location",
-            "question": "Question"
+            "correctScore": "Korrekter Score",
+            "incorrectScore": "Inkorrekter Score",
+            "correctLocation": "Korrekte Location",
+            "question": "Frage"
         }
     }
 }

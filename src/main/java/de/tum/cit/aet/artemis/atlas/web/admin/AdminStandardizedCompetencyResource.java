@@ -38,6 +38,8 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
  * Admin REST controller for managing {@link StandardizedCompetency} entities.
  */
 @Profile(PROFILE_CORE)
+@FeatureToggle(Feature.StandardizedCompetencies)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminStandardizedCompetencyResource {
@@ -61,8 +63,6 @@ public class AdminStandardizedCompetencyResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("standardized-competencies")
-    @FeatureToggle(Feature.StandardizedCompetencies)
-    @EnforceAdmin
     public ResponseEntity<StandardizedCompetencyResultDTO> createStandardizedCompetency(@RequestBody @Valid StandardizedCompetencyRequestDTO competency) throws URISyntaxException {
         log.debug("REST request to create standardized competency : {}", competency);
 
@@ -79,8 +79,6 @@ public class AdminStandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated standardized competency
      */
     @PutMapping("standardized-competencies/{competencyId}")
-    @FeatureToggle(Feature.StandardizedCompetencies)
-    @EnforceAdmin
     public ResponseEntity<StandardizedCompetencyResultDTO> updateStandardizedCompetency(@PathVariable long competencyId,
             @RequestBody @Valid StandardizedCompetencyRequestDTO competency) {
         log.debug("REST request to update standardized competency : {}", competency);
@@ -97,8 +95,6 @@ public class AdminStandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("standardized-competencies/{competencyId}")
-    @FeatureToggle(Feature.StandardizedCompetencies)
-    @EnforceAdmin
     public ResponseEntity<Void> deleteStandardizedCompetency(@PathVariable long competencyId) {
         log.debug("REST request to delete standardized competency : {}", competencyId);
 
@@ -115,8 +111,6 @@ public class AdminStandardizedCompetencyResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("standardized-competencies/knowledge-areas")
-    @FeatureToggle(Feature.StandardizedCompetencies)
-    @EnforceAdmin
     public ResponseEntity<KnowledgeAreaResultDTO> createKnowledgeArea(@RequestBody @Valid KnowledgeAreaRequestDTO knowledgeArea) throws URISyntaxException {
         log.debug("REST request to create knowledge area : {}", knowledgeArea);
 
@@ -134,8 +128,6 @@ public class AdminStandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated knowledge area
      */
     @PutMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
-    @FeatureToggle(Feature.StandardizedCompetencies)
-    @EnforceAdmin
     public ResponseEntity<KnowledgeAreaResultDTO> updateKnowledgeArea(@PathVariable long knowledgeAreaId, @RequestBody @Valid KnowledgeAreaRequestDTO knowledgeArea) {
         log.debug("REST request to update knowledge area : {}", knowledgeArea);
 
@@ -151,8 +143,6 @@ public class AdminStandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("standardized-competencies/knowledge-areas/{knowledgeAreaId}")
-    @FeatureToggle(Feature.StandardizedCompetencies)
-    @EnforceAdmin
     public ResponseEntity<Void> deleteKnowledgeArea(@PathVariable long knowledgeAreaId) {
         log.debug("REST request to delete knowledge area : {}", knowledgeAreaId);
 
@@ -168,8 +158,6 @@ public class AdminStandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("standardized-competencies/import")
-    @FeatureToggle(Feature.StandardizedCompetencies)
-    @EnforceAdmin
     public ResponseEntity<Void> importStandardizedCompetencyCatalog(@RequestBody @Valid StandardizedCompetencyCatalogDTO standardizedCompetencyCatalogDTO) {
         log.debug("REST request to import standardized competency catalog");
 
@@ -184,8 +172,6 @@ public class AdminStandardizedCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and the body containing the JSON string of the standardized competency catalog
      */
     @GetMapping("standardized-competencies/export")
-    @FeatureToggle(Feature.StandardizedCompetencies)
-    @EnforceAdmin
     public ResponseEntity<String> exportStandardizedCompetencyCatalog() {
         log.debug("REST request to export standardized competency catalog");
 

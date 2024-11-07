@@ -1,6 +1,6 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpResponse } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
@@ -24,8 +24,8 @@ describe('Example Submission Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
-            providers: [{ provide: ExerciseService, useClass: MockExerciseService }, MockProvider(StringCountService)],
+            imports: [ArtemisTestModule],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ExerciseService, useClass: MockExerciseService }, MockProvider(StringCountService)],
         });
         service = TestBed.inject(ExampleSubmissionService);
         httpMock = TestBed.inject(HttpTestingController);

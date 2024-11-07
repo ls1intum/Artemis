@@ -81,13 +81,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
 
 /**
  * This class contains architecture tests that apply for the whole project.
- * <p>
- * For more specific tests please refer to the other architecture test classes:
- * <ul>
- * <li>{@link RepositoryArchitectureTest}</li>
- * <li>{@link ServiceArchitectureTest}</li>
- * <li>{@link ResourceArchitectureTest}</li>
- * </ul>
  */
 class ArchitectureTest extends AbstractArchitectureTest {
 
@@ -108,7 +101,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 .areAnnotatedWith(BeforeAll.class).or().areAnnotatedWith(AfterEach.class).or().areAnnotatedWith(AfterAll.class).should().bePublic();
 
         classNames.check(testClasses);
-        noPublicTestClasses.check(testClasses.that(are(not(simpleNameContaining("Abstract")))));
+        noPublicTestClasses.check(testClasses.that(are(not(or(simpleNameContaining("Abstract"), INTERFACES)))));
         noPublicTests.check(testClasses);
     }
 
@@ -308,7 +301,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest",
-                "ResourceArchitectureTest" };
+                "AbstractModuleResourceArchitectureTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }

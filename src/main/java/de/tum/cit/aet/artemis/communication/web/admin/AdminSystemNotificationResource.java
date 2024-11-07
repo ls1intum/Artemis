@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
  * REST controller for administrating system notifications.
  */
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminSystemNotificationResource {
@@ -58,7 +59,6 @@ public class AdminSystemNotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("system-notifications")
-    @EnforceAdmin
     public ResponseEntity<Notification> createSystemNotification(@RequestBody SystemNotification systemNotification) throws URISyntaxException {
         log.debug("REST request to save SystemNotification : {}", systemNotification);
         if (systemNotification.getId() != null) {
@@ -79,7 +79,6 @@ public class AdminSystemNotificationResource {
      *         status 500 (Internal Server Error) if the system notification couldn't be updated
      */
     @PutMapping("system-notifications")
-    @EnforceAdmin
     public ResponseEntity<SystemNotification> updateSystemNotification(@RequestBody SystemNotification systemNotification) {
         log.debug("REST request to update SystemNotification : {}", systemNotification);
         if (systemNotification.getId() == null) {
@@ -101,7 +100,6 @@ public class AdminSystemNotificationResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("system-notifications/{notificationId}")
-    @EnforceAdmin
     public ResponseEntity<Void> deleteSystemNotification(@PathVariable Long notificationId) {
         log.debug("REST request to delete SystemNotification : {}", notificationId);
         systemNotificationRepository.deleteById(notificationId);

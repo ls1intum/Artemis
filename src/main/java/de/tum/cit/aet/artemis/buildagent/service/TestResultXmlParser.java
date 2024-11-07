@@ -33,22 +33,8 @@ public class TestResultXmlParser {
         testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
         TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);
 
-        // If the xml file is only one test suite, parse it directly
-        if (!testSuite.testCases().isEmpty()) {
-            processTestSuite(testSuite, failedTests, successfulTests);
-        }
-        else {
-            // Else, check if the file contains an outer <testsuites> element
-            // And parse the inner test suites
-            TestSuites suites = mapper.readValue(testResultFileString, TestSuites.class);
-            if (suites.testsuites() == null) {
-                return;
-            }
-
-            for (TestSuite suite : suites.testsuites()) {
-                processTestSuite(suite, failedTests, successfulTests);
-            }
-        }
+        // A toplevel <testsuites> element is parsed like a <testsuite>
+        processTestSuite(testSuite, failedTests, successfulTests);
     }
 
     private static void processTestSuite(TestSuite testSuite, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests) {
@@ -64,17 +50,19 @@ public class TestResultXmlParser {
                 successfulTests.add(new BuildResult.LocalCITestJobDTO(testCase.name(), List.of()));
             }
         }
+
+        for (TestSuite suite : testSuite.testSuites()) {
+            processTestSuite(suite, failedTests, successfulTests);
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record TestSuites(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testsuite") List<TestSuite> testsuites) {
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record TestSuite(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testcase") List<TestCase> testCases) {
+    record TestSuite(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testcase") List<TestCase> testCases,
+            @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testsuite") List<TestSuite> testSuites) {
 
         TestSuite {
             testCases = Objects.requireNonNullElse(testCases, Collections.emptyList());
+            testSuites = Objects.requireNonNullElse(testSuites, Collections.emptyList());
         }
     }
 

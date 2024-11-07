@@ -1,8 +1,8 @@
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { CompetencyImportResponseDTO, CompetencyWithTailRelationDTO, CourseCompetency } from 'app/entities/competency.model';
+import { CompetencyImportResponseDTO, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyImportOptionsDTO } from 'app/entities/competency.model';
 import { EntityTitleService } from 'app/shared/layouts/navbar/entity-title.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -53,19 +53,34 @@ export class PrerequisiteService extends CourseCompetencyService {
 
     importBulk(courseCompetencies: CourseCompetency[], courseId: number, importRelations: boolean) {
         const courseCompetencyIds = courseCompetencies.map((competency) => competency.id);
-        const params = new HttpParams().set('importRelations', importRelations);
-        return this.httpClient.post<Array<CompetencyWithTailRelationDTO>>(`${this.resourceURL}/courses/${courseId}/prerequisites/import/bulk`, courseCompetencyIds, {
-            params: params,
-            observe: 'response',
-        });
+        return this.httpClient.post<Array<CompetencyWithTailRelationDTO>>(
+            `${this.resourceURL}/courses/${courseId}/prerequisites/import/bulk`,
+            {
+                importExercises: false,
+                importRelations: importRelations,
+                sourceCourseId: courseId,
+                importLectures: false,
+                competencyIds: courseCompetencyIds,
+            } as CourseCompetencyImportOptionsDTO,
+            {
+                observe: 'response',
+            },
+        );
     }
 
     importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
-        const params = new HttpParams().set('importRelations', importRelations);
-        return this.httpClient.post<Array<CompetencyWithTailRelationDTO>>(`${this.resourceURL}/courses/${courseId}/prerequisites/import-all/${sourceCourseId}`, null, {
-            params: params,
-            observe: 'response',
-        });
+        return this.httpClient.post<Array<CompetencyWithTailRelationDTO>>(
+            `${this.resourceURL}/courses/${courseId}/prerequisites/import-all`,
+            {
+                importLectures: false,
+                importRelations: importRelations,
+                importExercises: false,
+                sourceCourseId: sourceCourseId,
+            } as CourseCompetencyImportOptionsDTO,
+            {
+                observe: 'response',
+            },
+        );
     }
 
     importStandardizedCompetencies(competencyIdsToImport: number[], courseId: number) {

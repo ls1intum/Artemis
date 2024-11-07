@@ -27,7 +27,6 @@ import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover
 import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 import { DetailOverviewNavigationBarComponent } from 'app/shared/detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { ScienceDirective } from 'app/shared/science/science.directive';
-import { SearchFilterComponent } from './search-filter/search-filter.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -56,7 +55,6 @@ import { SearchFilterComponent } from './search-filter/search-filter.component';
         AssessmentWarningComponent,
         StickyPopoverDirective,
         ScienceDirective,
-        SearchFilterComponent,
     ],
     exports: [
         ArtemisSharedLibsModule,
@@ -87,7 +85,6 @@ import { SearchFilterComponent } from './search-filter/search-filter.component';
         CompetencySelectionComponent,
         StickyPopoverDirective,
         ScienceDirective,
-        SearchFilterComponent,
     ],
 })
 export class ArtemisSharedModule {}

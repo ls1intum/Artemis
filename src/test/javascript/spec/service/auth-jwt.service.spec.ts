@@ -1,9 +1,10 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockLocalStorageService } from '../helpers/mocks/service/mock-local-storage.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('AuthServerProvider', () => {
     let service: AuthServerProvider;
@@ -19,8 +20,10 @@ describe('AuthServerProvider', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
