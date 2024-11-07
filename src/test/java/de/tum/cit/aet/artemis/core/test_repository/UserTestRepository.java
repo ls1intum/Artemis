@@ -75,4 +75,11 @@ public interface UserTestRepository extends UserRepository {
     default User findWithLearningPathsByIdElseThrow(long userId) {
         return getValueElseThrow(findWithLearningPathsById(userId), userId);
     }
+
+    @Query("""
+            SELECT user
+            FROM User user
+            WHERE user.login LIKE CONCAT(:userPrefix, '%')
+            """)
+    Set<User> findAllByUserPrefix(String userPrefix);
 }
