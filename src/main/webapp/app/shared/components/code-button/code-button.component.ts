@@ -91,18 +91,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         this.copyEnabled = true;
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
         this.useToken = this.localStorage.retrieve('useToken') || false;
-        this.localStorage.observe('useSsh').subscribe((useSsh) => {
-            this.useSsh = useSsh || false;
-            if (this.useSsh) {
-                this.useSshUrl();
-            }
-        });
-        this.localStorage.observe('useToken').subscribe((useToken) => {
-            this.useToken = useToken || false;
-            if (this.useToken) {
-                this.useHttpsUrlWithToken();
-            }
-        });
         this.loadParticipationVcsAccessTokens();
 
         // Get ssh information from the user
@@ -128,6 +116,13 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 this.sshSettingsUrl = profileInfo.sshKeysURL;
             }
             this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
+
+            if (this.useSsh) {
+                this.useSshUrl();
+            }
+            if (this.useToken) {
+                this.useHttpsUrlWithToken();
+            }
         });
 
         this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
