@@ -1,11 +1,9 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { faCheck, faCog, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-answer-post-header',
@@ -28,19 +26,14 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
     faPencilAlt = faPencilAlt;
     faCog = faCog;
 
-    constructor(
-        protected metisService: MetisService,
-        protected accountService: AccountService,
-    ) {
-        super(metisService, accountService);
-    }
-
     ngOnInit() {
+        this.assignPostingToAnswerPost();
         super.ngOnInit();
         this.setMayEditOrDelete();
     }
 
     ngOnChanges() {
+        this.assignPostingToAnswerPost();
         this.setUserProperties();
         this.setMayEditOrDelete();
         this.setUserAuthorityIconAndTooltip();
@@ -73,5 +66,12 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
         const mayEditOrDeleteOtherUsersAnswer =
             (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
         this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
+    }
+
+    private assignPostingToAnswerPost() {
+        // This is needed because otherwise instanceof returns 'object'.
+        if (this.posting && !(this.posting instanceof AnswerPost)) {
+            this.posting = Object.assign(new AnswerPost(), this.posting);
+        }
     }
 }

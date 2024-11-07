@@ -1,10 +1,11 @@
 import { Posting } from 'app/entities/metis/posting.model';
-import { Directive, EventEmitter, Input, OnInit, Output, input, output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnInit, Output, inject, input, output } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UserRole } from 'app/shared/metis/metis.util';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
@@ -29,10 +30,12 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     userAuthorityTooltip: string;
     currentUser?: User;
 
-    protected constructor(
-        protected metisService: MetisService,
-        protected accountService: AccountService,
-    ) {}
+    // Icons
+    faBookmark = faBookmark;
+    farBookmark = farBookmark;
+
+    protected metisService: MetisService = inject(MetisService);
+    protected accountService: AccountService = inject(AccountService);
 
     /**
      * on initialization: determines if user is at least tutor in the course and if user is author of posting by invoking the metis service,
@@ -95,6 +98,14 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
             this.userAuthority = 'tutor';
             this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
             this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
+        }
+    }
+
+    toggleSavePost() {
+        if (this.posting.isSaved) {
+            this.metisService.removeSavedPost(this.posting);
+        } else {
+            this.metisService.savePost(this.posting);
         }
     }
 

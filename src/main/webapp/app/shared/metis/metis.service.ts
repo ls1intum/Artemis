@@ -5,8 +5,8 @@ import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
-import { Posting } from 'app/entities/metis/posting.model';
-import { Injectable, OnDestroy } from '@angular/core';
+import { Posting, SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -31,6 +31,8 @@ import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/c
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
+import { SavedPostService } from 'app/shared/metis/saved-post.service';
+import { cloneDeep } from 'lodash-es';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -49,6 +51,7 @@ export class MetisService implements OnDestroy {
     private subscriptionChannel?: string;
 
     private courseWideTopicSubscription: Subscription;
+    private savedPostService: SavedPostService = inject(SavedPostService);
 
     constructor(
         protected postService: PostService,
@@ -545,6 +548,47 @@ export class MetisService implements OnDestroy {
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
+    }
+
+    public savePost(post: Posting) {
+        this.setIsSavedAndStatusOfPost(post, true, post.savedPostStatus as SavedPostStatus);
+        this.savedPostService.savePost(post).subscribe({
+            next: () => {},
+        });
+        this.posts$.next(this.cachedPosts);
+    }
+
+    public removeSavedPost(post: Posting) {
+        this.setIsSavedAndStatusOfPost(post, false, post.savedPostStatus as SavedPostStatus);
+        this.savedPostService.removeSavedPost(post).subscribe({
+            next: () => {},
+        });
+        this.posts$.next(this.cachedPosts);
+    }
+
+    public changeSavedPostStatus(post: Posting, status: SavedPostStatus) {
+        this.setIsSavedAndStatusOfPost(post, post.isSaved, status);
+        this.savedPostService.changeSavedPostStatus(post, status).subscribe({
+            next: () => {},
+        });
+        this.posts$.next(this.cachedPosts);
+    }
+
+    private setIsSavedAndStatusOfPost(post: Posting, isSaved: undefined | boolean, status: undefined | SavedPostStatus) {
+        if (post instanceof AnswerPost) {
+            const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.post!.id);
+            const indexOfAnswer = this.cachedPosts[indexToUpdate].answers?.findIndex((answer) => answer.id === post.id) ?? -1;
+            const postCopy = cloneDeep(this.cachedPosts[indexToUpdate].answers![indexOfAnswer]);
+            postCopy.isSaved = isSaved;
+            postCopy.savedPostStatus = status?.toString();
+            this.cachedPosts[indexToUpdate].answers![indexOfAnswer] = postCopy;
+        } else {
+            const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.id);
+            const postCopy = cloneDeep(this.cachedPosts[indexToUpdate]);
+            postCopy.isSaved = isSaved;
+            postCopy.savedPostStatus = status?.toString();
+            this.cachedPosts[indexToUpdate] = postCopy;
+        }
     }
 
     private handleNewOrUpdatedMessage = (postDTO: MetisPostDTO): void => {

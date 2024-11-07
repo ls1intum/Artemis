@@ -59,7 +59,11 @@
                         [searchbarCollapsed]="channelSearchCollapsed"
                     />
                 } @else {
-                    <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
+                    @if (!selectedSavedPostStatus) {
+                        <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
+                    } @else {
+                        <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus" [courseId]="course.id"></jhi-saved-posts>
+                    }
                 }
             </div>
             <div class="scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'is-answer-thread-open': !!postInThread }">

@@ -27,6 +27,7 @@
             "createModalTitleAnswer": "Antwort erstellen",
             "editPosting": "Inhalt bearbeiten",
             "edited": "(bearbeitet)",
+            "saveForLater": "Für später speichern",
             "markAsResolvingAnswerTooltip": "Bestätige, dass die ursprüngliche Nachricht durch diese Antwort geklärt wird",
             "resolvingAnswerTooltip": "Die ursprüngliche Nachricht wird durch diese Antwort geklärt",
             "unmarkAsResolvingAnswerTooltip": "Widerrufe, dass die ursprüngliche Nachricht durch diese Antwort geklärt wird",
@@ -94,7 +95,12 @@
                 "allPublicMessages": "Alle öffentlichen Nachrichten",
                 "searchResults": "Suchergebnisse für {{ search }}",
                 "mobileDisclaimer": "Bitte erst eine Konversation auswählen.",
-                "mobileDisclaimerCallToAction": "Konversation wählen"
+                "mobileDisclaimerCallToAction": "Konversation wählen",
+                "savedPosts": "Gespeicherte Nachrichten",
+                "progress": "In Bearbeitung",
+                "completed": "Abgeschlossen",
+                "archived": "Archiviert",
+                "emptySavedPosts": "Hier ist noch nichts. Speichere Nachrichten damit sie hier auftauchen."
             },
             "post": {
                 "context": "Kontext",
@@ -127,7 +133,12 @@
                 "showContent": "Inhalt ausklappen",
                 "collapseContent": "Inhalt einklappen",
                 "deletedContent": "Beitrag wird in {{ progress }} Sekunde(n) gelöscht.",
-                "undoDelete": "Löschen umkehren"
+                "undoDelete": "Löschen umkehren",
+                "bookmarkPost": "Beitrag speichern",
+                "bookmarkPostProgress": "Beitrag als in Bearbeitung speichern",
+                "bookmarkPostArchived": "Gespeicherten Beitrag archivieren",
+                "bookmarkPostComplete": "Gespeicherten Beitrag als Abgeschlossen markieren",
+                "thread": "Thread"
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",

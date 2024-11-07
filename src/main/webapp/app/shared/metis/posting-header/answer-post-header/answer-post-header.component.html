@@ -40,6 +40,14 @@
     </div>
     @if (!isDeleted()) {
         <div class="d-flex gap-2">
+            <fa-icon
+                size="xs"
+                class="bookmarkIcon clickable icon"
+                [ngbTooltip]="'artemisApp.metis.saveForLater' | artemisTranslate"
+                [icon]="posting.isSaved ? faBookmark : farBookmark"
+                (click)="toggleSavePost()"
+            />
+
             @if (mayEditOrDelete) {
                 <fa-icon
                     size="xs"

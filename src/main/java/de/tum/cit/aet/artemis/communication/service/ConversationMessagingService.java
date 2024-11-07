@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.SingleUserNotificationRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
@@ -87,10 +88,11 @@ public class ConversationMessagingService extends PostingService {
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
-            ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService,
+            ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService, SavedPostRepository savedPostRepository,
             GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository,
             PostSimilarityComparisonStrategy postContentCompareStrategy) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
+                savedPostRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationNotificationService = conversationNotificationService;
@@ -165,6 +167,7 @@ public class ConversationMessagingService extends PostingService {
         Set<ConversationNotificationRecipientSummary> recipientSummaries;
         ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, conversation, course,
                 createdConversationMessage.mentionedUsers());
+        preparePostForBroadcast(createdMessage);
         PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE, notification);
         createdMessage.getConversation().hideDetails();
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
@@ -295,7 +298,6 @@ public class ConversationMessagingService extends PostingService {
     public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilterDTO postContextFilter, User requestingUser, Long courseId) {
         conversationService.isMemberOrCreateForCourseWideElseThrow(postContextFilter.conversationId(), requestingUser, Optional.of(ZonedDateTime.now()));
 
-        // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
         setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
 
@@ -353,6 +355,7 @@ public class ConversationMessagingService extends PostingService {
         updatedPost.setConversation(conversation);
 
         // emit a post update via websocket
+        preparePostForBroadcast(updatedPost);
         broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
 
         return updatedPost;
@@ -380,7 +383,7 @@ public class ConversationMessagingService extends PostingService {
         conversation = conversationService.getConversationById(conversation.getId());
 
         conversationService.notifyAllConversationMembersAboutUpdate(conversation);
-
+        preparePostForBroadcast(post);
         broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null, null);
     }
 
@@ -411,6 +414,8 @@ public class ConversationMessagingService extends PostingService {
 
         Post updatedMessage = conversationMessageRepository.save(message);
         message.getConversation().hideDetails();
+        preparePostForBroadcast(message);
+        preparePostForBroadcast(updatedMessage);
         broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course.getId(), null, null);
         return updatedMessage;
     }

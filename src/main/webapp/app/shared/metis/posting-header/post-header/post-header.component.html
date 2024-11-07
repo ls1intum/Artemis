@@ -48,10 +48,18 @@
     </div>
     @if (!isDeleted()) {
         <div class="gap-1 d-flex">
+            <fa-icon
+                size="xs"
+                class="bookmarkIcon clickable icon"
+                [ngbTooltip]="'artemisApp.metis.saveForLater' | artemisTranslate"
+                [icon]="posting.isSaved ? faBookmark : farBookmark"
+                (click)="toggleSavePost()"
+            />
+
             @if (mayEditOrDelete) {
                 <fa-icon
                     size="xs"
-                    class="editIcon clickable icon"
+                    class="editIcon clickable icon ms-1"
                     [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
                     [icon]="faPencilAlt"
                     (click)="posting.title !== '' ? createEditModal.open() : isModalOpen.emit()"
