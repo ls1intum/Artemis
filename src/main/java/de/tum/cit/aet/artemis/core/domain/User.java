@@ -21,6 +21,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
@@ -40,6 +41,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -223,6 +225,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Nullable
     @Column(name = "iris_accepted")
     private ZonedDateTime irisAccepted = null;
+
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnoreProperties("user")
+    private LearnerProfile learnerProfile;
 
     public User() {
     }
@@ -565,5 +571,13 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Nullable
     public @Size(max = 100) String getSshPublicKeyHash() {
         return sshPublicKeyHash;
+    }
+
+    public LearnerProfile getLearnerProfile() {
+        return learnerProfile;
+    }
+
+    public void setLearnerProfile(LearnerProfile learnerProfile) {
+        this.learnerProfile = learnerProfile;
     }
 }

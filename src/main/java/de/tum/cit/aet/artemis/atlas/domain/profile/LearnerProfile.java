@@ -4,7 +4,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -15,13 +17,13 @@ import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
 @Table(name = "learner_profile")
-class LearnerProfile extends DomainObject {
+public class LearnerProfile extends DomainObject {
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToMany
+    @OneToMany(mappedBy = "learnerProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<CourseLearnerProfile> courseLearnerProfiles = new HashSet<>();
 
     public void setUser(User user) {
@@ -48,7 +50,7 @@ class LearnerProfile extends DomainObject {
         return this.courseLearnerProfiles.addAll(courseLearnerProfiles);
     }
 
-    public boolean removeCourseLearnerProfle(CourseLearnerProfile courseLearnerProfile) {
+    public boolean removeCourseLearnerProfile(CourseLearnerProfile courseLearnerProfile) {
         return this.courseLearnerProfiles.remove(courseLearnerProfile);
     }
 }

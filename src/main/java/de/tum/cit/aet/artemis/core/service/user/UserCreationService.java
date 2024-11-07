@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Organization;
@@ -74,9 +75,11 @@ public class UserCreationService {
 
     private final CacheManager cacheManager;
 
+    private final LearnerProfileService learnerProfileService;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository, CourseRepository courseRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager,
-            OrganizationRepository organizationRepository) {
+            OrganizationRepository organizationRepository, LearnerProfileService learnerProfileService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
@@ -85,6 +88,7 @@ public class UserCreationService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.cacheManager = cacheManager;
         this.organizationRepository = organizationRepository;
+        this.learnerProfileService = learnerProfileService;
     }
 
     /**
@@ -142,7 +146,8 @@ public class UserCreationService {
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
-        saveUser(newUser);
+        newUser = saveUser(newUser);
+        learnerProfileService.createProfile(newUser);
         log.debug("Created user: {}", newUser);
         return newUser;
     }
@@ -189,12 +194,14 @@ public class UserCreationService {
         user.setActivated(true);
         user.setInternal(true);
         user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
-        saveUser(user);
+        var savedUser = saveUser(user);
 
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, password));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(savedUser, password));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(savedUser, password));
 
-        addUserToGroupsInternal(user, userDTO.getGroups());
+        addUserToGroupsInternal(savedUser, userDTO.getGroups());
+
+        learnerProfileService.createProfile(savedUser);
 
         log.debug("Created Information for User: {}", user);
         return user;

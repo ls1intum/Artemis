@@ -39,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
+import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.GuidedTourSetting;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -113,11 +114,13 @@ public class UserService {
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
+    private final LearnerProfileService learnerProfileService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventRepository scienceEventRepository,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, LearnerProfileService learnerProfileService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -132,6 +135,7 @@ public class UserService {
         this.fileService = fileService;
         this.scienceEventRepository = scienceEventRepository;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
+        this.learnerProfileService = learnerProfileService;
     }
 
     /**
@@ -464,6 +468,7 @@ public class UserService {
     public void softDeleteUser(String login) {
         userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
+            learnerProfileService.deleteProfile(user);
             user.setDeleted(true);
             anonymizeUser(user);
             log.warn("Soft Deleted User: {}", user);
