@@ -78,12 +78,10 @@ export class CoursePerformanceSectionComponent {
     readonly exercisePerformance = computed(() =>
         this.sortedExerciseIds().flatMap((exerciseId) => {
             const exerciseInformation = this.exerciseMetrics().exerciseInformation?.[exerciseId];
-            const getKeysWithValue = (obj: { [key: number]: number[] }, value: number): number[] => {
-                return Object.keys(obj)
-                    .filter((key) => obj[Number(key)].includes(value))
-                    .map(Number);
-            };
-            const courseCompetencyIds = getKeysWithValue(this.studentMetrics()?.competencyMetrics?.exercises ?? {}, exerciseId);
+            const exercises = this.studentMetrics()?.competencyMetrics?.exercises ?? {};
+            const courseCompetencyIds = Object.keys(exercises)
+                .filter((key) => exercises[+key].includes(exerciseId))
+                .map(Number);
             return exerciseInformation
                 ? <ExercisePerformance[]>[
                       {
@@ -105,9 +103,6 @@ export class CoursePerformanceSectionComponent {
         effect(() => {
             const courseId = this.courseId();
             untracked(() => this.loadStudentMetrics(courseId));
-        });
-        effect(() => {
-            console.log(this.exercisePerformance());
         });
     }
 
