@@ -148,7 +148,7 @@ describe('CodeButtonComponent', () => {
         localStorageUseSshStoreStub = jest.spyOn(localStorageMock, 'store');
         getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken');
         createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken');
-        getTheiaTokenSpy = jest.spyOn(accountService, 'rekeyCookieToBearerToken');
+        getTheiaTokenSpy = jest.spyOn(accountService, 'getTheiaToken');
 
         localStorageUseSshObserveStubSubject = new Subject();
         localStorageUseSshObserveStub.mockReturnValue(localStorageUseSshObserveStubSubject);

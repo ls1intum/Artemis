@@ -368,7 +368,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     }
 
     async startOnlineIDE() {
-        const artemisToken: string = (await this.accountService.rekeyCookieToBearerToken().toPromise()) ?? '';
+        const artemisToken: string = (await this.accountService.getTheiaToken().toPromise()) ?? '';
 
         const data = {
             appDef: this.exercise?.buildConfig?.theiaImage ?? '',
