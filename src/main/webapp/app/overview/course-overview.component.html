@@ -1,4 +1,4 @@
-@if (!isLti) {
+@if (!isShownViaLti) {
     <div class="sidebar-wrapper">
         <div class="vw-100 bg-body">
             <mat-sidenav-container
@@ -149,7 +149,7 @@
                                 @if (hasSidebar) {
                                     <button
                                         [ngbTooltip]="'Toggle Sidebar (⇧ + Ctrl + B)'"
-                                        [ngClass]="{ 'is-collapsed': isSidebarCollapsed, 'is-communication-module': pageTitle === 'communication' }"
+                                        [ngClass]="{ 'is-collapsed': isSidebarCollapsed }"
                                         triggers="hover"
                                         class="btn btn-sidebar-collapse me-3 btn-sm rounded-3"
                                         (click)="toggleSidebar()"
@@ -204,6 +204,7 @@
         </div>
     </div>
 } @else {
+    <!-- LTI is active -->
     <div class="course-body-container">
         @if (!hasSidebar) {
             <ng-container class="d-flex ms-auto" #controlsViewContainer />

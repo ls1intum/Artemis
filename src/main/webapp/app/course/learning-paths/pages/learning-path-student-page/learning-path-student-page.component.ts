@@ -29,7 +29,7 @@ export class LearningPathStudentPageComponent {
 
     readonly isLearningPathLoading = signal(false);
     readonly learningPath = signal<LearningPathDTO | undefined>(undefined);
-    readonly courseId = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
+    readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly currentLearningObject = this.learningPathNavigationService.currentLearningObject;
     readonly isLearningPathNavigationLoading = this.learningPathNavigationService.isLoading;
 

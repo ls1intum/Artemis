@@ -73,16 +73,16 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             "submissionPolicy", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencies", "auxiliaryRepositories",
-            "submissionPolicy" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
+            "auxiliaryRepositories", "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencies", "auxiliaryRepositories",
-            "submissionPolicy", "buildConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
+            "auxiliaryRepositories", "submissionPolicy", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencies", "auxiliaryRepositories",
-            "submissionPolicy", "plagiarismDetectionConfig", "buildConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencyLinks.competency",
+            "auxiliaryRepositories", "submissionPolicy", "plagiarismDetectionConfig", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigById(
             long exerciseId);
 
@@ -108,7 +108,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencies", "buildConfig", "categories" })
+    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencyLinks.competency", "buildConfig", "categories" })
     Optional<ProgrammingExercise> findForUpdateById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
@@ -553,7 +553,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @Query("""
             SELECT e
             FROM ProgrammingExercise e
-                LEFT JOIN FETCH e.competencies
+                LEFT JOIN FETCH e.competencyLinks
             WHERE e.title = :title
                 AND e.course.id = :courseId
             """)
@@ -562,7 +562,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @Query("""
             SELECT e
             FROM ProgrammingExercise e
-                LEFT JOIN FETCH e.competencies
+                LEFT JOIN FETCH e.competencyLinks
             WHERE e.shortName = :shortName
                 AND e.course.id = :courseId
             """)
@@ -788,14 +788,17 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId)
+            throws EntityNotFoundException {
         // TODO: This is a dark hack. Move this into a service where we properly load only the solution participation in the second step
         ProgrammingExercise programmingExerciseWithTemplate = getValueElseThrow(findWithTemplateParticipationLatestResultFeedbackTestCasesById(programmingExerciseId),
                 programmingExerciseId);
         ProgrammingExercise programmingExerciseWithSolution = getValueElseThrow(findWithSolutionParticipationLatestResultFeedbackTestCasesById(programmingExerciseId),
                 programmingExerciseId);
+        ProgrammingExercise programmingExerciseWithAuxiliaryRepositories = findByIdWithAuxiliaryRepositoriesElseThrow(programmingExerciseId);
 
         programmingExerciseWithTemplate.setSolutionParticipation(programmingExerciseWithSolution.getSolutionParticipation());
+        programmingExerciseWithTemplate.setAuxiliaryRepositories(programmingExerciseWithAuxiliaryRepositories.getAuxiliaryRepositories());
 
         return programmingExerciseWithTemplate;
     }
@@ -976,7 +979,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         StaticCodeAnalysisCategories(ProgrammingExercise_.STATIC_CODE_ANALYSIS_CATEGORIES),
         SubmissionPolicy(ProgrammingExercise_.SUBMISSION_POLICY),
         ExerciseHints(ProgrammingExercise_.EXERCISE_HINTS),
-        Competencies(ProgrammingExercise_.COMPETENCIES),
+        CompetencyLinks(ProgrammingExercise_.COMPETENCY_LINKS),
         Teams(ProgrammingExercise_.TEAMS),
         TutorParticipations(ProgrammingExercise_.TUTOR_PARTICIPATIONS),
         ExampleSubmissions(ProgrammingExercise_.EXAMPLE_SUBMISSIONS),
