@@ -37,6 +37,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
+import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -187,6 +188,9 @@ public class Course extends DomainObject {
     @Column(name = "unenrollment_enabled")
     private boolean unenrollmentEnabled = false;
 
+    @Column(name = "faq_enabled")
+    private boolean faqEnabled = false;
+
     @Column(name = "presentation_score")
     private Integer presentationScore;
 
@@ -259,6 +263,10 @@ public class Course extends DomainObject {
     @JoinColumn(name = "tutorial_groups_configuration_id")
     @JsonIgnoreProperties("course")
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties(value = "course", allowSetters = true)
+    private Set<Faq> faqs = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -627,6 +635,14 @@ public class Course extends DomainObject {
         this.enrollmentEnabled = enrollmentEnabled;
     }
 
+    public boolean isFaqEnabled() {
+        return faqEnabled;
+    }
+
+    public void setFaqEnabled(boolean faqEnabled) {
+        this.faqEnabled = faqEnabled;
+    }
+
     public String getEnrollmentConfirmationMessage() {
         return enrollmentConfirmationMessage;
     }
@@ -717,7 +733,7 @@ public class Course extends DomainObject {
                 + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='" + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='"
                 + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'"
                 + ", courseIcon='" + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'" + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'"
-                + ", presentationScore='" + getPresentationScore() + "'" + "}";
+                + ", presentationScore='" + getPresentationScore() + "'" + ", faqEnabled='" + isFaqEnabled() + "'" + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {
@@ -1056,5 +1072,18 @@ public class Course extends DomainObject {
         public String getMappedColumnName() {
             return mappedColumnName;
         }
+    }
+
+    public Set<Faq> getFaqs() {
+        return faqs;
+    }
+
+    public void setFaqs(Set<Faq> faqs) {
+        this.faqs = faqs;
+    }
+
+    public void addFaq(Faq faq) {
+        this.faqs.add(faq);
+        faq.setCourse(this);
     }
 }

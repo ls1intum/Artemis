@@ -77,6 +77,10 @@ public class ShortAnswerSolution extends TempIdObject implements QuizQuestionCom
         this.question = shortAnswerQuestion;
     }
 
+    public void setMappings(Set<ShortAnswerMapping> mappings) {
+        this.mappings = mappings;
+    }
+
     @Override
     public String toString() {
         return "ShortAnswerSolution{" + "id=" + getId() + ", text='" + getText() + "'" + ", invalid='" + isInvalid() + "'" + "}";

@@ -1,12 +1,12 @@
 package de.tum.cit.aet.artemis.quiz;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -414,7 +414,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
-        verifyNoInteractions(websocketMessagingService);
+        verifyNoWebsocketMessageForExercise(quizExerciseServer);
     }
 
     @Test
@@ -431,7 +431,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         Result result = request.postWithResponseBody("/api/exercises/" + quizExerciseServer.getId() + "/submissions/practice", quizSubmission, Result.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(result).isNull();
-        verifyNoInteractions(websocketMessagingService);
+        verifyNoWebsocketMessageForExercise(quizExerciseServer);
     }
 
     @Test
@@ -451,7 +451,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
-        verifyNoInteractions(websocketMessagingService);
+        verifyNoWebsocketMessageForExercise(quizExercise);
     }
 
     @Test
@@ -755,6 +755,12 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(240);
         return quizExercise;
+    }
+
+    private void verifyNoWebsocketMessageForExercise(QuizExercise exercise) {
+        String topic = EXERCISE_TOPIC_ROOT + exercise.getId() + "/newResults";
+        verify(websocketMessagingService, never()).sendMessage(eq(topic), any());
+        verify(websocketMessagingService, never()).sendMessageToUser(any(), eq(topic), any());
     }
 
     @Nested

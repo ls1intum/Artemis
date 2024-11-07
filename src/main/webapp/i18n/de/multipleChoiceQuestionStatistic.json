@@ -2,19 +2,19 @@
     "artemisApp": {
         "multipleChoiceQuestionStatistic": {
             "home": {
-                "title": "Multiple-Choice Question Statistics",
-                "createLabel": "Multiple-Choice Question Statistic erstellen"
+                "title": "Multiple-Choice Fragestatistiken",
+                "createLabel": "Multiple-Choice Fragestatistik erstellen"
             },
-            "created": "Multiple-Choice Question Statistic erstellt mit ID {{ param }}",
-            "updated": "Multiple-Choice Question Statistic aktualisiert mit ID {{ param }}",
-            "deleted": "Multiple-Choice Question Statistic gelöscht mit ID {{ param }}",
+            "created": "Multiple-Choice Fragestatistik erstellt mit ID {{ param }}",
+            "updated": "Multiple-Choice Fragestatistik aktualisiert mit ID {{ param }}",
+            "deleted": "Multiple-Choice Fragestatistik gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Multiple-Choice Question Statistic {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Multiple-Choice Fragestatistik {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Multiple-Choice Question Statistic"
+                "title": "Multiple-Choice Fragestatistik"
             },
-            "answerCounters": "Answer Counters"
+            "answerCounters": "Antwortzähler"
         }
     }
 }

@@ -1,4 +1,4 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
@@ -10,6 +10,7 @@ import { MockTranslateService } from '../../../../helpers/mocks/service/mock-tra
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ChannelService', () => {
     let service: ChannelService;
@@ -18,8 +19,10 @@ describe('ChannelService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: NotificationService, useClass: MockNotificationService },

@@ -4,8 +4,6 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UPDATED_TITLE;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -14,8 +12,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import jakarta.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,8 +36,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
-import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupRegistrationTestRepository;
-import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupRegistrationTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 
 class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -86,7 +82,6 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
                 userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow(), IntStream.range(1, STUDENT_COUNT + 1)
                         .mapToObj((studentId) -> userRepository.findOneByLogin(TEST_PREFIX + "student" + studentId).orElseThrow()).collect(Collectors.toSet()));
 
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
         tutorialGroupNotificationRepository.deleteAll();
         notificationSettingRepository.deleteAll();
     }

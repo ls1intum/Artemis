@@ -203,7 +203,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         userTestRepository.save(instructor10);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
-        participantScoreScheduleService.activate();
     }
 
     @BeforeEach

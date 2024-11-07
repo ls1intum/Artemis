@@ -1,5 +1,5 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
-import { faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { faChevronLeft, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
@@ -17,6 +17,7 @@ import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.mo
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -42,6 +43,9 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     faUserPlus = faUserPlus;
     faUserGroup = faUserGroup;
     faSearch = faSearch;
+    faChevronLeft = faChevronLeft;
+
+    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
 
     constructor(
         private modalService: NgbModal,
@@ -63,6 +67,10 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+    }
+
+    openSidebar() {
+        this.courseSidebarService.openSidebar();
     }
 
     private subscribeToActiveConversation() {

@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.service.StatisticsService;
  * REST controller for administrating statistics.
  */
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminStatisticsResource {
@@ -44,7 +45,6 @@ public class AdminStatisticsResource {
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("management/statistics/data")
-    @EnforceAdmin
     public ResponseEntity<List<Integer>> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType) {
         log.debug("REST request to get graph data");
         return ResponseEntity.ok(this.statisticsService.getChartData(span, periodIndex, graphType, StatisticsView.ARTEMIS, null));

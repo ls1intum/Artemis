@@ -35,8 +35,8 @@ import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
-import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupTestRepository;
-import de.tum.cit.aet.artemis.tutorialgroups.util.TutorialGroupUtilService;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
 class ChannelIntegrationTest extends AbstractConversationTest {
 

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -16,6 +15,7 @@ import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-data
 import { ExerciseType } from 'app/entities/exercise.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterModule } from '@angular/router';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
     let fixture: ComponentFixture<ExamScoresAverageScoresGraphComponent>;
@@ -55,7 +55,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(BarChartModule)],
+            imports: [ArtemisTestModule, MockModule(BarChartModule), RouterModule.forRoot([])],
             declarations: [ExamScoresAverageScoresGraphComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(CourseManagementService, {

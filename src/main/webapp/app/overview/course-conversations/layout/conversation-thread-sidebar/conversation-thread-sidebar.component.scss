@@ -1,12 +1,14 @@
 @import 'src/main/webapp/content/scss/artemis-variables';
-
-$draggable-width: 15px;
-$thread-section-card-min-width: 420px;
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
 
 .postings-container {
     display: flex;
     height: 100%;
     margin-left: auto;
+    min-width: 30%;
+    max-width: 100%;
 
     .back-instruction {
         font-size: 12px;
@@ -14,12 +16,15 @@ $thread-section-card-min-width: 420px;
 }
 
 .expanded-thread {
-    width: calc(#{$draggable-width} + #{$thread-section-card-min-width});
+    display: flex;
+    flex-grow: 1;
+    min-width: 30%;
+    max-width: 100%;
 
     .scrollbar {
         position: relative;
         max-height: 1000px;
-        overflow: auto;
+        overflow-x: hidden;
     }
 
     .wrapper-scroll-y {
@@ -31,12 +36,12 @@ $thread-section-card-min-width: 420px;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        min-width: $draggable-width;
+        min-width: 1.5%;
+        max-width: 1.5%;
     }
 
     .card {
         width: inherit;
-        min-width: $thread-section-card-min-width;
 
         .card-header {
             justify-content: space-between;
@@ -59,7 +64,6 @@ $thread-section-card-min-width: 420px;
 
 .collapsed-thread {
     display: flex;
-    width: 38px;
     justify-content: space-between;
     flex-flow: column;
     margin-left: auto;
@@ -83,6 +87,16 @@ $thread-section-card-min-width: 420px;
 
         .draggable-left {
             display: none;
+        }
+    }
+}
+
+@include media-breakpoint-down(sm) {
+    .expanded-thread {
+        width: 100%;
+
+        & .card {
+            min-width: 100%;
         }
     }
 }

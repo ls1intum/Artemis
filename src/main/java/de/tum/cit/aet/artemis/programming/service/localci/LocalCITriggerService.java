@@ -22,6 +22,7 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusResult;
@@ -75,6 +77,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final AeolusTemplateService aeolusTemplateService;
 
+    private final BuildScriptProviderService buildScriptProviderService;
+
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -102,7 +106,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService) {
         this.hazelcastInstance = hazelcastInstance;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -114,6 +118,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.gitService = gitService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseDateService = exerciseDateService;
+        this.buildScriptProviderService = buildScriptProviderService;
     }
 
     @PostConstruct
@@ -148,6 +153,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll)
             throws LocalCIException {
+
+        log.info("Triggering build for participation {} and commit hash {}", participation.getId(), commitHashToBuild);
 
         // Commit hash related to the repository that will be tested
         String assignmentCommitHash;
@@ -190,8 +197,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig);
 
-        BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), null, participation.getId(), courseId, programmingExercise.getId(),
-                0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
+        BuildAgentDTO buildAgent = new BuildAgentDTO(null, null, null);
+
+        BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
+                programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
         queue.add(buildJobQueueItem);
         log.info("Added build job {} to the queue", buildJobId);
@@ -302,13 +311,15 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
 
         List<String> resultPaths = getTestResultPaths(windfile);
+        resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
 
         // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
         programmingExercise.setBuildConfig(buildConfig);
         String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
-                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths);
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths, buildConfig.getTimeoutSeconds(),
+                buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath());
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {

@@ -11,6 +11,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -34,7 +35,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -62,7 +63,7 @@ public class TextExerciseUtilService {
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
+    private ExerciseTestRepository exerciseRepository;
 
     @Autowired
     private CourseTestRepository courseRepo;
@@ -194,7 +195,7 @@ public class TextExerciseUtilService {
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        return exerciseRepo.save(textExercise);
+        return exerciseRepository.save(textExercise);
     }
 
     /**
@@ -211,7 +212,7 @@ public class TextExerciseUtilService {
         teamTextExercise.setMaxPoints(10.0);
         teamTextExercise.setBonusPoints(0.0);
         teamTextExercise.setMode(ExerciseMode.TEAM);
-        return exerciseRepo.save(teamTextExercise);
+        return exerciseRepository.save(teamTextExercise);
     }
 
     /**
@@ -226,7 +227,7 @@ public class TextExerciseUtilService {
         textExercise.setTitle(title);
         course.addExercises(textExercise);
         course = courseRepo.save(course);
-        textExercise = exerciseRepo.save(textExercise);
+        textExercise = exerciseRepository.save(textExercise);
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(textExercise);
         assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
@@ -268,7 +269,7 @@ public class TextExerciseUtilService {
         if (title != null) {
             textExercise.setTitle(title);
         }
-        return exerciseRepo.save(textExercise);
+        return exerciseRepository.save(textExercise);
     }
 
     /**
@@ -288,7 +289,7 @@ public class TextExerciseUtilService {
     public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamWithReviewDatesAndCourse(true);
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
-        return exerciseRepo.save(textExercise);
+        return exerciseRepository.save(textExercise);
     }
 
     /**
@@ -348,6 +349,45 @@ public class TextExerciseUtilService {
     }
 
     /**
+     * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and login. Also creates and saves an Athena Result for the StudentParticipation
+     *
+     * @param exercise     The TextExercise the TextSubmission belongs to
+     * @param submission   The TextSubmission that belongs to the StudentParticipation
+     * @param studentLogin The login of the user the TextSubmission belongs to (for individual exercises)
+     * @param teamId       The id of the team the TextSubmission belongs to (for team exercises)
+     * @return The updated TextSubmission
+     */
+    private TextSubmission saveTextSubmissionWithAthenaResult(TextExercise exercise, TextSubmission submission, String studentLogin, Long teamId) {
+        StudentParticipation participation = Optional.ofNullable(studentLogin).map(login -> participationUtilService.createAndSaveParticipationForExercise(exercise, login))
+                .orElseGet(() -> participationUtilService.addTeamParticipationForExercise(exercise, teamId));
+
+        submissionRepository.save(submission);
+
+        participation.addSubmission(submission);
+        Result result = new Result();
+        result.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        result.setScore(100D);
+        result.setSuccessful(true);
+        if (exercise.getReleaseDate() != null) {
+            result.setCompletionDate(exercise.getReleaseDate());
+        }
+        else { // exam exercises do not have a release date
+            result.setCompletionDate(ZonedDateTime.now());
+        }
+        result = resultRepo.save(result);
+        result.setSubmission(submission);
+        submission.setParticipation(participation);
+        submission.addResult(result);
+        submission.getParticipation().addResult(result);
+        submission = textSubmissionRepo.save(submission);
+        resultRepo.save(result);
+        studentParticipationRepo.save(participation);
+
+        submission = textSubmissionRepo.save(submission);
+        return submission;
+    }
+
+    /**
      * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and login. Also creates and saves a Result for the StudentParticipation given the
      * assessorLogin.
      *
@@ -359,6 +399,18 @@ public class TextExerciseUtilService {
      */
     public TextSubmission saveTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String login, String assessorLogin) {
         return saveTextSubmissionWithResultAndAssessor(exercise, submission, login, null, assessorLogin);
+    }
+
+    /**
+     * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and login. Also creates and saves an Athena Result for the StudentParticipation.
+     *
+     * @param exercise   The TextExercise the TextSubmission belongs to
+     * @param submission The TextSubmission that belongs to the StudentParticipation
+     * @param login      The login of the user the TextSubmission belongs to
+     * @return The updated TextSubmission
+     */
+    public TextSubmission saveTextSubmissionWithAthenaResult(TextExercise exercise, TextSubmission submission, String login) {
+        return saveTextSubmissionWithAthenaResult(exercise, submission, login, null);
     }
 
     /**
@@ -493,7 +545,7 @@ public class TextExerciseUtilService {
         finishedTextExercise.setTitle("Finished");
         course.addExercises(finishedTextExercise);
         course = courseRepo.save(course);
-        exerciseRepo.save(finishedTextExercise);
+        exerciseRepository.save(finishedTextExercise);
         return course;
     }
 

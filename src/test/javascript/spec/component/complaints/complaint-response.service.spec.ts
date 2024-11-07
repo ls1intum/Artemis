@@ -1,5 +1,5 @@
-import { HttpResponse } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
@@ -23,8 +23,8 @@ describe('ComplaintResponseService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [MockProvider(AccountService)],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(AccountService)],
         })
             .compileComponents()
             .then(() => {

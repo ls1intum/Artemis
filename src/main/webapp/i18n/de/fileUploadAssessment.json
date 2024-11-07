@@ -7,7 +7,7 @@
             "addFeedback": "Neues Feedback hinzufügen",
             "assessInstruction": "Bitte klicke auf \"Neues Feedback hinzufügen\".",
             "assessInstructionWithDropOption": "Bitte klicke auf \"Neues Feedback hinzufügen\" oder ziehe eine Bewertungsanweisung und lege sie hier ab.",
-            "deleteAssessment": "Bewertung {{ index }} löschen ?",
+            "deleteAssessment": "Bewertung {{ index }} löschen?",
             "dashboard": {
                 "heading": "Einreichungen und Bewertungen der Datei-Upload-Aufgabe \"{{exerciseTitle}}\""
             },

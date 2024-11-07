@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
-import { HttpClientTestingModule, HttpTestingController, TestRequest } from '@angular/common/http/testing';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -14,6 +14,7 @@ import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repo
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('BuildQueueService', () => {
     let service: BuildQueueService;
@@ -42,8 +43,10 @@ describe('BuildQueueService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

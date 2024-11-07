@@ -16,10 +16,10 @@
             },
             "posX": "Pos X",
             "posY": "Pos Y",
-            "width": "Width",
-            "height": "Height",
-            "invalid": "Invalid",
-            "question": "Question"
+            "width": "Breite",
+            "height": "Höhe",
+            "invalid": "Ungültig",
+            "question": "Frage"
         }
     }
 }

@@ -44,6 +44,8 @@ import { MockMetisConversationService } from '../../../helpers/mocks/service/moc
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @Directive({
     // eslint-disable-next-line @angular-eslint/directive-selector
@@ -65,7 +67,7 @@ describe('DiscussionSectionComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule), DiscussionSectionComponent],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule), DiscussionSectionComponent, MockModule(BrowserAnimationsModule)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -87,7 +89,7 @@ describe('DiscussionSectionComponent', () => {
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),
                 },
             ],
-            declarations: [InfiniteScrollStubDirective, MockComponent(FaIconComponent)],
+            declarations: [InfiniteScrollStubDirective, MockComponent(FaIconComponent), MockComponent(ProfilePictureComponent)],
         })
             .overrideComponent(DiscussionSectionComponent, {
                 set: {

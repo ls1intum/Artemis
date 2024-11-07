@@ -23,6 +23,7 @@ test.describe('Programming Exercise Management', () => {
             await courseManagementExercises.createProgrammingExercise();
             await page.waitForURL('**/programming-exercises/new**');
             const exerciseTitle = 'Programming exercise ' + generateUUID();
+            await programmingExerciseCreation.changeEditMode();
             await programmingExerciseCreation.setTitle(exerciseTitle);
             await programmingExerciseCreation.setShortName('programming' + generateUUID());
             await programmingExerciseCreation.setPackageName('de.test');
@@ -47,6 +48,7 @@ test.describe('Programming Exercise Management', () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createProgrammingExercise();
             await page.waitForURL('**/programming-exercises/new**');
+            await programmingExerciseCreation.changeEditMode();
 
             const firstSectionHeadline = 'General';
             const firstSectionStatusBarId = 0;
@@ -106,7 +108,7 @@ test.describe('Programming Exercise Management', () => {
         });
 
         test('Create an exercise team', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, exerciseTeams, programmingExerciseOverview }) => {
-            await login(instructor, '/');
+            await login(instructor);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseTeams(exercise.id!);

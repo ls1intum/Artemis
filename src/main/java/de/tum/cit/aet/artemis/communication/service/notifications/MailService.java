@@ -8,6 +8,8 @@ import java.net.URL;
 import java.util.Locale;
 import java.util.Set;
 
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -261,6 +263,18 @@ public class MailService implements InstantNotificationService {
             // posts use a different mechanism for the url
             context.setVariable(NOTIFICATION_URL, extractNotificationUrl(post, artemisServerUrl.toString()));
             subject = createAnnouncementText(notificationSubject, locale);
+
+            // Render markdown content of post to html
+            try {
+                Parser parser = Parser.builder().build();
+                HtmlRenderer renderer = HtmlRenderer.builder().build();
+                String postContent = post.getContent();
+                String renderedPostContent = renderer.render(parser.parse(postContent));
+                post.setContent(renderedPostContent);
+            }
+            catch (Exception e) {
+                // In case something goes wrong, leave content of post as-is
+            }
         }
         else {
             context.setVariable(NOTIFICATION_URL, extractNotificationUrl(notification, artemisServerUrl.toString()));

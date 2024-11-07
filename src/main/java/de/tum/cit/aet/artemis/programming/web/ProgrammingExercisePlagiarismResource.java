@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  * REST controller for managing ProgrammingExercise.
  */
 @Profile(PROFILE_CORE)
+@FeatureToggle(Feature.ProgrammingExercises)
 @RestController
 @RequestMapping("api/")
 public class ProgrammingExercisePlagiarismResource {
@@ -72,7 +73,6 @@ public class ProgrammingExercisePlagiarismResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/plagiarism-result")
     @EnforceAtLeastEditor
-    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -95,7 +95,7 @@ public class ProgrammingExercisePlagiarismResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/check-plagiarism")
     @EnforceAtLeastEditor
-    @FeatureToggle({ Feature.ProgrammingExercises, Feature.PlagiarismChecks })
+    @FeatureToggle(Feature.PlagiarismChecks)
     public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold,
             @RequestParam int minimumScore, @RequestParam int minimumSize) throws ExitException, IOException {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -128,7 +128,6 @@ public class ProgrammingExercisePlagiarismResource {
      */
     @GetMapping(value = "programming-exercises/{exerciseId}/check-plagiarism-jplag-report")
     @EnforceAtLeastEditor
-    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam int similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);

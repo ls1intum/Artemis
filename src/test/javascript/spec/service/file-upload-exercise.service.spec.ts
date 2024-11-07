@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
@@ -12,6 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('FileUploadExercise Service', () => {
     let service: FileUploadExerciseService;
@@ -25,8 +26,10 @@ describe('FileUploadExercise Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
+            imports: [ArtemisTestModule],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },

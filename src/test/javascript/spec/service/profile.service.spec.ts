@@ -1,6 +1,6 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
@@ -9,6 +9,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ProfileService', () => {
     let service: ProfileService;
@@ -268,8 +269,10 @@ describe('ProfileService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: Router, useClass: MockRouter },

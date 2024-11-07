@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
@@ -17,6 +17,7 @@ import { NewStudentParticipationResolver, StudentParticipationResolver } from 'a
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { of } from 'rxjs';
 import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('TextAssessment Service', () => {
     let service: TextAssessmentService;
@@ -64,8 +65,8 @@ describe('TextAssessment Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [{ provide: AccountService, useClass: MockAccountService }],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         });
         service = TestBed.inject(TextAssessmentService);
         httpMock = TestBed.inject(HttpTestingController);

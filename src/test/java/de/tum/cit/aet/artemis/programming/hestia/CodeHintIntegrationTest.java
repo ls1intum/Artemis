@@ -9,36 +9,19 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
-import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class CodeHintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class CodeHintIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "codehint";
-
-    @Autowired
-    private CodeHintRepository codeHintRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
-
-    @Autowired
-    private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     private ProgrammingExercise exercise;
 
@@ -143,7 +126,7 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         newEntry.setPreviousCode("New previous code");
         var testCase = testCases.get("test1");
         newEntry.setTestCase(testCase);
-        var savedNewEntry = solutionEntryRepository.save(newEntry);
+        var savedNewEntry = programmingExerciseSolutionEntryRepository.save(newEntry);
         savedNewEntry.setTestCase(testCase);
         codeHint.setSolutionEntries(new HashSet<>(Set.of(changedEntry, savedNewEntry)));
 

@@ -1,10 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
 import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/theme.service';
@@ -13,7 +12,7 @@ import { MockComponent } from 'ng-mocks';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
-import { RouterTestingModule } from '@angular/router/testing';
+import { RouterModule } from '@angular/router';
 
 // Mock the initialize method
 class MockThemeService {
@@ -28,7 +27,7 @@ describe('JhiMainComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, RouterTestingModule],
+            imports: [ArtemisTestModule, TranslateTestingModule, RouterModule.forRoot([])],
             declarations: [JhiMainComponent, MockComponent(AlertOverlayComponent), MockComponent(PageRibbonComponent), MockComponent(NotificationPopupComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

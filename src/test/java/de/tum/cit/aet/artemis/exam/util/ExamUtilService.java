@@ -15,8 +15,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -44,7 +48,7 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -94,7 +98,7 @@ public class ExamUtilService {
     private ExamRepository examRepository;
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
+    private ExerciseTestRepository exerciseRepo;
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -131,6 +135,12 @@ public class ExamUtilService {
 
     @Autowired
     private ConversationTestRepository conversationRepository;
+
+    @Autowired
+    private PostTestRepository postRepository;
+
+    @Autowired
+    private AnswerPostRepository answerPostRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -519,6 +529,37 @@ public class ExamUtilService {
         Channel channel = ConversationFactory.generatePublicChannel(exam.getCourse(), channelName, true);
         channel.setExam(exam);
         return conversationRepository.save(channel);
+    }
+
+    /**
+     * Creates and saves a Post for the given Channel.
+     *
+     * @param channel The Channel for which the Post should be created
+     * @param title   The title of the Post
+     * @param author  The author of the Post
+     * @return The newly created Post
+     */
+    public Post createPost(Channel channel, String title, User author) {
+        Post post = new Post();
+        post.setTitle(title);
+        post.setConversation(channel);
+        post.setAuthor(author);
+        return postRepository.save(post);
+    }
+
+    /**
+     * Creates and saves an AnswerPost for the given Post.
+     *
+     * @param post    The Post for which the AnswerPost should be created
+     * @param content The content of the AnswerPost
+     * @param author  The author of the AnswerPost
+     */
+    public void createAnswerPost(Post post, String content, User author) {
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setContent(content);
+        answerPost.setPost(post);
+        answerPost.setAuthor(author);
+        answerPostRepository.save(answerPost);
     }
 
     /**

@@ -7,8 +7,8 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
-import { debounceTime, switchMap, tap } from 'rxjs/operators';
-import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
+import { switchMap, tap } from 'rxjs/operators';
+import { FormControl, FormGroup } from '@angular/forms';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
 import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -17,7 +17,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { AdminUserService } from 'app/core/user/admin-user.service';
-import { UserService } from 'app/core/user/user.service';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -103,6 +102,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     predicate!: string;
     ascending!: boolean;
     searchTermString = '';
+    searchInvalid = false;
     isLdapProfileActive: boolean;
 
     // filters
@@ -129,7 +129,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     constructor(
         private adminUserService: AdminUserService,
-        private userService: UserService,
         private alertService: AlertService,
         private accountService: AccountService,
         private activatedRoute: ActivatedRoute,
@@ -148,7 +147,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.search
             .pipe(
                 tap(() => (this.loadingSearchResult = true)),
-                debounceTime(1000),
                 switchMap(() =>
                     this.adminUserService.query(
                         {
@@ -175,7 +173,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             });
 
         this.userSearchForm = new FormGroup({
-            searchControl: new FormControl('', { validators: [this.validateUserSearch], updateOn: 'blur' }),
+            searchControl: new FormControl('', { updateOn: 'change' }),
         });
         this.accountService.identity().then((user) => {
             this.currentAccount = user!;
@@ -443,17 +441,21 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
     loadAll() {
+        this.searchTerm = this.searchControl.value;
         if (this.searchTerm.length >= 3 || this.searchTerm.length === 0) {
+            this.searchInvalid = false;
             this.search.next();
+        } else {
+            this.searchInvalid = true;
         }
     }
 
     /**
      * Returns the unique identifier for items in the collection
-     * @param index of a user in the collection
+     * @param _index of a user in the collection
      * @param item current user
      */
-    trackIdentity(index: number, item: User) {
+    trackIdentity(_index: number, item: User) {
         return item.id ?? -1;
     }
 
@@ -520,14 +522,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         return this.searchTermString;
     }
 
-    validateUserSearch(control: AbstractControl) {
-        if (control.value.length >= 1 && control.value.length <= 2) {
-            return { searchControl: true };
-        }
-        return null;
-    }
-
     get searchControl() {
         return this.userSearchForm.get('searchControl')!;
+    }
+
+    onKeydown(event: KeyboardEvent) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Prevent the default form submission behavior
+            this.loadAll(); // Trigger the search logic
+        }
     }
 }

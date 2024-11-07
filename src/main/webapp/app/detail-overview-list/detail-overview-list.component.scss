@@ -1,3 +1,5 @@
+$details-image-height: 3rem;
+
 .section-headline {
     margin-top: 1rem;
     margin-bottom: 0.5rem;
@@ -8,6 +10,19 @@
     border-bottom: 1px solid var(--bs-border-color);
 }
 
-.diff-view-modal .modal-dialog {
-    max-width: 80vw;
+.details-default-profile-picture {
+    width: $details-image-height;
+    height: $details-image-height;
+    font-size: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--gray-400);
+    color: var(--white);
+}
+
+.details-image {
+    width: $details-image-height;
+    height: $details-image-height;
+    object-fit: cover;
 }

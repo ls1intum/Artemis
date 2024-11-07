@@ -111,7 +111,7 @@ describe('OnlineUnitFormComponent', () => {
                 name: exampleName,
                 description: exampleDescription,
                 releaseDate: exampleReleaseDate,
-                competencies: null,
+                competencyLinks: null,
                 source: 'https://www.example.com',
             });
 

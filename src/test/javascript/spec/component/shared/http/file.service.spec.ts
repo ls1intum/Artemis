@@ -1,7 +1,8 @@
 import { FileService } from 'app/shared/http/file.service';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { v4 as uuid } from 'uuid';
+import { provideHttpClient } from '@angular/common/http';
 
 jest.mock('uuid', () => ({
     v4: jest.fn(),
@@ -18,8 +19,8 @@ describe('FileService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [FileService],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), FileService],
         });
         fileService = TestBed.inject(FileService);
         httpMock = TestBed.inject(HttpTestingController);
