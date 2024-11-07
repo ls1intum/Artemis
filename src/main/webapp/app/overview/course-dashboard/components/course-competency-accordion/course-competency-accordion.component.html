@@ -7,7 +7,7 @@
 } @else {
     <div ngbAccordion class="course-competency-accordion">
         @for (courseCompetency of courseCompetencies(); let last = $last; track courseCompetency.id) {
-            <div ngbAccordionItem [class.mb-3]="!last" [destroyOnHide]="false">
+            <div ngbAccordionItem [ngbAccordionItem]="'course-competency-item-' + courseCompetency.id" [class.mb-3]="!last" [destroyOnHide]="false">
                 <h2 ngbAccordionHeader>
                     <button ngbAccordionButton class="px-3">
                         <div class="d-flex w-100 justify-content-between align-items-center">
@@ -17,7 +17,9 @@
                                     <span class="ms-2 badge text-bg-secondary">Optional</span>
                                 }
                                 <strong class="ms-2">{{ courseCompetency.title }}</strong>
-                                <h5 class="m-0 ms-2"><span class="badge text-bg-success text-white">3 / 3</span></h5>
+                                <h5 class="m-0 ms-2">
+                                    <span class="badge text-white" [ngClass]="{ 'text-bg-success': false, 'text-bg-secondary': true, 'text-bg-warning': false }">3 / 3</span>
+                                </h5>
                             </div>
                             @if (courseCompetency.softDueDate) {
                                 <div class="me-2">

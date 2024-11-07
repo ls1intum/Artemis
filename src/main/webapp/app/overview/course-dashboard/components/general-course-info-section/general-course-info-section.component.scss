@@ -1,0 +1,4 @@
+.general-info-container {
+    height: calc(100vh - var(--sidebar-footer-height-dev) - 9.2rem);
+    overflow: auto;
+}

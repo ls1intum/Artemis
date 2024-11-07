@@ -9,19 +9,21 @@
         </button>
     </div>
     <hr class="my-2" />
-    @if (isLoading()) {
-        <h5 class="card-title placeholder-glow">
-            <span class="placeholder col-6"></span>
-        </h5>
-        <p class="placeholder-glow">
-            <span class="placeholder col-7"></span>
-            <span class="placeholder col-4"></span>
-            <span class="placeholder col-10"></span>
-            <span class="placeholder col-8"></span>
-        </p>
-    } @else if (generalCourseInformation()) {
-        <span [innerHTML]="generalCourseInformation() | htmlForMarkdown"></span>
-    } @else {
-        <em class="text-secondary">No general course information has been set!</em>
-    }
+    <div class="general-info-container">
+        @if (isLoading()) {
+            <h5 class="card-title placeholder-glow">
+                <span class="placeholder col-6"></span>
+            </h5>
+            <p class="placeholder-glow">
+                <span class="placeholder col-7"></span>
+                <span class="placeholder col-4"></span>
+                <span class="placeholder col-10"></span>
+                <span class="placeholder col-8"></span>
+            </p>
+        } @else if (generalCourseInformation()) {
+            <span [innerHTML]="generalCourseInformation() | htmlForMarkdown"></span>
+        } @else {
+            <em class="text-secondary">No general course information has been set!</em>
+        }
+    </div>
 </div>

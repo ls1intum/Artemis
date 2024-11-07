@@ -187,6 +187,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                           shortName: exerciseInformation.shortName,
                           score: exerciseMetrics.score?.[exerciseId],
                           averageScore: exerciseMetrics.averageScore?.[exerciseId],
+                          courseCompetencyIds: [],
                       },
                   ]
                 : [];

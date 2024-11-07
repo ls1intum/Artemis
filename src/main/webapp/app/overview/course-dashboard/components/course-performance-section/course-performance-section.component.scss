@@ -1,26 +1,4 @@
-.competency-accordion {
-    .accordion-item {
-        border: none;
-        border-radius: var(--bs-border-radius-lg);
-
-        .accordion-button {
-            background: var(--navbar-breadcrumb-background);
-            color: var(--module-text);
-            box-shadow: none;
-            border: none;
-
-            &:not(.collapsed)::after {
-                background-image: var(--bs-accordion-btn-icon);
-            }
-        }
-
-        .accordion-body {
-            background: var(--navbar-breadcrumb-background);
-        }
-
-        .learning-objects-container {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-    }
+.performance-container {
+    height: calc(100vh - var(--sidebar-footer-height-dev) - 9.2rem);
+    overflow: auto;
 }

@@ -34,6 +34,7 @@
                 [showYAxisLabel]="true"
                 [yScaleMin]="0"
                 [yScaleMax]="yScaleMax"
+                (select)="selectDataPoint($event)"
             >
                 <ng-template #tooltipTemplate let-model="model">
                     <div class="d-flex flex-column align-items-start py-2">

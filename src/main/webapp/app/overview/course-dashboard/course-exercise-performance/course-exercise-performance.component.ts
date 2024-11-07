@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, untracked } from '@angular/core';
+import { Component, effect, inject, input, output, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
@@ -8,6 +8,7 @@ import { round } from 'app/shared/util/utils';
 
 export interface ExercisePerformance {
     exerciseId: number;
+    courseCompetencyIds: number[];
     title: string;
     shortName?: string;
     score?: number;
@@ -24,6 +25,16 @@ const AVERAGE_GRAPH_COLOR = GraphColors.YELLOW;
 })
 export class CourseExercisePerformanceComponent {
     readonly exercisePerformance = input.required<ExercisePerformance[]>();
+    // readonly exercisePerformance = signal<ExercisePerformance[]>([
+    //     <ExercisePerformance>{
+    //         exerciseId: 2,
+    //         title: 'Exercise 1',
+    //         score: 100,
+    //         shortName: 'E1',
+    //         courseCompetencyIds: [17],
+    //         averageScore: 80,
+    //     },
+    // ]);
 
     private readonly translateService = inject(TranslateService);
 
@@ -43,6 +54,8 @@ export class CourseExercisePerformanceComponent {
     protected readonly YOUR_GRAPH_COLOR = YOUR_GRAPH_COLOR;
     protected readonly AVERAGE_GRAPH_COLOR = AVERAGE_GRAPH_COLOR;
 
+    readonly onSelect = output<number[]>();
+
     constructor() {
         // setup chart whenever exercise performance changes
         effect(() => this.setupChart(this.exercisePerformance()));
@@ -55,6 +68,10 @@ export class CourseExercisePerformanceComponent {
                 }
             });
         });
+    }
+
+    selectDataPoint(data: any) {
+        this.onSelect.emit(data.extra.courseCompetencyIds);
     }
 
     /**
@@ -83,6 +100,7 @@ export class CourseExercisePerformanceComponent {
                         value: round(performance.score || 0, 1), // If the score is undefined, set it to 0
                         extra: {
                             title: performance.title,
+                            courseCompetencyIds: performance.courseCompetencyIds,
                         },
                     };
                 }),
@@ -95,6 +113,7 @@ export class CourseExercisePerformanceComponent {
                         value: round(performance.averageScore || 0, 1),
                         extra: {
                             title: performance.title,
+                            courseCompetencyIds: performance.courseCompetencyIds,
                         },
                     };
                 }),

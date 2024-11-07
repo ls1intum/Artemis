@@ -9,33 +9,35 @@
         </div>
     </div>
     <hr class="my-2" />
-    <jhi-course-exercise-performance [exercisePerformance]="exercisePerformance()" />
-    <hr />
-    <div class="mb-3">
-        <div class="d-flex justify-content-between align-items-center">
-            <h6 class="m-0">Course competencies</h6>
-            @if (learningPathsEnabled()) {
-                <button type="button" class="btn btn-sm btn-primary" [routerLink]="['/courses', courseId(), 'learning-path']">Continue learning path</button>
+    <div class="performance-container">
+        <jhi-course-exercise-performance [exercisePerformance]="exercisePerformance()" (onSelect)="expandCourseCompetencyItems($event)" />
+        <hr />
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="m-0">Course competencies</h6>
+                @if (learningPathsEnabled()) {
+                    <button type="button" class="btn btn-sm btn-primary" [routerLink]="['/courses', courseId(), 'learning-path']">Continue learning path</button>
+                }
+            </div>
+            <div class="text-secondary">
+                <fa-icon [icon]="faCircleInfo" />
+                <em><small>Select an exercise in the graph to open the corresponding course competency</small></em>
+            </div>
+        </div>
+        <div>
+            @if (isLoading()) {
+                <div class="row justify-content-center p-2">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only" jhiTranslate="loading"></span>
+                    </div>
+                </div>
+            } @else if (hasCompetencies()) {
+                <jhi-course-competency-accordion [courseId]="courseId()" [studentMetrics]="studentMetrics()!" />
+            } @else {
+                <div class="row justify-content-center p-2">
+                    <em class="text-secondary text-center">There are no course competencies in this course!</em>
+                </div>
             }
         </div>
-        <div class="text-secondary">
-            <fa-icon [icon]="faCircleInfo" />
-            <em><small>Select an exercise in the graph to open the corresponding competency</small></em>
-        </div>
-    </div>
-    <div>
-        @if (isLoading()) {
-            <div class="row justify-content-center p-2">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="sr-only" jhiTranslate="loading"></span>
-                </div>
-            </div>
-        } @else if (hasCompetencies()) {
-            <jhi-course-competency-accordion [courseId]="courseId()" [studentMetrics]="studentMetrics()!" />
-        } @else {
-            <div class="row justify-content-center p-2">
-                <em class="text-secondary text-center">There are no course competencies in this course!</em>
-            </div>
-        }
     </div>
 </div>

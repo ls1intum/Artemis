@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAccordionDirective, NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
 import { StudentMetrics } from 'app/entities/student-metrics.model';
 import { getIcon } from 'app/entities/competency.model';
@@ -35,6 +35,8 @@ export class CourseCompetencyAccordionComponent {
     readonly courseCompetencies = signal<LearningPathCompetencyDTO[]>([]);
     readonly learningPathId = signal<number | undefined>(undefined);
 
+    private readonly accordion = viewChild.required(NgbAccordionDirective);
+
     constructor() {
         effect(() => {
             const courseId = this.courseId();
@@ -42,7 +44,18 @@ export class CourseCompetencyAccordionComponent {
         });
     }
 
-    private async loadCourseCompetencies(courseId: number) {
+    expandCourseCompetencyItems(courseCompetencyIds: number[]) {
+        for (const courseCompetencyId of this.courseCompetencies().map((cc) => cc.id)) {
+            const itemId = `course-competency-item-${courseCompetencyId}`;
+            if (courseCompetencyIds.includes(courseCompetencyId)) {
+                this.accordion().expand(itemId);
+            } else {
+                this.accordion().collapse(itemId);
+            }
+        }
+    }
+
+    private async loadCourseCompetencies(courseId: number): Promise<void> {
         try {
             this.isLoading.set(true);
             await this.loadLearningPathId(courseId);

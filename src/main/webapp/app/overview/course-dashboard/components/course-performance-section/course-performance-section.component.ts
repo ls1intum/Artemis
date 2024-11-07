@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { CourseDashboardService } from 'app/overview/course-dashboard/course-dashboard.service';
 import { StudentMetrics } from 'app/entities/student-metrics.model';
 import { lastValueFrom } from 'rxjs';
@@ -78,6 +78,12 @@ export class CoursePerformanceSectionComponent {
     readonly exercisePerformance = computed(() =>
         this.sortedExerciseIds().flatMap((exerciseId) => {
             const exerciseInformation = this.exerciseMetrics().exerciseInformation?.[exerciseId];
+            const getKeysWithValue = (obj: { [key: number]: number[] }, value: number): number[] => {
+                return Object.keys(obj)
+                    .filter((key) => obj[Number(key)].includes(value))
+                    .map(Number);
+            };
+            const courseCompetencyIds = getKeysWithValue(this.studentMetrics()?.competencyMetrics?.exercises ?? {}, exerciseId);
             return exerciseInformation
                 ? <ExercisePerformance[]>[
                       {
@@ -86,17 +92,27 @@ export class CoursePerformanceSectionComponent {
                           shortName: exerciseInformation.shortName,
                           score: this.exerciseMetrics().score?.[exerciseId],
                           averageScore: this.exerciseMetrics().averageScore?.[exerciseId],
+                          courseCompetencyIds: courseCompetencyIds,
                       },
                   ]
                 : <ExercisePerformance[]>[];
         }),
     );
 
+    readonly courseCompetencyAccordion = viewChild(CourseCompetencyAccordionComponent);
+
     constructor() {
         effect(() => {
             const courseId = this.courseId();
             untracked(() => this.loadStudentMetrics(courseId));
         });
+        effect(() => {
+            console.log(this.exercisePerformance());
+        });
+    }
+
+    expandCourseCompetencyItems(selectedCourseCompetencyIds: number[]) {
+        this.courseCompetencyAccordion()?.expandCourseCompetencyItems(selectedCourseCompetencyIds);
     }
 
     private async loadStudentMetrics(courseId: number): Promise<void> {
