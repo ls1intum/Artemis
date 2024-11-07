@@ -1,4 +1,12 @@
-@if (currentlyLoadedPosts) {
+@if (isDeleted()) {
+    <span class="posting-content-undo-delete d-inline-flex align-items-center">
+        <span class="text-secondary" jhiTranslate="artemisApp.metis.post.deletedContent" [translateValues]="{ progress: deleteTimerInSeconds() }"></span>
+        <button class="btn btn-outline-primary btn-sm ms-2 position-relative" (click)="onUndoDeleteEvent.emit()">
+            <span class="post-delete-button-label" jhiTranslate="artemisApp.metis.post.undoDelete"></span>
+            <span class="post-delete-button-background"></span>
+        </button>
+    </span>
+} @else if (currentlyLoadedPosts) {
     <!-- in preview mode (showing similar posts during creation): content can be expanded and collapsed shown -->
     @if (previewMode) {
         <div class="pb-1">
@@ -8,7 +16,7 @@
             <span class="toggle-content" jhiTranslate="{{ showContent ? 'artemisApp.metis.post.collapseContent' : 'artemisApp.metis.post.showContent' }}"></span>
             @if (showContent) {
                 <div>
-                    @for (postingContentPart of postingContentParts; track postingContentPart) {
+                    @for (postingContentPart of postingContentParts(); track $index) {
                         <jhi-posting-content-part
                             [postingContentPart]="postingContentPart"
                             (userReferenceClicked)="userReferenceClicked.emit($event)"
@@ -25,7 +33,7 @@
     <!-- not in preview mode: content always shown -->
     @if (!previewMode) {
         <div class="pb-1">
-            @for (postingContentPart of postingContentParts; track postingContentPart) {
+            @for (postingContentPart of postingContentParts(); track $index) {
                 <jhi-posting-content-part
                     [postingContentPart]="postingContentPart"
                     (userReferenceClicked)="userReferenceClicked.emit($event)"

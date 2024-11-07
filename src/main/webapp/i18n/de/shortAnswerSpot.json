@@ -2,21 +2,21 @@
     "artemisApp": {
         "shortAnswerSpot": {
             "home": {
-                "title": "Short Answer Spots",
-                "createLabel": "Short Answer Spot erstellen"
+                "title": "Kurzantwort-Spots",
+                "createLabel": "Kurzantwort-Spot erstellen"
             },
-            "created": "Short Answer Spot erstellt mit ID {{ param }}",
-            "updated": "Short Answer Spot aktualisiert mit ID {{ param }}",
-            "deleted": "Short Answer Spot gelöscht mit ID {{ param }}",
+            "created": "Kurzantwort-Spot erstellt mit ID {{ param }}",
+            "updated": "Kurzantwort-Spot aktualisiert mit ID {{ param }}",
+            "deleted": "Kurzantwort-Spot gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Short Answer Spot {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Kurzantwort-Spot {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Short Answer Spot"
+                "title": "Kurzantwort-Spot"
             },
-            "width": "Width",
-            "invalid": "Invalid",
-            "question": "Question",
+            "width": "Breite",
+            "invalid": "Ungültig",
+            "question": "Frage",
             "invalidSpot": "Dieses Eingabefeld wurde als ungültig markiert. Die eingesetzte Lösung wird als korrekt gewertet."
         }
     }

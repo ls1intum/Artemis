@@ -1,8 +1,9 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
 import { SuspiciousExamSessions, SuspiciousSessionReason, SuspiciousSessionsAnalysisOptions } from 'app/entities/exam/exam-session.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('SuspiciousSessionsService', () => {
     let service: SuspiciousSessionsService;
@@ -34,7 +35,8 @@ describe('SuspiciousSessionsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(SuspiciousSessionsService);
         httpMock = TestBed.inject(HttpTestingController);

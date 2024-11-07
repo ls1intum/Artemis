@@ -3,14 +3,14 @@
         <div class="channels-overview">
             <div class="modal-header">
                 <h4 class="modal-title">
-                    <span>{{ 'artemisApp.dialogs.channelOverview.title.' + channelSubType | artemisTranslate: { courseTitle: course.title } }}</span>
+                    <span>{{ 'artemisApp.dialogs.channelOverview.title' | artemisTranslate: { courseTitle: course.title } }}</span>
                 </h4>
                 <button type="button" class="btn-close" (click)="clear()"></button>
             </div>
             <div class="modal-body">
                 <!-- Overview Table -->
                 @if (channels && channels.length > 0) {
-                    <div class="form-group mt-4">
+                    <div class="form-group mt-2">
                         <div class="table-wrapper-scroll-y scrollbar">
                             <ul class="list-group">
                                 @for (channel of channels; track channels.indexOf(channel)) {
@@ -21,36 +21,6 @@
                             </ul>
                         </div>
                     </div>
-                }
-                @if (otherChannels && otherChannels.length > 0) {
-                    <div class="form-group mt-4">
-                        <div (click)="otherChannelsAreCollapsed = !otherChannelsAreCollapsed" class="other-channels">
-                            <fa-icon [icon]="faChevronRight" [rotate]="!otherChannelsAreCollapsed ? 90 : undefined" />
-                            <span class="h5" jhiTranslate="artemisApp.dialogs.channelOverview.otherChannels"></span>
-                        </div>
-                        <div [(ngbCollapse)]="otherChannelsAreCollapsed">
-                            <div class="table-wrapper-scroll-y scrollbar mt-2">
-                                <ul class="list-group">
-                                    @for (channel of otherChannels; track otherChannels.indexOf(channel)) {
-                                        <li [id]="'channel-' + channel.id" class="list-group-item">
-                                            <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)" />
-                                        </li>
-                                    }
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-            <div class="modal-footer justify-content-between">
-                @if (createChannelFn && canCreateChannel(course)) {
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        (click)="openCreateChannelDialog($event)"
-                        id="createChannel"
-                        jhiTranslate="artemisApp.dialogs.channelOverview.createChannelButton"
-                    ></button>
                 }
             </div>
         </div>

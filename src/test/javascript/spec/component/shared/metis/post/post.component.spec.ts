@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
@@ -23,17 +23,17 @@ import {
     unsortedAnswerArray,
 } from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
-import { RouterTestingModule } from '@angular/router/testing';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { Router, RouterState } from '@angular/router';
+import { Router, RouterState, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -47,8 +47,9 @@ describe('PostComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule, MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip), MockModule(BrowserAnimationsModule)],
             providers: [
+                provideRouter([]),
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(MetisConversationService),
@@ -213,5 +214,49 @@ describe('PostComponent', () => {
         component.onChannelReferenceClicked(metisChannel.id!);
 
         expect(setActiveConversationSpy).toHaveBeenCalledWith(metisChannel.id!);
+    });
+
+    it('should set isDeleted to true', () => {
+        component.onDeleteEvent(true);
+        expect(component.isDeleted).toBeTrue();
+    });
+
+    it('should clear existing timers and intervals', () => {
+        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+        const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+
+        component.deleteTimer = setTimeout(() => {}, 1000);
+        component.deleteInterval = setInterval(() => {}, 1000);
+        component.onDeleteEvent(true);
+
+        expect(clearIntervalSpy).toHaveBeenCalledOnce();
+        expect(clearTimeoutSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should clear existing timers and intervals on destroy', () => {
+        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+        const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+
+        component.deleteTimer = setTimeout(() => {}, 1000);
+        component.deleteInterval = setInterval(() => {}, 1000);
+        component.ngOnDestroy();
+
+        expect(clearIntervalSpy).toHaveBeenCalledOnce();
+        expect(clearTimeoutSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should set deleteTimer and deleteInterval when isDelete is true', () => {
+        component.onDeleteEvent(true);
+
+        expect(component.deleteTimer).toBeDefined();
+        expect(component.deleteInterval).toBeDefined();
+        expect(component.deleteTimerInSeconds).toBe(component.timeToDeleteInSeconds);
+    });
+
+    it('should not set timers when isDelete is false', () => {
+        component.onDeleteEvent(false);
+
+        expect(component.deleteTimer).toBeUndefined();
+        expect(component.deleteInterval).toBeUndefined();
     });
 });

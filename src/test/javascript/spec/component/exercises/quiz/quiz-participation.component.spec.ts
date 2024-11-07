@@ -1,5 +1,5 @@
-import { HttpResponse } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -139,9 +139,11 @@ describe('QuizParticipationComponent', () => {
     describe('live mode', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
+                imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
                 declarations: [testBedDeclarations, MockDirective(NgModel)],
                 providers: [
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                     {
                         provide: ActivatedRoute,
                         useValue: {
@@ -498,9 +500,11 @@ describe('QuizParticipationComponent', () => {
     describe('preview mode', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
+                imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
                 declarations: testBedDeclarations,
                 providers: [
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                     {
                         provide: ActivatedRoute,
                         useValue: {
@@ -577,9 +581,11 @@ describe('QuizParticipationComponent', () => {
     describe('practice mode', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
+                imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
                 declarations: testBedDeclarations,
                 providers: [
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                     {
                         provide: ActivatedRoute,
                         useValue: {
@@ -658,9 +664,11 @@ describe('QuizParticipationComponent', () => {
     describe('solution mode', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
+                imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
                 declarations: testBedDeclarations,
                 providers: [
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                     {
                         provide: ActivatedRoute,
                         useValue: {

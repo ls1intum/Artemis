@@ -109,6 +109,10 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         this.invalid = invalid;
     }
 
+    public void setMappings(Set<DragAndDropMapping> mappings) {
+        this.mappings = mappings;
+    }
+
     /**
      * This method is called after the entity is saved for the first time. We replace the placeholder in the pictureFilePath with the id of the entity because we don't know it
      * before creation.

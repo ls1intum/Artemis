@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lti;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 
@@ -14,15 +13,10 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
-import de.tum.cit.aet.artemis.lti.test_repository.OnlineCourseConfigurationTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class OAuth2JWKSIntegrationTest extends AbstractLtiIntegrationTest {
 
     private static final String TEST_PREFIX = "oauth2jwksintegrationtest";
-
-    @Autowired
-    private OnlineCourseConfigurationTestRepository onlineCourseConfigurationRepository;
 
     @Test
     @WithAnonymousUser

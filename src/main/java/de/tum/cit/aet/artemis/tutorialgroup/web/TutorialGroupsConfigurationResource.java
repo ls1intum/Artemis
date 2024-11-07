@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurati
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
 
 @Profile(PROFILE_CORE)
+@FeatureToggle(Feature.TutorialGroups)
 @RestController
 @RequestMapping("api/")
 public class TutorialGroupsConfigurationResource {
@@ -68,7 +69,6 @@ public class TutorialGroupsConfigurationResource {
      */
     @GetMapping("courses/{courseId}/tutorial-groups-configuration")
     @EnforceAtLeastStudent
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupsConfiguration> getOneOfCourse(@PathVariable Long courseId) {
         log.debug("REST request to get tutorial groups configuration of course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -85,7 +85,6 @@ public class TutorialGroupsConfigurationResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups-configuration")
     @EnforceAtLeastInstructor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupsConfiguration> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroupsConfiguration tutorialGroupsConfiguration)
             throws URISyntaxException {
         log.debug("REST request to create TutorialGroupsConfiguration: {} for course: {}", tutorialGroupsConfiguration, courseId);
@@ -120,7 +119,6 @@ public class TutorialGroupsConfigurationResource {
      */
     @PutMapping("courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
     @EnforceAtLeastInstructor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupsConfiguration> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @RequestBody @Valid TutorialGroupsConfiguration updatedTutorialGroupConfiguration) {
         log.debug("REST request to update TutorialGroupsConfiguration: {} of course: {}", updatedTutorialGroupConfiguration, courseId);

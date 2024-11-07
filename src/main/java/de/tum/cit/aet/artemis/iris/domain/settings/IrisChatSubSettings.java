@@ -1,30 +1,24 @@
 package de.tum.cit.aet.artemis.iris.domain.settings;
 
+import java.util.SortedSet;
+import java.util.TreeSet;
+
 import jakarta.annotation.Nullable;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.cit.aet.artemis.iris.domain.IrisTemplate;
 
 /**
  * An {@link IrisSubSettings} implementation for chat settings.
  * Chat settings notably provide settings for the rate limit.
- * Chat settings provide a single {@link IrisTemplate} for the chat messages.
  */
 @Entity
 @DiscriminatorValue("CHAT")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisChatSubSettings extends IrisSubSettings {
-
-    @Nullable
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    private IrisTemplate template;
 
     @Nullable
     @Column(name = "rate_limit")
@@ -34,14 +28,9 @@ public class IrisChatSubSettings extends IrisSubSettings {
     @Column(name = "rate_limit_timeframe_hours")
     private Integer rateLimitTimeframeHours;
 
-    @Nullable
-    public IrisTemplate getTemplate() {
-        return template;
-    }
-
-    public void setTemplate(@Nullable IrisTemplate template) {
-        this.template = template;
-    }
+    @Column(name = "enabled_for_categories")
+    @Convert(converter = IrisListConverter.class)
+    private SortedSet<String> enabledForCategories = new TreeSet<>();
 
     @Nullable
     public Integer getRateLimit() {
@@ -59,5 +48,13 @@ public class IrisChatSubSettings extends IrisSubSettings {
 
     public void setRateLimitTimeframeHours(@Nullable Integer rateLimitTimeframeHours) {
         this.rateLimitTimeframeHours = rateLimitTimeframeHours;
+    }
+
+    public SortedSet<String> getEnabledForCategories() {
+        return enabledForCategories;
+    }
+
+    public void setEnabledForCategories(SortedSet<String> enabledForCategories) {
+        this.enabledForCategories = enabledForCategories;
     }
 }

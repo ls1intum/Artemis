@@ -1,11 +1,12 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
 import { defer, of } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('IrisWebsocketService', () => {
     let irisWebsocketService: IrisWebsocketService;
@@ -16,8 +17,14 @@ describe('IrisWebsocketService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [IrisWebsocketService, MockProvider(JhiWebsocketService), { provide: AccountService, useClass: MockAccountService }],
+            imports: [],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                IrisWebsocketService,
+                MockProvider(JhiWebsocketService),
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         });
         irisWebsocketService = TestBed.inject(IrisWebsocketService);
         jhiWebsocketService = TestBed.inject(JhiWebsocketService);

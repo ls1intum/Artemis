@@ -94,6 +94,10 @@ public class ShortAnswerSpot extends TempIdObject implements QuizQuestionCompone
         this.question = shortAnswerQuestion;
     }
 
+    public void setMappings(Set<ShortAnswerMapping> shortAnswerMappings) {
+        this.mappings = shortAnswerMappings;
+    }
+
     @Override
     public String toString() {
         return "ShortAnswerSpot{" + "id=" + getId() + ", width=" + getWidth() + ", spotNr=" + getSpotNr() + ", invalid='" + isInvalid() + "'" + "}";

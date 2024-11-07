@@ -18,7 +18,4 @@ jobs:
         with:
           python-version: "3.12"
       - name: Check if translation keys match
-        run: >
-          python .ci/translation-file-checker/translation_file_checker.py
-            --german-files src/main/webapp/i18n/de/
-            --english-files src/main/webapp/i18n/en/
+        run: python .ci/translation-file-checker/translation_file_checker.py --german-files src/main/webapp/i18n/de/ --english-files src/main/webapp/i18n/en/

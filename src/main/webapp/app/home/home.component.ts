@@ -65,7 +65,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     usernamePlaceholder = 'global.form.username.placeholder'; // default, might be overridden
     usernamePlaceholderTranslated = 'Login or email'; // default, might be overridden
     // if the server is not connected to an external user management, we accept all valid username patterns
-    usernameRegexPattern = /^[a-z0-9.@_-]{4,50}$/; // default (at least 4, at most 50 characters), might be overridden
+    usernameRegexPattern = /^[a-zA-Z0-9.@_-]{4,50}$/; // default (at least 4, at most 50 characters), might be overridden
     errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden
     accountName?: string; // additional information in the welcome message
 
@@ -120,7 +120,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.errorMessageUsername = 'home.errors.tumWarning';
             // Temporary workaround: Do not show a warning when TUM users login with an email address with a specific ending
             // allow emails with exactly one @ and usernames between 7 and 50 characters (shorter TUM usernames are not possible)
-            this.usernameRegexPattern = new RegExp(/^(?!.*@.*@)[a-z0-9.@_-]{7,50}$/);
+            this.usernameRegexPattern = new RegExp(/^(?!.*@.*@)[a-zA-Z0-9.@_-]{7,50}$/);
         }
         this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
         this.translateService.onLangChange.subscribe(() => {

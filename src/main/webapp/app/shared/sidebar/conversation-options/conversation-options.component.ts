@@ -79,11 +79,35 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
 
     onHiddenClicked(event: MouseEvent) {
         event.stopPropagation();
+        if (!this.course.id || !this.conversation.id) {
+            return;
+        }
+
+        if (!this.conversation.isHidden && this.conversation.isFavorite) {
+            this.conversationService.updateIsFavorite(this.course.id, this.conversation.id, false).subscribe({
+                next: () => {
+                    this.conversation.isFavorite = false;
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+        }
         this.hide$.next(!this.conversation.isHidden);
     }
 
     onFavoriteClicked($event: MouseEvent) {
         $event.stopPropagation();
+        if (!this.course.id || !this.conversation.id) {
+            return;
+        }
+
+        if (this.conversation.isHidden && !this.conversation.isFavorite) {
+            this.conversationService.updateIsHidden(this.course.id, this.conversation.id, false).subscribe({
+                next: () => {
+                    this.conversation.isHidden = false;
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+        }
         this.favorite$.next(!this.conversation.isFavorite);
     }
 

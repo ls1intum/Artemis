@@ -1,8 +1,9 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { mockSettings } from './mock-settings';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Iris Settings Service', () => {
     let service: IrisSettingsService;
@@ -10,8 +11,8 @@ describe('Iris Settings Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [IrisSettingsService],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), IrisSettingsService],
         });
         service = TestBed.inject(IrisSettingsService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -75,7 +76,7 @@ describe('Iris Settings Service', () => {
     it('should get uncombined programming exercise settings', fakeAsync(() => {
         const mockedSettings = mockSettings();
         service
-            .getUncombinedProgrammingExerciseSettings(1)
+            .getUncombinedExerciseSettings(1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual(mockedSettings));
         const req = httpMock.expectOne({ method: 'GET' });
@@ -86,7 +87,7 @@ describe('Iris Settings Service', () => {
     it('should get combined programming exercise settings', fakeAsync(() => {
         const mockedSettings = mockSettings();
         service
-            .getCombinedProgrammingExerciseSettings(1)
+            .getCombinedExerciseSettings(1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual(mockedSettings));
         const req = httpMock.expectOne({ method: 'GET' });
@@ -97,7 +98,7 @@ describe('Iris Settings Service', () => {
     it('should set programming exercise settings', fakeAsync(() => {
         const mockedSettings = mockSettings();
         service
-            .setProgrammingExerciseSettings(1, mockedSettings)
+            .setExerciseSettings(1, mockedSettings)
             .pipe(take(1))
             .subscribe((resp) => expect(resp.body).toEqual(mockedSettings));
         const req = httpMock.expectOne({ method: 'PUT' });

@@ -13,8 +13,8 @@
                 "dialogText": "Jeder Eintrag in der Eingabedatei muss entweder einen Wert für die Matrikelnummer, das Login oder die E-Mail enthalten.\nDie Angaben zu Name und Vorname sind optional.",
                 "pdfExampleText": "Beispiel für ein gültiges PDF-Dateiformat:",
                 "pdfFile": {
-                    "label": ".pdf-Datei auswählen",
-                    "tooltip": "Bitte wähle eine .pdf-Datei aus, die das Bild des registrierten Studenten und seine Matrikelnummer enthält."
+                    "label": "PDF-Datei auswählen",
+                    "tooltip": "Bitte wähle eine PDF-Datei aus, die das Bild des registrierten Studenten und seine Matrikelnummer enthält."
                 },
                 "dialogTitle": "Bilder hochladen",
                 "allImagesSaved": "Alle Bilder wurden erfolgreich gespeichert.",
@@ -150,6 +150,7 @@
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
             "notSet": "Nicht gesetzt",
             "startExamToolTip": "Button wird 5 Minuten vor der Klausur aktiviert.",
+            "yourSolution": "Deine Lösung",
             "cleanup": {
                 "title": "Aufräumen",
                 "question": "Möchtest du die Prüfung <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studierenden-Repositories in der Prüfung gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
@@ -157,7 +158,7 @@
             "validation": {
                 "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
-                "allExercisesInExerciseGroupOfSameIncludedType": "Alle Aufgaben in einer Aufgabengruppe müssen alle die selbe Bedeutung haben für das Klausurergebnis (Normale Aufgabe, Bonusaufgabe, Keine Bedeutung).",
+                "allExercisesInExerciseGroupOfSameIncludedType": "Alle Aufgaben in einer Aufgabengruppe müssen alle dieselbe Bedeutung haben für das Klausurergebnis (Normale Aufgabe, Bonusaufgabe, Keine Bedeutung).",
                 "allExercisesInExerciseGroupGiveSameNumberOfPoints": "Alle Aufgaben in einer Aufgabengruppe müssen dieselbe Anzahl an Punkte oder Bonuspunkte geben",
                 "tooManyMaxPoints": "Überprüfe die maximale Punktzahl in der Klausur! Die maximale Punktzahl, die Studierende in den verpflichtenden Aufgaben erreichen können, ist zu groß.",
                 "tooFewMaxPoints": "Überprüfe die maximale Punktzahl in der Klausur! Die maximale Punktzahl, die Studierende in den Aufgaben erreichen können, ist zu niedrig.",
@@ -212,17 +213,18 @@
         "examScores": {
             "xAxes": "Ergebnis in %",
             "xAxesSuffix": " + {Notenname}",
+            "xAxesSuffixNoBonus": " + {Notenname}",
             "xAxesSuffixBonus": " + {Bonuspunkte}",
             "yAxes": "Anzahl Teilnehmende",
-            "highlightPassedMedian": "Hebe Median aller bestandenen Klausuren im Diagram hervor: {{ median }}%",
-            "highlightOverallMedian": "Hebe Median aller Klausuren im Diagram hervor: {{ median }}%",
+            "highlightPassedMedian": "Hebe Median aller bestandenen Klausuren im Diagramm hervor: {{ median }}%",
+            "highlightOverallMedian": "Hebe Median aller Klausuren im Diagramm hervor: {{ median }}%",
             "criticalPerformance": "Bedenkliche Leistung",
             "uncriticalPerformance": "Unbedenkliche Leistung",
-            "noGradingScaleExplanation": "Eine Leistung gilt als bedenklich falls sie unter 40% der maximal zu erreichenden Punktzahl erzielt und somit in den meisten Fällen zum Nichtbestehen einer Klausur führen würde. Andernfalls gilt eine Leistung als unbedenklich.",
+            "noGradingScaleExplanation": "Eine Leistung gilt als bedenklich, falls sie unter 40 % der maximal zu erreichenden Punktzahl erzielt und somit in den meisten Fällen zum Nichtbestehen einer Klausur führen würde. Andernfalls gilt eine Leistung als unbedenklich.",
             "sufficientPerformance": "Ausreichende Leistung",
             "insufficientPerformance": "Ungenügende Leistung",
-            "gradingScaleExplanationNotBonus": "Eine Leistung gilt als ungenügend falls sie nicht zum Bestehen der Klausur genügt. Andernfalls gilt eine Leistung als ausreichend.",
-            "gradingScaleExplanationBonus": "Eine Leistung gilt als bedenklich falls sie keine Bonuspunkte erzielt. Andernfalls gilt eine Leistung als unbedenklich.",
+            "gradingScaleExplanationNotBonus": "Eine Leistung gilt als ungenügend, falls sie nicht zum Bestehen der Klausur genügt. Andernfalls gilt eine Leistung als ausreichend.",
+            "gradingScaleExplanationBonus": "Eine Leistung gilt als bedenklich, falls sie keine Bonuspunkte erzielt. Andernfalls gilt eine Leistung als unbedenklich.",
             "maxPoints": "Maximale Punktzahl",
             "title": "Klausurergebnisse",
             "examStatisticsTitle": "Klausurstatistik",
@@ -318,6 +320,7 @@
             "notSynced": "Aufgabe nicht gespeichert",
             "notStarted": "Aufgabe nicht gestartet",
             "submitted": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst die Aufgabe weiter bearbeiten und erneut abgeben.",
+            "submittedSubmissionLimitReached": "Du hast eine Lösung für die Aufgabe eingereicht. Du kannst keine Lösungen mehr einreichen, weil du das Limit erreicht hast.",
             "notSubmitted": "Aufgabe nicht eingereicht",
             "notSavedOrSubmitted": "Du hast Änderungen, die nicht abgesendet sind.",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
@@ -592,14 +595,33 @@
                     "duplicatedProgrammingExerciseTitle": "Mehrere Programmieraufgaben in der Klausur besitzen denselben Titel. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Titel",
                     "invalidExerciseConfiguration": "Ein oder mehrere eingegebene Werte liegen außerhalb des zulässigen Bereiches. Bitte passe diese vor dem Import an",
                     "isImporting": "Der Import der Aufgabengruppen und der Aufgaben wird derzeit auf dem Server durchgeführt. Dies kann etwas Zeit in Anspruch nehmen.",
-                    "infoProgrammingExercises": "Programmieraufgaben werden mit der Konfiguration der ursprünglichen importiert. Für eine Änderung der Abgaberichtline, für das Aktivieren / Deaktivieren der Statischen Code Analyse oder dem neu erstellen der Build-Pläne kann diese Import Funktionalität nicht genutzt werden. In diesem Fall bitte die Aufgaben einzeln in die Aufgabengruppen importieren."
+                    "infoProgrammingExercises": "Programmieraufgaben werden mit der Konfiguration der ursprünglichen importiert. Für eine Änderung der Abgaberichtlinie, für das Aktivieren / Deaktivieren der Statischen Code Analyse oder dem neu Erstellen der Build-Pläne kann diese Importfunktionalität nicht genutzt werden. In diesem Fall bitte die Aufgaben einzeln in die Aufgabengruppen importieren."
                 },
                 "importSuccessful": "Import der Aufgabengruppen erfolgreich!"
             },
             "quizPool": "Quiz Pool",
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studierenden. Diese Aktion kann NICHT rückgängig gemacht werden!",
-                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
+                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein.",
+                "summary": {
+                    "title": "Klausur-Zusammenfassung",
+                    "numberExerciseGroups": "Anzahl der Aufgabengruppen",
+                    "numberProgrammingExercises": "Anzahl der Programmieraufgaben",
+                    "numberModelingExercises": "Anzahl der Modellierungsaufgaben",
+                    "numberTextExercises": "Anzahl der Textaufgaben",
+                    "numberFileUploadExercises": "Anzahl der Datei-Upload-Aufgaben",
+                    "numberQuizExercises": "Anzahl der Quiz-Aufgaben",
+                    "numberRepositories": "Anzahl der Repositories",
+                    "numberBuilds": "Anzahl der Builds",
+                    "numberRegisteredStudents": "Anzahl der angemeldeten Studierenden",
+                    "numberNotStartedExams": "Anzahl der Klausuren (nicht gestartet)",
+                    "numberStartedExams": "Anzahl der Klausuren",
+                    "numberSubmittedExams": "Anzahl der Klausuren (abgegeben)",
+                    "numberCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
+                    "numberAnswerPosts": "Anzahl der Antwortbeiträge",
+                    "isTestExam": "Testklausur",
+                    "isTestCourse": "Testkurs"
+                }
             },
             "reset": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft zurückgesetzt werden? Alle Klausuren der Studierenden werden gelöscht. Teilnehmende an der Klausur und die Konfigurationen der Aufgaben bleiben erhalten. Diese Aktion kann NICHT rückgängig gemacht werden!",
@@ -641,7 +663,7 @@
                     "suspiciousBehavior": "Überprüfung von verdächtigem Verhalten"
                 },
                 "descriptionItem": {
-                    "register": "Studierende können auf drei verschiedene Arten registriert werden: einzeln, per .csv Datei oder es können alle zum Kurs der Klausur angemeldeten Studierenden auf einmal angemeldet werden.",
+                    "register": "Studierende können auf drei verschiedene Arten registriert werden: einzeln, per CSV-Datei oder es können alle zum Kurs der Klausur angemeldeten Studierenden auf einmal angemeldet werden.",
                     "exerciseGroups": "Du kannst Übungsgruppen mit mehreren Übungsvarianten erstellen, um Unterschleif für Studierende zu erschweren. Die Punkte aller Aufgaben einer Aufgabengruppe müssen identisch sein. Die Anzahl an Aufgabengruppen muss der Anzahl der Aufgaben in der Klausur entsprechen.",
                     "generateStudentExams": "Du musst die individuellen Klausuren der Studierenden vor Start der Klausur generieren. Die Arbeitszeit kann dabei individuell angepasst werden.\nZudem werden alle Commits des Templates von Programmieraufgaben in einem Commit zusammengefasst.",
                     "prepareExerciseStart": "Du musst die Aufgaben vor Beginn der Klausur vorbereiten.",
@@ -652,7 +674,7 @@
                     "examReview": "Alle relevanten Daten müssen in der Klausur spezifiziert sein.",
                     "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
-                    "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden.",
+                    "exportResults": "Die Klausurergebnisse können in Form einer CSV-Datei exportiert werden.",
                     "editWorkingTime": "Bis zu einer Minute vor dem Ende der Prüfung kannst du deren Dauer verlängern.",
                     "createAnnouncement": "Um wichtige Informationen an alle Studierenden, die gerade an der Klausur arbeiten, zu kommunizieren, kannst du eine Ankündigung machen. Sie wird sofort an alle Studierenden verteilt und angezeigt.",
                     "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können in diesem Dashboard eingesehen werden."

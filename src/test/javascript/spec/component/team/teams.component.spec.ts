@@ -6,7 +6,7 @@ import { NgModel } from '@angular/forms';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { MockTeamService, mockTeams } from '../../helpers/mocks/service/mock-team.service';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
@@ -22,8 +22,6 @@ import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-participate/team-students-list.component';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
-import { RouterTestingModule } from '@angular/router/testing';
-import { teamRoute } from 'app/exercises/shared/team/team.route';
 
 describe('TeamsComponent', () => {
     let comp: TeamsComponent;
@@ -38,7 +36,7 @@ describe('TeamsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxDatatableModule), RouterTestingModule.withRoutes([teamRoute[0]])],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
             declarations: [
                 TeamsComponent,
                 MockDirective(NgModel),
@@ -52,6 +50,7 @@ describe('TeamsComponent', () => {
                 MockComponent(TeamDeleteButtonComponent),
             ],
             providers: [
+                provideRouter([]),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ParticipationService, useClass: MockParticipationService },
                 { provide: ExerciseService, useClass: MockExerciseService },

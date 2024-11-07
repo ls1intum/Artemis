@@ -40,7 +40,7 @@ export class AeolusService {
      */
     getAeolusTemplateScript(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): Observable<string> {
         const uriWithParams = this.buildURIWithParams(language, projectType, staticAnalysis, sequentialRuns, coverage);
-        return this.http.get<string>(`${this.resourceUrl}/templateScripts/` + uriWithParams.uri, {
+        return this.http.get<string>(`${this.resourceUrl}/template-scripts/` + uriWithParams.uri, {
             responseType: 'text' as 'json',
             params: uriWithParams.params,
         });

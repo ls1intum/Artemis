@@ -48,7 +48,7 @@ export class EditTextUnitComponent implements OnInit {
                         name: this.textUnit.name,
                         releaseDate: this.textUnit.releaseDate,
                         content: this.textUnit.content,
-                        competencies: this.textUnit.competencies,
+                        competencyLinks: this.textUnit.competencyLinks,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -56,11 +56,12 @@ export class EditTextUnitComponent implements OnInit {
     }
 
     updateTextUnit(formData: TextUnitFormData) {
-        const { name, releaseDate, content, competencies } = formData;
+        const { name, releaseDate, content, competencyLinks } = formData;
         this.textUnit.name = name;
         this.textUnit.releaseDate = releaseDate;
         this.textUnit.content = content;
-        this.textUnit.competencies = competencies;
+        this.textUnit.competencyLinks = competencyLinks;
+
         this.isLoading = true;
         this.textUnitService
             .update(this.textUnit, this.lectureId)

@@ -9,9 +9,9 @@ build () {
 checkers () {
   echo '⚙️ executing checkers'
   # all java files in the assignment folder should have maximal line length 80
-  pipeline-helper line-length -l 80 -s assignment/ -e java
+  pipeline-helper line-length -l 80 -s ${studentParentWorkingDirectoryName}/ -e java
   # checks that the file exists and is not empty for non gui programs
-  pipeline-helper file-exists assignment/Tests.txt
+  pipeline-helper file-exists ${studentParentWorkingDirectoryName}/Tests.txt
 
   main_checker_output=$(pipeline-helper main-method -s target/classes)
 

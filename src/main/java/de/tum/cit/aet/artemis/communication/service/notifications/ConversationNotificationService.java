@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.domain.notification.ConversationNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationPlaceholderCreator;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
@@ -57,37 +58,39 @@ public class ConversationNotificationService {
      * @return the created notification
      */
     public ConversationNotification createNotification(Post createdMessage, Conversation conversation, Course course, Set<User> mentionedUsers) {
-        String notificationText;
-        String[] placeholders;
         NotificationType notificationType = CONVERSATION_NEW_MESSAGE;
         String conversationName = conversation.getHumanReadableNameForReceiver(createdMessage.getAuthor());
+        String conversationType;
+        String notificationText;
 
         // add channel/groupChat/oneToOneChat string to placeholders for notification to distinguish in mobile client
-        if (conversation instanceof Channel channel) {
-            notificationText = NEW_MESSAGE_CHANNEL_TEXT;
-            placeholders = createPlaceholdersNewMessageChannelText(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
-                    createdMessage.getAuthor().getName(), conversationName, "channel");
-            notificationType = getNotificationTypeForChannel(channel);
+        switch (conversation) {
+            case Channel channel -> {
+                notificationText = NEW_MESSAGE_CHANNEL_TEXT;
+                conversationType = "channel";
+                notificationType = getNotificationTypeForChannel(channel);
+            }
+            case GroupChat ignored -> {
+                notificationText = NEW_MESSAGE_GROUP_CHAT_TEXT;
+                conversationType = "groupChat";
+            }
+            case OneToOneChat ignored -> {
+                notificationText = NEW_MESSAGE_DIRECT_TEXT;
+                conversationType = "oneToOneChat";
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + conversation);
         }
-        else if (conversation instanceof GroupChat) {
-            notificationText = NEW_MESSAGE_GROUP_CHAT_TEXT;
-            placeholders = createPlaceholdersNewMessageChannelText(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
-                    createdMessage.getAuthor().getName(), conversationName, "groupChat");
-        }
-        else {
-            notificationText = NEW_MESSAGE_DIRECT_TEXT;
-            placeholders = createPlaceholdersNewMessageChannelText(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
-                    createdMessage.getAuthor().getName(), conversationName, "oneToOneChat");
-        }
+        String[] placeholders = createPlaceholdersNewMessageChannelText(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
+                conversationName, createdMessage.getAuthor().getName(), conversationType);
         ConversationNotification notification = createConversationMessageNotification(course.getId(), createdMessage, notificationType, notificationText, true, placeholders);
         save(notification, mentionedUsers, placeholders);
         return notification;
     }
 
     @NotificationPlaceholderCreator(values = { CONVERSATION_NEW_MESSAGE })
-    public static String[] createPlaceholdersNewMessageChannelText(String courseTitle, String messageContent, String messageCreationDate, String channelName, String authorName,
-            String conversationType) {
-        return new String[] { courseTitle, messageContent, messageCreationDate, channelName, authorName, conversationType };
+    public static String[] createPlaceholdersNewMessageChannelText(String courseTitle, String messageContent, String messageCreationDate, String conversationName,
+            String authorName, String conversationType) {
+        return new String[] { courseTitle, messageContent, messageCreationDate, conversationName, authorName, conversationType };
     }
 
     private void save(ConversationNotification notification, Set<User> mentionedUsers, String[] placeHolders) {

@@ -1,7 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, ParamMap, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
@@ -63,7 +62,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     beforeEach(() => {
         paramMapSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule],
+            imports: [ArtemisTestModule, RouterModule.forRoot([])],
             declarations: [
                 ModelingAssessmentEditorComponent,
                 MockComponent(AssessmentLayoutComponent),

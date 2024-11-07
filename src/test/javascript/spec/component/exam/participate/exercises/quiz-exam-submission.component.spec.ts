@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
@@ -25,6 +24,7 @@ import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
+import { provideRouter } from '@angular/router';
 
 describe('QuizExamSubmissionComponent', () => {
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
@@ -47,7 +47,7 @@ describe('QuizExamSubmissionComponent', () => {
         shortAnswerQuestion.id = 3;
 
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), NgbTooltipMocksModule],
+            imports: [NgbTooltipMocksModule],
             declarations: [
                 QuizExamSubmissionComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -56,7 +56,7 @@ describe('QuizExamSubmissionComponent', () => {
                 MockComponent(DragAndDropQuestionComponent),
                 MockComponent(ShortAnswerQuestionComponent),
             ],
-            providers: [MockProvider(ArtemisQuizService)],
+            providers: [provideRouter([]), MockProvider(ArtemisQuizService)],
         })
             .compileComponents()
             .then(() => {

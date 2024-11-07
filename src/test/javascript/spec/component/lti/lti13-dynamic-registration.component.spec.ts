@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { Lti13DynamicRegistrationComponent } from 'app/lti/lti13-dynamic-registration.component';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router, convertToParamMap } from '@angular/router';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { HttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of, throwError } from 'rxjs';
 
@@ -20,11 +20,8 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         } as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
-            providers: [
-                { provide: ActivatedRoute, useValue: route },
-                { provide: Router, useClass: MockRouter },
-            ],
+            imports: [ArtemisTestModule],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ActivatedRoute, useValue: route }, { provide: Router, useClass: MockRouter }],
         })
             .compileComponents()
             .then(() => {

@@ -1,4 +1,4 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
@@ -6,6 +6,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { CourseForImportDTOPagingService } from 'app/course/course-for-import-dto-paging-service';
 import { CourseForImportDTO } from 'app/entities/course.model';
 import { SortingOrder } from 'app/shared/table/pageable-table';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('CourseForImportDtoPagingService', () => {
     let pagingService: CourseForImportDTOPagingService;
@@ -14,8 +15,8 @@ describe('CourseForImportDtoPagingService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [{ provide: AccountService, useClass: MockAccountService }],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         });
 
         pagingService = TestBed.inject(CourseForImportDTOPagingService);

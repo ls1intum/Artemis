@@ -1,4 +1,3 @@
-import { RouterTestingModule } from '@angular/router/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
@@ -7,6 +6,7 @@ import { MockModule, MockPipe } from 'ng-mocks';
 import { DoughnutChartType } from 'app/course/manage/detail/course-detail.component';
 import { Course } from 'app/entities/course.model';
 import { PieChartModule } from '@swimlane/ngx-charts';
+import { provideRouter } from '@angular/router';
 
 describe('CourseDetailDoughnutChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailDoughnutChartComponent>;
@@ -19,8 +19,9 @@ describe('CourseDetailDoughnutChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(PieChartModule)],
+            imports: [ArtemisTestModule, MockModule(PieChartModule)],
             declarations: [CourseDetailDoughnutChartComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [provideRouter([])],
         })
             .compileComponents()
             .then(() => {
