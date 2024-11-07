@@ -92,7 +92,7 @@ describe('CodeButtonComponent', () => {
                 },
             },
         },
-        theiaPortalURL: 'https://theia-test.k8s.ase.cit.tum.de',
+        theiaPortalURL: 'https://theia.artemis.cit.tum.de',
         operatorName: 'TUM',
     };
 
