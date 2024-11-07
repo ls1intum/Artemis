@@ -74,12 +74,12 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
     public void requestAndHandleResponse(IrisLectureChatSession lectureChatSession) {
         var session = (IrisLectureChatSession) irisSessionRepository.findByIdWithMessagesAndContents(lectureChatSession.getId());
         var lecture = lectureRepository.findByIdElseThrow(session.getLecture().getId());
+        var course = lecture.getCourse();
 
-        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.LECTURE_CHAT, lecture)) {
+        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.LECTURE_CHAT, course)) {
             throw new ConflictException("Iris is not enabled for this lecture", "Iris", "irisDisabled");
         }
 
-        var course = lecture.getCourse();
         var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
         System.out.println(conversation);
         pyrisPipelineService.executePipeline("lecture-chat", "default",
@@ -125,7 +125,7 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
 
     @Override
     public void checkIsFeatureActivatedFor(IrisLectureChatSession session) {
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, session.getLecture());
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, session.getLecture().getCourse());
     }
 
     @Override

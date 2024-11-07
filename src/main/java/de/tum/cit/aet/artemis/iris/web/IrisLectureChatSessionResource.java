@@ -56,7 +56,7 @@ public class IrisLectureChatSessionResource {
         var lecture = lectureRepository.findByIdElseThrow(lectureId);
         validateLecture(lecture);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         var sessionOptional = irisLectureChatSessionRepository.findLatestSessionsByLectureIdAndUserIdWithMessages(lecture.getId(), user.getId(), Pageable.ofSize(1)).stream()
@@ -75,7 +75,7 @@ public class IrisLectureChatSessionResource {
         var lecture = lectureRepository.findByIdElseThrow(lectureId);
         validateLecture(lecture);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasAcceptedIrisElseThrow();
 
@@ -96,7 +96,7 @@ public class IrisLectureChatSessionResource {
         var lecture = lectureRepository.findByIdElseThrow(lectureId);
         validateLecture(lecture);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasAcceptedIrisElseThrow();
 

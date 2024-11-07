@@ -474,6 +474,7 @@ public class IrisSettingsService {
      * @param course The course to check
      */
     public void isEnabledForElseThrow(IrisSubSettingsType type, Course course) {
+        System.out.println(isEnabledFor(type, course));
         if (!isEnabledFor(type, course)) {
             throw new AccessForbiddenAlertException("The Iris " + type.name() + " feature is disabled for this course.", "Iris", "iris." + type.name().toLowerCase() + "Disabled");
         }
@@ -488,6 +489,7 @@ public class IrisSettingsService {
      */
     public boolean isEnabledFor(IrisSubSettingsType type, Course course) {
         var settings = getCombinedIrisSettingsFor(course, true);
+        System.out.println(settings.toString());
         return isFeatureEnabledInSettings(settings, type);
     }
 
@@ -506,12 +508,12 @@ public class IrisSettingsService {
     /**
      * Checks whether an Iris feature is enabled for an exercise.
      *
-     * @param type    The Iris feature to check
-     * @param lecture The exercise to check
+     * @param type   The Iris feature to check
+     * @param course The exercise to check
      * @return Whether the Iris feature is enabled for the exercise
      */
-    public boolean isEnabledFor(IrisSubSettingsType type, Lecture lecture) {
-        var settings = getCombinedIrisSettingsFor(lecture, true);
+    public boolean isEnabledForLecture(IrisSubSettingsType type, Course course) {
+        var settings = getCombinedIrisSettingsFor(course, true);
         return isFeatureEnabledInSettings(settings, type);
     }
 
@@ -526,19 +528,6 @@ public class IrisSettingsService {
         if (!isEnabledFor(type, exercise)) {
             throw new AccessForbiddenAlertException("The Iris " + type.name() + " feature is disabled for this exercise.", "Iris",
                     "iris." + type.name().toLowerCase() + "Disabled");
-        }
-    }
-
-    /**
-     * Checks whether an Iris feature is enabled for an exercise.
-     * Throws an exception if the feature is disabled.
-     *
-     * @param type    The Iris feature to check
-     * @param lecture The exercise to check
-     */
-    public void isEnabledForElseThrow(IrisSubSettingsType type, Lecture lecture) {
-        if (!isEnabledFor(type, lecture)) {
-            throw new AccessForbiddenAlertException("The Iris " + type.name() + " feature is disabled for this lecture.", "Iris", "iris." + type.name().toLowerCase() + "Disabled");
         }
     }
 
@@ -579,10 +568,10 @@ public class IrisSettingsService {
 
         // @formatter:off
         return new IrisCombinedSettingsDTO(
-                irisSubSettingsService.combineChatSettings(settingsList, minimal),
-                irisSubSettingsService.combineTextExerciseChatSettings(settingsList, minimal),
-                irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal),
-                irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal),
+            irisSubSettingsService.combineChatSettings(settingsList, minimal),
+            irisSubSettingsService.combineTextExerciseChatSettings(settingsList, minimal),
+            irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal),
+            irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal),
             irisSubSettingsService.combineLectureChatSettings(settingsList, minimal)
         );
         // @formatter:on
@@ -742,7 +731,7 @@ public class IrisSettingsService {
             case TEXT_EXERCISE_CHAT -> settings.irisTextExerciseChatSettings().enabled();
             case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().enabled();
             case LECTURE_INGESTION -> settings.irisLectureIngestionSettings().enabled();
-            case LECTURE_CHAT -> settings.irisLectureChatSettings().enabled(); // TODO
+            case LECTURE_CHAT -> settings.irisLectureChatSettings().enabled();
         };
     }
 }
