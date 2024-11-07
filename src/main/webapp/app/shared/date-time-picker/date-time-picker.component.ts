@@ -26,7 +26,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;
     labelName = input<string>();
     labelTooltip = input<string>();
-    value = model<any>();
+    value = model<dayjs.Dayjs | Date | null>();
     disabled = input<boolean>(false);
     error = input<boolean>();
     warning = input<boolean>();
