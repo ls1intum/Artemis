@@ -100,6 +100,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
+    @Query("""
+            SELECT u
+            FROM User u
+            LEFT JOIN FETCH u.groups
+            LEFT JOIN FETCH u.authorities
+            LEFT JOIN FETCH u.learnerProfile lp
+            LEFT JOIN FETCH lp.courseLearnerProfiles clp ON clp.course.id = :courseId
+            WHERE u.login = :login
+            """)
+    Optional<User> findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(@Param("login") String login, @Param("courseId") long courseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
@@ -899,6 +911,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     default User getUserWithGroupsAndAuthorities() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin));
+    }
+
+    /**
+     * Get user with user groups and authorities of currently logged-in user
+     *
+     * @param courseId the id of the course for which to load the user and the course learner profile
+     * @return currently logged-in user
+     */
+    @NotNull
+    default User getUserWithGroupsAndAuthoritiesAndLearnerProfile(long courseId) {
+        String currentUserLogin = getCurrentUserLogin();
+        return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(currentUserLogin, courseId));
     }
 
     /**

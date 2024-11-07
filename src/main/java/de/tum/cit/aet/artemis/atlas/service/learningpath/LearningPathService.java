@@ -400,7 +400,7 @@ public class LearningPathService {
      * @return the navigation overview
      */
     public LearningPathNavigationOverviewDTO getLearningPathNavigationOverview(long learningPathId) {
-        var learningPath = findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
+        var learningPath = findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(learningPathId);
         if (!userRepository.getUser().equals(learningPath.getUser())) {
             throw new AccessForbiddenException("You are not allowed to access this learning path");
         }
@@ -416,8 +416,8 @@ public class LearningPathService {
      * @param learningPathId the id of the learning path to fetch
      * @return the learning path with fetched data
      */
-    public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(long learningPathId) {
-        LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
+    public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(long learningPathId) {
+        LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
 
         // Remove exercises that are not visible to students
         learningPath.getCompetencies().forEach(competency -> competency

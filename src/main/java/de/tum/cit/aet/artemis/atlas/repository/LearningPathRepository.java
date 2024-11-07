@@ -63,11 +63,22 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
             """)
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencies", "competencies.lectureUnitLinks", "competencies.lectureUnitLinks.lectureUnit", "competencies.exerciseLinks",
-            "competencies.exerciseLinks.exercise" })
-    Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesById(long learningPathId);
+    @Query("""
+            SELECT l
+            FROM LearningPath l
+            LEFT JOIN FETCH l.competencies c
+            LEFT JOIN FETCH c.lectureUnitLinks lul
+            LEFT JOIN FETCH lul.lectureUnit
+            LEFT JOIN FETCH c.exerciseLinks el
+            LEFT JOIN FETCH el.exercise
+            LEFT JOIN FETCH l.user u
+            LEFT JOIN FETCH u.learnerProfile lp
+            LEFT JOIN FETCH lp.courseLearnerProfiles clp ON clp.course.id = l.course.id
+            WHERE lp.id = :learningPathId
+            """)
+    Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfile(long learningPathId);
 
-    default LearningPath findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(long learningPathId) {
-        return getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesById(learningPathId), learningPathId);
+    default LearningPath findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(long learningPathId) {
+        return getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfile(learningPathId), learningPathId);
     }
 }
