@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -12,8 +12,7 @@ export interface CleanupServiceExecutionRecordDTO {
 @Injectable({ providedIn: 'root' })
 export class DataCleanupService {
     private readonly adminResourceUrl = 'api/admin/cleanup';
-
-    constructor(private http: HttpClient) {}
+    private http = inject(HttpClient);
 
     /**
      * Send DELETE request to delete orphaned data.
