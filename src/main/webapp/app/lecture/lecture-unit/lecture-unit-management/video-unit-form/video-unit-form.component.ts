@@ -1,9 +1,9 @@
 import dayjs from 'dayjs/esm';
-import { Component, EventEmitter, Input, OnChanges, Output, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject, input, output, untracked } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Competency, CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 export interface VideoUnitFormData {
@@ -58,32 +58,41 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     selector: 'jhi-video-unit-form',
     templateUrl: './video-unit-form.component.html',
 })
-export class VideoUnitFormComponent implements OnChanges {
+export class VideoUnitFormComponent {
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
 
-    @Input() formData: VideoUnitFormData;
-    @Input() isEditMode = false;
+    private readonly formBuilder = inject(FormBuilder);
 
-    @Output() formSubmitted: EventEmitter<VideoUnitFormData> = new EventEmitter<VideoUnitFormData>();
+    formData = input<VideoUnitFormData>();
+    isEditMode = input<boolean>(false);
 
-    @Input() hasCancelButton: boolean;
-    @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
+    formSubmitted = output<VideoUnitFormData>();
+
+    hasCancelButton = input<boolean>();
+    onCancel = output<void>();
 
     videoSourceUrlValidator = videoSourceUrlValidator;
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
-    private readonly formBuilder = inject(FormBuilder);
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
         description: [undefined as string | undefined, [Validators.maxLength(1000)]],
         releaseDate: [undefined as dayjs.Dayjs | undefined],
         source: [undefined as string | undefined, [Validators.required, this.videoSourceUrlValidator]],
         urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
-        competencies: [undefined as Competency[] | undefined],
+        competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
     isFormValid = computed(() => this.statusChanges() === 'VALID');
+
+    constructor() {
+        effect(() => {
+            if (this.isEditMode() && this.formData()) {
+                untracked(() => this.setFormValues(this.formData()!));
+            }
+        });
+    }
 
     get nameControl() {
         return this.form.get('name');
@@ -103,12 +112,6 @@ export class VideoUnitFormComponent implements OnChanges {
 
     get urlHelperControl() {
         return this.form.get('urlHelper');
-    }
-
-    ngOnChanges(): void {
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
-        }
     }
 
     private setFormValues(formData: VideoUnitFormData) {
