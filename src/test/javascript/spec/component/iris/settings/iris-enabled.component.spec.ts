@@ -52,7 +52,7 @@ describe('IrisEnabledComponent', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('irisSubSettingsType', subSettingstype);
         fixture.detectChanges();
-        expect(getExerciseSettingsSpy).toHaveBeenCalled();
+        expect(getExerciseSettingsSpy).toHaveBeenCalledOnce();
         await Promise.resolve();
         expect(comp.irisSettings).toBe(irisSettings);
         expect(comp.irisSubSettings).toBeDefined();

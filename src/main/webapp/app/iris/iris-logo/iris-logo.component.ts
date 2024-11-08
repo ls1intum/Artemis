@@ -20,7 +20,7 @@ export enum IrisLogoLookDirection {
     standalone: true,
 })
 export class IrisLogoComponent implements OnInit {
-    size = input<IrisLogoSize | number>(IrisLogoSize.BIG);
+    size = input<IrisLogoSize>(IrisLogoSize.BIG);
 
     look = input<IrisLogoLookDirection>(IrisLogoLookDirection.RIGHT);
 

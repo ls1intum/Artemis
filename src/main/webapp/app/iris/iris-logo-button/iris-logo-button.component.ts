@@ -6,7 +6,6 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/iris-logo/iris-logo.co
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { NgbTooltipMocksModule } from '../../../../../test/javascript/spec/helpers/mocks/directive/ngbTooltipMocks.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 
 @Component({
@@ -14,7 +13,7 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
     templateUrl: './iris-logo-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
-    imports: [CommonModule, FontAwesomeModule, IrisLogoComponent, ArtemisSharedModule, NgbTooltipMocksModule, FeatureToggleModule],
+    imports: [CommonModule, FontAwesomeModule, IrisLogoComponent, ArtemisSharedModule, FeatureToggleModule],
 })
 export class IrisLogoButtonComponent {
     btnType = input<ButtonType>(ButtonType.PRIMARY);
