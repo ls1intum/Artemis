@@ -14,8 +14,8 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { LectureUpdateWizardStepComponent } from 'app/lecture/wizard-mode/lecture-update-wizard-step.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode/lecture-wizard-attachments.component';
-import { LectureUpdatePeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
-import { LectureUpdateTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
+import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
+import { LectureUpdateWizardTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import dayjs from 'dayjs/esm';
@@ -33,8 +33,8 @@ describe('LectureUpdateWizardComponent', () => {
                 MockComponent(LectureUpdateWizardStepComponent),
                 MockComponent(LectureUpdateWizardUnitsComponent),
                 MockComponent(LectureUpdateWizardAttachmentsComponent),
-                MockComponent(LectureUpdatePeriodComponent),
-                MockComponent(LectureUpdateTitleComponent),
+                MockComponent(LectureUpdateWizardPeriodComponent),
+                MockComponent(LectureUpdateWizardTitleComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
             ],

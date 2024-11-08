@@ -6,7 +6,7 @@ import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.ac
     selector: 'jhi-lecture-update-wizard-title',
     templateUrl: './lecture-wizard-title.component.html',
 })
-export class LectureUpdateTitleComponent {
+export class LectureUpdateWizardTitleComponent {
     @Input() currentStep: number;
     @Input() lecture: Lecture;
 

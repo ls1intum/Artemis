@@ -15,8 +15,8 @@ import { ArtemisLectureUnitManagementModule } from 'app/lecture/lecture-unit/lec
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
-import { LectureUpdateTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
-import { LectureUpdatePeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
+import { LectureUpdateWizardTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
+import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
 import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode/lecture-wizard-attachments.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { LectureUpdateWizardStepComponent } from 'app/lecture/wizard-mode/lecture-update-wizard-step.component';
@@ -50,8 +50,8 @@ const ENTITY_STATES = [...lectureRoute];
         LectureUpdateComponent,
         LectureUpdateWizardComponent,
         LectureAttachmentsComponent,
-        LectureUpdateTitleComponent,
-        LectureUpdatePeriodComponent,
+        LectureUpdateWizardTitleComponent,
+        LectureUpdateWizardPeriodComponent,
         LectureUpdateWizardAttachmentsComponent,
         LectureUpdateWizardUnitsComponent,
         LectureUpdateWizardStepComponent,

@@ -16,7 +16,7 @@ import { UPLOAD_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.con
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
-import { LectureUpdatePeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
+import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
@@ -41,7 +41,7 @@ export class LectureUpdateComponent implements OnInit {
     isEditMode = signal<boolean>(false);
 
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
-    @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdatePeriodComponent;
+    @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdateWizardPeriodComponent;
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
     periodSectionDatepickers = viewChildren(FormDateTimePickerComponent);
     unitSection = viewChild(LectureUpdateWizardUnitsComponent);
