@@ -7,16 +7,23 @@
             <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="user_id" type="bigint">
-                <constraints nullable="false"/>
-            </column>
         </createTable>
 
-        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="learner_profile" constraintName="FK_learner_profile_user" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addColumn tableName="jhi_user">
+            <column name="learner_profile_id" type="bigint"/>
+        </addColumn>
+
+        <addForeignKeyConstraint baseColumnNames="learner_profile_id" baseTableName="jhi_user" constraintName="FK_user_learner_profile" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="learner_profile" validate="true"/>
 
         <sql>
-            INSERT INTO learner_profile (user_id)
-            SELECT id FROM jhi_user;
+            INSERT INTO learner_profile (id)
+            SELECT u.id
+            FROM jhi_user u;
+        </sql>
+
+        <sql>
+            UPDATE jhi_user u
+            SET learner_profile_id = u.id;
         </sql>
 
         <createTable tableName="course_learner_profile">

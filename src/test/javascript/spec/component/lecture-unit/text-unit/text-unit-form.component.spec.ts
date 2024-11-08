@@ -167,12 +167,11 @@ describe('TextUnitFormComponent', () => {
 
         // init
         textUnitFormComponentFixture.detectChanges(); // ngOnInit
-        textUnitFormComponent.isEditMode = true;
+        textUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
         tick();
 
-        // setting the form data
-        textUnitFormComponent.formData = formData;
-        textUnitFormComponent.ngOnChanges(); // ngOnChanges
+        textUnitFormComponentFixture.componentRef.setInput('formData', formData);
+        textUnitFormComponent.ngOnChanges();
         textUnitFormComponentFixture.detectChanges();
 
         expect(textUnitFormComponent.nameControl!.value).toEqual(formData.name);

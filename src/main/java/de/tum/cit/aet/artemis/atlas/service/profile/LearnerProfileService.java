@@ -9,6 +9,7 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -18,19 +19,22 @@ public class LearnerProfileService {
 
     private final CourseLearnerProfileRepository courseLearnerProfileRepository;
 
-    public LearnerProfileService(LearnerProfileRepository learnerProfileRepository, CourseLearnerProfileRepository courseLearnerProfileRepository) {
+    private final UserRepository userRepository;
+
+    public LearnerProfileService(LearnerProfileRepository learnerProfileRepository, CourseLearnerProfileRepository courseLearnerProfileRepository, UserRepository userRepository) {
         this.learnerProfileRepository = learnerProfileRepository;
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
+        this.userRepository = userRepository;
     }
 
-    public LearnerProfile createProfile(User user) {
+    public void createProfile(User user) {
         var profile = new LearnerProfile();
         profile.setUser(user);
-        return learnerProfileRepository.save(profile);
+        user.setLearnerProfile(profile);
+        userRepository.save(user);
     }
 
     public void deleteProfile(User user) {
         learnerProfileRepository.deleteByUser(user);
-        courseLearnerProfileRepository.deleteAllByUser(user);
     }
 }

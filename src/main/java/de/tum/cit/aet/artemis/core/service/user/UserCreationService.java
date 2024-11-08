@@ -194,14 +194,14 @@ public class UserCreationService {
         user.setActivated(true);
         user.setInternal(true);
         user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
-        var savedUser = saveUser(user);
+        saveUser(user);
 
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(savedUser, password));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(savedUser, password));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, password));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
 
-        addUserToGroupsInternal(savedUser, userDTO.getGroups());
+        addUserToGroupsInternal(user, userDTO.getGroups());
 
-        learnerProfileService.createProfile(savedUser);
+        learnerProfileService.createProfile(user);
 
         log.debug("Created Information for User: {}", user);
         return user;

@@ -470,6 +470,7 @@ public class UserService {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
             learnerProfileService.deleteProfile(user);
             user.setDeleted(true);
+            user.setLearnerProfile(null);
             anonymizeUser(user);
             log.warn("Soft Deleted User: {}", user);
         });

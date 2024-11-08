@@ -50,10 +50,10 @@
                 </div>
                 <div class="row">
                     <div class="col-12">
-                        <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                        <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isFormValid()">
                             <span jhiTranslate="entity.action.submit"></span>
                         </button>
-                        @if (hasCancelButton) {
+                        @if (hasCancelButton()) {
                             <button type="button" (click)="cancelForm()" class="btn btn-default">
                                 <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                             </button>
