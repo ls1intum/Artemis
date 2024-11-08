@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenTool;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
 
 /**
@@ -105,16 +106,18 @@ public class PublicUserJwtResource {
     }
 
     /**
-     * Sends a theia token back as cookie and bearer token
+     * Sends a tool token back as cookie or bearer token
      *
+     * @param tool     the tool for which the token is requested
+     * @param asCookie if true the token is sent back as a cookie
      * @param request  HTTP request
      * @param response HTTP response
-     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized)
+     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) and depending on the asCookie flag a bearer token in the body
      */
-    @PostMapping("theia-token")
+    @PostMapping("tool-token")
     @EnforceAtLeastStudent
-    public ResponseEntity<String> getTheiaToken(@RequestParam(name = "as-cookie", defaultValue = "false") boolean asCookie, HttpServletRequest request,
-            HttpServletResponse response) {
+    public ResponseEntity<String> getToolToken(@RequestParam(name = "tool", required = true) TokenTool tool,
+            @RequestParam(name = "as-cookie", defaultValue = "false") boolean asCookie, HttpServletRequest request, HttpServletResponse response) {
         // remaining time in milliseconds
         var jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);
         if (jwtToken == null) {
@@ -126,7 +129,7 @@ public class PublicUserJwtResource {
 
         // 1 day validity
         long maxDuration = Duration.ofDays(1).toMillis();
-        ResponseCookie responseCookie = jwtCookieService.buildTheiaCookie(Math.min(tokenRemainingTime, maxDuration));
+        ResponseCookie responseCookie = jwtCookieService.buildToolCookie(Math.min(tokenRemainingTime, maxDuration), tool);
 
         if (asCookie) {
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
