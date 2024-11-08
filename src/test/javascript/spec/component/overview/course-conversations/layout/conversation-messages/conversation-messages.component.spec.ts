@@ -19,6 +19,7 @@ import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import dayjs from 'dayjs';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -139,6 +140,49 @@ examples.forEach((activeConversation) => {
             expect(conversation!.type).toEqual(activeConversation.type);
             expect(conversation!.id).toEqual(activeConversation.id);
         }));
+
+        it('should set posts and group them correctly', () => {
+            const posts = [
+                { id: 1, creationDate: dayjs().subtract(2, 'hours'), author: { id: 1 } } as Post,
+                { id: 4, creationDate: dayjs().subtract(3, 'minutes'), author: { id: 1 } } as Post,
+                { id: 2, creationDate: dayjs().subtract(1, 'minutes'), author: { id: 1 } } as Post,
+                { id: 3, creationDate: dayjs(), author: { id: 2 } } as Post,
+            ];
+
+            component.setPosts(posts);
+
+            expect(component.posts).toHaveLength(4);
+            expect(component.groupedPosts).toHaveLength(3);
+
+            expect(component.groupedPosts[0].posts).toHaveLength(1);
+            expect(component.groupedPosts[0].posts[0].id).toBe(1);
+            expect(component.groupedPosts[0].posts[0].isConsecutive).toBeFalse();
+
+            expect(component.groupedPosts[1].posts).toHaveLength(2);
+            expect(component.groupedPosts[1].posts[0].id).toBe(4);
+            expect(component.groupedPosts[1].posts[0].isConsecutive).toBeFalse();
+            expect(component.groupedPosts[1].posts[1].id).toBe(2);
+            expect(component.groupedPosts[1].posts[1].isConsecutive).toBeTrue();
+
+            expect(component.groupedPosts[2].posts).toHaveLength(1);
+            expect(component.groupedPosts[2].posts[0].id).toBe(3);
+            expect(component.groupedPosts[2].posts[0].isConsecutive).toBeFalse();
+        });
+
+        it('should not group posts that are exactly 5 minutes apart', () => {
+            const posts = [
+                { id: 1, creationDate: dayjs().subtract(10, 'minutes'), author: { id: 1 } } as Post,
+                { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: { id: 1 } } as Post,
+                { id: 3, creationDate: dayjs(), author: { id: 1 } } as Post,
+            ];
+
+            component.setPosts(posts);
+
+            expect(component.groupedPosts).toHaveLength(3);
+            expect(component.groupedPosts[0].posts).toHaveLength(1);
+            expect(component.groupedPosts[1].posts).toHaveLength(1);
+            expect(component.groupedPosts[2].posts).toHaveLength(1);
+        });
 
         if (getAsChannelDTO(activeConversation)?.isAnnouncementChannel) {
             it('should display the "new announcement" button when the conversation is an announcement channel', fakeAsync(() => {
