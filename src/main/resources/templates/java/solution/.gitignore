@@ -27,6 +27,8 @@ target/
 # Taken from https://github.com/github/gitignore
 
 ### Eclipse
+.project
+.classpath
 .metadata
 bin/
 tmp/

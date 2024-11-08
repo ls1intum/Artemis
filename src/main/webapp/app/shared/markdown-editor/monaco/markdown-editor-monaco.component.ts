@@ -26,7 +26,8 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
-import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
+import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
+import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { faAngleDown, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
@@ -50,6 +51,7 @@ import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -158,13 +160,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         new BoldAction(),
         new ItalicAction(),
         new UnderlineAction(),
+        new StrikethroughAction(),
         new QuoteAction(),
         new CodeAction(),
         new CodeBlockAction('java'),
         new UrlAction(),
         new AttachmentAction(),
         new OrderedListAction(),
-        new UnorderedListAction(),
+        new BulletedListAction(),
     ];
 
     @Input()
@@ -290,6 +293,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         return action?.hideInEditor ? undefined : action;
     }
 
+    handleActionClick(event: MouseEvent, action: TextEditorAction): void {
+        const x = event.clientX;
+        const y = event.clientY;
+        if (action instanceof EmojiAction) {
+            action.setPoint({ x, y });
+        }
+
+        action.executeInCurrentEditor();
+    }
+
     ngAfterViewInit(): void {
         this.adjustEditorDimensions();
         this.monacoEditor.setWordWrap(true);
@@ -318,6 +331,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 if (action instanceof FullscreenAction) {
                     // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
                     action.element = this.isInitialHeightExternal() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
+                } else if (this.enableFileUpload && action instanceof AttachmentAction) {
+                    action.setUploadCallback(this.embedFiles.bind(this));
                 }
                 this.monacoEditor.registerAction(action);
             });
@@ -477,6 +492,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param inputElement The input element that contains the files. If provided, the input element will be reset.
      */
     embedFiles(files: File[], inputElement?: HTMLInputElement): void {
+        if (!this.enableFileUpload) {
+            return;
+        }
         files.forEach((file) => {
             (this.useCommunicationForFileUpload()
                 ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(

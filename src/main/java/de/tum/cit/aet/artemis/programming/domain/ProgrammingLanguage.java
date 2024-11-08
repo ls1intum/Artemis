@@ -41,6 +41,7 @@ public enum ProgrammingLanguage {
         ASSEMBLER,
         C,
         C_PLUS_PLUS,
+        C_SHARP,
         HASKELL,
         JAVA,
         JAVASCRIPT,
