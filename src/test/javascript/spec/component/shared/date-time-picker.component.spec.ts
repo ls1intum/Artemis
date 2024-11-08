@@ -24,6 +24,7 @@ describe('FormDateTimePickerComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(FormDateTimePickerComponent);
                 component = fixture.componentInstance;
+                component.dateInput = { reset: jest.fn() } as any;
             });
     });
 
@@ -114,5 +115,15 @@ describe('FormDateTimePickerComponent', () => {
         expect(dayjs(component.minDate())).toEqual(expectedMinDate);
         expect(dayjs(component.maxDate())).toEqual(expectedMaxDate);
         expect(dayjs(component.startDate())).toEqual(expectedStartDate);
+    });
+
+    it('should clear the datepicker value', () => {
+        const resetSpy = jest.spyOn(component.dateInput, 'reset').mockImplementation();
+        const updateSignalsSpy = jest.spyOn(component, 'updateSignals').mockImplementation();
+
+        component.clearDate();
+
+        expect(resetSpy).toHaveBeenCalledWith(undefined);
+        expect(updateSignalsSpy).toHaveBeenCalled();
     });
 });
