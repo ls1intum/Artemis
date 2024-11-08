@@ -17,4 +17,5 @@ export class PostingThreadComponent {
     @Input() showChannelReference?: boolean;
     @Input() hasChannelModerationRights = false;
     @Output() openThread = new EventEmitter<Post>();
+    @Input() isConsecutive: boolean | undefined = false;
 }
