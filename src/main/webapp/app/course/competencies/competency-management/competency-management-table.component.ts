@@ -22,6 +22,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     @Input() courseId: number;
     @Input() courseCompetencies: CourseCompetency[];
+    @Input() allCompetencies: CourseCompetency[];
     @Input() competencyType: CourseCompetencyType;
     @Input() standardizedCompetenciesEnabled: boolean;
 
@@ -95,6 +96,7 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
         const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is CourseCompetency => !!element);
         this.courseCompetencies.push(...importedCompetencies);
+        this.allCompetencies.push(...importedCompetencies);
     }
 
     /**
