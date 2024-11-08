@@ -81,6 +81,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     faEnvelope = faEnvelope;
     faCircleNotch = faCircleNotch;
     isMobile = false;
+    isHiddenInputWithCallToAction = false;
+    isHiddenInputFull = false;
 
     private layoutService: LayoutService = inject(LayoutService);
 
@@ -145,6 +147,14 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private onActiveConversationChange() {
+        if (this._activeConversation !== undefined && this.getAsChannel(this._activeConversation)?.isAnnouncementChannel) {
+            this.isHiddenInputFull = !canCreateNewMessageInConversation(this._activeConversation);
+            this.isHiddenInputWithCallToAction = canCreateNewMessageInConversation(this._activeConversation);
+        } else {
+            this.isHiddenInputFull = false;
+            this.isHiddenInputWithCallToAction = false;
+        }
+
         if (this.course && this._activeConversation) {
             if (this.searchInput) {
                 this.searchInput.nativeElement.value = '';

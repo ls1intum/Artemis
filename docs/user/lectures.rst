@@ -154,44 +154,44 @@ See :ref:`Adaptive Learning <adaptive-learning>` for more information.
 
 
 .. |lectures-overview| image:: lectures/lectures-overview.png
-    :width: 800
+    :width: 1000
 .. |lecture-details| image:: lectures/lecture-details.png
-    :width: 800
+    :width: 1000
 .. |lectures-management| image:: lectures/lectures-management.png
-    :width: 800
+    :width: 1000
 .. |lectures-management-btn| image:: lectures/lectures-management-button.png
     :width: 80
 .. |create-lecture| image:: lectures/create-lecture.png
-    :width: 800
+    :width: 1000
 .. |create-lecture-btn| image:: lectures/create-lecture-button.png
     :width: 120
 .. |switch-to-guided-mode-btn| image:: lectures/switch-to-guided-mode-button.png
     :width: 160
 .. |create-attachment| image:: lectures/create-attachment.png
-    :width: 800
+    :width: 1000
 .. |import-lecture| image:: lectures/import-lecture.png
-    :width: 800
+    :width: 1000
 .. |import-lecture-btn| image:: lectures/import-lecture-button.png
     :width: 120
 .. |units-management-empty| image:: lectures/units-management-empty.png
-    :width: 800
+    :width: 1000
 .. |units-management| image:: lectures/units-management.png
-    :width: 800
+    :width: 1000
 .. |create-online-unit| image:: lectures/create-online-unit.png
-    :width: 800
+    :width: 1000
 .. |create-text-unit| image:: lectures/create-text-unit.png
-    :width: 800
+    :width: 1000
 .. |create-video-unit| image:: lectures/create-video-unit.png
-    :width: 800
+    :width: 1000
 .. |create-attachment-unit| image:: lectures/create-attachment-unit.png
-    :width: 800
+    :width: 1000
 .. |create-exercise-unit| image:: lectures/create-exercise-unit.png
-    :width: 800
+    :width: 1000
 .. |process-units-checkbox| image:: lectures/process-units-checkbox.png
    :width: 120
 .. |process-units-btn| image:: lectures/process-units-btn.png
    :width: 120
 .. |processed-lecture-units| image:: lectures/processed-lecture-units.png
-   :width: 800
+   :width: 1000
 .. |automatic-unit-processing| image:: lectures/automatic-unit-processing.png
-   :width: 800
+   :width: 1000
