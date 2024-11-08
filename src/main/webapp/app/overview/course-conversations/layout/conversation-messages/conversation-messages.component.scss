@@ -47,6 +47,14 @@
         max-height: calc(75vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
         overflow-y: auto;
 
+        &.hide-input-full {
+            max-height: calc(94vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
+        }
+
+        &.hide-input {
+            max-height: calc(87vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
+        }
+
         &.content-height-dev {
             max-height: calc(75vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
 
@@ -54,6 +62,14 @@
                 max-height: calc(90vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
                 max-height: calc(90dvh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
             }
+        }
+
+        &.hide-input-full.content-height-dev {
+            max-height: calc(94vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+        }
+
+        &.hide-input.content-height-dev {
+            max-height: calc(87vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
         }
 
         @include media-breakpoint-down(sm) {

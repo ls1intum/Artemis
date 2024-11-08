@@ -1,13 +1,14 @@
 import dayjs from 'dayjs/esm';
-import { Component, EventEmitter, Input, OnChanges, Output, computed, inject } from '@angular/core';
+import { Component, OnChanges, computed, inject, input, output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { HttpResponse } from '@angular/common/http';
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
-import { Competency, CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
+
 export interface OnlineUnitFormData {
     name?: string;
     description?: string;
@@ -33,32 +34,32 @@ function urlValidator(control: AbstractControl) {
     templateUrl: './online-unit-form.component.html',
 })
 export class OnlineUnitFormComponent implements OnChanges {
-    protected faTimes = faTimes;
-    protected faArrowLeft = faArrowLeft;
+    protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faTimes = faTimes;
 
-    @Input() formData: OnlineUnitFormData;
-    @Input() isEditMode = false;
+    formData = input<OnlineUnitFormData>();
+    isEditMode = input<boolean>(false);
 
-    @Output() formSubmitted: EventEmitter<OnlineUnitFormData> = new EventEmitter<OnlineUnitFormData>();
+    formSubmitted = output<OnlineUnitFormData>();
 
-    @Input() hasCancelButton: boolean;
-    @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
+    hasCancelButton = input<boolean>(false);
+    onCancel = output<void>();
 
     urlValidator = urlValidator;
 
     private readonly formBuilder = inject(FormBuilder);
+    private readonly onlineUnitService = inject(OnlineUnitService);
+
     form: FormGroup = this.formBuilder.group({
         name: [undefined, [Validators.required, Validators.maxLength(255)]],
         description: [undefined, [Validators.maxLength(1000)]],
         releaseDate: [undefined],
         source: [undefined, [Validators.required, this.urlValidator]],
-        competencies: [undefined as Competency[] | undefined],
+        competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
     });
 
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
     isFormValid = computed(() => this.statusChanges() === 'VALID');
-
-    constructor(private onlineUnitService: OnlineUnitService) {}
 
     get nameControl() {
         return this.form.get('name');
@@ -77,8 +78,8 @@ export class OnlineUnitFormComponent implements OnChanges {
     }
 
     ngOnChanges(): void {
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+        if (this.isEditMode() && this.formData()) {
+            this.setFormValues(this.formData()!);
         }
     }
 

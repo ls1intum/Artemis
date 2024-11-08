@@ -30,13 +30,12 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     @Output() channelNameChange = new EventEmitter<string>();
 
     isFormValidSignal = signal<boolean>(false);
-
     /**
-     * @deprecated Use formValidSignal instead.
+     * @deprecated Use {@link isFormValidSignal} instead.
      */
     formValid: boolean;
     /**
-     * @deprecated Use formValidSignal instead.
+     * @deprecated Use {@link isFormValidSignal} instead.
      */
     formValidChanges = new Subject();
 

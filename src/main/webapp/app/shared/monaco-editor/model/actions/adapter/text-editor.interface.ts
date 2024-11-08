@@ -106,4 +106,11 @@ export interface TextEditor {
      * @return A disposable that can be used to remove the completer from the editor.
      */
     addCompleter<ItemType>(completer: TextEditorCompleter<ItemType>): Disposable;
+
+    /**
+     * Adds a listener to the editor that is triggered after the user pastes something.
+     * @param callback The callback to execute after the user has pasted something.
+     * @return A disposable that can be used to remove the listener from the editor.
+     */
+    addPasteListener(callback: (insertedText: string) => void | Promise<void>): Disposable;
 }

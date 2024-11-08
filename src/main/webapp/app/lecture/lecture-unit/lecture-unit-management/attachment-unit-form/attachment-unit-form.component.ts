@@ -1,9 +1,9 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnChanges, ViewChild, computed, inject, input, output, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { UPLOAD_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
-import { Competency, CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -35,18 +35,17 @@ export interface FileProperties {
 export class AttachmentUnitFormComponent implements OnChanges {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
-    // A human-readable list of allowed file extensions
-    protected readonly allowedFileExtensions = UPLOAD_FILE_EXTENSIONS.join(', ');
-    // The list of file extensions for the "accept" attribute of the file input field
-    protected readonly acceptedFileExtensionsFileBrowser = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
 
-    @Input() formData: AttachmentUnitFormData;
-    @Input() isEditMode = false;
+    protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
+    protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
-    @Output() formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
+    formData = input<AttachmentUnitFormData>();
+    isEditMode = input<boolean>(false);
 
-    @Input() hasCancelButton: boolean;
-    @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
+    formSubmitted = output<AttachmentUnitFormData>();
+
+    hasCancelButton = input<boolean>(false);
+    onCancel = output<void>();
 
     // have to handle the file input as a special case at is not part of the reactive form
     @ViewChild('fileInput', { static: false })
@@ -64,7 +63,7 @@ export class AttachmentUnitFormComponent implements OnChanges {
         releaseDate: [undefined as dayjs.Dayjs | undefined],
         version: [{ value: 1, disabled: true }],
         updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
-        competencies: [undefined as Competency[] | undefined],
+        competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 
@@ -72,11 +71,9 @@ export class AttachmentUnitFormComponent implements OnChanges {
         return (this.statusChanges() === 'VALID' || this.fileName()) && !this.isFileTooBig();
     });
 
-    constructor(private fb: FormBuilder) {}
-
     ngOnChanges(): void {
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+        if (this.isEditMode() && this.formData()) {
+            this.setFormValues(this.formData()!);
         }
     }
 

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, computed, inject } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, computed, inject, input, output } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,7 +6,7 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Competency, CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 export interface TextUnitFormData {
@@ -24,13 +24,13 @@ export interface TextUnitFormData {
 export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly faTimes = faTimes;
 
-    @Input() formData: TextUnitFormData;
+    formData = input<TextUnitFormData>();
 
-    @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<TextUnitFormData> = new EventEmitter<TextUnitFormData>();
+    isEditMode = input<boolean>(false);
+    formSubmitted = output<TextUnitFormData>();
 
-    @Input() hasCancelButton: boolean;
-    @Output() onCancel: EventEmitter<any> = new EventEmitter<any>();
+    hasCancelButton = input<boolean>(false);
+    onCancel = output<void>();
 
     // not included in reactive form
     content: string | undefined;
@@ -42,7 +42,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
         releaseDate: [undefined as dayjs.Dayjs | undefined],
-        competencies: [undefined as Competency[] | undefined],
+        competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
     });
 
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
@@ -65,8 +65,8 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnChanges(): void {
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+        if (this.isEditMode() && this.formData()) {
+            this.setFormValues(this.formData()!);
         }
     }
 

@@ -144,6 +144,8 @@ examples.forEach((activeConversation) => {
             it('should display the "new announcement" button when the conversation is an announcement channel', fakeAsync(() => {
                 const announcementButton = fixture.debugElement.query(By.css('.btn.btn-md.btn-primary'));
                 expect(announcementButton).toBeTruthy(); // Check if the button is present
+                expect(component.isHiddenInputFull).toBeFalsy();
+                expect(component.isHiddenInputWithCallToAction).toBeTruthy();
 
                 const modal = fixture.debugElement.query(By.directive(PostCreateEditModalComponent));
                 expect(modal).toBeTruthy(); // Check if the modal is present
