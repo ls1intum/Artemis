@@ -6,7 +6,7 @@ import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lect
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-describe('LectureUpdatePeriodComponent', () => {
+describe('LectureWizardPeriodComponent', () => {
     let wizardPeriodComponentFixture: ComponentFixture<LectureUpdateWizardPeriodComponent>;
     let wizardPeriodComponent: LectureUpdateWizardPeriodComponent;
 
