@@ -1,13 +1,13 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, computed, signal, viewChild } from '@angular/core';
 import { Lecture } from 'app/entities/lecture.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
-import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
-import { OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
-import { AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
+import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
+import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
+import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
+import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { onError } from 'app/shared/util/global.utils';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
@@ -31,13 +31,25 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
     @Input() lecture: Lecture;
 
     @ViewChild(LectureUnitManagementComponent, { static: false }) unitManagementComponent: LectureUnitManagementComponent;
+    textUnitForm = viewChild(TextUnitFormComponent);
+    videoUnitForm = viewChild(VideoUnitFormComponent);
+    onlineUnitForm = viewChild(OnlineUnitFormComponent);
+    attachmentUnitForm = viewChild(AttachmentUnitFormComponent);
+    isUnitConfigurationValid = computed(() => {
+        return (
+            (this.textUnitForm()?.isFormValid() || !this.isTextUnitFormOpen()) &&
+            (this.videoUnitForm()?.isFormValid() || !this.isVideoUnitFormOpen()) &&
+            (this.onlineUnitForm()?.isFormValid() || !this.isOnlineUnitFormOpen()) &&
+            (this.attachmentUnitForm()?.isFormValid() || !this.isAttachmentUnitFormOpen())
+        );
+    });
 
     isEditingLectureUnit: boolean;
-    isTextUnitFormOpen: boolean;
-    isExerciseUnitFormOpen: boolean;
-    isVideoUnitFormOpen: boolean;
-    isOnlineUnitFormOpen: boolean;
-    isAttachmentUnitFormOpen: boolean;
+    isTextUnitFormOpen = signal<boolean>(false);
+    isExerciseUnitFormOpen = signal<boolean>(false);
+    isVideoUnitFormOpen = signal<boolean>(false);
+    isOnlineUnitFormOpen = signal<boolean>(false);
+    isAttachmentUnitFormOpen = signal<boolean>(false);
 
     currentlyProcessedTextUnit: TextUnit;
     currentlyProcessedVideoUnit: VideoUnit;
@@ -71,33 +83,33 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
 
         switch (type) {
             case LectureUnitType.TEXT:
-                this.isTextUnitFormOpen = true;
+                this.isTextUnitFormOpen.set(true);
                 break;
             case LectureUnitType.EXERCISE:
-                this.isExerciseUnitFormOpen = true;
+                this.isExerciseUnitFormOpen.set(true);
                 break;
             case LectureUnitType.VIDEO:
-                this.isVideoUnitFormOpen = true;
+                this.isVideoUnitFormOpen.set(true);
                 break;
             case LectureUnitType.ONLINE:
-                this.isOnlineUnitFormOpen = true;
+                this.isOnlineUnitFormOpen.set(true);
                 break;
             case LectureUnitType.ATTACHMENT:
-                this.isAttachmentUnitFormOpen = true;
+                this.isAttachmentUnitFormOpen.set(true);
                 break;
         }
     }
 
-    isAnyUnitFormOpen(): boolean {
-        return this.isTextUnitFormOpen || this.isVideoUnitFormOpen || this.isOnlineUnitFormOpen || this.isAttachmentUnitFormOpen || this.isExerciseUnitFormOpen;
-    }
+    isAnyUnitFormOpen = computed(() => {
+        return this.isTextUnitFormOpen() || this.isVideoUnitFormOpen() || this.isOnlineUnitFormOpen() || this.isAttachmentUnitFormOpen() || this.isExerciseUnitFormOpen();
+    });
 
     onCloseLectureUnitForms() {
-        this.isTextUnitFormOpen = false;
-        this.isVideoUnitFormOpen = false;
-        this.isOnlineUnitFormOpen = false;
-        this.isAttachmentUnitFormOpen = false;
-        this.isExerciseUnitFormOpen = false;
+        this.isTextUnitFormOpen.set(false);
+        this.isVideoUnitFormOpen.set(false);
+        this.isOnlineUnitFormOpen.set(false);
+        this.isAttachmentUnitFormOpen.set(false);
+        this.isExerciseUnitFormOpen.set(false);
     }
 
     createEditTextUnit(formData: TextUnitFormData) {
@@ -258,11 +270,11 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
         this.currentlyProcessedOnlineUnit = lectureUnit as OnlineUnit;
         this.currentlyProcessedAttachmentUnit = lectureUnit as AttachmentUnit;
 
-        this.isTextUnitFormOpen = lectureUnit.type === LectureUnitType.TEXT;
-        this.isVideoUnitFormOpen = lectureUnit.type === LectureUnitType.VIDEO;
-        this.isExerciseUnitFormOpen = lectureUnit.type === LectureUnitType.EXERCISE;
-        this.isOnlineUnitFormOpen = lectureUnit.type === LectureUnitType.ONLINE;
-        this.isAttachmentUnitFormOpen = lectureUnit.type === LectureUnitType.ATTACHMENT;
+        this.isTextUnitFormOpen.set(lectureUnit.type === LectureUnitType.TEXT);
+        this.isVideoUnitFormOpen.set(lectureUnit.type === LectureUnitType.VIDEO);
+        this.isExerciseUnitFormOpen.set(lectureUnit.type === LectureUnitType.EXERCISE);
+        this.isOnlineUnitFormOpen.set(lectureUnit.type === LectureUnitType.ONLINE);
+        this.isAttachmentUnitFormOpen.set(lectureUnit.type === LectureUnitType.ATTACHMENT);
 
         switch (lectureUnit.type) {
             case LectureUnitType.TEXT:
