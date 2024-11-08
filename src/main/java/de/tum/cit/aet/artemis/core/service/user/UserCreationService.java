@@ -336,9 +336,9 @@ public class UserCreationService {
      * @param user   the user who should be added to the given groups
      * @param groups the groups in which the user should be added
      */
-    private void addUserToGroupsInternal(User user, @Nullable Set<String> groups) {
+    private User addUserToGroupsInternal(User user, @Nullable Set<String> groups) {
         if (groups == null) {
-            return;
+            return user;
         }
         boolean userChanged = false;
         for (String group : groups) {
@@ -350,7 +350,10 @@ public class UserCreationService {
 
         if (userChanged) {
             // we only save if this is needed
-            saveUser(user);
+            return saveUser(user);
+        }
+        else {
+            return user;
         }
     }
 

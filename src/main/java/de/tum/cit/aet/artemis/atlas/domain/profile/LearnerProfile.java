@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @Table(name = "learner_profile")
 public class LearnerProfile extends DomainObject {
 
-    @OneToOne
+    @OneToOne(mappedBy = "learnerProfile", cascade = CascadeType.PERSIST)
     private User user;
 
     @OneToMany(mappedBy = "learnerProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.core.util;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.hibernate.resource.jdbc.spi.StatementInspector;
 import org.springframework.stereotype.Component;
 
@@ -10,8 +7,6 @@ import org.springframework.stereotype.Component;
 public class HibernateQueryInterceptor implements StatementInspector {
 
     private final transient ThreadLocal<Long> threadQueryCount = new ThreadLocal<>();
-
-    public final transient List<String> calls = new ArrayList<>();
 
     /**
      * Start or reset the query count to 0 for the considered thread
@@ -39,11 +34,7 @@ public class HibernateQueryInterceptor implements StatementInspector {
     public String inspect(String sql) {
         Long count = threadQueryCount.get();
         if (count != null) {
-            if (sql.contains("learner_profile")) {
-                System.out.println("Penguin");
-            }
             threadQueryCount.set(count + 1);
-            calls.add(sql);
         }
         return sql;
     }

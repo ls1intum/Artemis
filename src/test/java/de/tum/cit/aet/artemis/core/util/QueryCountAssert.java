@@ -28,8 +28,6 @@ public class QueryCountAssert<T, E extends Exception> extends AbstractAssert<Que
      */
     public T hasBeenCalledTimes(long times) throws E {
         var result = performCall();
-        log.error("Penguin");
-        log.error(String.join("\n", interceptor.calls));
         if (result.callCount != times) {
             throw failureWithActualExpected(interceptor.getQueryCount(), times, "Expected <%d> queries, but <%d> were performed.", times, result.callCount);
         }
@@ -46,8 +44,6 @@ public class QueryCountAssert<T, E extends Exception> extends AbstractAssert<Que
      */
     public T hasBeenCalledAtMostTimes(long times) throws E {
         var result = performCall();
-        log.error("Penguin");
-        log.error(String.join("\n", interceptor.calls));
         if (result.callCount > times) {
             throw failureWithActualExpected(interceptor.getQueryCount(), times, "Expected at most <%d> queries, but <%d> were performed.", times, result.callCount);
         }
