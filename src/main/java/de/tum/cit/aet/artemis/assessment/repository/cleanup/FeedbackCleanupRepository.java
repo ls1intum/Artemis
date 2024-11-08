@@ -43,7 +43,6 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
 
     /**
      * Deletes {@link Feedback} entries with a {@code null} result.
-     * Returns {@code void}
      */
     @Modifying
     @Transactional // ok because of delete

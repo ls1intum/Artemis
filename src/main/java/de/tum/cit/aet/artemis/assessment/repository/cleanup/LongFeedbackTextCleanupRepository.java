@@ -44,7 +44,6 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
 
     /**
      * Deletes {@link LongFeedbackText} linked to {@link Feedback} with a {@code null} result.
-     * Returns {@code void}
      */
     @Modifying
     @Transactional // ok because of delete
