@@ -3,6 +3,12 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms
 import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
+export enum DateTimePickerType {
+    CALENDAR,
+    TIMER,
+    DEFAULT,
+}
+
 @Component({
     selector: 'jhi-date-time-picker',
     templateUrl: `./date-time-picker.component.html`,
@@ -28,6 +34,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() min?: dayjs.Dayjs; // Dates before this date are not selectable.
     @Input() max?: dayjs.Dayjs; // Dates after this date are not selectable.
     @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
+    @Input() pickerType = DateTimePickerType.DEFAULT; // Only show the date picker, not the time picker.
     @Output() valueChange = new EventEmitter();
 
     readonly faCalendarAlt = faCalendarAlt;
@@ -118,4 +125,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     clearDate() {
         this.dateInput.reset(undefined);
     }
+
+    protected readonly DateTimePickerType = DateTimePickerType;
 }
