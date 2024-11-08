@@ -194,14 +194,14 @@ public class UserCreationService {
         user.setActivated(true);
         user.setInternal(true);
         user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
-        var savedUser = saveUser(user);
+        saveUser(user);
 
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(savedUser, password));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(savedUser, password));
+        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, password));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
 
-        addUserToGroupsInternal(savedUser, userDTO.getGroups());
+        addUserToGroupsInternal(user, userDTO.getGroups());
 
-        learnerProfileService.createProfile(savedUser);
+        learnerProfileService.createProfile(user);
 
         log.debug("Created Information for User: {}", user);
         return user;
@@ -336,9 +336,9 @@ public class UserCreationService {
      * @param user   the user who should be added to the given groups
      * @param groups the groups in which the user should be added
      */
-    private User addUserToGroupsInternal(User user, @Nullable Set<String> groups) {
+    private void addUserToGroupsInternal(User user, @Nullable Set<String> groups) {
         if (groups == null) {
-            return user;
+            return;
         }
         boolean userChanged = false;
         for (String group : groups) {
@@ -350,10 +350,7 @@ public class UserCreationService {
 
         if (userChanged) {
             // we only save if this is needed
-            return saveUser(user);
-        }
-        else {
-            return user;
+            saveUser(user);
         }
     }
 

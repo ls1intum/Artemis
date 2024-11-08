@@ -547,11 +547,11 @@ public class UserUtilService {
     }
 
     public void createLearnerProfilesForUsers(String userPrefix) {
-        Set<LearnerProfile> learnerProfiles = userTestRepository.findAllByUserPrefix(userPrefix).stream().map(user -> {
+        Set<User> users = userTestRepository.findAllByUserPrefix(userPrefix).stream().peek(user -> {
             LearnerProfile learnerProfile = new LearnerProfile();
             learnerProfile.setUser(user);
-            return learnerProfile;
+            user.setLearnerProfile(learnerProfile);
         }).collect(Collectors.toSet());
-        learnerProfileRepository.saveAll(learnerProfiles);
+        userTestRepository.saveAll(users);
     }
 }
