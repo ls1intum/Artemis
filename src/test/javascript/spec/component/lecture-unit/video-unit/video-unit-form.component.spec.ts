@@ -179,4 +179,10 @@ describe('VideoUnitFormComponent', () => {
         expect(videoUnitFormComponent.descriptionControl?.value).toEqual(formData.description);
         expect(videoUnitFormComponent.sourceControl?.value).toEqual(formData.source);
     });
+
+    it('should emit onCancel event when cancelForm is called', () => {
+        const onCancelSpy = jest.spyOn(videoUnitFormComponent.onCancel, 'emit');
+        videoUnitFormComponent.cancelForm();
+        expect(onCancelSpy).toHaveBeenCalled();
+    });
 });
