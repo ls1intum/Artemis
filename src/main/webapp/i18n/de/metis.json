@@ -138,7 +138,8 @@
                 "bookmarkPostProgress": "Beitrag als in Bearbeitung speichern",
                 "bookmarkPostArchived": "Gespeicherten Beitrag archivieren",
                 "bookmarkPostComplete": "Gespeicherten Beitrag als Abgeschlossen markieren",
-                "thread": "Thread"
+                "thread": "Thread",
+                "saved": "Für später gespeichert"
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",

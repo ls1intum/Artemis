@@ -5,12 +5,18 @@
 @import 'src/main/webapp/app/shared/metis/metis.component';
 
 .answer-post {
-    background-color: var(--metis-answer-post-background-color);
     border-radius: 7px;
+    background-color: transparent;
+
+    transition: background-color 0.2s ease-in-out;
 }
 
 .answer-post-content-margin {
-    padding-left: 3.2rem;
+    padding-left: 2.65rem;
+}
+
+.answer-post.is-saved {
+    background-color: rgba($primary, 0.1);
 }
 
 @include media-breakpoint-down(sm) {

@@ -1,4 +1,10 @@
-<div class="mb-3" [ngClass]="{ 'mx-0': !isThreadSidebar }">
+<div class="post rounded px-3 py-3" [ngClass]="{ 'mx-0': !isThreadSidebar, 'is-saved': posting.isSaved }">
+    @if (posting.isSaved) {
+        <div class="post-is-saved-message fs-xx-small mb-1">
+            <fa-icon [icon]="faBookmark"></fa-icon>
+            <span class="text-secondary" jhiTranslate="artemisApp.metis.post.saved"></span>
+        </div>
+    }
     <div>
         <jhi-post-header
             [previewMode]="previewMode"

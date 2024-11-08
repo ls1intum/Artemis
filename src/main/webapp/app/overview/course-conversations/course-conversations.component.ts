@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -163,6 +163,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
     private layoutService: LayoutService = inject(LayoutService);
+    private changeDetector: ChangeDetectorRef = inject(ChangeDetectorRef);
 
     constructor(
         private router: Router,
@@ -310,6 +311,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.focusPostId = post.referencePostId;
         this.openThreadOnFocus = (post.postingType as PostingType) === PostingType.ANSWER;
         this.metisConversationService.setActiveConversation(post.conversation!.id!);
+        this.changeDetector.detectChanges();
     }
 
     updateQueryParameters() {
@@ -427,6 +429,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     onConversationSelected(conversationId: number | string) {
         this.closeSidebarOnMobile();
+        this.focusPostId = undefined;
+        this.openThreadOnFocus = false;
         if (typeof conversationId === 'string') {
             if (
                 Object.values(SavedPostStatus)
@@ -438,10 +442,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.metisConversationService.setActiveConversation(undefined);
                 this.activeConversation = undefined;
                 this.updateQueryParameters();
+                this.metisService.resetCachedPosts();
+                this.changeDetector.detectChanges();
             }
         } else {
-            this.selectedSavedPostStatus = null;
             conversationId = +conversationId;
+            this.selectedSavedPostStatus = null;
             this.metisConversationService.setActiveConversation(conversationId);
         }
     }

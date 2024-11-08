@@ -138,7 +138,8 @@
                 "bookmarkPostProgress": "Save post as in progress",
                 "bookmarkPostArchived": "Archive saved post",
                 "bookmarkPostComplete": "Mark saved post as done",
-                "thread": "Thread"
+                "thread": "Thread",
+                "saved": "Saved for later"
             },
             "answerPost": {
                 "created": "New reply successfully created",

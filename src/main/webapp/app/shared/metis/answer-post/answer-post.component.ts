@@ -3,6 +3,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import dayjs from 'dayjs/esm';
 import { animate, style, transition, trigger } from '@angular/animations';
+import { faBookmark } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-answer-post',
@@ -27,5 +28,9 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @Input()
     isReadOnlyMode = false;
     // ng-container to render answerPostCreateEditModalComponent
+
+    // Icons
+    faBookmark = faBookmark;
+
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
 }

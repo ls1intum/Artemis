@@ -3,7 +3,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
@@ -54,8 +54,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly DisplayPriority = DisplayPriority;
 
     // Icons
-    faBullhorn = faBullhorn;
-    faCheckSquare = faCheckSquare;
+    readonly faBullhorn = faBullhorn;
+    readonly faCheckSquare = faCheckSquare;
+    readonly faBookmark = faBookmark;
 
     constructor(
         private oneToOneChatService: OneToOneChatService,

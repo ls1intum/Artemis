@@ -14,3 +14,13 @@
 .reference-hash {
     color: inherit;
 }
+
+.post {
+    background-color: transparent;
+
+    transition: background-color 0.2s ease-in-out;
+}
+
+.post.is-saved {
+    background-color: rgba($primary, 0.1);
+}

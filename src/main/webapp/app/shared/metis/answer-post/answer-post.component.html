@@ -1,4 +1,10 @@
-<div [id]="'item-' + posting.id" class="row" [ngClass]="isCommunicationPage ? 'module-bg mt-2 rounded-2' : 'answer-post m-1'">
+<div [id]="'item-' + posting.id" class="answer-post px-3 py-2" [ngClass]="{ 'is-saved': posting.isSaved, 'module-bg mt-2': isCommunicationPage }">
+    @if (posting.isSaved) {
+        <div class="post-is-saved-message fs-xx-small mb-1">
+            <fa-icon [icon]="faBookmark"></fa-icon>
+            <span class="text-secondary" jhiTranslate="artemisApp.metis.post.saved"></span>
+        </div>
+    }
     <jhi-answer-post-header
         [posting]="posting"
         [isReadOnlyMode]="isReadOnlyMode"

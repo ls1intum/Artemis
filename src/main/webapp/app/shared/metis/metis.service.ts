@@ -574,6 +574,13 @@ export class MetisService implements OnDestroy {
         this.posts$.next(this.cachedPosts);
     }
 
+    public resetCachedPosts() {
+        this.cachedPosts = [];
+        this.posts$.next(this.cachedPosts);
+        this.cachedTotalNumberOfPosts = 0;
+        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+    }
+
     private setIsSavedAndStatusOfPost(post: Posting, isSaved: undefined | boolean, status: undefined | SavedPostStatus) {
         if (post instanceof AnswerPost) {
             const indexToUpdate = this.cachedPosts.findIndex((cachedPost) => cachedPost.id === post.post!.id);
