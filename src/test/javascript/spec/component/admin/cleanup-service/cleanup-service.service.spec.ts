@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import dayjs from 'dayjs/esm';
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('DataCleanupService', () => {
     let service: DataCleanupService;
@@ -12,7 +13,8 @@ describe('DataCleanupService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [DataCleanupService, provideHttpClientTesting()],
+            imports: [],
+            providers: [DataCleanupService, provideHttpClient(), provideHttpClientTesting()],
         });
 
         service = TestBed.inject(DataCleanupService);
