@@ -71,7 +71,7 @@ describe('CleanupServiceComponent', () => {
             status: 500,
             statusText: 'Internal Server Error',
             error: 'Some error message',
-            url: 'https://artemis.ase.in.tum.de/api/admin/delete-orphans', // Adding a mock URL
+            url: 'https://artemis.ase.in.tum.de/api/admin/orphans', // Adding a mock URL
         });
 
         jest.spyOn(cleanupService, 'deleteOrphans').mockReturnValue(throwError(() => errorResponse));
@@ -84,7 +84,7 @@ describe('CleanupServiceComponent', () => {
         comp.executeCleanupOperation(operation);
 
         expect(cleanupService.deleteOrphans).toHaveBeenCalledOnce();
-        expect(errorMessage).toBe('Http failure response for https://artemis.ase.in.tum.de/api/admin/delete-orphans: 500 Internal Server Error');
+        expect(errorMessage).toBe('Http failure response for https://artemis.ase.in.tum.de/api/admin/orphans: 500 Internal Server Error');
     });
 
     it('should validate date ranges correctly', () => {

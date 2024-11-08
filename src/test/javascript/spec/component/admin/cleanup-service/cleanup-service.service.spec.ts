@@ -29,7 +29,7 @@ describe('DataCleanupService', () => {
             expect(res.body).toEqual(mockExecutionRecord);
         });
 
-        const req = httpMock.expectOne({ method: 'DELETE', url: 'api/admin/cleanup/delete-orphans' });
+        const req = httpMock.expectOne({ method: 'DELETE', url: 'api/admin/cleanup/orphans' });
         expect(req.request.method).toBe('DELETE');
         req.flush(mockExecutionRecord);
     });
@@ -44,7 +44,7 @@ describe('DataCleanupService', () => {
 
         const req = httpMock.expectOne({
             method: 'DELETE',
-            url: `api/admin/cleanup/delete-plagiarism-comparisons?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
+            url: `api/admin/cleanup/plagiarism-comparisons?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
         });
 
         expect(req.request.method).toBe('DELETE');
@@ -63,7 +63,7 @@ describe('DataCleanupService', () => {
 
         const req = httpMock.expectOne({
             method: 'DELETE',
-            url: `api/admin/cleanup/delete-non-rated-results?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
+            url: `api/admin/cleanup/non-rated-results?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
         });
 
         expect(req.request.method).toBe('DELETE');
@@ -82,7 +82,7 @@ describe('DataCleanupService', () => {
 
         const req = httpMock.expectOne({
             method: 'DELETE',
-            url: `api/admin/cleanup/delete-old-rated-results?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
+            url: `api/admin/cleanup/old-rated-results?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
         });
 
         expect(req.request.method).toBe('DELETE');

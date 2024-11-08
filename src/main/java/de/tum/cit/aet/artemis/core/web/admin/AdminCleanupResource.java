@@ -38,12 +38,12 @@ public class AdminCleanupResource {
     }
 
     /**
-     * DELETE admin/cleanup/delete-orphans
+     * DELETE admin/cleanup/orphans
      * Deletes orphaned data in the Artemis database.
      *
      * @return a {@link ResponseEntity} containing the result of the cleanup operation
      */
-    @DeleteMapping("delete-orphans")
+    @DeleteMapping("orphans")
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteOrphans() {
         log.debug("REST request to delete orphaned data in Artemis database");
         CleanupServiceExecutionRecordDTO result = dataCleanupService.deleteOrphans();
@@ -51,14 +51,14 @@ public class AdminCleanupResource {
     }
 
     /**
-     * DELETE admin/cleanup/delete-plagiarism-comparisons
+     * DELETE admin/cleanup/plagiarism-comparisons
      * Deletes plagiarism comparisons within the specified date range.
      *
      * @param deleteFrom the start date of the deletion range
      * @param deleteTo   the end date of the deletion range
      * @return a {@link ResponseEntity} containing the result of the cleanup operation
      */
-    @DeleteMapping("delete-plagiarism-comparisons")
+    @DeleteMapping("plagiarism-comparisons")
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deletePlagiarismComparisons(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
             @RequestParam("deleteTo") ZonedDateTime deleteTo) {
         log.debug("REST request to delete plagiarism comparisons between {} and {}", deleteFrom, deleteTo);
@@ -67,14 +67,14 @@ public class AdminCleanupResource {
     }
 
     /**
-     * DELETE admin/cleanup/delete-non-rated-results
+     * DELETE admin/cleanup/non-rated-results
      * Deletes non-rated results within the specified date range.
      *
      * @param deleteFrom the start date of the deletion range
      * @param deleteTo   the end date of the deletion range
      * @return a {@link ResponseEntity} containing the result of the cleanup operation
      */
-    @DeleteMapping("delete-non-rated-results")
+    @DeleteMapping("non-rated-results")
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteNonRatedResults(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
             @RequestParam("deleteTo") ZonedDateTime deleteTo) {
         log.debug("REST request to delete non-rated results between {} and {}", deleteFrom, deleteTo);
@@ -83,14 +83,14 @@ public class AdminCleanupResource {
     }
 
     /**
-     * DELETE admin/cleanup/delete-old-rated-results
+     * DELETE admin/cleanup/old-rated-results
      * Deletes old rated results within the specified date range.
      *
      * @param deleteFrom the start date of the deletion range
      * @param deleteTo   the end date of the deletion range
      * @return a {@link ResponseEntity} containing the result of the cleanup operation
      */
-    @DeleteMapping("delete-old-rated-results")
+    @DeleteMapping("old-rated-results")
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteOldRatedResults(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
             @RequestParam("deleteTo") ZonedDateTime deleteTo) {
         log.debug("REST request to delete old rated results between {} and {}", deleteFrom, deleteTo);
