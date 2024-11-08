@@ -21,7 +21,7 @@
         },
         "notRunYet": "This operation has not been run yet",
         "error": {
-            "datesInvalid": "'Delete To' must be after 'Delete From'"
+            "datesInvalid": "'Delete to' must be after 'Delete from'"
         }
     }
 }
