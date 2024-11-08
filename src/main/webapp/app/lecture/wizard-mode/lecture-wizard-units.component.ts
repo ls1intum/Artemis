@@ -1,13 +1,13 @@
-import { Component, Input, OnInit, ViewChild, computed, signal, viewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, computed, signal } from '@angular/core';
 import { Lecture } from 'app/entities/lecture.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
-import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
-import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
-import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
+import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
+import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
+import { OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
+import { AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { onError } from 'app/shared/util/global.utils';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
@@ -31,18 +31,6 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
     @Input() lecture: Lecture;
 
     @ViewChild(LectureUnitManagementComponent, { static: false }) unitManagementComponent: LectureUnitManagementComponent;
-    textUnitForm = viewChild(TextUnitFormComponent);
-    videoUnitForm = viewChild(VideoUnitFormComponent);
-    onlineUnitForm = viewChild(OnlineUnitFormComponent);
-    attachmentUnitForm = viewChild(AttachmentUnitFormComponent);
-    isUnitConfigurationValid = computed(() => {
-        return (
-            (this.textUnitForm()?.isFormValid() || !this.isTextUnitFormOpen()) &&
-            (this.videoUnitForm()?.isFormValid() || !this.isVideoUnitFormOpen()) &&
-            (this.onlineUnitForm()?.isFormValid() || !this.isOnlineUnitFormOpen()) &&
-            (this.attachmentUnitForm()?.isFormValid() || !this.isAttachmentUnitFormOpen())
-        );
-    });
 
     isEditingLectureUnit: boolean;
     isTextUnitFormOpen = signal<boolean>(false);
