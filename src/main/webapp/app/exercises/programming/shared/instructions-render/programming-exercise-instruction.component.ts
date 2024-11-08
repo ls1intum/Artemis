@@ -90,7 +90,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private generateHtmlSubscription: Subscription;
     private testCases?: ProgrammingExerciseTestCase[];
     private themeChangeSubscription = toObservable(this.themeService.currentTheme).subscribe(() => {
-        this.updateMarkdown();
+        if (!this.isInitial) {
+            this.updateMarkdown();
+        }
     });
 
     // Icons
