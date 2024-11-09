@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
 import static de.tum.cit.aet.artemis.atlas.domain.profile.PreferenceScale.HIGH;
-import static de.tum.cit.aet.artemis.atlas.domain.profile.PreferenceScale.LOW;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.PreferenceScale.MEDIUM_HIGH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore.INCLUDED_AS_BONUS;
@@ -46,6 +45,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.BaseExercise;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 
@@ -104,6 +104,8 @@ public class LearningPathRecommendationService {
      */
     private static final double[][] EXERCISE_DIFFICULTY_DISTRIBUTION_LUT = new double[][] { { 0.87, 0.12, 0.01 }, { 0.80, 0.18, 0.02 }, { 0.72, 0.25, 0.03 }, { 0.61, 0.33, 0.06 },
             { 0.50, 0.40, 0.10 }, { 0.39, 0.45, 0.16 }, { 0.28, 0.48, 0.24 }, { 0.20, 0.47, 0.33 }, { 0.13, 0.43, 0.44 }, { 0.08, 0.37, 0.55 }, { 0.04, 0.29, 0.67 }, };
+
+    private static final double COMPETENCY_LINK_WEIGHT_TO_GRADE_AIM_RATIO = 2;
 
     protected LearningPathRecommendationService(CompetencyRelationRepository competencyRelationRepository, LearningObjectService learningObjectService,
             ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository) {
@@ -502,8 +504,7 @@ public class LearningPathRecommendationService {
 
         // First sort exercises based on title to ensure consistent ordering over multiple calls then prefer higher weighted exercises
         final var pendingExercises = competency.getExerciseLinks().stream().filter(link -> !learningObjectService.isCompletedByUser(link.getExercise(), user))
-                .sorted(Comparator.comparing(link -> link.getExercise().getTitle())).sorted(Comparator.comparingDouble(CompetencyExerciseLink::getWeight).reversed())
-                .map(CompetencyExerciseLink::getExercise).toList();
+                .sorted(getExerciseOrderComparator(courseLearnerProfile.getAimForGradeOrBonus())).map(CompetencyExerciseLink::getExercise).toList();
 
         final var pendingExercisePoints = pendingExercises.stream().mapToDouble(BaseExercise::getMaxPoints).sum();
 
@@ -584,34 +585,37 @@ public class LearningPathRecommendationService {
             List<Exercise> exercises, CourseLearnerProfile courseLearnerProfile) {
         var remainingExercisePoints = new AtomicDouble(exercisePoints);
 
-        Comparator<Exercise> exerciseComparator = getExerciseOrderComparator(courseLearnerProfile.getAimForGradeOrBonus());
         Predicate<Exercise> exercisePredicate = getExerciseSelectionPredicate(courseLearnerProfile.getAimForGradeOrBonus(), remainingExercisePoints);
 
-        var selectedExercises = difficultyMap.get(difficulty).stream().sorted(exerciseComparator).takeWhile(exercisePredicate).toList();
+        var selectedExercises = difficultyMap.get(difficulty).stream().takeWhile(exercisePredicate).toList();
 
         exercises.addAll(selectedExercises);
         difficultyMap.get(difficulty).removeAll(selectedExercises);
         return remainingExercisePoints.get();
     }
 
+    private static int getIncludeInOverallScoreWeight(IncludedInOverallScore includedInOverallScore) {
+        return switch (includedInOverallScore) {
+            case INCLUDED_COMPLETELY -> 0;
+            case INCLUDED_AS_BONUS -> 1;
+            case NOT_INCLUDED -> 2;
+        };
+    }
+
     /**
-     * Creates a comparator that orders exercises based on the aim for grade or bonus. In case the student is at least medium low interested the comparator uses the inclusion in
-     * the score as sorting criterion. Otherwise, the order is unchanged
+     * Creates a comparator that orders exercises based on the aim for grade or bonus, the link weight for the current competency and as a tiebreaker the lexicographic order of
+     * the exercise title. The higher the aim for the grade bonus is, the higher this metric is weighted compared to the link weight.
      *
      * @param aimForGradeOrBonus the aim for grade or bonus
      * @return the comparator that orders the exercise based on the preference
      */
-    private static Comparator<Exercise> getExerciseOrderComparator(int aimForGradeOrBonus) {
-        if (aimForGradeOrBonus == LOW.getValue()) {
-            return Comparator.comparing(ignored -> 0);
-        }
-        else {
-            return Comparator.comparing(exercise -> switch (exercise.getIncludedInOverallScore()) {
-                case INCLUDED_COMPLETELY -> 0;
-                case INCLUDED_AS_BONUS -> 1;
-                case NOT_INCLUDED -> 2;
-            });
-        }
+    private static Comparator<CompetencyExerciseLink> getExerciseOrderComparator(int aimForGradeOrBonus) {
+        Comparator<CompetencyExerciseLink> exerciseComparator = Comparator.comparingDouble(exerciseLink -> (COMPETENCY_LINK_WEIGHT_TO_GRADE_AIM_RATIO * exerciseLink.getWeight())
+                + aimForGradeOrBonus * getIncludeInOverallScoreWeight(exerciseLink.getExercise().getIncludedInOverallScore()));
+        exerciseComparator = exerciseComparator.reversed();
+
+        exerciseComparator = exerciseComparator.thenComparing(exerciseLink -> exerciseLink.getExercise().getTitle());
+        return exerciseComparator;
     }
 
     /**
