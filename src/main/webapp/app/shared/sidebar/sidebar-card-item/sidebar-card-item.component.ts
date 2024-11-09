@@ -37,7 +37,7 @@ export class SidebarCardItemComponent implements OnInit, OnChanges {
         return this.unreadCount().toString() || '';
     }
 
-    private extractMessageUser(): void {
+    extractMessageUser(): void {
         if (this.sidebarItem.type === 'oneToOneChat' && (this.sidebarItem.conversation as OneToOneChatDTO)?.members) {
             this.otherUser = (this.sidebarItem.conversation as OneToOneChatDTO).members!.find((user) => !user.isRequestingUser);
         } else {
