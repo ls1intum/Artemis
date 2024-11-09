@@ -14,6 +14,7 @@ import org.apache.sshd.server.auth.pubkey.PublickeyAuthenticator;
 import org.apache.sshd.server.session.ServerSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +38,9 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
 
     private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
+    @Value("${server.url}")
+    private String artemisServerUrl;
+
     public GitPublickeyAuthenticatorService(UserRepository userRepository, Optional<SharedQueueManagementService> localCIBuildJobQueueService,
             UserSshPublicKeyRepository userSshPublicKeyRepository) {
         this.userRepository = userRepository;
@@ -53,6 +57,10 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
             if (expiryDate == null || expiryDate.isAfter(ZonedDateTime.now())) {
                 return authenticateUser(sshPublicKey, publicKey, session);
             }
+            else {
+                disconnectBecauseKeyHasExpired(session);
+            }
+
             return false;
         }).orElseGet(() -> authenticateBuildAgent(publicKey, session));
     }
@@ -135,5 +143,26 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
         }
 
         return agentPublicKey.equals(publicKey);
+    }
+
+    /**
+     * Disconnects the client from the session and informs that the key used to authenticate with has expired
+     *
+     * @param session the session with the client
+     */
+    private void disconnectBecauseKeyHasExpired(ServerSession session) {
+        try {
+            var keyExpiredErrorMessage = String.format("""
+                    Keys expired.
+
+                    One of your SSH keys has expired. Renew it in the Artemis settings:
+                    %s/user-settings/ssh
+                    """, artemisServerUrl);
+
+            session.disconnect(1, keyExpiredErrorMessage);
+        }
+        catch (IOException e) {
+            log.info("Failed to disconnect SSH client session {}", e.getMessage());
+        }
     }
 }
