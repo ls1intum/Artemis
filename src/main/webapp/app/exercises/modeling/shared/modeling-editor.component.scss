@@ -50,6 +50,11 @@ $draggable-width: 15px;
 .readonly-diagram {
     height: 100%;
     overflow: hidden;
+    overflow-y: auto;
+}
+
+.scroll-container::-webkit-scrollbar {
+    display: none;
 }
 
 @keyframes spin {
