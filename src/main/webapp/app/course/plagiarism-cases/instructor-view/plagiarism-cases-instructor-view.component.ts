@@ -3,13 +3,14 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { Exercise, getIcon } from 'app/entities/exercise.model';
+import { Exercise, getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
 import { downloadFile } from 'app/shared/util/download.util';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',
     templateUrl: './plagiarism-cases-instructor-view.component.html',
+    styleUrls: ['./plagiarism-cases-instructor-view.component.scss'],
 })
 export class PlagiarismCasesInstructorViewComponent implements OnInit {
     courseId: number;
@@ -17,6 +18,8 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     plagiarismCases: PlagiarismCase[] = [];
     groupedPlagiarismCases: any; // maybe? { [key: number]: PlagiarismCase[] }
     exercisesWithPlagiarismCases: Exercise[] = [];
+
+    getExerciseUrlSegment = getExerciseUrlSegment;
 
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'PlagiarismChecks';
@@ -37,23 +40,31 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
         plagiarismCasesForInstructor$.subscribe({
             next: (res: HttpResponse<PlagiarismCase[]>) => {
                 this.plagiarismCases = res.body!;
-                this.groupedPlagiarismCases = this.plagiarismCases.reduce((acc: { [exerciseId: number]: PlagiarismCase[] }, plagiarismCase) => {
-                    const caseExerciseId = plagiarismCase.exercise?.id;
-                    if (caseExerciseId === undefined) {
+                this.groupedPlagiarismCases = this.plagiarismCases.reduce(
+                    (
+                        acc: {
+                            [exerciseId: number]: PlagiarismCase[];
+                        },
+                        plagiarismCase,
+                    ) => {
+                        const caseExerciseId = plagiarismCase.exercise?.id;
+                        if (caseExerciseId === undefined) {
+                            return acc;
+                        }
+
+                        // Group initialization
+                        if (!acc[caseExerciseId]) {
+                            acc[caseExerciseId] = [];
+                            this.exercisesWithPlagiarismCases.push(plagiarismCase.exercise!);
+                        }
+
+                        // Grouping
+                        acc[caseExerciseId].push(plagiarismCase);
+
                         return acc;
-                    }
-
-                    // Group initialization
-                    if (!acc[caseExerciseId]) {
-                        acc[caseExerciseId] = [];
-                        this.exercisesWithPlagiarismCases.push(plagiarismCase.exercise!);
-                    }
-
-                    // Grouping
-                    acc[caseExerciseId].push(plagiarismCase);
-
-                    return acc;
-                }, {});
+                    },
+                    {},
+                );
             },
         });
     }
