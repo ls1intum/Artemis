@@ -39,7 +39,7 @@
         "@sentry/angular": "8.37.1",
         "@siemens/ngx-datatable": "22.4.1",
         "@swimlane/ngx-charts": "20.5.0",
-        "@swimlane/ngx-graph": "8.4.0",
+        "@swimlane/ngx-graph": "9.0.1",
         "@vscode/codicons": "0.0.36",
         "@vscode/markdown-it-katex": "1.1.0",
         "bootstrap": "5.3.3",
@@ -83,13 +83,6 @@
         "zone.js": "0.14.10"
     },
     "overrides": {
-        "@swimlane/ngx-graph": {
-            "d3-brush": "^3.0.0",
-            "d3-color": "^3.1.0",
-            "d3-interpolate": "^3.0.1",
-            "d3-selection": "^3.0.0",
-            "d3-transition": "^3.0.1"
-        },
         "@typescript-eslint/utils": {
             "eslint": "^9.14.0"
         },
