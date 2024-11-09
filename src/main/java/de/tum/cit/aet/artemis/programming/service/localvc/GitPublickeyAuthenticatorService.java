@@ -38,6 +38,8 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
 
     private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
+    private final int AUTHENTICATION_FAILED_CODE = 10;
+
     @Value("${server.url}")
     private String artemisServerUrl;
 
@@ -159,7 +161,7 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
                     %s/user-settings/ssh
                     """, artemisServerUrl);
 
-            session.disconnect(1, keyExpiredErrorMessage);
+            session.disconnect(AUTHENTICATION_FAILED_CODE, keyExpiredErrorMessage);
         }
         catch (IOException e) {
             log.info("Failed to disconnect SSH client session {}", e.getMessage());

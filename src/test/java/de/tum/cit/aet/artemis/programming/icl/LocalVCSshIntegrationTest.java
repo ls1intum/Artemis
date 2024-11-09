@@ -90,6 +90,33 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAuthenticationFailureBecauseKeyHasExpired() throws IOException, GeneralSecurityException {
+
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        KeyPair keyPair = setupKeyPairAndAddToUser();
+        User user = userTestRepository.getUser();
+        var userKey = userSshPublicKeyRepository.findAllByUserId(user.getId()).getFirst();
+        userKey.setExpiryDate(ZonedDateTime.now().minusMonths(1L));
+        userSshPublicKeyRepository.save(userKey);
+
+        assertThatThrownBy(() -> {
+
+            try (SshClient client = SshClient.setUpDefaultClient()) {
+                client.start();
+
+                ConnectFuture connectFuture = client.connect(user.getName(), hostname, port);
+                connectFuture.await(10, TimeUnit.SECONDS);
+
+                ClientSession session = connectFuture.getSession();
+                session.addPublicKeyIdentity(keyPair);
+
+                session.auth().verify(10, TimeUnit.SECONDS);
+            }
+        }).isInstanceOf(SshException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAuthenticationFailure() {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = generateKeyPair();
