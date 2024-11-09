@@ -47,5 +47,4 @@ Data Deletion by Operation Type
       - For each type, only the latest valid result within a participation is retained, while all others are deleted.
       - Because direct result deletion is restricted due to data integrity reasons, Artemis first removes associated data for results scheduled for deletion, including Long Feedback Text, Text Block, Feedback, Student Score, and Team Score.
 
-
 Artemis also records the date of the last cleanup operation, as seen in the last column of the table shown in the image.
