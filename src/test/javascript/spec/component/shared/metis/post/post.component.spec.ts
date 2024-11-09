@@ -36,6 +36,8 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-cre
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DOCUMENT } from '@angular/common';
+import { Posting, PostingType } from 'app/entities/metis/posting.model';
+import { Post } from 'app/entities/metis/post.model';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -310,5 +312,24 @@ describe('PostComponent', () => {
         component.onClickOutside();
         expect(component.showDropdown).toBeFalse();
         expect(enableBodyScrollSpy).toHaveBeenCalled();
+    });
+
+    it('should cast the post to Post on change', () => {
+        const mockPost: Posting = {
+            id: 1,
+            author: {
+                id: 1,
+                name: 'Test Author',
+                internal: false,
+            },
+            content: 'Test Content',
+            postingType: PostingType.POST.toString(),
+        };
+        const spy = jest.spyOn(component, 'assignPostingToPost');
+        component.posting = mockPost;
+        fixture.detectChanges();
+
+        expect(component.posting).toBeInstanceOf(Post);
+        expect(spy).toHaveBeenCalled();
     });
 });

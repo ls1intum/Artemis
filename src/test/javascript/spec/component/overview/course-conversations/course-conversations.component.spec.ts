@@ -10,7 +10,7 @@ import { CourseWideSearchComponent } from 'app/overview/course-conversations/cou
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course } from 'app/entities/course.model';
-import { BehaviorSubject, EMPTY } from 'rxjs';
+import { BehaviorSubject, EMPTY, of } from 'rxjs';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -42,6 +42,7 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -59,6 +60,7 @@ examples.forEach((activeConversation) => {
         let modalService: NgbModal;
         let courseSidebarService: CourseSidebarService;
         let layoutService: LayoutService;
+        let activatedRoute: ActivatedRoute;
 
         const MockLayoutService = {
             activeBreakpoints: [],
@@ -130,6 +132,7 @@ examples.forEach((activeConversation) => {
             metisConversationService = TestBed.inject(MetisConversationService);
             courseSidebarService = TestBed.inject(CourseSidebarService);
             layoutService = TestBed.inject(LayoutService);
+            activatedRoute = TestBed.inject(ActivatedRoute);
 
             Object.defineProperty(metisConversationService, 'isServiceSetup$', { get: () => new BehaviorSubject(true).asObservable() });
             Object.defineProperty(metisConversationService, 'conversationsOfUser$', { get: () => new BehaviorSubject([new GroupChatDTO()]).asObservable() });
@@ -429,6 +432,175 @@ examples.forEach((activeConversation) => {
                 expect(component.createChannelFn).toBeUndefined();
                 // Since createChannelFn is undefined, prepareSidebarData should not be called
                 expect(prepareSidebarDataSpy).not.toHaveBeenCalled();
+            });
+        });
+
+        describe('query parameter handling', () => {
+            it('should handle SavedPostStatus in conversationId', () => {
+                const queryParams = {
+                    conversationId: SavedPostStatus.ARCHIVED.toString(),
+                };
+                activatedRoute.queryParams = of(queryParams);
+
+                component.subscribeToQueryParameter();
+
+                expect(component['selectedSavedPostStatus']).toBe(SavedPostStatus.ARCHIVED);
+                expect(setActiveConversationSpy).not.toHaveBeenCalled();
+            });
+
+            it('should handle numeric conversationId', () => {
+                const queryParams = {
+                    conversationId: '123',
+                };
+                activatedRoute.queryParams = of(queryParams);
+                const spy = jest.spyOn(component, 'closeSidebarOnMobile');
+
+                component.subscribeToQueryParameter();
+
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(123);
+                expect(spy).toHaveBeenCalled();
+            });
+
+            it('should handle focusPostId parameter', () => {
+                const queryParams = {
+                    focusPostId: '456',
+                };
+                activatedRoute.queryParams = of(queryParams);
+
+                component.subscribeToQueryParameter();
+
+                expect(component['focusPostId']).toBe(456);
+            });
+
+            it('should handle openThreadOnFocus parameter', () => {
+                const queryParams = {
+                    openThreadOnFocus: 'true',
+                };
+                activatedRoute.queryParams = of(queryParams);
+
+                component.subscribeToQueryParameter();
+
+                expect(component['openThreadOnFocus']).toBe('true');
+            });
+
+            it('should handle messageId parameter', () => {
+                const queryParams = {
+                    messageId: '789',
+                };
+                activatedRoute.queryParams = of(queryParams);
+
+                component.subscribeToQueryParameter();
+
+                expect(component['postInThread']).toEqual({ id: 789 });
+            });
+
+            it('should clear postInThread when no messageId is present', () => {
+                const queryParams = {};
+                activatedRoute.queryParams = of(queryParams);
+
+                component.subscribeToQueryParameter();
+
+                expect(component['postInThread']).toBeUndefined();
+            });
+
+            it('should handle multiple query parameters together', () => {
+                const queryParams = {
+                    conversationId: SavedPostStatus.ARCHIVED.toString(),
+                    focusPostId: '456',
+                    openThreadOnFocus: 'true',
+                    messageId: '789',
+                };
+                activatedRoute.queryParams = of(queryParams);
+
+                component.subscribeToQueryParameter();
+
+                expect(component['selectedSavedPostStatus']).toBe(SavedPostStatus.ARCHIVED);
+                expect(component['focusPostId']).toBe(456);
+                expect(component['openThreadOnFocus']).toBe('true');
+                expect(component['postInThread']).toEqual({ id: 789 });
+            });
+        });
+
+        describe('navigate to post functionality', () => {
+            it('should handle answer post navigation correctly', () => {
+                const answerPost: Posting = {
+                    referencePostId: 123,
+                    postingType: PostingType.ANSWER,
+                    conversation: {
+                        id: 456,
+                    },
+                };
+
+                component.onNavigateToPost(answerPost);
+
+                expect(component['focusPostId']).toBe(123);
+                expect(component['openThreadOnFocus']).toBeTrue();
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(456);
+            });
+
+            it('should handle question post navigation correctly', () => {
+                const questionPost: Posting = {
+                    referencePostId: 123,
+                    postingType: PostingType.POST,
+                    conversation: {
+                        id: 456,
+                    },
+                };
+
+                component.onNavigateToPost(questionPost);
+
+                expect(component['focusPostId']).toBe(123);
+                expect(component['openThreadOnFocus']).toBeFalse();
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(456);
+            });
+
+            it('should not process navigation when referencePostId is undefined', () => {
+                const invalidPost: Posting = {
+                    postingType: PostingType.POST,
+                    conversation: {
+                        id: 456,
+                    },
+                };
+
+                component.onNavigateToPost(invalidPost);
+
+                expect(setActiveConversationSpy).not.toHaveBeenCalled();
+            });
+
+            it('should not process navigation when conversation id is undefined', () => {
+                const invalidPost: Posting = {
+                    referencePostId: 123,
+                    postingType: PostingType.POST,
+                    conversation: {},
+                };
+
+                component.onNavigateToPost(invalidPost);
+
+                expect(setActiveConversationSpy).not.toHaveBeenCalled();
+            });
+        });
+
+        describe('conversation selection', () => {
+            it('should handle numeric conversationId', () => {
+                component.onConversationSelected(123);
+                expect(component.selectedSavedPostStatus).toBeNull();
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(123);
+            });
+
+            it('should handle valid string conversationId as SavedPostStatus', () => {
+                const validStatus = SavedPostStatus.ARCHIVED;
+                component.onConversationSelected(validStatus);
+                expect(component.selectedSavedPostStatus).toBe(validStatus);
+                expect(component.postInThread).toBeUndefined();
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(undefined);
+                expect(component.activeConversation).toBeUndefined();
+            });
+
+            it('should ignore invalid string conversationId', () => {
+                const invalidStatus = 'invalidStatus';
+                component.onConversationSelected(invalidStatus);
+                expect(component.selectedSavedPostStatus).toBeNull();
+                expect(metisConversationService.setActiveConversation).not.toHaveBeenCalled();
             });
         });
     });

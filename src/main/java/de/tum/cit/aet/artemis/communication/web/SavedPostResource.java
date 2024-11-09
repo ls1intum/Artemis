@@ -68,7 +68,7 @@ public class SavedPostResource {
      * @return ResponseEntity with status 200 (Success) if course id and status are ok,
      *         or with status 400 (Bad Request) if the checks on type or post validity fail
      */
-    @GetMapping("/saved-posts/{courseId}/{status}")
+    @GetMapping("saved-posts/{courseId}/{status}")
     @EnforceAtLeastStudent
     public ResponseEntity<List<PostingDTO>> getSavedPosts(@PathVariable Long courseId, @PathVariable String status) {
         log.debug("GET getSavedPosts invoked for course {} and status {}", courseId, status);
@@ -121,7 +121,7 @@ public class SavedPostResource {
      * @return ResponseEntity with status 201 (Created) if successfully saved post,
      *         or with status 400 (Bad Request) if the checks on type or post validity fail
      */
-    @PostMapping("/saved-posts/{postId}/{type}")
+    @PostMapping("saved-posts/{postId}/{type}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> savePost(@PathVariable Long postId, @PathVariable String type) {
         log.debug("POST savePost invoked for post {}", postId);
@@ -147,7 +147,7 @@ public class SavedPostResource {
      * @return ResponseEntity with status 204 (No content) if successfully deleted post,
      *         or with status 400 (Bad Request) if the checks on type or post validity fail
      */
-    @DeleteMapping("/saved-posts/{postId}/{type}")
+    @DeleteMapping("saved-posts/{postId}/{type}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteSavedPost(@PathVariable Long postId, @PathVariable String type) {
         log.debug("DELETE deletePost invoked for post {}", postId);
@@ -170,7 +170,7 @@ public class SavedPostResource {
      * @return ResponseEntity with status 200 (Success) if successfully updated saved post status,
      *         or with status 400 (Bad Request) if the checks on type or post validity fail
      */
-    @PutMapping("/saved-posts/{postId}/{type}")
+    @PutMapping("saved-posts/{postId}/{type}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> putSavedPost(@PathVariable Long postId, @PathVariable String type, @RequestParam(name = "status") String status) {
         log.debug("DELETE putSavedPost invoked for post {}", postId);

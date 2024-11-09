@@ -17,7 +17,7 @@ export class SavedPostsComponent {
     private readonly savedPostService = inject(SavedPostService);
 
     protected posts: Posting[];
-    protected hiddenPosts: number[];
+    protected hiddenPosts: number[] = [];
 
     // Icons
     readonly faBookmark = faBookmark;
