@@ -25,23 +25,27 @@ When a cleanup operation is performed with specified "from" and "to" dates, all 
 Data Deletion by Operation Type
 ------------------------------------------
 
+Data Deletion by Operation Type
+------------------------------------------
+
 1. **Orphaned Data**:
- * Long Feedback Text with feedback that has no results
- * Text Block with feedback that has no results
- * Feedback records without results
- * Student and team scores where either a student or a team is specified
- * Long Feedback Text where both participation and submission are missing
- * Text Block where the referenced feedback has no associated participation or submission
- * Feedback with no associated participation or submission
- * All Ratings where the related result has no associated participation or submission
- * Results without associated participation or submission
+      - Long Feedback Text with feedback that has no results
+      - Text Block with feedback that has no results
+      - Feedback records without results
+      - Student and team scores where either a student or a team is specified
+      - Long Feedback Text where both participation and submission are missing
+      - Text Block where the referenced feedback has no associated participation or submission
+      - Feedback with no associated participation or submission
+      - All Ratings where the related result has no associated participation or submission
+      - Results without associated participation or submission
 
 2. **Plagiarism Results with an Undecided Outcome**:
- * All plagiarism comparisons related to courses within the specified dates and marked as undecided.
+      - All plagiarism comparisons related to courses within the specified dates and marked as undecided.
 
 3. **Rated and Non-rated Results**:
- * Both types follow the same logic, except for the rating status of results (rated vs. non-rated).
- * For each type, only the latest valid result within a participation is retained, while all others are deleted.
- * Because direct result deletion is restricted due to data integrity reasons, Artemis first removes associated data for results scheduled for deletion, including Long Feedback Text, Text Block, Feedback, Student Score, and Team Score.
+      - Both types follow the same logic, except for the rating status of results (rated vs. non-rated).
+      - For each type, only the latest valid result within a participation is retained, while all others are deleted.
+      - Because direct result deletion is restricted due to data integrity reasons, Artemis first removes associated data for results scheduled for deletion, including Long Feedback Text, Text Block, Feedback, Student Score, and Team Score.
+
 
 Artemis also records the date of the last cleanup operation, as seen in the last column of the table shown in the image.
