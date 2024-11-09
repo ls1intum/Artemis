@@ -1,5 +1,7 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, input } from '@angular/core';
 import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
+import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-sidebar-card-item',
@@ -11,11 +13,15 @@ export class SidebarCardItemComponent implements OnInit, OnChanges {
     @Input() sidebarType?: SidebarTypes;
     @Input() groupKey?: string;
     unreadCount = input<number>(0);
+    otherUser: any;
+
+    readonly faPeopleGroup = faPeopleGroup;
 
     formattedUnreadCount: string = '';
 
     ngOnInit(): void {
         this.formattedUnreadCount = this.getFormattedUnreadCount();
+        this.extractMessageUser();
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -29,5 +35,17 @@ export class SidebarCardItemComponent implements OnInit, OnChanges {
             return '99+';
         }
         return this.unreadCount().toString() || '';
+    }
+
+    private extractMessageUser(): void {
+        if (this.sidebarItem.type === 'oneToOneChat' && (this.sidebarItem.conversation as OneToOneChatDTO)?.members) {
+            this.otherUser = (this.sidebarItem.conversation as OneToOneChatDTO).members!.find((user) => !user.isRequestingUser);
+        } else {
+            this.otherUser = null;
+        }
+
+        if (this.sidebarItem.type === 'groupChat') {
+            this.sidebarItem.icon = this.faPeopleGroup;
+        }
     }
 }
