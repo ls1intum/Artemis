@@ -53,19 +53,37 @@
             @if (!displayInlineInput) {
                 <div class="message-container" [class.force-hover]="showDropdown" (contextmenu)="onRightClick($event)">
                     <div class="message-content" [ngClass]="{ 'mx-0': !isThreadSidebar }">
-                        <jhi-posting-content
-                            [previewMode]="previewMode"
-                            [content]="posting.content"
-                            [author]="posting.author"
-                            [isEdited]="!!posting.updatedDate"
-                            [posting]="posting"
-                            [isReply]="false"
-                            [isDeleted]="isDeleted"
-                            [deleteTimerInSeconds]="deleteTimerInSeconds"
-                            (onUndoDeleteEvent)="onDeleteEvent(false)"
-                            (userReferenceClicked)="onUserReferenceClicked($event)"
-                            (channelReferenceClicked)="onChannelReferenceClicked($event)"
-                        ></jhi-posting-content>
+                        @if (originalPostDetails) {
+                            <div *ngIf="originalPostDetails" class="forwarded-message-container">
+                                <div class="left-border-line"></div>
+                                <div class="forwarded-message-content">
+                                    <div class="forwarded-message-header">
+                                        <span class="forwarded-message-author">{{ originalPostDetails?.author?.name }}</span>
+                                    </div>
+                                    <div class="forwarded-message-body">
+                                        {{ originalPostDetails?.content }}
+                                    </div>
+                                    <div class="forwarded-message-footer">
+                                        <span class="forwarded-message-channel">{{ sourceName }}</span>
+                                        <span class="forwarded-message-time">{{ originalPostDetails?.creationDate }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        } @else {
+                            <jhi-posting-content
+                                [previewMode]="previewMode"
+                                [content]="posting.content"
+                                [author]="posting.author"
+                                [isEdited]="!!posting.updatedDate"
+                                [posting]="posting"
+                                [isReply]="false"
+                                [isDeleted]="isDeleted"
+                                [deleteTimerInSeconds]="deleteTimerInSeconds"
+                                (onUndoDeleteEvent)="onDeleteEvent(false)"
+                                (userReferenceClicked)="onUserReferenceClicked($event)"
+                                (channelReferenceClicked)="onChannelReferenceClicked($event)"
+                            ></jhi-posting-content>
+                        }
                         <div class="hover-actions post-content-margin" [ngClass]="{ 'mb-2': previewMode }">
                             @if (!previewMode) {
                                 <jhi-post-reactions-bar

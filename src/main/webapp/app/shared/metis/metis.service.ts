@@ -213,6 +213,10 @@ export class MetisService implements OnDestroy {
         );
     }
 
+    getPostById(postId: number) {
+        return this.postService.getPost(this.courseId, postId);
+    }
+
     /**
      * creates a new answer post by invoking the answer post service
      * @param {AnswerPost} answerPost to be created
@@ -651,6 +655,26 @@ export class MetisService implements OnDestroy {
             }
             return;
         }
+    }
+
+    /**
+     * Forwards an existing post to a different conversation or channel.
+     * @param {Post} originalPost - The post to be forwarded.
+     * @param {number} targetConversationId - The ID of the target conversation/channel.
+     * @param {string} [newContent] - Optional new content for the forwarded post.
+     * @return {Observable<Post>} forwarded post
+     */
+    forwardPost(originalPost: Post, conversation: Conversation, newContent?: string): Observable<Post> {
+        if (!this.courseId) {
+            throw new Error('Course ID is not set. Ensure that setCourse() is called before forwarding posts.');
+        }
+
+        return this.postService.forwardPost(this.courseId, originalPost, conversation, newContent).pipe(
+            map((res: HttpResponse<Post>) => res.body!),
+            tap((forwardedPost: Post) => {
+                this.addTags(forwardedPost.tags);
+            }),
+        );
     }
 
     /**

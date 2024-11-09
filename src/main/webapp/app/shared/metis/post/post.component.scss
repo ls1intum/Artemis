@@ -72,3 +72,47 @@
 .pinned-message {
     background-color: var(--artemis-alert-warning-background);
 }
+
+.forwarded-message-container {
+    display: flex;
+    margin: 1rem 0;
+    padding-left: 0.7rem;
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+    border-left: 4px solid var(--metis-blue);
+    background-color: #f9f9f9;
+    border-radius: 5px;
+
+    .forwarded-message-content {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .forwarded-message-header {
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .forwarded-message-body {
+        font-size: 0.9rem;
+        color: #555;
+        margin-bottom: 0.5rem;
+    }
+
+    .forwarded-message-footer {
+        display: flex;
+        justify-content: flex-end;
+        font-size: 0.8rem;
+        color: #777;
+
+        .forwarded-message-channel {
+            margin-right: 1rem;
+        }
+
+        .forwarded-message-time {
+        }
+    }
+}

@@ -7,6 +7,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingService } from 'app/shared/metis/posting.service';
 import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 type EntityResponseType = HttpResponse<Post>;
 type EntityArrayResponseType = HttpResponse<Post[]>;
@@ -27,6 +28,8 @@ export class PostService extends PostingService<Post> {
      */
     create(courseId: number, post: Post): Observable<EntityResponseType> {
         const copy = this.convertPostingDateFromClient(post);
+        console.log('original id si var mi');
+        console.log(post.originalPostId);
         return this.http
             .post<Post>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(undefined, post)}`, copy, { observe: 'response' })
             .pipe(map(this.convertPostingResponseDateFromServer));
@@ -129,6 +132,16 @@ export class PostService extends PostingService<Post> {
     }
 
     /**
+     * deletes a post
+     * @param {number} courseId
+     * @param {Post} post
+     * @return {Observable<HttpResponse<void>>}
+     */
+    getPost(courseId: number, postId: number): Observable<EntityResponseType> {
+        return this.http.get(`${this.resourceUrl}${courseId}/messages/${postId}`, { observe: 'response' }).pipe(map(this.convertPostingResponseDateFromServer));
+    }
+
+    /**
      * determines similar posts in a course
      * @param {Post} tempPost
      * @param {number} courseId
@@ -174,5 +187,29 @@ export class PostService extends PostingService<Post> {
         } else {
             return '/posts';
         }
+    }
+
+    /**
+     * Forwards an existing post to a different conversation or channel.
+     * @param {number} courseId - The ID of the course.
+     * @param {Post} originalPost - The post to be forwarded.
+     * @param {number} targetConversationId - The ID of the target conversation/channel.
+     * @param {string} [newContent] - Optional new content for the forwarded post.
+     * @return {Observable<EntityResponseType>}
+     */
+    forwardPost(courseId: number, originalPost: Post, conversation: Conversation, newContent?: string): Observable<EntityResponseType> {
+        console.log('artık burda degil misin');
+        const forwardPost: Post = {
+            ...originalPost,
+            id: undefined,
+            conversation: conversation,
+            content: newContent ? newContent : originalPost.content,
+            originalPostId: originalPost.id,
+            creationDate: undefined,
+        };
+        console.log('aaaa');
+        console.log(forwardPost.originalPostId);
+        console.log(forwardPost.conversation);
+        return this.create(courseId, forwardPost);
     }
 }

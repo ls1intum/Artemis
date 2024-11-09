@@ -202,6 +202,13 @@ public class ConversationMessageResource {
         return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
     }
 
+    @GetMapping("courses/{courseId}/messages/{messageId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Post> getPostById(@PathVariable Long courseId, @PathVariable Long messageId) {
+        Post requestedPost = conversationMessagingService.getMessageById(messageId);
+        return ResponseEntity.ok().body(requestedPost);
+    }
+
     /**
      * POST /courses/{courseId}/messages/similarity-check : trigger a similarity check for post to be created
      *

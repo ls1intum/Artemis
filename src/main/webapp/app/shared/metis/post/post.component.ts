@@ -27,7 +27,7 @@ import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-c
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { Channel, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { animate, style, transition, trigger } from '@angular/animations';
@@ -79,6 +79,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly DisplayPriority = DisplayPriority;
     mayEditOrDelete: boolean = false;
     canPin: boolean = false;
+    originalPostDetails: Post | null = null;
+    sourceName: string | undefined = '';
 
     // Icons
     readonly faBullhorn = faBullhorn;
@@ -182,6 +184,23 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.sortAnswerPosts();
+        this.fetchOriginalPost();
+    }
+
+    fetchOriginalPost(): void {
+        if (this.posting.originalPostId) {
+            console.log('forwarded mesaj var');
+            this.metisService.getPostById(this.posting.originalPostId).subscribe((post) => {
+                this.originalPostDetails = post.body;
+                this.changeDetector.markForCheck();
+                console.log(this.originalPostDetails);
+                if (this.originalPostDetails && this.originalPostDetails?.conversation?.type == 'channel') {
+                    this.sourceName = (this.originalPostDetails?.conversation as Channel)?.name;
+                } else {
+                    this.sourceName = 'Direct Message';
+                }
+            });
+        }
     }
 
     /**
@@ -277,4 +296,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             }
         }
     }
+
+    protected readonly origin = origin;
 }

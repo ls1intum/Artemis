@@ -158,10 +158,14 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
                     modalRef.componentInstance.channels = this.channels;
 
                     modalRef.result.then(
-                        (selection: Conversation) => {
+                        (selection: { channels: Conversation[]; chats: Conversation[] }) => {
                             if (selection) {
-                                post.conversation = selection;
-                                this.createPosting(post);
+                                const allSelections = [...selection.channels, ...selection.chats];
+                                allSelections.forEach((conversation) => {
+                                    if (conversation && conversation.id) {
+                                        this.forwardPost(post, conversation);
+                                    }
+                                });
                             }
                         },
                         (reason) => {
@@ -175,15 +179,10 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
             });
     }
 
-    createPosting(post: Post): void {
-        const newPost: Post = { ...post, id: undefined };
-        console.log(newPost);
-        this.metisService.createPost(newPost).subscribe({
-            next: () => {
-                this.reactionsUpdated.emit(this.posting.reactions);
-            },
+    forwardPost(post: Post, conversation: Conversation): void {
+        this.metisService.forwardPost(post, conversation, '').subscribe({
             error: (error) => {
-                console.error('Create Posting Error:', error);
+                console.error('Error forwarding post:', error);
             },
         });
     }

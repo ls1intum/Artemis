@@ -78,6 +78,9 @@ public class Post extends Posting {
     @ManyToOne
     private Conversation conversation;
 
+    @Column(name = "original_post_id")
+    private Long originalPostId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "display_priority", columnDefinition = "varchar(25) default 'NONE'")
     private DisplayPriority displayPriority = DisplayPriority.NONE;
@@ -177,6 +180,14 @@ public class Post extends Posting {
 
     public void setConversation(Conversation conversation) {
         this.conversation = conversation;
+    }
+
+    public Long getOriginalPostId() {
+        return originalPostId;
+    }
+
+    public void setOriginalPostId(Long originalPostId) {
+        this.originalPostId = originalPostId;
     }
 
     public DisplayPriority getDisplayPriority() {
