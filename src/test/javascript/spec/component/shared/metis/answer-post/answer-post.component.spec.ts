@@ -189,6 +189,7 @@ describe('AnswerPostComponent', () => {
             content: 'Test Content',
             postingType: PostingType.ANSWER.toString(),
         };
+        // @ts-ignore method is private
         const spy = jest.spyOn(component, 'assignPostingToAnswerPost');
         component.posting = mockPost;
         fixture.detectChanges();

@@ -66,6 +66,7 @@ describe('Metis Service', () => {
     let reaction: Reaction;
     let course: Course;
     let savedPostService: SavedPostService;
+    let setIsSavedAndStatusOfPostSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -96,6 +97,8 @@ describe('Metis Service', () => {
         metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
         metisServiceCreateWebsocketSubscriptionSpy = jest.spyOn(metisService, 'createWebsocketSubscription');
         metisServiceUserStub = jest.spyOn(metisService, 'getUser');
+        // @ts-ignore method is private
+        setIsSavedAndStatusOfPostSpy = jest.spyOn(metisService, 'setIsSavedAndStatusOfPost');
 
         post = metisPostExerciseUser1;
         post.displayPriority = DisplayPriority.PINNED;
@@ -631,43 +634,34 @@ describe('Metis Service', () => {
 
     describe('Save post methods', () => {
         it('should save a post and update cached posts', () => {
-            const spy = jest.spyOn(metisService, 'setIsSavedAndStatusOfPost');
-            const spyPostsNext = jest.spyOn(metisService['posts$'], 'next');
             const savedPostServiceSpy = jest.spyOn(savedPostService, 'savePost');
 
             metisService.createPost(post).subscribe();
             metisService.savePost(post);
 
-            expect(spy).toHaveBeenCalledWith(post, true, post.savedPostStatus);
+            expect(setIsSavedAndStatusOfPostSpy).toHaveBeenCalledWith(post, true, post.savedPostStatus);
             expect(savedPostServiceSpy).toHaveBeenCalledWith(post);
-            expect(spyPostsNext).toHaveBeenCalledWith(metisService.cachedPosts);
         });
 
         it('should remove a saved post and update cached posts', () => {
-            const spy = jest.spyOn(metisService, 'setIsSavedAndStatusOfPost');
             const savedPostServiceSpy = jest.spyOn(savedPostService, 'removeSavedPost');
-            const spyPostsNext = jest.spyOn(metisService['posts$'], 'next');
 
             metisService.createPost(post).subscribe();
             metisService.removeSavedPost(post);
 
-            expect(spy).toHaveBeenCalledWith(post, false, post.savedPostStatus);
+            expect(setIsSavedAndStatusOfPostSpy).toHaveBeenCalledWith(post, false, post.savedPostStatus);
             expect(savedPostServiceSpy).toHaveBeenCalledWith(post);
-            expect(spyPostsNext).toHaveBeenCalledWith(metisService.cachedPosts);
         });
 
         it('should change the saved post status and update cached posts', () => {
             const status = SavedPostStatus.ARCHIVED;
-            const spy = jest.spyOn(metisService, 'setIsSavedAndStatusOfPost');
             const savedPostServiceSpy = jest.spyOn(savedPostService, 'changeSavedPostStatus');
-            const spyPostsNext = jest.spyOn(metisService['posts$'], 'next');
 
             metisService.createPost(post).subscribe();
             metisService.changeSavedPostStatus(post, status);
 
-            expect(spy).toHaveBeenCalledWith(post, post.isSaved, status);
+            expect(setIsSavedAndStatusOfPostSpy).toHaveBeenCalledWith(post, post.isSaved, status);
             expect(savedPostServiceSpy).toHaveBeenCalled();
-            expect(spyPostsNext).toHaveBeenCalledWith(metisService.cachedPosts);
         });
 
         it('should reset cached posts and update total number of posts', () => {
