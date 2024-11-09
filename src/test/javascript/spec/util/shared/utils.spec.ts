@@ -11,6 +11,7 @@ import {
 } from 'app/shared/util/utils';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
+import { Range } from 'app/shared/util/utils';
 
 describe('Round', () => {
     it('Decimal length', () => {
@@ -88,6 +89,16 @@ describe('average', () => {
         expect(average([10])).toBe(10);
         expect(average([1, 3])).toBe(2);
         expect(average([1, 5, 4, 8])).toBe(4.5);
+    });
+});
+
+describe('Range', () => {
+    it('should return the correct string representation', () => {
+        const range = new Range(10, 50);
+        expect(range.toString()).toBe('[10%, 50%)');
+
+        const rangeInclusive = new Range(0, 100);
+        expect(rangeInclusive.toString()).toBe('[0%, 100%]');
     });
 });
 
