@@ -4,8 +4,16 @@ import { Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 
+export interface IASshUserSettingsService {
+    getCachedSshKeys: () => Promise<UserSshPublicKey[] | undefined>;
+    getSshPublicKeys: () => Observable<UserSshPublicKey[]>;
+    getSshPublicKey: (keyId: number) => Observable<UserSshPublicKey>;
+    addNewSshPublicKey: (userKey: UserSshPublicKey) => Observable<HttpResponse<UserSshPublicKey>>;
+    deleteSshPublicKey: (keyId: number) => Observable<void>;
+}
+
 @Injectable({ providedIn: 'root' })
-export class SshUserSettingsService {
+export class SshUserSettingsService implements IASshUserSettingsService {
     private http = inject(HttpClient);
 
     private userSshKeysValue?: UserSshPublicKey[];

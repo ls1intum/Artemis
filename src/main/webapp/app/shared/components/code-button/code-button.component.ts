@@ -354,7 +354,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      */
     private async checkForSshKeys() {
         this.sshKeys = await this.sshUserSettingsService.getCachedSshKeys();
-        console.log(this.sshKeys);
         if (this.sshKeys) {
             const now = dayjs();
             this.doesUserHaveSSHkeys = this.sshKeys.length > 0;
