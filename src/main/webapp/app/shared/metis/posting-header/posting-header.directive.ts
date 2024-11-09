@@ -4,8 +4,7 @@ import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UserRole } from 'app/shared/metis/metis.util';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faBookmark, faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
-import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
+import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
@@ -29,10 +28,6 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     userRoleBadge: string;
     userAuthorityTooltip: string;
     currentUser?: User;
-
-    // Icons
-    faBookmark = faBookmark;
-    farBookmark = farBookmark;
 
     protected metisService: MetisService = inject(MetisService);
     protected accountService: AccountService = inject(AccountService);

@@ -21,20 +21,11 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
     faPencilAlt = faPencilAlt;
 
     ngOnInit() {
-        this.assignPostingToAnswerPost();
         super.ngOnInit();
     }
 
     ngOnChanges() {
-        this.assignPostingToAnswerPost();
         this.setUserProperties();
         this.setUserAuthorityIconAndTooltip();
-    }
-
-    private assignPostingToAnswerPost() {
-        // This is needed because otherwise instanceof returns 'object'.
-        if (this.posting && !(this.posting instanceof AnswerPost)) {
-            this.posting = Object.assign(new AnswerPost(), this.posting);
-        }
     }
 }

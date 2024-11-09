@@ -181,6 +181,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.sortAnswerPosts();
+        this.assignPostingToPost();
     }
 
     /**
@@ -192,6 +193,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
         this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
         this.sortAnswerPosts();
+        this.assignPostingToPost();
     }
 
     /**
@@ -275,6 +277,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                     },
                 });
             }
+        }
+    }
+
+    private assignPostingToPost() {
+        // This is needed because otherwise instanceof returns 'object'.
+        if (this.posting && !(this.posting instanceof Post)) {
+            this.posting = Object.assign(new Post(), this.posting);
         }
     }
 }

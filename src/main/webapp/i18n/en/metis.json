@@ -141,6 +141,7 @@
                 "deletedContent": "Post is being deleted in {{ progress }} second(s).",
                 "undoDelete": "Undo delete",
                 "bookmarkPost": "Save post for later",
+                "removeBookmarkPost": "Remove bookmark",
                 "bookmarkPostProgress": "Save post as in progress",
                 "bookmarkPostArchived": "Archive saved post",
                 "bookmarkPostComplete": "Mark saved post as done",

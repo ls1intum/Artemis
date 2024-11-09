@@ -6,17 +6,10 @@
 
 .answer-post {
     border-radius: 7px;
-    background-color: transparent;
-
-    transition: background-color 0.2s ease-in-out;
 }
 
 .answer-post-content-margin {
-    padding-left: 2.65rem;
-}
-
-.answer-post.is-saved {
-    background-color: rgba($primary, 0.1);
+    padding-left: 3.42rem;
 }
 
 @include media-breakpoint-down(sm) {
@@ -43,13 +36,27 @@
 
 .message-container {
     position: relative;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
+}
+
+.post-is-saved-message,
+.message-container,
+.post-reactions-bar,
+.answer-post {
+    background-color: transparent;
+
+    transition: background-color 0.2s ease-in-out;
+
+    &.is-saved {
+        background-color: rgba($primary, 0.1);
+    }
+}
+
+.message-content,
+.post-is-saved-message-content {
+    padding-left: 0.25rem;
 }
 
 .message-content {
-    padding-left: 0.3rem;
-
     &.force-hover {
         background: var(--metis-selection-option-hover-background);
 
