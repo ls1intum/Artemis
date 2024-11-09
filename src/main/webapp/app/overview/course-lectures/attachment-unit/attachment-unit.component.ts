@@ -37,19 +37,31 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
     getFileName(): string {
         if (this.lectureUnit().attachment?.link) {
             const link = this.lectureUnit().attachment!.link!;
-            return link.substring(link.lastIndexOf('/') + 1);
+            const filename = link.substring(link.lastIndexOf('/') + 1);
+            return this.replaceAttachmentPrefixAndUnderscores(filename);
         }
         return '';
     }
 
+    /**
+     * Downloads the file
+     */
     handleDownload() {
         this.logEvent();
 
         if (this.lectureUnit().attachment?.link) {
             const link = this.lectureUnit().attachment!.link!;
-            this.fileService.downloadFile(link);
+            this.fileService.downloadFile(this.replaceAttachmentPrefixAndUnderscores(link));
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
+    }
+
+    /**
+     * Removes the prefix from the file name, and replaces underscore with spaces
+     * @param link
+     */
+    private replaceAttachmentPrefixAndUnderscores(link: string): string {
+        return link.replace(/AttachmentUnit_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}_/, '').replace(/_/g, ' ');
     }
 
     /**
