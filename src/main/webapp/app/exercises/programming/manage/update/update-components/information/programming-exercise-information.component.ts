@@ -161,7 +161,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
         const areCheckoutPathsValid = this.areCheckoutPathsValid();
         this.formValid = Boolean(
-            this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.formValidSignal() &&
+            this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.isFormValidSignal() &&
                 this.getIsShortNameFieldValid() &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&

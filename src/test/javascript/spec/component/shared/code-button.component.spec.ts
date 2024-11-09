@@ -19,7 +19,7 @@ import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
@@ -36,9 +36,6 @@ describe('CodeButtonComponent', () => {
     let profileService: ProfileService;
     let accountService: AccountService;
 
-    let localStorageUseSshRetrieveStub: jest.SpyInstance;
-    let localStorageUseSshObserveStub: jest.SpyInstance;
-    let localStorageUseSshObserveStubSubject: Subject<boolean | undefined>;
     let localStorageUseSshStoreStub: jest.SpyInstance;
     let getVcsAccessTokenSpy: jest.SpyInstance;
     let hasSshKeySpy: jest.SpyInstance;
@@ -86,6 +83,7 @@ describe('CodeButtonComponent', () => {
         },
         theiaPortalURL: 'https://theia-test.k8s.ase.cit.tum.de',
         operatorName: 'TUM',
+        tests,
     };
 
     let participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
@@ -119,15 +117,10 @@ describe('CodeButtonComponent', () => {
         accountService = TestBed.inject(AccountService);
 
         const localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
-        localStorageUseSshRetrieveStub = jest.spyOn(localStorageMock, 'retrieve');
-        localStorageUseSshObserveStub = jest.spyOn(localStorageMock, 'observe');
         localStorageUseSshStoreStub = jest.spyOn(localStorageMock, 'store');
         getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken');
         hasSshKeySpy = jest.spyOn(accountService, 'hasUserSshPublicKeys');
         createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken');
-
-        localStorageUseSshObserveStubSubject = new Subject();
-        localStorageUseSshObserveStub.mockReturnValue(localStorageUseSshObserveStubSubject);
 
         participation = {};
         component.user = user;
@@ -155,6 +148,8 @@ describe('CodeButtonComponent', () => {
 
         await fixture.whenStable();
         fixture.detectChanges();
+        await component.ngOnInit();
+
         expect(component.sshSettingsUrl).toBe(`${window.location.origin}/user-settings/ssh`);
         expect(component.sshTemplateUrl).toBe(info.sshCloneURLTemplate);
         expect(component.sshEnabled).toBe(!!info.sshCloneURLTemplate);
@@ -169,9 +164,7 @@ describe('CodeButtonComponent', () => {
         component.useParticipationVcsAccessToken = true;
         component.participations = [participation];
         await component.ngOnInit();
-        await fixture.whenStable();
         component.ngOnChanges();
-        await fixture.whenStable();
 
         expect(component.accessTokensEnabled).toBeTrue();
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
@@ -185,9 +178,7 @@ describe('CodeButtonComponent', () => {
         component.useParticipationVcsAccessToken = true;
         stubServices();
         await component.ngOnInit();
-        await fixture.whenStable();
         component.ngOnChanges();
-        await fixture.whenStable();
 
         expect(component.accessTokensEnabled).toBeTrue();
         expect(component.user.vcsAccessToken).toEqual(vcsToken);
@@ -373,10 +364,10 @@ describe('CodeButtonComponent', () => {
         component.sshEnabled = true;
         await component.ngOnInit();
         await fixture.whenStable();
+        component.accessTokensEnabled = true;
+
         fixture.detectChanges();
 
-        expect(localStorageUseSshRetrieveStub).toHaveBeenNthCalledWith(1, 'useSsh');
-        expect(localStorageUseSshObserveStub).toHaveBeenNthCalledWith(1, 'useSsh');
         expect(component.useSsh).toBeFalse();
 
         fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
@@ -393,12 +384,6 @@ describe('CodeButtonComponent', () => {
         expect(localStorageUseSshStoreStub).toHaveBeenCalledWith('useSsh', false);
         expect(component.useSsh).toBeFalse();
         expect(component.useToken).toBeTrue();
-
-        localStorageUseSshObserveStubSubject.next(true);
-        expect(component.useSsh).toBeTrue();
-
-        localStorageUseSshObserveStubSubject.next(false);
-        expect(component.useSsh).toBeFalse();
     });
 
     it.each([

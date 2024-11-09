@@ -87,22 +87,18 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     ) {}
 
     async ngOnInit() {
-        this.user = (await this.accountService.identity())!;
+        const user = await this.accountService.identity();
+        if (!user) {
+            return;
+        }
+        this.user = user;
+
         await this.checkForSshKeys();
         this.refreshTokenState();
 
         this.copyEnabled = true;
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
         this.useToken = this.localStorage.retrieve('useToken') || false;
-        this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
-        this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
-
-        if (this.useToken) {
-            this.useHttpsUrlWithToken();
-        }
-        if (this.useSsh) {
-            this.useSshUrl();
-        }
         this.loadParticipationVcsAccessTokens();
 
         // Get ssh information from the user
@@ -129,6 +125,13 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             }
             this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
             this.sshKeysExpiredTip = this.formatTip('artemisApp.exerciseActions.sshKeyExpiredTip', this.sshSettingsUrl);
+
+            if (this.useSsh) {
+                this.useSshUrl();
+            }
+            if (this.useToken) {
+                this.useHttpsUrlWithToken();
+            }
         });
 
         this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
