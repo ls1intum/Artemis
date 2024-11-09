@@ -9,7 +9,20 @@ import { MockProvider } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ScienceService } from 'app/shared/science/science.service';
-import { IconDefinition, faFile, faFileCsv, faFileImage, faFilePdf } from '@fortawesome/free-solid-svg-icons';
+import {
+    IconDefinition,
+    faFile,
+    faFileArchive,
+    faFileCode,
+    faFileCsv,
+    faFileExcel,
+    faFileImage,
+    faFileLines,
+    faFilePdf,
+    faFilePen,
+    faFilePowerpoint,
+    faFileWord,
+} from '@fortawesome/free-solid-svg-icons';
 
 describe('AttachmentUnitComponent', () => {
     let scienceService: ScienceService;
@@ -82,6 +95,13 @@ describe('AttachmentUnitComponent', () => {
         ['pdf', faFilePdf],
         ['csv', faFileCsv],
         ['png', faFileImage],
+        ['zip', faFileArchive],
+        ['txt', faFileLines],
+        ['doc', faFileWord],
+        ['json', faFileCode],
+        ['xls', faFileExcel],
+        ['ppt', faFilePowerpoint],
+        ['odf', faFilePen],
         ['exotic', faFile],
     ])('should use correct icon for extension', async (extension: string, icon: IconDefinition) => {
         const getAttachmentIconSpy = jest.spyOn(component, 'getAttachmentIcon');
