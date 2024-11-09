@@ -23,6 +23,7 @@ import {
     faFilePowerpoint,
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
+import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 
 describe('AttachmentUnitComponent', () => {
     let scienceService: ScienceService;
@@ -52,7 +53,7 @@ describe('AttachmentUnitComponent', () => {
                     provide: TranslateService,
                     useClass: MockTranslateService,
                 },
-                MockProvider(FileService),
+                { provide: FileService, useClass: MockFileService },
                 MockProvider(ScienceService),
             ],
         }).compileComponents();
