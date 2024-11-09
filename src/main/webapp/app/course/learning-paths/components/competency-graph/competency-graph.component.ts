@@ -1,7 +1,7 @@
 import { Component, computed, effect, input, signal } from '@angular/core';
 import { NgxGraphModule, NgxGraphZoomOptions } from '@swimlane/ngx-graph';
 import { Subject } from 'rxjs';
-import { CompetencyGraphDTO, NodeType } from 'app/entities/competency/learning-path.model';
+import { CompetencyGraphDTO } from 'app/entities/competency/learning-path.model';
 import { CompetencyNodeComponent, SizeUpdate } from 'app/course/learning-paths/components/competency-node/competency-node.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
@@ -13,8 +13,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     styleUrl: './competency-graph.component.scss',
 })
 export class CompetencyGraphComponent {
-    protected readonly NodeType = NodeType;
-
     readonly competencyGraph = input.required<CompetencyGraphDTO>();
 
     private readonly internalCompetencyGraph = signal<CompetencyGraphDTO>({
@@ -31,7 +29,6 @@ export class CompetencyGraphComponent {
         );
     });
 
-    readonly layout = signal('dagreCluster');
     readonly update$ = new Subject<boolean>();
     readonly center$ = new Subject<boolean>();
     readonly zoomToFit$ = new Subject<NgxGraphZoomOptions>();
