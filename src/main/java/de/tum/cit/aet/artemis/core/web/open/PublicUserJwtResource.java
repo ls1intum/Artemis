@@ -37,12 +37,12 @@ import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
-import de.tum.cit.aet.artemis.core.security.jwt.TokenTool;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
 
 /**
@@ -116,7 +116,7 @@ public class PublicUserJwtResource {
      */
     @PostMapping("tool-token")
     @EnforceAtLeastStudent
-    public ResponseEntity<String> getToolToken(@RequestParam(name = "tool", required = true) TokenTool tool,
+    public ResponseEntity<String> getToolToken(@RequestParam(name = "tool", required = true) ToolTokenType tool,
             @RequestParam(name = "as-cookie", defaultValue = "false") boolean asCookie, HttpServletRequest request, HttpServletResponse response) {
         // remaining time in milliseconds
         var jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);

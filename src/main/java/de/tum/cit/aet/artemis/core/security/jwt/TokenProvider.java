@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -107,7 +108,7 @@ public class TokenProvider {
      * @param tool           tool this token is used for. If null, it's a general access token
      * @return JWT Token
      */
-    public String createToken(Authentication authentication, long duration, @Nullable TokenTool tool) {
+    public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
         long now = (new Date()).getTime();
@@ -186,6 +187,11 @@ public class TokenProvider {
 
     private Claims parseClaims(String authToken) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
+    }
+
+    public String getClaim(String token, String claimName) {
+        Claims claims = parseClaims(token);
+        return claims.get(claimName, String.class);
     }
 
     public Date getExpirationDate(String authToken) {

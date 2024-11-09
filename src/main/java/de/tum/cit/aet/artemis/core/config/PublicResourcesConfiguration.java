@@ -14,10 +14,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.CacheControl;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolsInterceptor;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -29,8 +31,11 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
 
     private final JHipsterProperties jHipsterProperties;
 
-    public PublicResourcesConfiguration(JHipsterProperties jHipsterProperties) {
+    private final ToolsInterceptor toolsInterceptor;
+
+    public PublicResourcesConfiguration(JHipsterProperties jHipsterProperties, ToolsInterceptor toolsInterceptor) {
         this.jHipsterProperties = jHipsterProperties;
+        this.toolsInterceptor = toolsInterceptor;
     }
 
     @Value("${artemis.file-upload-path}")
@@ -107,5 +112,10 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
         var userDir = System.getProperty("user.dir");
         var morePaths = Stream.concat(Stream.of("public"), Arrays.stream(subPaths)).toArray(String[]::new);
         return "file:" + Path.of(userDir, morePaths) + "/";
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(toolsInterceptor);
     }
 }

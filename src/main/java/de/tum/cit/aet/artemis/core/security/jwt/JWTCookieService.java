@@ -14,6 +14,8 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
+
 @Profile(PROFILE_CORE)
 @Service
 public class JWTCookieService {
@@ -47,7 +49,7 @@ public class JWTCookieService {
      * @param duration the duration of the cookie and the jwt
      * @return the login ResponseCookie containing the JWT
      */
-    public ResponseCookie buildToolCookie(long duration, TokenTool tool) {
+    public ResponseCookie buildToolCookie(long duration, ToolTokenType tool) {
         String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), duration, tool);
         return buildJWTCookie(jwt, Duration.of(duration, ChronoUnit.MILLIS));
     }
