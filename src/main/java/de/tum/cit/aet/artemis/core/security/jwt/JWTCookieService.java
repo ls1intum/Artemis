@@ -46,7 +46,7 @@ public class JWTCookieService {
     /**
      * Builds a cookie with the tool claim in the jwt
      *
-     * @param duration the duration of the cookie and the jwt
+     * @param duration the duration of the cookie in milli seconds and the jwt
      * @return the login ResponseCookie containing the JWT
      */
     public ResponseCookie buildToolCookie(long duration, ToolTokenType tool) {

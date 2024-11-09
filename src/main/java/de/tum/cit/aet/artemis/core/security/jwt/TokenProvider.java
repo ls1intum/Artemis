@@ -104,7 +104,7 @@ public class TokenProvider {
      * Create JWT Token a fully populated <code>Authentication</code> object.
      *
      * @param authentication Authentication Object
-     * @param duration       the Token lifetime
+     * @param duration       the Token lifetime in milli seconds
      * @param tool           tool this token is used for. If null, it's a general access token
      * @return JWT Token
      */
