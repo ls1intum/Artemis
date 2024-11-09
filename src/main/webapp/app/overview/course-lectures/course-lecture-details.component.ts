@@ -131,7 +131,8 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     downloadAttachment(downloadUrl?: string): void {
         if (!this.isDownloadingLink && downloadUrl) {
             this.isDownloadingLink = downloadUrl;
-            this.fileService.downloadFile(downloadUrl);
+            console.log(downloadUrl);
+            this.fileService.downloadFile(this.fileService.replaceLectureAttachmentPrefixAndUnderscores(downloadUrl));
             this.isDownloadingLink = undefined;
         }
     }

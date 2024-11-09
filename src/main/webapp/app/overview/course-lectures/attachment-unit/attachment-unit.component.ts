@@ -38,7 +38,7 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
         if (this.lectureUnit().attachment?.link) {
             const link = this.lectureUnit().attachment!.link!;
             const filename = link.substring(link.lastIndexOf('/') + 1);
-            return this.replaceAttachmentPrefixAndUnderscores(filename);
+            return this.fileService.replaceAttachmentPrefixAndUnderscores(filename);
         }
         return '';
     }
@@ -51,17 +51,9 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
 
         if (this.lectureUnit().attachment?.link) {
             const link = this.lectureUnit().attachment!.link!;
-            this.fileService.downloadFile(this.replaceAttachmentPrefixAndUnderscores(link));
+            this.fileService.downloadFile(this.fileService.replaceAttachmentPrefixAndUnderscores(link));
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
-    }
-
-    /**
-     * Removes the prefix from the file name, and replaces underscore with spaces
-     * @param link
-     */
-    private replaceAttachmentPrefixAndUnderscores(link: string): string {
-        return link.replace(/AttachmentUnit_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}_/, '').replace(/_/g, ' ');
     }
 
     /**
