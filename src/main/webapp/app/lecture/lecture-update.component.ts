@@ -137,13 +137,35 @@ export class LectureUpdateComponent implements OnInit {
         }
     }
 
+    cancel() {
+        console.log('called cancel');
+        console.log('isEditMode', this.isEditMode());
+        if (!this.isEditMode()) {
+            console.log('trying to delete lecture');
+            console.log('lecture id' + this.lecture().id);
+            // this means we are in create mode and have an auto saved lecture (for attachments and units) that we need to delete
+            this.lectureService.delete(this.lecture().id!).subscribe({
+                next: () => {
+                    console.log('lecture deleted');
+                },
+            });
+            this.previousState(false);
+        } else {
+            this.previousState();
+        }
+    }
+
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
      * Returns to the detail page if there is no previous state, and we edited an existing lecture
      * Returns to the overview page if there is no previous state, and we created a new lecture
+     *
+     * @param useLectureId false when deleting in create mode. As we do not await the deletion, we need to tell this method that we will not use the id
      */
-    previousState() {
-        this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture().course!.id!.toString(), 'lectures'], this.lecture().id?.toString());
+    previousState(useLectureId: boolean = true) {
+        const lectureId = useLectureId ? this.lecture().id?.toString() : undefined;
+
+        this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture().course!.id!.toString(), 'lectures'], lectureId);
     }
 
     /**
