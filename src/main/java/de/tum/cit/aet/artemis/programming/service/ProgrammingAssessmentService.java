@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintResponseService;
@@ -48,9 +49,10 @@ public class ProgrammingAssessmentService extends AssessmentService {
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, ExamDateService examDateService, UserRepository userRepository, GradingCriterionRepository gradingCriterionRepository,
             Optional<LtiNewResultService> ltiNewResultService, SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService,
+            LongFeedbackTextRepository longFeedbackTextRepository) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examDateService, userRepository, ltiNewResultService, singleUserNotificationService, resultWebsocketService);
+                submissionRepository, examDateService, userRepository, ltiNewResultService, singleUserNotificationService, resultWebsocketService, longFeedbackTextRepository);
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.athenaFeedbackSendingService = athenaFeedbackSendingService;
     }
@@ -88,6 +90,8 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * @return the new saved result
      */
     public Result saveAndSubmitManualAssessment(StudentParticipation participation, Result newManualResult, Result existingManualResult, User assessor, boolean submit) {
+        // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with {@link resultRepository.save}
+        resultService.deleteLongFeedback(newManualResult.getFeedbacks(), newManualResult);
         // make sure that the submission cannot be manipulated on the client side
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
         ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();

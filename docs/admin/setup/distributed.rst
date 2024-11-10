@@ -608,7 +608,6 @@ These credentials are used to clone repositories via HTTPS. You must also add th
                 specify-concurrent-builds: true                     # Set to false, if the number of concurrent build jobs should be chosen automatically based on system resources
                 concurrent-build-size: 1                            # If previous value is true: Set to desired value but keep available system resources in mind
                 asynchronous: true
-                timeout-seconds: 240                                # Time limit of a build before it will be cancelled
                 build-container-prefix: local-ci-
                 image-cleanup:
                     enabled: true                                   # If set to true (recommended), old Docker images will be deleted on a schedule.
@@ -620,6 +619,8 @@ These credentials are used to clone repositories via HTTPS. You must also add th
                 build-agent:
                     short-name: "artemis-build-agent-X"             # Short name of the build agent. This should be unique for each build agent. Only lowercase letters, numbers and hyphens are allowed.
                     display-name: "Artemis Build Agent X"           # This value is optional. If omitted, the short name will be used as display name. Display name of the build agent. This is shown in the Artemis UI.
+                build-timeout-seconds:
+                    max: 240                                        # (Optional, default 240) Maximum time in seconds a build job is allowed to run. If a build job exceeds this time, it will be cancelled.
 
 
 Please note that ``artemis.continuous-integration.build-agent.short-name`` must be provided. Otherwise, the build agent will not start.

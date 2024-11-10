@@ -1,0 +1,27 @@
+{
+    "cleanupService": {
+        "title": "Cleanup Service",
+        "table": {
+            "operation": "Operation name",
+            "deleteFrom": "Delete from",
+            "deleteTo": "Delete to",
+            "lastExecuted": "Last executed"
+        },
+        "operation": {
+            "deleteOrphans": "Delete orphans",
+            "deletePlagiarismComparisons": "Delete plagiarism comparisons",
+            "deleteNonRatedResults": "Delete non-rated results",
+            "deleteOldRatedResults": "Delete old rated results",
+            "deleteOldSubmissionVersions": "Delete old submission versions",
+            "deleteOldFeedback": "Delete old feedback versions"
+        },
+        "execute": {
+            "question": "Are you sure you want to execute the operation <strong>{{ title }}</strong>? This action can NOT be undone!",
+            "typeOperationNameToConfirm": "Please type in the name of the operation to confirm."
+        },
+        "notRunYet": "This operation has not been run yet",
+        "error": {
+            "datesInvalid": "'Delete to' must be after 'Delete from'"
+        }
+    }
+}

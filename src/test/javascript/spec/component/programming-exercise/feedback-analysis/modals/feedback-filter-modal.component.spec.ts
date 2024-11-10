@@ -32,12 +32,14 @@ describe('FeedbackFilterModalComponent', () => {
             tasks: [],
             testCases: [],
             occurrence: [component.minCount(), component.maxCount()],
+            errorCategories: [],
         };
 
         expect(component.filters).toEqual({
             tasks: [],
             testCases: [],
             occurrence: [0, 10],
+            errorCategories: [],
         });
     });
 
@@ -47,11 +49,13 @@ describe('FeedbackFilterModalComponent', () => {
         const closeSpy = jest.spyOn(activeModal, 'close');
 
         component.filters.occurrence = [component.minCount(), component.maxCount()];
+        component.filters.errorCategories = ['Student Error', 'Ares Error'];
         component.applyFilter();
 
         expect(storeSpy).toHaveBeenCalledWith(component.FILTER_TASKS_KEY, []);
         expect(storeSpy).toHaveBeenCalledWith(component.FILTER_TEST_CASES_KEY, []);
         expect(storeSpy).toHaveBeenCalledWith(component.FILTER_OCCURRENCE_KEY, [0, 10]);
+        expect(storeSpy).toHaveBeenCalledWith(component.FILTER_ERROR_CATEGORIES_KEY, ['Student Error', 'Ares Error']);
         expect(emitSpy).toHaveBeenCalledOnce();
         expect(closeSpy).toHaveBeenCalledOnce();
     });
@@ -66,27 +70,42 @@ describe('FeedbackFilterModalComponent', () => {
         expect(clearSpy).toHaveBeenCalledWith(component.FILTER_TASKS_KEY);
         expect(clearSpy).toHaveBeenCalledWith(component.FILTER_TEST_CASES_KEY);
         expect(clearSpy).toHaveBeenCalledWith(component.FILTER_OCCURRENCE_KEY);
+        expect(clearSpy).toHaveBeenCalledWith(component.FILTER_ERROR_CATEGORIES_KEY);
 
         expect(component.filters).toEqual({
             tasks: [],
             testCases: [],
             occurrence: [0, 10],
+            errorCategories: [],
         });
         expect(emitSpy).toHaveBeenCalledOnce();
         expect(closeSpy).toHaveBeenCalledOnce();
     });
 
-    it('should update filters when checkboxes change', () => {
+    it('should update filters when checkboxes change for tasks', () => {
         const event = { target: { checked: true, value: 'test-task' } } as unknown as Event;
         component.onCheckboxChange(event, 'tasks');
         expect(component.filters.tasks).toEqual(['test-task']);
     });
 
-    it('should remove the value from filters when checkbox is unchecked', () => {
+    it('should update filters when checkboxes change for errorCategories', () => {
+        const event = { target: { checked: true, value: 'Student Error' } } as unknown as Event;
+        component.onCheckboxChange(event, 'errorCategories');
+        expect(component.filters.errorCategories).toEqual(['Student Error']);
+    });
+
+    it('should remove the value from filters when checkbox is unchecked for tasks', () => {
         component.filters.tasks = ['test-task', 'task-2'];
         const event = { target: { checked: false, value: 'test-task' } } as unknown as Event;
         component.onCheckboxChange(event, 'tasks');
         expect(component.filters.tasks).toEqual(['task-2']);
+    });
+
+    it('should remove the value from filters when checkbox is unchecked for errorCategories', () => {
+        component.filters.errorCategories = ['Student Error', 'Ares Error'];
+        const event = { target: { checked: false, value: 'Student Error' } } as unknown as Event;
+        component.onCheckboxChange(event, 'errorCategories');
+        expect(component.filters.errorCategories).toEqual(['Ares Error']);
     });
 
     it('should dismiss modal when closeModal is called', () => {
