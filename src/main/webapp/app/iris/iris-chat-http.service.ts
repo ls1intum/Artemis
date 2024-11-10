@@ -95,7 +95,7 @@ export class IrisChatHttpService {
      * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
      */
     rateMessage(sessionId: number, messageId: number, helpful: boolean): Response<IrisMessage> {
-        return this.httpClient.put<IrisMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/helpful/${helpful}`, null, { observe: 'response' });
+        return this.httpClient.put<IrisMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/helpful`, helpful, { observe: 'response' });
     }
 
     getCurrentSessionOrCreateIfNotExists<T extends IrisSession>(identifier: string): Response<T> {

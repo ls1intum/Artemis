@@ -107,15 +107,15 @@
                             </span>
                         </ng-template>
                     </ngx-datatable-column>
-                    <ngx-datatable-column prop="buildAgentAddress" [minWidth]="150" [width]="200">
+                    <ngx-datatable-column prop="buildAgent.displayName" [minWidth]="150" [width]="200">
                         <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildAgentAddress')">
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildAgent.displayName')">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.buildAgent"></span>
-                                <fa-icon [icon]="controls.iconForSortPropField('buildAgentAddress')" />
+                                <fa-icon [icon]="controls.iconForSortPropField('buildAgent.displayName')" />
                             </span>
                         </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: value }">
+                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                            <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: row.buildAgent!.name }">
                                 {{ value }}
                             </a>
                         </ng-template>

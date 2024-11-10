@@ -18,63 +18,29 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
-class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "peinttest";
 
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
-    private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
-
-    @Autowired
-    private ProgrammingExerciseStudentParticipationTestRepository participationRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
-    private ExamUtilService examUtilService;
-
     private Long programmingExerciseId;
-
-    @Autowired
-    private ChannelRepository channelRepository;
 
     @BeforeEach
     void init() {
@@ -170,7 +136,7 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
         ProgrammingExercise programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(programmingExerciseId).orElseThrow();
 
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).isEmpty();
 
         // no test cases, changing to automatic feedback: update should work
@@ -198,9 +164,9 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationJenkinsGitlabTest
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigById(programmingExerciseId).orElseThrow();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         testCases.forEach(testCase -> testCase.setWeight(0D));
-        programmingExerciseTestCaseRepository.saveAll(testCases);
+        testCaseRepository.saveAll(testCases);
 
         programmingExercise.setAssessmentType(assessmentType);
 

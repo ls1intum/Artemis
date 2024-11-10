@@ -25,7 +25,9 @@
                 "RECENT_SCORES_HIGHER": "Since your recent scores are higher than your average in the competency, the mastery is higher than the progress",
                 "MORE_EASY_POINTS": "Since you mostly scored your points in easy exercises, the mastery is lower than the progress",
                 "MORE_HARD_POINTS": "Since you mostly scored your points in hard exercises, the mastery is higher than the progress",
-                "QUICKLY_SOLVED_EXERCISES": "Since you solved some exercises quickly, the mastery is higher than the progress"
+                "QUICKLY_SOLVED_EXERCISES": "Since you solved some exercises quickly, the mastery is higher than the progress",
+                "MORE_LOW_WEIGHTED_EXERCISES": "Since you solved exercises or completed lecture units that are marked by the instructor as less important for this competency, the mastery is lower than the progress",
+                "MORE_HIGH_WEIGHTED_EXERCISES": "Since you solved exercises or completed lecture units that are marked by the instructor as more important for this competency, the mastery is higher than the progress"
             },
             "table": {
                 "panelHeader": "Your advancement"
@@ -117,7 +119,13 @@
             "link": {
                 "title": "Linked Competencies",
                 "lectureUnit": "Optionally link this lecture unit to one or more competencies.",
-                "exercise": "Optionally link this exercise to one or more competencies."
+                "exercise": "Optionally link this exercise to one or more competencies.",
+                "weightTooltip": "The relevance of this learning object for the competency.",
+                "weightLabels": {
+                    "low": "Low",
+                    "medium": "Medium",
+                    "high": "High"
+                }
             },
             "competencyCard": {
                 "connectedLectureUnits": "Linked Lecture Units",
@@ -172,8 +180,9 @@
             "softDueDate": "Recommended until",
             "masteryThreshold": "Mastery threshold",
             "manage": {
-                "helpButton": "Help",
-                "importAllButton": "Import all of a course"
+                "importAllButton": "Import all of a course",
+                "editRelationsButton": "Edit relations",
+                "helpButton": "Help"
             },
             "importSettings": {
                 "importRelationsLabel": "Import relations",
@@ -241,6 +250,36 @@
                 "ANALYZE": "differentiate, examine, experiment, question, relate, test, break down, contrast, distinguish",
                 "EVALUATE": "appraise, argue, choose, defend, judge, select, support, value, critique",
                 "CREATE": "design, formulate, hypothesize, invent, plan, propose, write, assemble, construct, develop"
+            },
+            "relations": {
+                "modalTitle": "Course competency relations",
+                "relationTypes": {
+                    "ASSUMES": "Assumes",
+                    "EXTENDS": "Extends",
+                    "MATCHES": "Matches"
+                },
+                "form": {
+                    "headCourseCompetencyLabel": "Head course competency",
+                    "headCourseCompetencyDefaultOption": "Select head course competency",
+                    "tailCourseCompetencyLabel": "Tail course competency",
+                    "tailCourseCompetencyDefaultOption": "Select tail course competency",
+                    "relationTypeLabel": "Relation Type",
+                    "relationTypeDefaultOption": "Select relation type",
+                    "deleteRelationButtonLabel": "Delete Relation",
+                    "updateRelationButtonLabel": "Update Relation",
+                    "createRelationButtonLabel": "Create Relation",
+                    "cyclicDependencyError": "You cannot create a cyclic dependency between course competencies."
+                },
+                "graph": {
+                    "nodeTypes": {
+                        "competency": "C",
+                        "prerequisite": "P"
+                    },
+                    "tooltips": {
+                        "competency": "This node represents a Competency",
+                        "prerequisite": "This node represents a Prerequisite"
+                    }
+                }
             },
             "featureExplanation": {
                 "title": "Introduction to course competencies",

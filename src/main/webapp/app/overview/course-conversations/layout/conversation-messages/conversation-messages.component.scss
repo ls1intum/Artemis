@@ -1,3 +1,7 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
 .conversation-messages {
     --message-input-height-prod: 171px;
     --message-input-height-dev: 187px;
@@ -43,12 +47,34 @@
         max-height: calc(75vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
         overflow-y: auto;
 
-        &.content-height-dev {
-            max-height: calc(75vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+        &.hide-input-full {
+            max-height: calc(94vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
         }
 
-        @media (max-width: 768px) {
-            max-height: calc(75vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height)) !important;
+        &.hide-input {
+            max-height: calc(87vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
+        }
+
+        &.content-height-dev {
+            max-height: calc(75vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+
+            @include media-breakpoint-down(sm) {
+                max-height: calc(90vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+                max-height: calc(90dvh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+            }
+        }
+
+        &.hide-input-full.content-height-dev {
+            max-height: calc(94vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+        }
+
+        &.hide-input.content-height-dev {
+            max-height: calc(87vh - var(--message-input-height-dev) - var(--search-height) - var(--channel-header-height));
+        }
+
+        @include media-breakpoint-down(sm) {
+            max-height: calc(90vh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
+            max-height: calc(90dvh - var(--message-input-height-prod) - var(--search-height) - var(--channel-header-height));
         }
     }
 
@@ -63,4 +89,26 @@
     .conversation-messages-message-list.is-fetching-posts {
         display: none;
     }
+}
+
+.message-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+
+.grouped-posts {
+    margin-left: 30px;
+    padding-left: 10px;
+}
+
+.grouped-posts,
+.grouped-post {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 0;
+}
+
+jhi-posting-thread {
+    margin-bottom: 5px;
 }

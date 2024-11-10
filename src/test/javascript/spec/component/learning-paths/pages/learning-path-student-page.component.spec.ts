@@ -14,6 +14,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { EntityNotFoundError } from 'app/course/learning-paths/exceptions/entity-not-found.error';
 import { LearningPathDTO } from 'app/entities/competency/learning-path.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('LearningPathStudentPageComponent', () => {
     let component: LearningPathStudentPageComponent;
@@ -33,15 +34,14 @@ describe('LearningPathStudentPageComponent', () => {
             imports: [LearningPathStudentPageComponent],
             providers: [
                 provideHttpClient(),
+                provideHttpClientTesting(),
                 {
                     provide: ActivatedRoute,
                     useValue: {
                         parent: {
-                            parent: {
-                                params: of({
-                                    courseId: courseId,
-                                }),
-                            },
+                            params: of({
+                                courseId: courseId,
+                            }),
                         },
                     },
                 },

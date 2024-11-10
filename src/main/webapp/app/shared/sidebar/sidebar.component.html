@@ -79,6 +79,7 @@
                                 [itemSelected]="itemSelected"
                                 [showLeadingIcon]="sidebarData.showAccordionLeadingIcon ?? false"
                                 [channelTypeIcon]="channelTypeIcon"
+                                [sidebarItemAlwaysShow]="sidebarItemAlwaysShow()"
                                 [collapseState]="collapseState"
                                 (onUpdateSidebar)="onUpdateSidebar.emit()"
                                 [isFilterActive]="isFilterActive"

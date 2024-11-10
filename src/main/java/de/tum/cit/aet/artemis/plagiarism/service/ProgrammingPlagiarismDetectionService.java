@@ -31,6 +31,7 @@ import de.jplag.Language;
 import de.jplag.c.CLanguage;
 import de.jplag.clustering.ClusteringOptions;
 import de.jplag.cpp.CPPLanguage;
+import de.jplag.csharp.CSharpLanguage;
 import de.jplag.exceptions.ExitException;
 import de.jplag.java.JavaLanguage;
 import de.jplag.javascript.JavaScriptLanguage;
@@ -41,6 +42,7 @@ import de.jplag.reporting.reportobject.ReportObjectFactory;
 import de.jplag.rlang.RLanguage;
 import de.jplag.rust.RustLanguage;
 import de.jplag.swift.SwiftLanguage;
+import de.jplag.typescript.TypeScriptLanguage;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -314,6 +316,7 @@ public class ProgrammingPlagiarismDetectionService {
         return switch (programmingExercise.getProgrammingLanguage()) {
             case C -> new CLanguage();
             case C_PLUS_PLUS -> new CPPLanguage();
+            case C_SHARP -> new CSharpLanguage();
             case JAVA -> new JavaLanguage();
             case JAVASCRIPT -> new JavaScriptLanguage();
             case KOTLIN -> new KotlinLanguage();
@@ -321,7 +324,8 @@ public class ProgrammingPlagiarismDetectionService {
             case R -> new RLanguage();
             case RUST -> new RustLanguage();
             case SWIFT -> new SwiftLanguage();
-            case EMPTY, PHP, DART, HASKELL, ASSEMBLER, OCAML, C_SHARP, SQL, TYPESCRIPT, GO, MATLAB, BASH, VHDL, RUBY, POWERSHELL, ADA -> throw new BadRequestAlertException(
+            case TYPESCRIPT -> new TypeScriptLanguage();
+            case EMPTY, PHP, DART, HASKELL, ASSEMBLER, OCAML, SQL, GO, MATLAB, BASH, VHDL, RUBY, POWERSHELL, ADA -> throw new BadRequestAlertException(
                     "Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.", "ProgrammingExercise", "notSupported");
         };
     }

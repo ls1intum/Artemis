@@ -11,6 +11,9 @@ import {
     Signal,
     ViewChild,
     computed,
+    inject,
+    input,
+    signal,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
@@ -23,11 +26,12 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
-import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
+import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
+import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { faAngleDown, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
 import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
@@ -45,9 +49,12 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
 
 export enum MarkdownEditorHeight {
-    INLINE = 100,
+    INLINE = 125,
     SMALL = 300,
     MEDIUM = 500,
     LARGE = 1000,
@@ -86,6 +93,12 @@ const BORDER_HEIGHT_OFFSET = 2;
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
+    private readonly alertService = inject(AlertService);
+    // We inject the MetisService here to avoid a NullInjectorError in the FileUploaderService.
+    private readonly metisService = inject(MetisService, { optional: true });
+    private readonly fileUploaderService = inject(FileUploaderService);
+    private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+
     @ViewChild(MonacoEditorComponent, { static: false }) monacoEditor: MonacoEditorComponent;
     @ViewChild('fullElement', { static: true }) fullElement: ElementRef<HTMLDivElement>;
     @ViewChild('wrapper', { static: true }) wrapper: ElementRef<HTMLDivElement>;
@@ -147,13 +160,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         new BoldAction(),
         new ItalicAction(),
         new UnderlineAction(),
+        new StrikethroughAction(),
         new QuoteAction(),
         new CodeAction(),
         new CodeBlockAction('java'),
         new UrlAction(),
         new AttachmentAction(),
         new OrderedListAction(),
-        new UnorderedListAction(),
+        new BulletedListAction(),
     ];
 
     @Input()
@@ -174,6 +188,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
+
+    readonly useCommunicationForFileUpload = input<boolean>(false);
+    readonly fallbackConversationId = input<number>();
 
     @Output()
     markdownChange = new EventEmitter<string>();
@@ -227,6 +244,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     ]);
 
     colorSignal: Signal<string[]> = computed(() => [...this.colorToClassMap.keys()]);
+    allowedFileExtensions = signal<string>(UPLOAD_MARKDOWN_FILE_EXTENSIONS.map((ext) => `.${ext}`).join(', ')).asReadonly();
 
     static readonly TAB_EDIT = 'editor_edit';
     static readonly TAB_PREVIEW = 'editor_preview';
@@ -245,11 +263,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly TAB_PREVIEW = MarkdownEditorMonacoComponent.TAB_PREVIEW;
     protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
 
-    constructor(
-        private alertService: AlertService,
-        private fileUploaderService: FileUploaderService,
-        private artemisMarkdown: ArtemisMarkdownService,
-    ) {
+    constructor() {
         this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
     }
 
@@ -277,6 +291,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     filterDisplayedAction<T extends TextEditorAction>(action?: T): T | undefined {
         return action?.hideInEditor ? undefined : action;
+    }
+
+    handleActionClick(event: MouseEvent, action: TextEditorAction): void {
+        const x = event.clientX;
+        const y = event.clientY;
+        if (action instanceof EmojiAction) {
+            action.setPoint({ x, y });
+        }
+
+        action.executeInCurrentEditor();
     }
 
     ngAfterViewInit(): void {
@@ -307,6 +331,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 if (action instanceof FullscreenAction) {
                     // We include the full element if the initial height is set to 'external' so the editor is resized to fill the screen.
                     action.element = this.isInitialHeightExternal() ? this.fullElement.nativeElement : this.wrapper.nativeElement;
+                } else if (this.enableFileUpload && action instanceof AttachmentAction) {
+                    action.setUploadCallback(this.embedFiles.bind(this));
                 }
                 this.monacoEditor.registerAction(action);
             });
@@ -356,7 +382,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      * @param newContentHeight The new height of the content in the editor.
      */
     onContentHeightChanged(newContentHeight: number | undefined): void {
-        if (this.linkEditorHeightToContentHeight) {
+        // Upon switching back from the preview tab, the file upload footer will briefly have a height of 0. We ignore this case to avoid an incorrect height.
+        if (this.linkEditorHeightToContentHeight && !(this.enableFileUpload && this.getElementClientHeight(this.fileUploadFooter) === 0)) {
             const totalHeight = (newContentHeight ?? 0) + this.getElementClientHeight(this.fileUploadFooter) + this.getElementClientHeight(this.actionPalette);
             // Clamp the height so it is between the minimum and maximum height.
             this.targetWrapperHeight = Math.max(this.resizableMinHeight, Math.min(this.resizableMaxHeight, totalHeight));
@@ -396,6 +423,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.onContentHeightChanged(this.monacoEditor.getContentHeight());
         const editorHeight = this.getEditorHeight();
         this.monacoEditor.layoutWithFixedSize(this.getEditorWidth(), editorHeight);
+        // Prevents an issue with line wraps in the editor
+        this.monacoEditor.layout();
     }
 
     /**
@@ -441,7 +470,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     onFileUpload(event: any): void {
         if (event.target.files.length >= 1) {
-            this.embedFiles(Array.from(event.target.files));
+            this.embedFiles(Array.from(event.target.files), event.target);
         }
     }
 
@@ -459,37 +488,58 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     /**
      * Embed the given files into the editor by uploading them and inserting the appropriate markdown.
      * For PDFs, a link to the file is inserted. For other files, the file is embedded as an image.
-     * @param files
+     * @param files The files to embed.
+     * @param inputElement The input element that contains the files. If provided, the input element will be reset.
      */
-    embedFiles(files: File[]): void {
+    embedFiles(files: File[], inputElement?: HTMLInputElement): void {
+        if (!this.enableFileUpload) {
+            return;
+        }
         files.forEach((file) => {
-            this.fileUploaderService.uploadMarkdownFile(file).then(
-                (response) => {
-                    const extension = file.name.split('.').last()?.toLocaleLowerCase();
-
-                    const attachmentAction: AttachmentAction | undefined = this.defaultActions.find((action) => action instanceof AttachmentAction);
-                    const urlAction: UrlAction | undefined = this.defaultActions.find((action) => action instanceof UrlAction);
-                    if (!attachmentAction || !urlAction || !response.path) {
-                        throw new Error('Cannot process file upload.');
-                    }
-                    const payload = { text: file.name, url: response.path };
-                    if (extension !== 'pdf') {
-                        // Embedded image
-                        attachmentAction?.executeInCurrentEditor(payload);
-                    } else {
-                        // For PDFs, just link to the file
-                        urlAction?.executeInCurrentEditor(payload);
-                    }
-                },
-                (error) => {
-                    this.alertService.addAlert({
-                        type: AlertType.DANGER,
-                        message: error.message,
-                        disableTranslation: true,
-                    });
-                },
-            );
+            (this.useCommunicationForFileUpload()
+                ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(
+                      file,
+                      this.metisService?.getCourse()?.id,
+                      this.metisService?.getCurrentConversation()?.id ?? this.fallbackConversationId(),
+                  )
+                : this.fileUploaderService.uploadMarkdownFile(file)
+            )
+                .then(
+                    (response) => this.processFileUploadResponse(response, file),
+                    (error) => {
+                        this.alertService.addAlert({
+                            type: AlertType.DANGER,
+                            message: error.message,
+                            disableTranslation: true,
+                        });
+                    },
+                )
+                .then(() => this.resetInputElement(inputElement));
         });
+    }
+
+    private processFileUploadResponse(response: FileUploadResponse, file: File): void {
+        const extension = file.name.split('.').last()?.toLocaleLowerCase();
+
+        const attachmentAction: AttachmentAction | undefined = this.defaultActions.find((action) => action instanceof AttachmentAction);
+        const urlAction: UrlAction | undefined = this.defaultActions.find((action) => action instanceof UrlAction);
+        if (!attachmentAction || !urlAction || !response.path) {
+            throw new Error('Cannot process file upload.');
+        }
+        const payload = { text: file.name, url: response.path };
+        if (extension !== 'pdf') {
+            // Embedded image
+            attachmentAction?.executeInCurrentEditor(payload);
+        } else {
+            // For PDFs, just link to the file
+            urlAction?.executeInCurrentEditor(payload);
+        }
+    }
+
+    private resetInputElement(inputElement?: HTMLInputElement): void {
+        if (inputElement) {
+            inputElement.value = '';
+        }
     }
 
     /**

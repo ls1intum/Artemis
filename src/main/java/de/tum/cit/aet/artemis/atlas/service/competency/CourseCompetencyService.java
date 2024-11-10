@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -20,6 +21,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
@@ -27,6 +30,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -39,10 +44,12 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
@@ -77,11 +84,15 @@ public class CourseCompetencyService {
 
     private final LearningObjectImportService learningObjectImportService;
 
+    private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
+
+    private final CourseRepository courseRepository;
+
     public CourseCompetencyService(CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LectureUnitService lectureUnitService, LearningPathService learningPathService, AuthorizationCheckService authCheckService,
             StandardizedCompetencyRepository standardizedCompetencyRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            LearningObjectImportService learningObjectImportService) {
+            LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -93,6 +104,8 @@ public class CourseCompetencyService {
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.learningObjectImportService = learningObjectImportService;
+        this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -124,6 +137,28 @@ public class CourseCompetencyService {
     }
 
     /**
+     * Updates the type of a course competency relation.
+     *
+     * @param courseId                          The id of the course for which to fetch the competencies
+     * @param courseCompetencyRelationId        The id of the course competency relation to update
+     * @param updateCourseCompetencyRelationDTO The DTO containing the new relation type
+     *
+     */
+    public void updateCourseCompetencyRelation(long courseId, long courseCompetencyRelationId, UpdateCourseCompetencyRelationDTO updateCourseCompetencyRelationDTO) {
+        var relation = competencyRelationRepository.findByIdElseThrow(courseCompetencyRelationId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var headCompetency = relation.getHeadCompetency();
+        var tailCompetency = relation.getTailCompetency();
+
+        if (!course.getId().equals(headCompetency.getCourse().getId()) || !course.getId().equals(tailCompetency.getCourse().getId())) {
+            throw new BadRequestAlertException("The relation does not belong to the course", ENTITY_NAME, "relationWrongCourse");
+        }
+
+        relation.setType(updateCourseCompetencyRelationDTO.newRelationType());
+        competencyRelationRepository.save(relation);
+    }
+
+    /**
      * Search for all course competencies fitting a {@link CompetencyPageableSearchDTO search query}. The result is paged.
      *
      * @param search The search query defining the search terms and the size of the returned page
@@ -150,13 +185,23 @@ public class CourseCompetencyService {
      * @param currentUser The user for whom to filter the learning objects
      */
     public void filterOutLearningObjectsThatUserShouldNotSee(CourseCompetency competency, User currentUser) {
-        competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, currentUser))
-                .peek(lectureUnit -> lectureUnit.setCompleted(lectureUnit.isCompletedFor(currentUser))).collect(Collectors.toSet()));
+        competency.setLectureUnitLinks(competency.getLectureUnitLinks().stream()
+                .filter(lectureUnitLink -> authCheckService.isAllowedToSeeLectureUnit(lectureUnitLink.getLectureUnit(), currentUser))
+                .peek(lectureUnitLink -> lectureUnitLink.getLectureUnit().setCompleted(lectureUnitLink.getLectureUnit().isCompletedFor(currentUser))).collect(Collectors.toSet()));
 
-        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(competency.getExercises(), currentUser);
-        Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
-                .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), currentUser);
-        competency.setExercises(exercisesWithAllInformationNeeded);
+        Set<Exercise> exercises = competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise).collect(Collectors.toSet());
+        Set<Long> exerciseIdsUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(exercises, currentUser).stream().map(Exercise::getId)
+                .collect(Collectors.toSet());
+        Set<Exercise> exercisesWithAllInformationNeeded = exerciseService.loadExercisesWithInformationForDashboard(exerciseIdsUserIsAllowedToSee, currentUser);
+
+        Set<CompetencyExerciseLink> exerciseLinksWithAllInformation = competency.getExerciseLinks().stream()
+                .filter(exerciseLink -> exerciseIdsUserIsAllowedToSee.contains(exerciseLink.getExercise().getId())).peek(exerciseLink -> {
+                    Optional<Exercise> exerciseWithAllInformationNeeded = exercisesWithAllInformationNeeded.stream()
+                            .filter(exercise -> exercise.getId().equals(exerciseLink.getExercise().getId())).findFirst();
+                    exerciseWithAllInformationNeeded.ifPresent(exerciseLink::setExercise);
+                }).collect(Collectors.toSet());
+
+        competency.setExerciseLinks(exerciseLinksWithAllInformation);
     }
 
     /**
@@ -273,10 +318,7 @@ public class CourseCompetencyService {
      */
     public <C extends CourseCompetency> C createCourseCompetency(C competencyToCreate, Course course) {
         competencyToCreate.setCourse(course);
-
         var persistedCompetency = courseCompetencyRepository.save(competencyToCreate);
-
-        updateLectureUnits(competencyToCreate, persistedCompetency);
 
         if (course.getLearningPathsEnabled()) {
             learningPathService.linkCompetencyToLearningPathsOfCourse(persistedCompetency, course.getId());
@@ -301,8 +343,6 @@ public class CourseCompetencyService {
             var createdCompetency = competencyFunction.apply(competency);
             createdCompetency.setCourse(course);
             createdCompetency = courseCompetencyRepository.save(createdCompetency);
-
-            updateLectureUnits(competency, createdCompetency);
 
             createdCompetencies.add(createdCompetency);
         }
@@ -329,14 +369,8 @@ public class CourseCompetencyService {
         competencyToUpdate.setMasteryThreshold(competency.getMasteryThreshold());
         competencyToUpdate.setTaxonomy(competency.getTaxonomy());
         competencyToUpdate.setOptional(competency.isOptional());
-        final var persistedCompetency = courseCompetencyRepository.save(competencyToUpdate);
 
-        // update competency progress if necessary
-        if (competency.getLectureUnits().size() != competencyToUpdate.getLectureUnits().size() || !competencyToUpdate.getLectureUnits().containsAll(competency.getLectureUnits())) {
-            competencyProgressService.updateProgressByCompetencyAndUsersInCourseAsync(persistedCompetency);
-        }
-
-        return persistedCompetency;
+        return courseCompetencyRepository.save(competencyToUpdate);
     }
 
     /**
@@ -349,10 +383,11 @@ public class CourseCompetencyService {
      */
     public <C extends CourseCompetency> C findProgressAndLectureUnitCompletionsForUser(C competency, Long userId) {
         competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), userId).ifPresent(progress -> competency.setUserProgress(Set.of(progress)));
+        Set<LectureUnit> lectureUnits = competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).collect(Collectors.toSet());
         // collect to map lecture unit id -> this
-        var completions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(competency.getLectureUnits(), userId).stream()
+        var completions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, userId).stream()
                 .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), completion -> completion));
-        competency.getLectureUnits().forEach(lectureUnit -> {
+        lectureUnits.forEach(lectureUnit -> {
             if (completions.containsKey(lectureUnit.getId())) {
                 lectureUnit.setCompletedUsers(Set.of(completions.get(lectureUnit.getId())));
             }
@@ -398,8 +433,8 @@ public class CourseCompetencyService {
         competencyRelationRepository.deleteAllByCompetencyId(courseCompetency.getId());
         competencyProgressService.deleteProgressForCompetency(courseCompetency.getId());
 
-        exerciseService.removeCompetency(courseCompetency.getExercises(), courseCompetency);
-        lectureUnitService.removeCompetency(courseCompetency.getLectureUnits(), courseCompetency);
+        exerciseService.removeCompetency(courseCompetency.getExerciseLinks(), courseCompetency);
+        lectureUnitService.removeCompetency(courseCompetency.getLectureUnitLinks(), courseCompetency);
 
         if (course.getLearningPathsEnabled()) {
             learningPathService.removeLinkedCompetencyFromLearningPathsOfCourse(courseCompetency, course.getId());
@@ -418,13 +453,6 @@ public class CourseCompetencyService {
     public void checkIfCompetencyBelongsToCourse(long competencyId, long courseId) {
         if (!courseCompetencyRepository.existsByIdAndCourseId(competencyId, courseId)) {
             throw new BadRequestAlertException("The competency does not belong to the course", ENTITY_NAME, "competencyWrongCourse");
-        }
-    }
-
-    private void updateLectureUnits(CourseCompetency competency, CourseCompetency createdCompetency) {
-        if (!competency.getLectureUnits().isEmpty()) {
-            lectureUnitService.linkLectureUnitsToCompetency(createdCompetency, competency.getLectureUnits(), Set.of());
-            competencyProgressService.updateProgressByCompetencyAndUsersInCourseAsync(createdCompetency);
         }
     }
 }
