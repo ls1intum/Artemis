@@ -53,24 +53,27 @@ export class LectureAttachmentsComponent implements OnDestroy {
         private lectureService: LectureService,
         private fileService: FileService,
     ) {
-        effect(() => {
-            this.notificationText = undefined;
-            this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
-                if (this.lectureId()) {
-                    this.lectureService.findWithDetails(this.lectureId()!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
-                        this.lecture.set(lectureResponse.body!);
+        effect(
+            () => {
+                this.notificationText = undefined;
+                this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
+                    if (this.lectureId()) {
+                        this.lectureService.findWithDetails(this.lectureId()!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
+                            this.lecture.set(lectureResponse.body!);
+                            this.loadAttachments();
+                        });
+                    } else {
+                        this.lecture.set(lecture);
                         this.loadAttachments();
-                    });
-                } else {
-                    this.lecture.set(lecture);
-                    this.loadAttachments();
-                }
-            });
-        });
+                    }
+                });
+            },
+            { allowSignalWrites: true },
+        );
     }
 
     loadAttachments(): void {
-        if (this.lecture().id !== undefined) {
+        if (this.lecture()?.id !== undefined) {
             this.attachmentService.findAllByLectureId(this.lecture().id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
                 this.attachments = attachmentsResponse.body!;
                 this.attachments.forEach((attachment) => {
