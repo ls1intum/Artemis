@@ -5,6 +5,8 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
+import org.springframework.web.bind.annotation.RestController;
+
 import com.tngtech.archunit.lang.syntax.elements.ClassesThat;
 import com.tngtech.archunit.lang.syntax.elements.GivenClassesConjunction;
 import com.tngtech.archunit.lang.syntax.elements.GivenMethodsConjunction;
@@ -48,5 +50,10 @@ public interface ModuleArchitectureTest {
 
     default MethodsThat<? extends GivenMethodsConjunction> noMethodsOfThisModuleThat() {
         return noMethodsOfThisModule().and();
+    }
+
+    default GivenMethodsConjunction endpointsOfThisModule() {
+        // checking for public methods is sufficient since shouldHaveNoPublicMethodsExceptForEndpoints() would fail otherwise
+        return methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().arePublic();
     }
 }

@@ -76,8 +76,30 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
         // allow empty should since some modules do not have any REST controllers
         classesOfThisModuleThat().areAnnotatedWith(RequestMapping.class).should(haveCorrectRequestMappingPathForClasses()).allowEmptyShould(true).check(productionClasses);
         for (var annotation : annotationClasses) {
-            methods().that().areAnnotatedWith(annotation).should(haveCorrectRequestMappingPathForMethods(annotation)).allowEmptyShould(true).check(productionClasses);
+            methodsOfThisModuleThat().areAnnotatedWith(annotation).should(haveCorrectRequestMappingPathForMethods(annotation)).allowEmptyShould(true).check(productionClasses);
         }
+    }
+
+    @Test
+    void shouldHaveNoPublicMethodsExceptForEndpoints() {
+        ArchRule rule = methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).and().arePublic().should(beAnnotatedWithRequestMapping())
+                .because("all public methods should be endpoints");
+        rule.check(productionClasses);
+    }
+
+    private ArchCondition<JavaMethod> beAnnotatedWithRequestMapping() {
+        return new ArchCondition<>("be annotated with request mapping annotation") {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                for (var annotation : annotationClasses) {
+                    if (item.isAnnotatedWith(annotation)) {
+                        return;
+                    }
+                }
+                events.add(violated(item, createMessage(item, "Method should be annotated with @RequestMapping")));
+            }
+        };
     }
 
     @Test
@@ -87,7 +109,7 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
         }
     }
 
-    protected ArchCondition<JavaMethod> useKebabCaseForRestAnnotations(Class<?> annotationClass) {
+    private ArchCondition<JavaMethod> useKebabCaseForRestAnnotations(Class<?> annotationClass) {
         return new ArchCondition<>("use kebab case for rest mapping annotations") {
 
             @Override
