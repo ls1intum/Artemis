@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
-import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -318,11 +317,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         // invoke generate student exams
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + examWithProgramming.getId() + "/generate-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
-
-        verify(gitService, never()).combineAllCommitsOfRepositoryIntoOne(any());
-
-        // invoke prepare exercise start
-        ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam1, course1);
 
         verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam1.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
     }

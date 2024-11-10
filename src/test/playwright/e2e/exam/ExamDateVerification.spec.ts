@@ -72,7 +72,7 @@ test.describe('Exam date verification', () => {
             const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
             await examAPIRequests.registerStudentForExam(exam, studentOne);
             await examAPIRequests.generateMissingIndividualExams(exam);
-            await examAPIRequests.prepareExerciseStartForExam(exam);
+
             await login(studentOne);
             await page.goto(`/courses/${course.id}/exams`);
             await courseOverview.openExamsTab();
@@ -109,7 +109,7 @@ test.describe('Exam date verification', () => {
             const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
             await examAPIRequests.registerStudentForExam(exam, studentOne);
             await examAPIRequests.generateMissingIndividualExams(exam);
-            await examAPIRequests.prepareExerciseStartForExam(exam);
+
             await login(studentOne);
             await page.goto(`/courses/${course.id}/exams/${exam.id}`);
             await page.waitForURL(`**/exams/${exam.id}`);

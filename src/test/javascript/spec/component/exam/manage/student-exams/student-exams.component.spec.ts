@@ -82,14 +82,7 @@ describe('StudentExamsComponent', () => {
                     }),
                 );
             },
-            startExercises: () => {
-                return of(
-                    new HttpResponse({
-                        body: 2,
-                        status: 200,
-                    }),
-                );
-            },
+
             getExerciseStartStatus: () => {
                 return of(
                     new HttpResponse({
@@ -387,32 +380,6 @@ describe('StudentExamsComponent', () => {
         expect(studentExamsComponent.isExamStarted).toBeFalse();
         expect(studentExamsComponent.course.isAtLeastInstructor).toBeTrue();
         expect(course).toBeTruthy();
-
-        const startExercisesSpy = jest.spyOn(examManagementService, 'startExercises');
-        const startExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#startExercisesButton'));
-        expect(startExercisesButton).toBeTruthy();
-        expect(startExercisesButton.nativeElement.disabled).toBeFalse();
-
-        startExercisesButton.nativeElement.click();
-        expect(startExercisesSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should correctly catch HTTPError when starting the exercises of the students', () => {
-        examManagementService = TestBed.inject(ExamManagementService);
-        const alertService = TestBed.inject(AlertService);
-        const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        course.isAtLeastInstructor = true;
-        exam.startDate = dayjs().add(120, 'seconds');
-
-        jest.spyOn(examManagementService, 'startExercises').mockReturnValue(throwError(() => httpError));
-        studentExamsComponentFixture.detectChanges();
-
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
-        const startExercisesButton = studentExamsComponentFixture.debugElement.query(By.css('#startExercisesButton'));
-        expect(startExercisesButton).toBeTruthy();
-        expect(startExercisesButton.nativeElement.disabled).toBeFalse();
-        startExercisesButton.nativeElement.click();
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should unlock all repositories of the students', () => {

@@ -677,45 +677,6 @@ public class StudentExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/start-exercises : Generate the participation objects
-     * for all the student exams belonging to the exam
-     *
-     * @param courseId the course to which the exam belongs to
-     * @param examId   the exam to which the student exam belongs to
-     * @return ResponseEntity containing the list of generated participations
-     */
-    @PostMapping(value = "courses/{courseId}/exams/{examId}/student-exams/start-exercises")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Void> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
-        long start = System.nanoTime();
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
-
-        if (exam.isTestExam()) {
-            throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
-        }
-
-        examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
-
-        User instructor = userRepository.getUser();
-        log.info("REST request to start exercises for student exams of exam {}", examId);
-        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructor.getLogin());
-        auditEventRepository.add(auditEvent);
-
-        studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> {
-            log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
-            if (ZonedDateTime.now().isAfter(ExamDateService.getExamProgrammingExerciseUnlockDate(exam))) {
-                // This is a special case if "prepare exercise start" was pressed shortly before the exam start
-                // Normally, the locking operation at the end of the exam gets scheduled during the initial unlocking process
-                // (see ProgrammingExerciseScheduleService#scheduleIndividualRepositoryAndParticipationLockTasks)
-                // Since this gets never executed here, we need to manually schedule the locking.
-                instanceMessageSendService.sendRescheduleAllStudentExams(examId);
-            }
-        });
-        return ResponseEntity.ok().build();
-    }
-
-    /**
      * GET /courses/{courseId}/exams/{examId}/student-exams/start-exercises/status : Return the current status of
      * starting exams for student exams in the given exam if available
      *
