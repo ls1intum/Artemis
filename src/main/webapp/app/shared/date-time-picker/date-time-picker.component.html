@@ -26,10 +26,10 @@
         [min]="minDate()"
         [max]="maxDate()"
         (ngModelChange)="updateField($event)"
-        [owlDateTime]="pickerType === DateTimePickerType.CALENDAR ? dtCalendar : pickerType === DateTimePickerType.TIMER ? dtTimer : dtDefault"
+        [owlDateTime]="pickerType() === DateTimePickerType.CALENDAR ? dtCalendar : pickerType() === DateTimePickerType.TIMER ? dtTimer : dtDefault"
         name="datePicker"
     />
-    @switch (pickerType) {
+    @switch (pickerType()) {
         @case (DateTimePickerType.TIMER) {
             <button [owlDateTimeTrigger]="dtTimer" class="btn position-absolute" type="button">
                 <fa-icon [icon]="faClock" />
@@ -52,7 +52,7 @@
         </button>
     </div>
 
-    <owl-date-time [startAt]="startDate" #dtDefault></owl-date-time>
+    <owl-date-time [startAt]="startDate()" #dtDefault></owl-date-time>
     <owl-date-time [pickerType]="'calendar'" #dtCalendar />
     <owl-date-time [pickerType]="'timer'" #dtTimer />
 </div>
