@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.service.UserSshPublicKeyService;
 
 @Profile(PROFILE_LOCALVC)
 @RestController
-@RequestMapping("/api/ssh-settings")
+@RequestMapping("api/ssh-settings/")
 public class SshPublicKeysResource {
 
     private static final Logger log = LoggerFactory.getLogger(SshPublicKeysResource.class);
@@ -44,7 +44,7 @@ public class SshPublicKeysResource {
     }
 
     /**
-     * GET ssh-public-keys : retrieves all SSH keys of a user
+     * GET public-keys : retrieves all SSH keys of a user
      *
      * @return the ResponseEntity containing all public SSH keys of a user with status 200 (OK)
      */
@@ -57,7 +57,7 @@ public class SshPublicKeysResource {
     }
 
     /**
-     * GET ssh-public-key : gets the ssh public key
+     * GET public-key : gets the ssh public key
      *
      * @param keyId The id of the key that should be fetched
      *
@@ -73,7 +73,7 @@ public class SshPublicKeysResource {
     }
 
     /**
-     * POST ssh-public-key : creates a new ssh public key for a user
+     * POST public-key : creates a new ssh public key for a user
      *
      * @param sshPublicKey the ssh public key to create
      *
@@ -98,7 +98,7 @@ public class SshPublicKeysResource {
     }
 
     /**
-     * Delete - ssh-public-key : deletes the ssh public key by its keyId
+     * Delete - public-key : deletes the ssh public key by its keyId
      *
      * @param keyId The id of the key that should be deleted
      *
