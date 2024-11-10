@@ -5,7 +5,7 @@
                 [toggleModeFunction]="toggleModeFunction"
                 [saveLectureFunction]="saveLectureFunction"
                 [validateDatesFunction]="onDatesValuesChanged"
-                [lecture]="lecture"
+                [lecture]="lecture()"
                 [isSaving]="isSaving"
             />
         } @else {
@@ -26,24 +26,27 @@
                     </div>
                 </div>
                 <jhi-form-status-bar [formStatusSections]="formStatusSections" />
-                @if (lecture.course) {
+                @if (lecture().course) {
                     <div class="form-group">
                         <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course"></label>
-                        <div class="d-flex">
-                            <!--                        TODO remove hover effect on disabled element-->
-                            <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="lecture.course.title" />
-                        </div>
+                        @if (lecture().course?.title) {
+                            <div class="d-flex">
+                                <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="lecture().course!.title!" />
+                            </div>
+                        }
                     </div>
                 }
                 <div>
                     <div>
                         <h2 id="artemisApp.lecture.wizardMode.steps.titleStepTitle"><span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepTitle"></span></h2>
                         <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepMessage"></span></p>
-                        <jhi-lecture-title-channel-name [lecture]="lecture" />
-                        <div class="form-group" id="field_description">
-                            <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description"></label>
-                            <jhi-markdown-editor-monaco class="markdown-editor" [domainActions]="domainActionsDescription" [(markdown)]="lecture.description" />
-                        </div>
+                        <jhi-lecture-title-channel-name [lecture]="lecture()" />
+                        @if (lecture()) {
+                            <div class="form-group" id="field_description">
+                                <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description"></label>
+                                <jhi-markdown-editor-monaco class="markdown-editor" [domainActions]="domainActionsDescription" [(markdown)]="lecture().description" />
+                            </div>
+                        }
                     </div>
                     <div>
                         <h2 id="artemisApp.lecture.wizardMode.steps.periodStepTitle"><span jhiTranslate="artemisApp.lecture.wizardMode.steps.periodStepTitle"></span></h2>
@@ -52,7 +55,7 @@
                             <div class="form-group flex-grow-1">
                                 <jhi-date-time-picker
                                     labelName="{{ 'artemisApp.lecture.visibleDate' | artemisTranslate }}"
-                                    [(ngModel)]="lecture.visibleDate"
+                                    [(ngModel)]="lecture().visibleDate"
                                     (valueChange)="onDatesValuesChanged()"
                                     name="visibleDate"
                                     id="visible-date"
@@ -61,7 +64,7 @@
                             <div class="form-group flex-grow-1 ms-3">
                                 <jhi-date-time-picker
                                     labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
-                                    [(ngModel)]="lecture.startDate"
+                                    [(ngModel)]="lecture().startDate"
                                     (valueChange)="onDatesValuesChanged()"
                                     name="startDate"
                                     id="start-date"
@@ -70,7 +73,7 @@
                             <div class="form-group flex-grow-1 ms-3">
                                 <jhi-date-time-picker
                                     labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
-                                    [(ngModel)]="lecture.endDate"
+                                    [(ngModel)]="lecture().endDate"
                                     (valueChange)="onDatesValuesChanged()"
                                     name="endDate"
                                     id="end-date"
@@ -83,12 +86,11 @@
                         <p id="artemisApp.lecture.wizardMode.steps.attachmentsStepMessage">
                             <span jhiTranslate="artemisApp.lecture.wizardMode.steps.attachmentsStepMessage"></span>
                         </p>
-                        <!--                        todo fix the lecture attachments if not lecture id is defined yet-->
-                        <jhi-lecture-attachments [lectureId]="lecture.id" [showHeader]="false" />
+                        <jhi-lecture-attachments [lectureId]="lecture().id" [showHeader]="false" [redirectToLecturePage]="false" />
                     </div>
                 </div>
                 <div>
-                    <jhi-lecture-update-wizard-units [lecture]="lecture" [currentStep]="3" />
+                    <jhi-lecture-update-wizard-units [lecture]="lecture()" [currentStep]="3" />
                     <div class="py-2">
                         <input class="form-check-input" type="checkbox" name="processUnit" (change)="onSelectProcessUnit()" [disabled]="editForm.form.invalid || isSaving" />
                         <span class="px-1" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.processAutomatically"></span>
