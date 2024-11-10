@@ -33,7 +33,7 @@
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.removePageButton"></span>
                 </button>
                 <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" />
-                <button (click)="triggerFileInput()" class="btn btn-primary text-truncate" aria-label="Append PDF file" [disabled]="isPdfLoading()">
+                <button (click)="triggerFileInput()" class="btn btn-primary text-truncate" aria-label="Append PDF file" [disabled]="!currentPdfUrl() || isPdfLoading()">
                     <fa-icon [icon]="faFileImport" />
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.appendPDFButton"></span>
                 </button>
@@ -47,6 +47,8 @@
                 (selectedPagesOutput)="selectedPages.set($event)"
                 (totalPagesOutput)="totalPages.set($event)"
             />
+        } @else {
+            <div class="empty-pdf-container"></div>
         }
         <div class="d-flex justify-content-between">
             <div>
