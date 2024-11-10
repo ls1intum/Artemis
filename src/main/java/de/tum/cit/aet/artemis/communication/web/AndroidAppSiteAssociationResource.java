@@ -37,7 +37,7 @@ public class AndroidAppSiteAssociationResource {
      *
      * @return assetslinks as json
      */
-    @GetMapping("assetlinks.json")
+    @GetMapping(value = "assetlinks.json", produces = "application/json")
     @ManualConfig
     public ResponseEntity<List<AndroidAssetLinksEntry>> getAndroidAssetLinks() {
         if (androidAppPackage == null || androidAppPackage.length() < 4 || sha256CertFingerprints == null || sha256CertFingerprints.length() < 20) {

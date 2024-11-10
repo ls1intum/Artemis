@@ -1,7 +1,7 @@
 import { Page } from 'playwright';
-import { BASE_API } from '../../constants';
 import { expect } from '@playwright/test';
 import { Commands } from '../../commands';
+import { BASE_API } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the exercise result page.
@@ -26,7 +26,7 @@ export class ExerciseResultPage {
 
     async shouldShowScore(percentage: number) {
         await Commands.reloadUntilFound(this.page, this.page.locator('jhi-course-exercise-details #submission-result-graded'), 4000, 60000);
-        await expect(this.page.locator('.tab-bar-exercise-details').getByText(`${percentage}%`)).toBeVisible();
+        await expect(this.page.locator('#exercise-headers-information').getByText(`${percentage}%`)).toBeVisible();
     }
 
     async clickOpenExercise(exerciseId: number) {

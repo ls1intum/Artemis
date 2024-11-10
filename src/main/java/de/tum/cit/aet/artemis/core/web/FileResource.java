@@ -417,10 +417,11 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        sanitizeFilenameElseThrow(filename);
+        String fileNameWithoutSpaces = filename.replaceAll(" ", "_");
+        sanitizeFilenameElseThrow(fileNameWithoutSpaces);
 
         List<Attachment> lectureAttachments = attachmentRepository.findAllByLectureId(lectureId);
-        Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> filename.equals(Path.of(lectureAttachment.getLink()).getFileName().toString())).findAny()
+        Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getLink().endsWith(fileNameWithoutSpaces)).findAny()
                 .orElseThrow(() -> new EntityNotFoundException("Attachment", filename));
 
         // get the course for a lecture attachment

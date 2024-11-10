@@ -19,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -91,14 +92,17 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         return createExerciseParticipationSubmissionAndResult(exercise, studentParticipation, pointsOfExercise, bonusPointsOfExercise, scoreAwarded, rated, TextSubmission::new, 1);
     }
 
-    private ProgrammingExercise createProgrammingExercise(int i, Set<CourseCompetency> competencies) {
+    private ProgrammingExercise createProgrammingExercise(int i, CourseCompetency competency) {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(null, null, course);
 
         programmingExercise.setMaxPoints(i * 10.0);
-        programmingExercise.setCompetencies(competencies);
         programmingExercise.setDifficulty(i == 1 ? DifficultyLevel.EASY : i == 2 ? DifficultyLevel.MEDIUM : DifficultyLevel.HARD);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        return programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        CompetencyExerciseLink link = new CompetencyExerciseLink(competency, programmingExercise, 1);
+        programmingExercise = (ProgrammingExercise) competencyExerciseLinkRepository.save(link).getExercise();
+        return programmingExercise;
     }
 
     private Result createProgrammingExerciseParticipationSubmissionAndResult(ProgrammingExercise exercise, Participant participant, long scoreAwarded, boolean rated,
@@ -275,7 +279,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
         @BeforeEach
         void setupTestScenario() {
-            programmingExercises = IntStream.range(1, 4).mapToObj(i -> createProgrammingExercise(i, Set.of(courseCompetency))).toArray(ProgrammingExercise[]::new);
+            programmingExercises = IntStream.range(1, 4).mapToObj(i -> createProgrammingExercise(i, courseCompetency)).toArray(ProgrammingExercise[]::new);
         }
 
         @Test

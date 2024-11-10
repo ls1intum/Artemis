@@ -7,9 +7,10 @@
                 "editLabel": "Edit Programming Exercise",
                 "importLabel": "Import Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
-                "switchToGuidedModeLabel": "Switch to guided mode",
-                "switchToTraditionalModeLabel": "Switch to normal mode",
-                "nextStepLabel": "Next"
+                "switchToSimpleMode": "Switch to simple mode",
+                "simpleModeTooltip": "The simple mode reduces the view to configuration options that are needed for a basic programming exercise. Changes made in the advanced mode will be saved.",
+                "switchToAdvancedMode": "Switch to advanced mode",
+                "advancedModeTooltip": "The advanced mode offers extended configuration options."
             },
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",
@@ -354,6 +355,8 @@
                     "error": "An error occurred while loading the feedback.",
                     "search": "Search ...",
                     "filter": "Filters",
+                    "noData": "No Feedback Entries could be found for the Programming Exercise.",
+                    "noDataFilter": "No Feedback Entries could be found for the specified filter or search Term.",
                     "feedbackModal": {
                         "header": "Error Details",
                         "feedbackTitle": "Test Case Feedback",
@@ -363,6 +366,7 @@
                         "modalTitle": "Filter Options",
                         "task": "Tasks",
                         "testcase": "Test Cases",
+                        "errorCategory": "Error Categories",
                         "occurrence": "Occurrence",
                         "clear": "Clear Filter",
                         "cancel": "Cancel",
@@ -535,7 +539,7 @@
             "auxiliaryRepository": {
                 "error": "There is a problem with the auxiliary repository.",
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
-                "usageDescription": "You can use auxiliary repositories to provide additional code that students cannot see or modify. The additional code is inserted at the specified Checkout Directory during the build of the submission.",
+                "usageDescription": "You can use auxiliary repositories to provide additional code that students cannot see or modify. The additional code is inserted into the specified checkout directory before the submission is built. The inserted code overwrites everything which lies at the location specified by the checkout directory. If you only need to overwrite student files partially, you need to adapt the build script.",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
                 "description": "Description",
@@ -550,7 +554,8 @@
                 },
                 "invalidDirectoryName": {
                     "pattern": "Checkout directory paths must only contain words, '_', '-', and '/' characters, but must not start nor end with a '/' character."
-                }
+                },
+                "invalidConfigurationPreventsSwitchingEditMode": "Adjust the auxiliary repository configuration to a valid configuration to switch to the simple mode."
             },
             "submissionPolicy": {
                 "title": "Submission Policy",
@@ -599,10 +604,10 @@
                     },
                     "submission_penalty": {
                         "title": "Submission Penalty",
-                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. Try to stay within the submission limit to avoid penalties!"
+                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. The penalty for this exercise is -{{points}} points."
                     }
                 },
-                "submissionLimitTitle": "Submission limit",
+                "submissionLimitTitle": "Submissions",
                 "submissionLimitDescription": "The number of submissions a participant can make before the system enforces the selected policy.",
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
                 "goToGradingToEditInformation": "Go to the grading page to edit submission policy.",
@@ -712,7 +717,8 @@
             }
         },
         "error": {
-            "noparticipations": "No existing user was specified or no submission exists."
+            "noparticipations": "No existing user was specified or no submission exists.",
+            "shortNameGenerationFailed": "The short name could not be generated, please switch to the advanced mode and set the short name manually."
         }
     }
 }

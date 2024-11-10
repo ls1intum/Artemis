@@ -2,6 +2,8 @@
 @import 'bootstrap/scss/variables';
 @import 'bootstrap/scss/mixins';
 
+$delete-delay-duration: 6s;
+
 .post-result-information {
     font-size: small;
     font-style: italic;
@@ -76,7 +78,7 @@
 }
 
 .card {
-    border-radius: 1em;
+    border-radius: 0.25em;
 }
 
 @include media-breakpoint-down(sm) {
@@ -96,5 +98,34 @@
     .post-header-date span {
         color: $secondary;
         font-size: 0.75rem !important;
+    }
+}
+
+.post-delete-button-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 0;
+    background-color: rgba($primary, 0.3);
+    animation: increaseWidth $delete-delay-duration forwards linear;
+
+    @media (prefers-reduced-motion) {
+        animation: none;
+    }
+}
+
+.post-delete-button-label {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes increaseWidth {
+    from {
+        width: 0;
+    }
+
+    to {
+        width: 100%;
     }
 }

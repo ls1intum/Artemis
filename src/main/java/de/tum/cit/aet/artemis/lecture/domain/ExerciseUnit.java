@@ -12,13 +12,13 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
@@ -66,13 +66,15 @@ public class ExerciseUnit extends LectureUnit {
     }
 
     @Override
-    public Set<CourseCompetency> getCompetencies() {
-        return exercise == null || !Hibernate.isPropertyInitialized(exercise, "competencies") ? new HashSet<>() : exercise.getCompetencies();
+    @JsonIgnore
+    public Set<CompetencyLectureUnitLink> getCompetencyLinks() {
+        // Set the links in the associated exercise instead
+        return new HashSet<>();
     }
 
     @Override
-    public void setCompetencies(Set<CourseCompetency> competencies) {
-        // Should be set in associated exercise
+    public void setCompetencyLinks(Set<CompetencyLectureUnitLink> competencyLinks) {
+        // Retrieve the link in the associated exercise instead"
     }
 
     /**
@@ -83,7 +85,6 @@ public class ExerciseUnit extends LectureUnit {
     public void prePersistOrUpdate() {
         this.name = null;
         this.releaseDate = null;
-        this.competencies = new HashSet<>();
     }
 
     // IMPORTANT NOTICE: The following string has to be consistent with the one defined in LectureUnit.java
