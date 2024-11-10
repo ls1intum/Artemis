@@ -79,27 +79,19 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         private ideSettingsService: IdeSettingsService,
     ) {}
 
-    ngOnInit() {
-        this.accountService
-            .identity()
-            .then((user) => {
-                this.user = user!;
-                this.refreshTokenState();
+    async ngOnInit() {
+        const user = await this.accountService.identity();
+        if (!user) {
+            return;
+        }
+        this.user = user;
 
-                this.copyEnabled = true;
-                this.useSsh = this.localStorage.retrieve('useSsh') || false;
-                this.useToken = this.localStorage.retrieve('useToken') || false;
-                this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
-                this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
+        this.refreshTokenState();
 
-                if (this.useSsh) {
-                    this.useSshUrl();
-                }
-                if (this.useToken) {
-                    this.useHttpsUrlWithToken();
-                }
-            })
-            .then(() => this.loadParticipationVcsAccessTokens());
+        this.copyEnabled = true;
+        this.useSsh = this.localStorage.retrieve('useSsh') || false;
+        this.useToken = this.localStorage.retrieve('useToken') || false;
+        this.loadParticipationVcsAccessTokens();
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -124,6 +116,13 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 this.sshSettingsUrl = profileInfo.sshKeysURL;
             }
             this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
+
+            if (this.useSsh) {
+                this.useSshUrl();
+            }
+            if (this.useToken) {
+                this.useHttpsUrlWithToken();
+            }
         });
 
         this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
