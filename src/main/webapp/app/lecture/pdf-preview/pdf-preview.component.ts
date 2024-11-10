@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { Attachment } from 'app/entities/attachment.model';
@@ -43,6 +43,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     appendFile = signal<boolean>(false);
     isFileChanged = signal<boolean>(false);
     selectedPages = signal<Set<number>>(new Set());
+    allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
@@ -90,14 +91,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.attachmentSub?.unsubscribe();
         this.attachmentUnitSub?.unsubscribe();
-    }
-
-    /**
-     * Checks if all pages are selected.
-     * @returns True if the number of selected pages equals the total number of pages, otherwise false.
-     */
-    allPagesSelected() {
-        return this.selectedPages().size === this.totalPages();
     }
 
     /**
