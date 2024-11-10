@@ -42,19 +42,14 @@ public class SshSettingsTestService {
 
     User student;
 
-    public void init(String testPrefix) throws Exception {
-
-    }
-
     public void setup(String testPrefix) throws Exception {
-        userUtilService.addUsers(testPrefix, 2, 0, 0, 0);
+        userUtilService.addUsers(testPrefix, 1, 1, 1, 1);
         student = userTestRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
         userTestRepository.save(student);
     }
 
     public void tearDown() throws IOException {
-        this.userTestRepository.deleteAll();
         this.userSshPublicKeyRepository.deleteAll();
     }
 
