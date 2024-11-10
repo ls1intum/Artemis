@@ -1,4 +1,4 @@
-@if (labelName) {
+@if (labelName()) {
     <label for="date-input-field" class="form-control-label col">
         {{ labelName() }}
     </label>
@@ -19,9 +19,9 @@
         #dateInput="ngModel"
         class="form-control position-relative ps-5"
         id="date-input-field"
-        [ngClass]="{ 'is-invalid': isValid(), 'border-warning': warning() }"
+        [ngClass]="{ 'is-invalid': !isValid(), 'border-warning': warning() }"
         [class.ng-invalid]="!isValid()"
-        [ngModel]="value"
+        [ngModel]="value()"
         [disabled]="disabled()"
         [min]="minDate()"
         [max]="maxDate()"

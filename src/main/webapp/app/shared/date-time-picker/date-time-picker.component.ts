@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, computed, forwardRef, input, output, signal } from '@angular/core';
+import { Component, ViewChild, computed, forwardRef, input, model, output, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
 import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -26,14 +26,14 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;
     labelName = input<string>();
     labelTooltip = input<string>();
-    @Input() value: any;
-    disabled = input<boolean>();
+    value = model<dayjs.Dayjs | Date | null>();
+    disabled = input<boolean>(false);
     error = input<boolean>();
     warning = input<boolean>();
     requiredField = input<boolean>(false);
-    startAt? = input<dayjs.Dayjs>(); // Default selected date. By default, this sets it to the current time without seconds or milliseconds;
-    min? = input<dayjs.Dayjs>(); // Dates before this date are not selectable.
-    max? = input<dayjs.Dayjs>(); // Dates after this date are not selectable.
+    startAt = input<dayjs.Dayjs | undefined>(); // Default selected date. By default, this sets it to the current time without seconds or milliseconds;
+    min = input<dayjs.Dayjs>(); // Dates before this date are not selectable.
+    max = input<dayjs.Dayjs>(); // Dates after this date are not selectable.
     shouldDisplayTimeZoneWarning = input<boolean>(true); // Displays a warning that the current time zone might differ from the participants'.
     valueChange = output<void>();
 
@@ -45,7 +45,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         return !isInvalid;
     });
 
-    private updateSignals(): void {
+    updateSignals(): void {
         this.isInputValid.set(!Boolean(this.dateInput?.invalid));
         this.dateInputValue.set(this.dateInput?.value);
     }
@@ -67,9 +67,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     writeValue(value: any) {
         // convert dayjs to date, because owl-date-time only works correctly with date objects
         if (dayjs.isDayjs(value)) {
-            this.value = (value as dayjs.Dayjs).toDate();
+            this.value.set((value as dayjs.Dayjs).toDate());
         } else {
-            this.value = value;
+            this.value.set(value);
         }
         this.updateSignals();
     }
@@ -94,8 +94,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * @param newValue
      */
     updateField(newValue: dayjs.Dayjs) {
-        this.value = newValue;
-        this.onChange?.(dayjs(this.value));
+        this.value.set(newValue);
+        this.onChange?.(dayjs(this.value()));
         this.valueChanged();
     }
 
