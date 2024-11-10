@@ -303,4 +303,174 @@ class SarifParserTest {
         SarifParser parser = new SarifParser(StaticCodeAnalysisTool.OTHER, new IdCategorizer());
         assertThatThrownBy(() -> parser.parse(report)).hasCauseInstanceOf(JsonProcessingException.class);
     }
+
+    @Test
+    void testFilterMalformedSarif() {
+        String report = """
+                {
+                    "runs": [
+                        {
+                            "tool": {
+                                "driver": {}
+                            },
+                            "results": [
+                                {
+                                    "locations": [
+                                        {
+                                            "physicalLocation": {
+                                                "artifactLocation": {
+                                                    "uri": "file:///path/to/file.txt"
+                                                },
+                                                "region": {
+                                                    "startLine": 1
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "message": {
+                                        "text": "VALID"
+                                    },
+                                    "ruleId": "A001"
+                                },
+                                {
+                                    "locations": [
+                                        {
+                                            "physicalLocation": {
+                                                "artifactLocation": {
+                                                    "uri": "file:///path/to/file.txt"
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "message": {
+                                        "text": "REGION MISSING"
+                                    },
+                                    "ruleId": "A002"
+                                },
+                                {
+                                    "locations": [
+                                        {
+                                            "physicalLocation": {
+                                                "artifactLocation": {
+                                                    "uri": "file:///path/to/file.txt"
+                                                },
+                                                "region": {
+                                                    "startLine": 1
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "message": {
+                                        "text": "NO_RULE_ID"
+                                    }
+                                },
+                                {
+                                    "locations": [
+                                        {
+                                            "physicalLocation": {
+                                                "artifactLocation": {
+                                                    "uri": "file:///path/to/file.txt"
+                                                },
+                                                "region": {
+                                                    "startLine": 1
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "message": {
+                                        "id": "INVALID_MESSAGE_ID"
+                                    },
+                                    "ruleId": "A004"
+                                }
+                            ]
+                        }
+                    ]
+                }
+                """;
+
+        SarifParser parser = new SarifParser(StaticCodeAnalysisTool.OTHER, new IdCategorizer());
+        StaticCodeAnalysisReportDTO parsedReport = parser.parse(report);
+
+        assertThat(parsedReport.issues()).singleElement().matches(issue -> issue.rule().equals("A001"));
+    }
+
+    @Test
+    void testFilterInformationMissing() {
+        String report = """
+                {
+                    "runs": [
+                        {
+                            "tool": {
+                                "driver": {}
+                            },
+                            "results": [
+                                {
+                                    "locations": [
+                                        {
+                                            "physicalLocation": {
+                                                "artifactLocation": {
+                                                    "uri": "file:///path/to/file.txt"
+                                                },
+                                                "region": {
+                                                    "startLine": 1
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "message": {
+                                        "text": "VALID"
+                                    },
+                                    "ruleId": "A001"
+                                },
+                                {
+                                    "message": {
+                                        "text": "LOCATION MISSING"
+                                    },
+                                    "ruleId": "A002"
+                                },
+                                {
+                                    "locations": [
+                                        {
+                                            "physicalLocation": {
+                                                "region": {
+                                                    "startLine": 1
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "message": {
+                                        "text": "PATH MISSING"
+                                    },
+                                    "ruleId": "A003"
+                                },
+                                {
+                                    "locations": [
+                                        {
+                                            "physicalLocation": {
+                                                "artifactLocation": {
+                                                    "uri": "file:///path/to/file.txt"
+                                                },
+                                                "region": {
+                                                    "byteOffset": 0,
+                                                    "byteLength": 10
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "message": {
+                                        "text": "NOT A TEXT REGION"
+                                    },
+                                    "ruleId": "A004"
+                                }
+                            ]
+                        }
+                    ]
+                }
+                """;
+
+        SarifParser parser = new SarifParser(StaticCodeAnalysisTool.OTHER, new IdCategorizer());
+        StaticCodeAnalysisReportDTO parsedReport = parser.parse(report);
+
+        assertThat(parsedReport.issues()).singleElement().matches(issue -> issue.rule().equals("A001"));
+    }
 }
