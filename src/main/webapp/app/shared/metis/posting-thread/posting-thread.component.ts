@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, inject } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import dayjs from 'dayjs/esm';
 
@@ -18,4 +18,6 @@ export class PostingThreadComponent {
     @Input() hasChannelModerationRights = false;
     @Output() openThread = new EventEmitter<Post>();
     @Input() isConsecutive: boolean | undefined = false;
+
+    elementRef = inject(ElementRef);
 }
