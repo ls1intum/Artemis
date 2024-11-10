@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -20,6 +21,5 @@ public interface CompetencyExerciseLinkRepository extends ArtemisJpaRepository<C
                 LEFT JOIN FETCH cel.competency
                 WHERE cel.exercise.id = :exerciseId
             """)
-    List<CompetencyExerciseLink> findByExerciseIdWithCompetency(long exerciseId);
-
+    List<CompetencyExerciseLink> findByExerciseIdWithCompetency(@Param("exerciseId") long exerciseId);
 }

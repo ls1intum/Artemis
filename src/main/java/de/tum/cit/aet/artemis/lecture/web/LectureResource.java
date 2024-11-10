@@ -327,14 +327,14 @@ public class LectureResource {
     public ResponseEntity<Lecture> getLectureWithDetailsAndSlides(@PathVariable long lectureId) {
         log.debug("REST request to get lecture {} with details with slides ", lectureId);
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndSlidesAndAttachmentsElseThrow(lectureId);
-        competencyService.addCompetencyLinksToExerciseUnits(lecture);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, userRepository.getUserWithGroupsAndAuthorities());
-
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
+
+        competencyService.addCompetencyLinksToExerciseUnits(lecture);
         lectureService.filterActiveAttachmentUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
         return ResponseEntity.ok(lecture);
