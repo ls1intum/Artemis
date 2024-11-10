@@ -1,21 +1,21 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
-import java.io.IOException;
+import java.io.StringReader;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Unmarshaller;
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlValue;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 
 public class TestResultXmlParser {
-
-    private static final XmlMapper mapper = new XmlMapper();
 
     // https://stackoverflow.com/a/4237934
     private static final String INVALID_XML_CHARS = "[^\t\r\n -\uD7FF\uE000-�\uD800\uDC00-\uDBFF\uDFFF]";
@@ -29,26 +29,29 @@ public class TestResultXmlParser {
      * @param testResultFileString The content of the test result file as a String.
      * @param failedTests          A list of failed tests. This list will be populated by the method.
      * @param successfulTests      A list of successful tests. This list will be populated by the method.
-     * @throws IOException If an I/O error occurs while reading the test result file.
+     * @throws JAXBException If an I/O error occurs while reading the test result file.
      */
     public static void processTestResultFile(String testResultFileString, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests)
-            throws IOException {
+            throws JAXBException {
         testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
-        TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);
 
-        // The toplevel element can be <testsuites> or <testsuite>
-        if (testResultFileString.contains("<testsuites")) {
-            if (testSuite.testSuites().size() == 1) {
-                TestSuite suite = testSuite.testSuites().getFirst();
+        JAXBContext context = JAXBContext.newInstance(TestSuites.class);
+        Unmarshaller unmarshaller = context.createUnmarshaller();
+        StringReader reader = new StringReader(testResultFileString);
+        Object unmarshalled = unmarshaller.unmarshal(reader);
+
+        if (unmarshalled instanceof TestSuites testSuites) {
+            if (testSuites.getTestSuites().size() == 1) {
+                TestSuite suite = testSuites.getTestSuites().getFirst();
                 processTopLevelTestSuite(failedTests, successfulTests, suite);
             }
             else {
-                for (TestSuite suite : testSuite.testSuites()) {
+                for (TestSuite suite : testSuites.getTestSuites()) {
                     processInnerTestSuite(suite, failedTests, successfulTests, "");
                 }
             }
         }
-        else {
+        else if (unmarshalled instanceof TestSuite testSuite) {
             processTopLevelTestSuite(failedTests, successfulTests, testSuite);
         }
     }
@@ -90,20 +93,56 @@ public class TestResultXmlParser {
         }
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record TestSuite(@JacksonXmlProperty(isAttribute = true, localName = "name") String name,
-            @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testcase") List<TestCase> testCases,
-            @JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testsuite") List<TestSuite> testSuites) {
+    @XmlRootElement(name = "testsuites")
+    private static final class TestSuites {
 
-        TestSuite {
-            testCases = Objects.requireNonNullElse(testCases, Collections.emptyList());
-            testSuites = Objects.requireNonNullElse(testSuites, Collections.emptyList());
+        @XmlElement(name = "testsuite")
+        private List<TestSuite> testSuites;
+
+        public List<TestSuite> getTestSuites() {
+            return testSuites;
         }
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record TestCase(@JacksonXmlProperty(isAttribute = true, localName = "name") String name, @JacksonXmlProperty(localName = "failure") Failure failure,
-            @JacksonXmlProperty(localName = "error") Failure error, @JacksonXmlProperty(localName = "skipped") Skip skipped) {
+    @XmlRootElement(name = "testsuite")
+    private static final class TestSuite {
+
+        @XmlAttribute
+        private String name;
+
+        @XmlElement(name = "testcase")
+        private List<TestCase> testCases;
+
+        @XmlElement(name = "testsuite")
+        private List<TestSuite> testSuites;
+
+        public String name() {
+            return name;
+        }
+
+        public List<TestCase> testCases() {
+            return Objects.requireNonNullElseGet(testCases, Collections::emptyList);
+        }
+
+        public List<TestSuite> testSuites() {
+            return Objects.requireNonNullElseGet(testSuites, Collections::emptyList);
+        }
+
+    }
+
+    private static final class TestCase {
+
+        @XmlAttribute
+        private String name;
+
+        @XmlElement
+        private Failure failure;
+
+        @XmlElement
+        private Failure error;
+
+        @XmlElement
+        private Skip skipped;
 
         private boolean isSkipped() {
             return skipped != null;
@@ -112,20 +151,35 @@ public class TestResultXmlParser {
         private Failure extractFailure() {
             return failure != null ? failure : error;
         }
+
+        public String name() {
+            return name;
+        }
+
+        public Failure failure() {
+            return failure;
+        }
+
+        public Failure error() {
+            return error;
+        }
+
+        public Skip skipped() {
+            return skipped;
+        }
+
     }
 
-    // Intentionally empty record to represent the skipped tag (<skipped/>)
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    record Skip() {
+    // Intentionally empty class to represent the skipped tag (<skipped/>)
+    private static class Skip {
     }
 
-    // Due to issues with Jackson this currently cannot be a record.
-    // See https://github.com/FasterXML/jackson-module-kotlin/issues/138#issuecomment-1062725140
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    static final class Failure {
+    private static final class Failure {
 
+        @XmlAttribute
         private String message;
 
+        @XmlValue
         private String detailedMessage;
 
         private String extractMessage() {
@@ -135,19 +189,7 @@ public class TestResultXmlParser {
             else if (detailedMessage != null) {
                 return detailedMessage;
             }
-            // empty text nodes are deserialized as null instead of a string, see: https://github.com/FasterXML/jackson-dataformat-xml/issues/565
-            // note that this workaround does not fix the issue entirely, as strings of only whitespace become the empty string
             return "";
-        }
-
-        @JacksonXmlProperty(isAttribute = true, localName = "message")
-        public void setMessage(String message) {
-            this.message = message;
-        }
-
-        @JacksonXmlText
-        public void setDetailedMessage(String detailedMessage) {
-            this.detailedMessage = detailedMessage;
         }
     }
 }

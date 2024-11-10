@@ -503,9 +503,7 @@ dependencies {
     }
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
-    annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
-        exclude group: "jakarta.ws.rs", module: "jsr311-api"
-    }
+    runtimeOnly "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: "com.vaadin.external.google", module: "android-json"
     }

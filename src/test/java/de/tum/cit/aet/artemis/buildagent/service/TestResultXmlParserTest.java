@@ -2,9 +2,10 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import jakarta.xml.bind.JAXBException;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +18,7 @@ class TestResultXmlParserTest {
     private final List<BuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
     @Test
-    void testParseResultXmlInnerText() throws IOException {
+    void testParseResultXmlInnerText() throws JAXBException {
         String exampleXml = """
                 <testsuite>
                     <testcase name="testBubbleSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.000306">
@@ -40,7 +41,7 @@ class TestResultXmlParserTest {
     }
 
     @Test
-    void testParseResultXmlMessageAttribute() throws IOException {
+    void testParseResultXmlMessageAttribute() throws JAXBException {
         String exampleXml = """
                 <testsuite>
                     <testcase name="testBubbleSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.000306">
@@ -57,7 +58,7 @@ class TestResultXmlParserTest {
     }
 
     @Test
-    void testParseResultXmlCData() throws IOException {
+    void testParseResultXmlCData() throws JAXBException {
         String exampleXml = """
                  <testsuite>
                     <testcase name="testMergeSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.059">
@@ -74,7 +75,7 @@ class TestResultXmlParserTest {
     }
 
     @Test
-    void testSuccessfulTests() throws IOException {
+    void testSuccessfulTests() throws JAXBException {
         String exampleXml = """
                 <testsuite>
                   <properties/>
@@ -93,7 +94,7 @@ class TestResultXmlParserTest {
     }
 
     @Test
-    void testWithTestSuitesWrapper() throws Exception {
+    void testWithTestSuitesWrapper() throws JAXBException {
         String input = """
                 <?xml version='1.0' encoding='utf-8'?>
                 <testsuites>
@@ -145,7 +146,7 @@ class TestResultXmlParserTest {
     }
 
     @Test
-    void testSkippedTest() throws IOException {
+    void testSkippedTest() throws JAXBException {
         String input = """
                 <testsuite>
                     <testcase name="testBubbleSort()" classname="testpackage.SortingExampleBehaviorTest" time="0.000306">
@@ -160,7 +161,7 @@ class TestResultXmlParserTest {
     }
 
     @Test
-    void testOutputInvalidXMLCharacters() throws IOException {
+    void testOutputInvalidXMLCharacters() throws JAXBException {
         String input = """
                 <?xml version='1.0' encoding='us-ascii'?>
                 <testsuites>
@@ -189,7 +190,7 @@ class TestResultXmlParserTest {
     }
 
     @Test
-    void testEmptyTestMessage() throws IOException {
+    void testEmptyTestMessage() throws JAXBException {
         String input = """
                 <testsuites>
                     <testsuite package="mwe-package" id="0" name="mwe-suite-name" timestamp="2024-08-09T12:34:56"
@@ -210,7 +211,7 @@ class TestResultXmlParserTest {
     }
 
     @Test
-    void testNestedTestsuite() throws IOException {
+    void testNestedTestsuite() throws JAXBException {
         String input = """
                 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
                 <testsuites errors="0" failures="0" tests="12" time="0.013">
@@ -260,7 +261,7 @@ class TestResultXmlParserTest {
     }
 
     @Test
-    void testMultipleTestsuite() throws IOException {
+    void testMultipleTestsuite() throws JAXBException {
         String input = """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <testsuites>
@@ -292,7 +293,7 @@ class TestResultXmlParserTest {
     }
 
     @Test
-    void testNestedTestsuiteMissingNames() throws IOException {
+    void testNestedTestsuiteMissingNames() throws JAXBException {
         String input = """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <testsuites>
