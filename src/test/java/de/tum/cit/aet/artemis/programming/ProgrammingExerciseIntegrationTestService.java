@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
@@ -373,7 +374,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, Boolean.class);
     }
 
-    List<Path> exportSubmissionsWithPracticeSubmissionByParticipationIds(boolean excludePracticeSubmissions) throws Exception {
+    List<Path> exportSubmissionsWithPracticeSubmissionByParticipationIds() throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUri()), anyString(), anyBoolean());
@@ -397,19 +398,19 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionsByParticipationIds_excludePracticeSubmissions() throws Exception {
-        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(true);
+        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds();
 
         // Make sure that the practice submission is not included
         assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
-                .noneMatch(entry -> entry.toString().matches(".*practice-[^\\/]*student2.*.git$"));
+                .noneMatch(entry -> entry.toString().matches(".*practice-[^/]*student2.*.git$"));
     }
 
     void testExportSubmissionsByParticipationIds_includePracticeSubmissions() throws Exception {
-        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(false);
+        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds();
 
         // Make sure that the practice submission is included
         assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
-                .anyMatch(entry -> entry.toString().matches(".*practice-[^\\/]*student2.*.git$"));
+                .anyMatch(entry -> entry.toString().matches(".*practice-[^/]*student2.*.git$"));
     }
 
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
@@ -536,7 +537,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // Rest call
         final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + participation1.getId();
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
-        downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         List<Path> entries = unzipExportedFile();
@@ -2042,9 +2043,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // Two participations exist with build plans before reset
         var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
         assertThat(participations).hasSize(2);
-        participations.forEach(participation -> {
-            assertThat(participation.getBuildPlanId()).isNotNull();
-        });
+        participations.forEach(participation -> assertThat(participation.getBuildPlanId()).isNotNull());
 
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false, false, false);
         request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
@@ -2052,9 +2051,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // Two participations exist with build plans removed after reset
         participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
         assertThat(participations).hasSize(2);
-        participations.forEach(participation -> {
-            assertThat(participation.getBuildPlanId()).isNull();
-        });
+        participations.forEach(participation -> assertThat(participation.getBuildPlanId()).isNull());
     }
 
     void testResetDeleteBuildPlansAndDeleteStudentRepositoriesSuccess() throws Exception {
