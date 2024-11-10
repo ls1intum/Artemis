@@ -35,6 +35,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     @Input() routerLinkForRepositoryView?: string | (string | number)[];
     @Input() participations?: ProgrammingExerciseStudentParticipation[];
     @Input() exercise?: ProgrammingExercise;
+    @Input() hideLabelMobile = false;
 
     useSsh = false;
     useToken = false;

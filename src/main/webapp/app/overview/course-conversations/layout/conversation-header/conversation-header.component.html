@@ -13,8 +13,23 @@
                             [isAnnouncementChannel]="activeConversationAsChannel.isAnnouncementChannel!"
                         />
                     }
-                    @if (getAsGroupChat(activeConversation); as groupChat) {
-                        <jhi-group-chat-icon />
+                    @if (getAsGroupChat(activeConversation)) {
+                        <fa-icon [icon]="faPeopleGroup" size="xs" />
+                    }
+                    @if (getAsOneToOneChat(activeConversation) && otherUser) {
+                        <jhi-profile-picture
+                            [imageSizeInRem]="'2'"
+                            [fontSizeInRem]="'0.9'"
+                            [imageId]="'sidebar-profile-picture'"
+                            [defaultPictureId]="'sidebar-default-profile-picture'"
+                            [isGray]="false"
+                            [authorId]="otherUser.id"
+                            [authorName]="otherUser.name"
+                            class="me-2"
+                            [imageUrl]="otherUser.imageUrl"
+                            [isEditable]="false"
+                        >
+                        </jhi-profile-picture>
                     }
                     {{ conversationService.getConversationName(activeConversation, true) }}
                 </h4>
