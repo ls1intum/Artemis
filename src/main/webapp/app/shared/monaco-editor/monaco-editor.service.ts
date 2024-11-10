@@ -62,6 +62,7 @@ export class MonacoEditorService {
             minimap: { enabled: false },
             lineNumbersMinChars: 4,
             scrollBeyondLastLine: false,
+            lineHeight: 16,
             scrollbar: {
                 alwaysConsumeMouseWheel: false, // Prevents the editor from consuming the mouse wheel event, allowing the parent element to scroll.
             },
@@ -82,6 +83,7 @@ export class MonacoEditorService {
             readOnly: true,
             renderSideBySide: true,
             scrollBeyondLastLine: false,
+            lineHeight: 16,
             stickyScroll: {
                 enabled: false,
             },
