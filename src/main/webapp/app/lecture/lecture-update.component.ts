@@ -60,6 +60,8 @@ export class LectureUpdateComponent implements OnInit {
     isProcessing: boolean;
     processUnitMode: boolean;
     isShowingWizardMode: boolean;
+    /** Adding attachments and lecture units requires a lecture id, we save the lecture in the background on creation to make sure the id is present in case an attachment / lecture unit is added */
+    isAutomaticSaveOnCreation: boolean = true;
 
     formStatusSections: FormSectionStatus[];
 
@@ -128,6 +130,10 @@ export class LectureUpdateComponent implements OnInit {
         });
 
         this.isEditMode.set(!this.router.url.endsWith('/new'));
+
+        if (!this.isEditMode()) {
+            this.save(true);
+        }
     }
 
     /**
@@ -143,9 +149,10 @@ export class LectureUpdateComponent implements OnInit {
      * Save the changes on a lecture
      * This function is called by pressing save after creating or editing a lecture
      */
-    save() {
+    save(isAutomaticSaveOnCreation: boolean = false) {
         this.isSaving = true;
         this.isProcessing = true;
+        this.isAutomaticSaveOnCreation = isAutomaticSaveOnCreation;
         if (this.lecture.id !== undefined) {
             this.subscribeToSaveResponse(this.lectureService.update(this.lecture));
         } else {
@@ -199,24 +206,30 @@ export class LectureUpdateComponent implements OnInit {
      * Action on successful lecture creation or edit
      */
     protected onSaveSuccess(lecture: Lecture) {
-        if (this.isShowingWizardMode && !this.lecture.id) {
+        this.isSaving = false;
+
+        const isAutomaticSaveForIdForAttachmentsAndUnits = !this.isEditMode() && this.isAutomaticSaveOnCreation;
+        if (isAutomaticSaveForIdForAttachmentsAndUnits) {
             this.lectureService.findWithDetails(lecture.id!).subscribe({
                 next: (response: HttpResponse<Lecture>) => {
-                    this.isSaving = false;
+                    this.lecture = response.body!;
+                },
+            });
+        } else if (this.isShowingWizardMode && !this.lecture.id) {
+            this.lectureService.findWithDetails(lecture.id!).subscribe({
+                next: (response: HttpResponse<Lecture>) => {
                     this.lecture = response.body!;
                     this.alertService.success(`Lecture with title ${lecture.title} was successfully created.`);
                     this.wizardComponent.onLectureCreationSucceeded();
                 },
             });
         } else if (this.processUnitMode) {
-            this.isSaving = false;
             this.isProcessing = false;
             this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture.id !== undefined ? 'updated' : 'created'}.`);
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
                 state: { file: this.file, fileName: this.fileName },
             });
         } else {
-            this.isSaving = false;
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
         }
     }
@@ -227,6 +240,11 @@ export class LectureUpdateComponent implements OnInit {
      */
     protected onSaveError(errorRes: HttpErrorResponse) {
         this.isSaving = false;
+
+        const isAutomaticSaveForIdForAttachmentsAndUnits = this.isAutomaticSaveOnCreation;
+        if (isAutomaticSaveForIdForAttachmentsAndUnits) {
+            return;
+        }
         if (errorRes.error && errorRes.error.title) {
             this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
         } else {
