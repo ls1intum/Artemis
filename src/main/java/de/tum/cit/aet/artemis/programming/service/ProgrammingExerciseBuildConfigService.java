@@ -27,6 +27,10 @@ public class ProgrammingExerciseBuildConfigService {
 
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ProgrammingExerciseBuildConfigService.class);
 
+    private static final String ENV_VARIABLE_REGEX = "(?:'([^']+)'|\"([^\"]+)\"|(\\w+))=(?:'([^']*)'|\"([^\"]*)\"|([^,]+))";
+
+    private final Pattern pattern = Pattern.compile(ENV_VARIABLE_REGEX);
+
     /**
      * Converts a JSON string representing Docker flags (in the form of a list of key-value pairs)
      * into a {@link DockerRunConfig} instance.
@@ -118,11 +122,6 @@ public class ProgrammingExerciseBuildConfigService {
     }
 
     private List<String> parseEnvVariableString(String envVariableString) {
-        Pattern pattern = Pattern.compile(
-                // match key-value pairs, where the key can be a single word or a string in single or double quotes
-                // key-value pairs are separated by commas
-                "(?:'([^']+)'|\"([^\"]+)\"|(\\w+))=(?:'([^']*)'|\"([^\"]*)\"|([^,]+))");
-
         if (envVariableString.length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
             log.warn("The environment variables string is too long. It will be truncated to {} characters.", MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH);
             envVariableString = envVariableString.substring(0, MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH);

@@ -716,7 +716,7 @@
             "dockerFlags": {
                 "disableNetworkAccess": {
                     "title": "Deaktiviere den Internetzugang beim beim Ausführen der Studierendeneinreichung",
-                    "description": "Aktiviere diese Option, um den Netzwerkzugang für Container zu deaktivieren. Das Netzwerk wird beim Ausführen der Studierendeneinreichung deaktiviert. Die Abhängigkeiten werden jedoch zuvor im Container heruntergeladen und zwischengespeichert.",
+                    "description": "Aktiviere diese Option, um den Netzwerkzugang für Container zu deaktivieren. Das Netzwerk wird beim Ausführen der Studierendeneinreichung deaktiviert.",
                     "warning": "Wenn der Internetzugang deaktiviert ist, müssen alle Abhängigkeiten im Docker-Image enthalten oder darin zwischengespeichert sein. Andernfalls schlägt der Build fehl."
                 },
                 "envVars": {
