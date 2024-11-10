@@ -536,8 +536,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Rest call
         final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + participation1.getId();
-        var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
-        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
         List<Path> entries = unzipExportedFile();
