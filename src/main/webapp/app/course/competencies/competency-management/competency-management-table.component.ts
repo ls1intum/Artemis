@@ -21,8 +21,8 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 })
 export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     @Input() courseId: number;
-    @Input() courseCompetencies: CourseCompetency[];
-    @Input() allCompetencies: CourseCompetency[];
+    @Input() courseCompetencies: CourseCompetency[] = [];
+    @Input() allCompetencies: CourseCompetency[] = [];
     @Input() competencyType: CourseCompetencyType;
     @Input() standardizedCompetenciesEnabled: boolean;
 
