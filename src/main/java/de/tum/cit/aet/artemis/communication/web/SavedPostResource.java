@@ -84,16 +84,16 @@ public class SavedPostResource {
 
         var savedPosts = savedPostService.getSavedPostsForCurrentUser(savedPostStatus);
 
-        List<Post> posts = postRepository.findByIdIn(savedPosts.stream().filter(savedPost -> savedPost.getType() == PostingType.POST).map(SavedPost::getPostId).toList()).stream()
-                .filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId)).toList();
+        List<Post> posts = postRepository.findByIdIn(savedPosts.stream().filter(savedPost -> savedPost.getPostType() == PostingType.POST).map(SavedPost::getPostId).toList())
+                .stream().filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId)).toList();
         List<AnswerPost> answerPosts = answerPostRepository
-                .findByIdIn(savedPosts.stream().filter(savedPost -> savedPost.getType() == PostingType.ANSWER).map(SavedPost::getPostId).toList()).stream()
+                .findByIdIn(savedPosts.stream().filter(savedPost -> savedPost.getPostType() == PostingType.ANSWER).map(SavedPost::getPostId).toList()).stream()
                 .filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId)).toList();
         List<PostingDTO> postingList = new ArrayList<>();
 
         for (SavedPost savedPost : savedPosts) {
             Optional posting;
-            if (savedPost.getType() == PostingType.ANSWER) {
+            if (savedPost.getPostType() == PostingType.ANSWER) {
                 posting = answerPosts.stream().filter(answerPost -> answerPost.getId().equals(savedPost.getPostId())).findFirst();
             }
             else {

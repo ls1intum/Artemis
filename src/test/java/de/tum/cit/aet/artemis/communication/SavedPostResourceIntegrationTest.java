@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -30,7 +30,7 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
     private AnswerPostRepository answerPostRepository;
 
     @Autowired
-    private SavedPostRepository savedPostRepository;
+    private SavedPostTestRepository savedPostRepository;
 
     private Post testPost;
 

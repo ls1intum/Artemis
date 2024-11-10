@@ -48,6 +48,10 @@ public class SavedPost {
         this.completedAt = completedAt;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public Long getId() {
         return id;
     }
@@ -72,7 +76,11 @@ public class SavedPost {
         this.completedAt = completedAt;
     }
 
-    public PostingType getType() {
+    public void setPostType(String postType) {
+        this.postType = postType;
+    }
+
+    public PostingType getPostType() {
         return PostingType.fromDatabaseKey(postType);
     }
 

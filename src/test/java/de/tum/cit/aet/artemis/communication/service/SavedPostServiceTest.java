@@ -19,9 +19,9 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
-import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class SavedPostServiceTest {
@@ -29,10 +29,10 @@ class SavedPostServiceTest {
     private SavedPostService savedPostService;
 
     @Mock
-    private SavedPostRepository savedPostRepository;
+    private SavedPostTestRepository savedPostRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     private User testUser;
 
