@@ -59,8 +59,10 @@ export class LectureUpdateComponent implements OnInit {
     processUnitMode: boolean;
     isShowingWizardMode: boolean;
     /**
-     * Adding attachments and lecture units requires a lecture id, we save the lecture in the background on creation
-     * to make sure the id is present in case an attachment / lecture unit is added
+     * Adding attachments and lecture units and attachments requires a lecture id.
+     * We save the lecture in the background on creation to make sure the id is present in case an attachment / lecture unit is added
+     *
+     * Note: this means we have to delete the lecture in case the creation is cancelled
      */
     isAutomaticSaveOnCreation: boolean = true;
 
@@ -137,10 +139,21 @@ export class LectureUpdateComponent implements OnInit {
         }
     }
 
-    async cancel() {
+    cancel() {
         if (!this.isEditMode()) {
-            // this means we are in create mode and have an auto saved lecture (for attachments and units) that we need to delete
-            this.lectureService.delete(this.lecture().id!, false).subscribe({
+            const lectureId = this.lecture().id!;
+
+            /**
+             * this is required because otherwise {@link LectureUnitManagementComponent#updateOrder} will be called,
+             * resulting in a 404 error, as the lecture from which the units shall be fetched is deleted in parallel
+             */
+            this.lecture().id = undefined;
+
+            /**
+             * this means we are in create mode and have an auto saved lecture (see {@link isAutomaticSaveOnCreation}
+             * for further explanation) that we need to delete
+             */
+            this.lectureService.delete(lectureId, false).subscribe({
                 next: () => {
                     this.previousState(false);
                 },
@@ -160,7 +173,6 @@ export class LectureUpdateComponent implements OnInit {
      */
     previousState(useLectureId: boolean = true) {
         const lectureId = useLectureId ? this.lecture().id?.toString() : undefined;
-
         this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture().course!.id!.toString(), 'lectures'], lectureId);
     }
 
