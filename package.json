@@ -67,6 +67,7 @@
         "ngx-infinite-scroll": "18.0.0",
         "ngx-webstorage": "18.0.0",
         "papaparse": "5.4.1",
+        "pdf-lib": "1.17.1",
         "pdfjs-dist": "4.8.69",
         "posthog-js": "1.181.0",
         "rxjs": "7.8.1",
