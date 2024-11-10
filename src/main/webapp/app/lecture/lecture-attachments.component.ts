@@ -69,12 +69,14 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     }
 
     loadAttachments(): void {
-        this.attachmentService.findAllByLectureId(this.lecture.id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
-            this.attachments = attachmentsResponse.body!;
-            this.attachments.forEach((attachment) => {
-                this.viewButtonAvailable[attachment.id!] = this.isViewButtonAvailable(attachment.link!);
+        if (this.lecture?.id !== undefined) {
+            this.attachmentService.findAllByLectureId(this.lecture.id).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
+                this.attachments = attachmentsResponse.body!;
+                this.attachments.forEach((attachment) => {
+                    this.viewButtonAvailable[attachment.id!] = this.isViewButtonAvailable(attachment.link!);
+                });
             });
-        });
+        }
     }
 
     ngOnDestroy(): void {

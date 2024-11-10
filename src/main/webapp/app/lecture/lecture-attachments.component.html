@@ -130,8 +130,7 @@
                             <div class="col-12">
                                 @if (!attachmentToBeCreated.id) {
                                     <h4 jhiTranslate="artemisApp.lecture.attachments.newAttachment"></h4>
-                                }
-                                @if (attachmentToBeCreated.id) {
+                                } @else {
                                     <h4 jhiTranslate="artemisApp.lecture.attachments.editAttachment"></h4>
                                 }
                             </div>
