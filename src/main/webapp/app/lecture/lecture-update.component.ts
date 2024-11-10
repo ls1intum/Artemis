@@ -20,13 +20,14 @@ import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lect
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { HostListener, OnDestroy } from '@angular/core';
 
 @Component({
     selector: 'jhi-lecture-update',
     templateUrl: './lecture-update.component.html',
     styleUrls: ['./lecture-update.component.scss'],
 })
-export class LectureUpdateComponent implements OnInit {
+export class LectureUpdateComponent implements OnInit, OnDestroy {
     protected readonly documentationType: DocumentationType = 'Lecture';
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSave = faSave;
@@ -139,9 +140,13 @@ export class LectureUpdateComponent implements OnInit {
         }
     }
 
-    cancel() {
+    ngOnDestroy() {
+        this.deleteAutoCreatedLecture();
+    }
+
+    deleteAutoCreatedLecture() {
         if (!this.isEditMode()) {
-            const lectureId = this.lecture().id!;
+            const lectureId = this.lecture().id;
 
             /**
              * this is required because otherwise {@link LectureUnitManagementComponent#updateOrder} will be called,
@@ -153,27 +158,34 @@ export class LectureUpdateComponent implements OnInit {
              * this means we are in create mode and have an auto saved lecture (see {@link isAutomaticSaveOnCreation}
              * for further explanation) that we need to delete
              */
-            this.lectureService.delete(lectureId, false).subscribe({
-                next: () => {
-                    this.previousState(false);
-                },
-                error: () => this.previousState(false),
-            });
-        } else {
-            this.previousState(false);
+            if (lectureId) {
+                this.lectureService.delete(lectureId, false).subscribe({
+                    next: () => {},
+                    error: () => {},
+                });
+                // TODO emit event when lecture was deleted
+            }
         }
+    }
+
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification(): void {
+        // handles if the user closes the window or tab
+        this.deleteAutoCreatedLecture();
+    }
+
+    cancel() {
+        this.deleteAutoCreatedLecture();
+        this.previousState();
     }
 
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
      * Returns to the detail page if there is no previous state, and we edited an existing lecture
      * Returns to the overview page if there is no previous state, and we created a new lecture
-     *
-     * @param useLectureId false when deleting in create mode. As we do not await the deletion, we need to tell this method that we will not use the id
      */
-    previousState(useLectureId: boolean = true) {
-        const lectureId = useLectureId ? this.lecture().id?.toString() : undefined;
-        this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture().course!.id!.toString(), 'lectures'], lectureId);
+    previousState() {
+        this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture().course!.id!.toString(), 'lectures'], this.lecture().id?.toString());
     }
 
     /**
