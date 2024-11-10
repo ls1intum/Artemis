@@ -374,7 +374,7 @@ public class ProgrammingExerciseIntegrationTestService {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, Boolean.class);
     }
 
-    List<Path> exportSubmissionsWithPracticeSubmissionByParticipationIds() throws Exception {
+    List<Path> exportSubmissionsWithPracticeSubmissionByParticipationIds(boolean excludePracticeSubmissions) throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUri()), anyString(), anyBoolean());
@@ -389,7 +389,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // Export with excludePracticeSubmissions
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
         final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
-        var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, true, false, false, false, false);
+        var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, excludePracticeSubmissions, false, false, false, false);
 
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
@@ -398,7 +398,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionsByParticipationIds_excludePracticeSubmissions() throws Exception {
-        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds();
+        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(true);
 
         // Make sure that the practice submission is not included
         assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
@@ -406,7 +406,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionsByParticipationIds_includePracticeSubmissions() throws Exception {
-        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds();
+        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(false);
 
         // Make sure that the practice submission is included
         assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
