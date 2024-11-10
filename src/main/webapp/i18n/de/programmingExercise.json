@@ -371,6 +371,13 @@
                         "clear": "Filter zurücksetzen",
                         "cancel": "Abbrechen",
                         "apply": "Filter anwenden"
+                    },
+                    "affectedStudentsModal": {
+                        "header": "Betroffene Studierende",
+                        "name": "Name",
+                        "login": "Login",
+                        "repository": "Repository",
+                        "totalItems": "Insgesamt {{count}} Elemente"
                     }
                 },
                 "help": {

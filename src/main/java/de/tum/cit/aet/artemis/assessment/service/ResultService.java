@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
@@ -24,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackPageableDTO;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -495,49 +497,45 @@ public class ResultService {
 
     @NotNull
     private List<Feedback> saveFeedbackWithHibernateWorkaround(@NotNull Result result, List<Feedback> feedbackList) {
+        // Avoid hibernate exception
         List<Feedback> savedFeedbacks = new ArrayList<>();
+        // Collect ids of feedbacks that have long feedback.
+        List<Long> feedbackIdsWithLongFeedback = feedbackList.stream().filter(feedback -> feedback.getId() != null && feedback.getHasLongFeedbackText()).map(Feedback::getId)
+                .toList();
+        // Get long feedback list from the database.
+        List<LongFeedbackText> longFeedbackTextList = longFeedbackTextRepository.findByFeedbackIds(feedbackIdsWithLongFeedback);
 
-        // Fetch long feedback texts associated with the provided feedback list
-        Map<Long, LongFeedbackText> longFeedbackTextMap = longFeedbackTextRepository
-                .findByFeedbackIds(feedbackList.stream().filter(feedback -> feedback.getId() != null && feedback.getHasLongFeedbackText()).map(Feedback::getId).toList()).stream()
-                .collect(Collectors.toMap(longFeedbackText -> longFeedbackText.getFeedback().getId(), Function.identity()));
-
+        // Convert list to map for accessing later.
+        Map<Long, LongFeedbackText> longLongFeedbackTextMap = longFeedbackTextList.stream()
+                .collect(Collectors.toMap(longFeedbackText -> longFeedbackText.getFeedback().getId(), longFeedbackText -> longFeedbackText));
         feedbackList.forEach(feedback -> {
-            handleFeedbackPersistence(feedback, result, longFeedbackTextMap);
+            // cut association to parent object
+            feedback.setResult(null);
+            LongFeedbackText longFeedback = null;
+            // look for long feedback that parent feedback has and cut the association between them.
+            if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
+                longFeedback = longLongFeedbackTextMap.get(feedback.getId());
+                if (longFeedback != null) {
+                    feedback.clearLongFeedback();
+                }
+            }
+            // persist the child object without an association to the parent object.
+            feedback = feedbackRepository.saveAndFlush(feedback);
+            // restore the association to the parent object
+            feedback.setResult(result);
+
+            // restore the association of the long feedback to the parent feedback
+            if (longFeedback != null) {
+                feedback.setDetailText(longFeedback.getText());
+            }
             savedFeedbacks.add(feedback);
         });
-
         return savedFeedbacks;
-    }
-
-    private void handleFeedbackPersistence(Feedback feedback, Result result, Map<Long, LongFeedbackText> longFeedbackTextMap) {
-        // Temporarily detach feedback from the parent result to avoid Hibernate issues
-        feedback.setResult(null);
-
-        // Clear the long feedback if it exists in the map
-        if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
-            LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
-            if (longFeedback != null) {
-                feedback.clearLongFeedback();
-            }
-        }
-
-        // Persist the feedback entity without the parent association
-        feedback = feedbackRepository.saveAndFlush(feedback);
-
-        // Restore associations to the result and long feedback after persistence
-        feedback.setResult(result);
-        LongFeedbackText longFeedback = longFeedbackTextMap.get(feedback.getId());
-        if (longFeedback != null) {
-            feedback.setDetailText(longFeedback.getText());
-        }
     }
 
     @NotNull
     private Result shouldSaveResult(@NotNull Result result, boolean shouldSave) {
         if (shouldSave) {
-            // long feedback text is deleted as it otherwise causes duplicate entries errors and will be saved again with {@link resultRepository.save}
-            deleteLongFeedback(result.getFeedbacks(), result);
             // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
             return resultRepository.save(result);
         }
@@ -618,8 +616,10 @@ public class ResultService {
                 maxOccurrence, filterErrorCategories, pageable);
 
         // 10. Process and map feedback details, calculating relative count and assigning task names
-        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.count(),
-                (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
+        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream()
+                .map(detail -> new FeedbackDetailDTO(List.of(String.valueOf(detail.concatenatedFeedbackIds()).split(",")), detail.count(),
+                        (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), detail.taskName(), detail.errorCategory()))
+                .toList();
 
         // 11. Predefined error categories available for filtering on the client side
         final List<String> ERROR_CATEGORIES = List.of("Student Error", "Ares Error", "AST Error");
@@ -643,31 +643,33 @@ public class ResultService {
     }
 
     /**
-     * Deletes long feedback texts for the provided list of feedback items to prevent duplicate entries in the {@link LongFeedbackTextRepository}.
+     * Retrieves a paginated list of students affected by specific feedback entries for a given exercise.
      * <br>
-     * This method processes the provided list of feedback items, identifies those with associated long feedback texts, and removes them in bulk
-     * from the repository to avoid potential duplicate entry errors when saving new feedback entries.
-     * <p>
-     * Primarily used to ensure data consistency in the {@link LongFeedbackTextRepository}, especially during operations where feedback entries are
-     * overridden or updated. The deletion is performed only for feedback items with a non-null ID and an associated long feedback text.
-     * <p>
-     * This approach reduces the need for individual deletion calls and performs batch deletion in a single database operation.
-     * <p>
-     * **Note:** This method should only be used for manually assessed submissions, not for fully automatic assessments, due to its dependency on the
-     * {@link Result#updateAllFeedbackItems} method, which is designed for manual feedback management. Using this method with automatic assessments could
-     * lead to unintended behavior or data inconsistencies.
+     * This method filters students based on feedback IDs and returns participation details for each affected student. It uses
+     * pagination and sorting to allow efficient retrieval and sorting of the results, thus supporting large datasets.
+     * <br>
+     * Supports:
+     * <ul>
+     * <li><b>Pagination:</b> Controls the page number and page size for the returned results.</li>
+     * <li><b>Sorting:</b> Applies sorting by specified columns and sorting order based on the {@link PageUtil.ColumnMapping#AFFECTED_STUDENTS} configuration.</li>
+     * </ul>
      *
-     * @param feedbackList The list of {@link Feedback} objects for which the long feedback texts are to be deleted. Only feedback items that have long feedback texts and a
-     *                         non-null ID will be processed.
-     * @param result       The {@link Result} object associated with the feedback items, used to update feedback list before processing.
+     * @param exerciseId  The ID of the exercise for which the affected student participation data is requested.
+     * @param feedbackIds A list of feedback IDs used to filter the participation to only those affected by specific feedback entries.
+     * @param data        A {@link PageableSearchDTO} object containing pagination and sorting parameters:
+     *                        <ul>
+     *                        <li>Page number and page size for pagination</li>
+     *                        <li>Sorting order and column for sorting (e.g., "participationId")</li>
+     *                        </ul>
+     * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback, with:
+     *         <ul>
+     *         <li>Details about the affected students, including participation data and student information.</li>
+     *         <li>Total count of affected students, allowing for pagination on the client side.</li>
+     *         </ul>
      */
-    public void deleteLongFeedback(List<Feedback> feedbackList, Result result) {
-        if (feedbackList == null) {
-            return;
-        }
-        List<Long> feedbackIdsWithLongText = feedbackList.stream().filter(feedback -> feedback.getHasLongFeedbackText() && feedback.getId() != null).map(Feedback::getId).toList();
-        longFeedbackTextRepository.deleteByFeedbackIds(feedbackIdsWithLongText);
-        List<Feedback> feedbacks = new ArrayList<>(feedbackList);
-        result.updateAllFeedbackItems(feedbacks, true);
+    public Page<FeedbackAffectedStudentDTO> getParticipationWithFeedbackId(long exerciseId, List<String> feedbackIds, PageableSearchDTO<String> data) {
+        List<Long> feedbackIdLongs = feedbackIds.stream().map(Long::valueOf).toList();
+        PageRequest pageRequest = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.AFFECTED_STUDENTS);
+        return studentParticipationRepository.findParticipationByFeedbackId(exerciseId, feedbackIdLongs, pageRequest);
     }
 }

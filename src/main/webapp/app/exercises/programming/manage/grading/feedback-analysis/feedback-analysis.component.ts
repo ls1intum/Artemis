@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { FeedbackAnalysisService, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { faFilter, faSort, faSortDown, faSortUp, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faSort, faSortDown, faSortUp, faUpRightAndDownLeftFromCenter, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-modal.component';
@@ -10,6 +10,7 @@ import { FeedbackFilterModalComponent, FilterData } from 'app/exercises/programm
 import { LocalStorageService } from 'ngx-webstorage';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 import { SortIconComponent } from 'app/shared/sort/sort-icon.component';
+import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-affected-students-modal.component';
 
 @Component({
     selector: 'jhi-feedback-analysis',
@@ -44,6 +45,7 @@ export class FeedbackAnalysisComponent {
     readonly faSortDown = faSortDown;
     readonly faFilter = faFilter;
     readonly faUpRightAndDownLeftFromCenter = faUpRightAndDownLeftFromCenter;
+    readonly faUsers = faUsers;
     readonly SortingOrder = SortingOrder;
     readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 200;
 
@@ -182,5 +184,11 @@ export class FeedbackAnalysisComponent {
             count++;
         }
         return count;
+    }
+
+    async openAffectedStudentsModal(feedbackDetail: FeedbackDetail): Promise<void> {
+        const modalRef = this.modalService.open(AffectedStudentsModalComponent, { centered: true, size: 'lg' });
+        modalRef.componentInstance.exerciseId = this.exerciseId;
+        modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
     }
 }

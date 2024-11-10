@@ -371,6 +371,13 @@
                         "clear": "Clear Filter",
                         "cancel": "Cancel",
                         "apply": "Apply Filter"
+                    },
+                    "affectedStudentsModal": {
+                        "header": "Affected Students",
+                        "name": "Name",
+                        "login": "Login",
+                        "repository": "Repository",
+                        "totalItems": "In total {{count}} items"
                     }
                 },
                 "help": {

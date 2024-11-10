@@ -29,6 +29,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -1217,7 +1218,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * - Occurrence range: Filters feedback where the number of occurrences (COUNT) is between the specified minimum and maximum values (inclusive).
      * - Error categories: Filters feedback based on error categories, which can be "Student Error", "Ares Error", or "AST Error".
      * <br>
-     * Grouping is done by feedback detail text, test case name, and error category. The occurrence count is filtered using the HAVING clause.
+     * Grouping is done by feedback detail text, test case name and error category. The occurrence count is filtered using the HAVING clause.
      *
      * @param exerciseId            The ID of the exercise for which feedback details should be retrieved.
      * @param searchTerm            The search term used for filtering the feedback detail text (optional).
@@ -1233,6 +1234,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
                 SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
+                    GROUP_CONCAT(f.id),
                     COUNT(f.id),
                     0,
                     f.detailText,
@@ -1329,4 +1331,46 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             ) AS feedbackCounts
             """)
     long findMaxCountForExercise(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Retrieves a paginated list of students affected by specific feedback entries for a given programming exercise.
+     * <br>
+     * This query joins `ProgrammingExerciseStudentParticipation`, `Submission`, `Result`, and `Feedback` entities to filter
+     * participation records based on feedback IDs and exercise ID. The results include information about each affected student,
+     * such as their course ID, participation ID, student details, and repository URI.
+     * <br>
+     * Supports:
+     * <ul>
+     * <li><b>Pagination:</b> The results are paginated using a {@link Pageable} parameter, allowing control over the page number and size.</li>
+     * <li><b>Sorting:</b> The query sorts results by the student's first name in ascending order.</li>
+     * </ul>
+     *
+     * @param exerciseId  The ID of the exercise for which the affected student participation data is requested.
+     * @param feedbackIds A list of feedback IDs used to filter the participation to only those affected by specific feedback entries.
+     * @param pageable    A {@link Pageable} object to control pagination and sorting of the results, specifying page number, page size, and sort order.
+     * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback, containing:
+     *         <ul>
+     *         <li>Course ID, participation ID, and student information (first name, last name, login).</li>
+     *         <li>Repository URI, linking the affected student's repository.</li>
+     *         <li>Total count of affected students to facilitate pagination on the client side.</li>
+     *         </ul>
+     */
+    @Query("""
+                SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO(
+                                p.exercise.course.id,
+                                p.id,
+                                p.student.firstName,
+                                p.student.lastName,
+                                p.student.login,
+                                p.repositoryUri
+                            )
+                FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN p.submissions s
+                JOIN s.results r
+                JOIN r.feedbacks f
+                WHERE p.exercise.id = :exerciseId
+                      AND f.id IN :feedbackIds
+                ORDER BY p.student.firstName ASC
+            """)
+    Page<FeedbackAffectedStudentDTO> findParticipationByFeedbackId(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds, Pageable pageable);
 }

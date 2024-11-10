@@ -8,6 +8,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'ngx-webstorage';
 import '@angular/localize/init';
 import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
+import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-affected-students-modal.component';
 
 describe('FeedbackAnalysisComponent', () => {
     let fixture: ComponentFixture<FeedbackAnalysisComponent>;
@@ -18,6 +19,7 @@ describe('FeedbackAnalysisComponent', () => {
 
     const feedbackMock: FeedbackDetail[] = [
         {
+            concatenatedFeedbackIds: ['1', '2'],
             detailText: 'Test feedback 1 detail',
             testCaseName: 'test1',
             count: 10,
@@ -26,6 +28,7 @@ describe('FeedbackAnalysisComponent', () => {
             errorCategory: 'Student Error',
         },
         {
+            concatenatedFeedbackIds: ['3', '4'],
             detailText: 'Test feedback 2 detail',
             testCaseName: 'test2',
             count: 5,
@@ -62,9 +65,9 @@ describe('FeedbackAnalysisComponent', () => {
         localStorageService = fixture.debugElement.injector.get(LocalStorageService);
 
         jest.spyOn(localStorageService, 'retrieve').mockReturnValue([]);
-
         searchSpy = jest.spyOn(feedbackAnalysisService, 'search').mockResolvedValue(feedbackResponseMock);
 
+        // Initial input setup
         fixture.componentRef.setInput('exerciseId', 1);
         fixture.componentRef.setInput('exerciseTitle', 'Sample Exercise Title');
 
@@ -235,6 +238,19 @@ describe('FeedbackAnalysisComponent', () => {
             const feedbackDetail = feedbackMock[0];
             component.openFeedbackModal(feedbackDetail);
 
+            expect(modalSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('openAffectedStudentsModal', () => {
+        it('should open affected students modal with the correct feedback detail', () => {
+            const modalService = fixture.debugElement.injector.get(NgbModal);
+            const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {} } as any);
+
+            const feedbackDetail = feedbackMock[1];
+            component.openAffectedStudentsModal(feedbackDetail);
+
+            expect(modalSpy).toHaveBeenCalledWith(AffectedStudentsModalComponent, { centered: true, size: 'lg' });
             expect(modalSpy).toHaveBeenCalledOnce();
         });
     });
