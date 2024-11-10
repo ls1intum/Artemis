@@ -15,3 +15,10 @@ export class OneToOneChatDTO extends ConversationDTO {
 export function isOneToOneChatDTO(conversation: ConversationDTO): conversation is OneToOneChatDTO {
     return conversation.type === ConversationType.ONE_TO_ONE;
 }
+
+export function getAsOneToOneChatDTO(conversation: ConversationDTO | undefined): OneToOneChatDTO | undefined {
+    if (!conversation) {
+        return undefined;
+    }
+    return isOneToOneChatDTO(conversation) ? conversation : undefined;
+}

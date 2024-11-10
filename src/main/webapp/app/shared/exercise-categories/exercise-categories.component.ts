@@ -21,6 +21,7 @@ export class ExerciseCategoriesComponent {
     readonly dayjs = dayjs;
 
     @Input() exercise: Exercise;
+    @Input() isSmall: boolean = false;
 
     @Input()
     showTags: ShowTagsConfig = {
