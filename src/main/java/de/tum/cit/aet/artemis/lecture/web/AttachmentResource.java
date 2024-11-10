@@ -210,4 +210,17 @@ public class AttachmentResource {
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, attachmentId.toString())).build();
     }
+
+    /**
+     * GET /attachments/:parentAttachmentId/hiddenAttachment : retrieve the hidden attachment associated with the given parent attachment ID.
+     *
+     * @param parentAttachmentId the ID of the parent attachment for which to retrieve the hidden attachment
+     * @return the ResponseEntity with status 200 (OK) and the Attachment in the body, or a 404 (Not Found) if no matching attachment exists
+     */
+    @GetMapping("attachments/{parentAttachmentId}/hiddenAttachment")
+    @EnforceAtLeastTutor
+    public ResponseEntity<Attachment> getAttachmentByParentAttachmentId(@PathVariable Long parentAttachmentId) {
+        log.debug("REST request to get attachment by the parent attachment Id : {}", parentAttachmentId);
+        return ResponseEntity.ok(attachmentRepository.findAttachmentByParentAttachmentId(parentAttachmentId));
+    }
 }

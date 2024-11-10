@@ -61,6 +61,13 @@ public class Attachment extends DomainObject implements Serializable {
     @JoinColumn(name = "attachment_unit_id")
     private AttachmentUnit attachmentUnit;
 
+    @Column(name = "hidden_pages")
+    private String hiddenPages;
+
+    @OneToOne
+    @JoinColumn(name = "parent_attachment_id")
+    private Attachment parentAttachment;
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public String getName() {
@@ -135,6 +142,22 @@ public class Attachment extends DomainObject implements Serializable {
         this.attachmentUnit = attachmentUnit;
     }
 
+    public String getHiddenPages() {
+        return hiddenPages;
+    }
+
+    public void setHiddenPages(String hiddenPages) {
+        this.hiddenPages = hiddenPages;
+    }
+
+    public Attachment getParentAttachment() {
+        return parentAttachment;
+    }
+
+    public void setParentAttachment(Attachment parentAttachment) {
+        this.parentAttachment = parentAttachment;
+    }
+
     public Boolean isVisibleToStudents() {
         if (releaseDate == null) {  // no release date means the attachment is visible to students
             return Boolean.TRUE;
@@ -145,6 +168,7 @@ public class Attachment extends DomainObject implements Serializable {
     @Override
     public String toString() {
         return "Attachment{" + "id=" + getId() + ", name='" + getName() + "'" + ", link='" + getLink() + "'" + ", version='" + getVersion() + "'" + ", uploadDate='"
-                + getUploadDate() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", attachmentType='" + getAttachmentType() + "'" + "}";
+                + getUploadDate() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", attachmentType='" + getAttachmentType() + "'" + ", hiddenPages='" + getHiddenPages() + "'"
+                + ", parentAttachment='" + getParentAttachment() + "'" + "}";
     }
 }
