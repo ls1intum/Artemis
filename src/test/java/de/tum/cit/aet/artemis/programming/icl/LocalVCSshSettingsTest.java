@@ -9,7 +9,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.programming.icl.util.SshSettingsTestService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-public class LocalVCSshSettingsTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class LocalVCSshSettingsTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "sshsettings";
 
