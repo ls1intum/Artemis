@@ -24,7 +24,6 @@ export class CompetenciesPopoverComponent implements OnInit {
     constructor() {}
 
     ngOnInit(): void {
-        console.log(this.competencyLinks);
         if (this.courseId) {
             switch (this.navigateTo) {
                 case 'courseCompetencies': {
