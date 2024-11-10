@@ -21,7 +21,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
-import { CreateExerciseUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
 
 @Component({
     selector: 'jhi-lecture-update-wizard-units',
@@ -37,7 +36,6 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
     videoUnitForm = viewChild(VideoUnitFormComponent);
     onlineUnitForm = viewChild(OnlineUnitFormComponent);
     attachmentUnitForm = viewChild(AttachmentUnitFormComponent);
-    exerciseUnitForm = viewChild(CreateExerciseUnitComponent); // TODO add status fo unit form
     isUnitConfigurationValid = computed(() => {
         return (
             (this.textUnitForm()?.isFormValid() || !this.isTextUnitFormOpen()) &&
