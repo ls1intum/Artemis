@@ -83,7 +83,7 @@ export class LectureUpdateComponent implements OnInit {
     ) {
         effect(() => {
             // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-            let updatedFormStatusSections: FormSectionStatus[] = [
+            const updatedFormStatusSections: FormSectionStatus[] = [
                 {
                     title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
                     valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
@@ -92,30 +92,20 @@ export class LectureUpdateComponent implements OnInit {
                     title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
                     valid: Boolean(this.isPeriodSectionValid()),
                 },
+                {
+                    title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
+                    valid: true, // TODO retrieve the valid status
+                },
+                {
+                    title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
+                    valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
+                },
             ];
-
-            // only in edit mode we have the lecture id which is currently required to store units and attachments
-            if (this.isEditMode()) {
-                updatedFormStatusSections = [
-                    ...updatedFormStatusSections,
-                    {
-                        title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
-                        valid: true, // TODO retrieve the valid status
-                    },
-                    {
-                        title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
-                        valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
-                    },
-                ];
-            }
 
             this.formStatusSections = updatedFormStatusSections;
         });
     }
 
-    /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
-     */
     ngOnInit() {
         this.isSaving = false;
         this.processUnitMode = false;
