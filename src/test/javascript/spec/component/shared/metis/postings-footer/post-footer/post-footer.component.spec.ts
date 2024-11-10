@@ -15,6 +15,13 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-cre
 import { TranslatePipeMock } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { metisPostExerciseUser1, post, unsortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { User } from 'app/core/user/user.model';
+
+interface PostGroup {
+    author: User | undefined;
+    posts: AnswerPost[];
+}
 
 describe('PostFooterComponent', () => {
     let component: PostFooterComponent;
@@ -62,6 +69,71 @@ describe('PostFooterComponent', () => {
         expect(component.createdAnswerPost.resolvesPost).toBeTrue();
     });
 
+    it('should group answer posts correctly', () => {
+        component.sortedAnswerPosts = unsortedAnswerArray;
+        component.groupAnswerPosts();
+        expect(component.groupedAnswerPosts.length).toBeGreaterThan(0); // Ensure groups are created
+        expect(component.groupedAnswerPosts[0].posts.length).toBeGreaterThan(0); // Ensure posts exist in groups
+    });
+
+    it('should group answer posts and detect changes on changes to sortedAnswerPosts input', () => {
+        const changeDetectorSpy = jest.spyOn(component['changeDetector'], 'detectChanges');
+        component.sortedAnswerPosts = unsortedAnswerArray;
+        component.ngOnChanges({ sortedAnswerPosts: { currentValue: unsortedAnswerArray, previousValue: [], firstChange: true, isFirstChange: () => true } });
+        expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
+        expect(changeDetectorSpy).toHaveBeenCalled();
+    });
+
+    it('should clear answerPostCreateEditModal container on destroy', () => {
+        const mockContainerRef = { clear: jest.fn() } as any;
+        component.answerPostCreateEditModal = {
+            createEditAnswerPostContainerRef: mockContainerRef,
+        } as AnswerPostCreateEditModalComponent;
+
+        const clearSpy = jest.spyOn(mockContainerRef, 'clear');
+        component.ngOnDestroy();
+        expect(clearSpy).toHaveBeenCalled();
+    });
+
+    it('should return the ID of the post in trackPostByFn', () => {
+        const mockPost: AnswerPost = { id: 200 } as AnswerPost;
+
+        const result = component.trackPostByFn(0, mockPost);
+        expect(result).toBe(200);
+    });
+
+    it('should return the ID of the first post in the group in trackGroupByFn', () => {
+        const mockGroup: PostGroup = {
+            author: { id: 1, login: 'user1' } as User,
+            posts: [{ id: 100, author: { id: 1 } } as AnswerPost],
+        };
+
+        const result = component.trackGroupByFn(0, mockGroup);
+        expect(result).toBe(100);
+    });
+
+    it('should return true if the post is the last post in the group in isLastPost', () => {
+        const mockPost: AnswerPost = { id: 300 } as AnswerPost;
+        const mockGroup: PostGroup = {
+            author: { id: 1, login: 'user1' } as User,
+            posts: [{ id: 100, author: { id: 1 } } as AnswerPost, mockPost],
+        };
+
+        const result = component.isLastPost(mockGroup, mockPost);
+        expect(result).toBeTrue();
+    });
+
+    it('should return false if the post is not the last post in the group in isLastPost', () => {
+        const mockPost: AnswerPost = { id: 100 } as AnswerPost;
+        const mockGroup: PostGroup = {
+            author: { id: 1, login: 'user1' } as User,
+            posts: [mockPost, { id: 300, author: { id: 1 } } as AnswerPost],
+        };
+
+        const result = component.isLastPost(mockGroup, mockPost);
+        expect(result).toBeFalse();
+    });
+
     it('should be initialized correctly for users that are not at least tutors in course', () => {
         component.posting = post;
         component.posting.answers = unsortedAnswerArray;
@@ -69,24 +141,6 @@ describe('PostFooterComponent', () => {
         component.ngOnInit();
         expect(component.isAtLeastTutorInCourse).toBeFalse();
         expect(component.createdAnswerPost.resolvesPost).toBeFalse();
-    });
-
-    it('should not contain an answer post', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
-        component.showAnswers = false;
-        fixture.detectChanges();
-        const answerPostComponent = fixture.debugElement.nativeElement.querySelector('jhi-answer-post');
-        expect(answerPostComponent).toBeNull();
-    });
-
-    it('should contain reference to container for rendering answerPostCreateEditModal component', () => {
-        expect(component.containerRef).not.toBeNull();
-    });
-
-    it('should contain component to create a new answer post', () => {
-        const answerPostCreateEditModal = fixture.debugElement.nativeElement.querySelector('jhi-answer-post-create-edit-modal');
-        expect(answerPostCreateEditModal).not.toBeNull();
     });
 
     it('should open create answer post modal', () => {

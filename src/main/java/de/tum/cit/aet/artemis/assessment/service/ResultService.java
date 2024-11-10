@@ -639,6 +639,10 @@ public class ResultService {
      * overridden or updated. The deletion is performed only for feedback items with a non-null ID and an associated long feedback text.
      * <p>
      * This approach reduces the need for individual deletion calls and performs batch deletion in a single database operation.
+     * <p>
+     * **Note:** This method should only be used for manually assessed submissions, not for fully automatic assessments, due to its dependency on the
+     * {@link Result#updateAllFeedbackItems} method, which is designed for manual feedback management. Using this method with automatic assessments could
+     * lead to unintended behavior or data inconsistencies.
      *
      * @param feedbackList The list of {@link Feedback} objects for which the long feedback texts are to be deleted. Only feedback items that have long feedback texts and a
      *                         non-null ID will be processed.
@@ -648,12 +652,9 @@ public class ResultService {
         if (feedbackList == null) {
             return;
         }
-
         List<Long> feedbackIdsWithLongText = feedbackList.stream().filter(feedback -> feedback.getHasLongFeedbackText() && feedback.getId() != null).map(Feedback::getId).toList();
-
         longFeedbackTextRepository.deleteByFeedbackIds(feedbackIdsWithLongText);
-
         List<Feedback> feedbacks = new ArrayList<>(feedbackList);
-        result.updateAllFeedbackItems(feedbacks, false);
+        result.updateAllFeedbackItems(feedbacks, true);
     }
 }
