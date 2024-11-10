@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
@@ -9,7 +10,6 @@ import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
-import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
@@ -82,8 +82,8 @@ examples.forEach((activeConversation) => {
                     ConversationInfoStubComponent,
                     MockPipe(ArtemisTranslatePipe),
                     MockComponent(ChannelIconComponent),
-                    MockComponent(GroupChatIconComponent),
                 ],
+                imports: [FontAwesomeModule],
                 providers: [MockProvider(NgbActiveModal), MockProvider(ConversationService)],
             }).compileComponents();
         }));
