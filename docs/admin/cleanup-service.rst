@@ -25,9 +25,6 @@ When a cleanup operation is performed with specified "from" and "to" dates, all 
 Data Deletion by Operation Type
 ------------------------------------------
 
-Data Deletion by Operation Type
-------------------------------------------
-
 1. **Orphaned Data**:
       - Long Feedback Text with feedback that has no results
       - Text Block with feedback that has no results
