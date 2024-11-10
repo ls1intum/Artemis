@@ -138,21 +138,11 @@ export class LectureUpdateComponent implements OnInit {
     }
 
     cancel() {
-        console.log('called cancel');
-        console.log('isEditMode', this.isEditMode());
         if (!this.isEditMode()) {
-            console.log('trying to delete lecture');
-            console.log('lecture id' + this.lecture().id);
             // this means we are in create mode and have an auto saved lecture (for attachments and units) that we need to delete
-            this.lectureService.delete(this.lecture().id!).subscribe({
-                next: () => {
-                    console.log('lecture deleted');
-                },
-            });
-            this.previousState(false);
-        } else {
-            this.previousState();
+            this.lectureService.delete(this.lecture().id!, false);
         }
+        this.previousState(false);
     }
 
     /**

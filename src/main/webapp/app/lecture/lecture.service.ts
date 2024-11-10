@@ -111,6 +111,7 @@ export class LectureService {
                 tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
             );
     }
+
     /**
      * triggers the ingestion of All the lectures inside the course specified or one lecture inside of the course
      *
@@ -128,6 +129,7 @@ export class LectureService {
             observe: 'response',
         });
     }
+
     /**
      * Clones and imports the lecture to the course
      *
@@ -151,8 +153,9 @@ export class LectureService {
             );
     }
 
-    delete(lectureId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' });
+    delete(lectureId: number, displayAlert: boolean = true): Observable<HttpResponse<any>> {
+        const params = new HttpParams().set('displayAlert', displayAlert);
+        return this.http.delete<any>(`${this.resourceUrl}/${lectureId}`, { params: params, observe: 'response' });
     }
 
     protected convertLectureDatesFromClient(lecture: Lecture): Lecture {
