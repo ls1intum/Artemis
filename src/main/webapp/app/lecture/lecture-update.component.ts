@@ -127,7 +127,7 @@ export class LectureUpdateComponent implements OnInit {
             }
         });
 
-        this.isEditMode.set(this.lecture.id !== undefined);
+        this.isEditMode.set(!this.router.url.endsWith('/new'));
     }
 
     /**

@@ -13,7 +13,7 @@
                 <div class="d-flex">
                     <div class="flex-grow-1">
                         <div class="d-flex align-items-center">
-                            <h1 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel"></h1>
+                            <h1 id="jhi-lecture-heading" [jhiTranslate]="isEditMode() ? 'artemisApp.lecture.home.editLabel' : 'artemisApp.lecture.home.createLabel'"></h1>
                             <jhi-documentation-button [type]="documentationType" />
                         </div>
                     </div>

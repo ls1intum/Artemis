@@ -4,6 +4,7 @@
             "home": {
                 "title": "Lectures",
                 "createLabel": "Create Lecture",
+                "editLabel": "Edit Lecture",
                 "filterLabel": "Filter",
                 "filterOptions": {
                     "filterPast": "Past",

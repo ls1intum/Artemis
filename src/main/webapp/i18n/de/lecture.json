@@ -4,6 +4,7 @@
             "home": {
                 "title": "Vorlesungen",
                 "createLabel": "Vorlesung erstellen",
+                "editLabel": "Vorlesung bearbeiten",
                 "filterLabel": "Filter",
                 "filterOptions": {
                     "filterPast": "Vergangene",
