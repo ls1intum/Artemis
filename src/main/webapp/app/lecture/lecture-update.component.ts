@@ -12,7 +12,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
-import { UPLOAD_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
@@ -33,10 +33,8 @@ export class LectureUpdateComponent implements OnInit {
     protected readonly faPuzzleProcess = faPuzzlePiece;
     protected readonly faBan = faBan;
     protected readonly faHandShakeAngle = faHandshakeAngle;
-    // A human-readable list of allowed file extensions
-    protected readonly allowedFileExtensions = UPLOAD_FILE_EXTENSIONS.join(', ');
-    // The list of file extensions for the "accept" attribute of the file input field
-    protected readonly acceptedFileExtensionsFileBrowser = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+    protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
+    protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
     isEditMode = signal<boolean>(false);
 
@@ -55,12 +53,15 @@ export class LectureUpdateComponent implements OnInit {
         return true;
     });
 
-    lecture: Lecture;
+    lecture = signal<Lecture>(new Lecture());
     isSaving: boolean;
     isProcessing: boolean;
     processUnitMode: boolean;
     isShowingWizardMode: boolean;
-    /** Adding attachments and lecture units requires a lecture id, we save the lecture in the background on creation to make sure the id is present in case an attachment / lecture unit is added */
+    /**
+     * Adding attachments and lecture units requires a lecture id, we save the lecture in the background on creation
+     * to make sure the id is present in case an attachment / lecture unit is added
+     */
     isAutomaticSaveOnCreation: boolean = true;
 
     formStatusSections: FormSectionStatus[];
@@ -116,10 +117,10 @@ export class LectureUpdateComponent implements OnInit {
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
-            this.lecture = lecture ?? new Lecture();
+            this.lecture.set(lecture ?? new Lecture());
             const course = data['course'];
             if (course) {
-                this.lecture.course = course;
+                this.lecture().course = course;
             }
         });
 
@@ -142,7 +143,7 @@ export class LectureUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state, and we created a new lecture
      */
     previousState() {
-        this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture.course!.id!.toString(), 'lectures'], this.lecture.id?.toString());
+        this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture().course!.id!.toString(), 'lectures'], this.lecture().id?.toString());
     }
 
     /**
@@ -153,11 +154,11 @@ export class LectureUpdateComponent implements OnInit {
         this.isSaving = true;
         this.isProcessing = true;
         this.isAutomaticSaveOnCreation = isAutomaticSaveOnCreation;
-        if (this.lecture.id !== undefined) {
-            this.subscribeToSaveResponse(this.lectureService.update(this.lecture));
+        if (this.lecture().id !== undefined) {
+            this.subscribeToSaveResponse(this.lectureService.update(this.lecture()));
         } else {
             // Newly created lectures must have a channel name, which cannot be undefined
-            this.subscribeToSaveResponse(this.lectureService.create(this.lecture));
+            this.subscribeToSaveResponse(this.lectureService.create(this.lecture()));
         }
     }
 
@@ -192,7 +193,7 @@ export class LectureUpdateComponent implements OnInit {
     }
 
     /**
-     * @callback Callback function after saving a lecture, handles appropriate action in case of error
+     * @callback callback after saving a lecture, handles appropriate action in case of error
      * @param result The Http response from the server
      */
     protected subscribeToSaveResponse(result: Observable<HttpResponse<Lecture>>) {
@@ -212,20 +213,20 @@ export class LectureUpdateComponent implements OnInit {
         if (isAutomaticSaveForIdForAttachmentsAndUnits) {
             this.lectureService.findWithDetails(lecture.id!).subscribe({
                 next: (response: HttpResponse<Lecture>) => {
-                    this.lecture = response.body!;
+                    this.lecture.set(response.body!);
                 },
             });
-        } else if (this.isShowingWizardMode && !this.lecture.id) {
+        } else if (this.isShowingWizardMode && !this.lecture().id) {
             this.lectureService.findWithDetails(lecture.id!).subscribe({
                 next: (response: HttpResponse<Lecture>) => {
-                    this.lecture = response.body!;
+                    this.lecture.set(response.body!);
                     this.alertService.success(`Lecture with title ${lecture.title} was successfully created.`);
                     this.wizardComponent.onLectureCreationSucceeded();
                 },
             });
         } else if (this.processUnitMode) {
             this.isProcessing = false;
-            this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture.id !== undefined ? 'updated' : 'created'}.`);
+            this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
                 state: { file: this.file, fileName: this.fileName },
             });
@@ -253,18 +254,18 @@ export class LectureUpdateComponent implements OnInit {
     }
 
     onDatesValuesChanged() {
-        const startDate = this.lecture.startDate;
-        const endDate = this.lecture.endDate;
-        const visibleDate = this.lecture.visibleDate;
+        const startDate = this.lecture().startDate;
+        const endDate = this.lecture().endDate;
+        const visibleDate = this.lecture().visibleDate;
 
         // Prevent endDate from being before startDate, if both dates are set
         if (endDate && startDate?.isAfter(endDate)) {
-            this.lecture.endDate = startDate.clone();
+            this.lecture().endDate = startDate.clone();
         }
 
         // Prevent visibleDate from being after startDate, if both dates are set
         if (visibleDate && startDate?.isBefore(visibleDate)) {
-            this.lecture.visibleDate = startDate.clone();
+            this.lecture().visibleDate = startDate.clone();
         }
     }
 }
