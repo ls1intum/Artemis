@@ -355,6 +355,8 @@
                     "error": "An error occurred while loading the feedback.",
                     "search": "Search ...",
                     "filter": "Filters",
+                    "noData": "No Feedback Entries could be found for the Programming Exercise.",
+                    "noDataFilter": "No Feedback Entries could be found for the specified filter or search Term.",
                     "feedbackModal": {
                         "header": "Error Details",
                         "feedbackTitle": "Test Case Feedback",
@@ -364,6 +366,7 @@
                         "modalTitle": "Filter Options",
                         "task": "Tasks",
                         "testcase": "Test Cases",
+                        "errorCategory": "Error Categories",
                         "occurrence": "Occurrence",
                         "clear": "Clear Filter",
                         "cancel": "Cancel",
