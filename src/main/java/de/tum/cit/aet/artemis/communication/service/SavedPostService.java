@@ -31,6 +31,11 @@ public class SavedPostService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Saves a post for the currently logged-in user, if post is already saved it returns
+     *
+     * @param post post to save
+     */
     public void savePostForCurrentUser(Posting post) {
         var existingSavedPost = this.getSavedPostForCurrentUser(post);
 
@@ -44,6 +49,11 @@ public class SavedPostService {
         savedPostRepository.save(savedPost);
     }
 
+    /**
+     * Removes a bookmark of a post for the currently logged-in user, if post is not saved it returns
+     *
+     * @param post post to remove from bookmarks
+     */
     public void removeSavedPostForCurrentUser(Posting post) {
         var existingSavedPost = this.getSavedPostForCurrentUser(post);
 
@@ -54,6 +64,12 @@ public class SavedPostService {
         savedPostRepository.delete(existingSavedPost);
     }
 
+    /**
+     * Updates the status of a bookmark, will return if no bookmark is present
+     *
+     * @param post   post to change status
+     * @param status status to change towards
+     */
     public void updateStatusOfSavedPostForCurrentUser(Posting post, SavedPostStatus status) {
         var existingSavedPost = this.getSavedPostForCurrentUser(post);
 
@@ -66,18 +82,31 @@ public class SavedPostService {
         savedPostRepository.save(existingSavedPost);
     }
 
+    /**
+     * Retrieve the saved posts for a given status
+     *
+     * @param status status to query
+     */
     public List<SavedPost> getSavedPostsForCurrentUser(SavedPostStatus status) {
         var currentUser = userRepository.getUserWithGroupsAndAuthorities();
 
         return savedPostRepository.findSavedPostsByUserIdAndStatusOrderById(currentUser.getId(), status.getDatabaseKey());
     }
 
+    /**
+     * Checks if maximum amount of saved posts limit is reached
+     */
     public boolean isMaximumSavedPostsReached() {
         var currentUser = userRepository.getUserWithGroupsAndAuthorities();
 
         return MAX_SAVED_POSTS_PER_USER <= savedPostRepository.countByUserId(currentUser.getId());
     }
 
+    /**
+     * Helper method to retrieve a bookmark for the current user
+     *
+     * @param post post to search bookmark for
+     */
     private SavedPost getSavedPostForCurrentUser(Posting post) {
         PostingType type = post instanceof Post ? PostingType.POST : PostingType.ANSWER;
         var author = userRepository.getUserWithGroupsAndAuthorities();

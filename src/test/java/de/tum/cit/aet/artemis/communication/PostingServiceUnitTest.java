@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -20,6 +21,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
+import de.tum.cit.aet.artemis.communication.domain.SavedPost;
+import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
 import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -43,12 +49,49 @@ class PostingServiceUnitTest {
 
     private AutoCloseable closeable;
 
+    @Mock
+    private SavedPostRepository savedPostRepository;
+
+    private User testUser;
+
+    private Post testPost;
+
+    private AnswerPost testAnswer1;
+
+    private AnswerPost testAnswer2;
+
+    private SavedPost savedPost;
+
+    private SavedPost savedAnswer;
+
     @BeforeEach
     void initTestCase() throws NoSuchMethodException {
         closeable = MockitoAnnotations.openMocks(this);
 
         parseUserMentions = PostingService.class.getDeclaredMethod("parseUserMentions", Course.class, String.class);
         parseUserMentions.setAccessible(true);
+
+        testUser = new User();
+        testUser.setId(1L);
+
+        testPost = new Post();
+        testPost.setId(2L);
+
+        testAnswer1 = new AnswerPost();
+        testAnswer1.setId(3L);
+
+        testAnswer2 = new AnswerPost();
+        testAnswer2.setId(4L);
+
+        Set<AnswerPost> answers = new HashSet<>();
+        answers.add(testAnswer1);
+        answers.add(testAnswer2);
+        testPost.setAnswers(answers);
+
+        savedPost = new SavedPost();
+        savedAnswer = new SavedPost();
+
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
     }
 
     @AfterEach
@@ -170,6 +213,62 @@ class PostingServiceUnitTest {
 
         // Should not be recognized as user mention and therefore should throw now exception
         parseUserMentions.invoke(postingService, course, content);
+    }
+
+    @Test
+    void shouldSetCorrectFlagsWhenPostsAreSaved() {
+        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
+            testUser.getId(),
+            testPost.getId(),
+            PostingType.POST.getDatabaseKey()
+        )).thenReturn(savedPost);
+
+        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
+            testUser.getId(),
+            testAnswer1.getId(),
+            PostingType.ANSWER.getDatabaseKey()
+        )).thenReturn(savedAnswer);
+
+        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
+            testUser.getId(),
+            testAnswer2.getId(),
+            PostingType.ANSWER.getDatabaseKey()
+        )).thenReturn(savedAnswer);
+
+        postingService.preparePostForBroadcast(testPost);
+
+        assertThat(testPost.getIsSaved()).isTrue();
+        testPost.getAnswers().forEach(answer ->
+            assertThat(answer.getIsSaved()).isTrue()
+        );
+    }
+
+    @Test
+    void shouldSetCorrectFlagsWhenPostsAreNotSaved() {
+        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
+            testUser.getId(),
+            testPost.getId(),
+            PostingType.POST.getDatabaseKey()
+        )).thenReturn(null);
+
+        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
+            testUser.getId(),
+            testAnswer1.getId(),
+            PostingType.ANSWER.getDatabaseKey()
+        )).thenReturn(null);
+
+        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
+            testUser.getId(),
+            testAnswer2.getId(),
+            PostingType.ANSWER.getDatabaseKey()
+        )).thenReturn(null);
+
+        postingService.preparePostForBroadcast(testPost);
+
+        assertThat(testPost.getIsSaved()).isFalse();
+        testPost.getAnswers().forEach(answer ->
+            assertThat(answer.getIsSaved()).isFalse()
+        );
     }
 
     /**

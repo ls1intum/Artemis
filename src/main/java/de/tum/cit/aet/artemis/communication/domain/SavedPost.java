@@ -75,4 +75,8 @@ public class SavedPost {
     public PostingType getType() {
         return PostingType.fromDatabaseKey(postType);
     }
+
+    public ZonedDateTime getCompletedAt() {
+        return completedAt;
+    }
 }

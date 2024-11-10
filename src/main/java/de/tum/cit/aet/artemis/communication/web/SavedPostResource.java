@@ -91,10 +91,7 @@ public class SavedPostResource {
                 .filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId)).toList();
         List<PostingDTO> postingList = new ArrayList<>();
 
-        log.debug(savedPosts.toString());
-
         for (SavedPost savedPost : savedPosts) {
-            log.debug("Handling post {}", savedPost.getPostId());
             Optional posting;
             if (savedPost.getType() == PostingType.ANSWER) {
                 posting = answerPosts.stream().filter(answerPost -> answerPost.getId().equals(savedPost.getPostId())).findFirst();
@@ -106,8 +103,6 @@ public class SavedPostResource {
                 postingList.add(new PostingDTO((Posting) posting.get(), true, savedPost.getStatus().getDatabaseKey()));
             }
         }
-
-        log.debug(postingList.toString());
 
         log.info("getSavedPosts took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(postingList, null, HttpStatus.OK);
