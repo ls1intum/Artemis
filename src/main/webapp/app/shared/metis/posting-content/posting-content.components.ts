@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, input, output, signal } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
@@ -24,10 +24,13 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() isReply?: boolean;
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
+    isDeleted = input<boolean>(false);
+    deleteTimerInSeconds = input<number>(0);
+    onUndoDeleteEvent = output<void>();
 
     showContent = false;
     currentlyLoadedPosts: Post[];
-    postingContentParts: PostingContentPart[];
+    postingContentParts = signal<PostingContentPart[]>([]);
 
     private postsSubscription: Subscription;
 
@@ -77,7 +80,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
      * computes an array of PostingContentPart objects by splitting up the posting content by post references (denoted by #{PostId}).
      */
     computePostingContentParts(patternMatches: PatternMatch[]): void {
-        this.postingContentParts = [];
+        this.postingContentParts.set([]);
         // if there are references found in the posting content, we need to create a PostingContentPart per reference match
         if (patternMatches && patternMatches.length > 0) {
             patternMatches.forEach((patternMatch: PatternMatch, index: number) => {
@@ -92,6 +95,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                 let attachmentToReference;
                 let slideToReference;
                 let queryParams;
+                let imageToReference;
                 if (ReferenceType.POST === referenceType) {
                     // if the referenced Id is within the currently loaded posts, we can create the context-specific link to that post
                     // by invoking the respective metis service methods for link and query params and passing the post object;
@@ -144,6 +148,10 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     queryParams = {
                         channelId: isNaN(channelId) ? undefined : channelId,
                     } as Params;
+                } else if (ReferenceType.IMAGE === referenceType) {
+                    // get filename of the image
+                    referenceStr = this.content.substring(this.content.indexOf('![') + 2, this.content.indexOf('](', patternMatch.startIndex));
+                    imageToReference = this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex));
                 }
 
                 // determining the endIndex of the content after the reference
@@ -167,9 +175,10 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     queryParams,
                     referenceStr,
                     referenceType,
+                    imageToReference,
                     contentAfterReference: this.content.substring(patternMatch.endIndex, endIndexOfContentAfterReference),
                 };
-                this.postingContentParts.push(contentPart);
+                this.postingContentParts.set([...this.postingContentParts(), contentPart]);
             });
             // if there are no post references in the content, the whole content is represented by a single PostingContentPart,
             // with contentBeforeReferenced represents the post content
@@ -182,7 +191,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                 referenceType: undefined,
                 contentAfterReference: undefined,
             };
-            this.postingContentParts.push(contentLink);
+            this.postingContentParts.set([...this.postingContentParts(), contentLink]);
         }
     }
 
@@ -199,9 +208,10 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         // Group 7: reference pattern for Lecture Attachments
         // Group 8: reference pattern for Lecture Units
         // Group 9: reference pattern for Users
+        // Group 10: pattern for embedded images
         // globally searched for, i.e. no return after first match
         const pattern =
-            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])|(?<CHANNEL>\[channel].*?\[\/channel])/g;
+            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])|(?<CHANNEL>\[channel].*?\[\/channel])|(?<IMAGE>!\[.*?]\(.*?\))/g;
 
         // array with PatternMatch objects per reference found in the posting content
         const patternMatches: PatternMatch[] = [];

@@ -10,8 +10,12 @@ import {
     Output,
     ViewChild,
     ViewEncapsulation,
+    computed,
     forwardRef,
+    inject,
+    input,
 } from '@angular/core';
+import { ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -30,6 +34,14 @@ import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/c
 import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
+import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
+import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
+import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
+import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
+import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -51,13 +63,20 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
     @Input() isInputLengthDisplayed = true;
     @Input() suppressNewlineOnEnter = true;
+    /**
+     * For AnswerPosts, the MetisService may not always have an active conversation (e.g. when in the 'all messages' view).
+     * In this case, file uploads have to rely on the parent post to determine the course.
+     */
+    readonly activeConversation = input<ConversationDTO>();
     @Output() valueChange = new EventEmitter();
     lectureAttachmentReferenceAction: LectureAttachmentReferenceAction;
     defaultActions: TextEditorAction[];
     content?: string;
     previewMode = false;
+    fallbackConversationId = computed<number | undefined>(() => this.activeConversation()?.id);
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+    private overlay = inject(Overlay);
 
     constructor(
         private cdref: ChangeDetectorRef,
@@ -65,6 +84,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         private courseManagementService: CourseManagementService,
         private lectureService: LectureService,
         private channelService: ChannelService,
+        public viewContainerRef: ViewContainerRef,
+        private positionBuilder: OverlayPositionBuilder,
     ) {}
 
     /**
@@ -79,9 +100,15 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new BoldAction(),
             new ItalicAction(),
             new UnderlineAction(),
+            new StrikethroughAction(),
+            new EmojiAction(this.viewContainerRef, this.overlay, this.positionBuilder),
+            new BulletedListAction(),
+            new OrderedListAction(),
             new QuoteAction(),
             new CodeAction(),
             new CodeBlockAction(),
+            new UrlAction(),
+            new AttachmentAction(),
             ...messagingOnlyActions,
             new ExerciseReferenceAction(this.metisService),
         ];

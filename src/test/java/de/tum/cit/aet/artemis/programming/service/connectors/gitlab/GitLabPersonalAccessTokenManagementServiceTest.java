@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -30,25 +29,13 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabException;
-import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabPersonalAccessTokenManagementService;
 import de.tum.cit.aet.artemis.programming.service.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
-class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class GitLabPersonalAccessTokenManagementServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "gitlabusermanagementservice";
-
-    @Autowired
-    private GitLabPersonalAccessTokenManagementService gitLabPersonalAccessTokenManagementService;
-
-    @Autowired
-    private UserTestRepository userRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
 
     @BeforeEach
     void setUp() {

@@ -41,6 +41,7 @@ public enum ProgrammingLanguage {
         ASSEMBLER,
         C,
         C_PLUS_PLUS,
+        C_SHARP,
         HASKELL,
         JAVA,
         JAVASCRIPT,
@@ -50,6 +51,7 @@ public enum ProgrammingLanguage {
         R,
         RUST,
         SWIFT,
+        TYPESCRIPT,
         VHDL,
         EMPTY
     );

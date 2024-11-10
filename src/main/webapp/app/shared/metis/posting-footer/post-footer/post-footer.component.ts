@@ -1,4 +1,17 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+    AfterContentChecked,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    ViewContainerRef,
+} from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -6,38 +19,40 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
+import { User } from 'app/core/user/user.model';
+
+interface PostGroup {
+    author: User | undefined;
+    posts: AnswerPost[];
+}
 
 @Component({
     selector: 'jhi-post-footer',
     templateUrl: './post-footer.component.html',
     styleUrls: ['./post-footer.component.scss'],
 })
-export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnDestroy, AfterContentChecked {
+export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() readOnlyMode = false;
-    @Input() previewMode: boolean;
-    // if the post is previewed in the create/edit modal,
-    // we need to pass the ref in order to close it when navigating to the previewed post via post context
+    @Input() previewMode = false;
     @Input() modalRef?: NgbModalRef;
-    tags: string[];
-    courseId: number;
-    @Input()
-    hasChannelModerationRights = false;
+    @Input() hasChannelModerationRights = false;
+    @Input() showAnswers = false;
+    @Input() isCommunicationPage = false;
+    @Input() sortedAnswerPosts: AnswerPost[] = [];
 
-    @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
-    @Input() showAnswers: boolean;
-    @Input() isCommunicationPage: boolean;
-    @Input() sortedAnswerPosts: AnswerPost[];
     @Output() openThread = new EventEmitter<void>();
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
 
-    createdAnswerPost: AnswerPost;
-    isAtLeastTutorInCourse: boolean;
+    @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
+    @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef!: ViewContainerRef;
+    @ViewChild('createAnswerPostModal') createAnswerPostModalComponent!: AnswerPostCreateEditModalComponent;
 
-    // ng-container to render createEditAnswerPostComponent
-    @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
-    @ViewChild('createAnswerPostModal') createAnswerPostModalComponent: AnswerPostCreateEditModalComponent;
+    createdAnswerPost: AnswerPost;
+    isAtLeastTutorInCourse = false;
+    courseId!: number;
+    groupedAnswerPosts: PostGroup[] = [];
 
     constructor(
         private metisService: MetisService,
@@ -46,18 +61,20 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
         super();
     }
 
-    /**
-     * on initialization: updates the post tags and the context information
-     */
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.createdAnswerPost = this.createEmptyAnswerPost();
+        this.groupAnswerPosts();
     }
 
-    /**
-     * on leaving the page, the container for answerPost creation or editing should be cleared
-     */
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['sortedAnswerPosts']) {
+            this.groupAnswerPosts();
+            this.changeDetector.detectChanges();
+        }
+    }
+
     ngOnDestroy(): void {
         this.answerPostCreateEditModal?.createEditAnswerPostContainerRef?.clear();
     }
@@ -82,10 +99,81 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
         return answerPost;
     }
 
+    groupAnswerPosts(): void {
+        if (!this.sortedAnswerPosts || this.sortedAnswerPosts.length === 0) {
+            this.groupedAnswerPosts = [];
+            return;
+        }
+
+        this.sortedAnswerPosts = this.sortedAnswerPosts
+            .slice()
+            .reverse()
+            .map((post) => {
+                (post as any).creationDateDayjs = post.creationDate ? dayjs(post.creationDate) : undefined;
+                return post;
+            });
+
+        const sortedPosts = this.sortedAnswerPosts.sort((a, b) => {
+            const aDate = (a as any).creationDateDayjs;
+            const bDate = (b as any).creationDateDayjs;
+            return aDate?.valueOf() - bDate?.valueOf();
+        });
+
+        const groups: PostGroup[] = [];
+        let currentGroup: PostGroup = {
+            author: sortedPosts[0].author,
+            posts: [{ ...sortedPosts[0], isConsecutive: false }],
+        };
+
+        for (let i = 1; i < sortedPosts.length; i++) {
+            const currentPost = sortedPosts[i];
+            const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
+
+            const currentDate = (currentPost as any).creationDateDayjs;
+            const lastDate = (lastPostInGroup as any).creationDateDayjs;
+
+            let timeDiff = Number.MAX_SAFE_INTEGER;
+            if (currentDate && lastDate) {
+                timeDiff = currentDate.diff(lastDate, 'minute');
+            }
+
+            if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 1 && timeDiff >= 0) {
+                currentGroup.posts.push({ ...currentPost, isConsecutive: true }); // consecutive post
+            } else {
+                groups.push(currentGroup);
+                currentGroup = {
+                    author: currentPost.author,
+                    posts: [{ ...currentPost, isConsecutive: false }],
+                };
+            }
+        }
+
+        groups.push(currentGroup);
+        this.groupedAnswerPosts = groups;
+        this.changeDetector.detectChanges();
+    }
+
+    trackGroupByFn(_: number, group: PostGroup): number {
+        return group.posts[0].id!;
+    }
+
+    trackPostByFn(_: number, post: AnswerPost): number {
+        return post.id!;
+    }
+
+    isLastPost(group: PostGroup, answerPost: AnswerPost): boolean {
+        const lastPostInGroup = group.posts[group.posts.length - 1];
+        return lastPostInGroup.id === answerPost.id;
+    }
+
     /**
      * Open create answer modal
      */
     openCreateAnswerPostModal() {
         this.createAnswerPostModalComponent.open();
+    }
+
+    protected postsTrackByFn(index: number, post: Post): number {
+        return post.id!;
     }
 }

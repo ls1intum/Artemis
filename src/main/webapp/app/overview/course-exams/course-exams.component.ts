@@ -25,6 +25,11 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     attempt: false,
 };
 
+const DEFAULT_SHOW_ALWAYS: CollapseState = {
+    real: false,
+    test: false,
+};
+
 @Component({
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
@@ -61,6 +66,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     withinWorkingTime: boolean;
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
+    protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     constructor(
         private route: ActivatedRoute,

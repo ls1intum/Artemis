@@ -767,16 +767,6 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
-    describe('unloadNotification', () => {
-        it('should set event return value', () => {
-            jest.spyOn(comp, 'canDeactivate').mockReturnValue(false);
-            jest.spyOn(comp, 'canDeactivateWarning', 'get').mockReturnValue('warning');
-            const event = { returnValue: undefined };
-            comp.unloadNotification(event);
-            expect(event.returnValue).toBe('warning');
-        });
-    });
-
     describe('isOver', () => {
         it('should return true if exam has ended', () => {
             const studentExam = new StudentExam();

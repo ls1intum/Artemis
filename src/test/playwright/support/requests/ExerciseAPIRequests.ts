@@ -230,6 +230,35 @@ export class ExerciseAPIRequests {
     }
 
     /**
+     * Adds a text exercise to an exercise group in an exam or to a course.
+     *
+     * @param body - An object containing either the course or exercise group the exercise will be added to.
+     * @param title - The title for the text exercise (optional, default: auto-generated).
+     * @param releaseDate
+     * @param dueDate
+     * @param assessmentDueDate
+     */
+    async createTextExerciseWithDates(
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
+        releaseDate: dayjs.Dayjs,
+        dueDate: dayjs.Dayjs,
+        assessmentDueDate: dayjs.Dayjs,
+        title = 'Text ' + generateUUID(),
+    ): Promise<TextExercise> {
+        const template = {
+            ...textExerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+            releaseDate: releaseDate,
+            dueDate: dueDate,
+            assessmentDueDate: assessmentDueDate,
+        };
+        const textExercise = Object.assign({}, template, body);
+        const response = await this.page.request.post(TEXT_EXERCISE_BASE, { data: textExercise });
+        return response.json();
+    }
+
+    /**
      * Deletes a text exercise with the specified exercise ID.
      *
      * @param exerciseId - The ID of the text exercise to be deleted.

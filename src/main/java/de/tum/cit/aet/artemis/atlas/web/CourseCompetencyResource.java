@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -32,6 +34,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -348,6 +351,23 @@ public class CourseCompetencyResource {
         competencyGenerationService.executeCompetencyExtractionPipeline(user, course, input.courseDescription(), input.currentCompetencies());
 
         return ResponseEntity.accepted().build();
+    }
+
+    /**
+     * PATCH courses/:courseId/course-competencies/relations/:competencyRelationId update a relation type of an existing relation
+     *
+     * @param courseId                          the id of the course to which the competencies belong
+     * @param competencyRelationId              the id of the competency relation to update
+     * @param updateCourseCompetencyRelationDTO the new relation type
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PatchMapping("courses/{courseId}/course-competencies/relations/{competencyRelationId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> updateCompetencyRelation(@PathVariable long courseId, @PathVariable long competencyRelationId,
+            @RequestBody @Valid UpdateCourseCompetencyRelationDTO updateCourseCompetencyRelationDTO) {
+        log.info("REST request to update a competency relation: {}", competencyRelationId);
+        courseCompetencyService.updateCourseCompetencyRelation(courseId, competencyRelationId, updateCourseCompetencyRelationDTO);
+        return ResponseEntity.noContent().build();
     }
 
     /**

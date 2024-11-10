@@ -45,7 +45,9 @@
                 "style": "Überschriften",
                 "codeBlock": "Code Block",
                 "code": "Code",
-                "color": "Farbe"
+                "color": "Farbe",
+                "emoji": "Emoji",
+                "strikethrough": "Durchgestrichen"
             },
             "visualEditor": {
                 "hintTooltip": "Füge hier einen Hinweis hinzu (sichtbar während des Quiz über den ?-Button)",

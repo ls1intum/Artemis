@@ -225,8 +225,8 @@ public class LocalCIResultProcessingService {
      */
     private void addResultToBuildAgentsRecentBuildJobs(BuildJobQueueItem buildJob, Result result) {
         try {
-            buildAgentInformation.lock(buildJob.buildAgentAddress());
-            BuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgentAddress());
+            buildAgentInformation.lock(buildJob.buildAgent().memberAddress());
+            BuildAgentInformation buildAgent = buildAgentInformation.get(buildJob.buildAgent().memberAddress());
             if (buildAgent != null) {
                 List<BuildJobQueueItem> recentBuildJobs = buildAgent.recentBuildJobs();
                 for (int i = 0; i < recentBuildJobs.size(); i++) {
@@ -235,11 +235,11 @@ public class LocalCIResultProcessingService {
                         break;
                     }
                 }
-                buildAgentInformation.put(buildJob.buildAgentAddress(), new BuildAgentInformation(buildAgent, recentBuildJobs));
+                buildAgentInformation.put(buildJob.buildAgent().memberAddress(), new BuildAgentInformation(buildAgent, recentBuildJobs));
             }
         }
         finally {
-            buildAgentInformation.unlock(buildJob.buildAgentAddress());
+            buildAgentInformation.unlock(buildJob.buildAgent().memberAddress());
         }
 
     }

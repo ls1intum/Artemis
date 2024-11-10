@@ -20,17 +20,25 @@
                     [rowClass]="settings.rowClass"
                     [scrollbarH]="settings.scrollbarH"
                 >
-                    <ngx-datatable-column prop="name" [minWidth]="150">
+                    <ngx-datatable-column prop="buildAgent.displayName" [minWidth]="150">
                         <ng-template ngx-datatable-header-template>
-                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildAgent.displayName')">
                                 <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.name"></span>
-                                <fa-icon [icon]="controls.iconForSortPropField('name')" />
+                                <fa-icon [icon]="controls.iconForSortPropField('buildAgent.displayName')" />
                             </span>
                         </ng-template>
-                        <ng-template ngx-datatable-cell-template let-value="value">
-                            <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: value }">
+                        <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
+                            <a [routerLink]="['/admin/build-agents/details']" [queryParams]="{ agentName: row.buildAgent.name }">
                                 {{ value }}
                             </a>
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column prop="buildAgent.memberAddress" [minWidth]="150">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildAgent.memberAddress')">
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.memberAddress"></span>
+                                <fa-icon [icon]="controls.iconForSortPropField('buildAgent.memberAddress')" />
+                            </span>
                         </ng-template>
                     </ngx-datatable-column>
                     <ngx-datatable-column prop="status" [minWidth]="150">
@@ -75,7 +83,7 @@
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                             <span style="margin-right: 20px">{{ value }}</span>
                             @if (value > 0) {
-                                <button class="btn btn-danger btn-sm" (click)="cancelAllBuildJobs(row.name)">
+                                <button class="btn btn-danger btn-sm" (click)="cancelAllBuildJobs(row.buildAgent)">
                                     <fa-icon [icon]="faTimes" />
                                     <span jhiTranslate="artemisApp.buildQueue.cancelAll"></span>
                                 </button>
