@@ -54,6 +54,9 @@ public class SarifParser implements ParserStrategy {
         }
     }
 
+    private record FileLocation(String path, int startLine, int endLine, int startColumn, int endColumn) {
+    }
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final StaticCodeAnalysisTool tool;
@@ -104,17 +107,8 @@ public class SarifParser implements ParserStrategy {
     }
 
     private StaticCodeAnalysisIssue processResult(Result result, ToolComponent driver, Map<String, ReportingDescriptor> ruleOfId) throws SarifFormatException {
-        PhysicalLocation location = result.getLocations().flatMap(locations -> locations.stream().findFirst()).flatMap(Location::getPhysicalLocation)
+        FileLocation fileLocation = result.getLocations().flatMap(locations -> locations.stream().findFirst()).flatMap(Location::getPhysicalLocation).map(this::extractLocation)
                 .orElseThrow(() -> new InformationMissingException("Location needed"));
-
-        URI uri = URI.create(location.getArtifactLocation().flatMap(ArtifactLocation::getUri).orElseThrow(() -> new InformationMissingException("File path needed")));
-        String path = uri.getPath();
-
-        Region region = location.getRegion().orElseThrow(() -> new SarifFormatException("Region must be present"));
-        int startLine = region.getStartLine().orElseThrow(() -> new InformationMissingException("Text region needed"));
-        int startColumn = region.getStartColumn().orElse(1);
-        int endLine = region.getEndLine().orElse(startLine);
-        int endColumn = region.getEndColumn().orElse(startColumn + 1);
 
         String ruleId = getRuleId(result);
 
@@ -130,7 +124,21 @@ public class SarifParser implements ParserStrategy {
 
         String message = findMessage(result, driver, rule);
 
-        return new StaticCodeAnalysisIssue(path, startLine, endLine, startColumn, endColumn, ruleId, category, message, level.toString(), null);
+        return new StaticCodeAnalysisIssue(fileLocation.path(), fileLocation.startLine(), fileLocation.endLine(), fileLocation.startColumn(), fileLocation.endColumn(), ruleId,
+                category, message, level.toString(), null);
+    }
+
+    private FileLocation extractLocation(PhysicalLocation location) {
+        URI uri = URI.create(location.getArtifactLocation().flatMap(ArtifactLocation::getUri).orElseThrow(() -> new InformationMissingException("File path needed")));
+
+        Region region = location.getRegion().orElseThrow(() -> new SarifFormatException("Region must be present"));
+
+        int startLine = region.getStartLine().orElseThrow(() -> new InformationMissingException("Text region needed"));
+        int startColumn = region.getStartColumn().orElse(1);
+        int endLine = region.getEndLine().orElse(startLine);
+        int endColumn = region.getEndColumn().orElse(startColumn + 1);
+
+        return new FileLocation(uri.getPath(), startLine, endLine, startColumn, endColumn);
     }
 
     private static String getRuleId(Result result) throws SarifFormatException {
