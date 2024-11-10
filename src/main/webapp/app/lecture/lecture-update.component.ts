@@ -137,12 +137,18 @@ export class LectureUpdateComponent implements OnInit {
         }
     }
 
-    cancel() {
+    async cancel() {
         if (!this.isEditMode()) {
             // this means we are in create mode and have an auto saved lecture (for attachments and units) that we need to delete
-            this.lectureService.delete(this.lecture().id!, false);
+            this.lectureService.delete(this.lecture().id!, false).subscribe({
+                next: () => {
+                    this.previousState(false);
+                },
+                error: () => this.previousState(false),
+            });
+        } else {
+            this.previousState(false);
         }
-        this.previousState(false);
     }
 
     /**
