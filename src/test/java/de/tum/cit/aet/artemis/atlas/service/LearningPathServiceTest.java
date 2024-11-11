@@ -11,24 +11,17 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.cit.aet.artemis.assessment.util.StudentScoreUtilService;
-import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
 import de.tum.cit.aet.artemis.atlas.learningpath.util.LearningPathUtilService;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRecommendationService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
-import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -50,27 +43,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private CompetencyUtilService competencyUtilService;
 
-    @Autowired
-    private LectureUtilService lectureUtilService;
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private CompetencyRepository competencyRepository;
-
-    @Autowired
-    private CompetencyProgressUtilService competencyProgressUtilService;
-
-    @Autowired
-    private StudentScoreUtilService studentScoreUtilService;
-
-    @Autowired
-    private LectureUnitRepository lectureUnitRepository;
-
     private Course course;
-
-    private User user;
 
     @BeforeEach
     void setAuthorizationForRepositoryRequests() {
@@ -88,9 +61,13 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
         @BeforeEach
         void setup() {
             userUtilService.addUsers(TEST_PREFIX, 5, 1, 1, 1);
+
+            userUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
+
             course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>(), TEST_PREFIX + "tumuser",
                     TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
             course = courseRepository.save(course);
+
         }
 
         @Test

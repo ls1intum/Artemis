@@ -67,8 +67,6 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String STUDENT2_OF_COURSE = TEST_PREFIX + "student2";
 
-    private static final String SECOND_STUDENT_OF_COURSE = TEST_PREFIX + "student2";
-
     private static final String TUTOR_OF_COURSE = TEST_PREFIX + "tutor1";
 
     private static final String EDITOR_OF_COURSE = TEST_PREFIX + "editor1";
@@ -384,7 +382,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathCompetencyGraphOfOtherUser() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var otherStudent = userTestRepository.findOneByLogin(SECOND_STUDENT_OF_COURSE).orElseThrow();
+        final var otherStudent = userTestRepository.findOneByLogin(STUDENT2_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), otherStudent.getId());
         request.get("/api/learning-path/" + learningPath.getId() + "/competency-graph", HttpStatus.FORBIDDEN, LearningPathCompetencyGraphDTO.class);
     }
@@ -509,7 +507,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = SECOND_STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT2_OF_COURSE, roles = "USER")
     void testGetCompetencyProgressForLearningPathByOtherStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
