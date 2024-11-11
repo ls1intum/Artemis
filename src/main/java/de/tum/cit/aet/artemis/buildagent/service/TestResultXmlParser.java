@@ -36,21 +36,22 @@ public class TestResultXmlParser {
     public static void processTestResultFile(String testResultFileString, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests)
             throws IOException {
         testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
-        TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);
 
         // The root element can be <testsuites> or <testsuite>
         if (testResultFileString.contains("<testsuites")) {
-            if (testSuite.testSuites().size() == 1) {
-                TestSuite suite = testSuite.testSuites().getFirst();
+            TestSuites testSuites = mapper.readValue(testResultFileString, TestSuites.class);
+            if (testSuites.testSuites().size() == 1) {
+                TestSuite suite = testSuites.testSuites().getFirst();
                 processTopLevelTestSuite(failedTests, successfulTests, suite);
             }
             else {
-                for (TestSuite suite : testSuite.testSuites()) {
+                for (TestSuite suite : testSuites.testSuites()) {
                     processInnerTestSuite(suite, failedTests, successfulTests, "");
                 }
             }
         }
         else {
+            TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);
             processTopLevelTestSuite(failedTests, successfulTests, testSuite);
         }
     }
@@ -89,6 +90,14 @@ public class TestResultXmlParser {
 
         for (TestSuite suite : testSuite.testSuites()) {
             processInnerTestSuite(suite, failedTests, successfulTests, namePrefix);
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    record TestSuites(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "testsuite") List<TestSuite> testSuites) {
+
+        TestSuites {
+            testSuites = Objects.requireNonNullElse(testSuites, Collections.emptyList());
         }
     }
 
