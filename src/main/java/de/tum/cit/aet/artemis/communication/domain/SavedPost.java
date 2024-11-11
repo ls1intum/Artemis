@@ -4,22 +4,16 @@ import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
 @Table(name = "saved_post")
-public class SavedPost {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class SavedPost extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -46,14 +40,6 @@ public class SavedPost {
         this.postType = postType;
         this.status = status;
         this.completedAt = completedAt;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public Long getPostId() {
