@@ -86,13 +86,21 @@ public abstract class PostingService {
      * @param post post that should be broadcast
      */
     public void preparePostForBroadcast(Post post) {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        var savedPost = savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(user.getId(), post.getId(), PostingType.POST.getDatabaseKey());
-        post.setIsSaved(savedPost != null);
-        post.getAnswers().forEach(answer -> {
-            var savedAnswerPost = savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(user.getId(), answer.getId(), PostingType.ANSWER.getDatabaseKey());
-            answer.setIsSaved(savedAnswerPost != null);
-        });
+        try {
+            var user = userRepository.getUserWithGroupsAndAuthorities();
+            var savedPost = savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(user.getId(), post.getId(), PostingType.POST.getDatabaseKey());
+            post.setIsSaved(savedPost != null);
+            post.getAnswers().forEach(answer -> {
+                var savedAnswerPost = savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(user.getId(), answer.getId(), PostingType.ANSWER.getDatabaseKey());
+                answer.setIsSaved(savedAnswerPost != null);
+            });
+        }
+        catch (Exception e) {
+            post.setIsSaved(false);
+            post.getAnswers().forEach(answer -> {
+                answer.setIsSaved(false);
+            });
+        }
     }
 
     /**
