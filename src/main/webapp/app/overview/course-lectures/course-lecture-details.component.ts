@@ -112,12 +112,8 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
                                 ).length > 0;
                         }
                         this.endsSameDay = !!this.lecture?.startDate && !!this.lecture.endDate && dayjs(this.lecture.startDate).isSame(this.lecture.endDate, 'day');
-                        console.log('lecture?: ' + this.lecture);
-                        console.log('course?: ' + this.lecture?.course);
-                        console.log('courseID: ' + this.lecture?.course?.id);
                         this.irisSettingsService.getCombinedCourseSettings(this.lecture?.course?.id!).subscribe((irisSettings) => {
                             this.irisSettings = irisSettings;
-                            console.log('settings: ' + irisSettings);
                         });
                     },
                     error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),

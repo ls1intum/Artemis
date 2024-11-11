@@ -95,7 +95,6 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
                         .map((category) => category!);
                     // Remove duplicate categories
                     this.categories = Array.from(new Set(this.categories));
-                    console.log(this.categories);
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -139,8 +138,6 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     }
 
     onEnabledChange() {
-        console.log(this.subSettings);
-        console.log('type: ' + this.settingsType);
         this.subSettings!.enabled = this.enabled;
     }
 
@@ -164,7 +161,6 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     }
 
     onCategorySelectionChange(category: string) {
-        console.log(category);
         if (!this.subSettings) {
             return;
         }

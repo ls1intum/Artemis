@@ -74,8 +74,6 @@ export class IrisChatService implements OnDestroy {
      * @param message to be created
      */
     public sendMessage(message: string): Observable<undefined> {
-        console.log(message);
-        console.log(this.sessionId);
         if (!this.sessionId) {
             return throwError(() => new Error('Not initialized'));
         }

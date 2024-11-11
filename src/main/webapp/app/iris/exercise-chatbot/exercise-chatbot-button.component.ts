@@ -39,21 +39,11 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         // Subscribes to route params and gets the exerciseId from the route
-        if (this.mode == ChatServiceMode.EXERCISE) {
-            this.paramsSubscription = this.route.params.subscribe((params) => {
-                console.log('switch');
-                const exerciseId = parseInt(params['exerciseId'], 10);
-                console.log(params);
-                this.chatService.switchTo(this.mode, exerciseId);
-            });
-        } else {
-            this.paramsSubscription = this.route.params.subscribe((params) => {
-                console.log('switch');
-                const lectureId = parseInt(params['lectureId'], 10);
-                console.log(params);
-                this.chatService.switchTo(this.mode, lectureId);
-            });
-        }
+        this.paramsSubscription = this.route.params.subscribe((params) => {
+            const rawId = this.mode == ChatServiceMode.LECTURE ? params['lectureId'] : params['exerciseId'];
+            const id = parseInt(rawId, 10);
+            this.chatService.switchTo(this.mode, id);
+        });
         // Subscribes to check for new messages
         this.numNewMessagesSubscription = this.chatService.numNewMessages.subscribe((num) => {
             this.hasNewMessages = num > 0;
