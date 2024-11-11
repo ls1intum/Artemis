@@ -671,8 +671,7 @@ public class ResultService {
      *         </ul>
      */
     public Page<FeedbackAffectedStudentDTO> getParticipationWithFeedbackId(long exerciseId, String feedbackIds, PageableSearchDTO<String> data) {
-        List<String> feedbackIdsList = Arrays.asList(feedbackIds.split(","));
-        List<Long> feedbackIdLongs = feedbackIdsList.stream().map(Long::valueOf).toList();
+        List<Long> feedbackIdLongs = Arrays.stream(feedbackIds.split(",")).map(Long::valueOf).toList();
         PageRequest pageRequest = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.AFFECTED_STUDENTS);
         return studentParticipationRepository.findParticipationByFeedbackId(exerciseId, feedbackIdLongs, pageRequest);
     }

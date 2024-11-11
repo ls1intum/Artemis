@@ -90,7 +90,7 @@ describe('FeedbackAnalysisService', () => {
 
     describe('getParticipationForFeedbackIds', () => {
         it('should retrieve paginated participation details for specified feedback IDs', async () => {
-            const feedbackIds = ['1', '2'];
+            const feedbackIds = '1, 2';
             const pageable = {
                 page: 1,
                 pageSize: 10,
@@ -122,7 +122,9 @@ describe('FeedbackAnalysisService', () => {
 
             const responsePromise = service.getParticipationForFeedbackIds(1, feedbackIds, pageable);
 
-            const req = httpMock.expectOne('api/exercises/1/feedback-details-participation?feedbackIds=1,2&page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING');
+            const req = httpMock.expectOne(
+                'api/exercises/1/feedback-details-participation?feedbackIds=1,%202&page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING',
+            );
             expect(req.request.method).toBe('GET');
             req.flush(participationResponseMock);
 
