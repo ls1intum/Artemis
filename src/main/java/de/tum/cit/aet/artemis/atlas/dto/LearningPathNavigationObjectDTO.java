@@ -52,6 +52,13 @@ public record LearningPathNavigationObjectDTO(long id, boolean completed, String
         LECTURE, EXERCISE
     }
 
+    /**
+     * Check if the learning object represented by this dto is equal to the given learning object in the competency.
+     *
+     * @param learningObject the learning object to compare to
+     * @param competency     the competency to compare to
+     * @return whether the learning object is equal
+     */
     public boolean equalsLearningObject(LearningObject learningObject, CourseCompetency competency) {
         if (learningObject == null) {
             return false;

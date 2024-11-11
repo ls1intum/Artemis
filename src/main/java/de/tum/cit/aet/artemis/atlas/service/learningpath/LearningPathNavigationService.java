@@ -63,6 +63,7 @@ public class LearningPathNavigationService {
      * @param learningObjectId   the id of the relative learning object
      * @param learningObjectType the type of the relative learning object
      * @param competencyId       the id of the competency of the relative learning object
+     * @param repeatedTest       whether the relative learning object is part of a repeated test
      * @return the navigation
      */
     public LearningPathNavigationDTO getNavigationRelativeToLearningObject(LearningPath learningPath, long learningObjectId, LearningObjectType learningObjectType,
@@ -113,7 +114,7 @@ public class LearningPathNavigationService {
         var learningPathUser = learningPath.getUser();
         RecommendationState recommendationState = learningPathRecommendationService.getRecommendedOrderOfAllCompetencies(learningPath);
         var learningObjects = recommendationState.recommendedOrderOfCompetencies().stream().map(competencyId -> recommendationState.competencyIdMap().get(competencyId))
-                .flatMap(competency -> learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competency, learningPathUser).stream()
+                .flatMap(competency -> learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competency, learningPathUser, false).stream()
                         .map(learningObject -> createLearningPathNavigationObjectDTO(learningObject, false, learningPathUser, competency)))
                 .toList();
         return new LearningPathNavigationOverviewDTO(learningObjects);

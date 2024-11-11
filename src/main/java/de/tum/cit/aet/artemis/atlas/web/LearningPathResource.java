@@ -224,6 +224,7 @@ public class LearningPathResource {
      * @param learningObjectId   the id of the learning object to navigate to
      * @param learningObjectType the type of the learning object to navigate to
      * @param competencyId       the id of the competency the learning object belongs to
+     * @param repeatedTest       whether the learning object is part of a repeated test
      * @return the ResponseEntity with status 200 (OK) and with body the navigation information
      */
     @GetMapping("learning-path/{learningPathId}/relative-navigation")
