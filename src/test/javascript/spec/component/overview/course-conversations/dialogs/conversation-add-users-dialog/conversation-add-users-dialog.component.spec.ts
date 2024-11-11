@@ -14,7 +14,6 @@ import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conv
 import { initializeDialog } from '../dialog-test-helpers';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
-import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { By } from '@angular/platform-browser';
 import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -42,13 +41,7 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                declarations: [
-                    ConversationAddUsersDialogComponent,
-                    ConversationAddUsersFormStubComponent,
-                    MockPipe(ArtemisTranslatePipe),
-                    MockComponent(ChannelIconComponent),
-                    MockComponent(GroupChatIconComponent),
-                ],
+                declarations: [ConversationAddUsersDialogComponent, ConversationAddUsersFormStubComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent)],
                 providers: [
                     MockProvider(AlertService),
                     MockProvider(NgbActiveModal),
