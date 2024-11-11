@@ -739,13 +739,11 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback.setTestCase(testCase);
 
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
-
         Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
-
         participationUtilService.addFeedbackToResult(feedback, result);
 
         String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=detailText&sortingOrder=ASCENDING"
-                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=";
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=";
 
         FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
 
@@ -755,6 +753,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(feedbackDetail.relativeCount()).isEqualTo(100.0);
         assertThat(feedbackDetail.detailText()).isEqualTo("Some feedback");
         assertThat(feedbackDetail.testCaseName()).isEqualTo("test1");
+        assertThat(response.errorCategories()).containsExactlyInAnyOrder("Student Error", "Ares Error", "AST Error");
 
         assertThat(response.totalItems()).isEqualTo(1);
     }
@@ -789,7 +788,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         participationUtilService.addFeedbackToResult(feedback3, result1);
 
         String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=detailText&sortingOrder=ASCENDING"
-                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=";
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=";
 
         FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
 
@@ -810,6 +809,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(secondFeedbackDetail.relativeCount()).isEqualTo(50.0);
         assertThat(secondFeedbackDetail.detailText()).isEqualTo("Some different feedback");
         assertThat(secondFeedbackDetail.testCaseName()).isEqualTo("test1");
+        assertThat(response.errorCategories()).containsExactlyInAnyOrder("Student Error", "Ares Error", "AST Error");
 
         assertThat(response.totalItems()).isEqualTo(2);
     }

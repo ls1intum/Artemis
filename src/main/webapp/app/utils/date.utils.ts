@@ -74,3 +74,7 @@ export function dayOfWeekZeroSundayToZeroMonday(dayOfWeekZeroSunday: number): nu
     }
     return (dayOfWeekZeroSunday + 6) % 7;
 }
+
+export function isDateLessThanAWeekInTheFuture(date: dayjs.Dayjs): boolean {
+    return date.isBetween(dayjs().add(1, 'week'), dayjs());
+}

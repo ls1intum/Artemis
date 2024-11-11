@@ -92,7 +92,7 @@ public class AttachmentResource {
         attachment.setId(null);
 
         Path basePath = FilePathService.getLectureAttachmentFilePath().resolve(attachment.getLecture().getId().toString());
-        Path savePath = fileService.saveFile(file, basePath, false);
+        Path savePath = fileService.saveFile(file, basePath, true);
         attachment.setLink(FilePathService.publicPathForActualPath(savePath, attachment.getLecture().getId()).toString());
 
         Attachment result = attachmentRepository.save(attachment);
@@ -123,7 +123,7 @@ public class AttachmentResource {
 
         if (file != null) {
             Path basePath = FilePathService.getLectureAttachmentFilePath().resolve(originalAttachment.getLecture().getId().toString());
-            Path savePath = fileService.saveFile(file, basePath, false);
+            Path savePath = fileService.saveFile(file, basePath, true);
             attachment.setLink(FilePathService.publicPathForActualPath(savePath, originalAttachment.getLecture().getId()).toString());
             // Delete the old file
             URI oldPath = URI.create(originalAttachment.getLink());
