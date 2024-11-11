@@ -26,6 +26,8 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
 
     /**
      * Deletes {@link Result} entries that have no participation and no submission.
+     *
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -35,7 +37,7 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
             WHERE r.participation IS NULL
                 AND r.submission IS NULL
             """)
-    void deleteResultWithoutParticipationAndSubmission();
+    int deleteResultWithoutParticipationAndSubmission();
 
     /**
      * Deletes non-rated {@link Result} entries that are not the latest result where the associated {@link Participation} and {@link Exercise} are not null,
@@ -45,6 +47,7 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -71,7 +74,7 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
                         )
                     )
             """)
-    void deleteNonLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteNonLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
      * Deletes rated {@link Result} entries that are not the latest rated result for a {@link Participation}, within courses
@@ -81,6 +84,7 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -107,5 +111,5 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
                         )
                     )
             """)
-    void deleteNonLatestRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteNonLatestRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }
