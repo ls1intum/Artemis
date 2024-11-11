@@ -31,21 +31,21 @@
     />
     @switch (pickerType()) {
         @case (DateTimePickerType.TIMER) {
-            <button [owlDateTimeTrigger]="dtTimer" class="btn position-absolute" type="button">
-                <fa-icon [icon]="faClock" />
-            </button>
+            <ng-template *ngTemplateOutlet="owlTrigger; context: { $implicit: dtTimer, icon: faClock }" />
         }
         @case (DateTimePickerType.CALENDAR) {
-            <button [owlDateTimeTrigger]="dtCalendar" class="btn position-absolute" type="button">
-                <fa-icon [icon]="faCalendarAlt" />
-            </button>
+            <ng-template *ngTemplateOutlet="owlTrigger; context: { $implicit: dtCalendar, icon: faCalendarAlt }" />
         }
         @default {
-            <button [owlDateTimeTrigger]="dtDefault" class="btn position-absolute" type="button">
-                <fa-icon [icon]="faCalendarAlt" />
-            </button>
+            <ng-template *ngTemplateOutlet="owlTrigger; context: { $implicit: dtDefault, icon: faCalendarAlt }" />
         }
     }
+
+    <ng-template #owlTrigger let-owlTrigger let-icon="icon">
+        <button [owlDateTimeTrigger]="owlTrigger" class="btn position-absolute" type="button">
+            <fa-icon [icon]="icon" />
+        </button>
+    </ng-template>
     <div class="position-relative">
         <button class="btn position-absolute" type="button" style="right: 0" (click)="clearDate()">
             <fa-icon [icon]="faCircleXmark" />
