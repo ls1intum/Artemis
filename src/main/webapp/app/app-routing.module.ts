@@ -129,6 +129,11 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'courses',
                     loadChildren: () => import('./overview/courses.module').then((m) => m.ArtemisCoursesModule),
                 },
+                {
+                    path: 'course-management/:courseId/lectures/:lectureId/attachments/:attachmentId',
+                    pathMatch: 'full',
+                    loadComponent: () => import('./lecture/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
+                },
                 // ===== GRADING SYSTEM =====
                 {
                     path: 'courses/:courseId/grading-system',
