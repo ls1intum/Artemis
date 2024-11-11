@@ -12,4 +12,7 @@ export class MockFileService {
     getTemplateFile = () => {
         return of();
     };
+
+    replaceLectureAttachmentPrefixAndUnderscores = (link: string) => link;
+    replaceAttachmentPrefixAndUnderscores = (link: string) => link;
 }

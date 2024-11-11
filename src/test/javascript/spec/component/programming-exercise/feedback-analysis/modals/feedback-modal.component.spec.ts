@@ -14,7 +14,7 @@ describe('FeedbackModalComponent', () => {
         relativeCount: 25.0,
         detailText: 'Some feedback detail',
         testCaseName: 'testCase1',
-        taskNumber: '1',
+        taskName: '1',
         errorCategory: 'StudentError',
     };
 
