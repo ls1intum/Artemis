@@ -5,3 +5,15 @@
 hr {
     border-top-color: var(--overview-light-border-color);
 }
+
+.newMessage {
+    width: 10px;
+    height: 10px;
+    position: relative;
+    padding-left: 0.7rem;
+    right: 1rem;
+    background-color: var(--bs-danger);
+    border-radius: 50%;
+    transform: translate(50%, -50%);
+    font-size: xx-small;
+}
