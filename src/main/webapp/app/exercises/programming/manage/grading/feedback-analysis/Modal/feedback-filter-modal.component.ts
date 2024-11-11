@@ -1,4 +1,4 @@
-import { Component, computed, inject, output, signal } from '@angular/core';
+import { Component, inject, output, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 import { FeedbackAnalysisService } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
@@ -9,6 +9,7 @@ export interface FilterData {
     tasks: string[];
     testCases: string[];
     occurrence: number[];
+    errorCategories: string[];
 }
 
 @Component({
@@ -24,26 +25,30 @@ export class FeedbackFilterModalComponent {
 
     filterApplied = output<FilterData>();
 
+    readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.filterModal';
     readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
     readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
     readonly FILTER_OCCURRENCE_KEY = 'feedbackAnalysis.occurrence';
+    readonly FILTER_ERROR_CATEGORIES_KEY = 'feedbackAnalysis.errorCategories';
 
-    readonly totalAmountOfTasks = signal<number>(0);
     readonly testCaseNames = signal<string[]>([]);
     readonly minCount = signal<number>(0);
     readonly maxCount = signal<number>(0);
-    readonly taskArray = computed(() => Array.from({ length: this.totalAmountOfTasks() }, (_, i) => i + 1));
+    readonly taskArray = signal<string[]>([]);
+    readonly errorCategories = signal<string[]>([]);
 
     filters: FilterData = {
         tasks: [],
         testCases: [],
         occurrence: [this.minCount(), this.maxCount() || 1],
+        errorCategories: [],
     };
 
     applyFilter(): void {
         this.localStorage.store(this.FILTER_TASKS_KEY, this.filters.tasks);
         this.localStorage.store(this.FILTER_TEST_CASES_KEY, this.filters.testCases);
         this.localStorage.store(this.FILTER_OCCURRENCE_KEY, this.filters.occurrence);
+        this.localStorage.store(this.FILTER_ERROR_CATEGORIES_KEY, this.filters.errorCategories);
         this.filterApplied.emit(this.filters);
         this.activeModal.close();
     }
@@ -52,10 +57,12 @@ export class FeedbackFilterModalComponent {
         this.localStorage.clear(this.FILTER_TASKS_KEY);
         this.localStorage.clear(this.FILTER_TEST_CASES_KEY);
         this.localStorage.clear(this.FILTER_OCCURRENCE_KEY);
+        this.localStorage.clear(this.FILTER_ERROR_CATEGORIES_KEY);
         this.filters = {
             tasks: [],
             testCases: [],
             occurrence: [this.minCount(), this.maxCount()],
+            errorCategories: [],
         };
         this.filterApplied.emit(this.filters);
         this.activeModal.close();
