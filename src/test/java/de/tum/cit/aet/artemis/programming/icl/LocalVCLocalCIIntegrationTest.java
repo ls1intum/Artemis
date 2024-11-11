@@ -1040,7 +1040,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testDockerFlagsParsing() {
-            String dockerFlags = "[[\"network\",\"none\"],[\"env\",\"key=value,key1=value1\"]]";
+            String dockerFlags = "{\"network\": \"none\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}";
             ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
             buildConfig.setDockerFlags(dockerFlags);
             programmingExerciseBuildConfigRepository.save(buildConfig);

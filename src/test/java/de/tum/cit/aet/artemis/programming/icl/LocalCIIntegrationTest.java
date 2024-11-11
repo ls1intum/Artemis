@@ -489,7 +489,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDisableNetworkAccessAndEnvVars() {
         var buildConfig = programmingExercise.getBuildConfig();
-        buildConfig.setDockerFlags("{\network\": \"none\", \"env\": {\"key\": \"value\"}}");
+        buildConfig.setDockerFlags("{\"network\": \"none\", \"env\": {\"key\": \"value\"}}");
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
 
