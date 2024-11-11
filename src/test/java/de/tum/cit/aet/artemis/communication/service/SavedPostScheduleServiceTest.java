@@ -19,13 +19,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
-import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class SavedPostScheduleServiceTest {
 
     @Mock
-    private SavedPostRepository savedPostRepository;
+    private SavedPostTestRepository savedPostRepository;
 
     private SavedPostScheduleService savedPostScheduleService;
 

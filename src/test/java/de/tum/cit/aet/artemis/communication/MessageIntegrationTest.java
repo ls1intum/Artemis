@@ -16,6 +16,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import jakarta.validation.ConstraintViolation;
@@ -731,13 +732,16 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.performMvcRequest(MockMvcRequestBuilders.delete("/api/courses/" + courseId + "/messages/" + createdPost2.getId()).with(user(TEST_PREFIX + "student1").roles("USER"))
                 .accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
 
-        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
-        long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost1.getConversation().getId()).orElseThrow()
-                .getConversationParticipants().stream()
-                .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
-                .getUnreadMessagesCount();
+        // We need to wait for the notification jobs to be done, otherwise assertion might fail
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+            SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+            long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost1.getConversation().getId()).orElseThrow()
+                    .getConversationParticipants().stream()
+                    .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
+                    .getUnreadMessagesCount();
 
-        assertThat(unreadMessages).isEqualTo(1);
+            assertThat(unreadMessages).isEqualTo(1);
+        });
     }
 
     private Post createPostWithOneToOneChat(String userPrefix) {
