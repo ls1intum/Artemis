@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
@@ -21,7 +22,8 @@ public class TestResultXmlParser {
     // https://stackoverflow.com/a/4237934
     private static final String INVALID_XML_CHARS = "[^\t\r\n -\uD7FF\uE000-�\uD800\uDC00-\uDBFF\uDFFF]";
 
-    private static final Pattern XML_ROOT_TAG_IS_TESTSUITES = Pattern.compile("^(<\\?.*?\\?>|<!--.*?-->|<!DOCTYPE.*?>|\\s)*<testsuites", Pattern.DOTALL);
+    private static final Pattern XML_ROOT_TAG_IS_TESTSUITES = Pattern.compile("^(<\\?([^?]|\\?[^>])*\\?>|<!--(-?[^-])*-->|<!DOCTYPE[^>]>|\\s)*<testsuites(\\s|/?>)",
+            Pattern.DOTALL);
 
     /**
      * Parses the test result file and extracts failed and successful tests.
@@ -39,6 +41,8 @@ public class TestResultXmlParser {
     public static void processTestResultFile(String testResultFileString, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests)
             throws IOException {
         testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
+
+        JsonNode jsonNode = mapper.readTree(testResultFileString);
 
         // The root element can be <testsuites> or <testsuite>
         if (XML_ROOT_TAG_IS_TESTSUITES.matcher(testResultFileString).find()) {
