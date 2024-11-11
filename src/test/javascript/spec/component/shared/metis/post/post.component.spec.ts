@@ -323,7 +323,7 @@ describe('PostComponent', () => {
                 internal: false,
             },
             content: 'Test Content',
-            postingType: PostingType.POST.toString(),
+            postingType: PostingType.POST,
         };
         // @ts-ignore method is private
         const spy = jest.spyOn(component, 'assignPostingToPost');

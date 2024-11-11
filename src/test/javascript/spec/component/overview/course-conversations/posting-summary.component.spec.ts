@@ -21,7 +21,7 @@ describe('PostingSummaryComponent', () => {
             internal: false,
         },
         content: 'Test Content',
-        postingType: PostingType.POST.toString(),
+        postingType: PostingType.POST,
         creationDate: dayjs(),
         conversation: {
             id: 1,

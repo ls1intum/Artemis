@@ -187,7 +187,7 @@ describe('AnswerPostComponent', () => {
                 internal: false,
             },
             content: 'Test Content',
-            postingType: PostingType.ANSWER.toString(),
+            postingType: PostingType.ANSWER,
         };
         // @ts-ignore method is private
         const spy = jest.spyOn(component, 'assignPostingToAnswerPost');
