@@ -70,7 +70,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         }
     }
 
-    calculateTotalUnreadMessages() {
+    calculateTotalUnreadMessages(): void {
         if (!this.groupedData) {
             this.totalUnreadMessagesPerGroup = {};
             return;
