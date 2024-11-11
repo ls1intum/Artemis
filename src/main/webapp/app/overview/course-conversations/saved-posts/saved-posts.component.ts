@@ -1,5 +1,5 @@
 import { Component, effect, inject, input, output } from '@angular/core';
-import { Posting, SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Posting, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
 
@@ -18,12 +18,17 @@ export class SavedPostsComponent {
 
     protected posts: Posting[];
     protected hiddenPosts: number[] = [];
+    protected savedPostStatusMap: SavedPostStatusMap;
 
     // Icons
     readonly faBookmark = faBookmark;
 
     constructor() {
+        this.savedPostStatusMap = Posting.statusToMap(this.savedPostStatus()!);
+
         effect(() => {
+            this.savedPostStatusMap = Posting.statusToMap(this.savedPostStatus()!);
+
             this.savedPostService.fetchSavedPosts(this.courseId()!, this.savedPostStatus()!).subscribe({
                 next: (response) => {
                     if (!response.body) {

@@ -32,7 +32,7 @@ export class PostingSummaryComponent {
 
     constructor() {
         effect(() => {
-            this.isAnswerPost = this.post()?.postingType === PostingType.ANSWER.toString();
+            this.isAnswerPost = this.post()?.postingType === PostingType.ANSWER.valueOf();
             if (this.post()) {
                 this.postingIsOfToday = dayjs().isSame(this.post()!.creationDate, 'day');
             }

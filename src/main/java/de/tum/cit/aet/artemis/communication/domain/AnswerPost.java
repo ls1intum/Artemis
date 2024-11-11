@@ -40,7 +40,7 @@ public class AnswerPost extends Posting {
     private Set<Reaction> reactions = new HashSet<>();
 
     @OneToMany(mappedBy = "postId", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
-    @SQLRestriction("post_type = 'answer'")
+    @SQLRestriction("post_type = 1")
     private Set<SavedPost> savedPosts = new HashSet<>();
 
     @ManyToOne

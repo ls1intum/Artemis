@@ -70,7 +70,7 @@ public class SavedPostResource {
      */
     @GetMapping("saved-posts/{courseId}/{status}")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<PostingDTO>> getSavedPosts(@PathVariable Long courseId, @PathVariable String status) {
+    public ResponseEntity<List<PostingDTO>> getSavedPosts(@PathVariable Long courseId, @PathVariable short status) {
         log.debug("GET getSavedPosts invoked for course {} and status {}", courseId, status);
         long start = System.nanoTime();
 
@@ -118,7 +118,7 @@ public class SavedPostResource {
      */
     @PostMapping("saved-posts/{postId}/{type}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> savePost(@PathVariable Long postId, @PathVariable String type) {
+    public ResponseEntity<Void> savePost(@PathVariable Long postId, @PathVariable short type) {
         log.debug("POST savePost invoked for post {}", postId);
         long start = System.nanoTime();
 
@@ -144,7 +144,7 @@ public class SavedPostResource {
      */
     @DeleteMapping("saved-posts/{postId}/{type}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteSavedPost(@PathVariable Long postId, @PathVariable String type) {
+    public ResponseEntity<Void> deleteSavedPost(@PathVariable Long postId, @PathVariable short type) {
         log.debug("DELETE deletePost invoked for post {}", postId);
         long start = System.nanoTime();
 
@@ -167,7 +167,7 @@ public class SavedPostResource {
      */
     @PutMapping("saved-posts/{postId}/{type}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> putSavedPost(@PathVariable Long postId, @PathVariable String type, @RequestParam(name = "status") String status) {
+    public ResponseEntity<Void> putSavedPost(@PathVariable Long postId, @PathVariable short type, @RequestParam(name = "status") short status) {
         log.debug("DELETE putSavedPost invoked for post {}", postId);
         long start = System.nanoTime();
 
@@ -187,7 +187,7 @@ public class SavedPostResource {
         return new ResponseEntity<>(null, null, HttpStatus.OK);
     }
 
-    private Posting retrievePostingElseThrow(long postId, String type) throws BadRequestAlertException {
+    private Posting retrievePostingElseThrow(long postId, short type) throws BadRequestAlertException {
         PostingType postingType;
 
         try {

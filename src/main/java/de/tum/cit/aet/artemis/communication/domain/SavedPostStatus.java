@@ -4,20 +4,20 @@ import java.util.Arrays;
 
 public enum SavedPostStatus {
 
-    IN_PROGRESS("progress"), COMPLETED("completed"), ARCHIVED("archived");
+    IN_PROGRESS((short) 0), COMPLETED((short) 1), ARCHIVED((short) 2);
 
-    private final String databaseKey;
+    private final short databaseKey;
 
-    SavedPostStatus(String databaseKey) {
+    SavedPostStatus(short databaseKey) {
         this.databaseKey = databaseKey;
     }
 
-    public String getDatabaseKey() {
+    public short getDatabaseKey() {
         return databaseKey;
     }
 
-    public static SavedPostStatus fromDatabaseKey(String databaseKey) {
-        return Arrays.stream(SavedPostStatus.values()).filter(type -> type.getDatabaseKey().equalsIgnoreCase(databaseKey)).findFirst()
+    public static SavedPostStatus fromDatabaseKey(short databaseKey) {
+        return Arrays.stream(SavedPostStatus.values()).filter(type -> type.getDatabaseKey() == databaseKey).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Unknown database key: " + databaseKey));
     }
 }

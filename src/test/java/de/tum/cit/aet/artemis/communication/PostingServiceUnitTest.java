@@ -220,19 +220,19 @@ class PostingServiceUnitTest {
         when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
             testUser.getId(),
             testPost.getId(),
-            PostingType.POST.getDatabaseKey()
+            PostingType.POST
         )).thenReturn(savedPost);
 
         when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
             testUser.getId(),
             testAnswer1.getId(),
-            PostingType.ANSWER.getDatabaseKey()
+            PostingType.ANSWER
         )).thenReturn(savedAnswer);
 
         when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
             testUser.getId(),
             testAnswer2.getId(),
-            PostingType.ANSWER.getDatabaseKey()
+            PostingType.ANSWER
         )).thenReturn(savedAnswer);
 
         postingService.preparePostForBroadcast(testPost);
@@ -248,19 +248,19 @@ class PostingServiceUnitTest {
         when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
             testUser.getId(),
             testPost.getId(),
-            PostingType.POST.getDatabaseKey()
+            PostingType.POST
         )).thenReturn(null);
 
         when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
             testUser.getId(),
             testAnswer1.getId(),
-            PostingType.ANSWER.getDatabaseKey()
+            PostingType.ANSWER
         )).thenReturn(null);
 
         when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
             testUser.getId(),
             testAnswer2.getId(),
-            PostingType.ANSWER.getDatabaseKey()
+            PostingType.ANSWER
         )).thenReturn(null);
 
         postingService.preparePostForBroadcast(testPost);

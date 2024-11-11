@@ -42,7 +42,7 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
-import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -438,7 +438,7 @@ examples.forEach((activeConversation) => {
         describe('query parameter handling', () => {
             it('should handle SavedPostStatus in conversationId', () => {
                 const queryParams = {
-                    conversationId: SavedPostStatus.ARCHIVED.toString(),
+                    conversationId: SavedPostStatusMap.ARCHIVED.toString(),
                 };
                 activatedRoute.queryParams = of(queryParams);
 
@@ -505,7 +505,7 @@ examples.forEach((activeConversation) => {
 
             it('should handle multiple query parameters together', () => {
                 const queryParams = {
-                    conversationId: SavedPostStatus.ARCHIVED.toString(),
+                    conversationId: SavedPostStatusMap.ARCHIVED.toString(),
                     focusPostId: '456',
                     openThreadOnFocus: 'true',
                     messageId: '789',
@@ -588,9 +588,9 @@ examples.forEach((activeConversation) => {
             });
 
             it('should handle valid string conversationId as SavedPostStatus', () => {
-                const validStatus = SavedPostStatus.ARCHIVED;
+                const validStatus = SavedPostStatusMap.ARCHIVED.toString();
                 component.onConversationSelected(validStatus);
-                expect(component.selectedSavedPostStatus).toBe(validStatus);
+                expect(component.selectedSavedPostStatus).toBe(SavedPostStatus.ARCHIVED);
                 expect(component.postInThread).toBeUndefined();
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(undefined);
                 expect(component.activeConversation).toBeUndefined();

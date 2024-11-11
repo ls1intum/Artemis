@@ -13,10 +13,10 @@
             <column name="post_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="post_type" type="varchar(10)">
+            <column name="post_type" type="tinyint">
                 <constraints nullable="false"/>
             </column>
-            <column name="status" type="varchar(10)">
+            <column name="status" type="tinyint">
                 <constraints nullable="false"/>
             </column>
             <column name="completed_at" type="datetime">

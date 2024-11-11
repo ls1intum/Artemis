@@ -11,10 +11,10 @@ import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PostingDTO(Long id, AuthorDTO author, UserRole role, ZonedDateTime creationDate, ZonedDateTime updatedDate, String content, boolean isSaved, String savedPostStatus,
-        List<ReactionDTO> reactions, PostingConversationDTO conversation, String postingType, Long referencePostId) {
+public record PostingDTO(Long id, AuthorDTO author, UserRole role, ZonedDateTime creationDate, ZonedDateTime updatedDate, String content, boolean isSaved, short savedPostStatus,
+        List<ReactionDTO> reactions, PostingConversationDTO conversation, short postingType, Long referencePostId) {
 
-    public PostingDTO(Posting post, boolean isSaved, String savedPostStatus) {
+    public PostingDTO(Posting post, boolean isSaved, short savedPostStatus) {
         this(post.getId(), new AuthorDTO(post.getAuthor()), post.getAuthorRole(), post.getCreationDate(), post.getUpdatedDate(), post.getContent(), isSaved, savedPostStatus,
                 post.getReactions().stream().map(ReactionDTO::new).toList(), new PostingConversationDTO(post.getConversation()), getSavedPostType(post).getDatabaseKey(),
                 getReferencePostId(post));

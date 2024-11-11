@@ -4,20 +4,20 @@ import java.util.Arrays;
 
 public enum PostingType {
 
-    POST("post"), ANSWER("answer");
+    POST((short) 0), ANSWER((short) 1);
 
-    private final String databaseKey;
+    private final short databaseKey;
 
-    PostingType(String databaseKey) {
+    PostingType(short databaseKey) {
         this.databaseKey = databaseKey;
     }
 
-    public String getDatabaseKey() {
+    public short getDatabaseKey() {
         return databaseKey;
     }
 
-    public static PostingType fromDatabaseKey(String databaseKey) {
-        return Arrays.stream(PostingType.values()).filter(type -> type.getDatabaseKey().equalsIgnoreCase(databaseKey)).findFirst()
+    public static PostingType fromDatabaseKey(short databaseKey) {
+        return Arrays.stream(PostingType.values()).filter(type -> type.getDatabaseKey() == databaseKey).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Unknown database key: " + databaseKey));
     }
 }

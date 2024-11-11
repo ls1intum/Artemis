@@ -39,7 +39,7 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
-import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -277,11 +277,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             if (queryParams.conversationId) {
                 if (
                     isNaN(Number(queryParams.conversationId)) &&
-                    Object.values(SavedPostStatus)
+                    Object.values(SavedPostStatusMap)
                         .map((s) => s.toString())
                         .includes(queryParams.conversationId)
                 ) {
-                    this.selectedSavedPostStatus = queryParams.conversationId as SavedPostStatus;
+                    this.selectedSavedPostStatus = Posting.mapToStatus(queryParams.conversationId as SavedPostStatusMap);
                 } else {
                     this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
                     this.closeSidebarOnMobile();
@@ -318,7 +318,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.router.navigate([], {
             relativeTo: this.activatedRoute,
             queryParams: {
-                conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus?.toString(),
+                conversationId: this.activeConversation?.id ?? (this.selectedSavedPostStatus !== null ? Posting.statusToMap(this.selectedSavedPostStatus) : undefined),
             },
             replaceUrl: true,
         });
@@ -433,11 +433,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.openThreadOnFocus = false;
         if (typeof conversationId === 'string') {
             if (
-                Object.values(SavedPostStatus)
+                Object.values(SavedPostStatusMap)
                     .map((s) => s.toString())
                     .includes(conversationId)
             ) {
-                this.selectedSavedPostStatus = conversationId as SavedPostStatus;
+                this.selectedSavedPostStatus = Posting.mapToStatus(conversationId as SavedPostStatusMap);
                 this.postInThread = undefined;
                 this.metisConversationService.setActiveConversation(undefined);
                 this.activeConversation = undefined;

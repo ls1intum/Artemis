@@ -88,10 +88,10 @@ public abstract class PostingService {
     public void preparePostForBroadcast(Post post) {
         try {
             var user = userRepository.getUserWithGroupsAndAuthorities();
-            var savedPost = savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(user.getId(), post.getId(), PostingType.POST.getDatabaseKey());
+            var savedPost = savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(user.getId(), post.getId(), PostingType.POST);
             post.setIsSaved(savedPost != null);
             post.getAnswers().forEach(answer -> {
-                var savedAnswerPost = savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(user.getId(), answer.getId(), PostingType.ANSWER.getDatabaseKey());
+                var savedAnswerPost = savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(user.getId(), answer.getId(), PostingType.ANSWER);
                 answer.setIsSaved(savedAnswerPost != null);
             });
         }

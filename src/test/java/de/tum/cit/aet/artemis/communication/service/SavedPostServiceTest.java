@@ -50,7 +50,7 @@ class SavedPostServiceTest {
         testPost = new Post();
         testPost.setId(1L);
 
-        testSavedPost = new SavedPost(testUser, testPost.getId(), PostingType.POST.getDatabaseKey(), SavedPostStatus.IN_PROGRESS.getDatabaseKey(), null);
+        testSavedPost = new SavedPost(testUser, testPost.getId(), PostingType.POST, SavedPostStatus.IN_PROGRESS, null);
 
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
     }
@@ -60,7 +60,7 @@ class SavedPostServiceTest {
         when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
             testUser.getId(),
             testPost.getId(),
-            PostingType.POST.getDatabaseKey()
+            PostingType.POST
         )).thenReturn(null);
 
         savedPostService.savePostForCurrentUser(testPost);
@@ -73,7 +73,7 @@ class SavedPostServiceTest {
         when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
             testUser.getId(),
             testPost.getId(),
-            PostingType.POST.getDatabaseKey()
+            PostingType.POST
         )).thenReturn(testSavedPost);
 
         savedPostService.savePostForCurrentUser(testPost);
@@ -86,7 +86,7 @@ class SavedPostServiceTest {
         when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
             testUser.getId(),
             testPost.getId(),
-            PostingType.POST.getDatabaseKey()
+            PostingType.POST
         )).thenReturn(testSavedPost);
 
         savedPostService.removeSavedPostForCurrentUser(testPost);
@@ -99,7 +99,7 @@ class SavedPostServiceTest {
         when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
             testUser.getId(),
             testPost.getId(),
-            PostingType.POST.getDatabaseKey()
+            PostingType.POST
         )).thenReturn(null);
 
         savedPostService.removeSavedPostForCurrentUser(testPost);
@@ -112,7 +112,7 @@ class SavedPostServiceTest {
         when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
             testUser.getId(),
             testPost.getId(),
-            PostingType.POST.getDatabaseKey()
+            PostingType.POST
         )).thenReturn(testSavedPost);
 
         savedPostService.updateStatusOfSavedPostForCurrentUser(testPost, SavedPostStatus.COMPLETED);
@@ -125,7 +125,7 @@ class SavedPostServiceTest {
     @Test
     void shouldUpdateStatusAndResetCompletedAtOfSavedPostWhenPostIsSetToInProgress() {
         testSavedPost.setCompletedAt(ZonedDateTime.now());
-        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST.getDatabaseKey())).thenReturn(testSavedPost);
+        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST)).thenReturn(testSavedPost);
 
         savedPostService.updateStatusOfSavedPostForCurrentUser(testPost, SavedPostStatus.IN_PROGRESS);
 
@@ -137,7 +137,7 @@ class SavedPostServiceTest {
     @Test
     void shouldReturnListFromRepositoryWhenQueriedByCurrentUser() {
         SavedPostStatus status = SavedPostStatus.IN_PROGRESS;
-        when(savedPostRepository.findSavedPostsByUserIdAndStatusOrderById(testUser.getId(), status.getDatabaseKey())).thenReturn(List.of(testSavedPost));
+        when(savedPostRepository.findSavedPostsByUserIdAndStatusOrderById(testUser.getId(), status)).thenReturn(List.of(testSavedPost));
 
         List<SavedPost> result = savedPostService.getSavedPostsForCurrentUser(status);
 

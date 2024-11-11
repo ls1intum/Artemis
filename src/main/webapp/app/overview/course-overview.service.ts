@@ -19,7 +19,7 @@ import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-ch
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { SavedPostStatus } from 'app/entities/metis/posting.model';
+import { SavedPostStatusMap } from 'app/entities/metis/posting.model';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -228,21 +228,21 @@ export class CourseOverviewService {
             entityData: [
                 {
                     title: this.translate.instant('artemisApp.courseOverview.sidebar.progress'),
-                    id: SavedPostStatus.PROGRESS.toString(),
+                    id: SavedPostStatusMap.PROGRESS.toString(),
                     type: ConversationType.CHANNEL,
                     icon: faBookmark,
                     size: 'S',
                 },
                 {
                     title: this.translate.instant('artemisApp.courseOverview.sidebar.completed'),
-                    id: SavedPostStatus.COMPLETED.toString(),
+                    id: SavedPostStatusMap.COMPLETED.toString(),
                     type: ConversationType.CHANNEL,
                     icon: faSquareCheck,
                     size: 'S',
                 },
                 {
                     title: this.translate.instant('artemisApp.courseOverview.sidebar.archived'),
-                    id: SavedPostStatus.ARCHIVED.toString(),
+                    id: SavedPostStatusMap.ARCHIVED.toString(),
                     type: ConversationType.CHANNEL,
                     icon: faBoxArchive,
                     size: 'S',

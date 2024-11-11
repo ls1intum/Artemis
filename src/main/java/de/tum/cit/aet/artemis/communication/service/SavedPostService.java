@@ -45,7 +45,7 @@ public class SavedPostService {
 
         PostingType type = post instanceof Post ? PostingType.POST : PostingType.ANSWER;
         var author = userRepository.getUserWithGroupsAndAuthorities();
-        var savedPost = new SavedPost(author, post.getId(), type.getDatabaseKey(), SavedPostStatus.IN_PROGRESS.getDatabaseKey(), null);
+        var savedPost = new SavedPost(author, post.getId(), type, SavedPostStatus.IN_PROGRESS, null);
         savedPostRepository.save(savedPost);
     }
 
@@ -77,7 +77,7 @@ public class SavedPostService {
             return;
         }
 
-        existingSavedPost.setStatus(status.getDatabaseKey());
+        existingSavedPost.setStatus(status);
         existingSavedPost.setCompletedAt(status == SavedPostStatus.IN_PROGRESS ? null : ZonedDateTime.now());
         savedPostRepository.save(existingSavedPost);
     }
@@ -91,7 +91,7 @@ public class SavedPostService {
     public List<SavedPost> getSavedPostsForCurrentUser(SavedPostStatus status) {
         var currentUser = userRepository.getUserWithGroupsAndAuthorities();
 
-        return savedPostRepository.findSavedPostsByUserIdAndStatusOrderById(currentUser.getId(), status.getDatabaseKey());
+        return savedPostRepository.findSavedPostsByUserIdAndStatusOrderById(currentUser.getId(), status);
     }
 
     /**
@@ -115,6 +115,6 @@ public class SavedPostService {
         PostingType type = post instanceof Post ? PostingType.POST : PostingType.ANSWER;
         var author = userRepository.getUserWithGroupsAndAuthorities();
 
-        return savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(author.getId(), post.getId(), type.getDatabaseKey());
+        return savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(author.getId(), post.getId(), type);
     }
 }

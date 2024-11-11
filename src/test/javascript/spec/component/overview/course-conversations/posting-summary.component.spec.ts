@@ -69,7 +69,7 @@ describe('PostingSummaryComponent', () => {
 
     describe('PostingType detection', () => {
         it('should detect answer post', () => {
-            const answerPost = { ...mockPost, postingType: PostingType.ANSWER.toString() };
+            const answerPost = { ...mockPost, postingType: PostingType.ANSWER.valueOf() };
 
             fixture.componentRef.setInput('post', answerPost);
             fixture.detectChanges();

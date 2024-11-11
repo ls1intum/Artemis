@@ -60,6 +60,11 @@ export class SavedPostService {
         return this.http.get(`${this.resourceUrl}${courseId}/${status.toString()}`, { observe: 'response' }).pipe(map(this.convertPostResponseFromServer));
     }
 
+    /**
+     * Converts posting to the corresponding type
+     * @param {Posting} post to convert
+     * @return {Post|AnswerPost}
+     */
     public convertPostingToCorrespondingType(post: Posting) {
         return Object.assign((post.postingType as PostingType) === PostingType.POST ? new Post() : new AnswerPost(), post);
     }

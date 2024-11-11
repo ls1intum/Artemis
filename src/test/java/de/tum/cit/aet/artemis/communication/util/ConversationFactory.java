@@ -125,6 +125,6 @@ public class ConversationFactory {
      * @return The generated SavedPost
      */
     public static SavedPost generateSavedPost(User user, Posting posting, PostingType postingType, SavedPostStatus savedPostStatus) {
-        return new SavedPost(user, posting.getId(), postingType.getDatabaseKey(), savedPostStatus.getDatabaseKey(), ZonedDateTime.now());
+        return new SavedPost(user, posting.getId(), postingType, savedPostStatus, ZonedDateTime.now());
     }
 }

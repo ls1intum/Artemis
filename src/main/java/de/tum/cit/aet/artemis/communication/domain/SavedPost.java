@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -22,19 +23,21 @@ public class SavedPost extends DomainObject {
     @Column(name = "post_id", nullable = false)
     private Long postId;
 
+    @Enumerated
     @Column(name = "post_type", nullable = false)
-    private String postType;
+    private PostingType postType;
 
+    @Enumerated
     @Column(name = "status", nullable = false)
-    private String status;
+    private SavedPostStatus status;
 
-    @Column(name = "completed_at", nullable = true)
+    @Column(name = "completed_at")
     private ZonedDateTime completedAt;
 
     public SavedPost() {
     }
 
-    public SavedPost(User user, Long postId, String postType, String status, ZonedDateTime completedAt) {
+    public SavedPost(User user, Long postId, PostingType postType, SavedPostStatus status, ZonedDateTime completedAt) {
         this.user = user;
         this.postId = postId;
         this.postType = postType;
@@ -46,7 +49,7 @@ public class SavedPost extends DomainObject {
         return postId;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(SavedPostStatus status) {
         this.status = status;
     }
 
@@ -55,19 +58,19 @@ public class SavedPost extends DomainObject {
     }
 
     public SavedPostStatus getStatus() {
-        return SavedPostStatus.fromDatabaseKey(status);
+        return status;
     }
 
     public void setCompletedAt(ZonedDateTime completedAt) {
         this.completedAt = completedAt;
     }
 
-    public void setPostType(String postType) {
+    public void setPostType(PostingType postType) {
         this.postType = postType;
     }
 
     public PostingType getPostType() {
-        return PostingType.fromDatabaseKey(postType);
+        return postType;
     }
 
     public ZonedDateTime getCompletedAt() {

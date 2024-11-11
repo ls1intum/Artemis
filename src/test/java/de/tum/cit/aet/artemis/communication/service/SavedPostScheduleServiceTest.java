@@ -18,6 +18,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 
@@ -62,7 +63,7 @@ class SavedPostScheduleServiceTest {
     @Test
     void shouldDeleteSavedPostsWhenTheyAreOrphaned() {
         // Arrange
-        List<SavedPost> orphanedPosts = List.of(createSavedPost(1L, "post"), createSavedPost(2L, "post"));
+        List<SavedPost> orphanedPosts = List.of(createSavedPost(1L, PostingType.POST), createSavedPost(2L, PostingType.POST));
         when(savedPostRepository.findOrphanedPostReferences()).thenReturn(orphanedPosts);
 
         // Act
@@ -86,7 +87,7 @@ class SavedPostScheduleServiceTest {
 
     @Test
     void shouldDeleteSavedAnswerPostsWhenTheyAreOrphaned() {
-        List<SavedPost> orphanedAnswers = List.of(createSavedPost(1L, "answer"), createSavedPost(2L, "answer"));
+        List<SavedPost> orphanedAnswers = List.of(createSavedPost(1L, PostingType.ANSWER), createSavedPost(2L, PostingType.ANSWER));
         when(savedPostRepository.findOrphanedAnswerReferences()).thenReturn(orphanedAnswers);
 
         savedPostScheduleService.cleanupOrphanedSavedAnswerPosts();
@@ -113,7 +114,7 @@ class SavedPostScheduleServiceTest {
         return savedPost;
     }
 
-    private SavedPost createSavedPost(Long id, String postType) {
+    private SavedPost createSavedPost(Long id, PostingType postType) {
         SavedPost savedPost = new SavedPost();
         savedPost.setId(id);
         savedPost.setPostType(postType);

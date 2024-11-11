@@ -58,7 +58,7 @@ public class Post extends Posting {
     private Set<AnswerPost> answers = new HashSet<>();
 
     @OneToMany(mappedBy = "postId", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
-    @SQLRestriction("post_type = 'post'")
+    @SQLRestriction("post_type = 0")
     private Set<SavedPost> savedPosts = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.EAGER)
