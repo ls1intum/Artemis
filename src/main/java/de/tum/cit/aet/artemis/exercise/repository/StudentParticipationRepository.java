@@ -1370,6 +1370,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                       AND f.id IN :feedbackIds
+                      AND p.testRun = FALSE
                 ORDER BY p.student.firstName ASC
             """)
     Page<FeedbackAffectedStudentDTO> findParticipationByFeedbackId(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds, Pageable pageable);
