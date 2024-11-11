@@ -86,6 +86,7 @@ public class SavedPostService {
      * Retrieve the saved posts for a given status
      *
      * @param status status to query
+     * @return a list of all saved posts of the current user with the given status
      */
     public List<SavedPost> getSavedPostsForCurrentUser(SavedPostStatus status) {
         var currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -95,6 +96,8 @@ public class SavedPostService {
 
     /**
      * Checks if maximum amount of saved posts limit is reached
+     *
+     * @return true if max saved post it reached, false otherwise
      */
     public boolean isMaximumSavedPostsReached() {
         var currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -106,6 +109,7 @@ public class SavedPostService {
      * Helper method to retrieve a bookmark for the current user
      *
      * @param post post to search bookmark for
+     * @return The saved post for the given posting if present
      */
     private SavedPost getSavedPostForCurrentUser(Posting post) {
         PostingType type = post instanceof Post ? PostingType.POST : PostingType.ANSWER;
