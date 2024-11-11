@@ -615,7 +615,6 @@ public class IrisSettingsService {
     public IrisCombinedSettingsDTO getCombinedIrisSettingsFor(Lecture lecture, boolean minimal) {
         var settingsList = new ArrayList<IrisSettings>();
         settingsList.add(getGlobalSettings());
-        // TODO: Add lecture settings
 
         // @formatter:off
         return new IrisCombinedSettingsDTO(

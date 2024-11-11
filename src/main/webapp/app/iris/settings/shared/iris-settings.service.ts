@@ -36,7 +36,7 @@ export class IrisSettingsService {
 
     /**
      * Get the uncombined Iris settings for a lecture
-     * @param courseId the id of the lecture
+     * @param courseId the id of the course
      */
     getUncombinedLectureSettings(courseId: number): Observable<IrisLectureSettings | undefined> {
         return this.http
@@ -102,11 +102,11 @@ export class IrisSettingsService {
 
     /**
      * Update the Iris settings for a lecture
-     * @param courseId the id of the lecture
+     * @param courseId the id of the course containing the lecture
      * @param settings the settings to set
      */
     setLectureSettings(courseId: number, settings: IrisLectureSettings): Observable<HttpResponse<IrisLectureSettings>> {
-        return this.http.put<IrisExerciseSettings>(`${this.resourceUrl}/lectures/${courseId}/raw-iris-settings`, settings, { observe: 'response' });
+        return this.http.put<IrisLectureSettings>(`${this.resourceUrl}/lectures/${courseId}/raw-iris-settings`, settings, { observe: 'response' });
     }
 
     /**

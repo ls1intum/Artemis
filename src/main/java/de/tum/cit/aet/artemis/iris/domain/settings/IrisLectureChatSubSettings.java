@@ -8,6 +8,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.validation.constraints.Min;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -19,11 +20,21 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisLectureChatSubSettings extends IrisSubSettings {
 
+    /**
+     * Maximum number of messages allowed within the specified timeframe.
+     * Must be a positive integer or null to disable rate limiting.
+     */
     @Nullable
+    @Min(1)
     @Column(name = "rate_limit")
     private Integer rateLimit;
 
+    /**
+     * Timeframe in hours for the rate limit.
+     * Must be a positive integer when rate limit is set.
+     */
     @Nullable
+    @Min(1)
     @Column(name = "rate_limit_timeframe_hours")
     private Integer rateLimitTimeframeHours;
 

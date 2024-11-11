@@ -171,7 +171,7 @@ public class IrisSubSettingsService {
             IrisCombinedLectureChatSubSettingsDTO parentSettings, IrisSettingsType settingsType) {
         if (newSettings == null) {
             if (parentSettings == null) {
-                throw new IllegalArgumentException("Cannot delete the Lecture Ingestion settings");
+                throw new IllegalArgumentException("Cannot delete the Lecture Chat settings");
             }
             return null;
         }
