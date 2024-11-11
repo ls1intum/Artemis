@@ -25,7 +25,48 @@ public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaReposit
 
     @Modifying
     @Transactional // ok because of delete
-    void deleteByIdIn(List<Long> ids);
+    @Query("""
+            DELETE
+            FROM PlagiarismComparison pc
+            WHERE pc.id IN :ids
+            """)
+    int deleteByIdsIn(@Param("ids") List<Long> ids);
+
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE
+            FROM PlagiarismSubmissionElement e
+            WHERE e.plagiarismSubmission.plagiarismComparison.id IN :ids
+            """)
+    int deletePlagiarismSubmissionElementsByComparisonIdsIn(@Param("ids") List<Long> ids);
+
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE
+            FROM PlagiarismSubmission s
+            WHERE s.plagiarismComparison.id IN :ids
+            """)
+    int deletePlagiarismSubmissionsByComparisonIdsIn(@Param("ids") List<Long> ids);
+
+    @Modifying
+    @Transactional // ok because of modifying
+    @Query("""
+            UPDATE PlagiarismComparison pc
+            SET pc.submissionA = NULL, pc.submissionB = NULL
+            WHERE pc.id IN :ids
+            """)
+    int setPlagiarismSubmissionsToNullInComparisonsWithIds(@Param("ids") List<Long> ids);
+
+    @Modifying
+    @Transactional // ok because of delete
+    @Query(nativeQuery = true, value = """
+            DELETE
+            FROM plagiarism_comparison_matches m
+            WHERE m.plagiarism_comparison_id IN :ids
+            """)
+    int deletePlagiarismComparisonMatchesByComparisonIdsIn(@Param("ids") List<Long> ids);
 
     /**
      * Retrieves a list of unnecessary plagiarism comparison IDs based on the associated course's date range.
