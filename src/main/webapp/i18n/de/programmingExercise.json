@@ -722,7 +722,8 @@
                 "envVars": {
                     "title": "Umgebungsvariablen",
                     "description": "Füge Umgebungsvariablen zum Docker-Container hinzu. Zum Beispiel: 'API_KEY'=\"ABCD 1234\",API_SECRET='XYZ',\"API_TOKEN\"=1234 (Max 1000 Zeichen)",
-                    "invalid": "Ungültiges Format der Umgebungsvariable. Schlüssel und Werte können in einfachen oder doppelten Anführungszeichen stehen. Zum Beispiel: 'API_KEY'=\"ABCD 1234\",API_SECRET='XYZ',\"API_TOKEN\"=1234"
+                    "addEnvVar": "Umgebungsvariable hinzufügen",
+                    "removeEnvVar": "Entfernen"
                 }
             }
         },

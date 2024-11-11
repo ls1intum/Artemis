@@ -39,26 +39,32 @@
         }
 
         <div class="mb-2">
-            <label>
-                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.title"></span>
-            </label>
+            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.title"></span>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.envVars.description" />
-            <input
-                type="text"
-                class="form-control"
-                name="envVars"
-                id="field_envVars"
-                maxlength="1000"
-                [ngModel]="envVars"
-                (ngModelChange)="onEnvVarsChange($event)"
-                [pattern]="envVarRegex"
-                #envVarsInput="ngModel"
-            />
-            @if (envVarsInput.invalid && (envVarsInput.dirty || envVarsInput.touched)) {
-                <div class="warning alert-warning mt-2" role="alert">
-                    <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.invalid"></span>
-                </div>
-            }
+            <ngx-datatable id="envVarsTable" class="bootstrap" trackByProp="id" [headerHeight]="50" [columnMode]="'force'" [rowHeight]="'auto'" [rows]="envVars">
+                <ngx-datatable-column [name]="'Key'" [maxWidth]="200">
+                    <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
+                        <jhi-table-editable-field [id]="'key' + rowIndex" [value]="row[0] || ''" [onValueUpdate]="this.onEnvVarsKeyChange(row)" [isRequired]="true" />
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column [name]="'Value'">
+                    <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
+                        <jhi-table-editable-field [id]="'value' + rowIndex" [value]="row[1] || ''" [onValueUpdate]="this.onEnvVarsValueChange(row)" [isRequired]="true" />
+                    </ng-template>
+                </ngx-datatable-column>
+                <ngx-datatable-column [maxWidth]="150">
+                    <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
+                        <button class="btn btn-sm btn-danger" (click)="removeEnvVar(rowIndex)">
+                            <fa-icon [icon]="faTrash"></fa-icon>
+                            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.removeEnvVar"></span>
+                        </button>
+                    </ng-template>
+                </ngx-datatable-column>
+            </ngx-datatable>
+            <button class="btn btn-sm btn-primary mb-2" (click)="addEnvVar()">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.addEnvVar"></span>
+            </button>
         </div>
         <div class="d-flex align-items-center justify-content-start gap-4 mb-2">
             <div>

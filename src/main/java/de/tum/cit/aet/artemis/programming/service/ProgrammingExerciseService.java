@@ -47,6 +47,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -1089,35 +1090,22 @@ public class ProgrammingExerciseService {
     public void validateDockerFlags(ProgrammingExercise programmingExercise) {
         ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
 
-        List<List<String>> flags = programmingExerciseBuildConfigService.parseDockerFlags(buildConfig);
+        DockerFlagsDTO dockerFlagsDTO = programmingExerciseBuildConfigService.parseDockerFlags(buildConfig);
+        if (dockerFlagsDTO == null) {
+            return;
+        }
 
-        if (flags != null) {
-            String envFlag = getEnvFlag(flags);
-
-            if (envFlag != null && envFlag.length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
+        for (var entry : dockerFlagsDTO.env().entrySet()) {
+            if (entry.getKey().length() + entry.getValue().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
                 throw new BadRequestAlertException("The environment variables are too long. Max " + MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH + " chars", "Exercise",
                         "envVariablesTooLong");
             }
         }
 
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfigFromParsedList(flags);
-
-        if (dockerRunConfig == null) {
-            return;
-        }
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfigFromParsedFlags(dockerFlagsDTO);
 
         if (List.of(ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL).contains(programmingExercise.getProgrammingLanguage()) && dockerRunConfig.isNetworkDisabled()) {
             throw new BadRequestAlertException("This programming language does not support disabling the network access feature", "Exercise", "networkAccessNotSupported");
         }
-    }
-
-    private String getEnvFlag(List<List<String>> flags) {
-        List<String> envVars = flags.stream().filter(flag -> flag.getFirst().equals(DockerRunConfig.AllowedDockerFlags.ENV.flag())).findFirst().orElse(null);
-
-        if (envVars == null) {
-            return null;
-        }
-
-        return envVars.get(1);
     }
 }

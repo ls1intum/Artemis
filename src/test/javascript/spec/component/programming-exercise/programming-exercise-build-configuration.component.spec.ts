@@ -94,34 +94,29 @@ describe('ProgrammingExercise Docker Image', () => {
     it('should update network flag value', () => {
         comp.onDisableNetworkAccessChange({ target: { checked: true } });
         expect(comp.isNetworkDisabled).toBeTrue();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('[["network","none"]]');
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none"}');
 
         comp.onDisableNetworkAccessChange({ target: { checked: false } });
         expect(comp.isNetworkDisabled).toBeFalse();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('[]');
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{}');
     });
 
-    it('should update env vars', () => {
-        comp.onEnvVarsChange('\'key\'="value"');
-        expect(comp.envVars).toBe('\'key\'="value"');
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('[["env","\'key\'=\\"value\\""]]');
+    it('should parse docker flags correctly', () => {
+        comp.envVars = [['key', 'value']];
+        comp.parseDockerFlagsToString();
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{"key":"value"}}');
 
-        comp.onEnvVarsChange('');
-        expect(comp.envVars).toBe('');
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('[]');
-    });
+        comp.isNetworkDisabled = true;
+        comp.parseDockerFlagsToString();
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{"key":"value"}}');
 
-    it('should handle both network and env vars', () => {
-        comp.onDisableNetworkAccessChange({ target: { checked: true } });
-        comp.onEnvVarsChange('key=value');
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('[["network","none"],["env","key=value"]]');
+        comp.envVars = [];
+        comp.parseDockerFlagsToString();
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none"}');
 
-        comp.onDisableNetworkAccessChange({ target: { checked: false } });
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('[["env","key=value"]]');
-
-        comp.onDisableNetworkAccessChange({ target: { checked: true } });
-        comp.onEnvVarsChange('');
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('[["network","none"]]');
+        comp.addEnvVar();
+        comp.parseDockerFlagsToString();
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none"}');
     });
 
     it('should parse existing docker flags', () => {
@@ -133,10 +128,10 @@ describe('ProgrammingExercise Docker Image', () => {
             }),
         );
 
-        programmingExercise.buildConfig!.dockerFlags = '[["network","none"],["env","key=value"]]';
+        programmingExercise.buildConfig!.dockerFlags = '{"network":"none","env":{"key":"value"}}';
         comp.ngOnInit();
         expect(comp.isNetworkDisabled).toBeTrue();
-        expect(comp.envVars).toBe('key=value');
+        expect(comp.envVars).toEqual([['key', 'value']]);
     });
 
     it('should set supported languages', () => {

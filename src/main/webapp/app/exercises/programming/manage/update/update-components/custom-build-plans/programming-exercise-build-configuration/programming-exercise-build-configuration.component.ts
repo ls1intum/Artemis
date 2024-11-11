@@ -2,14 +2,14 @@ import { Component, OnInit, effect, inject, input, output, viewChild } from '@an
 import { NgModel } from '@angular/forms';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
-
-const ALLOWED_DOCKER_FLAG_OPTIONS = ['network', 'env'];
+import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.SWIFT, ProgrammingLanguage.HASKELL, ProgrammingLanguage.EMPTY];
 
-const NETWORK_KEY: string = 'network';
-const ENV_KEY: string = 'env';
-export const ENV_VAR_REGEX = /(?:'([^']+)'|"([^"]+)"|(\w+))=(?:'([^']*)'|"([^"]*)"|([^,]+))/;
+interface DockerFlags {
+    network?: string;
+    env?: { [key: string]: string };
+}
 
 @Component({
     selector: 'jhi-programming-exercise-build-configuration',
@@ -26,8 +26,9 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     timeout = input<number>();
     timeoutChange = output<number>();
 
-    envVars: string = '';
+    envVars: [string, string][] = [];
     isNetworkDisabled = false;
+    dockerFlags: DockerFlags = {};
 
     isAeolus = input.required<boolean>();
 
@@ -40,7 +41,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     isLanguageSupported: boolean = false;
 
-    protected readonly envVarRegex = ENV_VAR_REGEX;
+    faPlus = faPlus;
+    faTrash = faTrash;
 
     constructor() {
         effect(() => {
@@ -74,33 +76,58 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     initDockerFlags() {
-        const dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags || '[]') as [string, string][];
-        dockerFlags.forEach(([key, value]) => {
-            if (key === NETWORK_KEY) {
-                this.isNetworkDisabled = value === 'none';
-            } else if (key === ENV_KEY) {
-                this.envVars = value;
+        this.dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags ?? '') as DockerFlags;
+        this.isNetworkDisabled = this.dockerFlags.network === 'none';
+        this.envVars = [];
+        if (this.dockerFlags.env) {
+            for (const key in this.dockerFlags.env) {
+                this.envVars.push([key, this.dockerFlags.env?.[key] ?? '']);
             }
-        });
+        }
     }
 
     onDisableNetworkAccessChange(event: any) {
         this.isNetworkDisabled = event.target.checked;
-        this.updateDockerFlags(NETWORK_KEY, event.target.checked ? 'none' : '');
+        this.parseDockerFlagsToString();
     }
 
-    onEnvVarsChange(event: any) {
-        this.envVars = event;
-        this.updateDockerFlags(ENV_KEY, event);
+    onEnvVarsKeyChange(row: [string, string]) {
+        return (newValue: string) => {
+            row[0] = newValue;
+            this.parseDockerFlagsToString();
+            return row[0];
+        };
     }
 
-    updateDockerFlags(key: string, value: string) {
-        let existingFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags || '[]') as [string, string][];
-        existingFlags = existingFlags.filter(([flag]) => ALLOWED_DOCKER_FLAG_OPTIONS.includes(flag) && flag !== key) || [];
-        if (ALLOWED_DOCKER_FLAG_OPTIONS.includes(key) && value.trim() !== '') {
-            existingFlags.push([key, value]);
+    onEnvVarsValueChange(row: [string, string]) {
+        return (newValue: string) => {
+            row[1] = newValue;
+            this.parseDockerFlagsToString();
+            return row[1];
+        };
+    }
+
+    addEnvVar() {
+        this.envVars.push(['', '']);
+    }
+
+    removeEnvVar(index: number) {
+        this.envVars.splice(index, 1);
+        this.parseDockerFlagsToString();
+    }
+
+    parseDockerFlagsToString() {
+        let newEnv = {} as { [key: string]: string } | undefined;
+        this.envVars.forEach(([key, value]) => {
+            if (key.trim()) {
+                newEnv![key] = value;
+            }
+        });
+        if (Object.keys(newEnv ?? {}).length === 0) {
+            newEnv = undefined;
         }
-        this.programmingExercise()!.buildConfig!.dockerFlags = JSON.stringify(existingFlags);
+        this.dockerFlags = { network: this.isNetworkDisabled ? 'none' : undefined, env: newEnv };
+        this.programmingExercise()!.buildConfig!.dockerFlags = JSON.stringify(this.dockerFlags);
     }
 
     setIsLanguageSupported() {
