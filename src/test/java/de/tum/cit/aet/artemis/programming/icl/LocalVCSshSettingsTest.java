@@ -23,7 +23,7 @@ class LocalVCSshSettingsTest extends AbstractSpringIntegrationLocalCILocalVCTest
 
     @AfterEach
     void teardown() throws Exception {
-        sshSettingsTestService.tearDown();
+        sshSettingsTestService.tearDown(TEST_PREFIX);
     }
 
     @Test
