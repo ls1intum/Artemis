@@ -44,8 +44,8 @@ export class ExamManagementPage {
     /**
      * Opens the exercise groups page.
      */
-    async openExerciseGroups(examId: number) {
-        await this.page.locator(`#exercises-button-${examId}-groups`).click();
+    async openExerciseGroups() {
+        await this.page.locator(`#exercises-button-groups-table`).click();
     }
 
     /**
