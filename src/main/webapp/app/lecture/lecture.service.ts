@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -8,6 +8,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { EventBusService } from 'app/shared/event-bus.service';
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;
@@ -15,6 +16,8 @@ type EntityArrayResponseType = HttpResponse<Lecture[]>;
 @Injectable({ providedIn: 'root' })
 export class LectureService {
     public resourceUrl = 'api/lectures';
+
+    private eventBusService = inject(EventBusService);
 
     constructor(
         protected http: HttpClient,
@@ -155,7 +158,11 @@ export class LectureService {
 
     delete(lectureId: number, displayAlert: boolean = true): Observable<HttpResponse<any>> {
         const params = new HttpParams().set('displayAlert', displayAlert);
-        return this.http.delete<any>(`${this.resourceUrl}/${lectureId}`, { params: params, observe: 'response' });
+        return this.http.delete<any>(`${this.resourceUrl}/${lectureId}`, { params: params, observe: 'response' }).pipe(
+            tap(() => {
+                this.eventBusService.emitLectureDeleted(lectureId);
+            }),
+        );
     }
 
     protected convertLectureDatesFromClient(lecture: Lecture): Lecture {

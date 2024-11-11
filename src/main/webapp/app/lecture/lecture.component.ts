@@ -1,7 +1,7 @@
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { LectureService } from './lecture.service';
@@ -16,6 +16,7 @@ import { Subject, Subscription } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { EventBusService } from 'app/shared/event-bus.service';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -59,6 +60,8 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     private profileInfoSubscription: Subscription;
 
+    private eventBusService = inject(EventBusService);
+
     constructor(
         protected lectureService: LectureService,
         private route: ActivatedRoute,
@@ -83,6 +86,10 @@ export class LectureComponent implements OnInit, OnDestroy {
                     this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
                 });
             }
+        });
+
+        this.eventBusService.lectureDeleted$.subscribe((lectureId) => {
+            this.deleteLectureFromDisplayedLectures(lectureId);
         });
     }
 
@@ -120,6 +127,12 @@ export class LectureComponent implements OnInit, OnDestroy {
         );
     }
 
+    private deleteLectureFromDisplayedLectures(lectureId: number) {
+        this.dialogErrorSource.next('');
+        this.lectures = this.lectures.filter((lecture) => lecture.id !== lectureId);
+        this.applyFilters();
+    }
+
     /**
      * Deletes Lecture
      * @param lectureId the id of the lecture
@@ -127,9 +140,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     deleteLecture(lectureId: number) {
         this.lectureService.delete(lectureId).subscribe({
             next: () => {
-                this.dialogErrorSource.next('');
-                this.lectures = this.lectures.filter((lecture) => lecture.id !== lectureId);
-                this.applyFilters();
+                this.deleteLectureFromDisplayedLectures(lectureId);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
