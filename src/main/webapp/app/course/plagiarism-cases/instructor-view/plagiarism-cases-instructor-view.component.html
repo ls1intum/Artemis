@@ -49,17 +49,17 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    @for (plagiarismCase of groupedPlagiarismCases[exercise!.id!]; track plagiarismCase) {
+                    @for (plagiarismCase of groupedPlagiarismCases[exercise!.id!]; track plagiarismCase; let j = $index) {
                         <div class="row mb-3">
                             <div class="col-1 text-center">
                                 <a [routerLink]="['/course-management', courseId, 'plagiarism-cases', plagiarismCase.id]">
                                     {{ plagiarismCase.student.name }} ({{ plagiarismCase.student.login }})
                                 </a>
                             </div>
-
                             @if (plagiarismCase.plagiarismSubmissions) {
                                 <div class="col-2 text-center">
                                     <span
+                                        id="navigate-plagiarism-detection-{{ i }}-{{ j }}"
                                         [routerLink]="[
                                             '/course-management',
                                             courseId,
