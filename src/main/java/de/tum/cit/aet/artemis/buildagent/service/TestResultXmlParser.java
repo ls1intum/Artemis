@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
@@ -19,6 +20,8 @@ public class TestResultXmlParser {
 
     // https://stackoverflow.com/a/4237934
     private static final String INVALID_XML_CHARS = "[^\t\r\n -\uD7FF\uE000-�\uD800\uDC00-\uDBFF\uDFFF]";
+
+    private static final Pattern XML_ROOT_TAG_IS_TESTSUITES = Pattern.compile("^(<\\?.*?\\?>|<!--.*?-->|<!DOCTYPE.*?>|\\s)*<testsuites", Pattern.DOTALL);
 
     /**
      * Parses the test result file and extracts failed and successful tests.
@@ -38,7 +41,7 @@ public class TestResultXmlParser {
         testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
 
         // The root element can be <testsuites> or <testsuite>
-        if (testResultFileString.contains("<testsuites")) {
+        if (XML_ROOT_TAG_IS_TESTSUITES.matcher(testResultFileString).find()) {
             TestSuites testSuites = mapper.readValue(testResultFileString, TestSuites.class);
             if (testSuites.testSuites().size() == 1) {
                 TestSuite suite = testSuites.testSuites().getFirst();
