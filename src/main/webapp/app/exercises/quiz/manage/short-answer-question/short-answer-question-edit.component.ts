@@ -31,8 +31,9 @@ import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.acti
 import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
 import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
-import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
+import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { InsertShortAnswerSpotAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-spot.action';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { InsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-option.action';
@@ -122,9 +123,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             new BoldAction(),
             new ItalicAction(),
             new UnderlineAction(),
+            new StrikethroughAction(),
             new CodeAction(),
             new UrlAction(),
-            new UnorderedListAction(),
+            new BulletedListAction(),
             new OrderedListAction(),
             this.insertShortAnswerSpotAction,
             this.insertShortAnswerOptionAction,
