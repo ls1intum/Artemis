@@ -28,6 +28,8 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     /**
      * Deletes {@link TextBlock} entries linked to {@link Feedback} where the associated {@link Result}
      * has no submission and no participation.
+     *
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -41,10 +43,12 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                     AND r.participation IS NULL
                 )
             """)
-    void deleteTextBlockForOrphanResults();
+    int deleteTextBlockForOrphanResults();
 
     /**
      * Deletes {@link TextBlock} entries linked to {@link Feedback} with a {@code null} result.
+     *
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -56,7 +60,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                 WHERE f.result IS NULL
                 )
             """)
-    void deleteTextBlockForEmptyFeedback();
+    int deleteTextBlockForEmptyFeedback();
 
     /**
      * Deletes {@link TextBlock} entries associated with rated {@link Result} that are not the latest rated result
@@ -66,6 +70,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -89,7 +94,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                     AND c.startDate > :deleteFrom
             )
             """)
-    void deleteTextBlockForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteTextBlockForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
      * Deletes {@link TextBlock} entries linked to non-rated {@link Result} that are not the latest non-rated result
@@ -100,6 +105,7 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -123,5 +129,5 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
                     AND c.startDate > :deleteFrom
                 )
             """)
-    void deleteTextBlockForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteTextBlockForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

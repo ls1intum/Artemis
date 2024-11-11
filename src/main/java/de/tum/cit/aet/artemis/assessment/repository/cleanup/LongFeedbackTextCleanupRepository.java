@@ -28,6 +28,8 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
     /**
      * Deletes {@link LongFeedbackText} entries linked to {@link Feedback} where the associated
      * {@link Result} has no participation and no submission.
+     *
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -40,10 +42,12 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                     AND f.result.submission IS NULL
                 )
             """)
-    void deleteLongFeedbackTextForOrphanResult();
+    int deleteLongFeedbackTextForOrphanResult();
 
     /**
      * Deletes {@link LongFeedbackText} linked to {@link Feedback} with a {@code null} result.
+     *
+     * @return the number of deleted {@link LongFeedbackText} entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -55,7 +59,7 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                 WHERE f.result IS NULL
                 )
             """)
-    void deleteLongFeedbackTextForOrphanedFeedback();
+    int deleteLongFeedbackTextForOrphanedFeedback();
 
     /**
      * Deletes {@link LongFeedbackText} entries associated with rated {@link Result} that are not the latest rated result
@@ -65,6 +69,7 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -88,7 +93,7 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                     AND r.rated = TRUE
                 )
             """)
-    void deleteLongFeedbackTextForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteLongFeedbackTextForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
      * Deletes {@link LongFeedbackText} entries linked to non-rated {@link Feedback} that are not the latest non-rated result where the associated course's start
@@ -98,6 +103,7 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -121,5 +127,5 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                     AND c.startDate > :deleteFrom
                 )
             """)
-    void deleteLongFeedbackTextForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteLongFeedbackTextForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }
