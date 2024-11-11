@@ -47,12 +47,11 @@ export class CoursePerformanceSectionComponent {
     readonly isLoading = signal<boolean>(false);
     readonly studentMetrics = signal<StudentMetrics | undefined | null>(undefined);
 
-    // TODO: This only updates when the courseId input changes but not when the course changes
-    readonly course = computed(() => this.courseStorageService.getCourse(this.courseId()));
+    private readonly course = computed(() => this.courseStorageService.getCourse(this.courseId()));
     readonly learningPathsEnabled = computed(() => !!this.course()?.learningPathsEnabled);
 
     readonly exerciseMetrics = computed(() => this.studentMetrics()?.exerciseMetrics ?? {});
-    readonly sortedExerciseIds = computed(() =>
+    private readonly sortedExerciseIds = computed(() =>
         Object.values(this.exerciseMetrics()?.exerciseInformation ?? {})
             .filter((exercise) => exercise.dueDate && exercise.dueDate.isBefore(dayjs()))
             .sort((a, b) => ((a.dueDate ?? a.startDate).isBefore(b.dueDate) ? -1 : 1))
@@ -95,7 +94,7 @@ export class CoursePerformanceSectionComponent {
         }),
     );
 
-    readonly courseCompetencyAccordion = viewChild(CourseCompetencyAccordionComponent);
+    private readonly courseCompetencyAccordion = viewChild(CourseCompetencyAccordionComponent);
 
     constructor() {
         effect(() => {

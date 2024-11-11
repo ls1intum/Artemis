@@ -25,16 +25,6 @@ const AVERAGE_GRAPH_COLOR = GraphColors.YELLOW;
 })
 export class CourseExercisePerformanceComponent {
     readonly exercisePerformance = input.required<ExercisePerformance[]>();
-    // readonly exercisePerformance = signal<ExercisePerformance[]>([
-    //     <ExercisePerformance>{
-    //         exerciseId: 2,
-    //         title: 'Exercise 1',
-    //         score: 100,
-    //         shortName: 'E1',
-    //         courseCompetencyIds: [17],
-    //         averageScore: 80,
-    //     },
-    // ]);
 
     private readonly translateService = inject(TranslateService);
 
