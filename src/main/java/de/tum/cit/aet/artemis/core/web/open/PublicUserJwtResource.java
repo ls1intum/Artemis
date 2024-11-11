@@ -80,7 +80,8 @@ public class PublicUserJwtResource {
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
+    public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent,
+            @RequestParam(name = "tool", required = false) ToolTokenType tool, HttpServletResponse response) {
 
         var username = loginVM.getUsername();
         var password = loginVM.getPassword();
@@ -94,7 +95,7 @@ public class PublicUserJwtResource {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
 
-            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, tool);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
@@ -116,7 +117,7 @@ public class PublicUserJwtResource {
      */
     @PostMapping("tool-token")
     @EnforceAtLeastStudent
-    public ResponseEntity<String> getToolToken(@RequestParam(name = "tool", required = true) ToolTokenType tool,
+    public ResponseEntity<String> convertCookieToToolToken(@RequestParam(name = "tool", required = true) ToolTokenType tool,
             @RequestParam(name = "as-cookie", defaultValue = "false") boolean asCookie, HttpServletRequest request, HttpServletResponse response) {
         // remaining time in milliseconds
         var jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);
@@ -129,7 +130,7 @@ public class PublicUserJwtResource {
 
         // 1 day validity
         long maxDuration = Duration.ofDays(1).toMillis();
-        ResponseCookie responseCookie = jwtCookieService.buildToolCookie(Math.min(tokenRemainingTime, maxDuration), tool);
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(Math.min(tokenRemainingTime, maxDuration), tool);
 
         if (asCookie) {
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
@@ -169,7 +170,7 @@ public class PublicUserJwtResource {
         }
 
         final boolean rememberMe = Boolean.parseBoolean(body);
-        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, null);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
         return ResponseEntity.ok().build();
