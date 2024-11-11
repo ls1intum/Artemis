@@ -10,6 +10,8 @@ assessment:
 
 athena:
   - athena
+  - ai feedback
+  - request (ai )?feedback
   - caseSensitive: false
 
 atlas:
