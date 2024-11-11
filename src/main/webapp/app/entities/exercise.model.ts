@@ -12,7 +12,7 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 import { Team } from 'app/entities/team.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { CourseCompetency } from 'app/entities/competency.model';
+import { CompetencyExerciseLink } from 'app/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
@@ -105,7 +105,7 @@ export abstract class Exercise implements BaseEntity {
     public posts?: Post[];
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
-    public competencies?: CourseCompetency[];
+    public competencyLinks?: CompetencyExerciseLink[];
 
     public plagiarismDetectionConfig?: PlagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG; // default value
 
@@ -281,5 +281,5 @@ export function resetForImport(exercise: Exercise) {
     exercise.allowComplaintsForAutomaticAssessments = false;
     exercise.allowFeedbackRequests = false;
 
-    exercise.competencies = [];
+    exercise.competencyLinks = [];
 }

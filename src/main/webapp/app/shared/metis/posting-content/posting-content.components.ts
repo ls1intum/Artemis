@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, input, output, signal } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
@@ -24,6 +24,9 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() isReply?: boolean;
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
+    isDeleted = input<boolean>(false);
+    deleteTimerInSeconds = input<number>(0);
+    onUndoDeleteEvent = output<void>();
 
     showContent = false;
     currentlyLoadedPosts: Post[];

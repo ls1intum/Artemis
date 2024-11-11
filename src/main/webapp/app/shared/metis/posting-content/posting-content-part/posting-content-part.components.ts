@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
 
@@ -27,7 +27,7 @@ import { AccountService } from 'app/core/auth/account.service';
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['./../../metis.component.scss'],
 })
-export class PostingContentPartComponent {
+export class PostingContentPartComponent implements OnInit {
     @Input() postingContentPart: PostingContentPart;
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
@@ -36,7 +36,7 @@ export class PostingContentPartComponent {
     hasClickedUserReference = false;
 
     // Only allow certain html tags and attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'li', 'mark', 'ol', 'p', 'pre', 'small', 'span', 'strong', 'sub', 'sup', 'ul'];
+    allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'mark', 'p', 'pre', 'small', 's', 'span', 'strong', 'sub', 'sup'];
     allowedHtmlAttributes: string[] = ['href'];
 
     // icons
@@ -47,12 +47,18 @@ export class PostingContentPartComponent {
     protected readonly faQuestion = faQuestion;
 
     protected readonly ReferenceType = ReferenceType;
+    processedContentBeforeReference: string;
+    processedContentAfterReference: string;
 
     constructor(
         private fileService: FileService,
         private dialog: MatDialog,
         private accountService: AccountService,
     ) {}
+
+    ngOnInit() {
+        this.processContent();
+    }
 
     /**
      * Opens an attachment with the given URL in a new window
@@ -65,6 +71,20 @@ export class PostingContentPartComponent {
 
     toggleImageNotFound(): void {
         this.imageNotFound = true;
+    }
+
+    processContent() {
+        if (this.postingContentPart.contentBeforeReference) {
+            this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart.contentBeforeReference);
+        }
+
+        if (this.postingContentPart.contentAfterReference) {
+            this.processedContentAfterReference = this.escapeNumberedList(this.postingContentPart.contentAfterReference);
+        }
+    }
+
+    escapeNumberedList(content: string): string {
+        return content.replace(/^(\s*\d+)\. /gm, '$1\\. ');
     }
 
     /**

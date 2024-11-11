@@ -9,8 +9,8 @@ describe('FeedbackAnalysisService', () => {
     let httpMock: HttpTestingController;
 
     const feedbackDetailsMock: FeedbackDetail[] = [
-        { detailText: 'Feedback 1', testCaseName: 'test1', count: 5, relativeCount: 25.0, taskNumber: '1', errorCategory: 'StudentError' },
-        { detailText: 'Feedback 2', testCaseName: 'test2', count: 3, relativeCount: 15.0, taskNumber: '2', errorCategory: 'StudentError' },
+        { detailText: 'Feedback 1', testCaseName: 'test1', count: 5, relativeCount: 25.0, taskName: '1', errorCategory: 'StudentError' },
+        { detailText: 'Feedback 2', testCaseName: 'test2', count: 3, relativeCount: 15.0, taskName: '2', errorCategory: 'StudentError' },
     ];
 
     const feedbackAnalysisResponseMock = {
@@ -42,11 +42,11 @@ describe('FeedbackAnalysisService', () => {
                 sortingOrder: SortingOrder.ASCENDING,
                 sortedColumn: 'detailText',
             };
-            const filters = { tasks: [], testCases: [], occurrence: [] };
+            const filters = { tasks: [], testCases: [], occurrence: [], errorCategories: [] };
             const responsePromise = service.search(pageable, { exerciseId: 1, filters });
 
             const req = httpMock.expectOne(
-                'api/exercises/1/feedback-details?page=1&pageSize=10&searchTerm=&sortingOrder=ASCENDING&sortedColumn=detailText&filterTasks=&filterTestCases=&filterOccurrence=',
+                'api/exercises/1/feedback-details?page=1&pageSize=10&searchTerm=&sortingOrder=ASCENDING&sortedColumn=detailText&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=',
             );
             expect(req.request.method).toBe('GET');
             req.flush(feedbackAnalysisResponseMock);

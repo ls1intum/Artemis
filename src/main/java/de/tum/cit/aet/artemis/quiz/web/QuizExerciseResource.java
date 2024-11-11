@@ -300,6 +300,8 @@ public class QuizExerciseResource {
 
         Channel updatedChannel = channelService.updateExerciseChannel(originalQuiz, quizExercise);
 
+        exerciseService.reconnectCompetencyExerciseLinks(quizExercise);
+
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, quizExercise, notificationText);

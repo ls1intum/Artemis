@@ -33,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
@@ -83,10 +85,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final FileService fileService;
 
+    private final ExerciseService exerciseService;
+
+    private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, FileService fileService, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository) {
+            ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -96,6 +102,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.fileService = fileService;
+        this.exerciseService = exerciseService;
+        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
     }
 
     /**
@@ -429,7 +437,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // make sure the pointers in the statistics are correct
         quizExercise.recalculatePointCounters();
 
-        QuizExercise savedQuizExercise = super.save(quizExercise);
+        QuizExercise savedQuizExercise = exerciseService.saveWithCompetencyLinks(quizExercise, super::save);
 
         if (savedQuizExercise.isCourseExercise()) {
             // only schedule quizzes for course exercises, not for exam exercises

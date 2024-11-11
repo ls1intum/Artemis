@@ -36,6 +36,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     courseId: number;
     referencedFaqId: number;
     faqs: Faq[];
+    faqState = FaqState.ACCEPTED;
 
     filteredFaqs: Faq[];
     existingCategories: FaqCategory[];
@@ -83,7 +84,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     }
 
     private loadCourseExerciseCategories(courseId: number) {
-        loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
+        loadCourseFaqCategories(courseId, this.alertService, this.faqService, this.faqState).subscribe((existingCategories) => {
             this.existingCategories = existingCategories;
             this.hasCategories = existingCategories.length > 0;
         });
@@ -91,7 +92,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
     private loadFaqs() {
         this.faqService
-            .findAllByCourseIdAndState(this.courseId, FaqState.ACCEPTED)
+            .findAllByCourseIdAndState(this.courseId, this.faqState)
             .pipe(map((res: HttpResponse<Faq[]>) => res.body))
             .subscribe({
                 next: (res: Faq[]) => {

@@ -40,6 +40,9 @@ import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachm
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
+import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
+import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -100,7 +103,10 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new BoldAction(),
             new ItalicAction(),
             new UnderlineAction(),
+            new StrikethroughAction(),
             new EmojiAction(this.viewContainerRef, this.overlay, this.positionBuilder),
+            new BulletedListAction(),
+            new OrderedListAction(),
             new QuoteAction(),
             new CodeAction(),
             new CodeBlockAction(),
