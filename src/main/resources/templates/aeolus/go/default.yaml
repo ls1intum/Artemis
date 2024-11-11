@@ -1,0 +1,13 @@
+api: v0.0.1
+metadata:
+  name: "Go"
+  id: Go
+actions:
+  - name: test
+    script: |
+      cd "${testWorkingDirectory}"
+      go test -json 2>&1 | go-junit-report -parser gojson -out test-results.xml
+    results:
+      - name: Go Test Results
+        path: "${testWorkingDirectory}/test-results.xml"
+        type: junit
