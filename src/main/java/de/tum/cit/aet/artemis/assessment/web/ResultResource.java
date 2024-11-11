@@ -379,7 +379,7 @@ public class ResultResource {
      */
     @GetMapping("exercises/{exerciseId}/feedback-details-participation")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<Page<FeedbackAffectedStudentDTO>> getParticipationWithFeedback(@PathVariable long exerciseId, @RequestParam List<String> feedbackIds,
+    public ResponseEntity<Page<FeedbackAffectedStudentDTO>> getParticipationWithFeedback(@PathVariable long exerciseId, @RequestParam String feedbackIds,
             @ModelAttribute PageableSearchDTO<String> data) {
         Page<FeedbackAffectedStudentDTO> participation = resultService.getParticipationWithFeedbackId(exerciseId, feedbackIds, data);
         return ResponseEntity.ok(participation);

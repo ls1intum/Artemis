@@ -1234,7 +1234,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
                 SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
-                    GROUP_CONCAT(f.id),
+                    CAST(GROUP_CONCAT(f.id) AS string),
                     COUNT(f.id),
                     0,
                     f.detailText,

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -621,10 +622,8 @@ public class ResultService {
                 maxOccurrence, filterErrorCategories, pageable);
 
         // 10. Process and map feedback details, calculating relative count and assigning task names
-        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream()
-                .map(detail -> new FeedbackDetailDTO(List.of(String.valueOf(detail.concatenatedFeedbackIds()).split(",")), detail.count(),
-                        (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), detail.taskName(), detail.errorCategory()))
-                .toList();
+        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.concatenatedFeedbackIds(), detail.count(),
+                (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
         // 11. Predefined error categories available for filtering on the client side
         final List<String> ERROR_CATEGORIES = List.of("Student Error", "Ares Error", "AST Error");
 
@@ -671,8 +670,9 @@ public class ResultService {
      *         <li>Total count of affected students, allowing for pagination on the client side.</li>
      *         </ul>
      */
-    public Page<FeedbackAffectedStudentDTO> getParticipationWithFeedbackId(long exerciseId, List<String> feedbackIds, PageableSearchDTO<String> data) {
-        List<Long> feedbackIdLongs = feedbackIds.stream().map(Long::valueOf).toList();
+    public Page<FeedbackAffectedStudentDTO> getParticipationWithFeedbackId(long exerciseId, String feedbackIds, PageableSearchDTO<String> data) {
+        List<String> feedbackIdsList = Arrays.asList(feedbackIds.split(","));
+        List<Long> feedbackIdLongs = feedbackIdsList.stream().map(Long::valueOf).toList();
         PageRequest pageRequest = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.AFFECTED_STUDENTS);
         return studentParticipationRepository.findParticipationByFeedbackId(exerciseId, feedbackIdLongs, pageRequest);
     }

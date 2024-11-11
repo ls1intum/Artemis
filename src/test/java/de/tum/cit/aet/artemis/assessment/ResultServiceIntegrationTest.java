@@ -861,4 +861,5 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
         assertThat(maxCount).isEqualTo(2);
     }
+
 }
