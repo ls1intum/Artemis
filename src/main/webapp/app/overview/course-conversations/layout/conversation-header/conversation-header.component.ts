@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
-import { faChevronLeft, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
@@ -18,6 +18,8 @@ import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKe
 import { catchError } from 'rxjs/operators';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import { getAsOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -39,11 +41,13 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     activeConversationAsChannel?: ChannelDTO;
     channelSubTypeReferenceTranslationKey?: string;
     channelSubTypeReferenceRouterLink?: string;
+    otherUser?: ConversationUserDTO;
 
     faUserPlus = faUserPlus;
     faUserGroup = faUserGroup;
     faSearch = faSearch;
     faChevronLeft = faChevronLeft;
+    readonly faPeopleGroup = faPeopleGroup;
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
 
@@ -56,12 +60,20 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     ) {}
 
     getAsGroupChat = getAsGroupChatDTO;
+    getAsOneToOneChat = getAsOneToOneChatDTO;
 
     canAddUsers = canAddUsersToConversation;
 
     ngOnInit(): void {
         this.course = this.metisConversationService.course!;
         this.subscribeToActiveConversation();
+    }
+
+    getOtherUser() {
+        const conversation = getAsOneToOneChatDTO(this.activeConversation);
+        if (conversation) {
+            this.otherUser = conversation.members?.find((user) => !user.isRequestingUser);
+        }
     }
 
     ngOnDestroy() {
@@ -79,6 +91,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
             this.activeConversationAsChannel = getAsChannelDTO(conversation);
             this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.activeConversationAsChannel?.subType);
             this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.activeConversationAsChannel);
+            this.getOtherUser();
         });
     }
 

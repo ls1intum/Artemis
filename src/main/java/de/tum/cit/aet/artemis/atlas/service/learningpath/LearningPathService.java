@@ -138,7 +138,8 @@ public class LearningPathService {
     /**
      * Generate learning paths for all students enrolled in the course
      *
-     * @param course course the learning paths are created for
+     * @param course   course the learning paths are created for
+     * @param students students for which the learning paths are generated with eager loaded learner profiles
      */
     public void generateLearningPaths(@NotNull Course course, Set<User> students) {
         students.forEach(student -> generateLearningPathForUser(course, student));

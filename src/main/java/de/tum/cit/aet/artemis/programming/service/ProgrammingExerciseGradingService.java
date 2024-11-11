@@ -986,20 +986,35 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Calculates the statistics for the grading page.
+     * Generates grading statistics for a programming exercise.
+     * <p>
+     * This method compiles various statistics for a programming exercise identified by the provided exercise ID.
+     * It gathers data on the number of passed and failed tests per test case, as well as the number of issues
+     * detected in static code analysis per category. The results are encapsulated in a
+     * {@link ProgrammingExerciseGradingStatisticsDTO} object which includes:
+     * - The number of results processed
+     * - A map of test case names to their respective pass/fail statistics
+     * - A map of static code analysis category names to the number of students per issue count
+     * <p>
+     * The method performs the following steps:
+     * 1. Initializes statistics for the number of passed and failed tests per test case.
+     * 2. Initializes statistics for the number of students per amount of detected issues per category.
+     * 3. Fetches the latest automatic results for the exercise along with their feedback.
+     * 4. Processes each result to update test case statistics and detect issues per category.
+     * 5. Merges individual result statistics into overall statistics.
      *
-     * @param exerciseId The current exercise
-     * @return The statistics object
+     * @param exerciseId the ID of the exercise
+     * @return a {@link ProgrammingExerciseGradingStatisticsDTO} object containing the compiled grading statistics
      */
     public ProgrammingExerciseGradingStatisticsDTO generateGradingStatistics(Long exerciseId) {
-        // number of passed and failed tests per test case
+        // Initialize statistics for the number of passed and failed tests per test case
         final var testCases = testCaseRepository.findByExerciseId(exerciseId);
         final var testCaseStatsMap = new HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats>();
         for (ProgrammingExerciseTestCase testCase : testCases) {
             testCaseStatsMap.put(testCase.getTestName(), new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
         }
 
-        // number of students per amount of detected issues per category
+        // Initialize statistics for the number of students per amount of detected issues per category
         final Set<StaticCodeAnalysisCategory> categories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseId);
         final var categoryIssuesStudentsMap = new HashMap<String, Map<Integer, Integer>>();
         for (StaticCodeAnalysisCategory category : categories) {
@@ -1008,63 +1023,105 @@ public class ProgrammingExerciseGradingService {
 
         final var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(exerciseId);
         for (Result result : results) {
-            // number of detected issues per category for this result
-            final var categoryIssuesMap = new HashMap<String, Integer>();
-            for (var feedback : result.getFeedbacks()) {
-                addFeedbackToStatistics(categoryIssuesMap, testCaseStatsMap, feedback);
-            }
+            // Count the number of detected issues per category for the current result
+            final var categoryIssuesMap = categorizeStaticCodeAnalysisIssues(result);
 
+            // Update the statistics for each test case based on the feedback
+            updateTestCaseMapBasedOnResultFeedback(result, testCaseStatsMap);
+
+            // Merge the current result's category issues map into the overall map
             mergeCategoryIssuesMap(categoryIssuesStudentsMap, categoryIssuesMap);
         }
 
-        final var statistics = new ProgrammingExerciseGradingStatisticsDTO();
-        statistics.setNumParticipations(results.size());
-        statistics.setTestCaseStatsMap(testCaseStatsMap);
-        statistics.setCategoryIssuesMap(categoryIssuesStudentsMap);
-
-        return statistics;
+        return new ProgrammingExerciseGradingStatisticsDTO(results.size(), testCaseStatsMap, categoryIssuesStudentsMap);
     }
 
     /**
-     * Merges the result map of a single student with the overall issues map
+     * Categorizes static code analysis issues from a given result.
+     * <p>
+     * This method processes the feedbacks associated with the provided result to identify
+     * and count the occurrences of static code analysis issues for each category. The result
+     * is a map where the key is the category name and the value is the count of issues detected
+     * in that category.
      *
-     * @param issuesAllStudents   The overall issues map for all students
-     * @param issuesSingleStudent The issues map for one student
+     * @param result The {@link Result} object containing feedbacks to be analyzed
+     * @return A map where the key is the static code analysis category name and the value is the count of occurrences of issues in that category
      */
-    private void mergeCategoryIssuesMap(final Map<String, Map<Integer, Integer>> issuesAllStudents, final Map<String, Integer> issuesSingleStudent) {
-        for (var entry : issuesSingleStudent.entrySet()) {
-            final String category = entry.getKey();
-            final Integer issueCount = entry.getValue();
+    private static Map<String, Integer> categorizeStaticCodeAnalysisIssues(Result result) {
+        return result.getFeedbacks().stream()
+                // Filter the feedbacks to include only those that are related to static code analysis
+                .filter(Feedback::isStaticCodeAnalysisFeedback)
+                // Map each filtered feedback to its static code analysis category name
+                .map(Feedback::getStaticCodeAnalysisCategory)
+                // Filter out any empty category names to avoid counting them
+                .filter(categoryName -> !categoryName.isEmpty())
+                // Collect the results into a map where the key is the category name and the value is the count of occurrences
+                .collect(Collectors.toMap(
+                        // The key in the resulting map is the category name
+                        categoryName -> categoryName,
+                        // The initial value for each key is 1, representing the first occurrence
+                        categoryName -> 1,
+                        // If the key already exists, sum the existing value with the new value (i.e., increment the count)
+                        Integer::sum));
+    }
 
+    /**
+     * Updates the test case statistics map based on the feedback from a given result.
+     * <p>
+     * This method processes the feedbacks associated with the provided result to update
+     * the test case statistics map. It counts the number of positive and non-positive feedbacks
+     * for each test case and updates the corresponding entries in the provided test case statistics map.
+     *
+     * @param result           The {@link Result} object containing feedbacks to be analyzed
+     * @param testCaseStatsMap The map of test case names to their respective statistics (passed and failed counts)
+     */
+    private static void updateTestCaseMapBasedOnResultFeedback(Result result, HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap) {
+        result.getFeedbacks().stream()
+                // Filter the feedbacks to include only those that are automatic and have an assigned test case
+                .filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType()) && feedback.getTestCase() != null)
+                // Collect the filtered feedbacks into a map grouped by test case name, and partitioned by whether the feedback is positive
+                .collect(Collectors.groupingBy(
+                        // Group by the name of the test case associated with the feedback
+                        feedback -> feedback.getTestCase().getTestName(),
+                        // Partition each group into positive and non-positive feedbacks, and count the occurrences
+                        Collectors.partitioningBy(Feedback::isPositive, Collectors.counting())
+                // Process each entry in the resulting map
+                )).forEach((testName, partitionedFeedbacks) -> {
+                    // Get the count of positive feedbacks for the test case, defaulting to 0 if none exist
+                    long numPassed = partitionedFeedbacks.getOrDefault(true, 0L);
+                    // Get the count of non-positive feedbacks for the test case, defaulting to 0 if none exist
+                    long numFailed = partitionedFeedbacks.getOrDefault(false, 0L);
+                    // Ensure there is an entry for the test case in the testCaseStatsMap, initializing with zero passed and failed if absent
+                    testCaseStatsMap.putIfAbsent(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
+                    // Update the entry for the test case in the testCaseStatsMap, incrementing the passed and failed counts
+                    testCaseStatsMap.computeIfPresent(testName,
+                            // Create a new TestCaseStats object with the updated counts and replace the existing entry
+                            (key, stats) -> new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(stats.numPassed() + (int) numPassed, stats.numFailed() + (int) numFailed));
+                });
+    }
+
+    /**
+     * Merges the result map of a single student with the overall issues map.
+     * <p>
+     * This method updates the overall issues map for all students by incorporating the issues
+     * detected for a single student. Each category of issues is updated with the count of issues
+     * detected for that category and the number of students who had that count of issues.
+     *
+     * @param issuesAllStudents   The overall issues map for all students. The key is the category name,
+     *                                and the value is a map where the key is the issue count and the value
+     *                                is the number of students with that issue count.
+     * @param issuesSingleStudent The issues map for one student. The key is the category name, and the value
+     *                                is the number of issues detected in that category for this student.
+     */
+    private static void mergeCategoryIssuesMap(final Map<String, Map<Integer, Integer>> issuesAllStudents, final Map<String, Integer> issuesSingleStudent) {
+        // Iterate over each entry in the issues map for a single student
+        issuesSingleStudent.forEach((category, issueCount) -> {
+            // Ensure the overall issues map has an entry for the current category
             issuesAllStudents.putIfAbsent(category, new HashMap<>());
-
-            var issuesStudentsMap = issuesAllStudents.get(category);
-            issuesStudentsMap.putIfAbsent(issueCount, 0);
-            // add 1 to the number of students for the category & issues
-            issuesStudentsMap.merge(issueCount, 1, Integer::sum);
-        }
-    }
-
-    /**
-     * Analyses the feedback and updates the statistics maps
-     *
-     * @param categoryIssuesMap The issues map for sca statistics
-     * @param testCaseStatsMap  The map for test case statistics
-     * @param feedback          The given feedback object
-     */
-    private void addFeedbackToStatistics(final Map<String, Integer> categoryIssuesMap, final Map<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap,
-            final Feedback feedback) {
-        if (feedback.isStaticCodeAnalysisFeedback()) {
-            String categoryName = feedback.getStaticCodeAnalysisCategory();
-            if (categoryName.isEmpty()) {
-                return;
-            }
-            categoryIssuesMap.compute(categoryName, (category, count) -> count == null ? 1 : count + 1);
-        }
-        else if (FeedbackType.AUTOMATIC.equals(feedback.getType()) && feedback.getTestCase() != null) {
-            String testName = feedback.getTestCase().getTestName();
-            testCaseStatsMap.putIfAbsent(testName, new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(0, 0));
-            testCaseStatsMap.get(testName).updateWithFeedback(feedback);
-        }
+            // Ensure the category map has an entry for the current issue count with an initial value of 0
+            issuesAllStudents.get(category).putIfAbsent(issueCount, 0);
+            // Increment the number of students who had the current issue count for the current category by 1
+            issuesAllStudents.get(category).merge(issueCount, 1, Integer::sum);
+        });
     }
 }

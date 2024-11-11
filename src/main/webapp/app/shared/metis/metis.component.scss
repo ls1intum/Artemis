@@ -78,7 +78,7 @@ $delete-delay-duration: 6s;
 }
 
 .card {
-    border-radius: 1em;
+    border-radius: 0.25em;
 }
 
 @include media-breakpoint-down(sm) {
