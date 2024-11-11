@@ -132,6 +132,7 @@ public class LearningPathService {
      */
     public void generateLearningPaths(@NotNull Course course) {
         var students = userRepository.getStudentsWithLearnerProfile(course);
+        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
         generateLearningPaths(course, students);
     }
 

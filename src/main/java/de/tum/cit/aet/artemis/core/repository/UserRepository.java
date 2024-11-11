@@ -99,7 +99,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     @Query("""
             SELECT u
             FROM User u

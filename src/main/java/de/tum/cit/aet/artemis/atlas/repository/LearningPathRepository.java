@@ -81,10 +81,10 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
             LEFT JOIN FETCH l.user u
             LEFT JOIN FETCH u.learnerProfile lp
             LEFT JOIN FETCH lp.courseLearnerProfiles clp
-            WHERE lp.id = :learningPathId
+            WHERE l.id = :learningPathId
                 AND clp.course.id = l.course.id
             """)
-    Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(long learningPathId);
+    Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(@Param("learningPathId") long learningPathId);
 
     default LearningPath findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(long learningPathId) {
         return getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId), learningPathId);
