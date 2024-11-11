@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.communication;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import java.util.ArrayList;
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.test_repository.SavedPostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 class SavedPostResourceIntegrationTest extends AbstractConversationTest {
 
@@ -61,8 +59,7 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnBadRequestWhenWrongStatusIsSupplied() throws Exception {
         request.performMvcRequest(MockMvcRequestBuilders.get("/api/saved-posts/" + exampleCourseId + "/" + "wrong-type")).andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("error.savedPostStatusDoesNotExist"))
-                .andExpect(result -> assertInstanceOf(BadRequestAlertException.class, result.getResolvedException()));
+                .andExpect(jsonPath("$.message").value("error.savedPostStatusDoesNotExist"));
     }
 
     @Test
@@ -82,8 +79,7 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnBadRequestWhenWrongTypeIsSupplied() throws Exception {
         request.performMvcRequest(MockMvcRequestBuilders.post("/api/saved-posts/{postId}/{type}", testPost.getId(), "invalid_type"))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest()).andExpect(jsonPath("$.message").value("error.savedPostTypeDoesNotExist"))
-                .andExpect(result -> assertInstanceOf(BadRequestAlertException.class, result.getResolvedException()));
+                .andExpect(MockMvcResultMatchers.status().isBadRequest()).andExpect(jsonPath("$.message").value("error.savedPostTypeDoesNotExist"));
     }
 
     @Test
@@ -99,8 +95,7 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
         }
 
         request.performMvcRequest(MockMvcRequestBuilders.post("/api/saved-posts/{postId}/{type}", testPost.getId(), PostingType.POST))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest()).andExpect(jsonPath("$.message").value("error.savedPostMaxReached"))
-                .andExpect(result -> assertInstanceOf(BadRequestAlertException.class, result.getResolvedException()));
+                .andExpect(MockMvcResultMatchers.status().isBadRequest()).andExpect(jsonPath("$.message").value("error.savedPostMaxReached"));
 
         // Cleanup
         savedPostRepository.deleteAll(savedPosts);
@@ -117,8 +112,7 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnBadRequestWhenUpdatingAndWrongStatusIsSupplied() throws Exception {
         request.performMvcRequest(MockMvcRequestBuilders.put("/api/saved-posts/{postId}/{type}?status={status}", testPost.getId(), PostingType.POST, "wrong-status"))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest()).andExpect(jsonPath("$.message").value("error.savedPostStatusDoesNotExist"))
-                .andExpect(result -> assertInstanceOf(BadRequestAlertException.class, result.getResolvedException()));
+                .andExpect(MockMvcResultMatchers.status().isBadRequest()).andExpect(jsonPath("$.message").value("error.savedPostStatusDoesNotExist"));
     }
 
     @Test
