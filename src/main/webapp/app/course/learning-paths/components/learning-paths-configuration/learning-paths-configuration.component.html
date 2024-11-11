@@ -1,0 +1,41 @@
+<div>
+    <div class="row m-0 align-items-center justify-content-between">
+        <h5 class="m-0 col-md-auto p-0" jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.title"></h5>
+        @if (isEditMode()) {
+            <button id="save-learning-paths-configuration-button" class="btn btn-primary btn-sm col-md-auto" (click)="saveLearningPathsConfiguration()">
+                @if (isSaving()) {
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                }
+                <span jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.saveButtonLabel"></span>
+            </button>
+        } @else {
+            <button
+                id="edit-learning-paths-configuration-button"
+                class="btn btn-secondary btn-sm col-md-auto"
+                (click)="enableEditMode()"
+                jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.editButtonLabel"
+            ></button>
+        }
+    </div>
+    <hr class="my-2" />
+    <div class="row align-items-center m-0 learning-paths-management-container">
+        @if (isConfigLoading()) {
+            <div class="row justify-content-center p-2">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only" jhiTranslate="loading"></span>
+                </div>
+            </div>
+        } @else {
+            <input
+                id="include-all-graded-exercises-checkbox"
+                type="checkbox"
+                class="col-md-auto"
+                (change)="toggleIncludeAllGradedExercises()"
+                [checked]="includeAllGradedExercisesEnabled()"
+                [disabled]="!isEditMode()"
+            />
+            <label class="col-md-auto" jhiTranslate="artemisApp.learningPathManagement.learningPathsConfiguration.configuration.includeAllGradedExercises"></label>
+            <jhi-help-icon class="col-md-auto p-0" text="artemisApp.learningPathManagement.learningPathsConfiguration.configuration.includeAllGradedExercisesToolTip" />
+        }
+    </div>
+</div>

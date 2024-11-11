@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -28,9 +30,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -232,36 +236,31 @@ public class CourseCompetencyResource {
     }
 
     /**
-     * POST courses/{courseId}/course-competencies/import-all/{sourceCourseId} : Imports all course competencies of the source course (and optionally their relations) into another.
+     * POST courses/{courseId}/course-competencies/import-all : Imports all course competencies of the source course (and optionally their relations) into another.
      *
-     * @param courseId        the id of the course to import into
-     * @param sourceCourseId  the id of the course to import from
-     * @param importRelations if relations should be imported as well
+     * @param courseId      the id of the course to import into
+     * @param importOptions the options for the import
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported competencies (and relations)
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("courses/{courseId}/course-competencies/import-all/{sourceCourseId}")
+    @PostMapping("courses/{courseId}/course-competencies/import-all")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllCompetenciesFromCourse(@PathVariable long courseId, @PathVariable long sourceCourseId,
-            @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
-        log.info("REST request to all course competencies from course {} into course {}", sourceCourseId, courseId);
+    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllCompetenciesFromCourse(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
+            throws URISyntaxException {
+        log.info("REST request to all course competencies from course {} into course {}", importOptions.sourceCourseId(), courseId);
 
-        if (courseId == sourceCourseId) {
-            throw new BadRequestAlertException("Cannot import from a course into itself", "Course", "courseCycle");
+        if (importOptions.sourceCourseId().isEmpty()) {
+            throw new BadRequestAlertException("No source course specified", ENTITY_NAME, "noSourceCourse");
+        }
+        else if (courseId == importOptions.sourceCourseId().get()) {
+            throw new BadRequestAlertException("Cannot import from a course into itself", ENTITY_NAME, "courseCycle");
         }
         var targetCourse = courseRepository.findByIdElseThrow(courseId);
-        var sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
+        var sourceCourse = courseRepository.findByIdElseThrow(importOptions.sourceCourseId().get());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
-        var competencies = courseCompetencyRepository.findAllForCourse(sourceCourse.getId());
-        Set<CompetencyWithTailRelationDTO> importedCompetencies;
-
-        if (importRelations) {
-            importedCompetencies = courseCompetencyService.importCourseCompetenciesAndRelations(targetCourse, competencies);
-        }
-        else {
-            importedCompetencies = courseCompetencyService.importCourseCompetencies(targetCourse, competencies);
-        }
+        var competencies = courseCompetencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
+        Set<CompetencyWithTailRelationDTO> importedCompetencies = courseCompetencyService.importCourseCompetencies(targetCourse, competencies, importOptions);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
     }
@@ -352,6 +351,23 @@ public class CourseCompetencyResource {
         competencyGenerationService.executeCompetencyExtractionPipeline(user, course, input.courseDescription(), input.currentCompetencies());
 
         return ResponseEntity.accepted().build();
+    }
+
+    /**
+     * PATCH courses/:courseId/course-competencies/relations/:competencyRelationId update a relation type of an existing relation
+     *
+     * @param courseId                          the id of the course to which the competencies belong
+     * @param competencyRelationId              the id of the competency relation to update
+     * @param updateCourseCompetencyRelationDTO the new relation type
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PatchMapping("courses/{courseId}/course-competencies/relations/{competencyRelationId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> updateCompetencyRelation(@PathVariable long courseId, @PathVariable long competencyRelationId,
+            @RequestBody @Valid UpdateCourseCompetencyRelationDTO updateCourseCompetencyRelationDTO) {
+        log.info("REST request to update a competency relation: {}", competencyRelationId);
+        courseCompetencyService.updateCourseCompetencyRelation(courseId, competencyRelationId, updateCourseCompetencyRelationDTO);
+        return ResponseEntity.noContent().build();
     }
 
     /**

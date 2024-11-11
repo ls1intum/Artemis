@@ -105,6 +105,18 @@ public class TutorialGroup extends DomainObject {
     private String teachingAssistantName;
 
     /**
+     * This transient fields is set to the name of the teaching assistant of this tutorial group
+     */
+    @Transient
+    private Long teachingAssistantId;
+
+    /**
+     * This transient fields is set to the name of the teaching assistant of this tutorial group
+     */
+    @Transient
+    private String teachingAssistantImageUrl;
+
+    /**
      * This transient fields is set to the course title to which this tutorial group belongs
      */
     @Transient
@@ -290,8 +302,28 @@ public class TutorialGroup extends DomainObject {
         return teachingAssistantName;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty
+    public Long getTeachingAssistantId() {
+        return teachingAssistantId;
+    }
+
+    @JsonIgnore(false)
+    @JsonProperty
+    public String getTeachingAssistantImageUrl() {
+        return teachingAssistantImageUrl;
+    }
+
     public void setTeachingAssistantName(String teachingAssistantName) {
         this.teachingAssistantName = teachingAssistantName;
+    }
+
+    public void setTeachingAssistantId(Long teachingAssistantId) {
+        this.teachingAssistantId = teachingAssistantId;
+    }
+
+    public void setTeachingAssistantImageUrl(String teachingAssistantImageUrl) {
+        this.teachingAssistantImageUrl = teachingAssistantImageUrl;
     }
 
     @JsonIgnore(false)

@@ -1,7 +1,13 @@
-<div class="d-flex justify-content-between gap-3">
+<div class="d-flex justify-content-between">
     @if (course) {
         <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
-            <jhi-sidebar [itemSelected]="lectureSelected" [courseId]="courseId" [sidebarData]="sidebarData" [collapseState]="DEFAULT_COLLAPSE_STATE" />
+            <jhi-sidebar
+                [itemSelected]="lectureSelected"
+                [courseId]="courseId"
+                [sidebarData]="sidebarData"
+                [collapseState]="DEFAULT_COLLAPSE_STATE"
+                [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+            />
         </div>
 
         @if (lectureSelected) {

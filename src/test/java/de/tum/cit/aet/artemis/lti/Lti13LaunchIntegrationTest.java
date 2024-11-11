@@ -21,7 +21,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import io.jsonwebtoken.Jwts;
 
 /**
@@ -35,7 +34,7 @@ import io.jsonwebtoken.Jwts;
  * see <a href="https://www.imsglobal.org/spec/lti/v1p3/#lti-message-general-details">LTI message general details</a>
  * see <a href="https://www.imsglobal.org/spec/security/v1p0/#openid_connect_launch_flow">OpenId Connect launch flow</a>
  */
-class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class Lti13LaunchIntegrationTest extends AbstractLtiIntegrationTest {
 
     private static final SecretKey SIGNING_KEY = Jwts.SIG.HS256.key().build();
 

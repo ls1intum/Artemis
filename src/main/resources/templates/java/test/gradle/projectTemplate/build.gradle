@@ -28,7 +28,7 @@ dependencies {
     // testImplementation(':${exerciseNamePomXml}-Solution')
 }
 
-def assignmentSrcDir = "assignment/src"
+def assignmentSrcDir = "${studentWorkingDirectoryNoSlash}"
 def studentOutputDir = sourceSets.main.java.destinationDirectory.get()
 // %static-code-analysis-start%
 def scaConfigDirectory = "$projectDir/staticCodeAnalysisConfig"

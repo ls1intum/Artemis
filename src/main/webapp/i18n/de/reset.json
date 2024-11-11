@@ -8,11 +8,11 @@
             },
             "messages": {
                 "info": "Gib die E-Mail-Adresse ein, die du bei der Registrierung verwendest hast oder deinen Login.",
-                "success": "Eine E-Mail mit weiteren Instruktionen für das Zurücksetzen des Passworts wurde gesendet. Aus Sicherheitsgründen erscheint dieser Hinweis auch wenn der angegebene Account nicht existiert. Überprüfe deine Eingabe, wenn du keine E-Mail erhältst."
+                "success": "Eine E-Mail mit weiteren Instruktionen für das Zurücksetzen des Passworts wurde gesendet. Aus Sicherheitsgründen erscheint dieser Hinweis, auch wenn der angegebene Account nicht existiert. Überprüfe deine Eingabe, wenn du keine E-Mail erhältst."
             },
             "external": {
-                "explanation": "Deine Zugangsdaten sind nicht in Artemis sondern in {{provider}} gespeichert.",
-                "noLink": "Die Links zur Passwortzurücksetzung für {{provider}} wurden nicht eingestellt. Bitte benachrichtige den Administrator. Wenn du weißt wie du dein Passwort für {{provider}} zurücksetzen kannst, kannst du es selbst machen.",
+                "explanation": "Deine Zugangsdaten sind nicht in Artemis, sondern in {{provider}} gespeichert.",
+                "noLink": "Die Links zur Passwortzurücksetzung für {{provider}} wurden nicht eingestellt. Bitte benachrichtige den Administrator. Wenn du weißt, wie du dein Passwort für {{provider}} zurücksetzen kannst, kannst du es selbst machen.",
                 "hint": "Bitte setz dein Passwort über diesen Link zurück:",
                 "generalHint": "Wenn du Zugangsdaten von {{provider}} nutzt statt von Artemis, bitte setz dein Passwort hier zurück:",
                 "linkTitle": "Passwort Zurücksetzen",

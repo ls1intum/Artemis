@@ -18,11 +18,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.iris.domain.IrisTemplate;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -60,9 +59,9 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     protected void activateIrisGlobally() {
         var globalSettings = irisSettingsService.getGlobalSettings();
         activateSubSettings(globalSettings.getIrisChatSettings());
-        activateSubSettings(globalSettings.getIrisHestiaSettings());
         activateSubSettings(globalSettings.getIrisLectureIngestionSettings());
         activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
+        activateSubSettings(globalSettings.getIrisTextExerciseChatSettings());
         irisSettingsRepository.save(globalSettings);
     }
 
@@ -73,36 +72,29 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     private void activateSubSettings(IrisSubSettings settings) {
         settings.setEnabled(true);
-        settings.setPreferredModel(null);
-        settings.setAllowedModels(new TreeSet<>(Set.of("dummy")));
+        settings.setSelectedVariant("default");
+        settings.setAllowedVariants(new TreeSet<>(Set.of("default")));
     }
 
     protected void activateIrisFor(Course course) {
         var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
 
         activateSubSettings(courseSettings.getIrisChatSettings());
-        courseSettings.getIrisChatSettings().setTemplate(createDummyTemplate());
-
-        activateSubSettings(courseSettings.getIrisHestiaSettings());
-        courseSettings.getIrisHestiaSettings().setTemplate(createDummyTemplate());
 
         activateSubSettings(courseSettings.getIrisCompetencyGenerationSettings());
-        courseSettings.getIrisCompetencyGenerationSettings().setTemplate(createDummyTemplate());
 
         activateSubSettings(courseSettings.getIrisLectureIngestionSettings());
+
+        activateSubSettings(courseSettings.getIrisTextExerciseChatSettings());
 
         irisSettingsRepository.save(courseSettings);
     }
 
-    protected void activateIrisFor(ProgrammingExercise exercise) {
+    protected void activateIrisFor(Exercise exercise) {
         var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
         activateSubSettings(exerciseSettings.getIrisChatSettings());
-        exerciseSettings.getIrisChatSettings().setTemplate(createDummyTemplate());
+        activateSubSettings(exerciseSettings.getIrisTextExerciseChatSettings());
         irisSettingsRepository.save(exerciseSettings);
-    }
-
-    protected IrisTemplate createDummyTemplate() {
-        return new IrisTemplate("Hello World");
     }
 
     /**

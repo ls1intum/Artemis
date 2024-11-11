@@ -1,10 +1,11 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { irisExercise, mockClientMessage, mockConversation, mockServerMessage } from '../../helpers/sample/iris-sample-data';
 import { IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { IrisChatHttpService } from 'app/iris/iris-chat-http.service';
 import { ChatServiceMode } from 'app/iris/iris-chat.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Iris Chat Http Service', () => {
     let service: IrisChatHttpService;
@@ -12,8 +13,8 @@ describe('Iris Chat Http Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [IrisChatHttpService],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), IrisChatHttpService],
         });
         service = TestBed.inject(IrisChatHttpService);
         httpMock = TestBed.inject(HttpTestingController);

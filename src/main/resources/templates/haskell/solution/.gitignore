@@ -28,6 +28,8 @@ cabal.project.local~
 
 
 ### Eclipse
+.project
+.classpath
 .metadata
 bin/
 tmp/

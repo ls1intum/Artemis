@@ -72,7 +72,7 @@
             },
             "useAsExampleSubmissionVerificationQuestion": "Are you sure to import this submission as an example submission?",
             "messages": {
-                "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted and the submission will be available for assessment to other tutors again.",
+                "confirmCancel": "Are you sure you want to cancel the assessment? Your current assessment progress will be deleted, and the submission will be available for assessment to other tutors again.",
                 "acceptComplaintWithoutMoreScore": "Are you sure you want to accept the complaint without giving the student more points?",
                 "loadSubmissionFailed": "Retrieving requested submission failed.",
                 "submitSuccessful": "Your assessment was submitted successfully!",
@@ -84,7 +84,7 @@
             },
             "dashboard": {
                 "warning": "Warning: The submission period is not over yet and students are still allowed to submit their solutions. Please do not start with the assessment yet!",
-                "warningIndividual": "Warning: The general submission period is over but some students with individual due dates are still allowed to submit their solutions. Please check if that is the case for the participation you want to assess.",
+                "warningIndividual": "Warning: The general submission period is over, but some students with individual due dates are still allowed to submit their solutions. Please check if that is the case for the participation you want to assess.",
                 "empty": "No Submissions found!",
                 "emptySearch": "Please enter a student name to find submissions.",
                 "loading": "Loading...",

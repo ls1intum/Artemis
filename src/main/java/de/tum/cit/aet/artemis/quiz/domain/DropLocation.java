@@ -128,6 +128,10 @@ public class DropLocation extends TempIdObject implements QuizQuestionComponent<
         this.invalid = invalid;
     }
 
+    public void setMappings(Set<DragAndDropMapping> mappings) {
+        this.mappings = mappings;
+    }
+
     /**
      * check if the DropLocation is solved correctly
      *

@@ -3,8 +3,8 @@ import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
-import { Competency } from 'app/entities/competency.model';
+import { UPLOAD_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 
 export interface AttachmentUnitFormData {
@@ -19,7 +19,7 @@ export interface FormProperties {
     releaseDate?: dayjs.Dayjs;
     version?: number;
     updateNotificationText?: string;
-    competencies?: Competency[];
+    competencyLinks?: CompetencyLectureUnitLink[];
 }
 
 // file input is a special case and is not included in the reactive form structure
@@ -39,9 +39,9 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     isEditMode = false;
 
     // A human-readable list of allowed file extensions
-    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
+    readonly allowedFileExtensions = UPLOAD_FILE_EXTENSIONS.join(', ');
     // The list of file extensions for the "accept" attribute of the file input field
-    readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+    readonly acceptedFileExtensionsFileBrowser = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
 
     faQuestionCircle = faQuestionCircle;
 
@@ -90,7 +90,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             releaseDate: [undefined as dayjs.Dayjs | undefined],
             version: [{ value: 1, disabled: true }],
             updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
-            competencies: [undefined as Competency[] | undefined],
+            competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
         });
     }
 

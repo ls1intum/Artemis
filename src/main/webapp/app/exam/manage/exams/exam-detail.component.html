@@ -87,6 +87,8 @@
                             jhiDeleteButton
                             [buttonSize]="buttonSize"
                             [entityTitle]="exam.title || ''"
+                            entitySummaryTitle="artemisApp.examManagement.delete.summary.title"
+                            [fetchEntitySummary]="fetchExamDeletionSummary()"
                             deleteQuestion="artemisApp.examManagement.delete.question"
                             deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
                             (delete)="deleteExam(exam.id!)"

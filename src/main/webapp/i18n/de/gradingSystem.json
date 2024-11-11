@@ -48,14 +48,14 @@
             "add": "Notenstufe hinzufügen",
             "save": "Speichern",
             "stickyGradeStep": "Der letzte Notenschritt ist immer offen, um Punkte zu verarbeiten, die das Maximum überschreiten. Es klebt am Boden.",
-            "plagiarismGradeHelp": "Diese Note wird vergeben, wenn bei einen Studierenden in einer beliebigen Übung ein \"Unterschleif\" festgestellt wurde.",
+            "plagiarismGradeHelp": "Diese Note wird vergeben, wenn bei einem Studierenden in einer beliebigen Übung ein \"Unterschleif\" festgestellt wurde.",
             "noParticipationGradeHelp": "Diese besondere Note für Nichtbestehen wird vergeben, wenn ein Student nicht teilgenommen hat. Bei Kursen bedeutet dies, dass der Studierende keine Übung begonnen hat. Bei Prüfungen bedeutet dies, dass der Studierende nicht begonnen oder nicht abgegeben hat.",
             "defaultGradeName": "Standard: {{default}}",
             "info": {
                 "title": "Hilfe zum Notenschlüssel",
                 "general": {
                     "title": "Allgemeine Informationen",
-                    "explanation": "Ein Notenschlüssel besteht aus Notenstufen, die alle möglichen Prozentwerte von 0 bis 100 abdecken. Alle benachbarten Notenstufen sollten sich an ihren Schranken überschneiden (Beispiel: Notenstufen (60, 70) und (70, 80) überschneiden sich bei 70%). Welche Notenstufe diese Schranke einschließt, wird durch die \"Inklusivität\" bestimmt. Alle Notenstufen haben außerdem entweder einen Namen (1,0, Ausreichend, A,...) oder eine damit verbundene Anzahl an Bonuspunkten (5, 10,..), abhängig von dem \"Notentyp\""
+                    "explanation": "Ein Notenschlüssel besteht aus Notenstufen, die alle möglichen Prozentwerte von 0 bis 100 abdecken. Alle benachbarten Notenstufen sollten sich an ihren Schranken überschneiden (Beispiel: Notenstufen (60, 70) und (70, 80) überschneiden sich bei 70 %). Welche Notenstufe diese Schranke einschließt, wird durch die \"Inklusivität\" bestimmt. Alle Notenstufen haben außerdem entweder einen Namen (1,0, Ausreichend, A,...) oder eine damit verbundene Anzahl an Bonuspunkten (5, 10,..), abhängig von dem \"Notentyp\""
                 },
                 "maxPoints": {
                     "title": "Maximale Punktzahl",
@@ -67,7 +67,7 @@
                 },
                 "inclusivity": {
                     "title": "Inklusivität",
-                    "explanation": "Legt fest, ob die Min. % einer Notenstufe einbezogen und die Max. % ausgeschlossen wird oder umgekehrt (Ausnahme - 0% und 100% werden immer in der ersten bzw. letzten Notenstufe einbezogen). Beispiel: Ein Wert von 60 % wird einer Notenstufe mit einem Bereich von 60 % - 70 % zugeordnet, wenn \"Untere Schranke inklusiv\" für die Inklusivität eingestellt ist, aber nicht, wenn \"Obere Schranke inklusiv\" für die Inklusivität eingestellt ist (in diesem Fall würde er der vorherigen Notenstufe zugeordnet werden)"
+                    "explanation": "Legt fest, ob die Min. % einer Notenstufe einbezogen und die Max. % ausgeschlossen wird oder umgekehrt (Ausnahme - 0 % und 100 % werden immer in der ersten bzw. letzten Notenstufe einbezogen). Beispiel: Ein Wert von 60 % wird einer Notenstufe mit einem Bereich von 60 % - 70 % zugeordnet, wenn \"Untere Schranke inklusiv\" für die Inklusivität eingestellt ist, aber nicht, wenn \"Obere Schranke inklusiv\" für die Inklusivität eingestellt ist (in diesem Fall würde er der vorherigen Notenstufe zugeordnet werden)"
                 },
                 "firstPassingGrade": {
                     "title": "Erste bestehende Note",

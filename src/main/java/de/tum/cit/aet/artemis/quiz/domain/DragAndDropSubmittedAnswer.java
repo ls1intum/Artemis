@@ -76,7 +76,6 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
      * @param question the changed question with the changed DragItems and DropLocations
      */
     private void checkAndDeleteMappings(DragAndDropQuestion question) {
-
         if (question != null) {
             // Check if a dragItem or dropLocation was deleted and delete reference to it in mappings
             Set<DragAndDropMapping> selectedMappingsToDelete = new HashSet<>();
@@ -98,7 +97,6 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
      */
     @Override
     public void checkAndDeleteReferences(QuizExercise quizExercise) {
-
         // Delete all references to question, dropLocations and dragItem if the question was deleted
         if (!quizExercise.getQuizQuestions().contains(getQuizQuestion())) {
             setQuizQuestion(null);

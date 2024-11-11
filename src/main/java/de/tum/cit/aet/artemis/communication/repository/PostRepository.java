@@ -45,4 +45,8 @@ public interface PostRepository extends ArtemisJpaRepository<Post, Long>, JpaSpe
     default Post findPostOrMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {
         return getValueElseThrow(findById(postId), postId);
     }
+
+    List<Post> findAllByConversationId(Long conversationId);
+
+    List<Post> findAllByCourseId(Long courseId);
 }
