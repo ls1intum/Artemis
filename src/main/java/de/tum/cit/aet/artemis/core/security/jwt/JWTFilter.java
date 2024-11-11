@@ -68,13 +68,7 @@ public class JWTFilter extends GenericFilterBean {
             return null;
         }
 
-        String jwtToken;
-        if (cookie != null) {
-            jwtToken = getJwtFromCookie(cookie);
-        }
-        else {
-            jwtToken = getJwtFromBearer(authHeader);
-        }
+        String jwtToken = cookie != null ? getJwtFromCookie(cookie) : getJwtFromBearer(authHeader);
 
         if (!isJwtValid(tokenProvider, jwtToken)) {
             return null;
