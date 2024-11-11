@@ -32,14 +32,14 @@ describe('SshUserSettingsComponent', () => {
     };
     let sshServiceMock: {
         deleteSshPublicKey: jest.Mock;
-        getAllSshPublicKeys: jest.Mock;
+        getSshPublicKeys: jest.Mock;
     };
     let translateService: TranslateService;
 
     beforeEach(async () => {
         sshServiceMock = {
             deleteSshPublicKey: jest.fn(),
-            getAllSshPublicKeys: jest.fn(),
+            getSshPublicKeys: jest.fn(),
         };
         alertServiceMock = {
             error: jest.fn(),
@@ -60,23 +60,23 @@ describe('SshUserSettingsComponent', () => {
     });
 
     it('should initialize with User without keys', async () => {
-        sshServiceMock.getAllSshPublicKeys.mockReturnValue(of([] as UserSshPublicKey[]));
+        sshServiceMock.getSshPublicKeys.mockReturnValue(of([] as UserSshPublicKey[]));
         comp.ngOnInit();
-        expect(sshServiceMock.getAllSshPublicKeys).toHaveBeenCalled();
+        expect(sshServiceMock.getSshPublicKeys).toHaveBeenCalled();
         expect(comp.keyCount).toBe(0);
     });
 
     it('should initialize with User with keys', async () => {
-        sshServiceMock.getAllSshPublicKeys.mockReturnValue(of(mockedUserSshKeys as UserSshPublicKey[]));
+        sshServiceMock.getSshPublicKeys.mockReturnValue(of(mockedUserSshKeys as UserSshPublicKey[]));
         comp.ngOnInit();
-        expect(sshServiceMock.getAllSshPublicKeys).toHaveBeenCalled();
+        expect(sshServiceMock.getSshPublicKeys).toHaveBeenCalled();
         expect(comp.sshPublicKeys).toHaveLength(2);
         expect(comp.sshPublicKeys[0].publicKey).toEqual(mockKey);
         expect(comp.keyCount).toBe(2);
     });
 
     it('should delete SSH key', async () => {
-        sshServiceMock.getAllSshPublicKeys.mockReturnValue(of(mockedUserSshKeys as UserSshPublicKey[]));
+        sshServiceMock.getSshPublicKeys.mockReturnValue(of(mockedUserSshKeys as UserSshPublicKey[]));
         sshServiceMock.deleteSshPublicKey.mockReturnValue(of(new HttpResponse({ status: 200 })));
         comp.ngOnInit();
         comp.deleteSshKey(mockedUserSshKeys[0]);
@@ -84,7 +84,7 @@ describe('SshUserSettingsComponent', () => {
     });
 
     it('should fail to load SSH keys', () => {
-        sshServiceMock.getAllSshPublicKeys.mockReturnValue(throwError(() => new HttpResponse({ body: new Blob() })));
+        sshServiceMock.getSshPublicKeys.mockReturnValue(throwError(() => new HttpResponse({ body: new Blob() })));
         comp.ngOnInit();
         expect(comp.keyCount).toBe(0);
         expect(alertServiceMock.error).toHaveBeenCalled();
