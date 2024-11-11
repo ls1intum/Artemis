@@ -36,6 +36,13 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
     @EntityGraph(type = LOAD, attributePaths = { "competencies" })
     Optional<LearningPath> findWithEagerCompetenciesByCourseIdAndUserId(long courseId, long userId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "course" })
+    Optional<LearningPath> findWithEagerCourseById(long learningPathId);
+
+    default LearningPath findWithEagerCourseByIdElseThrow(long learningPathId) {
+        return getValueElseThrow(findWithEagerCourseById(learningPathId), learningPathId);
+    }
+
     @EntityGraph(type = LOAD, attributePaths = { "course", "competencies" })
     Optional<LearningPath> findWithEagerCourseAndCompetenciesById(long learningPathId);
 
@@ -73,12 +80,13 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
             LEFT JOIN FETCH el.exercise
             LEFT JOIN FETCH l.user u
             LEFT JOIN FETCH u.learnerProfile lp
-            LEFT JOIN FETCH lp.courseLearnerProfiles clp ON clp.course.id = l.course.id
+            LEFT JOIN FETCH lp.courseLearnerProfiles clp
             WHERE lp.id = :learningPathId
+                AND clp.course.id = l.course.id
             """)
-    Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfile(long learningPathId);
+    Optional<LearningPath> findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(long learningPathId);
 
     default LearningPath findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(long learningPathId) {
-        return getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfile(learningPathId), learningPathId);
+        return getValueElseThrow(findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId), learningPathId);
     }
 }

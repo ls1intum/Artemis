@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
@@ -15,7 +16,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * @param type      the type of the learning object
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LearningPathNavigationObjectDTO(long id, boolean completed, String name, long competencyId, LearningObjectType type, boolean unreleased) {
+public record LearningPathNavigationObjectDTO(long id, boolean completed, String name, long competencyId, LearningObjectType type, boolean repeatedTest, boolean unreleased) {
 
     /**
      * Create a navigation object DTO from a learning object.
@@ -24,7 +25,7 @@ public record LearningPathNavigationObjectDTO(long id, boolean completed, String
      * @param completed      whether the learning object is completed by the user
      * @return the navigation object DTO
      */
-    public static LearningPathNavigationObjectDTO of(LearningObject learningObject, boolean completed, long competencyId) {
+    public static LearningPathNavigationObjectDTO of(LearningObject learningObject, boolean repeatedTest, boolean completed, long competencyId) {
         long id = learningObject.getId();
         String name;
         LearningObjectType type;
@@ -44,10 +45,28 @@ public record LearningPathNavigationObjectDTO(long id, boolean completed, String
 
         name = unreleased ? "" : name;
 
-        return new LearningPathNavigationObjectDTO(id, completed, name, competencyId, type, unreleased);
+        return new LearningPathNavigationObjectDTO(id, completed, name, competencyId, type, repeatedTest, unreleased);
     }
 
     public enum LearningObjectType {
         LECTURE, EXERCISE
+    }
+
+    public boolean equalsLearningObject(LearningObject learningObject, CourseCompetency competency) {
+        if (learningObject == null) {
+            return false;
+        }
+        if (id != learningObject.getId()) {
+            return false;
+        }
+        if (competencyId != competency.getId()) {
+            return false;
+        }
+
+        return switch (learningObject) {
+            case LectureUnit ignored -> type == LearningObjectType.LECTURE;
+            case Exercise ignored -> type == LearningObjectType.EXERCISE;
+            default -> false;
+        };
     }
 }

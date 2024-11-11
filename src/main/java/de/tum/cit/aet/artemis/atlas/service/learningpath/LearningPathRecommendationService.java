@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore.INCLUDED_AS_BONUS;
 import static de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore.INCLUDED_COMPLETELY;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -107,6 +109,8 @@ public class LearningPathRecommendationService {
 
     private static final double COMPETENCY_LINK_WEIGHT_TO_GRADE_AIM_RATIO = 2;
 
+    private static final int MIN_DAYS_BETWEEN_REPETITION = 7;
+
     protected LearningPathRecommendationService(CompetencyRelationRepository competencyRelationRepository, LearningObjectService learningObjectService,
             ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository) {
         this.competencyRelationRepository = competencyRelationRepository;
@@ -145,43 +149,167 @@ public class LearningPathRecommendationService {
     }
 
     /**
-     * Gets the first learning object of a learning path
+     * Determines the competencies that should be repeated by the user based on the course learner profile.
      *
-     * @param user                the user that should be analyzed
-     * @param recommendationState the current state of the learning path recommendation
-     * @return the next due learning object of learning path
+     * @param recommendationState  the current state of the recommendation system
+     * @param courseLearnerProfile the course learner profile of the user
+     * @return the competencies that should be repeated
      */
-    public LearningObject getFirstLearningObject(User user, RecommendationState recommendationState) {
-        for (long competencyId : recommendationState.recommendedOrderOfCompetencies) {
-            var competency = recommendationState.competencyIdMap.get(competencyId);
-            var recommendedOrderOfLearningObjects = getRecommendedOrderOfLearningObjects(user, competency, recommendationState);
-            if (!recommendedOrderOfLearningObjects.isEmpty()) {
-                return recommendedOrderOfLearningObjects.getFirst();
+    public List<CourseCompetency> determineCompetenciesForRepeatedTests(RecommendationState recommendationState, CourseLearnerProfile courseLearnerProfile) {
+        return recommendationState.competencyIdMap.values().stream().filter(competency -> {
+            Optional<CompetencyProgress> progress = competency.getUserProgress().stream().findAny();
+            if (progress.isEmpty()) {
+                return false;
+            }
+
+            int repetitionThresholdDays;
+            if (competency.getSoftDueDate() != null) {
+                int daysSinceSoftDueDate = (int) ((ZonedDateTime.now().toEpochSecond() - competency.getSoftDueDate().toEpochSecond()) / (24 * 60 * 60));
+                repetitionThresholdDays = Math.max(MIN_DAYS_BETWEEN_REPETITION, daysSinceSoftDueDate / (courseLearnerProfile.getTimeInvestment() + 1));
+            }
+            else {
+                repetitionThresholdDays = MIN_DAYS_BETWEEN_REPETITION;
+            }
+            Instant repetitionThreshold = Instant.now().minus(repetitionThresholdDays, ChronoUnit.DAYS);
+
+            return progress.get().getLastModifiedDate().isBefore(repetitionThreshold);
+        }).sorted(Comparator.comparing(competency -> competency.getUserProgress().stream().findAny().orElseThrow().getLastModifiedDate())).toList();
+    }
+
+    /**
+     * Finds the next learning object in the learning path
+     *
+     * @param user                         the user that should get the recommendation
+     * @param recommendationState          the current state of the recommendation system
+     * @param competenciesForRepeatedTests the competencies that should be repeated
+     * @param currentLearningObject        the current learning object or null if the first learning object should be recommended
+     * @return the recommended learning object
+     */
+    public LearningPathNavigationObjectDTO findLearningObject(User user, RecommendationState recommendationState, List<CourseCompetency> competenciesForRepeatedTests,
+            LearningPathNavigationObjectDTO currentLearningObject) {
+        Long firstCompetencyId = recommendationState.recommendedOrderOfCompetencies().getFirst();
+
+        // Finished learning path or finished last competency -> try to find a competency for repetition
+        if (firstCompetencyId == null) {
+            return findLearningObjectInCompetencies(user, recommendationState, competenciesForRepeatedTests, true, currentLearningObject);
+        }
+        else if (recommendationState.competencyMastery().get(firstCompetencyId) == 0) {
+            var learningObject = findLearningObjectInCompetencies(user, recommendationState, competenciesForRepeatedTests, true, currentLearningObject);
+            if (learningObject != null) {
+                return learningObject;
+            }
+        }
+
+        List<CourseCompetency> competencies = recommendationState.recommendedOrderOfCompetencies().stream().map(recommendationState.competencyIdMap()::get).toList();
+        return findLearningObjectInCompetencies(user, recommendationState, competencies, false, currentLearningObject);
+    }
+
+    /**
+     * Finds the next learning object in the provided competencies. If the current learning object is provided, next learning object must come after it.
+     *
+     * @param user                  the user that should get the recommendation
+     * @param recommendationState   the current state of the recommendation system
+     * @param competencies          the competencies that should be considered
+     * @param repeatedTest          whether the learning object should be repeated
+     * @param currentLearningObject the current learning object or null if the first learning object should be recommended
+     * @return the recommended learning object
+     */
+    private LearningPathNavigationObjectDTO findLearningObjectInCompetencies(User user, RecommendationState recommendationState, List<CourseCompetency> competencies,
+            boolean repeatedTest, LearningPathNavigationObjectDTO currentLearningObject) {
+        boolean foundCurrentLearningObject = currentLearningObject == null;
+        for (CourseCompetency competency : competencies) {
+            List<LearningObject> learningObjects = getRecommendedOrderOfLearningObjects(user, competency, recommendationState, repeatedTest);
+            for (LearningObject learningObject : learningObjects) {
+                if (currentLearningObject != null && currentLearningObject.equalsLearningObject(learningObject, competency)) {
+                    foundCurrentLearningObject = true;
+                    continue;
+                }
+                else if (!foundCurrentLearningObject) {
+                    continue;
+                }
+
+                return LearningPathNavigationObjectDTO.of(learningObject, repeatedTest, learningObjectService.isCompletedByUser(learningObject, user), competency.getId());
             }
         }
         return null;
     }
 
     /**
-     * Gets the last learning object of a learning path
+     * Finds the previous learning object.
      *
-     * @param user                the user that should be analyzed
-     * @param recommendationState the current state of the learning path recommendation
-     * @return the last learning object of the learning path
+     * @param learningPath          the learning path that should be analyzed
+     * @param recommendationState   the current state of the recommendation system
+     * @param currentLearningObject the current learning object the navigation should be relative to
+     * @return the previously recommended learning object
      */
-    public LearningObject getLastLearningObject(User user, RecommendationState recommendationState) {
-        LearningObject learningObject = null;
-        int indexOfLastCompletedCompetency = recommendationState.recommendedOrderOfCompetencies().size() - 1;
-        while (learningObject == null && indexOfLastCompletedCompetency >= 0) {
-            var lastCompletedCompetencyId = recommendationState.recommendedOrderOfCompetencies().get(indexOfLastCompletedCompetency);
-            var lastCompletedCompetency = recommendationState.competencyIdMap().get(lastCompletedCompetencyId);
-            var recommendedLearningObjectsInLastCompetency = getOrderOfLearningObjectsForCompetency(lastCompletedCompetency, user);
-            if (!recommendedLearningObjectsInLastCompetency.isEmpty()) {
-                learningObject = recommendedLearningObjectsInLastCompetency.getLast();
+    public LearningPathNavigationObjectDTO findPreviousLearningObject(LearningPath learningPath, RecommendationState recommendationState,
+            LearningPathNavigationObjectDTO currentLearningObject) {
+        if (currentLearningObject != null && !currentLearningObject.repeatedTest()) {
+            CourseCompetency currentCompetency = recommendationState.competencyIdMap().get(currentLearningObject.competencyId());
+            List<LearningObject> learnObjectsOfCurrentCompetency = getOrderOfLearningObjectsForCompetency(currentCompetency, learningPath.getUser());
+            LearningPathNavigationObjectDTO previousLearningObject = getPreviousLearningObjectInCompetency(learningPath, currentLearningObject, currentCompetency,
+                    learnObjectsOfCurrentCompetency);
+            if (previousLearningObject != null) {
+                return previousLearningObject;
             }
-            indexOfLastCompletedCompetency--;
         }
-        return learningObject;
+
+        RecommendationState recommendationStateWithAllCompetencies = getRecommendedOrderOfAllCompetencies(learningPath);
+        int indexToSearch;
+        if (currentLearningObject == null || currentLearningObject.repeatedTest()) {
+            Optional<CourseCompetency> firstNonMasteredCompetency = recommendationStateWithAllCompetencies.recommendedOrderOfCompetencies().stream()
+                    .map(recommendationState.competencyIdMap::get)
+                    .filter(competency -> recommendationState.competencyMastery().get(competency.getId()) >= competency.getMasteryThreshold()).findFirst();
+            CourseCompetency competencyToSearch = firstNonMasteredCompetency
+                    .orElse(recommendationState.competencyIdMap().get(recommendationState.recommendedOrderOfCompetencies().getLast()));
+            indexToSearch = recommendationStateWithAllCompetencies.recommendedOrderOfCompetencies().indexOf(competencyToSearch.getId());
+        }
+        else {
+            indexToSearch = recommendationStateWithAllCompetencies.recommendedOrderOfCompetencies().indexOf(currentLearningObject.competencyId());
+        }
+
+        for (int i = indexToSearch; i >= 0; i--) {
+            CourseCompetency competency = recommendationStateWithAllCompetencies.competencyIdMap()
+                    .get(recommendationStateWithAllCompetencies.recommendedOrderOfCompetencies().get(i));
+
+            List<LearningObject> learningObjects = getOrderOfLearningObjectsForCompetency(competency, learningPath.getUser());
+            if (!learningObjects.isEmpty()) {
+                if (i == indexToSearch && currentLearningObject != null && !currentLearningObject.repeatedTest()) {
+                    LearningPathNavigationObjectDTO previousLearningObject = getPreviousLearningObjectInCompetency(learningPath, currentLearningObject, competency,
+                            learningObjects);
+                    if (previousLearningObject != null) {
+                        return previousLearningObject;
+                    }
+                }
+                else {
+                    LearningObject lastLearningObject = learningObjects.getLast();
+                    return LearningPathNavigationObjectDTO.of(lastLearningObject, false, learningObjectService.isCompletedByUser(lastLearningObject, learningPath.getUser()),
+                            competency.getId());
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds the previous learning object.
+     *
+     * @param learningPath          the learning path that should be analyzed
+     * @param currentLearningObject the current learning object the navigation should be relative to
+     * @param competency            the competency to look for the previous learning object
+     * @param learningObjects       the learning objects of the competency
+     * @return the previously recommended learning object
+     */
+    private LearningPathNavigationObjectDTO getPreviousLearningObjectInCompetency(LearningPath learningPath, LearningPathNavigationObjectDTO currentLearningObject,
+            CourseCompetency competency, List<LearningObject> learningObjects) {
+        for (int j = 1; j < learningObjects.size(); j++) {
+            if (currentLearningObject.equalsLearningObject(learningObjects.get(j), competency)) {
+                LearningObject previousLearningObject = learningObjects.get(j - 1);
+                return LearningPathNavigationObjectDTO.of(previousLearningObject, false, learningObjectService.isCompletedByUser(previousLearningObject, learningPath.getUser()),
+                        competency.getId());
+            }
+        }
+        return null;
     }
 
     /**
@@ -470,9 +598,9 @@ public class LearningPathRecommendationService {
      * @param state      the current state of the recommendation
      * @return the recommended ordering of learning objects
      */
-    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, CourseCompetency competency, RecommendationState state) {
+    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, CourseCompetency competency, RecommendationState state, boolean repeatedTests) {
         final var combinedPriorConfidence = computeCombinedPriorConfidence(competency, state);
-        return getRecommendedOrderOfLearningObjects(user, competency, combinedPriorConfidence);
+        return getRecommendedOrderOfLearningObjects(user, competency, combinedPriorConfidence, repeatedTests);
     }
 
     /**
@@ -484,12 +612,12 @@ public class LearningPathRecommendationService {
      * @param combinedPriorConfidence the combined confidence of the user for the prior competencies
      * @return the recommended ordering of learning objects
      */
-    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, CourseCompetency competency, double combinedPriorConfidence) {
+    public List<LearningObject> getRecommendedOrderOfLearningObjects(User user, CourseCompetency competency, double combinedPriorConfidence, boolean repeatedTests) {
         var learnerProfile = user.getLearnerProfile();
         var courseLearnerProfile = learnerProfile.getCourseLearnerProfiles().stream().findFirst().orElse(new CourseLearnerProfile());
 
-        var pendingLectureUnits = competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).filter(lectureUnit -> !lectureUnit.isCompletedFor(user))
-                .toList();
+        var pendingLectureUnits = competency.getLectureUnitLinks().stream().sorted(Comparator.comparingDouble(CompetencyLectureUnitLink::getWeight).reversed())
+                .map(CompetencyLectureUnitLink::getLectureUnit).filter(lectureUnit -> !lectureUnit.isCompletedFor(user)).toList();
         List<LearningObject> recommendedOrder = new ArrayList<>(pendingLectureUnits);
 
         // early return if competency can be trivially mastered
@@ -500,9 +628,11 @@ public class LearningPathRecommendationService {
         final var optionalCompetencyProgress = competency.getUserProgress().stream().findAny();
         final double weightedConfidence = computeWeightedConfidence(combinedPriorConfidence, optionalCompetencyProgress);
 
-        final var numberOfRequiredExercisePointsToMaster = calculateNumberOfExercisePointsRequiredToMaster(user, competency, weightedConfidence);
+        var numberOfRequiredExercisePointsToMaster = calculateNumberOfExercisePointsRequiredToMaster(user, competency, weightedConfidence);
+        if (repeatedTests) {
+            numberOfRequiredExercisePointsToMaster *= 1 + courseLearnerProfile.getRepetitionIntensity() / 10.0;
+        }
 
-        // First sort exercises based on title to ensure consistent ordering over multiple calls then prefer higher weighted exercises
         final var pendingExercises = competency.getExerciseLinks().stream().filter(link -> !learningObjectService.isCompletedByUser(link.getExercise(), user))
                 .sorted(getExerciseOrderComparator(courseLearnerProfile.getAimForGradeOrBonus())).map(CompetencyExerciseLink::getExercise).toList();
 
@@ -777,7 +907,7 @@ public class LearningPathRecommendationService {
         Stream<LectureUnit> completedLectureUnits = lectureUnits.stream().filter(lectureUnit -> lectureUnit.isCompletedFor(user));
         Stream<Exercise> completedExercises = competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise)
                 .filter(exercise -> learningObjectService.isCompletedByUser(exercise, user));
-        Stream<LearningObject> pendingLearningObjects = getRecommendedOrderOfLearningObjects(user, competency, weightedConfidence).stream();
+        Stream<LearningObject> pendingLearningObjects = getRecommendedOrderOfLearningObjects(user, competency, weightedConfidence, false).stream();
 
         return Stream.concat(completedLectureUnits, Stream.concat(completedExercises, pendingLearningObjects)).toList();
     }
