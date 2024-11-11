@@ -25,6 +25,8 @@ public class TestResultXmlParser {
      * The name of nested testsuite elements are prepended with dots to the testcase name.
      * A singular top-level testsuite is not included in the name.
      * If multiple top-level testsuite elements are present, their names will be included.
+     * Top-level testsuite elements refer to direct children of the root &lt;testsuites&gt; element or
+     * the root &lt;testsuite&gt; element itself.
      *
      * @param testResultFileString The content of the test result file as a String.
      * @param failedTests          A list of failed tests. This list will be populated by the method.
@@ -36,7 +38,7 @@ public class TestResultXmlParser {
         testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
         TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);
 
-        // The toplevel element can be <testsuites> or <testsuite>
+        // The root element can be <testsuites> or <testsuite>
         if (testResultFileString.contains("<testsuites")) {
             if (testSuite.testSuites().size() == 1) {
                 TestSuite suite = testSuite.testSuites().getFirst();
