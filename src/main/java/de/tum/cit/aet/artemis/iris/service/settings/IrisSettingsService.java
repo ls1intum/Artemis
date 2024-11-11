@@ -474,7 +474,6 @@ public class IrisSettingsService {
      * @param course The course to check
      */
     public void isEnabledForElseThrow(IrisSubSettingsType type, Course course) {
-        System.out.println(isEnabledFor(type, course));
         if (!isEnabledFor(type, course)) {
             throw new AccessForbiddenAlertException("The Iris " + type.name() + " feature is disabled for this course.", "Iris", "iris." + type.name().toLowerCase() + "Disabled");
         }

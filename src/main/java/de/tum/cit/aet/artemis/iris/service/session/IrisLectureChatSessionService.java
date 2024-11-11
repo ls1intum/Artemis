@@ -81,7 +81,6 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
         }
 
         var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
-        System.out.println(conversation);
         pyrisPipelineService.executePipeline("lecture-chat", "default",
                 pyrisJobService.createTokenForJob(token -> new LectureChatJob(token, course.getId(), lecture.getId(), session.getId())),
                 dto -> new PyrisLectureChatPipelineExecutionDTO(new PyrisCourseDTO(course), conversation, new PyrisUserDTO(session.getUser()), dto.settings(), dto.initialStages()),

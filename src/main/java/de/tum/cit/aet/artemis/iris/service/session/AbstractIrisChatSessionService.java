@@ -73,10 +73,6 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         var session = (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         IrisMessage savedMessage;
 
-        System.out.println("Handle status update");
-        System.out.println(statusUpdate);
-        System.out.println(job);
-
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
