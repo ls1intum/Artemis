@@ -100,7 +100,7 @@ public class AttachmentUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentUnit : {}", attachmentUnitId);
-        AttachmentUnit attachmentUnit = attachmentUnitRepository.findOneWithSlidesAndCompetencies(attachmentUnitId);
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
         checkAttachmentUnitCourseAndLecture(attachmentUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
 
@@ -125,7 +125,7 @@ public class AttachmentUnitResource {
             @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
-        AttachmentUnit existingAttachmentUnit = attachmentUnitRepository.findOneWithSlidesAndCompetencies(attachmentUnitId);
+        AttachmentUnit existingAttachmentUnit = attachmentUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
         checkAttachmentUnitCourseAndLecture(existingAttachmentUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentUnit.getLecture().getCourse(), null);
 
