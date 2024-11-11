@@ -6,7 +6,7 @@
                     {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }}
                     - {{ quizExercise.title }}
                     @switch (mode) {
-                        @case ('live') {
+                        @case ('practice') {
                             <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'practiceMode' }"></ng-template>
                         }
                         @case ('preview') {
