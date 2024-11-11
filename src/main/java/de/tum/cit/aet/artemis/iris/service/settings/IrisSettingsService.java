@@ -488,7 +488,6 @@ public class IrisSettingsService {
      */
     public boolean isEnabledFor(IrisSubSettingsType type, Course course) {
         var settings = getCombinedIrisSettingsFor(course, true);
-        System.out.println(settings.toString());
         return isFeatureEnabledInSettings(settings, type);
     }
 
