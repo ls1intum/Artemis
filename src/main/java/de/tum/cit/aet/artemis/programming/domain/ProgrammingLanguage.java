@@ -42,6 +42,7 @@ public enum ProgrammingLanguage {
         C,
         C_PLUS_PLUS,
         C_SHARP,
+        GO,
         HASKELL,
         JAVA,
         JAVASCRIPT,
