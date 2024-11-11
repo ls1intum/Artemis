@@ -73,8 +73,6 @@ export class CoursePerformanceSectionComponent {
         return round(maxPoints, 1);
     });
 
-    readonly hasCompetencies = computed(() => Object.keys(this.studentMetrics()?.competencyMetrics?.competencyInformation ?? {}).length > 0);
-
     readonly exercisePerformance = computed(() =>
         this.sortedExerciseIds().flatMap((exerciseId) => {
             const exerciseInformation = this.exerciseMetrics().exerciseInformation?.[exerciseId];

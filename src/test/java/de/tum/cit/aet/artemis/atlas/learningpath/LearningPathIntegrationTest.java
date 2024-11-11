@@ -668,7 +668,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         final var result = request.getList("/api/learning-path/" + learningPath.getId() + "/competencies", HttpStatus.OK, CompetencyNameDTO.class);
-        assertThat(result).containsExactlyElementsOf(Arrays.stream(competencies).map(CompetencyNameDTO::of).toList());
+        assertThat(result).containsExactlyElementsOf(Arrays.stream(competencies).map(competency -> CompetencyNameDTO.of(competency, 0)).toList());
     }
 
     @Test

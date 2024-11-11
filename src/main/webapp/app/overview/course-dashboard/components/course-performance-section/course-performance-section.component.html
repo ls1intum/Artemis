@@ -31,12 +31,8 @@
                         <span class="sr-only" jhiTranslate="loading"></span>
                     </div>
                 </div>
-            } @else if (hasCompetencies()) {
-                <jhi-course-competency-accordion [courseId]="courseId()" [studentMetrics]="studentMetrics()!" />
             } @else {
-                <div class="row justify-content-center p-2">
-                    <em class="text-secondary text-center">There are no course competencies in this course!</em>
-                </div>
+                <jhi-course-competency-accordion [courseId]="courseId()" [studentMetrics]="studentMetrics()!" />
             }
         </div>
     </div>
