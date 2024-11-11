@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
@@ -92,9 +91,6 @@ public class IrisSettingsResource {
     @EnforceAtLeastTutorInExercise
     public ResponseEntity<IrisSettings> getRawExerciseSettings(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-
         var combinedIrisSettings = irisSettingsService.getRawIrisSettingsFor(exercise);
         return ResponseEntity.ok(combinedIrisSettings);
     }
