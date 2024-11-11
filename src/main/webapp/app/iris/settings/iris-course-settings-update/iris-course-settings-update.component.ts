@@ -22,6 +22,7 @@ export class IrisCourseSettingsUpdateComponent implements OnInit, ComponentCanDe
     ngOnInit(): void {
         this.route.parent?.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
+            console.log(this.courseId);
         });
     }
 

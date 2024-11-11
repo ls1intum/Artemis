@@ -12,7 +12,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     templateUrl: './iris-event-settings-update.component.html',
 })
 export class IrisEventSettingsUpdateComponent {
-    private eventSettings = model.required<IrisEventSettings>();
+    eventSettings = model.required<IrisEventSettings>();
 
     proactivityDisabled = input.required<boolean>();
     settingsType = input.required<IrisSettingsType>();

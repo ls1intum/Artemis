@@ -81,7 +81,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository, SubmissionRepository submissionRepository) {
         super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -345,27 +345,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         }
 
         return session;
-    }
-
-    /**
-     * Handles the status update of a ExerciseChatJob by sending the result to the student via the Websocket.
-     *
-     * @param job          The job that was executed
-     * @param statusUpdate The status update of the job
-     */
-    public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        var session = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
-        if (statusUpdate.result() != null) {
-            var message = new IrisMessage();
-            message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-            var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
-        }
-        else {
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions());
-        }
-
-        updateLatestSuggestions(session, statusUpdate.suggestions());
     }
 
     @Override
