@@ -201,7 +201,8 @@ a:not(.btn):hover {
         background-color: var(--navbar-breadcrumb-background);
         margin-left: 1rem;
         margin-bottom: 0;
-        padding: 5px 16px 5px 16px;
+        padding: 0.25rem 1rem;
+        font-size: smaller;
 
         .breadcrumb-link {
             font-weight: 300;

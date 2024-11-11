@@ -13,6 +13,7 @@ export class Post extends Posting {
     public conversation?: Conversation;
     public displayPriority?: DisplayPriority;
     public resolved?: boolean;
+    public isConsecutive?: boolean = false;
 
     constructor() {
         super();
