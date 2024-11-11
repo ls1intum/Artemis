@@ -1,5 +1,5 @@
 import { Posting } from 'app/entities/metis/posting.model';
-import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnInit, Output, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UserRole } from 'app/shared/metis/metis.util';
@@ -16,6 +16,9 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
 
     @Input() hasChannelModerationRights = false;
     @Output() isModalOpen = new EventEmitter<void>();
+
+    isDeleted = input<boolean>(false);
+
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;
     postingIsOfToday: boolean;
@@ -94,6 +97,4 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
             this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
         }
     }
-
-    abstract deletePosting(): void;
 }

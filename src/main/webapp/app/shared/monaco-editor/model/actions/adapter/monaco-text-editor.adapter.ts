@@ -194,6 +194,12 @@ export class MonacoTextEditorAdapter implements TextEditor {
         this.editor.revealRangeInCenter(this.toMonacoRange(range));
     }
 
+    addPasteListener(callback: (insertedText: string) => void | Promise<void>): Disposable {
+        return this.editor.onDidPaste((pasteEvent) => {
+            callback(this.getTextAtRange(this.fromMonacoRange(pasteEvent.range)));
+        });
+    }
+
     private toMonacoPosition(position: TextEditorPosition): monaco.IPosition {
         return new monaco.Position(position.getLineNumber(), position.getColumn());
     }
