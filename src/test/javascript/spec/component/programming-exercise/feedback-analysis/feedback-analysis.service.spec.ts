@@ -10,7 +10,7 @@ describe('FeedbackAnalysisService', () => {
 
     const feedbackDetailsMock: FeedbackDetail[] = [
         {
-            concatenatedFeedbackIds: ['1', '2'],
+            concatenatedFeedbackIds: '1, 2',
             detailText: 'Feedback 1',
             testCaseName: 'test1',
             count: 5,
@@ -19,7 +19,7 @@ describe('FeedbackAnalysisService', () => {
             errorCategory: 'StudentError',
         },
         {
-            concatenatedFeedbackIds: ['3', '4'],
+            concatenatedFeedbackIds: '3, 4',
             detailText: 'Feedback 2',
             testCaseName: 'test2',
             count: 3,
@@ -70,8 +70,8 @@ describe('FeedbackAnalysisService', () => {
 
             const result = await responsePromise;
             expect(result).toEqual(feedbackAnalysisResponseMock);
-            expect(result.feedbackDetails.resultsOnPage[0].concatenatedFeedbackIds).toEqual(['1', '2']);
-            expect(result.feedbackDetails.resultsOnPage[1].concatenatedFeedbackIds).toEqual(['3', '4']);
+            expect(result.feedbackDetails.resultsOnPage[0].concatenatedFeedbackIds).toBe('1, 2');
+            expect(result.feedbackDetails.resultsOnPage[1].concatenatedFeedbackIds).toBe('3, 4');
         });
     });
 

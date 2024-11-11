@@ -882,10 +882,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
         participationUtilService.addFeedbackToResult(feedback, result);
 
-        List<Feedback> feedbacks = feedbackRepository.findAll();
-        System.out.println("Feedbacks in DB: " + feedbacks);
-        System.out.println("Using Feedback ID: " + feedback.getId());
-
         String url = "/api/exercises/" + programmingExercise.getId()
                 + "/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING&feedbackIds=" + feedback.getId();
         String jsonResponse = request.get(url, HttpStatus.OK, String.class);
