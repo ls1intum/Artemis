@@ -81,6 +81,7 @@ export abstract class CourseCompetency extends BaseCompetency {
     protected constructor(type: CourseCompetencyType) {
         super();
         this.type = type;
+        this.masteryThreshold = DEFAULT_MASTERY_THRESHOLD;
     }
 }
 

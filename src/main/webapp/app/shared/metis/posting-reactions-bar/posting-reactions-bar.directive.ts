@@ -1,4 +1,4 @@
-import { Directive, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, output } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -50,9 +50,14 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     @Input() posting: T;
     @Input() isThreadSidebar: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
+    @Output() reactionsUpdated = new EventEmitter<Reaction[]>();
 
     showReactionSelector = false;
     currentUserIsAtLeastTutor: boolean;
+    isAtLeastTutorInCourse: boolean;
+    isAuthorOfPosting: boolean;
+    @Output() isModalOpen = new EventEmitter<void>();
+    isDeleteEvent = output<boolean>();
 
     /*
      * icons (as svg paths) to be used as category preview image in emoji mart selector
@@ -101,6 +106,12 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     ngOnInit(): void {
         this.updatePostingWithReactions();
         this.currentUserIsAtLeastTutor = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting);
+        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+    }
+
+    deletePosting(): void {
+        this.metisService.deletePost(this.posting);
     }
 
     /**
@@ -153,12 +164,17 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
         if (this.posting.reactions && existingReactionIdx > -1) {
             const reactionToDelete = this.posting.reactions[existingReactionIdx];
             this.metisService.deleteReaction(reactionToDelete).subscribe(() => {
+                this.posting.reactions = this.posting.reactions?.filter((reaction) => reaction.id !== reactionToDelete.id);
+                this.updatePostingWithReactions();
                 this.showReactionSelector = false;
+                this.reactionsUpdated.emit(this.posting.reactions);
             });
         } else {
             const reactionToCreate = this.buildReaction(emojiId);
             this.metisService.createReaction(reactionToCreate).subscribe(() => {
+                this.updatePostingWithReactions();
                 this.showReactionSelector = false;
+                this.reactionsUpdated.emit(this.posting.reactions);
             });
         }
     }

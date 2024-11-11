@@ -547,73 +547,86 @@ public class ResultService {
     }
 
     /**
-     * Retrieves paginated and filtered aggregated feedback details for a given exercise.
+     * Retrieves paginated and filtered aggregated feedback details for a given exercise, including the count of each unique feedback detail text,
+     * test case name, task name, and error category.
      * <br>
      * For each feedback detail:
-     * 1. The relative count is calculated as a percentage of the total number of distinct results for the exercise.
-     * 2. The task numbers are assigned based on the associated test case names. A mapping between test cases and tasks is created using the set of tasks retrieved from the
-     * database.
+     * 1. The relative count is calculated as a percentage of the total distinct results for the exercise.
+     * 2. Task names are assigned based on associated test case names, with a mapping created between test cases and tasks from the exercise database.
+     * Feedback items not assigned to any task are labeled as "Not assigned to a task."
+     * 3. Error categories are classified as one of "Student Error," "Ares Error," or "AST Error," based on feedback content.
      * <br>
-     * Filtering:
-     * - **Search term**: Filters feedback details by the search term (case-insensitive).
-     * - **Test case names**: Filters feedback based on specific test case names (if provided).
-     * - **Task names**: Maps provided task numbers to task names and filters feedback based on the test cases associated with those tasks.
-     * - **Occurrences**: Filters feedback where the number of occurrences (COUNT) is between the provided minimum and maximum values (inclusive).
+     * It supports filtering by:
+     * - Search term: Case-insensitive filtering on feedback detail text.
+     * - Test case names: Filters feedback based on specific test case names. Only active test cases are included in the filtering options.
+     * - Task names: Filters feedback based on specified task names and includes unassigned tasks if "Not assigned to a task" is selected.
+     * - Occurrence range: Filters feedback where the number of occurrences (COUNT) is within the specified minimum and maximum range.
+     * - Error categories: Filters feedback based on selected error categories, such as "Student Error," "Ares Error," and "AST Error."
      * <br>
      * Pagination and sorting:
      * - Sorting is applied based on the specified column and order (ascending or descending).
-     * - The result is paginated based on the provided page number and page size.
+     * - The result is paginated according to the provided page number and page size.
      *
      * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
-     * @param data       The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters (task names, test cases,
-     *                       occurrence range).
+     * @param data       The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters
+     *                       (task names, test cases, occurrence range, error categories).
      * @return A {@link FeedbackAnalysisResponseDTO} object containing:
      *         - A {@link SearchResultPageDTO} of paginated feedback details.
      *         - The total number of distinct results for the exercise.
-     *         - The total number of tasks associated with the feedback.
-     *         - A list of test case names included in the feedback.
+     *         - A set of task names, including "Not assigned to a task" if applicable.
+     *         - A list of active test case names used in the feedback.
+     *         - A list of predefined error categories ("Student Error," "Ares Error," "AST Error") available for filtering.
      */
     public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, FeedbackPageableDTO data) {
 
         // 1. Fetch programming exercise with associated test cases
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesByIdElseThrow(exerciseId);
 
+        // 2. Get the distinct count of results for calculating relative feedback counts
         long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
 
-        // 2. Extract test case names using streams
-        List<String> testCaseNames = programmingExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
+        // 3. Extract only active test case names for use in filtering options
+        List<String> activeTestCaseNames = programmingExercise.getTestCases().stream().filter(ProgrammingExerciseTestCase::isActive).map(ProgrammingExerciseTestCase::getTestName)
+                .toList();
 
+        // 4. Retrieve all tasks associated with the exercise and map their names
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
+        Set<String> taskNames = tasks.stream().map(ProgrammingExerciseTask::getTaskName).collect(Collectors.toSet());
 
-        // 3. Generate filter task names directly
-        List<String> filterTaskNames = data.getFilterTasks().stream().map(index -> {
-            int idx = Integer.parseInt(index);
-            return (idx > 0 && idx <= tasks.size()) ? tasks.get(idx - 1).getTaskName() : null;
-        }).filter(Objects::nonNull).toList();
+        // 5. Include unassigned tasks if specified by the filter; otherwise, only include specified tasks
+        List<String> includeUnassignedTasks = new ArrayList<>(taskNames);
+        if (!data.getFilterTasks().isEmpty()) {
+            includeUnassignedTasks.removeAll(data.getFilterTasks());
+        }
+        else {
+            includeUnassignedTasks.clear();
+        }
 
-        // 4. Set minOccurrence and maxOccurrence based on filterOccurrence
+        // 6. Define the occurrence range based on filter parameters
         long minOccurrence = data.getFilterOccurrence().length == 2 ? Long.parseLong(data.getFilterOccurrence()[0]) : 0;
         long maxOccurrence = data.getFilterOccurrence().length == 2 ? Long.parseLong(data.getFilterOccurrence()[1]) : Integer.MAX_VALUE;
 
-        // 5. Create pageable object for pagination
+        // 7. Define the error categories to filter based on user selection
+        List<String> filterErrorCategories = data.getFilterErrorCategories();
+
+        // 8. Set up pagination and sorting based on input data
         final var pageable = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
 
-        // 6. Fetch filtered feedback from the repository
+        // 9. Query the database to retrieve paginated and filtered feedback
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
-                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), filterTaskNames, minOccurrence, maxOccurrence,
-                pageable);
+                StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
+                maxOccurrence, filterErrorCategories, pageable);
 
-        // 7. Process feedback details
-        // Map to index (+1 for 1-based indexing)
-        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> {
-            String taskIndex = tasks.stream().filter(task -> task.getTaskName().equals(detail.taskNumber())).findFirst().map(task -> String.valueOf(tasks.indexOf(task) + 1))
-                    .orElse("0");
-            return new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), taskIndex, "StudentError");
-        }).toList();
+        // 10. Process and map feedback details, calculating relative count and assigning task names
+        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.count(),
+                (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
 
-        // 8. Return the response DTO containing feedback details, total elements, and test case/task info
-        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), tasks.size(),
-                testCaseNames);
+        // 11. Predefined error categories available for filtering on the client side
+        final List<String> ERROR_CATEGORIES = List.of("Student Error", "Ares Error", "AST Error");
+
+        // 12. Return response containing processed feedback details, task names, active test case names, and error categories
+        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), taskNames,
+                activeTestCaseNames, ERROR_CATEGORIES);
     }
 
     /**
@@ -639,6 +652,10 @@ public class ResultService {
      * overridden or updated. The deletion is performed only for feedback items with a non-null ID and an associated long feedback text.
      * <p>
      * This approach reduces the need for individual deletion calls and performs batch deletion in a single database operation.
+     * <p>
+     * **Note:** This method should only be used for manually assessed submissions, not for fully automatic assessments, due to its dependency on the
+     * {@link Result#updateAllFeedbackItems} method, which is designed for manual feedback management. Using this method with automatic assessments could
+     * lead to unintended behavior or data inconsistencies.
      *
      * @param feedbackList The list of {@link Feedback} objects for which the long feedback texts are to be deleted. Only feedback items that have long feedback texts and a
      *                         non-null ID will be processed.
@@ -648,12 +665,9 @@ public class ResultService {
         if (feedbackList == null) {
             return;
         }
-
         List<Long> feedbackIdsWithLongText = feedbackList.stream().filter(feedback -> feedback.getHasLongFeedbackText() && feedback.getId() != null).map(Feedback::getId).toList();
-
         longFeedbackTextRepository.deleteByFeedbackIds(feedbackIdsWithLongText);
-
         List<Feedback> feedbacks = new ArrayList<>(feedbackList);
-        result.updateAllFeedbackItems(feedbacks, false);
+        result.updateAllFeedbackItems(feedbacks, true);
     }
 }

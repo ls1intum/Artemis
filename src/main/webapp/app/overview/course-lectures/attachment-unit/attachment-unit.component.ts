@@ -37,17 +37,21 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
     getFileName(): string {
         if (this.lectureUnit().attachment?.link) {
             const link = this.lectureUnit().attachment!.link!;
-            return link.substring(link.lastIndexOf('/') + 1);
+            const filename = link.substring(link.lastIndexOf('/') + 1);
+            return this.fileService.replaceAttachmentPrefixAndUnderscores(filename);
         }
         return '';
     }
 
+    /**
+     * Downloads the file
+     */
     handleDownload() {
         this.logEvent();
 
         if (this.lectureUnit().attachment?.link) {
             const link = this.lectureUnit().attachment!.link!;
-            this.fileService.downloadFile(link);
+            this.fileService.downloadFile(this.fileService.replaceAttachmentPrefixAndUnderscores(link));
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }

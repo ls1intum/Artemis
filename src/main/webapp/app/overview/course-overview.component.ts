@@ -19,6 +19,7 @@ import {
     IconDefinition,
     faChalkboardUser,
     faChartBar,
+    faChartColumn,
     faChevronLeft,
     faChevronRight,
     faCircleNotch,
@@ -30,7 +31,6 @@ import {
     faFlag,
     faGraduationCap,
     faListAlt,
-    faListCheck,
     faNetworkWired,
     faPersonChalkboard,
     faQuestion,
@@ -130,19 +130,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isExamStarted = false;
     private examStartedSubscription: Subscription;
     readonly MIN_DISPLAYED_COURSES: number = 6;
-    isLti: boolean = false;
+    isShownViaLti = false;
     private ltiSubscription: Subscription;
 
     // Properties to track hidden items for dropdown menu
-    dropdownOpen: boolean = false;
-    anyItemHidden: boolean = false;
+    anyItemHidden = false;
     hiddenItems: SidebarItem[] = [];
-    thresholdsForEachSidebarItem: number[] = [];
-    dropdownOffset: number;
-    dropdownClickNumber: number = 0;
     readonly WINDOW_OFFSET: number = 300;
     readonly ITEM_HEIGHT: number = 38;
-    readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 88;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -184,6 +179,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     facSidebar = facSidebar;
     faEllipsis = faEllipsis;
     faQuestion = faQuestion;
+    faChartColumn = faChartColumn;
 
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
@@ -260,8 +256,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
         this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
-        this.ltiSubscription = this.ltiService.isLti$.subscribe((isLti) => {
-            this.isLti = isLti;
+        this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
+            this.isShownViaLti = isShownViaLti;
         });
     }
 
@@ -501,7 +497,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
         const exercisesItem: SidebarItem = {
             routerLink: 'exercises',
-            icon: faListCheck,
+            icon: faListAlt,
             title: 'Exercises',
             translation: 'artemisApp.courseOverview.menu.exercises',
             hidden: false,
@@ -509,7 +505,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
         const statisticsItem: SidebarItem = {
             routerLink: 'statistics',
-            icon: faListAlt,
+            icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
             hasInOrionProperty: true,
