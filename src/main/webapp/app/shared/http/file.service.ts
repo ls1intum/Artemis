@@ -116,4 +116,20 @@ export class FileService {
         } while (mapOfFiles && mapOfFiles.has(name));
         return name;
     }
+
+    /**
+     * Removes the prefix from the file name, and replaces underscore with spaces
+     * @param link
+     */
+    replaceAttachmentPrefixAndUnderscores(link: string): string {
+        return link.replace(/AttachmentUnit_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}_/, '').replace(/_/g, ' ');
+    }
+
+    /**
+     * Removes the prefix from the file name, and replaces underscore with spaces
+     * @param link
+     */
+    replaceLectureAttachmentPrefixAndUnderscores(link: string): string {
+        return link.replace(/LectureAttachment_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}_/, '').replace(/_/g, ' ');
+    }
 }
