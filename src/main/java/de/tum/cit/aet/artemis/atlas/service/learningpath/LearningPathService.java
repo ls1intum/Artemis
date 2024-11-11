@@ -418,7 +418,16 @@ public class LearningPathService {
      * @return the learning path with fetched data
      */
     public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(long learningPathId) {
-        LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
+        Optional<LearningPath> optionalLearningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId);
+        LearningPath learningPath;
+        if (optionalLearningPath.isEmpty()) {
+            LearningPath learningPathWithCourse = learningPathRepository.findWithEagerCourseByIdElseThrow(learningPathId);
+            courseLearnerProfileService.createCourseLearnerProfile(learningPathWithCourse.getCourse(), learningPathWithCourse.getUser());
+            learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
+        }
+        else {
+            learningPath = optionalLearningPath.get();
+        }
 
         // Remove exercises that are not visible to students
         learningPath.getCompetencies().forEach(competency -> competency

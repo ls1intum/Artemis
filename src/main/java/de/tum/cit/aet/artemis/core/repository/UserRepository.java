@@ -106,8 +106,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             LEFT JOIN FETCH u.groups
             LEFT JOIN FETCH u.authorities
             LEFT JOIN FETCH u.learnerProfile lp
-            LEFT JOIN FETCH lp.courseLearnerProfiles clp ON clp.course.id = :courseId
+            LEFT JOIN FETCH lp.courseLearnerProfiles clp
             WHERE u.login = :login
+                AND clp.course.id = :courseId
             """)
     Optional<User> findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(@Param("login") String login, @Param("courseId") long courseId);
 
