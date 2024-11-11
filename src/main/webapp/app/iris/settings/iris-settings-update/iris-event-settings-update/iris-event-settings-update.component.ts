@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, computed, input, signal } from '@angular/core';
+import { Component, computed, input, model, signal } from '@angular/core';
 import { IrisEventSettings } from 'app/entities/iris/settings/iris-event-settings.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,20 +12,18 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     templateUrl: './iris-event-settings-update.component.html',
 })
 export class IrisEventSettingsUpdateComponent {
-    private settingsSignal = input.required<IrisEventSettings>({});
+    private eventSettings = model.required<IrisEventSettings>();
 
     proactivityDisabled = input.required<boolean>();
     settingsType = input.required<IrisSettingsType>();
     parentEventSettings = input<IrisEventSettings>();
 
-    @Output() eventSettingsChange = new EventEmitter<IrisEventSettings>();
-
+    isAdmin = signal(false);
     inheritDisabled = computed(() => (this.parentEventSettings() !== undefined ? !this.parentEventSettings()!.enabled : false));
     isSettingsSwitchDisabled = computed(() => (!this.isAdmin() && this.settingsType() !== IrisSettingsType.EXERCISE) || this.inheritDisabled());
 
     // Computed properties
-    enabled = computed(() => this.settingsSignal().enabled);
-    isAdmin = signal(false);
+    enabled = computed(() => this.eventSettings().enabled);
 
     // Constants
     readonly WARNING = ButtonType.WARNING;
@@ -35,7 +33,6 @@ export class IrisEventSettingsUpdateComponent {
     }
 
     updateSetting(key: keyof IrisEventSettings, value: any) {
-        const updatedSettings = { ...this.settingsSignal(), [key]: value };
-        this.eventSettingsChange.emit(updatedSettings);
+        this.eventSettings.update((curr) => ({ ...curr, [key]: value }));
     }
 }
