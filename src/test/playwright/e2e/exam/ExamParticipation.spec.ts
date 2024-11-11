@@ -359,6 +359,7 @@ test.describe('Exam participation', () => {
             courseManagement,
             examManagement,
             examExerciseGroups,
+            editExam,
             textExerciseCreation,
         }) => {
             await login(instructor);
@@ -381,7 +382,7 @@ test.describe('Exam participation', () => {
                 await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
             }
 
-            await examManagement.openExerciseGroups();
+            await editExam.openExerciseGroups();
             await examExerciseGroups.clickEditExercise(exercise.exerciseGroup!.id!, exercise.id!);
 
             const problemStatementText = textExerciseTemplate.problemStatement;
