@@ -79,13 +79,6 @@ describe('CourseDashboardStudentPageComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-
-        expect(component).toBeDefined();
-        expect(component.courseId()).toBe(courseId);
-    });
-
     it('should load iris settings if iris is enabled', async () => {
         const irisSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
 

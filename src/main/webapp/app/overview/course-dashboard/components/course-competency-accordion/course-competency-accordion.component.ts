@@ -3,7 +3,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { NgbAccordionDirective, NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import { JudgementOfLearningRatingComponent } from 'app/course/competencies/judgement-of-learning-rating/judgement-of-learning-rating.component';
-import { StudentMetrics } from 'app/entities/student-metrics.model';
 import { getIcon } from 'app/entities/competency.model';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { CourseCompetencyBodyComponent } from 'app/overview/course-dashboard/components/course-competency-body/course-competency-body.component';
@@ -29,7 +28,6 @@ export class CourseCompetencyAccordionComponent {
     private readonly alertService = inject(AlertService);
 
     readonly courseId = input.required<number>();
-    readonly studentMetrics = input.required<StudentMetrics>();
 
     readonly isLoading = signal<boolean>(false);
     readonly courseCompetencies = signal<LearningPathCompetencyDTO[]>([]);
@@ -73,7 +71,7 @@ export class CourseCompetencyAccordionComponent {
         try {
             learningPathDTO = await this.learningPathApiService.getLearningPathForCurrentUser(courseId);
         } catch (error) {
-            if (error.status != 404) {
+            if (error?.status != 404) {
                 throw error;
             }
             learningPathDTO = await this.learningPathApiService.generateLearningPathForCurrentUser(courseId);

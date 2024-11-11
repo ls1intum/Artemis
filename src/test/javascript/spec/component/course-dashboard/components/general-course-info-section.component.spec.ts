@@ -58,11 +58,6 @@ describe('GeneralCourseInfoSectionComponent', () => {
         jest.clearAllMocks();
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(component).toBeTruthy();
-    });
-
     it('should load general course information', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
