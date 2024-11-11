@@ -64,6 +64,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     readonly faRepeat = faRepeat;
     readonly faCheckCircle = faCheckCircle;
     readonly faSpinner = faSpinner;
+
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
@@ -123,7 +124,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                             this.viewButtonAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
                         });
                         this.initializeProfileInfo();
-                        this.updateIngestionStates();
+                        if (this.lectureIngestionEnabled) {
+                            this.updateIngestionStates();
+                        }
                     } else {
                         this.lectureUnits = [];
                     }
@@ -155,6 +158,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             }
         });
     }
+
     drop(event: CdkDragDrop<LectureUnit[]>) {
         moveItemInArray(this.lectureUnits, event.previousIndex, event.currentIndex);
         this.updateOrderSubject.next('');
@@ -262,6 +266,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return undefined;
         }
     }
+
     /**
      * Fetches the ingestion state for each lecture unit asynchronously and updates the lecture unit object.
      */

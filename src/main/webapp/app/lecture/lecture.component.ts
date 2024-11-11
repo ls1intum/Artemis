@@ -166,7 +166,9 @@ export class LectureComponent implements OnInit, OnDestroy {
                         Object.assign(lecture, lectureData);
                         return lecture;
                     });
-                    this.updateIngestionStates();
+                    if (this.lectureIngestionEnabled) {
+                        this.updateIngestionStates();
+                    }
                     this.applyFilters();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -230,24 +232,26 @@ export class LectureComponent implements OnInit, OnDestroy {
      * Fetches the ingestion state for all lecture asynchronously and updates all the lectures ingestion state.
      */
     updateIngestionStates() {
-        this.lectureService.getIngestionState(this.courseId).subscribe({
-            next: (res: HttpResponse<Record<number, IngestionState>>) => {
-                if (res.body) {
-                    const ingestionStatesMap = res.body;
-                    this.lectures.forEach((lecture) => {
-                        if (lecture.id) {
-                            const ingestionState = ingestionStatesMap[lecture.id];
-                            if (ingestionState !== undefined) {
-                                lecture.ingested = ingestionState;
+        if (this.lectureIngestionEnabled) {
+            this.lectureService.getIngestionState(this.courseId).subscribe({
+                next: (res: HttpResponse<Record<number, IngestionState>>) => {
+                    if (res.body) {
+                        const ingestionStatesMap = res.body;
+                        this.lectures.forEach((lecture) => {
+                            if (lecture.id) {
+                                const ingestionState = ingestionStatesMap[lecture.id];
+                                if (ingestionState !== undefined) {
+                                    lecture.ingested = ingestionState;
+                                }
                             }
-                        }
-                    });
-                }
-            },
-            error: (err: HttpErrorResponse) => {
-                console.error(`Error fetching ingestion state for lecture in course ${this.courseId}`, err);
-                this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
-            },
-        });
+                        });
+                    }
+                },
+                error: (err: HttpErrorResponse) => {
+                    console.error(`Error fetching ingestion state for lecture in course ${this.courseId}`, err);
+                    this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
+                },
+            });
+        }
     }
 }
