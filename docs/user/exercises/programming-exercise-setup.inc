@@ -426,7 +426,6 @@ If internet access is disabled, the container cannot access the internet during 
 The dependencies must then be included/cached in the docker image.
 
 Additional environment variables can be added to the container configuration. This can be useful if the build process requires additional environment variables to be set.
-Keys and values can be wrapped in single or double quotes. The keys and values must be separated by an equal sign. Multiple key-value pairs can be added by separating them with a comma with no space in between.
 
 .. figure:: programming/docker-flags-edit.png
           :align: center

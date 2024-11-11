@@ -27,16 +27,15 @@ public class ProgrammingExerciseBuildConfigService {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ProgrammingExerciseBuildConfigService.class);
 
     /**
-     * Converts a JSON string representing Docker flags (in the form of a list of key-value pairs)
+     * Converts a JSON string representing Docker flags (in JSON format)
      * into a {@link DockerRunConfig} instance.
      *
      * <p>
-     * The JSON string is expected to represent a list of key-value pairs where each
-     * entry is a list containing two strings: the first being the key and the second being the value.
+     * The JSON string is expected to represent a {@link DockerFlagsDTO} object.
      * Example JSON input:
      *
      * <pre>
-     * [["network", "none"], ["env", "TEST"]]
+     * {"network":"none","env":{"key1":"value1","key2":"value2"}}
      * </pre>
      *
      * @param buildConfig the build config containing the Docker flags
@@ -68,7 +67,7 @@ public class ProgrammingExerciseBuildConfigService {
     }
 
     /**
-     * Parses the JSON string representing Docker flags into a list of key-value pairs.
+     * Parses the JSON string representing Docker flags into DockerFlagsDTO. (see {@link DockerFlagsDTO})
      *
      * @return a list of key-value pairs, or {@code null} if an error occurs
      */

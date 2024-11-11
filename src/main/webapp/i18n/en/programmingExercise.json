@@ -723,7 +723,7 @@
                 },
                 "envVars": {
                     "title": "Environment Variables",
-                    "description": "Add environment variables to the Docker container.",
+                    "description": "Add environment variables to the Docker container. Each key and value should not be longer than 1000 characters.",
                     "addEnvVar": "Add Environment Variable",
                     "removeEnvVar": "Remove"
                 }
