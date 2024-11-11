@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
@@ -61,10 +60,6 @@ public class ProgrammingExerciseBuildConfigService {
             for (Map.Entry<String, String> entry : dockerFlagsDTO.env().entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                if (key.length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH || value.length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
-                    log.warn("Docker environment variable key or value is too long. Key: {}, Value: {}", key, value);
-                    return null;
-                }
                 env.add(key + "=" + value);
             }
         }

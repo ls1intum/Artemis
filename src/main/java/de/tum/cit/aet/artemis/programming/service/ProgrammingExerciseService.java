@@ -1096,7 +1096,7 @@ public class ProgrammingExerciseService {
         }
 
         for (var entry : dockerFlagsDTO.env().entrySet()) {
-            if (entry.getKey().length() + entry.getValue().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
+            if (entry.getKey().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH || entry.getValue().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
                 throw new BadRequestAlertException("The environment variables are too long. Max " + MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH + " chars", "Exercise",
                         "envVariablesTooLong");
             }
