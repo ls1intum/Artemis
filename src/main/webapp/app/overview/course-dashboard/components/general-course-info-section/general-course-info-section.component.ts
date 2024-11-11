@@ -21,6 +21,7 @@ export class GeneralCourseInfoSectionComponent {
     private readonly alertService = inject(AlertService);
 
     readonly courseId = input.required<number>();
+    readonly irisEnabled = input.required<boolean>();
 
     readonly isLoading = signal<boolean>(true);
     readonly generalCourseInformation = signal<string | undefined>(undefined);

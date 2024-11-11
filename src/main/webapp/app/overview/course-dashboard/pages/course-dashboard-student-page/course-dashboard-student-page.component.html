@@ -1,11 +1,11 @@
 <div class="row m-0">
     <div class="col-4 p-0 pe-2">
-        <jhi-general-course-info-section [courseId]="courseId()" />
+        <jhi-general-course-info-section [courseId]="courseId()" [irisEnabled]="irisEnabled()" />
         @if (irisEnabled()) {
             <div class="mt-4">
                 <h5 class="m-0">Iris</h5>
                 <hr class="my-2" />
-                <div>
+                <div class="position-relative iris-container">
                     <jhi-course-chatbot [courseId]="courseId()" />
                 </div>
             </div>

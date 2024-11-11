@@ -19,13 +19,17 @@
                                 <strong class="ms-2">{{ courseCompetency.title }}</strong>
                                 <h5 class="m-0 ms-2">
                                     <span
+                                        [ngbTooltip]="courseCompetency.masteryProgress === 1 ? 'You mastered this course competency.' : undefined"
                                         class="badge text-white"
                                         [ngClass]="{
                                             'text-bg-success':
-                                                courseCompetency.numberOfCompletedLearningObjects == courseCompetency.numberOfLearningObjects &&
-                                                courseCompetency.numberOfLearningObjects !== 0,
+                                                courseCompetency.masteryProgress === 1 ||
+                                                (courseCompetency.numberOfCompletedLearningObjects == courseCompetency.numberOfLearningObjects &&
+                                                    courseCompetency.numberOfLearningObjects !== 0),
                                             'text-bg-secondary': true,
-                                            'text-bg-warning': courseCompetency.numberOfCompletedLearningObjects !== courseCompetency.numberOfLearningObjects,
+                                            'text-bg-warning':
+                                                courseCompetency.masteryProgress !== 1 &&
+                                                courseCompetency.numberOfCompletedLearningObjects !== courseCompetency.numberOfLearningObjects,
                                         }"
                                         >{{ courseCompetency.numberOfCompletedLearningObjects }} / {{ courseCompetency.numberOfLearningObjects }}</span
                                     >

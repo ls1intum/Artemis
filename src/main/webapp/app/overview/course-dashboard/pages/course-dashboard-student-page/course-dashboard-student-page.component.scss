@@ -1,4 +1,3 @@
 .iris-container {
-    overflow: hidden;
-    height: 430px;
+    height: calc(50vh - var(--sidebar-footer-height-dev) - 9.2rem);
 }
