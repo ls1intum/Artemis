@@ -28,6 +28,12 @@ public class CourseLearnerProfileService {
         this.learnerProfileRepository = learnerProfileRepository;
     }
 
+    /**
+     * Create a course learner profile for a user and saves it in the database
+     *
+     * @param course the course for which the profile is created
+     * @param user   the user for which the profile is created
+     */
     public void createCourseLearnerProfile(Course course, User user) {
         var courseProfile = new CourseLearnerProfile();
         courseProfile.setCourse(course);
@@ -38,6 +44,12 @@ public class CourseLearnerProfileService {
         courseLearnerProfileRepository.save(courseProfile);
     }
 
+    /**
+     * Create course learner profiles for a set of users and saves them in the database.
+     *
+     * @param course the course for which the profiles are created
+     * @param users  the users for which the profiles are created with eagerly loaded learner profiles
+     */
     public void createCourseLearnerProfiles(Course course, Set<User> users) {
         Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> {
             var courseProfile = new CourseLearnerProfile();
@@ -50,10 +62,21 @@ public class CourseLearnerProfileService {
         courseLearnerProfileRepository.saveAll(courseProfiles);
     }
 
+    /**
+     * Delete a course learner profile for a user
+     *
+     * @param course the course for which the profile is deleted
+     * @param user   the user for which the profile is deleted
+     */
     public void deleteCourseLearnerProfile(Course course, User user) {
         courseLearnerProfileRepository.deleteByCourseAndUser(course, user);
     }
 
+    /**
+     * Delete all course learner profiles for a course
+     *
+     * @param course the course for which the profiles are deleted
+     */
     public void deleteAllForCourse(Course course) {
         courseLearnerProfileRepository.deleteAllByCourse(course);
     }
