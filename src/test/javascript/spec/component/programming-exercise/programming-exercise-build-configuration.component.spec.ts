@@ -110,8 +110,7 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.parseDockerFlagsToString();
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{"key":"value"}}');
 
-        comp.envVars = [];
-        comp.parseDockerFlagsToString();
+        comp.removeEnvVar(0);
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none"}');
 
         comp.addEnvVar();
