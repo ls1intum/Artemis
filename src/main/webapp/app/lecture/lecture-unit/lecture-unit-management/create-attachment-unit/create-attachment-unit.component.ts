@@ -47,7 +47,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
         if (!attachmentUnitFormData?.formProperties?.name || !attachmentUnitFormData?.fileProperties?.file || !attachmentUnitFormData?.fileProperties?.fileName) {
             return;
         }
-        const { description, name, releaseDate, competencyLinks, hiddenPages, parentAttachmentUnit } = attachmentUnitFormData.formProperties;
+        const { description, name, releaseDate, competencyLinks, hiddenPages } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         // === Setting attachment ===
@@ -61,7 +61,6 @@ export class CreateAttachmentUnitComponent implements OnInit {
         this.attachmentUnitToCreate.description = description;
         this.attachmentUnitToCreate.competencyLinks = competencyLinks || [];
         this.attachmentUnitToCreate.hiddenPages = hiddenPages;
-        this.attachmentUnitToCreate.parentAttachmentUnit = parentAttachmentUnit;
 
         this.isLoading = true;
 

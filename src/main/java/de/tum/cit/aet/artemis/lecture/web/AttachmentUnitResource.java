@@ -142,18 +142,20 @@ public class AttachmentUnitResource {
     /**
      * POST lectures/:lectureId/attachment-units : creates a new attachment unit.
      *
-     * @param lectureId      the id of the lecture to which the attachment unit should be added
-     * @param attachmentUnit the attachment unit that should be created
-     * @param attachment     the attachment that should be created
-     * @param file           the file to upload
-     * @param keepFilename   specifies if the original filename should be kept or not
+     * @param lectureId            the id of the lecture to which the attachment unit should be added
+     * @param attachmentUnit       the attachment unit that should be created
+     * @param attachment           the attachment that should be created
+     * @param parentAttachmentUnit the parent attachment unit of the new attachment unit
+     * @param file                 the file to upload
+     * @param keepFilename         specifies if the original filename should be kept or not
      * @return the ResponseEntity with status 201 (Created) and with body the new attachment unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "lectures/{lectureId}/attachment-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentUnit> createAttachmentUnit(@PathVariable Long lectureId, @RequestPart AttachmentUnit attachmentUnit, @RequestPart Attachment attachment,
-            @RequestPart MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename) throws URISyntaxException {
+            @RequestPart AttachmentUnit parentAttachmentUnit, @RequestPart MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename)
+            throws URISyntaxException {
         log.debug("REST request to create AttachmentUnit {} with Attachment {}", attachmentUnit, attachment);
         if (attachmentUnit.getId() != null) {
             throw new BadRequestAlertException("A new attachment unit cannot already have an ID", ENTITY_NAME, "idexists");
@@ -168,7 +170,7 @@ public class AttachmentUnitResource {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, file, keepFilename);
+        AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, parentAttachmentUnit, file, keepFilename);
         lectureRepository.save(lecture);
         if (Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
             slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);

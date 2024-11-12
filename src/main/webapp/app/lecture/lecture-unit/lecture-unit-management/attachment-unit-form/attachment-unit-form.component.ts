@@ -6,7 +6,6 @@ import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { UPLOAD_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;
@@ -22,7 +21,6 @@ export interface FormProperties {
     updateNotificationText?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
     hiddenPages?: string;
-    parentAttachmentUnit?: AttachmentUnit;
 }
 
 // file input is a special case and is not included in the reactive form structure
