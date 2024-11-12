@@ -143,6 +143,18 @@ describe('CourseUsersSelectorComponent', () => {
             expect(userSelectorComponent.selectedUsers).toEqual([exampleUserPublicInfoDTO]);
             expect(fixture.debugElement.query(By.css('.delete-user'))).toBeFalsy();
         }));
+
+        it('should render profile picture for users in dropdown', fakeAsync(() => {
+            const user = generateExampleUserPublicInfoDTO({});
+            searchUsersSpy.mockReturnValue(of(new HttpResponse({ body: [user], status: 200 })));
+
+            changeInput(fixture.debugElement.nativeElement, 'test');
+            tick(1000);
+            fixture.detectChanges();
+
+            const profilePicture = fixture.debugElement.query(By.directive(MockComponent(ProfilePictureComponent)));
+            expect(profilePicture).not.toBeNull();
+        }));
     });
 
     function getNativeInput(element: HTMLElement): HTMLInputElement {
