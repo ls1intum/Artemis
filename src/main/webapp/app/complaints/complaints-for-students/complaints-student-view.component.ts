@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -27,6 +27,8 @@ export class ComplaintsStudentViewComponent implements OnInit {
     @Input() exam: Exam;
     // flag to indicate exam test run. Default set to false.
     @Input() testRun = false;
+
+    @ViewChild('bottom') bottom: ElementRef;
 
     submission: Submission;
     complaint: Complaint;
@@ -148,5 +150,15 @@ export class ComplaintsStudentViewComponent implements OnInit {
             return this.serverDateService.now().isBetween(dayjs(this.exam.examStudentReviewStart), dayjs(this.exam.examStudentReviewEnd));
         }
         return false;
+    }
+
+    startComplaint(): void {
+        this.formComplaintType = ComplaintType.COMPLAINT;
+        // Wait for the view to update
+        setTimeout(() => this.scrollToBottom(), 0);
+    }
+
+    private scrollToBottom(): void {
+        this.bottom.nativeElement.scrollIntoView({ behavior: 'smooth' });
     }
 }

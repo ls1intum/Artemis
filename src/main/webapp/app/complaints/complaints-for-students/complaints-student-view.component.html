@@ -23,7 +23,7 @@
                         id="complain"
                         class="btn btn-primary"
                         [class.not-allowed]="(!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid"
-                        (click)="formComplaintType = ComplaintType.COMPLAINT"
+                        (click)="startComplaint()"
                         [disabled]="(!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid"
                         title="{{
                             (!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid
@@ -66,3 +66,4 @@
         }
     </div>
 }
+<div #bottom></div>
