@@ -16,9 +16,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -79,9 +78,7 @@ public class ExerciseDeletionService {
 
     private final ChannelService channelService;
 
-    private final CompetencyProgressService competencyProgressService;
-
-    private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+    private final CompetencyProgressApi competencyProgressApi;
 
     private final Optional<IrisSettingsService> irisSettingsService;
 
@@ -89,8 +86,7 @@ public class ExerciseDeletionService {
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
             LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
-            ChannelRepository channelRepository, ChannelService channelService, CompetencyProgressService competencyProgressService,
-            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, Optional<IrisSettingsService> irisSettingsService) {
+            ChannelRepository channelRepository, ChannelService channelService, CompetencyProgressApi competencyProgressApi, Optional<IrisSettingsService> irisSettingsService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -105,8 +101,7 @@ public class ExerciseDeletionService {
         this.textExerciseService = textExerciseService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
-        this.competencyProgressService = competencyProgressService;
-        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
+        this.competencyProgressApi = competencyProgressApi;
         this.irisSettingsService = irisSettingsService;
     }
 
@@ -219,7 +214,7 @@ public class ExerciseDeletionService {
             exerciseRepository.delete(exercise);
         }
 
-        competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(competencyProgressService::updateProgressByCompetencyAsync);
+        competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(competencyProgressApi::updateProgressByCompetencyAsync);
     }
 
     /**
