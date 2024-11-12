@@ -1,4 +1,4 @@
-<div [id]="'exercise-' + quizExercise?.id">
+<div [id]="'exercise-' + quizExercise?.id" class="position-relative h-100 d-flex flex-column">
     @if (quizExercise) {
         <div class="row sticky-top module-bg">
             <div class="d-flex justify-content-between align-items-center pt-2 mt-n3 module-bg">
@@ -192,8 +192,10 @@
             </div>
             <!-- END QUESTION SECTION -->
         </div>
-        <div class="row sticky-bottom my-0">
-            <hr class="mb-0" />
+        <div class="row sticky-bottom mb-0 mt-auto">
+            @if (mode === 'live') {
+                <hr class="mb-0" />
+            }
             <div class="container d-flex fs-small align-items-center justify-content-between module-bg mb-n3 py-2">
                 @if (mode === 'live') {
                     @if (!showingResult) {
@@ -232,6 +234,7 @@
                     <!-- REFRESH BUTTON -->
                     @if (!quizBatch?.started && !quizBatch?.startTime) {
                         <jhi-button
+                            class="ms-2"
                             id="refresh-quiz"
                             (onClick)="refreshQuiz(true)"
                             [btnSize]="ButtonSize.SMALL"
