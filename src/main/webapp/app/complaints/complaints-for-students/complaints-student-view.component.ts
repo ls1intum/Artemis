@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -53,6 +53,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
         private serverDateService: ArtemisServerDateService,
         private accountService: AccountService,
         private courseService: CourseManagementService,
+        private cdr: ChangeDetectorRef,
     ) {}
 
     /**
@@ -158,13 +159,14 @@ export class ComplaintsStudentViewComponent implements OnInit {
     startComplaint(complainType: ComplaintType): void {
         this.formComplaintType = complainType;
         // Wait for the view to update
-        setTimeout(() => this.scrollToComplaint(), 0);
+        this.cdr.detectChanges();
+        this.scrollToComplaint();
     }
 
     /**
      * Function to scroll to the complaint form
      */
     private scrollToComplaint(): void {
-        this.complaintScrollpoint.nativeElement.scrollIntoView({ behavior: 'smooth' });
+        this.complaintScrollpoint?.nativeElement.scrollIntoView({ behavior: 'smooth' });
     }
 }
