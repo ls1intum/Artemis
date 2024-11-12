@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyStudentProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyLectureUnitMasteryCalculationDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -294,6 +295,23 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     }
 
     List<CourseCompetency> findByCourseIdOrderById(long courseId);
+
+    @Query("""
+                    SELECT new de.tum.cit.aet.artemis.atlas.dto.CompetencyStudentProgressDTO(
+                        c.title,
+                        c.description,
+                        c.taxonomy,
+                        c.softDueDate,
+                        c.optional,
+                        CASE WHEN TYPE(c) = Competency THEN 'competency' ELSE 'prerequisite' END,
+                        COUNT(up),
+                        (SELECT COUNT(up) WHERE up.progress * up.confidence >= c.masteryThreshold)
+                    )
+                    FROM CourseCompetency c
+                        LEFT JOIN FETCH c.userProgress up
+                    WHERE c.course.id = :courseId
+            """)
+    List<CompetencyStudentProgressDTO> findWithStudentProgressByCourseId(long courseId);
 
     boolean existsByIdAndCourseId(long competencyId, long courseId);
 }

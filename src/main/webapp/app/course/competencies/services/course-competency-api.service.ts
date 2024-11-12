@@ -41,6 +41,6 @@ export class CourseCompetencyApiService extends BaseApiHttpService {
     }
 
     async getCourseCompetenciesByCourseId(courseId: number): Promise<CourseCompetency[]> {
-        return await this.get<CompetencyRelationDTO[]>(`${this.getPath(courseId)}`);
+        return await this.get<CourseCompetency[]>(`${this.getPath(courseId)}`);
     }
 }

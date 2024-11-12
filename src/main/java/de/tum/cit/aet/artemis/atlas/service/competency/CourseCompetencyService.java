@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyStudentProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
@@ -128,12 +129,10 @@ public class CourseCompetencyService {
      * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
      *
      * @param courseId The id of the course for which to fetch the competencies
-     * @param userId   The id of the user for which to fetch the progress
      * @return The found competency
      */
-    public List<CourseCompetency> findCourseCompetenciesWithProgressForUserByCourseId(Long courseId, Long userId) {
-        List<CourseCompetency> competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
-        return findProgressForCompetenciesAndUser(competencies, userId);
+    public List<CompetencyStudentProgressDTO> findCourseCompetenciesWithStudentProgressByCourseId(Long courseId) {
+        return courseCompetencyRepository.findWithStudentProgressByCourseId(courseId);
     }
 
     /**
