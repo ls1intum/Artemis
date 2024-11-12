@@ -377,7 +377,8 @@
                         "name": "Name",
                         "login": "Login",
                         "repository": "Repository",
-                        "totalItems": "In total {{count}} items"
+                        "totalItems": "In total {{count}} items",
+                        "error": "There was an error while loading the affected Students for this feedback."
                     }
                 },
                 "help": {

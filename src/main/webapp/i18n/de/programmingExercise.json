@@ -377,7 +377,8 @@
                         "name": "Name",
                         "login": "Login",
                         "repository": "Repository",
-                        "totalItems": "Insgesamt {{count}} Elemente"
+                        "totalItems": "Insgesamt {{count}} Elemente",
+                        "error": "Beim Laden der betroffenen Studierenden ist ein Fehler aufgetreten."
                     }
                 },
                 "help": {

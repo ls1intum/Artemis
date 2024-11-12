@@ -12,7 +12,7 @@ export interface FeedbackAnalysisResponse {
     errorCategories: string[];
 }
 export interface FeedbackDetail {
-    concatenatedFeedbackIds: string;
+    concatenatedFeedbackIds: number[];
     count: number;
     relativeCount: number;
     detailText: string;
@@ -26,7 +26,7 @@ export interface FeedbackAffectedStudentDTO {
     firstName: string;
     lastName: string;
     login: string;
-    repositoryName: string;
+    repositoryURI: string;
 }
 @Injectable()
 export class FeedbackAnalysisService extends BaseApiHttpService {
@@ -49,9 +49,9 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
         return this.get<number>(`exercises/${exerciseId}/feedback-details-max-count`);
     }
 
-    async getParticipationForFeedbackIds(exerciseId: number, feedbackIds: string, pageable: PageableSearch): Promise<PageableResult<FeedbackAffectedStudentDTO>> {
+    async getParticipationForFeedbackIds(exerciseId: number, feedbackIds: number[], pageable: PageableSearch): Promise<PageableResult<FeedbackAffectedStudentDTO>> {
         const params = new HttpParams()
-            .set('feedbackIds', feedbackIds)
+            .set('feedbackIds', feedbackIds.join(','))
             .set('page', pageable.page.toString())
             .set('pageSize', pageable.pageSize.toString())
             .set('sortedColumn', pageable.sortedColumn)

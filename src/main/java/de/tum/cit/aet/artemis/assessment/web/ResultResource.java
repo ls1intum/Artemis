@@ -354,34 +354,20 @@ public class ResultResource {
 
     /**
      * GET /exercises/{exerciseId}/feedback-details-participation : Retrieves paginated details of students affected by specific feedback entries for a specified exercise.
-     * <br>
      * This endpoint returns details of students whose submissions were impacted by specified feedback entries, including student information
-     * and participation details. This supports efficient loading of affected students' data by returning only the required information.
+     * and participation details.
      * <br>
-     * Supports pagination and sorting, allowing the client to control the amount and order of returned data:
-     * <ul>
-     * <li><b>Pagination:</b> Controls page number and page size for the response.</li>
-     * <li><b>Sorting:</b> Allows sorting by specified columns (e.g., "participationId") in ascending or descending order.</li>
-     * </ul>
      *
-     * @param exerciseId  The ID of the exercise for which the participation data is requested.
-     * @param feedbackIds A list of feedback IDs to filter affected students by specific feedback entries.
-     * @param data        A {@link PageableSearchDTO} object containing pagination and sorting parameters:
-     *                        <ul>
-     *                        <li>Page number and page size</li>
-     *                        <li>Sorted column and sorting order</li>
-     *                        </ul>
-     * @return A {@link ResponseEntity} containing a {@link Page} of {@link FeedbackAffectedStudentDTO}, each representing a student affected by the feedback entries, including:
-     *         <ul>
-     *         <li>List of affected students with participation details.</li>
-     *         <li>Total number of students affected (for pagination).</li>
-     *         </ul>
+     * @param exerciseId  for which the participation data is requested.
+     * @param feedbackIds to filter affected students by specific feedback entries.
+     * @param data        A {@link PageableSearchDTO} object containing pagination and sorting parameters.
+     * @return A {@link ResponseEntity} containing a {@link Page} of {@link FeedbackAffectedStudentDTO}, each representing a student affected by the feedback entries.
      */
     @GetMapping("exercises/{exerciseId}/feedback-details-participation")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<Page<FeedbackAffectedStudentDTO>> getParticipationWithFeedback(@PathVariable long exerciseId, @RequestParam String feedbackIds,
+    public ResponseEntity<Page<FeedbackAffectedStudentDTO>> getAffectedStudentsWithFeedback(@PathVariable long exerciseId, @RequestParam String feedbackIds,
             @ModelAttribute PageableSearchDTO<String> data) {
-        Page<FeedbackAffectedStudentDTO> participation = resultService.getParticipationWithFeedbackId(exerciseId, feedbackIds, data);
+        Page<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackId(exerciseId, feedbackIds, data);
         return ResponseEntity.ok(participation);
     }
 }

@@ -19,7 +19,7 @@ describe('FeedbackAnalysisComponent', () => {
 
     const feedbackMock: FeedbackDetail[] = [
         {
-            concatenatedFeedbackIds: '1,2',
+            concatenatedFeedbackIds: [1, 2],
             detailText: 'Test feedback 1 detail',
             testCaseName: 'test1',
             count: 10,
@@ -28,7 +28,7 @@ describe('FeedbackAnalysisComponent', () => {
             errorCategory: 'Student Error',
         },
         {
-            concatenatedFeedbackIds: '3,4',
+            concatenatedFeedbackIds: [3, 4],
             detailText: 'Test feedback 2 detail',
             testCaseName: 'test2',
             count: 5,

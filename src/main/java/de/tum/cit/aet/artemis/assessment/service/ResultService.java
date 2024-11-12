@@ -649,31 +649,19 @@ public class ResultService {
      * Retrieves a paginated list of students affected by specific feedback entries for a given exercise.
      * <br>
      * This method filters students based on feedback IDs and returns participation details for each affected student. It uses
-     * pagination and sorting to allow efficient retrieval and sorting of the results, thus supporting large datasets.
+     * pagination and sorting (order based on the {@link PageUtil.ColumnMapping#AFFECTED_STUDENTS}) to allow efficient retrieval and sorting of the results, thus supporting large
+     * datasets.
      * <br>
-     * Supports:
-     * <ul>
-     * <li><b>Pagination:</b> Controls the page number and page size for the returned results.</li>
-     * <li><b>Sorting:</b> Applies sorting by specified columns and sorting order based on the {@link PageUtil.ColumnMapping#AFFECTED_STUDENTS} configuration.</li>
-     * </ul>
      *
-     * @param exerciseId  The ID of the exercise for which the affected student participation data is requested.
-     * @param feedbackIds A list of feedback IDs used to filter the participation to only those affected by specific feedback entries.
-     * @param data        A {@link PageableSearchDTO} object containing pagination and sorting parameters:
-     *                        <ul>
-     *                        <li>Page number and page size for pagination</li>
-     *                        <li>Sorting order and column for sorting (e.g., "participationId")</li>
-     *                        </ul>
-     * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback, with:
-     *         <ul>
-     *         <li>Details about the affected students, including participation data and student information.</li>
-     *         <li>Total count of affected students, allowing for pagination on the client side.</li>
-     *         </ul>
+     * @param exerciseId  for which the affected student participation data is requested.
+     * @param feedbackIds used to filter the participation to only those affected by specific feedback entries.
+     * @param data        A {@link PageableSearchDTO} object containing pagination and sorting parameters.
+     * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
-    public Page<FeedbackAffectedStudentDTO> getParticipationWithFeedbackId(long exerciseId, String feedbackIds, PageableSearchDTO<String> data) {
+    public Page<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackId(long exerciseId, String feedbackIds, PageableSearchDTO<String> data) {
         List<Long> feedbackIdLongs = Arrays.stream(feedbackIds.split(",")).map(Long::valueOf).toList();
         PageRequest pageRequest = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.AFFECTED_STUDENTS);
-        return studentParticipationRepository.findParticipationByFeedbackId(exerciseId, feedbackIdLongs, pageRequest);
+        return studentParticipationRepository.findAffectedStudentsByFeedbackId(exerciseId, feedbackIdLongs, pageRequest);
     }
 
     /**

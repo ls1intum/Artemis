@@ -13,7 +13,7 @@ describe('AffectedStudentsModalComponent', () => {
     let feedbackService: FeedbackAnalysisService;
 
     const feedbackDetailMock: FeedbackDetail = {
-        concatenatedFeedbackIds: '1,2',
+        concatenatedFeedbackIds: [1, 2],
         count: 5,
         relativeCount: 25.0,
         detailText: 'Some feedback detail',
@@ -23,8 +23,8 @@ describe('AffectedStudentsModalComponent', () => {
     };
 
     const participationMock: FeedbackAffectedStudentDTO[] = [
-        { courseId: 1, participationId: 101, firstName: 'John', lastName: 'Doe', login: 'johndoe', repositoryName: 'repo1' },
-        { courseId: 1, participationId: 102, firstName: 'Jane', lastName: 'Smith', login: 'janesmith', repositoryName: 'repo2' },
+        { courseId: 1, participationId: 101, firstName: 'John', lastName: 'Doe', login: 'johndoe', repositoryURI: 'repo1' },
+        { courseId: 1, participationId: 102, firstName: 'Jane', lastName: 'Smith', login: 'janesmith', repositoryURI: 'repo2' },
     ];
 
     beforeEach(async () => {

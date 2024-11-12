@@ -1242,7 +1242,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     COALESCE((
                         SELECT MAX(t.taskName)
                         FROM ProgrammingExerciseTask t
-                        JOIN t.testCases tct
+                        LEFT JOIN t.testCases tct
                         WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
                     ), 'Not assigned to task'),
                     CASE
@@ -1252,12 +1252,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     END
                 )
                 FROM StudentParticipation p
-                JOIN p.results r ON r.id = (
+                LEFT JOIN p.results r ON r.id = (
                     SELECT MAX(pr.id)
                     FROM p.results pr
                     WHERE pr.participation.id = p.id
                 )
-                JOIN r.feedbacks f
+                LEFT JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                     AND p.testRun = FALSE
                     AND f.positive = FALSE
@@ -1266,7 +1266,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     AND (:#{#filterTaskNames != NULL && #filterTaskNames.size() < 1} = TRUE OR f.testCase.testName NOT IN (
                             SELECT tct.testName
                             FROM ProgrammingExerciseTask t
-                            JOIN t.testCases tct
+                            LEFT JOIN t.testCases tct
                             WHERE t.taskName IN (:filterTaskNames)
                         ))
                     AND (:#{#filterErrorCategories != NULL && #filterErrorCategories.size() < 1} = TRUE OR CASE
@@ -1292,7 +1292,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT COUNT(DISTINCT r.id)
             FROM StudentParticipation p
-                JOIN p.results r ON r.id = (
+                LEFT JOIN p.results r ON r.id = (
                          SELECT MAX(pr.id)
                          FROM p.results pr
                          WHERE pr.participation.id = p.id
@@ -1318,12 +1318,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM (
                 SELECT COUNT(f.id) AS feedbackCount
                 FROM StudentParticipation p
-                JOIN p.results r ON r.id = (
+                LEFT JOIN p.results r ON r.id = (
                     SELECT MAX(pr.id)
                     FROM p.results pr
                     WHERE pr.participation.id = p.id
                 )
-                JOIN r.feedbacks f
+                LEFT JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                   AND p.testRun = FALSE
                   AND f.positive = FALSE
@@ -1335,25 +1335,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     /**
      * Retrieves a paginated list of students affected by specific feedback entries for a given programming exercise.
      * <br>
-     * This query joins `ProgrammingExerciseStudentParticipation`, `Submission`, `Result`, and `Feedback` entities to filter
-     * participation records based on feedback IDs and exercise ID. The results include information about each affected student,
-     * such as their course ID, participation ID, student details, and repository URI.
-     * <br>
-     * Supports:
-     * <ul>
-     * <li><b>Pagination:</b> The results are paginated using a {@link Pageable} parameter, allowing control over the page number and size.</li>
-     * <li><b>Sorting:</b> The query sorts results by the student's first name in ascending order.</li>
-     * </ul>
      *
-     * @param exerciseId  The ID of the exercise for which the affected student participation data is requested.
-     * @param feedbackIds A list of feedback IDs used to filter the participation to only those affected by specific feedback entries.
+     * @param exerciseId  for which the affected student participation data is requested.
+     * @param feedbackIds used to filter the participation to only those affected by specific feedback entries.
      * @param pageable    A {@link Pageable} object to control pagination and sorting of the results, specifying page number, page size, and sort order.
-     * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback, containing:
-     *         <ul>
-     *         <li>Course ID, participation ID, and student information (first name, last name, login).</li>
-     *         <li>Repository URI, linking the affected student's repository.</li>
-     *         <li>Total count of affected students to facilitate pagination on the client side.</li>
-     *         </ul>
+     * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
     @Query("""
                 SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO(
@@ -1366,12 +1352,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                             )
                 FROM ProgrammingExerciseStudentParticipation p
                 LEFT JOIN p.submissions s
-                JOIN s.results r
-                JOIN r.feedbacks f
+                LEFT JOIN s.results r
+                LEFT JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                       AND f.id IN :feedbackIds
                       AND p.testRun = FALSE
                 ORDER BY p.student.firstName ASC
             """)
-    Page<FeedbackAffectedStudentDTO> findParticipationByFeedbackId(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds, Pageable pageable);
+    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackId(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds, Pageable pageable);
 }

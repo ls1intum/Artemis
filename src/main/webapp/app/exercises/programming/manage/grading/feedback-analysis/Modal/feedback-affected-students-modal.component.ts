@@ -48,7 +48,7 @@ export class AffectedStudentsModalComponent {
             const response = await this.feedbackService.getParticipationForFeedbackIds(this.exerciseId(), feedbackDetail.concatenatedFeedbackIds, pageable);
             this.participation.set(response);
         } catch (error) {
-            this.alertService.error('There was an error while loading the affected Students for this feedback');
+            this.alertService.error(this.TRANSLATION_BASE + '.error');
         }
     }
 
