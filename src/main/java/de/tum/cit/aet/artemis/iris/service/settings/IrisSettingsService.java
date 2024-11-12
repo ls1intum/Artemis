@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -505,18 +504,6 @@ public class IrisSettingsService {
 
     /**
      * Checks whether an Iris feature is enabled for an exercise.
-     *
-     * @param type   The Iris feature to check
-     * @param course The exercise to check
-     * @return Whether the Iris feature is enabled for the exercise
-     */
-    public boolean isEnabledForLecture(IrisSubSettingsType type, Course course) {
-        var settings = getCombinedIrisSettingsFor(course, true);
-        return isFeatureEnabledInSettings(settings, type);
-    }
-
-    /**
-     * Checks whether an Iris feature is enabled for an exercise.
      * Throws an exception if the feature is disabled.
      *
      * @param type     The Iris feature to check
@@ -598,31 +585,6 @@ public class IrisSettingsService {
                 irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal),
                 irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal),
                 irisSubSettingsService.combineLectureChatSettings(settingsList, minimal)
-        );
-        // @formatter:on
-    }
-
-    /**
-     * Get the combined Iris settings for a lecture as an {@link IrisCombinedSettingsDTO}.
-     * Combines the global Iris settings with the course Iris settings and the lecture Iris settings.
-     * If minimal is true, only certain attributes are returned. The minimal version can safely be passed to the students.
-     * See also {@link IrisSubSettingsService} for how the combining works in detail
-     *
-     * @param lecture The exercise to get the Iris settings for
-     * @param minimal Whether to return the minimal version of the settings
-     * @return The combined Iris settings for the exercise
-     */
-    public IrisCombinedSettingsDTO getCombinedIrisSettingsFor(Lecture lecture, boolean minimal) {
-        var settingsList = new ArrayList<IrisSettings>();
-        settingsList.add(getGlobalSettings());
-
-        // @formatter:off
-        return new IrisCombinedSettingsDTO(
-            irisSubSettingsService.combineChatSettings(settingsList, minimal),
-            irisSubSettingsService.combineTextExerciseChatSettings(settingsList, minimal),
-            irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal),
-            irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal),
-            irisSubSettingsService.combineLectureChatSettings(settingsList, minimal)
         );
         // @formatter:on
     }

@@ -103,6 +103,7 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
      *
      * @param user    The user to check
      * @param session The session to check
+     * @return weather the user has access to the session
      */
     public boolean hasAccess(User user, IrisLectureChatSession session) {
         try {

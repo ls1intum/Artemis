@@ -115,7 +115,6 @@ public class IrisLectureChatSessionResource {
         user.hasAcceptedIrisElseThrow();
 
         var sessions = irisLectureChatSessionRepository.findSessionsByLectureIdAndUserId(lecture.getId(), user.getId());
-        // TODO: Discuss this with the team: should we filter out sessions where the user does not have access, or throw an exception?
         // Access check might not even be necessary here -> see comments in hasAccess method
         var filteredSessions = sessions.stream().filter(session -> irisLectureChatSessionService.hasAccess(user, session)).toList();
         return ResponseEntity.ok(filteredSessions);
@@ -126,5 +125,4 @@ public class IrisLectureChatSessionResource {
             throw new ConflictException("The lecture is not visible to students yet", "Iris", "irisLecture");
         }
     }
-
 }
