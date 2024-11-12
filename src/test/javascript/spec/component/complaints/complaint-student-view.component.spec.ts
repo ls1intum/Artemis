@@ -148,6 +148,22 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(userMock).toHaveBeenCalledOnce();
         }));
 
+        it('should open complaint form and focus on complaint form when pressing complaint', fakeAsync(() => {
+            // Mock complaintScrollpoint
+            const scrollIntoViewMock = jest.fn();
+            component.complaintScrollpoint = {
+                nativeElement: {
+                    scrollIntoView: scrollIntoViewMock,
+                },
+            } as ElementRef;
+
+            component.startComplaint(ComplaintType.COMPLAINT);
+            expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
+            // Wait for setTimeout to execute
+            tick();
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
+        }));
+
         it('should be visible on test run', fakeAsync(() => {
             const now = dayjs();
             const examWithFutureReview: Exam = { examStudentReviewStart: dayjs(now).add(1, 'day'), examStudentReviewEnd: dayjs(now).add(2, 'day') } as Exam;
@@ -204,6 +220,38 @@ describe('ComplaintsStudentViewComponent', () => {
         it('should initialize with complaint', fakeAsync(() => {
             testInitWithResultStub(of({ body: complaint } as EntityResponseType));
             expect(component.complaint).toStrictEqual(complaint);
+        }));
+
+        it('should open complaint form and focus on complaint form when pressing complaint', fakeAsync(() => {
+            // Mock complaintScrollpoint
+            const scrollIntoViewMock = jest.fn();
+            component.complaintScrollpoint = {
+                nativeElement: {
+                    scrollIntoView: scrollIntoViewMock,
+                },
+            } as ElementRef;
+
+            component.startComplaint(ComplaintType.COMPLAINT);
+            expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
+            // Wait for setTimeout to execute
+            tick();
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
+        }));
+
+        it('should open complaint form and focus on complaint form when pressing more feedback', fakeAsync(() => {
+            // Mock complaintScrollpoint
+            const scrollIntoViewMock = jest.fn();
+            component.complaintScrollpoint = {
+                nativeElement: {
+                    scrollIntoView: scrollIntoViewMock,
+                },
+            } as ElementRef;
+
+            component.startComplaint(ComplaintType.MORE_FEEDBACK);
+            expect(component.formComplaintType).toBe(ComplaintType.MORE_FEEDBACK);
+            // Wait for setTimeout to execute
+            tick();
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
         }));
 
         it('should not be available if before or at assessment due date', fakeAsync(() => {
@@ -355,40 +403,6 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(numberOfAllowedComplaintsStub).toHaveBeenCalledOnce();
             expect(userStub).toHaveBeenCalledOnce();
         }
-    });
-
-    describe('startComplaint', () => {
-        it('should set formComplaintType to COMPLAINT and scroll to complaint section', fakeAsync(() => {
-            // Mock complaintScrollpoint
-            const scrollIntoViewMock = jest.fn();
-            component.complaintScrollpoint = {
-                nativeElement: {
-                    scrollIntoView: scrollIntoViewMock,
-                },
-            } as ElementRef;
-
-            component.startComplaint(ComplaintType.COMPLAINT);
-            expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
-            // Wait for setTimeout to execute
-            tick();
-            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
-        }));
-
-        it('should set formComplaintType to MORE_FEEDBACK and scroll to complaint section', fakeAsync(() => {
-            // Mock complaintScrollpoint
-            const scrollIntoViewMock = jest.fn();
-            component.complaintScrollpoint = {
-                nativeElement: {
-                    scrollIntoView: scrollIntoViewMock,
-                },
-            } as ElementRef;
-
-            component.startComplaint(ComplaintType.MORE_FEEDBACK);
-            expect(component.formComplaintType).toBe(ComplaintType.MORE_FEEDBACK);
-            // Wait for setTimeout to execute
-            tick();
-            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
-        }));
     });
 
     function expectDefault() {
