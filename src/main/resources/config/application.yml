@@ -77,7 +77,7 @@ artemis:
                     default: "ls1tum/artemis-c-docker:latest"
                     fact: "sharingcodeability/fact:latest"
                 haskell:
-                    default: "ghcr.io/uni-passau-artemis/artemis-haskell:v19.33.0"
+                    default: "ghcr.io/uni-passau-artemis/artemis-haskell:v22.37.0"
                 vhdl:
                     default: "tizianleonhardt/era-artemis-vhdl:latest"
                 assembler:
@@ -95,6 +95,8 @@ artemis:
                     default: "ghcr.io/ls1intum/artemis-r-docker:v1.0.0"
                 c_plus_plus:
                     default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.0.0"
+                c_sharp:
+                    default: "ghcr.io/ls1intum/artemis-csharp-docker:v1.0.0"
                 typescript:
                   default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
 
