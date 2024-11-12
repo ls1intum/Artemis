@@ -241,14 +241,14 @@ describe('ComplaintsStudentViewComponent', () => {
 
         it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', fakeAsync(() => {
             testInitWithResultStub(of());
-            const courseWithMaxComplaints = {
+            const courseWithMaxComplaints: Course = {
                 ...Course,
                 maxComplaints: 3,
-            } as Course;
-            const exerciseWithMaxComplaints = {
+            };
+            const exerciseWithMaxComplaints: Exercise = {
                 ...courseExercise,
                 course: courseWithMaxComplaints,
-            } as Exercise;
+            };
             component.course = courseWithMaxComplaints;
             component.exercise = exerciseWithMaxComplaints;
 
