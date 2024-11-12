@@ -37,8 +37,6 @@ import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapt
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { ListAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/list.action';
-import { StrikethroughAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/strikethrough.action';
-
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -151,27 +149,8 @@ describe('PostingsMarkdownEditor', () => {
 
     it('should have set the correct default commands on init if messaging or communication is enabled', () => {
         component.ngOnInit();
-
-        expect(component.defaultActions).toEqual(
-            expect.arrayContaining([
-                expect.any(BoldAction),
-                expect.any(ItalicAction),
-                expect.any(UnderlineAction),
-                expect.any(QuoteAction),
-                expect.any(CodeAction),
-                expect.any(CodeBlockAction),
-                expect.any(OrderedListAction),
-                expect.any(BulletedListAction),
-                expect.any(StrikethroughAction),
-                expect.any(UnderlineAction),
-                expect.any(EmojiAction),
-                expect.any(UrlAction),
-                expect.any(AttachmentAction),
-                expect.any(UserMentionAction),
-                expect.any(ChannelReferenceAction),
-                expect.any(ExerciseReferenceAction),
-            ]),
-        );
+        containDefaultActions(component.defaultActions);
+        expect(component.defaultActions).toEqual(expect.arrayContaining([expect.any(UserMentionAction), expect.any(ChannelReferenceAction)]));
 
         expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
     });
@@ -179,8 +158,12 @@ describe('PostingsMarkdownEditor', () => {
     it('should have set the correct default commands on init if communication is disabled', () => {
         jest.spyOn(CourseModel, 'isCommunicationEnabled').mockReturnValueOnce(false);
         component.ngOnInit();
+        containDefaultActions(component.defaultActions);
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
+    });
 
-        expect(component.defaultActions).toEqual(
+    function containDefaultActions(defaultActions: TextEditorAction[]) {
+        expect(defaultActions).toEqual(
             expect.arrayContaining([
                 expect.any(BoldAction),
                 expect.any(ItalicAction),
@@ -194,54 +177,21 @@ describe('PostingsMarkdownEditor', () => {
                 expect.any(ExerciseReferenceAction),
             ]),
         );
-
-        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
-    });
+    }
 
     it('should have set the correct default commands on init if faq is enabled', () => {
         jest.spyOn(CourseModel, 'isFaqEnabled').mockReturnValueOnce(true);
         component.ngOnInit();
-
-        expect(component.defaultActions).toEqual(
-            expect.arrayContaining([
-                expect.any(BoldAction),
-                expect.any(ItalicAction),
-                expect.any(UnderlineAction),
-                expect.any(QuoteAction),
-                expect.any(CodeAction),
-                expect.any(CodeBlockAction),
-                expect.any(EmojiAction),
-                expect.any(UrlAction),
-                expect.any(AttachmentAction),
-                expect.any(UserMentionAction),
-                expect.any(ChannelReferenceAction),
-                expect.any(ExerciseReferenceAction),
-                expect.any(FaqReferenceAction),
-            ]),
-        );
-
+        containDefaultActions(component.defaultActions);
+        expect(component.defaultActions).toEqual(expect.arrayContaining([expect.any(FaqReferenceAction)]));
         expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
     });
 
     it('should have set the correct default commands on init if faq is disabled', () => {
         jest.spyOn(CourseModel, 'isFaqEnabled').mockReturnValueOnce(false);
         component.ngOnInit();
-
-        expect(component.defaultActions).toEqual(
-            expect.arrayContaining([
-                expect.any(BoldAction),
-                expect.any(ItalicAction),
-                expect.any(UnderlineAction),
-                expect.any(QuoteAction),
-                expect.any(CodeAction),
-                expect.any(CodeBlockAction),
-                expect.any(EmojiAction),
-                expect.any(UrlAction),
-                expect.any(AttachmentAction),
-                expect.any(ExerciseReferenceAction),
-            ]),
-        );
-
+        containDefaultActions(component.defaultActions);
+        expect(component.defaultActions).toEqual(expect.not.arrayContaining([expect.any(FaqReferenceAction)]));
         expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
     });
 
