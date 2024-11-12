@@ -47,7 +47,6 @@
                 }
             </div>
         }
-        <div #complaintScrollpoint></div>
         @if (!complaint && formComplaintType) {
             <div class="row">
                 <jhi-complaint-form
@@ -60,6 +59,7 @@
                     (onSubmit)="loadPotentialComplaint()"
                 />
             </div>
+            <div #complaintScrollpoint></div>
         }
         @if (complaint) {
             <div class="row">

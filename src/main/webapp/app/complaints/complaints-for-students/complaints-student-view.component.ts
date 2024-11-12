@@ -167,6 +167,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * Function to scroll to the complaint form
      */
     private scrollToComplaint(): void {
-        this.complaintScrollpoint?.nativeElement.scrollIntoView({ behavior: 'smooth' });
+        this.complaintScrollpoint?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
 }
