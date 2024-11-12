@@ -387,10 +387,10 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Trades the current cookie for a new Theia-specific bearer token which is also able to authenticate the user.
-     * The Cookie stays valid, a new bearer token is generated on every call with a valididity of max 1d.
+     * Trades the current cookie for a new Tool-specific bearer token which is able to authenticate the user.
+     * The Cookie stays valid, a new bearer token is generated on every call with a validity of max 1d.
      */
-    getTheiaToken() {
-        return this.http.post<string>('api/public/theia-token', null, { responseType: 'text' as 'json' });
+    getToolToken(tool: string): Observable<string> {
+        return this.http.post<string>('api/public/tool-token', null, { params: { tool: tool }, responseType: 'text' as 'json' });
     }
 }

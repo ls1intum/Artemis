@@ -50,7 +50,7 @@ describe('CodeButtonComponent', () => {
     let createVcsAccessTokenSpy: jest.SpyInstance;
     let getProfileInfoSub: jest.SpyInstance;
     let getBuildConfigSub: jest.SpyInstance;
-    let getTheiaTokenSpy: jest.SpyInstance;
+    let getToolTokenSpy: jest.SpyInstance;
 
     const vcsToken: string = 'vcpat-xlhBs26D4F2CGlkCM59KVU8aaV9bYdX5Mg4IK6T8W3aT';
 
@@ -148,7 +148,7 @@ describe('CodeButtonComponent', () => {
         localStorageUseSshStoreStub = jest.spyOn(localStorageMock, 'store');
         getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken');
         createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken');
-        getTheiaTokenSpy = jest.spyOn(accountService, 'getTheiaToken');
+        getToolTokenSpy = jest.spyOn(accountService, 'getToolToken');
 
         localStorageUseSshObserveStubSubject = new Subject();
         localStorageUseSshObserveStub.mockReturnValue(localStorageUseSshObserveStubSubject);
@@ -575,7 +575,7 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
 
         await component.startOnlineIDE();
-        expect(getTheiaTokenSpy).toHaveBeenCalled();
+        expect(getToolTokenSpy).toHaveBeenCalled();
         expect(windowOpenSpy).toHaveBeenCalledWith('', '_blank');
         expect(documentAppendChildSpy).toHaveBeenCalled();
         expect(formSubmitSpy).toHaveBeenCalled();
