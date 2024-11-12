@@ -101,7 +101,6 @@ describe('PostingSummaryComponent', () => {
             fixture.componentRef.setInput('post', yesterdayPost);
             fixture.detectChanges();
 
-            // Assert
             expect(component['postingIsOfToday']).toBeFalsy();
         });
     });
@@ -122,7 +121,6 @@ describe('PostingSummaryComponent', () => {
 
             component['onTriggerNavigateToPost']();
 
-            // Assert
             expect(emitSpy).toHaveBeenCalledWith(mockPost);
         });
 

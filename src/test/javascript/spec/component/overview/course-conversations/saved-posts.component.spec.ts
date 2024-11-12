@@ -130,5 +130,16 @@ describe('SavedPostsComponent', () => {
             const emptyNotice = fixture.nativeElement.querySelector('.saved-posts-empty-notice');
             expect(emptyNotice).toBeFalsy();
         }));
+
+        it('should show delete post notice when archived is selected', fakeAsync(() => {
+            fixture.componentRef.setInput('savedPostStatus', SavedPostStatus.ARCHIVED);
+            fixture.detectChanges();
+            tick();
+            fixture.detectChanges();
+
+            const optionsElement = fixture.nativeElement.querySelector('.saved-posts-delete-notice');
+            expect(component['isShowDeleteNotice']).toBeTruthy();
+            expect(optionsElement).toBeTruthy();
+        }));
     });
 });

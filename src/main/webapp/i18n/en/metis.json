@@ -100,7 +100,8 @@
                 "progress": "In Progress",
                 "completed": "Completed",
                 "archived": "Archived",
-                "emptySavedPosts": "There is nothing here yet. Bookmark messages and they will appear here."
+                "emptySavedPosts": "There is nothing here yet. Bookmark messages and they will appear here.",
+                "deleteNoticeSavedPosts": "Archived and completed bookmarks will be removed after 100 days."
             },
             "post": {
                 "context": "Context",

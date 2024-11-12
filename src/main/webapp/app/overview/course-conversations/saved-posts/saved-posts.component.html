@@ -5,6 +5,12 @@
         </h4>
     </div>
     <hr class="my-2" />
+    @if (isShowDeleteNotice) {
+        <div class="saved-posts-delete-notice m-2 fs-x-small text-secondary">
+            <fa-icon class="me-1" [icon]="faInfoCircle"></fa-icon>
+            <span jhiTranslate="artemisApp.metis.overview.deleteNoticeSavedPosts"></span>
+        </div>
+    }
     <div class="saved-posts-post-container flex-grow">
         @if (posts && posts.length > 0) {
             @for (post of posts; track trackPostFunction($index, post)) {

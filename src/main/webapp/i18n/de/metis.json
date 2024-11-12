@@ -100,7 +100,8 @@
                 "progress": "In Bearbeitung",
                 "completed": "Abgeschlossen",
                 "archived": "Archiviert",
-                "emptySavedPosts": "Hier ist noch nichts. Speichere Nachrichten damit sie hier auftauchen."
+                "emptySavedPosts": "Hier ist noch nichts. Speichere Nachrichten damit sie hier auftauchen.",
+                "deleteNoticeSavedPosts": "Abgeschlossene und archivierte Lesezeichen werden nach 100 Tagen gelöscht."
             },
             "post": {
                 "context": "Kontext",
