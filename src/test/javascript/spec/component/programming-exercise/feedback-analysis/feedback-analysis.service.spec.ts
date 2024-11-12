@@ -10,7 +10,7 @@ describe('FeedbackAnalysisService', () => {
 
     const feedbackDetailsMock: FeedbackDetail[] = [
         {
-            concatenatedFeedbackIds: '1, 2',
+            concatenatedFeedbackIds: [1, 2],
             detailText: 'Feedback 1',
             testCaseName: 'test1',
             count: 5,
@@ -19,7 +19,7 @@ describe('FeedbackAnalysisService', () => {
             errorCategory: 'StudentError',
         },
         {
-            concatenatedFeedbackIds: '3, 4',
+            concatenatedFeedbackIds: [3, 4],
             detailText: 'Feedback 2',
             testCaseName: 'test2',
             count: 3,
@@ -70,8 +70,8 @@ describe('FeedbackAnalysisService', () => {
 
             const result = await responsePromise;
             expect(result).toEqual(feedbackAnalysisResponseMock);
-            expect(result.feedbackDetails.resultsOnPage[0].concatenatedFeedbackIds).toBe('1, 2');
-            expect(result.feedbackDetails.resultsOnPage[1].concatenatedFeedbackIds).toBe('3, 4');
+            expect(result.feedbackDetails.resultsOnPage[0].concatenatedFeedbackIds).toStrictEqual([1, 2]);
+            expect(result.feedbackDetails.resultsOnPage[1].concatenatedFeedbackIds).toStrictEqual([3, 4]);
         });
     });
 
@@ -90,7 +90,7 @@ describe('FeedbackAnalysisService', () => {
 
     describe('getParticipationForFeedbackIds', () => {
         it('should retrieve paginated participation details for specified feedback IDs', async () => {
-            const feedbackIds = '1, 2';
+            const feedbackIds = [1, 2];
             const pageable = {
                 page: 1,
                 pageSize: 10,
@@ -122,9 +122,7 @@ describe('FeedbackAnalysisService', () => {
 
             const responsePromise = service.getParticipationForFeedbackIds(1, feedbackIds, pageable);
 
-            const req = httpMock.expectOne(
-                'api/exercises/1/feedback-details-participation?feedbackIds=1,%202&page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING',
-            );
+            const req = httpMock.expectOne('api/exercises/1/feedback-details-participation?feedbackIds=1,2&page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING');
             expect(req.request.method).toBe('GET');
             req.flush(participationResponseMock);
 
