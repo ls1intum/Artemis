@@ -106,8 +106,7 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         @BeforeEach
         void setup() {
-            final var users = userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-            user = users.getFirst();
+            userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
             course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(8), new HashSet<>(), TEST_PREFIX + "tumuser",
                     TEST_PREFIX + "tutor", TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
             course = courseRepository.save(course);
