@@ -25,6 +25,8 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { ElementRef } from '@angular/core';
+import { ComplaintType } from 'app/entities/complaint.model';
 
 describe('ComplaintsStudentViewComponent', () => {
     const complaintTimeLimitDays = 7;
@@ -353,6 +355,40 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(numberOfAllowedComplaintsStub).toHaveBeenCalledOnce();
             expect(userStub).toHaveBeenCalledOnce();
         }
+    });
+
+    describe('startComplaint', () => {
+        it('should set formComplaintType to COMPLAINT and scroll to complaint section', fakeAsync(() => {
+            // Mock complaintScrollpoint
+            const scrollIntoViewMock = jest.fn();
+            component.complaintScrollpoint = {
+                nativeElement: {
+                    scrollIntoView: scrollIntoViewMock,
+                },
+            } as ElementRef;
+
+            component.startComplaint(ComplaintType.COMPLAINT);
+            expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
+            // Wait for setTimeout to execute
+            tick();
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
+        }));
+
+        it('should set formComplaintType to MORE_FEEDBACK and scroll to complaint section', fakeAsync(() => {
+            // Mock complaintScrollpoint
+            const scrollIntoViewMock = jest.fn();
+            component.complaintScrollpoint = {
+                nativeElement: {
+                    scrollIntoView: scrollIntoViewMock,
+                },
+            } as ElementRef;
+
+            component.startComplaint(ComplaintType.MORE_FEEDBACK);
+            expect(component.formComplaintType).toBe(ComplaintType.MORE_FEEDBACK);
+            // Wait for setTimeout to execute
+            tick();
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
+        }));
     });
 
     function expectDefault() {
