@@ -4,10 +4,12 @@
             [previewMode]="previewMode"
             [readOnlyMode]="readOnlyMode"
             [posting]="posting"
+            [isDeleted]="isDeleted"
             [isCommunicationPage]="isCommunicationPage"
             [hasChannelModerationRights]="hasChannelModerationRights"
             (isModalOpen)="displayInlineInput = true"
             [lastReadDate]="lastReadDate"
+            (isDeleteEvent)="onDeleteEvent(true)"
         />
     </div>
     <div class="align-items-center post-content-margin">
@@ -57,33 +59,38 @@
                     [isEdited]="!!posting.updatedDate"
                     [posting]="posting"
                     [isReply]="false"
+                    [isDeleted]="isDeleted"
+                    [deleteTimerInSeconds]="deleteTimerInSeconds"
+                    (onUndoDeleteEvent)="onDeleteEvent(false)"
                     (userReferenceClicked)="onUserReferenceClicked($event)"
                     (channelReferenceClicked)="onChannelReferenceClicked($event)"
                 />
             }
         </div>
     </div>
-    @if (displayInlineInput && !readOnlyMode) {
+    @if (!isDeleted && displayInlineInput && !readOnlyMode) {
         <div class="post-content-margin">
             <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
         </div>
     }
-    <div class="post-content-margin me-0 mt-2 justify-content-between" [ngClass]="{ 'mb-2': previewMode }">
-        <!-- Post reactions -->
-        @if (!previewMode) {
-            <jhi-post-reactions-bar
-                [lastReadDate]="lastReadDate"
-                [readOnlyMode]="readOnlyMode"
-                [posting]="posting"
-                [(showAnswers)]="showAnswers"
-                [sortedAnswerPosts]="sortedAnswerPosts"
-                [isCommunicationPage]="isCommunicationPage"
-                [isThreadSidebar]="isThreadSidebar"
-                (openPostingCreateEditModal)="openCreateAnswerPostModal()"
-                (openThread)="openThread.emit()"
-            />
-        }
-    </div>
+    @if (!isDeleted) {
+        <div class="post-content-margin me-0 mt-2 justify-content-between" [ngClass]="{ 'mb-2': previewMode }" @fade>
+            <!-- Post reactions -->
+            @if (!previewMode) {
+                <jhi-post-reactions-bar
+                    [lastReadDate]="lastReadDate"
+                    [readOnlyMode]="readOnlyMode"
+                    [posting]="posting"
+                    [(showAnswers)]="showAnswers"
+                    [sortedAnswerPosts]="sortedAnswerPosts"
+                    [isCommunicationPage]="isCommunicationPage"
+                    [isThreadSidebar]="isThreadSidebar"
+                    (openPostingCreateEditModal)="openCreateAnswerPostModal()"
+                    (openThread)="openThread.emit()"
+                />
+            }
+        </div>
+    }
 </div>
 <jhi-post-footer
     #postFooter

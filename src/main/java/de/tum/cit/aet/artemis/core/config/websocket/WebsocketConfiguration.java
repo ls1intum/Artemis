@@ -19,7 +19,6 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import jakarta.annotation.Nullable;
-import jakarta.servlet.http.Cookie;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -32,6 +31,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
@@ -52,7 +52,6 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
-import org.springframework.web.util.WebUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterators;
@@ -200,10 +199,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             @Override
             public boolean beforeHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler,
                     @NotNull Map<String, Object> attributes) {
-                if (request instanceof ServletServerHttpRequest servletRequest) {
+                if (request instanceof ServletServerHttpRequest servletRequest && response instanceof ServletServerHttpResponse servletResponse) {
                     attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
-                    Cookie jwtCookie = WebUtils.getCookie(servletRequest.getServletRequest(), JWTFilter.JWT_COOKIE_NAME);
-                    return JWTFilter.isJwtCookieValid(tokenProvider, jwtCookie);
+                    return JWTFilter.extractValidJwt(servletRequest.getServletRequest(), servletResponse.getServletResponse(), tokenProvider) != null;
                 }
                 return false;
             }

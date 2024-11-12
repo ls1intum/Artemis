@@ -109,6 +109,9 @@ public final class Constants {
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;
 
     // Note: The values in input.constants.ts (client) need to be the same
+    public static final long MAX_FILE_SIZE_COMMUNICATION = 5 * 1024 * 1024; // 5 MB
+
+    // Note: The values in input.constants.ts (client) need to be the same
     public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
 
     // Note: The values in input.constants.ts (client) need to be the same
@@ -271,6 +274,12 @@ public final class Constants {
     public static final String VERSION_CONTROL_NAME = "versionControlName";
 
     public static final String CONTINUOUS_INTEGRATION_NAME = "continuousIntegrationName";
+
+    public static final String INSTRUCTOR_BUILD_TIMEOUT_MIN_OPTION = "buildTimeoutMin";
+
+    public static final String INSTRUCTOR_BUILD_TIMEOUT_MAX_OPTION = "buildTimeoutMax";
+
+    public static final String INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION = "buildTimeoutDefault";
 
     public static final String USE_EXTERNAL = "useExternal";
 

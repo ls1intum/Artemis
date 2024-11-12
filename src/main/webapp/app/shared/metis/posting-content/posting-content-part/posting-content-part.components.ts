@@ -73,6 +73,7 @@ export class PostingContentPartComponent {
     enlargeImage(slideToReference: string) {
         this.dialog.open(EnlargeSlideImageComponent, {
             data: { slideToReference },
+            maxWidth: '95vw',
         });
     }
 
