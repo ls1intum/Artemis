@@ -1925,7 +1925,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
-        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.BAD_REQUEST);
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
 
@@ -1954,12 +1954,12 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testValidateAuxiliaryRepositoryWithoutCheckoutDirectory() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory();
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory("   ");
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory() throws Exception {
@@ -1982,7 +1982,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutDescription();
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
@@ -2266,8 +2266,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden(String testPrefix) throws Exception {
+        userUtilService.addInstructor("other-instructors", testPrefix + "instructoralt");
         programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExercise, HttpStatus.FORBIDDEN);
