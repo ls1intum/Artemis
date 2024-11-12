@@ -36,6 +36,7 @@
                 }
                 @if (!isExamMode && course?.requestMoreFeedbackEnabled) {
                     <button
+                        id="more-feedback"
                         class="btn btn-primary ms-1"
                         [class.not-allowed]="!timeOfFeedbackRequestValid"
                         (click)="startComplaint(ComplaintType.MORE_FEEDBACK)"

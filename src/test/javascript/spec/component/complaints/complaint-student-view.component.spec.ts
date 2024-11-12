@@ -148,8 +148,21 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(userMock).toHaveBeenCalledOnce();
         }));
 
-        it('should open complaint form and focus on complaint form when pressing complaint', fakeAsync(() => {
-            // Mock complaintScrollpoint
+        it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', fakeAsync(() => {
+            component.exercise = examExercise;
+            component.result = result;
+            component.exam = defaultExam;
+            component.showSection = true;
+            component.isCorrectUserToFileAction = true;
+            const complaintBySubmissionMock = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
+
+            fixture.detectChanges();
+
+            //Check if button is available
+            expect(component.complaint).toBeUndefined();
+            expect(complaintBySubmissionMock).toHaveBeenCalledOnce();
+
+            // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
             component.complaintScrollpoint = {
                 nativeElement: {
@@ -157,7 +170,11 @@ describe('ComplaintsStudentViewComponent', () => {
                 },
             } as ElementRef;
 
-            component.startComplaint(ComplaintType.COMPLAINT);
+            const button = fixture.debugElement.nativeElement.querySelector('#complain');
+            button.click();
+
+            fixture.detectChanges();
+
             expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
             // Wait for setTimeout to execute
             tick();
@@ -222,8 +239,29 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(component.complaint).toStrictEqual(complaint);
         }));
 
-        it('should open complaint form and focus on complaint form when pressing complaint', fakeAsync(() => {
-            // Mock complaintScrollpoint
+        it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', fakeAsync(() => {
+            testInitWithResultStub(of());
+            const courseWithMaxComplaints = {
+                ...Course,
+                maxComplaints: 3,
+            } as Course;
+            const exerciseWithMaxComplaints = {
+                ...courseExercise,
+                course: courseWithMaxComplaints,
+            } as Exercise;
+            component.course = courseWithMaxComplaints;
+            component.exercise = exerciseWithMaxComplaints;
+
+            component.showSection = true;
+            component.isCorrectUserToFileAction = true;
+            component.remainingNumberOfComplaints = 1;
+
+            fixture.detectChanges();
+
+            //Check if button is available
+            expect(component.complaint).toBeUndefined();
+
+            // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
             component.complaintScrollpoint = {
                 nativeElement: {
@@ -231,15 +269,28 @@ describe('ComplaintsStudentViewComponent', () => {
                 },
             } as ElementRef;
 
-            component.startComplaint(ComplaintType.COMPLAINT);
+            const button = fixture.debugElement.nativeElement.querySelector('#complain');
+            button.click();
+
+            fixture.detectChanges();
+
             expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
             // Wait for setTimeout to execute
             tick();
             expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
         }));
 
-        it('should open complaint form and focus on complaint form when pressing more feedback', fakeAsync(() => {
-            // Mock complaintScrollpoint
+        it('should set complaint type MORE_FEEDBACK and scroll to complaint form when pressing complaint', fakeAsync(() => {
+            testInitWithResultStub(of());
+            component.showSection = true;
+            component.isCorrectUserToFileAction = true;
+
+            fixture.detectChanges();
+
+            //Check if button is available
+            expect(component.complaint).toBeUndefined();
+
+            // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
             component.complaintScrollpoint = {
                 nativeElement: {
@@ -247,7 +298,11 @@ describe('ComplaintsStudentViewComponent', () => {
                 },
             } as ElementRef;
 
-            component.startComplaint(ComplaintType.MORE_FEEDBACK);
+            const button = fixture.debugElement.nativeElement.querySelector('#more-feedback');
+            button.click();
+
+            fixture.detectChanges();
+
             expect(component.formComplaintType).toBe(ComplaintType.MORE_FEEDBACK);
             // Wait for setTimeout to execute
             tick();
