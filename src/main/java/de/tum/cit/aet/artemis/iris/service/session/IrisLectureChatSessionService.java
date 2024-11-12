@@ -96,6 +96,14 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, session.getLecture(), user);
     }
 
+    /**
+     * Checks if the user has access to the Iris session.
+     * A user has access if they have access to the lecture and the session belongs to them.
+     * If the user is null, the user is fetched from the database.
+     *
+     * @param user    The user to check
+     * @param session The session to check
+     */
     public boolean hasAccess(User user, IrisLectureChatSession session) {
         try {
             checkHasAccessTo(user, session);
@@ -106,6 +114,13 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
         }
     }
 
+    /**
+     * Handles the status update of a lecture chat job.
+     *
+     * @param job          The job that is updated
+     * @param statusUpdate The status update
+     * @return The same job that was passed in
+     */
     public LectureChatJob handleStatusUpdate(LectureChatJob job, PyrisLectureChatStatusUpdateDTO statusUpdate) {
         // TODO: LLM Token Tracking - or better, make this class a subclass of AbstractIrisChatSessionService
         var session = (IrisLectureChatSession) irisSessionRepository.findByIdElseThrow(job.sessionId());

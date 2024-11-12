@@ -51,6 +51,12 @@ public class IrisLectureChatSessionResource {
         this.irisLectureChatSessionRepository = irisLectureChatSessionRepository;
     }
 
+    /**
+     * GET lecture-chat/{lectureId}/sessions/current: Retrieve the current iris session for the lecture
+     *
+     * @param lectureId of the lecture
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris session for the lecture or {@code 404 (Not Found)} if no session exists
+     */
     @PostMapping("{lectureId}/sessions/current")
     public ResponseEntity<IrisLectureChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long lectureId) throws URISyntaxException {
         var lecture = lectureRepository.findByIdElseThrow(lectureId);
@@ -67,11 +73,19 @@ public class IrisLectureChatSessionResource {
             return ResponseEntity.ok(session);
         }
 
-        return createSessionForExercise(lectureId);
+        return createSessionForLecture(lectureId);
     }
 
+    /**
+     * POST lecture-chat/{lectureId}/session: Create a new iris session for a lecture and user.
+     * If there already exists an iris session for the lecture and user, a new one is created.
+     * Note: The old session including messages is not deleted and can still be retrieved
+     *
+     * @param lectureId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new iris session for the lecture
+     */
     @PostMapping("{lectureId}/sessions")
-    public ResponseEntity<IrisLectureChatSession> createSessionForExercise(@PathVariable Long lectureId) throws URISyntaxException {
+    public ResponseEntity<IrisLectureChatSession> createSessionForLecture(@PathVariable Long lectureId) throws URISyntaxException {
         var lecture = lectureRepository.findByIdElseThrow(lectureId);
         validateLecture(lecture);
 
@@ -86,7 +100,7 @@ public class IrisLectureChatSessionResource {
     }
 
     /**
-     * GET exercise-chat/{exerciseId}/sessions: Retrieve all Iris Sessions for the programming exercise
+     * GET lecture-chat/{lectureId}/sessions: Retrieve all Iris Sessions for the lecture
      *
      * @param lectureId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the exercise or {@code 404 (Not Found)} if no session exists
