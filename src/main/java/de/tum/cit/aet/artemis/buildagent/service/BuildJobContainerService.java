@@ -137,6 +137,8 @@ public class BuildJobContainerService {
             }
             catch (Exception e) {
                 log.error("Failed to disconnect container with id {} from network: {}", containerId, e.getMessage());
+                buildLogsMap.appendBuildLogEntry(buildJobId, "Failed to disconnect container from default network 'bridge': " + e.getMessage());
+                throw new LocalCIException("Failed to disconnect container from default network 'bridge': " + e.getMessage());
             }
         }
 
