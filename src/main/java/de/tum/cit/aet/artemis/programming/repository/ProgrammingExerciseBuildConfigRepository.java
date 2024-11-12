@@ -35,4 +35,14 @@ public interface ProgrammingExerciseBuildConfigRepository extends ArtemisJpaRepo
     default void loadAndSetBuildConfig(ProgrammingExercise programmingExercise) {
         programmingExercise.setBuildConfig(getProgrammingExerciseBuildConfigElseThrow(programmingExercise));
     }
+
+    /**
+     * Find a build config by its programming exercise's id and throw an Exception if it cannot be found
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    default ProgrammingExerciseBuildConfig findByExerciseIdElseThrow(long programmingExerciseId) {
+        return getValueElseThrow(findByProgrammingExerciseId(programmingExerciseId));
+    }
 }

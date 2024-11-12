@@ -385,4 +385,12 @@ export class AccountService implements IAccountService {
         const params = new HttpParams().set('participationId', participationId);
         return this.http.put<string>('api/account/participation-vcs-access-token', null, { observe: 'response', params, responseType: 'text' as 'json' });
     }
+
+    /**
+     * Trades the current cookie for a new Tool-specific bearer token which is able to authenticate the user.
+     * The Cookie stays valid, a new bearer token is generated on every call with a validity of max 1d.
+     */
+    getToolToken(tool: string): Observable<string> {
+        return this.http.post<string>('api/public/tool-token', null, { params: { tool: tool }, responseType: 'text' as 'json' });
+    }
 }
