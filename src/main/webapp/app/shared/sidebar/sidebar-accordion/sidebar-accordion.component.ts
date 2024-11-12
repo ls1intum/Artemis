@@ -40,7 +40,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         } else {
             this.setStoredCollapseState();
         }
-        this.calculateUnreadMessages();
+        this.calculateUnreadMessagesOfGroup();
     }
 
     setStoredCollapseState() {
@@ -69,14 +69,13 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         }
     }
 
-    calculateUnreadMessages(): void {
+    calculateUnreadMessagesOfGroup(): void {
         if (!this.groupedData) {
             this.totalUnreadMessagesPerGroup = {};
             return;
         }
 
         Object.keys(this.groupedData).forEach((groupKey) => {
-            // Sum the unread messages for each item in the group
             this.totalUnreadMessagesPerGroup[groupKey] = this.groupedData[groupKey].entityData
                 .filter((item: SidebarCardElement) => item.conversation?.unreadMessagesCount)
                 .reduce((sum, item) => sum + (item.conversation?.unreadMessagesCount || 0), 0);
