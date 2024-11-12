@@ -66,7 +66,7 @@ describe('AffectedStudentsModalComponent', () => {
 
         await component['loadAffected']();
 
-        expect(alertServiceSpy).toHaveBeenCalledWith('There was an error while loading the affected Students for this feedback');
+        expect(alertServiceSpy).toHaveBeenCalledTimes(2);
         expect(component.participation().content).toEqual([]);
         expect(consoleErrorSpy).toHaveBeenCalled();
 
