@@ -27,11 +27,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
-import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
@@ -199,9 +199,15 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             @Override
             public boolean beforeHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler,
                     @NotNull Map<String, Object> attributes) {
-                if (request instanceof ServletServerHttpRequest servletRequest && response instanceof ServletServerHttpResponse servletResponse) {
-                    attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
-                    return JWTFilter.extractValidJwt(servletRequest.getServletRequest(), servletResponse.getServletResponse(), tokenProvider) != null;
+                if (request instanceof ServletServerHttpRequest servletRequest) {
+                    try {
+                        attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
+                        return JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider) != null;
+                    }
+                    catch (IllegalArgumentException e) {
+                        response.setStatusCode(HttpStatusCode.valueOf(400));
+                        return false;
+                    }
                 }
                 return false;
             }

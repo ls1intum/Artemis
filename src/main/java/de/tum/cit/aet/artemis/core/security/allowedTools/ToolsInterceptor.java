@@ -24,7 +24,14 @@ public class ToolsInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        var jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);
+        String jwtToken;
+        try {
+            jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);
+        }
+        catch (IllegalArgumentException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return false;
+        }
 
         if (handler instanceof HandlerMethod && jwtToken != null) {
             HandlerMethod handlerMethod = (HandlerMethod) handler;
