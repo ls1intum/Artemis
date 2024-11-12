@@ -45,7 +45,10 @@ public class IrisProactivitySubSettings extends DomainObject implements IrisTogg
         return eventSettings;
     }
 
-    public void setEventSettings(Set<IrisEventSettings> proactivityStatuses) {
-        this.eventSettings = proactivityStatuses;
+    public void setEventSettings(Set<IrisEventSettings> eventSettings) {
+        this.eventSettings = eventSettings;
+        for (IrisEventSettings eventSetting : eventSettings) {
+            eventSetting.setProactivitySubSettings(this);
+        }
     }
 }
