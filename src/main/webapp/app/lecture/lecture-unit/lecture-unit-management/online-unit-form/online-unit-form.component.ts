@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, OnChanges, computed, inject, input, output } from '@angular/core';
+import { Component, OnChanges, computed, inject, input, output, viewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { map } from 'rxjs';
@@ -8,6 +8,7 @@ import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-managem
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 export interface OnlineUnitFormData {
     name?: string;
@@ -45,6 +46,8 @@ export class OnlineUnitFormComponent implements OnChanges {
     hasCancelButton = input<boolean>(false);
     onCancel = output<void>();
 
+    datePickerComponent = viewChild(FormDateTimePickerComponent);
+
     urlValidator = urlValidator;
 
     private readonly formBuilder = inject(FormBuilder);
@@ -59,7 +62,7 @@ export class OnlineUnitFormComponent implements OnChanges {
     });
 
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-    isFormValid = computed(() => this.statusChanges() === 'VALID');
+    isFormValid = computed(() => this.statusChanges() === 'VALID') && this.datePickerComponent()?.isValid();
 
     get nameControl() {
         return this.form.get('name');

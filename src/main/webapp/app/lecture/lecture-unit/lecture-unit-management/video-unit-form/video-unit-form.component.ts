@@ -1,10 +1,11 @@
 import dayjs from 'dayjs/esm';
-import { Component, computed, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 export interface VideoUnitFormData {
     name?: string;
@@ -72,6 +73,8 @@ export class VideoUnitFormComponent {
     hasCancelButton = input<boolean>();
     onCancel = output<void>();
 
+    datePickerComponent = viewChild(FormDateTimePickerComponent);
+
     videoSourceUrlValidator = videoSourceUrlValidator;
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
@@ -84,7 +87,7 @@ export class VideoUnitFormComponent {
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-    isFormValid = computed(() => this.statusChanges() === 'VALID');
+    isFormValid = computed(() => this.statusChanges() === 'VALID') && this.datePickerComponent()?.isValid();
 
     constructor() {
         effect(() => {
