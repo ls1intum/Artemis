@@ -152,12 +152,18 @@ export class ComplaintsStudentViewComponent implements OnInit {
         return false;
     }
 
+    /**
+     * Opens the complaint form for the student to submit a complaint and scrolls to the bottom of the page to make the form visible
+     */
     startComplaint(): void {
         this.formComplaintType = ComplaintType.COMPLAINT;
         // Wait for the view to update
         setTimeout(() => this.scrollToBottom(), 0);
     }
 
+    /**
+     * Scrolls to the bottom of the page
+     */
     private scrollToBottom(): void {
         this.bottom.nativeElement.scrollIntoView({ behavior: 'smooth' });
     }
