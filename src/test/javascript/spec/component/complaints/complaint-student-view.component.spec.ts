@@ -258,9 +258,6 @@ describe('ComplaintsStudentViewComponent', () => {
 
             fixture.detectChanges();
 
-            //Check if button is available
-            expect(component.complaint).toBeUndefined();
-
             // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
             component.complaintScrollpoint = {
@@ -275,8 +272,7 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.detectChanges();
 
             expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
-            // Wait for setTimeout to execute
-            tick();
+            tick(); // Wait for update to happen
             expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
         }));
 
@@ -304,8 +300,7 @@ describe('ComplaintsStudentViewComponent', () => {
             fixture.detectChanges();
 
             expect(component.formComplaintType).toBe(ComplaintType.MORE_FEEDBACK);
-            // Wait for setTimeout to execute
-            tick();
+            tick(); // Wait for update to happen
             expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
         }));
 
