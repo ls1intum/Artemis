@@ -374,6 +374,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             appDef: this.exercise?.buildConfig?.theiaImage ?? '',
             gitUri: this.addCredentialsToHttpUrl(this.getRepositoryUri(), false, true),
             artemisToken: artemisToken,
+            artemisUrl: window.location.protocol ? `${window.location.protocol}://` : '' + window.location.host ? window.location.host : '',
         };
 
         const newWindow = window.open('', '_blank');
