@@ -335,15 +335,15 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * GET /lectures/:lectureId/attachment-units/:parentAttachmentUnitId/hiddenAttachment : retrieve the hidden attachment associated with the given parent attachment ID.
+     * GET /lectures/:lectureId/attachment-units/:parentAttachmentUnitId/hiddenAttachment : retrieve the hidden attachment unit associated with the given parent attachment unit ID.
      *
      * @param lectureId              the ID of the lecture to which the attachment unit belongs
      * @param parentAttachmentUnitId the ID of the parent attachment unit for which to retrieve the hidden attachment unit
-     * @return the ResponseEntity with status 200 (OK) and the Attachment in the body, or a 404 (Not Found) if no matching attachment exists
+     * @return the ResponseEntity with status 200 (OK) and the AttachmentUnit in the body, or a 404 (Not Found) if no matching attachment unit exists
      */
     @GetMapping("lectures/{lectureId}/attachment-units/{parentAttachmentUnitId}/hiddenAttachment")
     @EnforceAtLeastTutor
-    public ResponseEntity<AttachmentUnit> getAttachmentByParentAttachmentId(@PathVariable Long lectureId, @PathVariable Long parentAttachmentUnitId) {
+    public ResponseEntity<AttachmentUnit> getAttachmentUnitByParentAttachmentUnitId(@PathVariable Long lectureId, @PathVariable Long parentAttachmentUnitId) {
         log.debug("REST request to get attachment unit by the parent attachment unit Id : {}", parentAttachmentUnitId);
         return ResponseEntity.ok(attachmentUnitRepository.findAttachmentUnitByLectureIdAndParentAttachmentUnitId(lectureId, parentAttachmentUnitId));
     }

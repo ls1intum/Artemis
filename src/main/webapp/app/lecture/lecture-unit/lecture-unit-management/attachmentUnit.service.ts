@@ -77,7 +77,7 @@ export class AttachmentUnitService {
      *
      * @param lectureId The ID of the lecture that the attachment unit belongs to
      * @param parentAttachmentUnitId The ID of the parent attachment unit whose hidden attachment unit is to be retrieved
-     * @returns An Observable that emits an EntityResponseType containing the Attachment object when the HTTP request completes successfully
+     * @returns An Observable that emits an EntityResponseType containing the Attachment Unit object when the HTTP request completes successfully
      */
     getAttachmentUnitByParentAttachmentUnitId(lectureId: number, parentAttachmentUnitId: number): Observable<EntityResponseType> {
         return this.httpClient
