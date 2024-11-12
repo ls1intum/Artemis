@@ -15,10 +15,11 @@ checkers () {
 
   main_checker_output=$(pipeline-helper main-method -s target/classes)
 
-  IFS=$'\n' read -rd '' -a main_checker_lines <<< "${main_checker_output}"
+  line_count="$(echo "$main_checker_output" | wc -l)"
+  main_method="$(echo "$main_checker_output" | head -n1)"
 
-  if [ ${#main_checker_lines[@]} -eq 2 ]; then
-    export MAIN_CLASS=${main_checker_lines[0]}
+  if [ "${line_count}" -eq 2 ]; then
+    export MAIN_CLASS="${main_method}"
   else
     exit 1
   fi
