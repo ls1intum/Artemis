@@ -1,5 +1,9 @@
 @if (postingContentPart.contentBeforeReference) {
-    <span class="markdown-preview" [innerHTML]="postingContentPart.contentBeforeReference | htmlForPostingMarkdown: true : allowedHtmlTags : allowedHtmlAttributes"></span>
+    <span
+        class="markdown-preview"
+        style="white-space: pre-wrap"
+        [innerHTML]="processedContentBeforeReference | htmlForPostingMarkdown: true : allowedHtmlTags : allowedHtmlAttributes"
+    ></span>
 }
 @if (postingContentPart.linkToReference) {
     <a class="reference" [routerLink]="postingContentPart.linkToReference" [queryParams]="postingContentPart.queryParams">
@@ -68,5 +72,9 @@
 }
 
 @if (postingContentPart.contentAfterReference) {
-    <span class="markdown-preview" [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown: false : allowedHtmlTags : allowedHtmlAttributes"></span>
+    <span
+        class="markdown-preview"
+        style="white-space: pre-wrap"
+        [innerHTML]="processedContentAfterReference | htmlForPostingMarkdown: false : allowedHtmlTags : allowedHtmlAttributes"
+    ></span>
 }

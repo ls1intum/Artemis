@@ -7,6 +7,7 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
+import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 
 export enum ConversationDetailTabs {
     MEMBERS = 'members',
@@ -24,6 +25,7 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     @Input() selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 
     isInitialized = false;
+    readonly faPeopleGroup = faPeopleGroup;
 
     initialize() {
         super.initialize(['course', 'activeConversation', 'selectedTab']);

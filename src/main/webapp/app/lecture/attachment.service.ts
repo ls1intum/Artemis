@@ -6,6 +6,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { Attachment } from 'app/entities/attachment.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { objectToJsonBlob } from 'app/utils/blob-util';
+import { cloneDeep } from 'lodash-es';
 
 type EntityResponseType = HttpResponse<Attachment>;
 type EntityArrayResponseType = HttpResponse<Attachment[]>;
@@ -96,11 +97,11 @@ export class AttachmentService {
     }
 
     convertAttachmentDatesFromClient(attachment: Attachment): Attachment {
-        const copy: Attachment = Object.assign({}, attachment, {
+        // Deep clone is applied to preserve all nested properties of the attachment
+        return Object.assign({}, cloneDeep(attachment), {
             releaseDate: convertDateFromClient(attachment.releaseDate),
             uploadDate: convertDateFromClient(attachment.uploadDate),
         });
-        return copy;
     }
 
     convertAttachmentDatesFromServer(attachment?: Attachment) {
