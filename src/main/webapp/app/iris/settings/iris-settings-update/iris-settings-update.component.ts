@@ -51,7 +51,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     GLOBAL = IrisSettingsType.GLOBAL;
     COURSE = IrisSettingsType.COURSE;
     EXERCISE = IrisSettingsType.EXERCISE;
-    LECTURE = IrisSettingsType.LECTURE;
 
     constructor(
         private irisSettingsService: IrisSettingsService,
@@ -153,8 +152,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 return new Observable<IrisSettings | undefined>();
             case IrisSettingsType.COURSE:
                 return this.irisSettingsService.getGlobalSettings();
-            case IrisSettingsType.LECTURE:
-                return this.irisSettingsService.getCombinedCourseSettings(this.courseId!);
             case IrisSettingsType.EXERCISE:
                 return this.irisSettingsService.getCombinedCourseSettings(this.courseId!);
         }
@@ -166,8 +163,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 return this.irisSettingsService.getGlobalSettings();
             case IrisSettingsType.COURSE:
                 return this.irisSettingsService.getUncombinedCourseSettings(this.courseId!);
-            case IrisSettingsType.LECTURE:
-                return this.irisSettingsService.getUncombinedLectureSettings(this.courseId!);
             case IrisSettingsType.EXERCISE:
                 return this.irisSettingsService.getUncombinedExerciseSettings(this.exerciseId!);
         }
@@ -179,8 +174,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 return this.irisSettingsService.setGlobalSettings(this.irisSettings!);
             case IrisSettingsType.COURSE:
                 return this.irisSettingsService.setCourseSettings(this.courseId!, this.irisSettings!);
-            case IrisSettingsType.LECTURE:
-                return this.irisSettingsService.setLectureSettings(this.courseId!, this.irisSettings!);
             case IrisSettingsType.EXERCISE:
                 return this.irisSettingsService.setExerciseSettings(this.exerciseId!, this.irisSettings!);
         }

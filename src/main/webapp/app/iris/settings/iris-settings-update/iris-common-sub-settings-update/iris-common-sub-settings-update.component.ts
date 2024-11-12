@@ -49,7 +49,6 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     COURSE = IrisSettingsType.COURSE;
     TEXT_EXERCISE_CHAT = IrisSubSettingsType.TEXT_EXERCISE_CHAT;
     CHAT = IrisSubSettingsType.CHAT;
-    LECTURE = IrisSettingsType.LECTURE;
     // Button types
     WARNING = ButtonType.WARNING;
     // Icons

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { IrisCourseSettings, IrisExerciseSettings, IrisGlobalSettings, IrisLectureSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisCourseSettings, IrisExerciseSettings, IrisGlobalSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 
@@ -32,16 +32,6 @@ export class IrisSettingsService {
         return this.http
             .get<IrisCourseSettings>(`${this.resourceUrl}/courses/${courseId}/raw-iris-settings`, { observe: 'response' })
             .pipe(map((res: HttpResponse<IrisCourseSettings>) => res.body ?? undefined));
-    }
-
-    /**
-     * Get the uncombined Iris settings for a lecture
-     * @param courseId the id of the course
-     */
-    getUncombinedLectureSettings(courseId: number): Observable<IrisLectureSettings | undefined> {
-        return this.http
-            .get<IrisLectureSettings>(`${this.resourceUrl}/lectures/${courseId}/raw-iris-settings`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<IrisLectureSettings>) => res.body ?? undefined));
     }
 
     /**
@@ -98,15 +88,6 @@ export class IrisSettingsService {
      */
     setExerciseSettings(exerciseId: number, settings: IrisExerciseSettings): Observable<HttpResponse<IrisExerciseSettings>> {
         return this.http.put<IrisExerciseSettings>(`${this.resourceUrl}/exercises/${exerciseId}/raw-iris-settings`, settings, { observe: 'response' });
-    }
-
-    /**
-     * Update the Iris settings for a lecture
-     * @param courseId the id of the course containing the lecture
-     * @param settings the settings to set
-     */
-    setLectureSettings(courseId: number, settings: IrisLectureSettings): Observable<HttpResponse<IrisLectureSettings>> {
-        return this.http.put<IrisLectureSettings>(`${this.resourceUrl}/lectures/${courseId}/raw-iris-settings`, settings, { observe: 'response' });
     }
 
     /**

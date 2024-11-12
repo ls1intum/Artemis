@@ -11,7 +11,6 @@ export enum IrisSettingsType {
     GLOBAL = 'global',
     COURSE = 'course',
     EXERCISE = 'exercise',
-    LECTURE = 'lecture',
 }
 
 export abstract class IrisSettings implements BaseEntity {
@@ -51,12 +50,4 @@ export class IrisExerciseSettings implements IrisSettings {
     exerciseId?: number;
     irisChatSettings?: IrisChatSubSettings;
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
-}
-
-export class IrisLectureSettings implements IrisSettings {
-    id?: number;
-    type = IrisSettingsType.LECTURE;
-    lectureId?: number;
-    irisChatSettings?: IrisChatSubSettings;
-    irisLectureChatSettings?: IrisLectureChatSubSettings;
 }
