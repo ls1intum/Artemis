@@ -16,6 +16,7 @@
                 }
             </p>
         }
+
         @if (isCorrectUserToFileAction && !complaint) {
             <div class="mt-4">
                 @if (isExamMode || (course?.maxComplaints && course!.maxComplaints! > 0)) {
@@ -23,7 +24,7 @@
                         id="complain"
                         class="btn btn-primary"
                         [class.not-allowed]="(!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid"
-                        (click)="startComplaint()"
+                        (click)="startComplaint(ComplaintType.COMPLAINT)"
                         [disabled]="(!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid"
                         title="{{
                             (!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid
@@ -37,7 +38,7 @@
                     <button
                         class="btn btn-primary ms-1"
                         [class.not-allowed]="!timeOfFeedbackRequestValid"
-                        (click)="formComplaintType = ComplaintType.MORE_FEEDBACK"
+                        (click)="startComplaint(ComplaintType.MORE_FEEDBACK)"
                         [disabled]="!timeOfFeedbackRequestValid"
                         title="{{ !timeOfFeedbackRequestValid ? ('artemisApp.moreFeedback.notAllowedTooltip' | artemisTranslate) : '' }}"
                         jhiTranslate="artemisApp.moreFeedback.button"
@@ -45,6 +46,7 @@
                 }
             </div>
         }
+        <div #complaintScrollpoint></div>
         @if (!complaint && formComplaintType) {
             <div class="row">
                 <jhi-complaint-form
@@ -66,4 +68,3 @@
         }
     </div>
 }
-<div #bottom></div>

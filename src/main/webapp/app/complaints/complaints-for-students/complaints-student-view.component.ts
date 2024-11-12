@@ -28,7 +28,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     // flag to indicate exam test run. Default set to false.
     @Input() testRun = false;
 
-    @ViewChild('bottom') bottom: ElementRef;
+    @ViewChild('complaintScrollpoint') complaintScrollpoint: ElementRef;
 
     submission: Submission;
     complaint: Complaint;
@@ -153,18 +153,18 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * Opens the complaint form for the student to submit a complaint and scrolls to the bottom of the page to make the form visible
+     * Opens the complaint form (for a given complaint type) for the student to submit a complaint and scrolls to the bottom of the page to make the form visible
      */
-    startComplaint(): void {
-        this.formComplaintType = ComplaintType.COMPLAINT;
+    startComplaint(complainType: ComplaintType): void {
+        this.formComplaintType = complainType;
         // Wait for the view to update
-        setTimeout(() => this.scrollToBottom(), 0);
+        setTimeout(() => this.scrollToComplaint(), 0);
     }
 
     /**
-     * Scrolls to the bottom of the page
+     * Scrolls to the complaint form
      */
-    private scrollToBottom(): void {
-        this.bottom.nativeElement.scrollIntoView({ behavior: 'smooth' });
+    private scrollToComplaint(): void {
+        this.complaintScrollpoint.nativeElement.scrollIntoView({ behavior: 'smooth' });
     }
 }
