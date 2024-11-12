@@ -55,6 +55,7 @@ describe('SidebarAccordionComponent', () => {
         component.collapseState = { current: false, dueSoon: false, past: false, future: true, noDate: true };
         fixture.componentRef.setInput('sidebarItemAlwaysShow', { current: false, dueSoon: false, past: false, future: false, noDate: false });
         fixture.detectChanges();
+        component.calculateUnreadMessagesOfGroup();
     });
 
     afterEach(() => {
@@ -145,9 +146,7 @@ describe('SidebarAccordionComponent', () => {
         expect(component.collapseState['future']).toBeFalse();
     });
 
-    it('should calculate total unread messages correctly', () => {
-        component.calculateTotalUnreadMessages();
-
+    it('should calculate unread messages of each group correctly', () => {
         expect(component.totalUnreadMessagesPerGroup['current']).toBe(1);
         expect(component.totalUnreadMessagesPerGroup['past']).toBe(0);
         expect(component.totalUnreadMessagesPerGroup['future']).toBe(1);
