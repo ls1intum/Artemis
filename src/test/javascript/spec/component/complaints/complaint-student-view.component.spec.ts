@@ -178,7 +178,7 @@ describe('ComplaintsStudentViewComponent', () => {
             expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
             // Wait for setTimeout to execute
             tick();
-            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
         }));
 
         it('should be visible on test run', fakeAsync(() => {
@@ -273,7 +273,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
             tick(); // Wait for update to happen
-            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
         }));
 
         it('should set complaint type MORE_FEEDBACK and scroll to complaint form when pressing complaint', fakeAsync(() => {
@@ -301,7 +301,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             expect(component.formComplaintType).toBe(ComplaintType.MORE_FEEDBACK);
             tick(); // Wait for update to happen
-            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth' });
+            expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'end' });
         }));
 
         it('should not be available if before or at assessment due date', fakeAsync(() => {

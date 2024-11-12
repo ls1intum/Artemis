@@ -59,8 +59,8 @@
                     (onSubmit)="loadPotentialComplaint()"
                 />
             </div>
-            <div #complaintScrollpoint></div>
         }
+        <div #complaintScrollpoint></div>
         @if (complaint) {
             <div class="row">
                 <jhi-complaint-request class="col-12 col-md-6" [complaint]="complaint" [maxComplaintTextLimit]="course?.maxComplaintTextLimit!" />
