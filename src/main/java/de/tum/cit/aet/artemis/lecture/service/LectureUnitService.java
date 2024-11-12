@@ -247,13 +247,12 @@ public class LectureUnitService {
      * @return saved exercise
      */
     public <T extends LectureUnit> T saveWithCompetencyLinks(T lectureUnit, Function<T, T> saveFunction) {
-        // persist lecture Unit before linking it to the competency
         Set<CompetencyLectureUnitLink> links = lectureUnit.getCompetencyLinks();
         lectureUnit.setCompetencyLinks(new HashSet<>());
 
         T savedLectureUnit = saveFunction.apply(lectureUnit);
 
-        if (Hibernate.isInitialized(links) && !links.isEmpty()) {
+        if (Hibernate.isInitialized(links) && links != null && !links.isEmpty()) {
             savedLectureUnit.setCompetencyLinks(links);
             reconnectCompetencyLectureUnitLinks(savedLectureUnit);
             savedLectureUnit.setCompetencyLinks(new HashSet<>(competencyLectureUnitLinkRepository.saveAll(links)));
