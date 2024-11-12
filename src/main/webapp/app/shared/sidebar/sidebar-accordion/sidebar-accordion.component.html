@@ -15,7 +15,7 @@
                 </div>
                 <div class="icon-container pe-3">
                     @if (totalUnreadMessagesPerGroup[groupKey] > 0) {
-                        <span class="newMessage"></span>
+                        <span style="margin-right: 0.5rem">{{ totalUnreadMessagesPerGroup[groupKey] }}</span>
                     }
                     <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseState[groupKey]" />
                 </div>

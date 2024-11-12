@@ -32,7 +32,6 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     ngOnInit() {
         this.expandGroupWithSelectedItem();
         this.setStoredCollapseState();
-        this.calculateTotalUnreadMessages();
     }
 
     ngOnChanges() {
@@ -41,7 +40,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         } else {
             this.setStoredCollapseState();
         }
-        this.calculateTotalUnreadMessages();
+        this.calculateUnreadMessages();
     }
 
     setStoredCollapseState() {
@@ -70,16 +69,17 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         }
     }
 
-    calculateTotalUnreadMessages(): void {
+    calculateUnreadMessages(): void {
         if (!this.groupedData) {
             this.totalUnreadMessagesPerGroup = {};
             return;
         }
 
         Object.keys(this.groupedData).forEach((groupKey) => {
-            this.totalUnreadMessagesPerGroup[groupKey] = this.groupedData[groupKey].entityData.filter(
-                (item: SidebarCardElement) => item.conversation?.unreadMessagesCount && item.conversation?.unreadMessagesCount > 0,
-            ).length;
+            // Sum the unread messages for each item in the group
+            this.totalUnreadMessagesPerGroup[groupKey] = this.groupedData[groupKey].entityData
+                .filter((item: SidebarCardElement) => item.conversation?.unreadMessagesCount)
+                .reduce((sum, item) => sum + (item.conversation?.unreadMessagesCount || 0), 0);
         });
     }
 
