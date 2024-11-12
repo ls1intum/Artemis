@@ -156,7 +156,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     /**
      * Function to set complaint type (which opens the complaint form) and scrolls to the complaint form
      */
-    startComplaint(complainType: ComplaintType): void {
+    openComplaintForm(complainType: ComplaintType): void {
         this.formComplaintType = complainType;
         // Wait for the view to update
         this.cdr.detectChanges();

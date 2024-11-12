@@ -24,7 +24,7 @@
                         id="complain"
                         class="btn btn-primary"
                         [class.not-allowed]="(!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid"
-                        (click)="startComplaint(ComplaintType.COMPLAINT)"
+                        (click)="openComplaintForm(ComplaintType.COMPLAINT)"
                         [disabled]="(!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid"
                         title="{{
                             (!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid
@@ -39,7 +39,7 @@
                         id="more-feedback"
                         class="btn btn-primary ms-1"
                         [class.not-allowed]="!timeOfFeedbackRequestValid"
-                        (click)="startComplaint(ComplaintType.MORE_FEEDBACK)"
+                        (click)="openComplaintForm(ComplaintType.MORE_FEEDBACK)"
                         [disabled]="!timeOfFeedbackRequestValid"
                         title="{{ !timeOfFeedbackRequestValid ? ('artemisApp.moreFeedback.notAllowedTooltip' | artemisTranslate) : '' }}"
                         jhiTranslate="artemisApp.moreFeedback.button"
