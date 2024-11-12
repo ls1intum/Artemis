@@ -94,11 +94,11 @@ describe('ProgrammingExercise Docker Image', () => {
     it('should update network flag value', () => {
         comp.onDisableNetworkAccessChange({ target: { checked: true } });
         expect(comp.isNetworkDisabled).toBeTrue();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none"}');
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{}}');
 
         comp.onDisableNetworkAccessChange({ target: { checked: false } });
         expect(comp.isNetworkDisabled).toBeFalse();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{}');
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{}}');
     });
 
     it('should parse docker flags correctly', () => {
@@ -111,11 +111,11 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{"key":"value"}}');
 
         comp.removeEnvVar(0);
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none"}');
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{}}');
 
         comp.addEnvVar();
         comp.parseDockerFlagsToString();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none"}');
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{}}');
     });
 
     it('should parse existing docker flags', () => {
