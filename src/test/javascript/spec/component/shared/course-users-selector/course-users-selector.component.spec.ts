@@ -6,7 +6,7 @@ import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/shared/course-users-selector/course-users-selector.component';
@@ -14,6 +14,7 @@ import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TranslateModule } from '@ngx-translate/core';
+import { ProfilePictureComponent } from '../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';
 
 @Component({
     template: `
@@ -48,7 +49,7 @@ describe('CourseUsersSelectorComponent', () => {
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTypeaheadModule, ArtemisSharedModule, ArtemisSharedComponentModule, TranslateModule.forRoot()],
-            declarations: [CourseUsersSelectorComponent, WrapperComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [CourseUsersSelectorComponent, WrapperComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ProfilePictureComponent)],
             providers: [MockProvider(CourseManagementService)],
         }).compileComponents();
     }));
