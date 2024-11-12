@@ -6,6 +6,8 @@ export class AttachmentUnit extends LectureUnit {
     public description?: string;
     public attachment?: Attachment;
     public slides?: Slide[];
+    public hiddenPages?: string;
+    public parentAttachmentUnit?: AttachmentUnit;
 
     constructor() {
         super(LectureUnitType.ATTACHMENT);

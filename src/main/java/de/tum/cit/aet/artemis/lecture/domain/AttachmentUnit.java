@@ -9,9 +9,11 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -31,6 +33,14 @@ public class AttachmentUnit extends LectureUnit {
     @OneToMany(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("attachmentUnit")
     private List<Slide> slides = new ArrayList<>();
+
+    @Column(name = "hidden_pages")
+    private String hiddenPages;
+
+    @OneToOne
+    @JoinColumn(name = "parent_attachment_unit_id")
+    @JsonIgnore
+    private AttachmentUnit parentAttachmentUnit;
 
     @Override
     public boolean isVisibleToStudents() {
@@ -90,5 +100,21 @@ public class AttachmentUnit extends LectureUnit {
     @Override
     public String getType() {
         return "attachment";
+    }
+
+    public String getHiddenPages() {
+        return hiddenPages;
+    }
+
+    public void setHiddenPages(String hiddenPages) {
+        this.hiddenPages = hiddenPages;
+    }
+
+    public AttachmentUnit getParentAttachmentUnit() {
+        return parentAttachmentUnit;
+    }
+
+    public void setParentAttachmentUnit(AttachmentUnit parentAttachmentUnit) {
+        this.parentAttachmentUnit = parentAttachmentUnit;
     }
 }

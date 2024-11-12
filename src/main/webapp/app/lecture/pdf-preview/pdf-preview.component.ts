@@ -69,7 +69,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             if ('attachment' in data) {
                 this.attachment.set(data.attachment);
-                this.hiddenPages.set(new Set(data.attachment.hiddenPages?.split(',').map(Number) || []));
                 this.attachmentSub = this.attachmentService.getAttachmentFile(this.course()!.id!, this.attachment()!.id!).subscribe({
                     next: (blob: Blob) => {
                         this.currentPdfBlob.set(blob);
@@ -79,7 +78,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit.set(data.attachmentUnit);
-                this.hiddenPages.set(new Set(data.attachmentUnit.attachment.hiddenPages?.split(',').map(Number) || []));
+                this.hiddenPages.set(new Set(data.attachmentUnit.hiddenPages?.split(',').map(Number) || []));
                 this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!).subscribe({
                     next: (blob: Blob) => {
                         this.currentPdfBlob.set(blob);
@@ -134,6 +133,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         return false;
     }
 
+    getHiddenPages() {
+        return Array.from(document.querySelectorAll('[id^="show-button-"]'))
+            .map((el) => el.id.match(/show-button-(\d+)/)?.[1])
+            .join(',');
+    }
+
     /**
      * Updates the existing attachment file or creates a new hidden version of the attachment.
      */
@@ -149,58 +154,22 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentToBeEdited.set(this.attachment());
             this.attachmentToBeEdited()!.version!++;
             this.attachmentToBeEdited()!.uploadDate = dayjs();
-            this.attachmentToBeEdited()!.hiddenPages = Array.from(this.newHiddenPages()).join(',');
 
             this.attachmentService.update(this.attachmentToBeEdited()!.id!, this.attachmentToBeEdited()!, pdfFile).subscribe({
-                next: async () => {
-                    if (this.newHiddenPages().size > 0) {
-                        const pdfFileWithHiddenPages = await this.createHiddenVersionOfAttachment(Array.from(this.newHiddenPages()));
-                        this.attachmentService.getAttachmentByParentAttachmentId(this.attachment()!.id!).subscribe({
-                            next: async (attachmentRes) => {
-                                if (attachmentRes.body && attachmentRes.body.id) {
-                                    attachmentRes.body.version!++;
-                                    this.attachmentService.update(attachmentRes.body.id, attachmentRes.body, pdfFileWithHiddenPages!).subscribe({
-                                        next: () => {
-                                            this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
-                                        },
-                                        error: (error) => {
-                                            this.alertService.error('artemisApp.attachment.pdfPreview.hiddenAttachmentUpdateError', { error: error.message });
-                                        },
-                                    });
-                                } else {
-                                    const attachmentWithHiddenPages = cloneDeep(this.attachment()!);
-                                    attachmentWithHiddenPages.parentAttachment = this.attachment()!;
-                                    attachmentWithHiddenPages.name = `${attachmentWithHiddenPages.name}_hidden`;
-                                    attachmentWithHiddenPages.hiddenPages = undefined;
-                                    this.attachmentService.create(attachmentWithHiddenPages, pdfFileWithHiddenPages!).subscribe({
-                                        next: () => {
-                                            this.alertService.success('artemisApp.attachment.pdfPreview.hiddenAttachmentCreateSuccess');
-                                            this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
-                                        },
-                                        error: (error) => {
-                                            this.alertService.error('artemisApp.attachment.pdfPreview.hiddenAttachmentCreateError', { error: error.message });
-                                        },
-                                    });
-                                }
-                            },
-                            error: (error) => {
-                                this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
-                            },
-                        });
-                    } else {
-                        this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                        this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
-                    }
+                next: () => {
+                    this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+                    this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
                 },
                 error: (error) => {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
                 },
             });
         } else if (this.attachmentUnit()) {
+            const finalHiddenPages = this.getHiddenPages();
             this.attachmentToBeEdited.set(this.attachmentUnit()!.attachment!);
             this.attachmentToBeEdited()!.version!++;
             this.attachmentToBeEdited()!.uploadDate = dayjs();
-            this.attachmentToBeEdited()!.hiddenPages = Array.from(this.hiddenPages()).join(',');
+            this.attachmentUnit()!.hiddenPages = finalHiddenPages;
 
             const formData = new FormData();
             formData.append('file', pdfFile);
@@ -209,18 +178,48 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
                 next: async () => {
-                    if (this.hiddenPages().size > 0) {
-                        const attachmentWithHiddenPages = cloneDeep(this.attachmentUnit()?.attachment!);
-                        attachmentWithHiddenPages.parentAttachment = this.attachmentUnit()?.attachment!;
-                        const pdfFileWithHiddenPages = await this.createHiddenVersionOfAttachment(Array.from(this.hiddenPages()));
+                    if (finalHiddenPages!.length > 0) {
+                        const pdfFileWithHiddenPages = await this.createHiddenVersionOfAttachment(Array.from(finalHiddenPages!.split(',').map(Number)));
+                        const attachmentUnitWithHiddenPages = cloneDeep(this.attachmentUnit()!);
+                        const attachmentWithHiddenPages = cloneDeep(this.attachmentUnit()!.attachment!);
+
+                        attachmentWithHiddenPages.id = undefined;
+                        attachmentWithHiddenPages.name = `${attachmentWithHiddenPages.name}_hidden`;
+                        attachmentUnitWithHiddenPages.id = undefined;
+                        attachmentUnitWithHiddenPages.hiddenPages = undefined;
+                        attachmentUnitWithHiddenPages.parentAttachmentUnit = this.attachmentUnit();
+
+                        const formData = new FormData();
 
                         formData.append('file', pdfFileWithHiddenPages!);
-                        formData.append('attachment', objectToJsonBlob(attachmentWithHiddenPages));
+                        formData.append('attachment', objectToJsonBlob(attachmentWithHiddenPages!));
+                        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnitWithHiddenPages!));
 
-                        this.attachmentUnitService.create(formData, this.attachmentUnit()?.lecture!.id!).subscribe({
-                            next: () => {
-                                this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                                this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+                        this.attachmentUnitService.getAttachmentUnitByParentAttachmentUnitId(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!).subscribe({
+                            next: async (attachmentUnitRes) => {
+                                if (attachmentUnitRes.body && attachmentUnitRes.body.id) {
+                                    this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, attachmentUnitRes.body.id, formData).subscribe({
+                                        next: () => {
+                                            this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+                                            this.alertService.success('artemisApp.attachment.pdfPreview.hiddenAttachmentUnitUpdateSuccess');
+                                            this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+                                        },
+                                        error: (error) => {
+                                            this.alertService.error('artemisApp.attachment.pdfPreview.hiddenAttachmentUnitUpdateError', { error: error.message });
+                                        },
+                                    });
+                                } else {
+                                    this.attachmentUnitService.create(formData, this.attachmentUnit()!.lecture!.id!).subscribe({
+                                        next: () => {
+                                            this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+                                            this.alertService.success('artemisApp.attachment.pdfPreview.hiddenAttachmentUnitCreateSuccess');
+                                            this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
+                                        },
+                                        error: (error) => {
+                                            this.alertService.error('artemisApp.attachment.pdfPreview.hiddenAttachmentUnitCreateError', { error: error.message });
+                                        },
+                                    });
+                                }
                             },
                             error: (error) => {
                                 this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
@@ -306,7 +305,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     async createHiddenVersionOfAttachment(hiddenPages: number[]) {
         try {
-            const fileName = this.attachment()!.name;
+            const fileName = this.attachmentUnit()!.attachment!.name;
             const existingPdfBytes = await this.currentPdfBlob()!.arrayBuffer();
             const hiddenPdfDoc = await PDFDocument.load(existingPdfBytes);
 

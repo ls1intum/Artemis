@@ -117,6 +117,7 @@ public class AttachmentUnitService {
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
         existingAttachmentUnit.setName(updateUnit.getName());
         existingAttachmentUnit.setReleaseDate(updateUnit.getReleaseDate());
+        existingAttachmentUnit.setHiddenPages(updateUnit.getHiddenPages());
 
         AttachmentUnit savedAttachmentUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentUnit, attachmentUnitRepository::saveAndFlush);
 

@@ -147,16 +147,4 @@ export class AttachmentService {
     getAttachmentFile(courseId: number, attachmentId: number): Observable<Blob> {
         return this.http.get(`api/files/courses/${courseId}/attachments/${attachmentId}`, { responseType: 'blob' });
     }
-
-    /**
-     * Retrieve the hidden attachment associated with a given parent attachment ID
-     *
-     * @param parentAttachmentId The ID of the parent attachment whose hidden attachment is to be retrieved
-     * @returns An Observable that emits an EntityResponseType containing the Attachment object when the HTTP request completes successfully
-     */
-    getAttachmentByParentAttachmentId(parentAttachmentId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Attachment>(`${this.resourceUrl}/${parentAttachmentId}/hiddenAttachment`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
-    }
 }

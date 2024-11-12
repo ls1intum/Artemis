@@ -23,6 +23,7 @@ export class PdfPreviewThumbnailGridComponent {
     currentPdfUrl = input<string>();
     appendFile = input<boolean>();
     hiddenPages = input<Set<number>>();
+    isAttachmentUnit = input<boolean>();
 
     // Signals
     isEnlargedView = signal<boolean>(false);
@@ -141,24 +142,30 @@ export class PdfPreviewThumbnailGridComponent {
 
         const overlay = this.createOverlay(pageIndex);
         const checkbox = this.createCheckbox(pageIndex);
-        const hideShowButton = this.createHideShowButton(pageIndex, container);
+
         container.appendChild(canvas);
         container.appendChild(overlay);
         container.appendChild(checkbox);
-        container.appendChild(hideShowButton);
 
         container.addEventListener('mouseenter', () => {
             overlay.style.opacity = '1';
-            hideShowButton.style.opacity = '1';
         });
         container.addEventListener('mouseleave', () => {
             overlay.style.opacity = '0';
-            hideShowButton.style.opacity = '0';
         });
-
-        hideShowButton.addEventListener('click', () => this.toggleVisibility(container, hideShowButton));
         overlay.addEventListener('click', () => this.displayEnlargedCanvas(canvas));
 
+        if (this.isAttachmentUnit()) {
+            const hideShowButton = this.createHideShowButton(pageIndex, container);
+            container.appendChild(hideShowButton);
+            container.addEventListener('mouseenter', () => {
+                hideShowButton.style.opacity = '1';
+            });
+            container.addEventListener('mouseleave', () => {
+                hideShowButton.style.opacity = '0';
+            });
+            hideShowButton.addEventListener('click', () => this.toggleVisibility(pageIndex, container, hideShowButton));
+        }
         return container;
     }
 
@@ -201,14 +208,14 @@ export class PdfPreviewThumbnailGridComponent {
     }
 
     private createHideShowButton(pageIndex: number, container: HTMLDivElement): HTMLAnchorElement {
-        const hideButton = document.createElement('a');
-        hideButton.type = 'button';
-        hideButton.style.cssText = `opacity: 0; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); cursor: pointer; z-index: 4;`;
+        const hideShowButton = document.createElement('a');
+        hideShowButton.type = 'button';
+        hideShowButton.style.cssText = `opacity: 0; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); cursor: pointer; z-index: 4;`;
 
         if (this.hiddenPages()!.has(pageIndex)) {
-            hideButton.className = 'btn btn-success';
-            hideButton.id = `show-button-${pageIndex}`;
-            hideButton.innerHTML = `<i class="fa fa-eye"></i>`;
+            hideShowButton.className = 'btn btn-success';
+            hideShowButton.id = `show-button-${pageIndex}`;
+            hideShowButton.innerHTML = `<i class="fa fa-eye"></i>`;
 
             const overlay = document.createElement('div');
             overlay.id = 'pdf-page-overlay';
@@ -220,15 +227,15 @@ export class PdfPreviewThumbnailGridComponent {
 
             container.appendChild(overlay);
         } else {
-            hideButton.className = 'btn btn-secondary';
-            hideButton.id = `hide-button-${pageIndex}`;
-            hideButton.innerHTML = `<i class="fa fa-eye-slash"></i>`;
+            hideShowButton.className = 'btn btn-secondary';
+            hideShowButton.id = `hide-button-${pageIndex}`;
+            hideShowButton.innerHTML = `<i class="fa fa-eye-slash"></i>`;
         }
 
-        return hideButton;
+        return hideShowButton;
     }
 
-    private toggleVisibility(container: HTMLDivElement, hideShowButton: HTMLAnchorElement): void {
+    private toggleVisibility(pageIndex: number, container: HTMLDivElement, hideShowButton: HTMLAnchorElement): void {
         const overlay = document.createElement('div');
         overlay.id = 'pdf-page-overlay';
         overlay.style.cssText = `position: absolute; top: 0; width: 100%; height: 100%; z-index: 1; transition: opacity 0.3s ease; background-color: var(--pdf-preview-container-overlay)`;
@@ -241,12 +248,14 @@ export class PdfPreviewThumbnailGridComponent {
             container.appendChild(overlay);
             hideShowButton.className = 'btn btn-success';
             hideShowButton.children[0].className = 'fa fa-eye';
-            this.newHiddenPages().add(Number(hideShowButton.id.split('-')[2]));
+            hideShowButton.id = `show-button-${pageIndex}`;
+            this.newHiddenPages().add(pageIndex);
         } else {
             container.removeChild(container.querySelector(`#pdf-page-overlay`)!);
             hideShowButton.className = 'btn btn-secondary';
             hideShowButton.children[0].className = 'fa fa-eye-slash';
-            this.newHiddenPages().delete(Number(hideShowButton.id.split('-')[2]));
+            hideShowButton.id = `hide-button-${pageIndex}`;
+            this.newHiddenPages().delete(Number(pageIndex));
         }
         this.newHiddenPagesOutput.emit(this.newHiddenPages());
     }

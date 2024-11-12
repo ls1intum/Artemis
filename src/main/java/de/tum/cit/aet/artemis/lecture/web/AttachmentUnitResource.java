@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -331,5 +332,19 @@ public class AttachmentUnitResource {
         if (!filePath.toString().endsWith(".pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
+    }
+
+    /**
+     * GET /lectures/:lectureId/attachment-units/:parentAttachmentUnitId/hiddenAttachment : retrieve the hidden attachment associated with the given parent attachment ID.
+     *
+     * @param lectureId              the ID of the lecture to which the attachment unit belongs
+     * @param parentAttachmentUnitId the ID of the parent attachment unit for which to retrieve the hidden attachment unit
+     * @return the ResponseEntity with status 200 (OK) and the Attachment in the body, or a 404 (Not Found) if no matching attachment exists
+     */
+    @GetMapping("lectures/{lectureId}/attachment-units/{parentAttachmentUnitId}/hiddenAttachment")
+    @EnforceAtLeastTutor
+    public ResponseEntity<AttachmentUnit> getAttachmentByParentAttachmentId(@PathVariable Long lectureId, @PathVariable Long parentAttachmentUnitId) {
+        log.debug("REST request to get attachment unit by the parent attachment unit Id : {}", parentAttachmentUnitId);
+        return ResponseEntity.ok(attachmentUnitRepository.findAttachmentUnitByLectureIdAndParentAttachmentUnitId(lectureId, parentAttachmentUnitId));
     }
 }

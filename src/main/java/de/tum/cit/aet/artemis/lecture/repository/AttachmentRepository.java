@@ -29,11 +29,4 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
     default Attachment findByIdOrElseThrow(Long attachmentId) {
         return getValueElseThrow(findById(attachmentId), attachmentId);
     }
-
-    @Query("""
-            SELECT a
-            FROM Attachment a
-            WHERE a.parentAttachment.id = :parentAttachmentId
-            """)
-    Attachment findAttachmentByParentAttachmentId(@Param("parentAttachmentId") Long parentAttachmentId);
 }
