@@ -24,7 +24,7 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Competency } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
@@ -45,7 +45,7 @@ class CompetenciesPopoverStubComponent {
     @Input()
     courseId: number;
     @Input()
-    competencies: Competency[] = [];
+    competencyLinks: CompetencyLectureUnitLink[] = [];
     @Input()
     navigateTo: 'competencyManagement' | 'courseStatistics' = 'courseStatistics';
 }
