@@ -55,6 +55,8 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -219,6 +221,7 @@ public class ParticipationResource {
      */
     @PostMapping("exercises/{exerciseId}/participations")
     @EnforceAtLeastStudentInExercise
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -775,6 +778,7 @@ public class ParticipationResource {
      */
     @GetMapping("exercises/{exerciseId}/participation")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<MappingJacksonValue> getParticipationForCurrentUser(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);

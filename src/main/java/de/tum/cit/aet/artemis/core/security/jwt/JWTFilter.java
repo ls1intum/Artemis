@@ -9,6 +9,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,8 +33,16 @@ public class JWTFilter extends GenericFilterBean {
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
+        HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
+        String jwtToken;
+        try {
+            jwtToken = extractValidJwt(httpServletRequest, this.tokenProvider);
+        }
+        catch (IllegalArgumentException e) {
+            httpServletResponse.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
 
-        String jwtToken = extractValidJwt(httpServletRequest, this.tokenProvider);
         if (jwtToken != null) {
             Authentication authentication = this.tokenProvider.getAuthentication(jwtToken);
             SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -43,22 +52,32 @@ public class JWTFilter extends GenericFilterBean {
     }
 
     /**
-     * Extracts the first valid jwt found in the cookie or the Authorization header
+     * Extracts the valid jwt found in the cookie or the Authorization header
      *
      * @param httpServletRequest the http request
      * @param tokenProvider      the Artemis token provider used to generate and validate jwt's
      * @return the valid jwt or null if not found or invalid
      */
     public static @Nullable String extractValidJwt(HttpServletRequest httpServletRequest, TokenProvider tokenProvider) {
-        String jwtToken = getJwtFromCookie(WebUtils.getCookie(httpServletRequest, JWT_COOKIE_NAME));
-        if (isJwtValid(tokenProvider, jwtToken)) {
-            return jwtToken;
+        var cookie = WebUtils.getCookie(httpServletRequest, JWT_COOKIE_NAME);
+        var authHeader = httpServletRequest.getHeader("Authorization");
+
+        if (cookie == null && authHeader == null) {
+            return null;
         }
-        jwtToken = getJwtFromBearer(httpServletRequest.getHeader("Authorization"));
-        if (isJwtValid(tokenProvider, jwtToken)) {
-            return jwtToken;
+
+        if (cookie != null && authHeader != null) {
+            // Single Method Enforcement: Only one method of authentication is allowed
+            throw new IllegalArgumentException("Only one method of authentication is allowed");
         }
-        return null;
+
+        String jwtToken = cookie != null ? getJwtFromCookie(cookie) : getJwtFromBearer(authHeader);
+
+        if (!isJwtValid(tokenProvider, jwtToken)) {
+            return null;
+        }
+
+        return jwtToken;
     }
 
     /**
@@ -67,7 +86,7 @@ public class JWTFilter extends GenericFilterBean {
      * @param jwtCookie the cookie with Key "jwt"
      * @return the jwt or null if not found
      */
-    private static @Nullable String getJwtFromCookie(Cookie jwtCookie) {
+    private static @Nullable String getJwtFromCookie(@Nullable Cookie jwtCookie) {
         if (jwtCookie == null) {
             return null;
         }
@@ -80,7 +99,7 @@ public class JWTFilter extends GenericFilterBean {
      * @param jwtBearer the content of the Authorization header
      * @return the jwt or null if not found
      */
-    private static @Nullable String getJwtFromBearer(String jwtBearer) {
+    private static @Nullable String getJwtFromBearer(@Nullable String jwtBearer) {
         if (!StringUtils.hasText(jwtBearer) || !jwtBearer.startsWith("Bearer ")) {
             return null;
         }
@@ -95,7 +114,7 @@ public class JWTFilter extends GenericFilterBean {
      * @param jwtToken      the jwt
      * @return true if the jwt is valid, false if missing or invalid
      */
-    private static boolean isJwtValid(TokenProvider tokenProvider, String jwtToken) {
+    private static boolean isJwtValid(TokenProvider tokenProvider, @Nullable String jwtToken) {
         return StringUtils.hasText(jwtToken) && tokenProvider.validateTokenForAuthority(jwtToken);
     }
 }

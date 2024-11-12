@@ -94,6 +94,8 @@ import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -621,6 +623,7 @@ public class CourseResource {
     // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
@@ -685,6 +688,7 @@ public class CourseResource {
      */
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<CoursesForDashboardDTO> getCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();

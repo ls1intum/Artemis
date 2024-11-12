@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 
 import javax.crypto.SecretKey;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -95,26 +97,28 @@ public class TokenProvider {
      * @return JWT Token
      */
     public String createToken(Authentication authentication, boolean rememberMe) {
-        return createToken(authentication, getTokenValidity(rememberMe));
+        return createToken(authentication, getTokenValidity(rememberMe), null);
     }
 
     /**
      * Create JWT Token a fully populated <code>Authentication</code> object.
      *
      * @param authentication Authentication Object
-     * @param duration       the Token lifetime
-     * @param tools          tools this token is used for
+     * @param duration       the Token lifetime in milli seconds
+     * @param tool           tool this token is used for. If null, it's a general access token
      * @return JWT Token
      */
-    public String createToken(Authentication authentication, long duration, String... tools) {
+    public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
-
-        String toolClaims = String.join(",", tools);
 
         long now = (new Date()).getTime();
         Date validity = new Date(now + duration);
-        return Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).claim("tools", toolClaims).signWith(key, Jwts.SIG.HS512).expiration(validity)
-                .compact();
+        var jwtBuilder = Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities);
+        if (tool != null) {
+            jwtBuilder.claim("tools", tool);
+        }
+
+        return jwtBuilder.signWith(key, Jwts.SIG.HS512).expiration(validity).compact();
     }
 
     /**
@@ -183,6 +187,11 @@ public class TokenProvider {
 
     private Claims parseClaims(String authToken) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
+    }
+
+    public String getClaim(String token, String claimName) {
+        Claims claims = parseClaims(token);
+        return claims.get(claimName, String.class);
     }
 
     public Date getExpirationDate(String authToken) {

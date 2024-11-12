@@ -27,7 +27,10 @@ import org.springframework.http.MediaType;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolsInterceptor;
 import de.tum.cit.aet.artemis.core.security.filter.CachingHttpHeadersFilter;
 import tech.jhipster.config.JHipsterProperties;
 
@@ -36,7 +39,7 @@ import tech.jhipster.config.JHipsterProperties;
  */
 @Profile(PROFILE_CORE)
 @Configuration
-public class WebConfigurer implements ServletContextInitializer, WebServerFactoryCustomizer<WebServerFactory> {
+public class WebConfigurer implements ServletContextInitializer, WebServerFactoryCustomizer<WebServerFactory>, WebMvcConfigurer {
 
     private static final Logger log = LoggerFactory.getLogger(WebConfigurer.class);
 
@@ -44,9 +47,12 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private final JHipsterProperties jHipsterProperties;
 
-    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties) {
+    private final ToolsInterceptor toolsInterceptor;
+
+    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties, ToolsInterceptor toolsInterceptor) {
         this.env = env;
         this.jHipsterProperties = jHipsterProperties;
+        this.toolsInterceptor = toolsInterceptor;
     }
 
     @Override
@@ -124,5 +130,10 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
             source.registerCorsConfiguration("/v3/api-docs", config);
         }
         return new CorsFilter(source);
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(toolsInterceptor);
     }
 }

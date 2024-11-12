@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
@@ -79,7 +80,8 @@ public class PublicUserJwtResource {
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
+    public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent,
+            @RequestParam(name = "tool", required = false) ToolTokenType tool, HttpServletResponse response) {
 
         var username = loginVM.getUsername();
         var password = loginVM.getPassword();
@@ -93,7 +95,7 @@ public class PublicUserJwtResource {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
 
-            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, tool);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
@@ -105,16 +107,18 @@ public class PublicUserJwtResource {
     }
 
     /**
-     * Sends a theia token back as cookie and bearer token
+     * Sends a tool token back as cookie or bearer token
      *
+     * @param tool     the tool for which the token is requested
+     * @param asCookie if true the token is sent back as a cookie
      * @param request  HTTP request
      * @param response HTTP response
-     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized)
+     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) and depending on the asCookie flag a bearer token in the body
      */
-    @PostMapping("theia-token")
+    @PostMapping("tool-token")
     @EnforceAtLeastStudent
-    public ResponseEntity<String> getTheiaToken(@RequestParam(name = "as-cookie", defaultValue = "false") boolean asCookie, HttpServletRequest request,
-            HttpServletResponse response) {
+    public ResponseEntity<String> convertCookieToToolToken(@RequestParam(name = "tool", required = true) ToolTokenType tool,
+            @RequestParam(name = "as-cookie", defaultValue = "false") boolean asCookie, HttpServletRequest request, HttpServletResponse response) {
         // remaining time in milliseconds
         var jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);
         if (jwtToken == null) {
@@ -126,7 +130,7 @@ public class PublicUserJwtResource {
 
         // 1 day validity
         long maxDuration = Duration.ofDays(1).toMillis();
-        ResponseCookie responseCookie = jwtCookieService.buildTheiaCookie(Math.min(tokenRemainingTime, maxDuration));
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(Math.min(tokenRemainingTime, maxDuration), tool);
 
         if (asCookie) {
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
@@ -166,7 +170,7 @@ public class PublicUserJwtResource {
         }
 
         final boolean rememberMe = Boolean.parseBoolean(body);
-        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, null);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
         return ResponseEntity.ok().build();
