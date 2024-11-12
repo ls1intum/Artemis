@@ -65,6 +65,8 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     @Input() missingResultInfo = MissingResultInformation.NONE;
     @Input() exercise?: Exercise;
     @Input() estimatedCompletionDate?: dayjs.Dayjs;
+    @Input() buildStartDate?: dayjs.Dayjs;
+    @Input() showProgressBar = false;
 
     textColorClass: string;
     resultIconClass: IconProp;
@@ -74,7 +76,8 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     badge: Badge;
     resultTooltip?: string;
     latestDueDate: dayjs.Dayjs | undefined;
-    estimatedDuration: number;
+    estimatedRemaining: number;
+    progressBarValue: number;
     estimatedDurationInterval: ReturnType<typeof setInterval>;
 
     // Icons
@@ -199,8 +202,10 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         if (changes.estimatedCompletionDate && this.estimatedCompletionDate) {
             clearInterval(this.estimatedDurationInterval);
             this.estimatedDurationInterval = setInterval(() => {
-                this.estimatedDuration = Math.max(0, dayjs(this.estimatedCompletionDate).diff(dayjs(), 'seconds'));
-                if (this.estimatedDuration <= 0) {
+                this.estimatedRemaining = Math.max(0, dayjs(this.estimatedCompletionDate).diff(dayjs(), 'seconds'));
+                const estimatedDuration = dayjs(this.estimatedCompletionDate).diff(dayjs(this.buildStartDate), 'seconds');
+                this.progressBarValue = Math.round((1 - this.estimatedRemaining / estimatedDuration) * 100);
+                if (this.estimatedRemaining <= 0) {
                     clearInterval(this.estimatedDurationInterval);
                 }
             }, 1000); // 1 second

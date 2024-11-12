@@ -8,19 +8,26 @@
             <span class="text-primary">
                 <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
                 <span id="test-queued" jhiTranslate="artemisApp.editor.queued"></span>
-                @if (estimatedDuration && estimatedDuration > 0) {
-                    <span id="test-estimated-duration-queue"> {{ estimatedDuration | artemisDurationFromSeconds }}</span>
+                @if (estimatedRemaining && estimatedRemaining > 0) {
+                    <span id="test-estimated-duration-queue"> {{ estimatedRemaining | artemisDurationFromSeconds }}</span>
                 }
             </span>
         }
         @case (ResultTemplateStatus.IS_BUILDING) {
-            <span class="text-primary">
-                <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
-                <span id="test-building" jhiTranslate="artemisApp.editor.building"></span>
-                @if (estimatedDuration && estimatedDuration > 0) {
-                    <span id="test-estimated-duration-build"> {{ estimatedDuration | artemisDurationFromSeconds }}</span>
-                }
-            </span>
+            @if (showProgressBar && estimatedRemaining) {
+                <div class="progress position-relative" role="progressbar" [style.min-width.px]="250" [style.height.px]="25">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" [style.width.%]="progressBarValue"></div>
+                    <span class="position-absolute" style="top: 5px; left: 80px" [style.font-size.px]="12.4">{{ 'Remaining: ' + estimatedRemaining }}</span>
+                </div>
+            } @else {
+                <span class="text-primary">
+                    <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
+                    <span id="test-building" jhiTranslate="artemisApp.editor.building"></span>
+                    @if (estimatedRemaining && estimatedRemaining > 0) {
+                        <span id="test-estimated-duration-build"> {{ estimatedRemaining | artemisDurationFromSeconds }}</span>
+                    }
+                </span>
+            }
         }
         @case (ResultTemplateStatus.FEEDBACK_GENERATION_FAILED) {
             @if (result) {

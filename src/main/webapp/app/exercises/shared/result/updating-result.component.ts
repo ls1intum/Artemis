@@ -4,7 +4,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { RepositoryService } from 'app/exercises/shared/result/repository.service';
 import dayjs from 'dayjs/esm';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
+import { BuildTimingInfo, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -45,7 +45,8 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     result?: Result;
     isBuilding: boolean;
     isQueued: boolean;
-    estimatedCompletionTime?: dayjs.Dayjs;
+    estimatedCompletionDate?: dayjs.Dayjs;
+    buildStartDate?: dayjs.Dayjs;
     missingResultInfo = MissingResultInformation.NONE;
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
@@ -135,8 +136,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             .getLatestPendingSubmissionByParticipationId(this.participation.id!, this.exercise.id!, this.personalParticipation)
             .pipe(
                 filter(({ submission }) => this.shouldUpdateSubmissionState(submission)),
-                tap((submission) => console.log('UpdatingResultComponent: submission', submission)),
-                tap(({ submissionState, estimatedCompletionDate }) => this.updateSubmissionState(submissionState, estimatedCompletionDate)),
+                tap(({ submissionState, buildTimingInfo }) => this.updateSubmissionState(submissionState, buildTimingInfo)),
             )
             .subscribe();
     }
@@ -171,23 +171,26 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      * Updates the shown status based on the given state of a submission.
      *
      * @param submissionState the submission is currently in.
-     * @param estimatedCompletionTime the estimated time when the submission will be completed.
+     * @param buildTimingInfo object container the build start time and the estimated completion time.
      */
-    private updateSubmissionState(submissionState: ProgrammingSubmissionState, estimatedCompletionTime?: dayjs.Dayjs) {
+    private updateSubmissionState(submissionState: ProgrammingSubmissionState, buildTimingInfo?: BuildTimingInfo) {
         this.isQueued = submissionState === ProgrammingSubmissionState.IS_QUEUED;
         this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
 
         if (submissionState === ProgrammingSubmissionState.IS_QUEUED) {
-            this.estimatedCompletionTime = undefined;
+            this.buildStartDate = undefined;
             this.submissionService.fetchQueueReleaseDateEstimationByParticipationId(this.participation.id!).subscribe((releaseDate) => {
-                if (releaseDate) {
-                    console.log('UpdatingResultComponent: estimatedCompletionTime QUEUE', releaseDate);
-                    this.estimatedCompletionTime = releaseDate;
+                if (releaseDate && !this.isBuilding) {
+                    this.estimatedCompletionDate = releaseDate;
                 }
             });
-        } else if (submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION && estimatedCompletionTime && dayjs(estimatedCompletionTime).isAfter(dayjs())) {
-            console.log('UpdatingResultComponent: estimatedCompletionTime BUILD', estimatedCompletionTime);
-            this.estimatedCompletionTime = estimatedCompletionTime;
+        } else if (
+            submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION &&
+            buildTimingInfo?.estimatedCompletionDate &&
+            dayjs(buildTimingInfo?.estimatedCompletionDate).isAfter(dayjs())
+        ) {
+            this.estimatedCompletionDate = buildTimingInfo?.estimatedCompletionDate;
+            this.buildStartDate = buildTimingInfo?.buildStartDate;
         }
 
         if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {

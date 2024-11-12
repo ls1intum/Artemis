@@ -5,4 +5,5 @@ export class SubmissionProcessingDTO {
     public participationId?: number;
     public commitHash?: string;
     public estimatedCompletionDate?: dayjs.Dayjs;
+    public buildStartDate?: dayjs.Dayjs;
 }

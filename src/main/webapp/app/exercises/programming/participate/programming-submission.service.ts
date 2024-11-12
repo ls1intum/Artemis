@@ -31,7 +31,12 @@ export type ProgrammingSubmissionStateObj = {
     participationId: number;
     submissionState: ProgrammingSubmissionState;
     submission?: ProgrammingSubmission;
+    buildTimingInfo?: BuildTimingInfo;
+};
+
+export type BuildTimingInfo = {
     estimatedCompletionDate?: dayjs.Dayjs;
+    buildStartDate?: dayjs.Dayjs;
 };
 
 export type ExerciseSubmissionState = { [participationId: number]: ProgrammingSubmissionStateObj };
@@ -93,7 +98,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA;
     private currentExpectedQueueEstimate = this.DEFAULT_EXPECTED_QUEUE_ESTIMATE;
 
-    private startedProcessingCache: Map<string, dayjs.Dayjs | undefined> = new Map<string, dayjs.Dayjs | undefined>();
+    private startedProcessingCache: Map<string, BuildTimingInfo> = new Map<string, BuildTimingInfo>();
 
     constructor(
         private websocketService: JhiWebsocketService,
@@ -251,7 +256,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                                 return;
                             }
 
-                            let estimatedCompletionDate: dayjs.Dayjs | undefined = undefined;
+                            let buildTimingInfo: BuildTimingInfo | undefined = undefined;
                             if (checkIfSubmissionIsProcessing(submission)) {
                                 const submissionProcessing = submission as SubmissionProcessingDTO;
                                 const programmingSubmission = this.getSubmissionByCommitHash(submissionProcessing);
@@ -259,12 +264,18 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                                 // In this case, we cache that the submission started processing and do not emit the building state.
                                 // When the submission message arrives, we check if the submission is already in the cache.
                                 if (!programmingSubmission) {
-                                    this.startedProcessingCache.set(submission.commitHash!, submissionProcessing.estimatedCompletionDate);
+                                    this.startedProcessingCache.set(submission.commitHash!, {
+                                        estimatedCompletionDate: submissionProcessing.estimatedCompletionDate,
+                                        buildStartDate: submissionProcessing.buildStartDate,
+                                    });
                                     return;
                                 }
                                 programmingSubmission.isProcessing = true;
                                 submission = programmingSubmission;
-                                estimatedCompletionDate = submissionProcessing.estimatedCompletionDate;
+                                buildTimingInfo = {
+                                    estimatedCompletionDate: submissionProcessing.estimatedCompletionDate,
+                                    buildStartDate: submissionProcessing.buildStartDate,
+                                };
                             }
 
                             const programmingSubmission = submission as ProgrammingSubmission;
@@ -282,14 +293,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                                     return;
                                 }
                             }
-                            estimatedCompletionDate = estimatedCompletionDate ?? this.startedProcessingCache.get(programmingSubmission.commitHash!);
+                            buildTimingInfo = buildTimingInfo ?? this.startedProcessingCache.get(programmingSubmission.commitHash!);
                             this.removeSubmissionFromProcessingCache(submission.commitHash!);
                             this.resetQueueEstimateTimer(submissionParticipationId);
                             this.emitBuildingSubmission(
                                 submissionParticipationId,
                                 this.participationIdToExerciseId.get(submissionParticipationId)!,
                                 programmingSubmission,
-                                estimatedCompletionDate,
+                                buildTimingInfo,
                             );
                             // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
                             this.startResultWaitingTimer(submissionParticipationId);
@@ -387,8 +398,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.notifySubscribers(participationId, exerciseId, newSubmissionState);
     }
 
-    private emitBuildingSubmission(participationId: number, exerciseId: number, submission: ProgrammingSubmission, estimatedCompletionDate?: dayjs.Dayjs) {
-        const newSubmissionState = { participationId, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, estimatedCompletionDate };
+    private emitBuildingSubmission(participationId: number, exerciseId: number, submission: ProgrammingSubmission, buildTimingInfo?: BuildTimingInfo) {
+        const newSubmissionState = { participationId, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, buildTimingInfo };
         this.notifySubscribers(participationId, exerciseId, newSubmissionState);
     }
 
