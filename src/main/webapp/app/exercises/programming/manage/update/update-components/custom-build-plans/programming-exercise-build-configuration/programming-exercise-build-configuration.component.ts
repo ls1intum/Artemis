@@ -117,15 +117,12 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     parseDockerFlagsToString() {
-        let newEnv = {} as { [key: string]: string } | undefined;
+        const newEnv = {} as { [key: string]: string } | undefined;
         this.envVars.forEach(([key, value]) => {
             if (key.trim()) {
                 newEnv![key] = value;
             }
         });
-        if (Object.keys(newEnv ?? {}).length === 0) {
-            newEnv = undefined;
-        }
         this.dockerFlags = { network: this.isNetworkDisabled ? 'none' : undefined, env: newEnv };
         this.programmingExercise()!.buildConfig!.dockerFlags = JSON.stringify(this.dockerFlags);
     }
