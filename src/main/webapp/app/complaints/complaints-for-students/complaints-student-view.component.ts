@@ -153,7 +153,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * Opens the complaint form (for a given complaint type) for the student to submit a complaint and scrolls to the bottom of the page to make the form visible
+     * Function to set complaint type (which opens the complaint form) and scrolls to the complaint form
      */
     startComplaint(complainType: ComplaintType): void {
         this.formComplaintType = complainType;
@@ -162,7 +162,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
     }
 
     /**
-     * Scrolls to the complaint form
+     * Function to scroll to the complaint form
      */
     private scrollToComplaint(): void {
         this.complaintScrollpoint.nativeElement.scrollIntoView({ behavior: 'smooth' });
