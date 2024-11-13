@@ -348,14 +348,14 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param submissionId    the id of the submission we want
      * @param correctionRound correction round for which we want the submission
      * @param resultId        if result already exists, we want to get the submission for this specific result
-     * @return a Participation of the tutor in the submission
+     * @return a Participation with relevant data for a tutor or instructor to assess the submission
      */
     @GetMapping("text-submissions/{submissionId}/for-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get data for tutors text assessment submission: {}", submissionId);
-        final var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(submissionId);
+        var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(submissionId);
         final Participation participation = textSubmission.getParticipation();
         final var exercise = participation.getExercise();
         final User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -387,7 +387,9 @@ public class TextAssessmentResource extends AssessmentResource {
                         .build();
             }
 
-            textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission, correctionRound);
+            textSubmission = textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission.getId(), correctionRound);
+            // reconnect with participation
+            textSubmission.setParticipation(participation);
             // set it since it has changed
             result = textSubmission.getResultForCorrectionRound(correctionRound);
         }
