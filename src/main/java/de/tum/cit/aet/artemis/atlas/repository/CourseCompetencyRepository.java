@@ -306,11 +306,12 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                         c.optional,
                         CASE WHEN TYPE(c) = Competency THEN 'competency' ELSE 'prerequisite' END,
                         COUNT(up),
-                        (SELECT COUNT(up) WHERE up.progress * up.confidence >= c.masteryThreshold)
+                        COUNT(CASE WHEN up.progress * up.confidence >= c.masteryThreshold THEN 1 ELSE 0 END)
                     )
                     FROM CourseCompetency c
                         LEFT JOIN c.userProgress up
                     WHERE c.course.id = :courseId
+                    GROUP BY c
             """)
     List<CompetencyStudentProgressDTO> findWithStudentProgressByCourseId(long courseId);
 

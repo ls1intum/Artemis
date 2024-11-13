@@ -40,7 +40,11 @@ export class CourseCompetencyApiService extends BaseApiHttpService {
         return await this.get<CompetencyRelationDTO[]>(`${this.getPath(courseId)}/relations`);
     }
 
-    async getCourseCompetenciesByCourseId(courseId: number): Promise<CourseCompetency[]> {
+    async getCourseCompetenciesWithOwnProgressByCourseId(courseId: number): Promise<CourseCompetency[]> {
         return await this.get<CourseCompetency[]>(`${this.getPath(courseId)}`);
+    }
+
+    async getCourseCompetenciesWithStudentProgressByCourseId(courseId: number): Promise<CourseCompetency[]> {
+        return await this.get<CourseCompetency[]>(`${this.getPath(courseId)}-student-progress`);
     }
 }

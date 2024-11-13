@@ -129,6 +129,20 @@ public class CourseCompetencyService {
      * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
      *
      * @param courseId The id of the course for which to fetch the competencies
+     * @param userId   The id of the user for which to fetch the progress
+     * @return The found competency
+     */
+    public List<CourseCompetency> findCourseCompetenciesWithProgressForUserByCourseId(Long courseId, Long userId) {
+        List<CourseCompetency> competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
+        return findProgressForCompetenciesAndUser(competencies, userId);
+    }
+
+    /**
+     * Finds competencies within a course and fetch progress for the provided user.
+     * <p>
+     * As Spring Boot 3 doesn't support conditional JOIN FETCH statements, we have to retrieve the data manually.
+     *
+     * @param courseId The id of the course for which to fetch the competencies
      * @return The found competency
      */
     public List<CompetencyStudentProgressDTO> findCourseCompetenciesWithStudentProgressByCourseId(Long courseId) {
