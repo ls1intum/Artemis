@@ -298,6 +298,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
 
     @Query("""
                     SELECT new de.tum.cit.aet.artemis.atlas.dto.CompetencyStudentProgressDTO(
+                        c.id,
                         c.title,
                         c.description,
                         c.taxonomy,
@@ -308,7 +309,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                         (SELECT COUNT(up) WHERE up.progress * up.confidence >= c.masteryThreshold)
                     )
                     FROM CourseCompetency c
-                        LEFT JOIN FETCH c.userProgress up
+                        LEFT JOIN c.userProgress up
                     WHERE c.course.id = :courseId
             """)
     List<CompetencyStudentProgressDTO> findWithStudentProgressByCourseId(long courseId);
