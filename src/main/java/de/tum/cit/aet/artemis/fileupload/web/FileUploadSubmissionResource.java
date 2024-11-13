@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
@@ -256,17 +254,17 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         if (!(fileUploadExercise instanceof FileUploadExercise)) {
             throw new BadRequestAlertException("The requested exercise was not found.", "exerciseId", "400");
         }
-        Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
-        fileUploadExercise.setGradingCriteria(gradingCriteria);
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, fileUploadExercise, user);
 
         // Check if tutors can start assessing the students submission
-        this.fileUploadSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
+        fileUploadSubmissionService.checkIfExerciseDueDateIsReached(fileUploadExercise);
 
         // Check if the limit of simultaneously locked submissions has been reached
         fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+
+        final var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
+        fileUploadExercise.setGradingCriteria(gradingCriteria);
 
         final FileUploadSubmission submission;
         if (lockSubmission) {
@@ -284,7 +282,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             final StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
             studentParticipation.setExercise(fileUploadExercise);
             submission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
-            this.fileUploadSubmissionService.hideDetails(submission, user);
+            fileUploadSubmissionService.hideDetails(submission, user);
         }
 
         return ResponseEntity.ok(submission);
