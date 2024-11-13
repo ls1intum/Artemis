@@ -1089,16 +1089,24 @@ public class ProgrammingExerciseService {
      */
     public void validateDockerFlags(ProgrammingExercise programmingExercise) {
         ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        DockerFlagsDTO dockerFlagsDTO;
+        try {
+            dockerFlagsDTO = programmingExerciseBuildConfigService.parseDockerFlags(buildConfig);
+        }
+        catch (IllegalArgumentException e) {
+            throw new BadRequestAlertException("Error while parsing the docker flags", "Exercise", "dockerFlagsParsingError");
+        }
 
-        DockerFlagsDTO dockerFlagsDTO = programmingExerciseBuildConfigService.parseDockerFlags(buildConfig);
         if (dockerFlagsDTO == null) {
             return;
         }
 
-        for (var entry : dockerFlagsDTO.env().entrySet()) {
-            if (entry.getKey().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH || entry.getValue().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
-                throw new BadRequestAlertException("The environment variables are too long. Max " + MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH + " chars", "Exercise",
-                        "envVariablesTooLong");
+        if (dockerFlagsDTO.env() != null) {
+            for (var entry : dockerFlagsDTO.env().entrySet()) {
+                if (entry.getKey().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH || entry.getValue().length() > MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH) {
+                    throw new BadRequestAlertException("The environment variables are too long. Max " + MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH + " chars", "Exercise",
+                            "envVariablesTooLong");
+                }
             }
         }
 

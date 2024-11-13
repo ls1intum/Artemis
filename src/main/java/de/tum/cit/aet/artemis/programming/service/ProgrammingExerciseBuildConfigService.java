@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
@@ -25,6 +24,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 public class ProgrammingExerciseBuildConfigService {
 
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ProgrammingExerciseBuildConfigService.class);
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * Converts a JSON string representing Docker flags (in JSON format)
@@ -39,7 +40,7 @@ public class ProgrammingExerciseBuildConfigService {
      * </pre>
      *
      * @param buildConfig the build config containing the Docker flags
-     * @return a {@link DockerRunConfig} object initialized with the parsed flags, or {@code null} if an error occurs
+     * @return a {@link DockerRunConfig} object initialized with the parsed flags, or {@code null} if the JSON string is empty
      */
     @Nullable
     public DockerRunConfig getDockerRunConfig(ProgrammingExerciseBuildConfig buildConfig) {
@@ -69,7 +70,8 @@ public class ProgrammingExerciseBuildConfigService {
     /**
      * Parses the JSON string representing Docker flags into DockerFlagsDTO. (see {@link DockerFlagsDTO})
      *
-     * @return a list of key-value pairs, or {@code null} if an error occurs
+     * @return a list of key-value pairs, or {@code null} if the JSON string is empty
+     * @throws IllegalArgumentException if the JSON string is invalid
      */
     @Nullable
     DockerFlagsDTO parseDockerFlags(ProgrammingExerciseBuildConfig buildConfig) {
@@ -78,15 +80,11 @@ public class ProgrammingExerciseBuildConfigService {
         }
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-
-            return objectMapper.readValue(buildConfig.getDockerFlags(), new TypeReference<>() {
-            });
+            return objectMapper.readValue(buildConfig.getDockerFlags(), DockerFlagsDTO.class);
         }
         catch (Exception e) {
-            log.error("Failed to parse DockerRunConfig from JSON string: {}. Using default settings.", buildConfig.getDockerFlags(), e);
+            log.error("Failed to parse DockerRunConfig from JSON string: {}. Using default settings.", buildConfig.getDockerFlags());
+            throw new IllegalArgumentException("Failed to parse DockerRunConfig from JSON string: " + buildConfig.getDockerFlags(), e);
         }
-
-        return null;
     }
 }
