@@ -370,11 +370,17 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     async startOnlineIDE() {
         const artemisToken: string = (await this.accountService.getToolToken('SCORPIO').toPromise()) ?? '';
 
+        console.log(window.location.protocol, window.location.host);
+        const artemisUrl = window.location.protocol ? `${window.location.protocol}//` : '' + window.location.host ? window.location.host : '';
+        console.log(artemisUrl);
+
         const data = {
             appDef: this.exercise?.buildConfig?.theiaImage ?? '',
             gitUri: this.addCredentialsToHttpUrl(this.getRepositoryUri(), false, true),
+            gitUser: this.user.name,
+            gitMail: this.user.email,
             artemisToken: artemisToken,
-            artemisUrl: window.location.protocol ? `${window.location.protocol}://` : '' + window.location.host ? window.location.host : '',
+            artemisUrl: artemisUrl,
         };
 
         const newWindow = window.open('', '_blank');
