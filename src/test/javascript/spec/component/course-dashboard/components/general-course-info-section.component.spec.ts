@@ -67,7 +67,55 @@ describe('GeneralCourseInfoSectionComponent', () => {
         expect(component.generalCourseInformation()).toBe(generalInfo);
     });
 
-    it('should set isLoading correctly', async () => {
+    it('should toggleEditMode', () => {
+        component.toggleEditMode();
+        expect(component.isEditMode()).toBeTrue();
+        component.toggleEditMode();
+        expect(component.isEditMode()).toBeFalse();
+    });
+
+    it('should update general information', async () => {
+        component.updateGeneralInformation('New general course information');
+        expect(component.generalCourseInformation()).toBe('New general course information');
+    });
+
+    it('should save general information', async () => {
+        component.generalCourseInformation.set('New general course information');
+        const updateGeneralCourseInformationSpy = jest.spyOn(courseDashboardService, 'updateGeneralCourseInformation').mockResolvedValue();
+
+        await component.saveGeneralInformation();
+
+        expect(updateGeneralCourseInformationSpy).toHaveBeenCalledExactlyOnceWith(courseId, 'New general course information');
+    });
+
+    it('should set isLoading correctly on updating general information', async () => {
+        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+
+        await component.saveGeneralInformation();
+
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
+        expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
+    });
+
+    it('should toggle edit mode after updating general information', async () => {
+        component.isEditMode.set(true);
+
+        await component.saveGeneralInformation();
+
+        expect(component.isEditMode()).toBeFalse();
+    });
+
+    it('should show error message if updating general course information fails', async () => {
+        jest.spyOn(courseDashboardService, 'updateGeneralCourseInformation').mockRejectedValueOnce({});
+        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+        component.generalCourseInformation.set('New general course information');
+
+        await component.saveGeneralInformation();
+
+        expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should set isLoading correctly on loading general information', async () => {
         const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
 
         fixture.detectChanges();

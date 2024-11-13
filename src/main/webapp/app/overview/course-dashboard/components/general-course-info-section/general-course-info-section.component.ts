@@ -18,6 +18,8 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
     styleUrl: './general-course-info-section.component.scss',
 })
 export class GeneralCourseInfoSectionComponent {
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
+
     protected readonly faSpinner = faSpinner;
     protected readonly faWrench = faWrench;
     protected readonly faFloppyDisk = faFloppyDisk;
@@ -43,20 +45,20 @@ export class GeneralCourseInfoSectionComponent {
         });
     }
 
-    protected toggleEditMode() {
+    public toggleEditMode() {
         this.isEditMode.set(!this.isEditMode());
     }
 
-    protected cancelEdit() {
+    public cancelEdit() {
         this.generalCourseInformation.set(this.courseInformationCopy());
         this.toggleEditMode();
     }
 
-    protected updateGeneralInformation(updatedInformation: string) {
+    public updateGeneralInformation(updatedInformation: string) {
         this.generalCourseInformation.set(updatedInformation);
     }
 
-    protected async saveGeneralInformation() {
+    public async saveGeneralInformation() {
         try {
             this.isLoading.set(true);
             if (this.generalCourseInformation()) {
@@ -83,6 +85,4 @@ export class GeneralCourseInfoSectionComponent {
             this.isLoading.set(false);
         }
     }
-
-    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 }
