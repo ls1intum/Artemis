@@ -253,7 +253,7 @@ public class LectureUnitService {
 
         T savedLectureUnit = saveFunction.apply(lectureUnit);
 
-        if (Hibernate.isInitialized(links) && !links.isEmpty()) {
+        if (Hibernate.isInitialized(links) && links != null && !links.isEmpty()) {
             savedLectureUnit.setCompetencyLinks(links);
             reconnectCompetencyLectureUnitLinks(savedLectureUnit);
             savedLectureUnit.setCompetencyLinks(new HashSet<>(competencyLectureUnitLinkRepository.saveAll(links)));

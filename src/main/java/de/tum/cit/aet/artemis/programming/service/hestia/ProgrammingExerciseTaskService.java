@@ -350,7 +350,7 @@ public class ProgrammingExerciseTaskService {
      * @param exercise The exercise where its problem statement is updated
      */
     public void replaceTestIdsWithNames(ProgrammingExercise exercise) {
-        // Also replace inactive test cases; don't send any testids (e.g. ids referring to previously active test cases) to the editor.
+        // Also replace inactive test cases; don't send any test ids (e.g. ids referring to previously active test cases) to the editor.
         // The client will then show a warning that the mentioned test name no longer exists.
         replaceInProblemStatement(exercise, this::extractTestNamesFromTestIds, false);
     }
