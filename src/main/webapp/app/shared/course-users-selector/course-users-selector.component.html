@@ -13,14 +13,14 @@
             [placeholder]="'artemisApp.userSelector.placeholderText' | artemisTranslate"
             [ngbTypeahead]="search"
             [inputFormatter]="usersFormatter"
-            [resultTemplate]="rt"
+            [resultTemplate]="resultTemplate"
             [editable]="false"
             [focusFirst]="false"
             (input)="onInputChange($event)"
             placement="bottom-start"
             #instance="ngbTypeahead"
         />
-        <ng-template #rt let-user="result" let-term="term">
+        <ng-template #resultTemplate let-user="result">
             <div class="d-flex align-items-center">
                 <jhi-profile-picture
                     [imageSizeInRem]="'1.1'"

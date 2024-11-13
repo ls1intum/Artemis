@@ -14,7 +14,7 @@ import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { TranslateModule } from '@ngx-translate/core';
-import { ProfilePictureComponent } from '../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @Component({
     template: `
