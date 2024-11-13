@@ -33,7 +33,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     isExamStarted: boolean = false;
     isTestRunExam: boolean = false;
     isCourseOverview: boolean = false;
-    isLti: boolean = false;
+    isShownViaLti: boolean = false;
 
     constructor(
         private jhiLanguageHelper: JhiLanguageHelper,
@@ -124,8 +124,8 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             this.isCourseOverview = isPresent;
         });
 
-        this.ltiSubscription = this.ltiService.isLti$.subscribe((isLti) => {
-            this.isLti = isLti;
+        this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
+            this.isShownViaLti = isShownViaLti;
         });
 
         this.themeService.initialize();
