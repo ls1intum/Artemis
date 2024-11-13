@@ -64,6 +64,10 @@ public final class Constants {
 
     public static final String NEW_SUBMISSION_TOPIC = "/topic" + PROGRAMMING_SUBMISSION_TOPIC;
 
+    public static final String SUBMISSION_PROCESSING = "/submissionProcessing";
+
+    public static final String SUBMISSION_PROCESSING_TOPIC = "/topic" + SUBMISSION_PROCESSING;
+
     public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/public/athena/programming-exercises/";
 
     // short names should have at least 3 characters and must start with a letter

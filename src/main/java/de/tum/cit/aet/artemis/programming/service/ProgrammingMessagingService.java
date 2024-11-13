@@ -6,6 +6,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
 import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_SUBMISSION_TOPIC;
+import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING;
+import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
 
 import java.util.Optional;
@@ -165,6 +167,10 @@ public class ProgrammingMessagingService {
         return EXERCISE_TOPIC_ROOT + exerciseId + PROGRAMMING_SUBMISSION_TOPIC;
     }
 
+    private static String getSubmissionProcessingTopicForTAAndAbove(Long exerciseId) {
+        return EXERCISE_TOPIC_ROOT + exerciseId + SUBMISSION_PROCESSING;
+    }
+
     public static String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
         return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
     }
@@ -197,12 +203,12 @@ public class ProgrammingMessagingService {
                 // eager load the team with students so their information can be used for the messages below
                 studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
             }
-            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
+            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), SUBMISSION_PROCESSING_TOPIC, submission));
         }
 
         // send an update to tutors, editors and instructors about submissions for template and solution participations
         if (!(participation instanceof StudentParticipation)) {
-            var topicDestination = getExerciseTopicForTAAndAbove(exerciseId);
+            var topicDestination = getSubmissionProcessingTopicForTAAndAbove(exerciseId);
             websocketMessagingService.sendMessage(topicDestination, submission);
         }
     }

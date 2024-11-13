@@ -15,6 +15,8 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { SubmissionProcessingDTO } from 'app/entities/programming/submission-processing-dto';
 import dayjs from 'dayjs/esm';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -51,10 +53,6 @@ const checkIfSubmissionIsError = (toBeDetermined: ProgrammingSubmission | Progra
     return !!(toBeDetermined as ProgrammingSubmissionError).error;
 };
 
-const checkIfSubmissionIsProcessing = (dto: ProgrammingSubmission | SubmissionProcessingDTO): dto is SubmissionProcessingDTO => {
-    return !!(dto as SubmissionProcessingDTO).participationId;
-};
-
 export interface IProgrammingSubmissionService {
     getLatestPendingSubmissionByParticipationId: (participationId: number, exerciseId: number, personal: boolean) => Observable<ProgrammingSubmissionStateObj>;
     getSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseSubmissionState>;
@@ -73,12 +71,16 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     // Default value: 2 minutes.
     private DEFAULT_EXPECTED_RESULT_ETA = 2 * 60 * 1000;
     // Default value: 30 seconds.
-    private DEFAULT_EXPECTED_QUEUE_ESTIMATE = 30 * 1000;
+    private DEFAULT_EXPECTED_QUEUE_ESTIMATE = 60 * 1000;
     private SUBMISSION_TEMPLATE_TOPIC = '/topic/exercise/%exerciseId%/newSubmissions';
+
+    private SUBMISSION_PROCESSING_TEMPLATE_TOPIC = '/topic/exercise/%exerciseId%/submissionProcessing';
 
     private resultSubscriptions: { [participationId: number]: Subscription } = {};
     // participationId -> topic
     private submissionTopicsSubscribed = new Map<number, string>();
+    // participationId -> topic
+    private submissionProcessingTopicsSubscribed = new Map<number, string>();
 
     // participationId -> exerciseId
     private participationIdToExerciseId = new Map<number, number>();
@@ -99,13 +101,19 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private currentExpectedQueueEstimate = this.DEFAULT_EXPECTED_QUEUE_ESTIMATE;
 
     private startedProcessingCache: Map<string, BuildTimingInfo> = new Map<string, BuildTimingInfo>();
+    private isLocalCIProfile?: boolean = undefined;
 
     constructor(
         private websocketService: JhiWebsocketService,
         private http: HttpClient,
         private participationWebsocketService: ParticipationWebsocketService,
         private participationService: ProgrammingExerciseParticipationService,
-    ) {}
+        private profileService: ProfileService,
+    ) {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.isLocalCIProfile = !!profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
+        });
+    }
 
     ngOnDestroy(): void {
         Object.values(this.resultSubscriptions).forEach((sub) => sub.unsubscribe());
@@ -248,53 +256,80 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 this.websocketService
                     .receive(newSubmissionTopic)
                     .pipe(
-                        tap((submission: ProgrammingSubmission | SubmissionProcessingDTO | ProgrammingSubmissionError) => {
-                            console.log(submission);
+                        tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
                             if (checkIfSubmissionIsError(submission)) {
                                 const programmingSubmissionError = submission as ProgrammingSubmissionError;
                                 this.emitFailedSubmission(programmingSubmissionError.participationId, exerciseId);
                                 return;
                             }
-
+                            const programmingSubmission = submission as ProgrammingSubmission;
+                            const submissionParticipationId = programmingSubmission.participation!.id!;
                             let buildTimingInfo: BuildTimingInfo | undefined = undefined;
-                            if (checkIfSubmissionIsProcessing(submission)) {
-                                const submissionProcessing = submission as SubmissionProcessingDTO;
-                                const programmingSubmission = this.getSubmissionByCommitHash(submissionProcessing);
-                                // It is possible that the submission started processing before it got saved to the database and the message was sent to the client.
-                                // In this case, we cache that the submission started processing and do not emit the building state.
-                                // When the submission message arrives, we check if the submission is already in the cache.
-                                if (!programmingSubmission) {
-                                    this.startedProcessingCache.set(submission.commitHash!, {
-                                        estimatedCompletionDate: submissionProcessing.estimatedCompletionDate,
-                                        buildStartDate: submissionProcessing.buildStartDate,
-                                    });
-                                    return;
+
+                            if (this.isLocalCIProfile) {
+                                if (!programmingSubmission.isProcessing && !this.didSubmissionStartProcessing(programmingSubmission.commitHash!)) {
+                                    const queueRemainingTime = this.getExpectedRemainingTimeForQueue(programmingSubmission);
+                                    if (queueRemainingTime > 0) {
+                                        this.emitQueuedSubmission(submissionParticipationId, exerciseId, programmingSubmission);
+                                        this.startQueueEstimateTimer(submissionParticipationId, exerciseId, programmingSubmission, queueRemainingTime);
+                                        return;
+                                    }
                                 }
-                                programmingSubmission.isProcessing = true;
-                                submission = programmingSubmission;
-                                buildTimingInfo = {
-                                    estimatedCompletionDate: submissionProcessing.estimatedCompletionDate,
-                                    buildStartDate: submissionProcessing.buildStartDate,
-                                };
+
+                                buildTimingInfo = this.startedProcessingCache.get(programmingSubmission.commitHash!);
+                                this.removeSubmissionFromProcessingCache(programmingSubmission.commitHash!);
                             }
 
-                            const programmingSubmission = submission as ProgrammingSubmission;
+                            this.emitBuildingSubmission(submissionParticipationId, this.participationIdToExerciseId.get(submissionParticipationId)!, submission, buildTimingInfo);
+                            // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
+                            this.startResultWaitingTimer(submissionParticipationId);
+                        }),
+                    )
+                    .subscribe();
+            }
+            this.submissionTopicsSubscribed.set(participationId, newSubmissionTopic);
+        }
+    }
+
+    private setupWebsocketSubscriptionForSubmissionProcessing(participationId: number, exerciseId: number, personal: boolean): void {
+        if (!this.submissionProcessingTopicsSubscribed.get(participationId)) {
+            let newSubmissionTopic: string;
+            if (personal) {
+                newSubmissionTopic = '/user/topic/submissionProcessing';
+            } else {
+                newSubmissionTopic = this.SUBMISSION_PROCESSING_TEMPLATE_TOPIC.replace('%exerciseId%', exerciseId.toString());
+            }
+
+            // Only subscribe if not subscription to same topic exists (e.g. from different participation)
+            if (!Array.from(this.submissionProcessingTopicsSubscribed.values()).includes(newSubmissionTopic)) {
+                this.websocketService.subscribe(newSubmissionTopic);
+                this.websocketService
+                    .receive(newSubmissionTopic)
+                    .pipe(
+                        tap((submissionProcessing: SubmissionProcessingDTO) => {
+                            const programmingSubmission = this.getSubmissionByCommitHash(submissionProcessing);
+                            // It is possible that the submission started processing before it got saved to the database and the message was sent to the client.
+                            // In this case, we cache that the submission started processing and do not emit the building state.
+                            // When the submission message arrives, we check if the submission is already in the cache.
+                            if (!programmingSubmission) {
+                                this.startedProcessingCache.set(submissionProcessing.commitHash!, {
+                                    estimatedCompletionDate: submissionProcessing.estimatedCompletionDate,
+                                    buildStartDate: submissionProcessing.buildStartDate,
+                                });
+                                return;
+                            }
+                            programmingSubmission.isProcessing = true;
                             const submissionParticipationId = programmingSubmission.participation!.id!;
 
                             if (!this.isNewestSubmission(programmingSubmission, exerciseId, submissionParticipationId)) {
                                 return;
                             }
 
-                            if (!programmingSubmission.isProcessing && !this.didSubmissionStartProcessing(programmingSubmission.commitHash!)) {
-                                const queueRemainingTime = this.getExpectedRemainingTimeForQueue(programmingSubmission);
-                                if (queueRemainingTime > 0) {
-                                    this.emitQueuedSubmission(submissionParticipationId, exerciseId, programmingSubmission);
-                                    this.startQueueEstimateTimer(submissionParticipationId, exerciseId, programmingSubmission, queueRemainingTime);
-                                    return;
-                                }
-                            }
-                            buildTimingInfo = buildTimingInfo ?? this.startedProcessingCache.get(programmingSubmission.commitHash!);
-                            this.removeSubmissionFromProcessingCache(submission.commitHash!);
+                            const buildTimingInfo = {
+                                estimatedCompletionDate: submissionProcessing.estimatedCompletionDate,
+                                buildStartDate: submissionProcessing.buildStartDate,
+                            };
+                            this.removeSubmissionFromProcessingCache(programmingSubmission.commitHash!);
                             this.resetQueueEstimateTimer(submissionParticipationId);
                             this.emitBuildingSubmission(
                                 submissionParticipationId,
@@ -308,7 +343,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     )
                     .subscribe();
             }
-            this.submissionTopicsSubscribed.set(participationId, newSubmissionTopic);
+            this.submissionProcessingTopicsSubscribed.set(participationId, newSubmissionTopic);
         }
     }
 
@@ -661,21 +696,30 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             // The new submission would then override the current latest pending submission.
             tap(() => {
                 this.setupWebsocketSubscriptionForLatestPendingSubmission(participationId, exerciseId, personal);
+                if (this.isLocalCIProfile) {
+                    this.setupWebsocketSubscriptionForSubmissionProcessing(participationId, exerciseId, personal);
+                }
             }),
             // Find out in what state the latest submission is (pending / failed). If the submission is pending, start the result timer.
             map((submission: ProgrammingSubmission | undefined) => {
                 if (submission) {
-                    const queueRemainingTime = this.getExpectedRemainingTimeForQueue(submission);
-                    if (submission.isProcessing === false && queueRemainingTime > 0 && !this.didSubmissionStartProcessing(submission.commitHash!)) {
-                        this.emitQueuedSubmission(participationId, exerciseId, submission);
-                        this.startQueueEstimateTimer(participationId, exerciseId, submission, queueRemainingTime);
-                        return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_QUEUED };
+                    if (this.isLocalCIProfile && submission.isProcessing === false && !this.didSubmissionStartProcessing(submission.commitHash!)) {
+                        const queueRemainingTime = this.getExpectedRemainingTimeForQueue(submission);
+                        if (queueRemainingTime > 0) {
+                            this.emitQueuedSubmission(participationId, exerciseId, submission);
+                            this.startQueueEstimateTimer(participationId, exerciseId, submission, queueRemainingTime);
+                            return {
+                                participationId,
+                                submission: submissionToBeProcessed,
+                                submissionState: ProgrammingSubmissionState.IS_QUEUED,
+                            };
+                        }
                     } else {
-                        const estimatedCompletionDate = this.startedProcessingCache.get(submission.commitHash!);
+                        const buildTimingInfo = this.startedProcessingCache.get(submission.commitHash!);
                         this.removeSubmissionFromProcessingCache(submission.commitHash!);
                         const remainingTime = this.getExpectedRemainingTimeForBuild(submission);
                         if (remainingTime > 0) {
-                            this.emitBuildingSubmission(participationId, exerciseId, submission, estimatedCompletionDate);
+                            this.emitBuildingSubmission(participationId, exerciseId, submission, buildTimingInfo);
                             this.startResultWaitingTimer(participationId, remainingTime);
                             return { participationId, submission: submissionToBeProcessed, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION };
                         }

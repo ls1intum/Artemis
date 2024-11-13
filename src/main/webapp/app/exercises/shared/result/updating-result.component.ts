@@ -34,6 +34,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() showBadge = false;
     @Input() showIcon = true;
     @Input() isInSidebarCard = false;
+    @Input() showProgressBar = false;
     @Output() showResult = new EventEmitter<void>();
     /**
      * @property personalParticipation Whether the participation belongs to the user (by being a student) or not (by being an instructor)
@@ -186,7 +187,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             });
         } else if (
             submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION &&
-            buildTimingInfo?.estimatedCompletionDate &&
+            buildTimingInfo &&
             dayjs(buildTimingInfo?.estimatedCompletionDate).isAfter(dayjs())
         ) {
             this.estimatedCompletionDate = buildTimingInfo?.estimatedCompletionDate;
