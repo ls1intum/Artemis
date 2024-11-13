@@ -7,15 +7,16 @@ import { FilterData } from 'app/exercises/programming/manage/grading/feedback-an
 export interface FeedbackAnalysisResponse {
     feedbackDetails: SearchResult<FeedbackDetail>;
     totalItems: number;
-    totalAmountOfTasks: number;
+    taskNames: string[];
     testCaseNames: string[];
+    errorCategories: string[];
 }
 export interface FeedbackDetail {
     count: number;
     relativeCount: number;
     detailText: string;
     testCaseName: string;
-    taskNumber: string;
+    taskName: string;
     errorCategory: string;
 }
 @Injectable()
@@ -29,7 +30,8 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             .set('sortedColumn', pageable.sortedColumn)
             .set('filterTasks', options.filters.tasks.join(','))
             .set('filterTestCases', options.filters.testCases.join(','))
-            .set('filterOccurrence', options.filters.occurrence.join(','));
+            .set('filterOccurrence', options.filters.occurrence.join(','))
+            .set('filterErrorCategories', options.filters.errorCategories.join(','));
 
         return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details`, { params });
     }

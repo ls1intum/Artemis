@@ -37,15 +37,15 @@ $transition-color-length: 0.2s;
 }
 
 .mat-drawer-container {
-    height: calc(100vh - var(--sidebar-footer-height-prod));
+    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--spacing-modules));
 
     &.sidenav-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev));
+        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--spacing-modules));
     }
 
     @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
-        height: calc(100dvh - var(--sidebar-footer-height-prod)) !important;
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--spacing-modules)) !important;
+        height: calc(100dvh - var(--sidebar-footer-height-prod) - var(--spacing-modules)) !important;
     }
 
     &.exam-wrapper {
@@ -56,14 +56,14 @@ $transition-color-length: 0.2s;
         box-sizing: content-box;
         width: $menu-width-open;
         transition: width 0.2s ease-in-out !important;
-        height: calc(100vh - var(--sidebar-footer-height-prod));
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--spacing-modules));
 
         &.sidenav-height-dev {
-            height: calc(100vh - var(--sidebar-footer-height-dev));
+            height: calc(100vh - var(--sidebar-footer-height-dev) - var(--spacing-modules));
         }
 
         @media (max-width: 768px) {
-            height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
+            height: calc(100vh - var(--sidebar-footer-height-prod) - var(--spacing-modules)) !important;
         }
     }
 

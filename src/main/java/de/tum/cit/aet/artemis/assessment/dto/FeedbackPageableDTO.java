@@ -14,6 +14,8 @@ public class FeedbackPageableDTO extends PageableSearchDTO<String> {
 
     private String searchTerm;
 
+    private List<String> filterErrorCategories;
+
     public List<String> getFilterTasks() {
         return filterTasks;
     }
@@ -44,5 +46,13 @@ public class FeedbackPageableDTO extends PageableSearchDTO<String> {
 
     public void setSearchTerm(String searchTerm) {
         this.searchTerm = searchTerm;
+    }
+
+    public List<String> getFilterErrorCategories() {
+        return filterErrorCategories;
+    }
+
+    public void setFilterErrorCategories(List<String> filterErrorCategories) {
+        this.filterErrorCategories = filterErrorCategories;
     }
 }
