@@ -19,7 +19,7 @@ public abstract class AbstractParser {
                 failedTests.add(new BuildResult.LocalCITestJobDTO(testCase.name(), List.of(failure.extractMessage())));
             }
             else {
-                successfulTests.add(new BuildResult.LocalCITestJobDTO(testCase.name(), List.of()));
+                successfulTests.add(new BuildResult.LocalCITestJobDTO(testCase.name(), List.of(testCase.extractSuccessMessage())));
             }
         }
 

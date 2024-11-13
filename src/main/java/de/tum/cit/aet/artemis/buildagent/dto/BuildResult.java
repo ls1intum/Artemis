@@ -174,13 +174,13 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
     }
 
     /**
-     * Represents the information about one test case, including the test case's name and potential error messages that indicate what went wrong.
+     * Represents the information about one test case, including the test case's name and messages.
      *
-     * @param name   name of the test case.
-     * @param errors list of error messages.
+     * @param name     name of the test case.
+     * @param messages list of messages.
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseBaseDTO, Serializable {
+    public record LocalCITestJobDTO(String name, List<String> messages) implements TestCaseBaseDTO, Serializable {
 
         @Override
         public String getName() {
@@ -189,7 +189,7 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
 
         @Override
         public List<String> getTestMessages() {
-            return errors;
+            return messages;
         }
     }
 }

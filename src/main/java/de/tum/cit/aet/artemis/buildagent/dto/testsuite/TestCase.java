@@ -14,4 +14,8 @@ public record TestCase(@JacksonXmlProperty(isAttribute = true, localName = "name
     public Failure extractFailure() {
         return failure != null ? failure : error;
     }
+
+    public String extractSuccessMessage() {
+        return successMessage != null ? successMessage : "";
+    }
 }
