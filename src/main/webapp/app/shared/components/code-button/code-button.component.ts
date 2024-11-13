@@ -370,7 +370,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     async startOnlineIDE() {
         const artemisToken: string = (await this.accountService.getToolToken('SCORPIO').toPromise()) ?? '';
 
-        console.log(window.location.protocol, window.location.host);
         let artemisUrl: string = '';
         if (window.location.protocol) {
             artemisUrl += window.location.protocol + '//';
@@ -378,7 +377,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         if (window.location.host) {
             artemisUrl += window.location.host;
         }
-        console.log(artemisUrl);
 
         const data = {
             appDef: this.exercise?.buildConfig?.theiaImage ?? '',
