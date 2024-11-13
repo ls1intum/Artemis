@@ -371,7 +371,13 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         const artemisToken: string = (await this.accountService.getToolToken('SCORPIO').toPromise()) ?? '';
 
         console.log(window.location.protocol, window.location.host);
-        const artemisUrl = window.location.protocol ? `${window.location.protocol}//` : '' + window.location.host ? window.location.host : '';
+        let artemisUrl: string = '';
+        if (window.location.protocol) {
+            artemisUrl += window.location.protocol + '//';
+        }
+        if (window.location.host) {
+            artemisUrl += window.location.host;
+        }
         console.log(artemisUrl);
 
         const data = {
