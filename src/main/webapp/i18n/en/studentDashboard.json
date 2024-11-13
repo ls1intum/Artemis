@@ -1,0 +1,29 @@
+{
+    "artemisApp": {
+        "studentDashboard": {
+            "generalInformationSection": {
+                "title": "General",
+                "cancelButton": "Cancel",
+                "saveButton": "Save",
+                "editButton": "Edit",
+                "refreshButton": "Refresh",
+                "emptyInformation": "No general course information has been set!"
+            },
+            "coursePerformanceSection": {
+                "title": "Your performance",
+                "overallPerformanceLabel": "overall Performance:",
+                "courseCompetencies": {
+                    "title": "Course competencies",
+                    "learningPathButton": "Continue learning path",
+                    "actionLabel": "Select an exercise in the graph to open the corresponding course competency",
+                    "body": {
+                        "noLearningObjects": "This course competency does not include any learning objects!"
+                    },
+                    "optional": "Optional",
+                    "recommendedIn": "Recommended in:",
+                    "noCourseCompetencies": "There are no course competencies in this course!"
+                }
+            }
+        }
+    }
+}

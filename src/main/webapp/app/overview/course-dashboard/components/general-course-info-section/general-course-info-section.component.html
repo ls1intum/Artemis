@@ -1,11 +1,11 @@
 <div>
     <div class="d-flex justify-content-between align-items-center">
-        <h5 class="m-0">General</h5>
+        <h5 class="m-0" jhiTranslate="artemisApp.studentDashboard.generalInformationSection.title"></h5>
         @if (isAtLeastInstructor()) {
             @if (isEditMode()) {
                 <div>
                     <button class="btn btn-secondary btn-sm col-md-auto" (click)="cancelEdit()">
-                        <span>Cancel</span>
+                        <span jhiTranslate="artemisApp.studentDashboard.generalInformationSection.cancelButton"></span>
                     </button>
                     <button class="ms-1 btn btn-primary btn-sm col-md-auto" (click)="saveGeneralInformation()">
                         @if (isLoading()) {
@@ -13,13 +13,13 @@
                         } @else {
                             <fa-icon [icon]="faFloppyDisk" />
                         }
-                        <span>Save</span>
+                        <span jhiTranslate="artemisApp.studentDashboard.generalInformationSection.saveButton"></span>
                     </button>
                 </div>
             } @else {
                 <button class="btn btn-secondary btn-sm col-md-auto" (click)="toggleEditMode()">
                     <fa-icon [icon]="faWrench" />
-                    <span>Edit</span>
+                    <span jhiTranslate="artemisApp.studentDashboard.generalInformationSection.editButton"></span>
                 </button>
             }
         } @else {
@@ -27,7 +27,7 @@
                 @if (isLoading()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 }
-                <span>Refresh</span>
+                <span jhiTranslate="artemisApp.studentDashboard.generalInformationSection.refreshButton"></span>
             </button>
         }
     </div>
@@ -48,7 +48,7 @@
         } @else if (generalCourseInformation()) {
             <span class="position-relative" [innerHTML]="generalCourseInformation() | htmlForMarkdown"></span>
         } @else {
-            <em class="text-secondary">No general course information has been set!</em>
+            <em class="text-secondary" jhiTranslate="artemisApp.studentDashboard.generalInformationSection.emptyInformation"></em>
         }
     </div>
 </div>

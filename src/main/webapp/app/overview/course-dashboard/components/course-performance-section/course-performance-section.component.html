@@ -1,8 +1,8 @@
 <div>
     <div class="d-flex justify-content-between align-items-center">
-        <h5 class="m-0">Your performance</h5>
+        <h5 class="m-0" jhiTranslate="artemisApp.studentDashboard.coursePerformanceSection.title"></h5>
         <div class="d-flex justify-content-center align-items-center">
-            <small>overall Performance:</small>
+            <small jhiTranslate="artemisApp.studentDashboard.coursePerformanceSection.overallPerformanceLabel"></small>
             <h4 class="m-0 ms-2">
                 <span class="badge text-bg-success text-white">{{ points() }} / {{ maxPoints() }}</span>
             </h4>
@@ -14,14 +14,19 @@
         <hr />
         <div class="mb-3">
             <div class="d-flex justify-content-between align-items-center">
-                <h6 class="m-0">Course competencies</h6>
+                <h6 class="m-0" jhiTranslate="artemisApp.studentDashboard.coursePerformanceSection.courseCompetencies.title"></h6>
                 @if (learningPathsEnabled()) {
-                    <button type="button" class="btn btn-sm btn-primary" [routerLink]="['/courses', courseId(), 'learning-path']">Continue learning path</button>
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-primary"
+                        [routerLink]="['/courses', courseId(), 'learning-path']"
+                        jhiTranslate="artemisApp.studentDashboard.coursePerformanceSection.courseCompetencies.learningPathButton"
+                    ></button>
                 }
             </div>
             <div class="text-secondary">
                 <fa-icon [icon]="faCircleInfo" />
-                <em><small>Select an exercise in the graph to open the corresponding course competency</small></em>
+                <em><small jhiTranslate="artemisApp.studentDashboard.coursePerformanceSection.courseCompetencies.actionLabel"></small></em>
             </div>
         </div>
         <div>

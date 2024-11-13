@@ -14,7 +14,10 @@
                             <div class="d-flex justify-content-center align-items-center">
                                 <fa-icon [icon]="getIcon(courseCompetency.taxonomy)" size="lg" />
                                 @if (courseCompetency.optional) {
-                                    <span class="ms-2 badge text-bg-secondary">Optional</span>
+                                    <span
+                                        class="ms-2 badge text-bg-secondary"
+                                        jhiTranslate="artemisApp.studentDashboard.coursePerformanceSection.courseCompetencies.optional"
+                                    ></span>
                                 }
                                 <strong class="ms-2">{{ courseCompetency.title }}</strong>
                                 <h5 class="m-0 ms-2">
@@ -37,7 +40,7 @@
                             </div>
                             @if (courseCompetency.softDueDate) {
                                 <div class="me-2">
-                                    <small>Recommended in:</small>
+                                    <small jhiTranslate="artemisApp.studentDashboard.coursePerformanceSection.courseCompetencies.recommendedIn"></small>
                                     <span class="badge text-bg-secondary">
                                         {{ courseCompetency.softDueDate! | artemisTimeAgo }}
                                     </span>
@@ -62,7 +65,7 @@
             </div>
         } @empty {
             <div class="row justify-content-center p-2">
-                <em class="text-secondary text-center">There are no course competencies in this course!</em>
+                <em class="text-secondary text-center" jhiTranslate="artemisApp.studentDashboard.coursePerformanceSection.courseCompetencies.noCourseCompetencies"></em>
             </div>
         }
     </div>
