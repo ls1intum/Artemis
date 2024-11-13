@@ -29,8 +29,14 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     @Output() titleChange = new EventEmitter<string>();
     @Output() channelNameChange = new EventEmitter<string>();
 
-    formValidSignal = signal<boolean>(false);
+    isFormValidSignal = signal<boolean>(false);
+    /**
+     * @deprecated Use {@link isFormValidSignal} instead.
+     */
     formValid: boolean;
+    /**
+     * @deprecated Use {@link isFormValidSignal} instead.
+     */
     formValidChanges = new Subject();
 
     fieldTitleSubscription?: Subscription;
@@ -88,7 +94,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
 
     calculateFormValid(): void {
         const updatedFormValidValue = Boolean(this.field_title.valid && (!this.isChannelFieldDisplayed() || this.field_channel_name()?.valid));
-        this.formValidSignal.set(updatedFormValidValue);
+        this.isFormValidSignal.set(updatedFormValidValue);
         this.formValid = updatedFormValidValue;
         this.formValidChanges.next(this.formValid);
     }
