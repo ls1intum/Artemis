@@ -53,7 +53,7 @@ export class CompetencyManagementComponent implements OnInit {
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly isLoading = signal<boolean>(false);
 
-    private readonly courseCompetencies = signal<CourseCompetency[]>([]);
+    readonly courseCompetencies = signal<CourseCompetency[]>([]);
     competencies = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.COMPETENCY));
     prerequisites = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.PREREQUISITE));
 

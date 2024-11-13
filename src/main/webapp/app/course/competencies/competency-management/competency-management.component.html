@@ -33,6 +33,7 @@
     }
     <jhi-competency-management-table
         [courseId]="courseId()"
+        [allCompetencies]="courseCompetencies"
         [courseCompetencies]="competencies()"
         [competencyType]="CourseCompetencyType.COMPETENCY"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
@@ -40,6 +41,7 @@
     />
     <jhi-competency-management-table
         [courseId]="courseId()"
+        [allCompetencies]="courseCompetencies"
         [courseCompetencies]="prerequisites()"
         [competencyType]="CourseCompetencyType.PREREQUISITE"
         [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
