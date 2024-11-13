@@ -37,6 +37,7 @@ describe('GeneralCourseInfoSectionComponent', () => {
                     provide: CourseDashboardService,
                     useValue: {
                         getGeneralCourseInformation: () => jest.fn(),
+                        updateGeneralCourseInformation: () => jest.fn(),
                     },
                 },
             ],

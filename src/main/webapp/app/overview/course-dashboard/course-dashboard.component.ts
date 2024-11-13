@@ -14,9 +14,6 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
-import dayjs from 'dayjs/esm';
-import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-course-dashboard',
@@ -95,63 +92,63 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         }
 
         this.isLoading = true;
-        this.metricsSubscription = this.courseDashboardService.getCourseMetricsForUser(this.courseId).subscribe({
-            next: (response) => {
-                if (response.body) {
-                    this.studentMetrics = response.body;
-                    const lectureUnitMetrics = response.body.lectureUnitStudentMetricsDTO ?? {};
-
-                    // Exercise metrics
-                    const exerciseMetrics = response.body.exerciseMetrics ?? {};
-                    // Sorted exercises that have a due date in the past
-                    let sortedExerciseIds = Object.values(exerciseMetrics?.exerciseInformation ?? {})
-                        .filter((exercise) => exercise.dueDate && exercise.dueDate.isBefore(dayjs()))
-                        .sort((a, b) => ((a.dueDate ?? a.startDate).isBefore(b.dueDate) ? -1 : 1))
-                        .map((exercise) => exercise.id);
-
-                    // Limit the number of exercises to the last 10
-                    sortedExerciseIds = sortedExerciseIds.slice(-10);
-
-                    this.hasExercises = sortedExerciseIds.length > 0;
-                    this.setOverallPerformance(sortedExerciseIds, exerciseMetrics);
-                    this.setExercisePerformance(sortedExerciseIds, exerciseMetrics);
-                    this.setExerciseLateness(sortedExerciseIds, exerciseMetrics);
-
-                    // Competency metrics
-                    const competencyMetrics = response.body.competencyMetrics ?? {};
-                    this.competencies = Object.values(competencyMetrics.competencyInformation ?? {})
-                        .filter((competency) => {
-                            // Has at least one exercise that has started
-                            const exerciseIds = competencyMetrics.exercises?.[competency.id] ?? [];
-                            for (const exerciseId of exerciseIds) {
-                                const exercise = exerciseMetrics.exerciseInformation?.[exerciseId];
-                                if (exercise && exercise.startDate.isBefore(dayjs())) {
-                                    return true;
-                                }
-                            }
-
-                            // Or has at least one lecture unit that has been released
-                            const lectureUnitIds = competencyMetrics.lectureUnits?.[competency.id] ?? [];
-                            for (const lectureUnitId of lectureUnitIds) {
-                                const lectureUnit = lectureUnitMetrics.lectureUnitInformation?.[lectureUnitId];
-                                if (lectureUnit && lectureUnit.releaseDate && lectureUnit.releaseDate.isBefore(dayjs())) {
-                                    return true;
-                                }
-                            }
-                        })
-                        .sort((a, b) => {
-                            return a.id < b.id ? -1 : 1;
-                        });
-
-                    this.hasCompetencies = this.competencies.length > 0;
-                }
-                this.isLoading = false;
-            },
-            error: (errorResponse: HttpErrorResponse) => {
-                onError(this.alertService, errorResponse);
-                this.isLoading = false;
-            },
-        });
+        // this.metricsSubscription = this.courseDashboardService.getCourseMetricsForUser(this.courseId).subscribe({
+        //     next: (response) => {
+        //         if (response.body) {
+        //             this.studentMetrics = response.body;
+        //             const lectureUnitMetrics = response.body.lectureUnitStudentMetricsDTO ?? {};
+        //
+        //             // Exercise metrics
+        //             const exerciseMetrics = response.body.exerciseMetrics ?? {};
+        //             // Sorted exercises that have a due date in the past
+        //             let sortedExerciseIds = Object.values(exerciseMetrics?.exerciseInformation ?? {})
+        //                 .filter((exercise) => exercise.dueDate && exercise.dueDate.isBefore(dayjs()))
+        //                 .sort((a, b) => ((a.dueDate ?? a.startDate).isBefore(b.dueDate) ? -1 : 1))
+        //                 .map((exercise) => exercise.id);
+        //
+        //             // Limit the number of exercises to the last 10
+        //             sortedExerciseIds = sortedExerciseIds.slice(-10);
+        //
+        //             this.hasExercises = sortedExerciseIds.length > 0;
+        //             this.setOverallPerformance(sortedExerciseIds, exerciseMetrics);
+        //             this.setExercisePerformance(sortedExerciseIds, exerciseMetrics);
+        //             this.setExerciseLateness(sortedExerciseIds, exerciseMetrics);
+        //
+        //             // Competency metrics
+        //             const competencyMetrics = response.body.competencyMetrics ?? {};
+        //             this.competencies = Object.values(competencyMetrics.competencyInformation ?? {})
+        //                 .filter((competency) => {
+        //                     // Has at least one exercise that has started
+        //                     const exerciseIds = competencyMetrics.exercises?.[competency.id] ?? [];
+        //                     for (const exerciseId of exerciseIds) {
+        //                         const exercise = exerciseMetrics.exerciseInformation?.[exerciseId];
+        //                         if (exercise && exercise.startDate.isBefore(dayjs())) {
+        //                             return true;
+        //                         }
+        //                     }
+        //
+        //                     // Or has at least one lecture unit that has been released
+        //                     const lectureUnitIds = competencyMetrics.lectureUnits?.[competency.id] ?? [];
+        //                     for (const lectureUnitId of lectureUnitIds) {
+        //                         const lectureUnit = lectureUnitMetrics.lectureUnitInformation?.[lectureUnitId];
+        //                         if (lectureUnit && lectureUnit.releaseDate && lectureUnit.releaseDate.isBefore(dayjs())) {
+        //                             return true;
+        //                         }
+        //                     }
+        //                 })
+        //                 .sort((a, b) => {
+        //                     return a.id < b.id ? -1 : 1;
+        //                 });
+        //
+        //             this.hasCompetencies = this.competencies.length > 0;
+        //         }
+        //         this.isLoading = false;
+        //     },
+        //     error: (errorResponse: HttpErrorResponse) => {
+        //         onError(this.alertService, errorResponse);
+        //         this.isLoading = false;
+        //     },
+        // });
     }
 
     /**

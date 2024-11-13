@@ -2,7 +2,6 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { CourseDashboardService } from 'app/overview/course-dashboard/course-dashboard.service';
 import { StudentMetrics } from 'app/entities/student-metrics.model';
-import { lastValueFrom } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { round } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
@@ -110,8 +109,8 @@ export class CoursePerformanceSectionComponent {
     private async loadStudentMetrics(courseId: number): Promise<void> {
         try {
             this.isLoading.set(true);
-            const response = await lastValueFrom(this.courseDashboardService.getCourseMetricsForUser(courseId));
-            this.studentMetrics.set(response.body);
+            const response = await this.courseDashboardService.getCourseMetricsForUser(courseId);
+            this.studentMetrics.set(response);
         } catch (error) {
             this.alertService.error(error);
         } finally {

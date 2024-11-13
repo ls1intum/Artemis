@@ -1,47 +1,41 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, lastValueFrom, map } from 'rxjs';
 import { CompetencyMetrics, ExerciseInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CompetencyJol } from 'app/entities/competency.model';
+import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 
 @Injectable({ providedIn: 'root' })
-export class CourseDashboardService {
-    public resourceUrl = 'api/metrics';
-
-    constructor(private http: HttpClient) {}
-
+export class CourseDashboardService extends BaseApiHttpService {
     async getGeneralCourseInformation(courseId: number): Promise<string> {
-        return await lastValueFrom(this.http.get(`api/courses/${courseId}/general-information`, { observe: 'body', responseType: 'text' }));
+        return await this.get<string>(`courses/${courseId}/general-information`, { responseType: 'text' });
     }
 
-    getCourseMetricsForUser(courseId: number): Observable<HttpResponse<StudentMetrics>> {
-        return this.http.get<StudentMetrics>(`${this.resourceUrl}/course/${courseId}/student`, { observe: 'response' }).pipe(
-            map((response) => {
-                if (response.body) {
-                    if (response.body.exerciseMetrics && response.body.exerciseMetrics.exerciseInformation) {
-                        response.body.exerciseMetrics.exerciseInformation = this.convertToExerciseInformation(
-                            response.body.exerciseMetrics.exerciseInformation,
-                            response.body.exerciseMetrics?.categories ?? {},
-                            response.body.exerciseMetrics.teamId,
-                        );
-                    }
-                    if (response.body.lectureUnitStudentMetricsDTO && response.body.lectureUnitStudentMetricsDTO.lectureUnitInformation) {
-                        response.body.lectureUnitStudentMetricsDTO.lectureUnitInformation = this.convertToLectureUnitInformation(
-                            response.body.lectureUnitStudentMetricsDTO.lectureUnitInformation,
-                        );
-                    }
-                    if (response.body.competencyMetrics && response.body.competencyMetrics.competencyInformation) {
-                        response.body.competencyMetrics.competencyInformation = this.convertToCompetencyInformation(response.body.competencyMetrics.competencyInformation);
-                        response.body.competencyMetrics.currentJolValues = this.filterJolWhereMasteryChanged(response.body.competencyMetrics);
-                    }
-                }
-                return response;
-            }),
-        );
+    async updateGeneralCourseInformation(courseId: number, generalInformation: string) {
+        return await this.post<void>(`courses/${courseId}/general-information`, generalInformation);
+    }
+
+    async getCourseMetricsForUser(courseId: number): Promise<StudentMetrics> {
+        const studentMetrics = await this.get<StudentMetrics>(`metrics/course/${courseId}/student`);
+        if (studentMetrics.exerciseMetrics && studentMetrics.exerciseMetrics.exerciseInformation) {
+            studentMetrics.exerciseMetrics.exerciseInformation = this.convertToExerciseInformation(
+                studentMetrics.exerciseMetrics.exerciseInformation,
+                studentMetrics.exerciseMetrics?.categories ?? {},
+                studentMetrics.exerciseMetrics.teamId,
+            );
+        }
+        if (studentMetrics.lectureUnitStudentMetricsDTO && studentMetrics.lectureUnitStudentMetricsDTO.lectureUnitInformation) {
+            studentMetrics.lectureUnitStudentMetricsDTO.lectureUnitInformation = this.convertToLectureUnitInformation(
+                studentMetrics.lectureUnitStudentMetricsDTO.lectureUnitInformation,
+            );
+        }
+        if (studentMetrics.competencyMetrics && studentMetrics.competencyMetrics.competencyInformation) {
+            studentMetrics.competencyMetrics.competencyInformation = this.convertToCompetencyInformation(studentMetrics.competencyMetrics.competencyInformation);
+            studentMetrics.competencyMetrics.currentJolValues = this.filterJolWhereMasteryChanged(studentMetrics.competencyMetrics);
+        }
+        return studentMetrics;
     }
 
     private convertToExerciseInformation(
