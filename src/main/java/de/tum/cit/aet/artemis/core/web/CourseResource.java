@@ -445,13 +445,14 @@ public class CourseResource {
     }
 
     private List<Course> getCoursesForTutors(User user, boolean onlyActive) {
-        List<Course> userCourses = courseRepository.findCoursesForAtLeastTutorWithGroups(user.getGroups(), authCheckService.isAdmin(user));
         if (onlyActive) {
             // only include courses that have NOT been finished
             final var now = ZonedDateTime.now();
-            userCourses = userCourses.stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(now)).toList();
+            return courseRepository.findActiveCoursesForAtLeastTutorWithGroups(user.getGroups(), authCheckService.isAdmin(user), now);
         }
-        return userCourses;
+        else {
+            return courseRepository.findAllCoursesForAtLeastTutorWithGroups(user.getGroups(), authCheckService.isAdmin(user));
+        }
     }
 
     /**

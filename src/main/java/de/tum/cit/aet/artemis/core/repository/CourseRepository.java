@@ -580,5 +580,16 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
                OR c.instructorGroupName IN :userGroups
                OR :isAdmin = TRUE
             """)
-    List<Course> findCoursesForAtLeastTutorWithGroups(@Param("userGroups") Set<String> userGroups, @Param("isAdmin") boolean isAdmin);
+    List<Course> findAllCoursesForAtLeastTutorWithGroups(@Param("userGroups") Set<String> userGroups, @Param("isAdmin") boolean isAdmin);
+
+    @Query("""
+            SELECT c
+            FROM Course c
+            WHERE (c.teachingAssistantGroupName IN :userGroups
+               OR c.editorGroupName IN :userGroups
+               OR c.instructorGroupName IN :userGroups
+               OR :isAdmin = TRUE)
+               AND (c.endDate >= :now OR c.endDate IS NULL)
+            """)
+    List<Course> findActiveCoursesForAtLeastTutorWithGroups(@Param("userGroups") Set<String> userGroups, @Param("isAdmin") boolean isAdmin, @Param("now") ZonedDateTime now);
 }
