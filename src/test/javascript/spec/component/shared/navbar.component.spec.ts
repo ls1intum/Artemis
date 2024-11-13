@@ -40,6 +40,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
+import { mockThemeSwitcherComponentViewChildren } from '../../helpers/mocks/mock-instance.helper';
 
 class MockBreadcrumb {
     label: string;
@@ -91,6 +92,9 @@ describe('NavbarComponent', () => {
         },
         activeProfiles: ['test'],
     } as ProfileInfo;
+
+    // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
+    mockThemeSwitcherComponentViewChildren();
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
