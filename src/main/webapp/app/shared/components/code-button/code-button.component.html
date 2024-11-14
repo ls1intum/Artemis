@@ -20,10 +20,10 @@
         @if (useSsh && areAnySshKeysExpired) {
             <div class="alert alert-warning" [innerHTML]="sshKeysExpiredTip"></div>
         }
-        @if (useToken && !copyEnabled && tokenMissing) {
+        @if (useToken && tokenMissing) {
             <div class="alert alert-warning" [innerHTML]="tokenMissingTip"></div>
         }
-        @if (useToken && !copyEnabled && tokenExpired) {
+        @if (useToken && tokenExpired) {
             <div class="alert alert-warning" [innerHTML]="tokenExpiredTip"></div>
         }
         @if (participations && participations.length > 1) {
