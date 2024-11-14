@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonSize, TooltipPlacement } from 'app/shared/components/button.component';
+import { ButtonSize } from 'app/shared/components/button.component';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -94,6 +94,4 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.profileSubscription?.unsubscribe();
     }
-
-    protected readonly TooltipPlacement = TooltipPlacement;
 }
