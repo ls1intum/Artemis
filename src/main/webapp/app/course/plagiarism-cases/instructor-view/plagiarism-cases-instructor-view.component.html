@@ -53,7 +53,7 @@
                         <div class="row mb-3">
                             <div class="col-1 text-center">
                                 <a [routerLink]="['/course-management', courseId, 'plagiarism-cases', plagiarismCase.id]">
-                                    {{ plagiarismCase.student.name }} ({{ plagiarismCase.student.login }})
+                                    {{ plagiarismCase.student?.name }} ({{ plagiarismCase.student?.login }})
                                 </a>
                             </div>
                             @if (plagiarismCase.plagiarismSubmissions) {
@@ -68,6 +68,7 @@
                                             'plagiarism',
                                         ]"
                                         class="clickable underline-hover"
+                                        [attr.aria-label]="'View plagiarism detection for ' + plagiarismCase.student?.name"
                                     >
                                         {{
                                             'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissions?.length }
