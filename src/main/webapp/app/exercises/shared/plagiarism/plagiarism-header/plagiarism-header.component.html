@@ -23,6 +23,11 @@
             jhiTranslate="artemisApp.plagiarism.deny"
         ></button>
 
+        <button class="btn btn-outline-secondary btn-sm" (click)="toggleLockFiles()" [class.active]="isLockFilesEnabled" data-qa="lock-files-toggle-button">
+            <fa-icon [icon]="isLockFilesEnabled ? faLock : faUnlock" class="fa-solid m-2" aria-label="Synchronize files while navigating on both sides"> </fa-icon>
+            <span [jhiTranslate]="isLockFilesEnabled ? 'artemisApp.plagiarism.unlockSync' : 'artemisApp.plagiarism.lockSync'"></span>
+        </button>
+
         <div class="vertical-divider"></div>
 
         <div class="split-controls">
