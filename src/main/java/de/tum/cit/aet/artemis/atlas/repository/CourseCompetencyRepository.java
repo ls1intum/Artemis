@@ -313,7 +313,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
                     WHERE c.course.id = :courseId
                     GROUP BY c
             """)
-    List<CompetencyStudentProgressDTO> findWithStudentProgressByCourseId(long courseId);
+    List<CompetencyStudentProgressDTO> findWithStudentProgressByCourseId(@Param("courseId") long courseId);
 
     boolean existsByIdAndCourseId(long competencyId, long courseId);
 }
