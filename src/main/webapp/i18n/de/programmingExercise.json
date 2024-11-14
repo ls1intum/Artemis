@@ -351,7 +351,7 @@
                     "task": "Aufgabe",
                     "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
-                    "totalItems": "Insgesamt {{count}} Elemente",
+                    "totalItems": "Insgesamt {{count}} Element(e)",
                     "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten.",
                     "search": "Suche ...",
                     "filter": "Filter",
@@ -377,7 +377,7 @@
                         "name": "Name",
                         "login": "Login",
                         "repository": "Repository",
-                        "totalItems": "Insgesamt {{count}} Elemente",
+                        "totalItems": "Insgesamt {{count}} Element(e)",
                         "error": "Beim Laden der betroffenen Studierenden ist ein Fehler aufgetreten."
                     }
                 },

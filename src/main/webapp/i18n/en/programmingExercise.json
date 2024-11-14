@@ -351,7 +351,7 @@
                     "task": "Task",
                     "testcase": "Test Case",
                     "errorCategory": "Error Category",
-                    "totalItems": "In total {{count}} items",
+                    "totalItems": "In total {{count}} item(s)",
                     "error": "An error occurred while loading the feedback.",
                     "search": "Search ...",
                     "filter": "Filters",
@@ -377,7 +377,7 @@
                         "name": "Name",
                         "login": "Login",
                         "repository": "Repository",
-                        "totalItems": "In total {{count}} items",
+                        "totalItems": "In total {{count}} item(s)",
                         "error": "There was an error while loading the affected Students for this feedback."
                     }
                 },

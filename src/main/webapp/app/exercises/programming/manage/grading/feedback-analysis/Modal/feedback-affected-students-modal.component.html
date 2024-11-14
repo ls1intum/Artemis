@@ -1,3 +1,8 @@
+<ng-template #headerTemplate let-label="label" let-colSize="colSize">
+    <th scope="col" [class]="colSize">
+        <span [jhiTranslate]="label"></span>
+    </th>
+</ng-template>
 <div class="modal-header">
     <h4 class="modal-title" [jhiTranslate]="TRANSLATION_BASE + '.header'"></h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
@@ -11,9 +16,9 @@
         </colgroup>
         <thead>
             <tr>
-                <th [jhiTranslate]="TRANSLATION_BASE + '.name'"></th>
-                <th [jhiTranslate]="TRANSLATION_BASE + '.login'"></th>
-                <th [jhiTranslate]="TRANSLATION_BASE + '.repository'"></th>
+                <ng-container *ngTemplateOutlet="headerTemplate; context: { label: TRANSLATION_BASE + '.name', colSize: 'col-4' }"></ng-container>
+                <ng-container *ngTemplateOutlet="headerTemplate; context: { label: TRANSLATION_BASE + '.login', colSize: 'col-4' }"></ng-container>
+                <ng-container *ngTemplateOutlet="headerTemplate; context: { label: TRANSLATION_BASE + '.repository', colSize: 'col-2' }"></ng-container>
             </tr>
         </thead>
         <tbody class="table-group-divider">
@@ -34,7 +39,9 @@
         </tbody>
     </table>
     <div class="d-flex flex-column align-items-end mt-2">
-        <ngb-pagination [collectionSize]="collectionsSize()" [pageSize]="pageSize()" [page]="page()" (pageChange)="setPage($event)" size="sm" [maxSize]="5"></ngb-pagination>
+        @if (participation().totalElements >= pageSize()) {
+            <ngb-pagination [collectionSize]="collectionsSize()" [pageSize]="pageSize()" [page]="page()" (pageChange)="setPage($event)" size="sm" [maxSize]="5"></ngb-pagination>
+        }
         <div class="text-muted text-end">
             <span [jhiTranslate]="TRANSLATION_BASE + '.totalItems'" [translateValues]="{ count: participation().totalElements }"></span>
         </div>
