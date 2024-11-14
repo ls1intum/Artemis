@@ -49,8 +49,7 @@ $draggable-width: 15px;
 
 .readonly-diagram {
     height: 100%;
-    overflow: hidden;
-    overflow-x: hidden;
+    overflow-x: auto;
     overflow-y: auto;
 }
 
@@ -59,11 +58,15 @@ $draggable-width: 15px;
     &::-webkit-scrollbar {
         width: 6px; /* WebKit */
     }
+
     &::-webkit-scrollbar-thumb {
         background-color: rgba(0, 0, 0, 0.2);
         border-radius: 3px;
     }
 }
+
+.full-screen-margin {
+    margin-top: 30px;
 }
 
 @keyframes spin {

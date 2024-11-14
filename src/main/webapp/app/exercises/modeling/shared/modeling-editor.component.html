@@ -111,7 +111,7 @@
         <div
             class="d-flex align-items-center justify-content-center readonly-diagram scroll-container"
             [innerHtml]="readOnlySVG"
-            [style.margin-top]="isFullScreen ? '30px' : ''"
+            [ngClass]="{ 'full-screen-margin': isFullScreen }"
         ></div>
     }
 
