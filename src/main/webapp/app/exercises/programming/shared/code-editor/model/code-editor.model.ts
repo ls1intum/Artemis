@@ -112,6 +112,7 @@ export enum GitConflictState {
  */
 export enum FileBadgeType {
     FEEDBACK_SUGGESTION = 'FEEDBACK_SUGGESTION',
+    PRELIMINARY_FEEDBACK = 'PRELIMINARY_FEEDBACK',
 }
 
 /**

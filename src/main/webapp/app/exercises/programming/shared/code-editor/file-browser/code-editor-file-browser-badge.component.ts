@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { IconDefinition, faLightbulb } from '@fortawesome/free-solid-svg-icons';
+import { faLightbulb, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { FileBadge, FileBadgeType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
@@ -20,6 +20,8 @@ export class CodeEditorFileBrowserBadgeComponent {
         switch (this.badge.type) {
             case FileBadgeType.FEEDBACK_SUGGESTION:
                 return this.translateService.instant('artemisApp.editor.fileBrowser.fileBadgeTooltips.feedbackSuggestions');
+            case FileBadgeType.PRELIMINARY_FEEDBACK:
+                return this.translateService.instant('artemisApp.editor.fileBrowser.fileBadgeTooltips.preliminaryFeedback');
             default:
                 return undefined;
         }
@@ -28,6 +30,8 @@ export class CodeEditorFileBrowserBadgeComponent {
     get icon(): IconDefinition | undefined {
         switch (this.badge.type) {
             case FileBadgeType.FEEDBACK_SUGGESTION:
+                return faLightbulb;
+            case FileBadgeType.PRELIMINARY_FEEDBACK:
                 return faLightbulb;
             default:
                 return undefined;

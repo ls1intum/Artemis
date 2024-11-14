@@ -24,6 +24,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { Result } from 'app/entities/result.model';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -87,6 +88,8 @@ export class CodeEditorContainerComponent implements OnChanges {
     onDiscardSuggestion = new EventEmitter<Feedback>();
     @Input()
     course?: Course;
+    @Input()
+    latestResult?: Result;
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 
@@ -116,9 +119,12 @@ export class CodeEditorContainerComponent implements OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        // Update file badges when feedback suggestions change
+        // Update file badges when feedback or feedback suggestions change
         if (changes.feedbackSuggestions) {
-            this.updateFileBadges();
+            this.updateFileBadgesForFeedbackSuggestions();
+        }
+        if (changes.latestResult) {
+            this.updateFileBadgesForPreliminaryFeedback();
         }
     }
 
@@ -149,9 +155,9 @@ export class CodeEditorContainerComponent implements OnChanges {
     }
 
     /**
-     * Update the file badges for the code editor (currently only feedback suggestions)
+     * Update the file badges for the code editor for feedback suggestions
      */
-    updateFileBadges() {
+    updateFileBadgesForFeedbackSuggestions() {
         this.fileBadges = {};
         // Create badges for feedback suggestions
         // Get file paths from feedback suggestions:
@@ -162,6 +168,22 @@ export class CodeEditorContainerComponent implements OnChanges {
             // Count the number of suggestions for this file
             const suggestionsCount = this.feedbackSuggestions.filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
             this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, suggestionsCount)];
+        }
+    }
+
+    /**
+     * Update the file badges for the code editor for preliminary feedback
+     */
+    updateFileBadgesForPreliminaryFeedback() {
+        this.fileBadges = {};
+        // Create badges for preliminary feedback
+        const feedbacks = this.latestResult?.feedbacks ?? [];
+        // Get file paths from feedback:
+        const filePaths = feedbacks.map((feedback) => Feedback.getReferenceFilePath(feedback)).filter((filePath) => filePath !== undefined) as string[];
+        for (const filePath of filePaths) {
+            // Count the number of feedback for this file
+            const feedbackCount = feedbacks.filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
+            this.fileBadges[filePath] = [new FileBadge(FileBadgeType.PRELIMINARY_FEEDBACK, feedbackCount)];
         }
     }
 

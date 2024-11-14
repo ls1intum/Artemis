@@ -29,8 +29,10 @@
             [showEditorInstructions]="showEditorInstructions"
             [isTutorAssessment]="hasTutorAssessment"
             [readOnlyManualFeedback]="true"
+            [latestResult]="latestResult"
             [course]="course"
         >
+            >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
                 <!-- prettier-ignore -->
@@ -73,7 +75,8 @@
                   [showBadge]="true"
                   [participation]="participation"
                   [personalParticipation]="true"
-                  (onParticipationChange)="receivedNewResult()"
+                  (onParticipationChange)="receivedParticipationChange()"
+                  (showResult)="receivedNewResult($event)"
                   class="me-2"
                 />
               }

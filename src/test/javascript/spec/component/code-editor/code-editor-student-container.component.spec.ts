@@ -84,4 +84,6 @@ describe('CodeEditorStudentContainerComponent', () => {
             expect(getParticipationSubmissionCountSpy).not.toHaveBeenCalled();
         },
     );
+
+    it('Should invalidate old feedback suggestions when new feedback arrives', () => {});
 });
