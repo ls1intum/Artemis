@@ -91,11 +91,11 @@ describe('CourseCompetencyApiService', () => {
         await methodCall;
     });
 
-    it('should get course competencies by course id', async () => {
-        const methodCall = courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId);
+    it('should get course competencies with student progress by course id', async () => {
+        const methodCall = courseCompetencyApiService.getCourseCompetenciesWithStudentProgressByCourseId(courseId);
         const response = httpClient.expectOne({
             method: 'GET',
-            url: `${getBasePath(courseId)}`,
+            url: `${getBasePath(courseId)}-student-progress`,
         });
         response.flush([]);
         await methodCall;

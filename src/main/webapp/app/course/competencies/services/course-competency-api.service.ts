@@ -3,8 +3,8 @@ import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-
 import {
     CompetencyRelationDTO,
     CompetencyWithTailRelationDTO,
-    CourseCompetency,
     CourseCompetencyImportOptionsDTO,
+    CourseCompetencyStudentProgressDTO,
     UpdateCourseCompetencyRelationDTO,
 } from 'app/entities/competency.model';
 
@@ -40,11 +40,7 @@ export class CourseCompetencyApiService extends BaseApiHttpService {
         return await this.get<CompetencyRelationDTO[]>(`${this.getPath(courseId)}/relations`);
     }
 
-    async getCourseCompetenciesWithOwnProgressByCourseId(courseId: number): Promise<CourseCompetency[]> {
-        return await this.get<CourseCompetency[]>(`${this.getPath(courseId)}`);
-    }
-
-    async getCourseCompetenciesWithStudentProgressByCourseId(courseId: number): Promise<CourseCompetency[]> {
-        return await this.get<CourseCompetency[]>(`${this.getPath(courseId)}-student-progress`);
+    async getCourseCompetenciesWithStudentProgressByCourseId(courseId: number): Promise<CourseCompetencyStudentProgressDTO[]> {
+        return await this.get<CourseCompetencyStudentProgressDTO[]>(`${this.getPath(courseId)}-student-progress`);
     }
 }

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { Competency, CompetencyWithTailRelationDTO, CourseCompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
+import { CompetencyWithTailRelationDTO, CourseCompetencyStudentProgressDTO, CourseCompetencyType } from 'app/entities/competency.model';
 import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -23,7 +23,6 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { Prerequisite } from 'app/entities/prerequisite.model';
 import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 import {
@@ -32,6 +31,7 @@ import {
 } from 'app/course/competencies/components/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 describe('CompetencyManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
@@ -83,6 +83,13 @@ describe('CompetencyManagementComponent', () => {
                         },
                     },
                 },
+                {
+                    provide: CourseCompetencyApiService,
+                    useValue: {
+                        getCourseCompetenciesWithStudentProgressByCourseId: jest.fn(),
+                        importAllByCourseId: jest.fn(),
+                    },
+                },
             ],
             schemas: [],
         }).compileComponents();
@@ -92,22 +99,36 @@ describe('CompetencyManagementComponent', () => {
         profileService = TestBed.inject(ProfileService);
         alertService = TestBed.inject(AlertService);
 
-        const competency: Competency = new Competency();
-        competency.id = 1;
-        competency.description = 'test';
-        const courseCompetencyProgress = new CourseCompetencyProgress();
-        courseCompetencyProgress.competencyId = 1;
-        courseCompetencyProgress.numberOfStudents = 8;
-        courseCompetencyProgress.numberOfMasteredStudents = 5;
-        courseCompetencyProgress.averageStudentScore = 90;
+        const competency = <CourseCompetencyStudentProgressDTO>{
+            id: 1,
+            description: 'test',
+            type: CourseCompetencyType.COMPETENCY,
+            numberOfStudents: 8,
+            numberOfMasteredStudents: 5,
+            optional: false,
+            title: 'Competency 1',
+        };
 
-        getAllForCourseSpy = jest.spyOn(courseCompetencyApiService, 'getCourseCompetenciesByCourseId').mockResolvedValue([
+        getAllForCourseSpy = jest.spyOn(courseCompetencyApiService, 'getCourseCompetenciesWithStudentProgressByCourseId').mockResolvedValue([
             competency,
-            { id: 5, type: CourseCompetencyType.COMPETENCY } as Competency,
+            {
+                id: 5,
+                type: CourseCompetencyType.COMPETENCY,
+                title: 'Competency 2',
+                description: 'test',
+                optional: false,
+                numberOfMasteredStudents: 0,
+                numberOfStudents: 0,
+            } as CourseCompetencyStudentProgressDTO,
             {
                 id: 3,
                 type: CourseCompetencyType.PREREQUISITE,
-            } as Prerequisite,
+                title: 'Prerequisite 1',
+                description: 'test',
+                optional: false,
+                numberOfMasteredStudents: 0,
+                numberOfStudents: 0,
+            } as CourseCompetencyStudentProgressDTO,
         ]);
 
         const profileInfoResponse = {
@@ -168,7 +189,7 @@ describe('CompetencyManagementComponent', () => {
 
     it('should show alert when loading iris settings fails', async () => {
         const errorSpy = jest.spyOn(alertService, 'error');
-        getIrisSettingsSpy.mockRejectedValueOnce({});
+        getIrisSettingsSpy.mockReturnValue(new HttpErrorResponse({ status: 500 }));
 
         fixture.detectChanges();
         await fixture.whenStable();
