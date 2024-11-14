@@ -54,8 +54,16 @@ $draggable-width: 15px;
     overflow-y: auto;
 }
 
-.scroll-container::-webkit-scrollbar {
-    display: none;
+.scroll-container {
+    scrollbar-width: thin; /* Firefox */
+    &::-webkit-scrollbar {
+        width: 6px; /* WebKit */
+    }
+    &::-webkit-scrollbar-thumb {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 3px;
+    }
+}
 }
 
 @keyframes spin {
