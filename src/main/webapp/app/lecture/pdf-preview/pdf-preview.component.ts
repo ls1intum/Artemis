@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { Attachment } from 'app/entities/attachment.model';
@@ -22,6 +22,7 @@ import { cloneDeep } from 'lodash-es';
 @Component({
     selector: 'jhi-pdf-preview-component',
     templateUrl: './pdf-preview.component.html',
+    styleUrls: ['./pdf-preview.component.scss'],
     standalone: true,
     imports: [ArtemisSharedModule, PdfPreviewThumbnailGridComponent],
 })
@@ -43,6 +44,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     appendFile = signal<boolean>(false);
     isFileChanged = signal<boolean>(false);
     selectedPages = signal<Set<number>>(new Set());
+    allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
     hiddenPages = signal<Set<number>>(new Set());
     newHiddenPages = signal<Set<number>>(new Set());
 
@@ -102,14 +104,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             },
             { allowSignalWrites: true },
         );
-    }
-
-    /**
-     * Checks if all pages are selected.
-     * @returns True if the number of selected pages equals the total number of pages, otherwise false.
-     */
-    allPagesSelected() {
-        return this.selectedPages().size === this.totalPages();
     }
 
     /**
