@@ -50,10 +50,17 @@ export class ExerciseImportFromFileComponent implements OnInit {
         switch (this.exerciseType) {
             case ExerciseType.PROGRAMMING:
                 this.exercise = JSON.parse(exerciseDetails as string) as ProgrammingExercise;
+                const progEx = this.exercise as ProgrammingExercise;
                 // This is needed to make sure that old exported programming exercises can be imported
-                if (!(this.exercise as ProgrammingExercise).buildConfig) {
-                    (this.exercise as ProgrammingExercise).buildConfig = copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
+                if (!progEx.buildConfig) {
+                    progEx.buildConfig = copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
                 }
+                if (progEx.auxiliaryRepositories) {
+                    progEx.auxiliaryRepositories!.forEach((repo, index) => {
+                        progEx.auxiliaryRepositories![index].id = undefined;
+                    });
+                }
+                this.exercise = progEx;
                 break;
             default:
                 this.alertService.error('artemisApp.exercise.importFromFile.notSupportedExerciseType', {
