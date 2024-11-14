@@ -1078,7 +1078,8 @@ public class ProgrammingExerciseGradingService {
     private static void updateTestCaseMapBasedOnResultFeedback(Result result, HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats> testCaseStatsMap) {
         result.getFeedbacks().stream()
                 // Filter the feedbacks to include only those that are automatic and have an assigned test case
-                .filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType()) && feedback.getTestCase() != null)
+                .filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType()) && feedback.getTestCase() != null && feedback.getTestCase().getTestName() != null
+                        && feedback.isPositive() != null)
                 // Collect the filtered feedbacks into a map grouped by test case name, and partitioned by whether the feedback is positive
                 .collect(Collectors.groupingBy(
                         // Group by the name of the test case associated with the feedback
