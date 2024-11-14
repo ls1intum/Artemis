@@ -359,9 +359,9 @@ public class ResultResource {
      * and participation details.
      * <br>
      *
-     * @param exerciseId  for which the participation data is requested.
-     * @param feedbackIds to filter affected students by specific feedback entries.
-     * @param data        A {@link PageableSearchDTO} object containing pagination and sorting parameters.
+     * @param exerciseId        for which the participation data is requested.
+     * @param feedbackIdsHeader to filter affected students by specific feedback entries.
+     * @param data              A {@link PageableSearchDTO} object containing pagination and sorting parameters.
      * @return A {@link ResponseEntity} containing a {@link Page} of {@link FeedbackAffectedStudentDTO}, each representing a student affected by the feedback entries.
      */
     @GetMapping("exercises/{exerciseId}/feedback-details-participation")
