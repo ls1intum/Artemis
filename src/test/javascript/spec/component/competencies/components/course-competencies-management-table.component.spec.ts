@@ -272,7 +272,7 @@ describe('CourseCompetenciesManagementTable', () => {
             },
             result: modalResult,
         } as any);
-        jest.spyOn(competencyService, 'importAll').mockReturnValue(of(new HttpErrorResponse<CompetencyWithTailRelationDTO>({ status: 500 })));
+        jest.spyOn(competencyService, 'importAll').mockReturnValue(of(new HttpErrorResponse<CompetencyWithTailRelationDTO[]>({ status: 500 })));
         const errorSpy = jest.spyOn(alertService, 'error');
 
         const importAllButton = fixture.nativeElement.querySelector('#importAllCompetenciesButton');
