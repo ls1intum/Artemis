@@ -114,7 +114,7 @@ public class IrisLectureChatSessionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasAcceptedIrisElseThrow();
 
-        var sessions = irisLectureChatSessionRepository.findSessionsByLectureIdAndUserId(lecture.getId(), user.getId());
+        var sessions = irisLectureChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(lecture.getId(), user.getId());
         // Access check might not even be necessary here -> see comments in hasAccess method
         var filteredSessions = sessions.stream().filter(session -> irisLectureChatSessionService.hasAccess(user, session)).toList();
         return ResponseEntity.ok(filteredSessions);

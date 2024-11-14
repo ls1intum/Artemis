@@ -9,8 +9,6 @@ import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -21,23 +19,9 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 @Profile(PROFILE_IRIS)
 public interface IrisLectureChatSessionRepository extends ArtemisJpaRepository<IrisLectureChatSession, Long> {
 
-    @Query("""
-                SELECT s
-                    FROM IrisLectureChatSession s
-                    WHERE s.lecture.id = :lectureId
-                        AND s.user.id = :userId
-                    ORDER BY s.creationDate DESC
-            """)
-    List<IrisLectureChatSession> findSessionsByLectureIdAndUserId(@Param("lectureId") Long lectureId, @Param("userId") Long userId);
+    List<IrisLectureChatSession> findByLectureIdAndUserIdOrderByCreationDateDesc(Long lectureId, Long userId);
 
-    @Query("""
-                SELECT s
-                    FROM IrisLectureChatSession s
-                    WHERE s.lecture.id = :lectureId
-                        AND s.user.id = :userId
-                    ORDER BY s.creationDate DESC
-            """)
-    List<IrisLectureChatSession> findSessionsByLectureIdAndUserId(@Param("lectureId") Long lectureId, @Param("userId") Long userId, Pageable pageable);
+    List<IrisLectureChatSession> findByLectureIdAndUserIdOrderByCreationDateDesc(Long lectureId, Long userId, Pageable pageable);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
     List<IrisLectureChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
@@ -52,7 +36,7 @@ public interface IrisLectureChatSessionRepository extends ArtemisJpaRepository<I
      * @return a list of {@code IrisLectureChatSession} with messages, or an empty list if no sessions are found
      */
     default List<IrisLectureChatSession> findLatestSessionsByLectureIdAndUserIdWithMessages(Long lectureId, Long userId, Pageable pageable) {
-        List<Long> ids = findSessionsByLectureIdAndUserId(lectureId, userId, pageable).stream().map(DomainObject::getId).toList();
+        List<Long> ids = findByLectureIdAndUserIdOrderByCreationDateDesc(lectureId, userId, pageable).stream().map(DomainObject::getId).toList();
 
         if (ids.isEmpty()) {
             return Collections.emptyList();
