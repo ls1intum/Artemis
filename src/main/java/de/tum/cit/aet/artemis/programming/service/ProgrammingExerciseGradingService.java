@@ -1086,12 +1086,12 @@ public class ProgrammingExerciseGradingService {
                         return false;
                     }
                     if (feedback.getTestCase().getTestName() == null) {
-                        // Log the feedback with null test name to analyse the issue if it occurs again
+                        // Log the feedback id with null test name to analyse NullPointer issue if it occurs again in the future
                         log.warn("Feedback with ID {} has a test case with a null test name.", feedback.getId());
                         return false;
                     }
                     if (feedback.isPositive() == null) {
-                        // Log the feedback with null isPositive value to analyse the issue if it occurs again
+                        // Log the feedback with null isPositive value to analyse NullPointer issue if it occurs again in the future
                         log.warn("Feedback with ID {} has a test case with a null isPositive value.", feedback.getId());
                         return false;
                     }
