@@ -122,7 +122,7 @@ describe('FeedbackAnalysisService', () => {
 
             const responsePromise = service.getParticipationForFeedbackIds(1, feedbackIds, pageable);
 
-            const req = httpMock.expectOne('api/exercises/1/feedback-details-participation?feedbackIds=1,2&page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING');
+            const req = httpMock.expectOne('api/exercises/1/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING');
             expect(req.request.method).toBe('GET');
             req.flush(participationResponseMock);
 
