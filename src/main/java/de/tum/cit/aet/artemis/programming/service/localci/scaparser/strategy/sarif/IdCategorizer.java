@@ -6,6 +6,6 @@ class IdCategorizer implements RuleCategorizer {
 
     @Override
     public String categorizeRule(ReportingDescriptor rule) {
-        return rule.getId();
+        return rule.id();
     }
 }

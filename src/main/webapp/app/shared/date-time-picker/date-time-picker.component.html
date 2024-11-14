@@ -1,4 +1,4 @@
-@if (labelName()) {
+@if (labelName() && !hideLabelName()) {
     <label for="date-input-field" class="form-control-label col">
         {{ labelName() }}
     </label>

@@ -9,7 +9,7 @@ public class RuffCategorizer implements RuleCategorizer {
 
     @Override
     public String categorizeRule(ReportingDescriptor rule) {
-        Map<String, Object> properties = rule.getProperties().map(PropertyBag::getAdditionalProperties).orElseGet(Map::of);
+        Map<String, Object> properties = rule.getOptionalProperties().map(PropertyBag::additionalProperties).orElseGet(Map::of);
         return properties.getOrDefault("kind", "Unknown").toString();
     }
 }

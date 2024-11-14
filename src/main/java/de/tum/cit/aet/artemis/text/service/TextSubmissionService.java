@@ -155,11 +155,15 @@ public class TextSubmissionService extends SubmissionService {
     /**
      * Lock a given text submission that still needs to be assessed to prevent other tutors from receiving and assessing it.
      *
-     * @param textSubmission  textSubmission to be locked
-     * @param correctionRound get submission with results in the correction round
+     * @param textSubmissionId id of the textSubmission to be locked
+     * @param correctionRound  get submission with results in the correction round
+     * @return the locked textSubmission
      */
-    public void lockTextSubmissionToBeAssessed(TextSubmission textSubmission, int correctionRound) {
+    public TextSubmission lockTextSubmissionToBeAssessed(long textSubmissionId, int correctionRound) {
+        // NOTE: we load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
+        final var textSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(textSubmissionId);
         lockSubmission(textSubmission, correctionRound);
+        return textSubmission;
     }
 
     public TextSubmission findOneWithEagerResultFeedbackAndTextBlocks(Long submissionId) {
