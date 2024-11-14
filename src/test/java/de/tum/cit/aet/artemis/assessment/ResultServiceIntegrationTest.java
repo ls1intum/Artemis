@@ -22,6 +22,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -882,9 +883,11 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
         participationUtilService.addFeedbackToResult(feedback, result);
 
-        String url = "/api/exercises/" + programmingExercise.getId()
-                + "/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING&feedbackIds=" + feedback.getId();
-        String jsonResponse = request.get(url, HttpStatus.OK, String.class);
+        String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING";
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("feedbackIds", String.valueOf(feedback.getId()));
+
+        String jsonResponse = request.get(url, HttpStatus.OK, String.class, headers);
 
         JsonNode jsonNode = new ObjectMapper().readTree(jsonResponse);
         assertThat(jsonNode.has("content")).isTrue();
