@@ -17,7 +17,6 @@ import jakarta.ws.rs.BadRequestException;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -57,9 +56,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 public class AccountResource {
 
     public static final String ENTITY_NAME = "user";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private static final Logger log = LoggerFactory.getLogger(AccountResource.class);
 
@@ -233,7 +229,7 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/participation-vcs-access-token : get the vcsToken for of a user for a participation
+     * PUT account/participation-vcs-access-token : add a vcsToken for of a user for a participation
      *
      * @param participationId the participation for which the access token should be fetched
      *
