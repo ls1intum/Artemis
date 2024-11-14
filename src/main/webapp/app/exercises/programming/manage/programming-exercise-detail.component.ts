@@ -57,6 +57,7 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
+import { switchMap, tap } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -184,13 +185,15 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
             this.templateAndSolutionParticipationSubscription = this.programmingExerciseService
                 .findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!)
-                .subscribe((updatedProgrammingExercise) => {
-                    this.programmingExercise = updatedProgrammingExercise.body!;
-
-                    this.setLatestCoveredLineRatio();
-                    this.loadingTemplateParticipationResults = false;
-                    this.loadingSolutionParticipationResults = false;
-                    this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
+                .pipe(
+                    tap((updatedProgrammingExercise) => {
+                        this.programmingExercise = updatedProgrammingExercise.body!;
+                        this.setLatestCoveredLineRatio();
+                        this.loadingTemplateParticipationResults = false;
+                        this.loadingSolutionParticipationResults = false;
+                    }),
+                    switchMap(() => this.profileService.getProfileInfo()),
+                    tap(async (profileInfo) => {
                         if (profileInfo) {
                             if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId) {
                                 this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
@@ -215,38 +218,56 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             if (this.irisEnabled) {
                                 this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
                                     this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
-                                    this.exerciseDetailSections = this.getExerciseDetails();
                                 });
                             }
                         }
+                    }),
+                    switchMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!)),
+                    tap((submissionPolicy) => {
+                        this.programmingExercise.submissionPolicy = submissionPolicy;
+                    }),
+                    switchMap(() => this.programmingExerciseService.getDiffReport(this.programmingExercise.id!)),
+                    tap((gitDiffReport) => {
+                        if (
+                            gitDiffReport &&
+                            (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
+                                this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash)
+                        ) {
+                            this.programmingExercise.gitDiffReport = gitDiffReport;
+                            gitDiffReport.programmingExercise = this.programmingExercise;
+                            this.addedLineCount =
+                                gitDiffReport.entries
+                                    ?.map((entry) => entry.lineCount)
+                                    .filter((lineCount) => lineCount)
+                                    .map((lineCount) => lineCount!)
+                                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+                            this.removedLineCount =
+                                gitDiffReport.entries
+                                    ?.map((entry) => entry.previousLineCount)
+                                    .filter((lineCount) => lineCount)
+                                    .map((lineCount) => lineCount!)
+                                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+                        }
+                    }),
+                    switchMap(() => (this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : [])),
+                    tap((buildLogStatistics) => {
+                        if (this.programmingExercise.isAtLeastEditor) {
+                            this.programmingExercise.buildLogStatistics = buildLogStatistics;
+                        }
+                    }),
+                )
+                .subscribe({
+                    next: () => {
+                        this.setLatestCoveredLineRatio();
+                        this.checkAndAlertInconsistencies();
+                        this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
+                            programmingExercise.programmingLanguage,
+                        ).plagiarismCheckSupported;
                         this.exerciseDetailSections = this.getExerciseDetails();
-                    });
-
-                    this.submissionPolicySubscription = this.programmingExerciseSubmissionPolicyService
-                        .getSubmissionPolicyOfProgrammingExercise(exerciseId!)
-                        .subscribe((submissionPolicy) => {
-                            this.programmingExercise.submissionPolicy = submissionPolicy;
-                            this.exerciseDetailSections = this.getExerciseDetails();
-                        });
-
-                    this.loadGitDiffReport();
-
-                    // the build logs endpoint requires at least editor privileges
-                    if (this.programmingExercise.isAtLeastEditor) {
-                        this.buildLogsSubscription = this.programmingExerciseService
-                            .getBuildLogStatistics(exerciseId!)
-                            .subscribe((buildLogStatistics) => (this.programmingExercise.buildLogStatistics = buildLogStatistics));
-                        this.exerciseDetailSections = this.getExerciseDetails();
-                    }
-
-                    this.setLatestCoveredLineRatio();
-
-                    this.checkAndAlertInconsistencies();
-
-                    this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
-                        programmingExercise.programmingLanguage,
-                    ).plagiarismCheckSupported;
-                    this.exerciseDetailSections = this.getExerciseDetails();
+                    },
+                    error: (error) => {
+                        this.alertService.error(error.message);
+                    },
                 });
 
             this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
