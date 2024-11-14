@@ -186,6 +186,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             // Used for a save typecast, this should always be true since this class only works with programming exercises.
             programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
+            programmingExercise.setAuxiliaryRepositories(auxiliaryRepositoryRepository.findByExerciseId(exercise.getId()));
         }
         super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
     }

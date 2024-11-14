@@ -166,7 +166,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     @EnforceAtLeastStudent
     public ResponseEntity<TextSubmission> getTextSubmissionWithResults(@PathVariable long submissionId) {
         log.debug("REST request to get text submission: {}", submissionId);
-        var textSubmission = textSubmissionRepository.findWithEagerResultsById(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
+        var textSubmission = textSubmissionRepository.findWithEagerResultsAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
             // anonymize and throw exception if not authorized to view submission
@@ -219,7 +219,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
-        this.textSubmissionService.checkIfExerciseDueDateIsReached(exercise);
+        textSubmissionService.checkIfExerciseDueDateIsReached(exercise);
 
         // Check if the limit of simultaneously locked submissions has been reached
         textSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -232,10 +232,10 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             return ResponseEntity.ok(null);
         }
 
-        final TextSubmission textSubmission = optionalTextSubmission.get();
+        TextSubmission textSubmission = optionalTextSubmission.get();
 
         if (lockSubmission) {
-            textSubmissionService.lockTextSubmissionToBeAssessed(optionalTextSubmission.get(), correctionRound);
+            textSubmission = textSubmissionService.lockTextSubmissionToBeAssessed(textSubmission.getId(), correctionRound);
             textAssessmentService.prepareSubmissionForAssessment(textSubmission, textSubmission.getResultForCorrectionRound(correctionRound));
         }
 
