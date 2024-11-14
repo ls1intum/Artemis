@@ -58,6 +58,7 @@ import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { switchMap, tap } from 'rxjs/operators';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -228,26 +229,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     }),
                     switchMap(() => this.programmingExerciseService.getDiffReport(this.programmingExercise.id!)),
                     tap((gitDiffReport) => {
-                        if (
-                            gitDiffReport &&
-                            (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
-                                this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash)
-                        ) {
-                            this.programmingExercise.gitDiffReport = gitDiffReport;
-                            gitDiffReport.programmingExercise = this.programmingExercise;
-                            this.addedLineCount =
-                                gitDiffReport.entries
-                                    ?.map((entry) => entry.lineCount)
-                                    .filter((lineCount) => lineCount)
-                                    .map((lineCount) => lineCount!)
-                                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
-                            this.removedLineCount =
-                                gitDiffReport.entries
-                                    ?.map((entry) => entry.previousLineCount)
-                                    .filter((lineCount) => lineCount)
-                                    .map((lineCount) => lineCount!)
-                                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
-                        }
+                        this.processGitDiffReport(gitDiffReport);
                     }),
                     switchMap(() => (this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : [])),
                     tap((buildLogStatistics) => {
@@ -801,29 +783,33 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return link;
     }
 
+    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined): void {
+        if (
+            gitDiffReport &&
+            (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
+                this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash)
+        ) {
+            this.programmingExercise.gitDiffReport = gitDiffReport;
+            gitDiffReport.programmingExercise = this.programmingExercise;
+            this.addedLineCount =
+                gitDiffReport.entries
+                    ?.map((entry) => entry.lineCount)
+                    .filter((lineCount) => lineCount)
+                    .map((lineCount) => lineCount!)
+                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+            this.removedLineCount =
+                gitDiffReport.entries
+                    ?.map((entry) => entry.previousLineCount)
+                    .filter((lineCount) => lineCount)
+                    .map((lineCount) => lineCount!)
+                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+        }
+    }
+
     loadGitDiffReport() {
         this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
-            if (
-                gitDiffReport &&
-                (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
-                    this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash)
-            ) {
-                this.programmingExercise.gitDiffReport = gitDiffReport;
-                gitDiffReport.programmingExercise = this.programmingExercise;
-                this.addedLineCount =
-                    gitDiffReport.entries
-                        ?.map((entry) => entry.lineCount)
-                        .filter((lineCount) => lineCount)
-                        .map((lineCount) => lineCount!)
-                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
-                this.removedLineCount =
-                    gitDiffReport.entries
-                        ?.map((entry) => entry.previousLineCount)
-                        .filter((lineCount) => lineCount)
-                        .map((lineCount) => lineCount!)
-                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
-                this.exerciseDetailSections = this.getExerciseDetails();
-            }
+            this.processGitDiffReport(gitDiffReport);
+            this.getExerciseDetails();
         });
     }
 
