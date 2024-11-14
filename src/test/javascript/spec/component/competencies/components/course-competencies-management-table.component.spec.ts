@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CourseCompetenciesManagementTableComponent } from 'app/course/competencies/components/course-competencies-management-table/course-competencies-management-table.component';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyStudentProgressDTO, CourseCompetencyType } from 'app/entities/competency.model';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -272,7 +272,7 @@ describe('CourseCompetenciesManagementTable', () => {
             },
             result: modalResult,
         } as any);
-        jest.spyOn(competencyService, 'importAll').mockReturnValue(of(new HttpErrorResponse<CompetencyWithTailRelationDTO[]>({ status: 500 })));
+        jest.spyOn(competencyService, 'importAll').mockReturnValue(of(new HttpResponse<CompetencyWithTailRelationDTO[]>({ status: 500 })));
         const errorSpy = jest.spyOn(alertService, 'error');
 
         const importAllButton = fixture.nativeElement.querySelector('#importAllCompetenciesButton');
