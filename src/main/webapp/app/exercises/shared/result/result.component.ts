@@ -261,14 +261,17 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      */
     showDetails(result: Result) {
         const exerciseService = this.exerciseCacheService ?? this.exerciseService;
-        if (this.exercise?.type === ExerciseType.TEXT) {
+        if (this.exercise?.type === ExerciseType.TEXT || this.exercise?.type === ExerciseType.MODELING) {
             const courseId = getCourseFromExercise(this.exercise)?.id;
             let submissionId = result.submission?.id;
             // In case of undefined result submission try the latest submission as this can happen before reloading the component
             if (!submissionId) {
                 submissionId = result.participation?.submissions?.last()?.id;
             }
-            this.router.navigate(['/courses', courseId, 'exercises', 'text-exercises', this.exercise?.id, 'participate', result.participation?.id, 'submission', submissionId]);
+
+            const exerciseTypePath = this.exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
+
+            this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, this.exercise?.id, 'participate', result.participation?.id, 'submission', submissionId]);
             return undefined;
         }
 

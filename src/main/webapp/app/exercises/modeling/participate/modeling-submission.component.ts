@@ -22,6 +22,7 @@ import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
+import { faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
 import { Subject, Subscription, TeardownLogic } from 'rxjs';
@@ -33,9 +34,11 @@ import { Course } from 'app/entities/course.model';
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../assess/modeling-assessment.util';
 import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { onError } from 'app/shared/util/global.utils';
 import { SubmissionPatch } from 'app/entities/submission-patch.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { catchError, switchMap, tap } from 'rxjs/operators';
+import { onError } from 'app/shared/util/global.utils';
+import { of } from 'rxjs';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -75,6 +78,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     selectedRelationships: string[];
 
     submission: ModelingSubmission;
+    submissionId: number | undefined;
+    sortedSubmissionHistory: ModelingSubmission[];
+    sortedResultHistory: Result[];
 
     assessmentResult?: Result;
     assessmentsNames: AssessmentNamesForModelId = {};
@@ -96,6 +102,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     isAfterAssessmentDueDate: boolean;
     isLoading: boolean;
     isLate: boolean; // indicates if the submission is late
+    isGeneratingFeedback: boolean;
     ComplaintType = ComplaintType;
     examMode = false;
 
@@ -111,6 +118,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     faGripLines = faGripLines;
     farListAlt = faListAlt;
     faExclamationTriangle = faExclamationTriangle;
+    faTimeline = faTimeline;
+
+    // mode
+    isFeedbackView: boolean = false;
+    showResultHistory: boolean = false;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -132,29 +144,94 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
         } else {
-            this.subscription = this.route.params.subscribe((params) => {
-                const participationId = params['participationId'] ?? this.participationId;
+            this.route.params
+                .pipe(
+                    switchMap((params) => {
+                        this.participationId = params['participationId'] ?? this.participationId;
+                        this.submissionId = Number(params['submissionId']) || undefined;
+                        this.isFeedbackView = !!this.submissionId;
 
-                if (participationId) {
-                    this.modelingSubmissionService.getLatestSubmissionForModelingEditor(participationId).subscribe({
-                        next: (modelingSubmission) => {
+                        // If participationId exists and feedback view is needed, fetch history results first
+                        if (this.participationId && this.isFeedbackView) {
+                            return this.fetchSubmissionHistory().pipe(
+                                tap((results) => (this.sortedSubmissionHistory = results)),
+                                switchMap(() => this.fetchLatestSubmission()), // After history results, fetch latest submission
+                            );
+                        }
+                        // Otherwise, directly fetch the latest submission
+                        return this.fetchLatestSubmission();
+                    }),
+                )
+                .subscribe({
+                    next: (modelingSubmission) => {
+                        if (modelingSubmission) {
                             this.updateModelingSubmission(modelingSubmission);
-                            if (this.modelingExercise.teamMode) {
-                                this.setupSubmissionStreamForTeam();
-                            } else {
-                                this.setAutoSaveTimer();
-                            }
-                        },
-                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                    });
-                }
-            });
+                            this.setupMode();
+                        }
+                    },
+                    error: (error) => onError(this.alertService, error),
+                });
         }
 
         const isDisplayedOnExamSummaryPage = !this.displayHeader && this.participationId !== undefined;
         if (!isDisplayedOnExamSummaryPage) {
             window.scroll(0, 0);
         }
+    }
+
+    private setupMode(): void {
+        if (this.modelingExercise.teamMode) {
+            this.setupSubmissionStreamForTeam();
+        } else {
+            this.setAutoSaveTimer();
+        }
+    }
+
+    private fetchLatestSubmission() {
+        return this.modelingSubmissionService.getLatestSubmissionForModelingEditor(this.participationId!).pipe(
+            catchError((error: HttpErrorResponse) => {
+                onError(this.alertService, error);
+                return of(null); // Return null on error
+            }),
+        );
+    }
+
+    // Fetch the results and sort them
+    // Fetch the submissions and sort them by the latest result's completionDate in descending order
+    private fetchSubmissionHistory() {
+        return this.modelingSubmissionService.getSubmissionsWithResultsForParticipation(this.participationId!).pipe(
+            catchError((error: HttpErrorResponse) => {
+                onError(this.alertService, error);
+                return of([]);
+            }),
+            tap((submissions: ModelingSubmission[]) => {
+                this.sortedSubmissionHistory = submissions.sort((a, b) => {
+                    // Get the latest result for each submission (sorted by completionDate descending)
+                    const latestResultA = a.results?.sort((resultA, resultB) => {
+                        const dateA = resultA.completionDate ? resultA.completionDate.valueOf() : 0;
+                        const dateB = resultB.completionDate ? resultB.completionDate.valueOf() : 0;
+                        return dateB - dateA; // Descending
+                    })[0];
+
+                    const latestResultB = b.results?.sort((resultA, resultB) => {
+                        const dateA = resultA.completionDate ? resultA.completionDate.valueOf() : 0;
+                        const dateB = resultB.completionDate ? resultB.completionDate.valueOf() : 0;
+                        return dateB - dateA; // Descending
+                    })[0];
+
+                    // Use the latest result's completionDate for comparison
+                    const dateA = latestResultA?.completionDate ? latestResultA.completionDate.valueOf() : 0;
+                    const dateB = latestResultB?.completionDate ? latestResultB.completionDate.valueOf() : 0;
+
+                    return dateB - dateA; // Sort submissions by latest result's completionDate in descending order
+                });
+                this.sortedResultHistory = this.sortedSubmissionHistory.map((submission) => {
+                    const result = getLatestSubmissionResult(submission)!;
+                    result.participation = submission.participation;
+                    return result;
+                });
+            }),
+        );
     }
 
     private inputValuesArePresent(): boolean {
@@ -186,12 +263,29 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.explanation = this.submission.explanationText ?? '';
     }
 
+    viewTimeline() {
+        if (this.participationId && this.sortedSubmissionHistory) {
+            this.showResultHistory = !this.showResultHistory;
+        }
+    }
+
     /**
      * Updates the modeling submission with the given modeling submission.
      */
-    private updateModelingSubmission(modelingSubmission: ModelingSubmission) {
+    private updateModelingSubmission(modelingSubmission: ModelingSubmission): void {
         if (!modelingSubmission) {
             this.alertService.error('artemisApp.apollonDiagram.submission.noSubmission');
+        }
+
+        // If isFeedbackView is true and submissionId is present, we want to find the corresponding submission and not get the latest one
+        if (this.isFeedbackView && this.submissionId && this.sortedSubmissionHistory) {
+            const matchingSubmission = this.sortedSubmissionHistory.find((submission) => submission.id === this.submissionId);
+
+            if (matchingSubmission) {
+                modelingSubmission = matchingSubmission;
+            } else {
+                console.warn(`Submission with ID ${this.submissionId} not found in sorted history results.`);
+            }
         }
 
         this.submission = modelingSubmission;
@@ -227,15 +321,26 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
         this.explanation = this.submission.explanationText ?? '';
         this.subscribeToWebsockets();
-        if (getLatestSubmissionResult(this.submission) && this.isAfterAssessmentDueDate) {
+        if ((getLatestSubmissionResult(this.submission) && this.isAfterAssessmentDueDate) || this.isFeedbackView) {
             this.result = getLatestSubmissionResult(this.submission);
+            if (this.isFeedbackView && this.submissionId) {
+                this.result = this.sortedSubmissionHistory.find((submission) => submission.id === this.submissionId)?.latestResult;
+            }
         }
         this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
         if (this.submission.submitted && this.result && this.result.completionDate) {
-            this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
-                this.assessmentResult = assessmentResult;
-                this.prepareAssessmentData();
-            });
+            if (!this.isFeedbackView) {
+                this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
+                    this.assessmentResult = assessmentResult;
+                    this.prepareAssessmentData();
+                });
+            } else if (this.result) {
+                // Defer the assignment to avoid ExpressionChangedAfterItHasBeenCheckedError
+                setTimeout(() => {
+                    this.assessmentResult = this.modelingAssessmentService.convertResult(this.result!);
+                    this.prepareAssessmentData();
+                }, 0);
+            }
         }
         this.isLoading = false;
         this.guidedTourService.enableTourForExercise(this.modelingExercise, modelingTour, true);
@@ -300,6 +405,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 if (this.assessmentResult.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
                     this.alertService.info('artemisApp.modelingEditor.newAssessment');
                 }
+                this.isGeneratingFeedback = false;
             }
         });
     }
@@ -532,6 +638,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return undefined;
     }
 
+    /*
+     * Check if the latest submission has an Athena result
+     */
+    get hasAthenaResultForLatestSubmission(): boolean {
+        const latestResult = getLatestSubmissionResult(this.submission);
+        return latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+    }
+
     /**
      * Updates the model of the submission with the current Apollon model state
      * and the explanation text of submission with current explanation if explanation is defined
@@ -674,4 +788,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
         return 'entity.action.submitDueDateMissedTooltip';
     }
+
+    protected readonly hasExerciseDueDatePassed = hasExerciseDueDatePassed;
 }

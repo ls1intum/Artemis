@@ -173,6 +173,7 @@ public class ModelingExerciseFeedbackService {
         feedback.setHasLongFeedbackText(false);
         feedback.setType(FeedbackType.AUTOMATIC);
         feedback.setCredits(feedbackItem.credits());
+        feedback.setReference(feedbackItem.reference());
         return feedback;
     }
 

@@ -7,6 +7,36 @@
             </span>
             <ng-container submitbutton>
                 @if (isOwnerOfParticipation) {
+                    @if (isFeedbackView) {
+                        @if ((sortedSubmissionHistory?.length || 0) > 1) {
+                            <jhi-button
+                                id="toggleTimeline"
+                                [icon]="faTimeline"
+                                [title]="showResultHistory ? 'entity.action.hideTimeline' : 'entity.action.viewTimeline'"
+                                (click)="viewTimeline()"
+                            />
+                        }
+                        @if (isActive || !modelingExercise.dueDate) {
+                            <jhi-button
+                                id="Continue"
+                                [title]="'entity.action.continueSubmission'"
+                                [routerLink]="['/courses', course?.id, 'exercises', 'modeling-exercises', modelingExercise?.id!, 'participate', result?.participation?.id]"
+                            />
+                        }
+                    } @else {
+                        @if (modelingExercise.allowFeedbackRequests && (!this.modelingExercise.dueDate || !hasExerciseDueDatePassed(this.modelingExercise, this.participation))) {
+                            <jhi-request-feedback-button
+                                [exercise]="modelingExercise"
+                                [pendingChanges]="isChanged"
+                                [hasAthenaResultForLatestSubmission]="hasAthenaResultForLatestSubmission"
+                                [isGeneratingFeedback]="isGeneratingFeedback"
+                                (generatingFeedback)="this.isGeneratingFeedback = true"
+                                [isSubmitted]="submission.submitted || false"
+                            ></jhi-request-feedback-button>
+                        }
+                    }
+                }
+                @if (!this.isFeedbackView) {
                     <jhi-button
                         class="guided-tour submission-button"
                         id="submit-modeling-submission"
@@ -21,6 +51,17 @@
             </ng-container>
         </jhi-header-participation-page>
     }
+
+    <div class="mb-2">
+        @if (isFeedbackView) {
+            @if (showResultHistory) {
+                <div id="result-history" class="row mb-2">
+                    <jhi-result-history [results]="sortedResultHistory" [exercise]="modelingExercise" />
+                </div>
+            }
+        }
+    </div>
+
     @if (modelingExercise) {
         <jhi-resizeable-container [isExerciseParticipation]="true" [isBeingPrinted]="isPrinting" [expandProblemStatement]="expandProblemStatement">
             <!--region Left Panel-->
@@ -41,7 +82,7 @@
                         </div>
                         <jhi-fullscreen>
                             <div class="row flex-grow-1">
-                                @if (submission && (isActive || isLate) && !result && (!isLate || !submission.submitted)) {
+                                @if (submission && (isActive || isLate) && !result && (!isLate || !submission.submitted) && !isFeedbackView) {
                                     <div class="col-12 editor-large">
                                         <jhi-modeling-editor
                                             [readOnly]="!isOwnerOfParticipation"
@@ -66,7 +107,7 @@
                                         }
                                     </div>
                                 }
-                                @if ((!isActive || result) && (!isLate || submission.submitted)) {
+                                @if (((!isActive || result) && (!isLate || submission.submitted)) || isFeedbackView) {
                                     <div class="col-9">
                                         <div class="flex flex-column h-100">
                                             <jhi-modeling-assessment
@@ -85,7 +126,7 @@
                                         </div>
                                     </div>
                                 }
-                                @if (submission?.submitted && (!isActive || result)) {
+                                @if ((submission?.submitted && (!isActive || result)) || isFeedbackView) {
                                     <div class="col-3 pt-5">
                                         <h4 jhiTranslate="artemisApp.modelingSubmission.assessment.title"></h4>
                                         @if (!assessmentResult || !assessmentResult!.feedbacks || assessmentResult!.feedbacks!.length === 0) {

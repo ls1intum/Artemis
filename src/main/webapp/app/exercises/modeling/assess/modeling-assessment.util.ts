@@ -11,8 +11,10 @@ export type AssessmentNamesForModelId = { [modelId: string]: { type: string; nam
 export function getNamesForAssessments(result: Result, model: UMLModelCompat): AssessmentNamesForModelId {
     const assessmentsNames: AssessmentNamesForModelId = {};
     for (const feedback of result.feedbacks!) {
+        console.log('Feedback: ', feedback);
         const referencedModelType = feedback.referenceType! as UMLElementType;
         const referencedModelId = feedback.referenceId!;
+        console.log('ReferencedModelType: ', referencedModelType);
         if (referencedModelType in UMLElementType) {
             const element = findElement(model, referencedModelId);
             if (!element) {
