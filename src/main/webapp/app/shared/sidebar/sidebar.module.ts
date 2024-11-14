@@ -16,6 +16,7 @@ import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive'
 import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-options/conversation-options.component';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @NgModule({
     imports: [
@@ -29,6 +30,7 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
         SidebarCardDirective,
         ArtemisExamSharedModule,
         SearchFilterComponent,
+        ProfilePictureComponent,
     ],
     declarations: [
         SidebarAccordionComponent,
