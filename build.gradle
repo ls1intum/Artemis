@@ -22,7 +22,6 @@ plugins {
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
     id "org.owasp.dependencycheck" version "11.1.0"
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.jsonschema2pojo" version "1.2.2"
 }
 
 group = "de.tum.cit.aet.artemis"
@@ -155,7 +154,6 @@ private excludedClassFilesForReport(classDirectories) {
             exclude: [
                 "**/de/tum/cit/aet/artemis/**/domain/**/*_*",
                 "**/de/tum/cit/aet/artemis/core/config/migration/entries/**",
-                "**/de/tum/cit/aet/artemis/programming/service/localci/scaparser/format/sarif/**",
                 "**/gradle-wrapper.jar/**"
             ]
         )
@@ -195,12 +193,6 @@ jacocoTestCoverageVerification {
     }
 }
 check.dependsOn jacocoTestCoverageVerification
-
-jsonSchema2Pojo {
-    targetDirectory = file(layout.buildDirectory.dir("generated/sources/js2p"))
-    useOptionalForGetters = true
-    inclusionLevel = "NON_EMPTY"
-}
 
 configurations {
     providedRuntime
@@ -651,14 +643,6 @@ checkstyle {
     checkstyleTest.enabled = false
     maxErrors = 0
 }
-
-tasks.withType(Checkstyle).configureEach {
-    // Exclude generated sources
-    exclude {
-        it.file.toPath().startsWith(jsonSchema2Pojo.targetDirectory.toPath())
-    }
-}
-
 
 def isNonStable = { String version ->
     def stableKeyword = ["RELEASE", "FINAL", "GA"].any { it -> version.toUpperCase().contains(it) }

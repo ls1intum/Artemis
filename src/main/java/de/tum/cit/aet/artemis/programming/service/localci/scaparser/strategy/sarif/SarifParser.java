@@ -78,15 +78,15 @@ public class SarifParser implements ParserStrategy {
             throw new RuntimeException(e);
         }
 
-        Run run = sarifLog.getRuns().getFirst();
-        ToolComponent driver = run.getTool().getDriver();
+        Run run = sarifLog.runs().getFirst();
+        ToolComponent driver = run.tool().driver();
 
-        List<ReportingDescriptor> rules = driver.getRules().orElse(List.of());
+        List<ReportingDescriptor> rules = driver.getOptionalRules().orElse(List.of());
 
         // Rule ids are not guaranteed to be unique. Use the first occurring for rule lookup.
-        Map<String, ReportingDescriptor> ruleOfId = rules.stream().collect(Collectors.toMap(ReportingDescriptor::getId, Function.identity(), (first, next) -> first));
+        Map<String, ReportingDescriptor> ruleOfId = rules.stream().collect(Collectors.toMap(ReportingDescriptor::id, Function.identity(), (first, next) -> first));
 
-        List<Result> results = run.getResults().orElse(List.of());
+        List<Result> results = run.getOptionalResults().orElse(List.of());
         List<StaticCodeAnalysisIssue> issues = results.stream().map(result -> tryProcessResult(result, driver, ruleOfId)).filter(Objects::nonNull).toList();
 
         return new StaticCodeAnalysisReportDTO(tool, issues);
@@ -107,20 +107,20 @@ public class SarifParser implements ParserStrategy {
     }
 
     private StaticCodeAnalysisIssue processResult(Result result, ToolComponent driver, Map<String, ReportingDescriptor> ruleOfId) throws SarifFormatException {
-        FileLocation fileLocation = result.getLocations().flatMap(locations -> locations.stream().findFirst()).flatMap(Location::getPhysicalLocation).map(this::extractLocation)
-                .orElseThrow(() -> new InformationMissingException("Location needed"));
+        FileLocation fileLocation = result.getOptionalLocations().flatMap(locations -> locations.stream().findFirst()).flatMap(Location::getOptionalPhysicalLocation)
+                .map(this::extractLocation).orElseThrow(() -> new InformationMissingException("Location needed"));
 
         String ruleId = getRuleId(result);
 
         Optional<Integer> ruleIndex = getRuleIndex(result);
 
-        Optional<ReportingDescriptor> ruleByIndex = driver.getRules().flatMap(rules -> ruleIndex.map(rules::get));
+        Optional<ReportingDescriptor> ruleByIndex = driver.getOptionalRules().flatMap(rules -> ruleIndex.map(rules::get));
         Optional<ReportingDescriptor> rule = ruleByIndex.or(() -> lookupRuleById(ruleId, ruleOfId));
 
         // Fallback to the rule identifier for the category
         String category = rule.map(ruleCategorizer::categorizeRule).orElse(ruleId);
 
-        Result.Level level = result.getLevel().orElse(Result.Level.WARNING);
+        Result.Level level = result.getOptionalLevel().orElse(Result.Level.WARNING);
 
         String message = findMessage(result, driver, rule);
 
@@ -129,43 +129,44 @@ public class SarifParser implements ParserStrategy {
     }
 
     private FileLocation extractLocation(PhysicalLocation location) {
-        URI uri = URI.create(location.getArtifactLocation().flatMap(ArtifactLocation::getUri).orElseThrow(() -> new InformationMissingException("File path needed")));
+        URI uri = URI
+                .create(location.getOptionalArtifactLocation().flatMap(ArtifactLocation::getOptionalUri).orElseThrow(() -> new InformationMissingException("File path needed")));
 
-        Region region = location.getRegion().orElseThrow(() -> new SarifFormatException("Region must be present"));
+        Region region = location.getOptionalRegion().orElseThrow(() -> new SarifFormatException("Region must be present"));
 
-        int startLine = region.getStartLine().orElseThrow(() -> new InformationMissingException("Text region needed"));
-        int startColumn = region.getStartColumn().orElse(1);
-        int endLine = region.getEndLine().orElse(startLine);
-        int endColumn = region.getEndColumn().orElse(startColumn + 1);
+        int startLine = region.getOptionalStartLine().orElseThrow(() -> new InformationMissingException("Text region needed"));
+        int startColumn = region.getOptionalStartColumn().orElse(1);
+        int endLine = region.getOptionalEndLine().orElse(startLine);
+        int endColumn = region.getOptionalEndColumn().orElse(startColumn + 1);
 
         return new FileLocation(uri.getPath(), startLine, endLine, startColumn, endColumn);
     }
 
     private static String getRuleId(Result result) throws SarifFormatException {
-        return result.getRuleId().orElseGet(
-                () -> result.getRule().flatMap(ReportingDescriptorReference::getId).orElseThrow(() -> new SarifFormatException("Either ruleId or rule.id must be present")));
+        return result.getOptionalRuleId().orElseGet(() -> result.getOptionalRule().flatMap(ReportingDescriptorReference::getOptionalId)
+                .orElseThrow(() -> new SarifFormatException("Either ruleId or rule.id must be present")));
     }
 
     private static Optional<Integer> getRuleIndex(Result result) {
         // ruleIndex can use -1 to indicate a missing value
-        Optional<Integer> ruleIndexOrMinusOne = result.getRuleIndex().or(() -> result.getRule().flatMap(ReportingDescriptorReference::getIndex));
+        Optional<Integer> ruleIndexOrMinusOne = result.getOptionalRuleIndex().or(() -> result.getOptionalRule().flatMap(ReportingDescriptorReference::getOptionalIndex));
         return ruleIndexOrMinusOne.flatMap(index -> index != -1 ? Optional.of(index) : Optional.empty());
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private static String findMessage(Result result, ToolComponent driver, Optional<ReportingDescriptor> rule) throws SarifFormatException {
-        return result.getMessage().getText().orElseGet(() -> lookupMessageById(result, driver, rule));
+        return result.message().getOptionalText().orElseGet(() -> lookupMessageById(result, driver, rule));
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private static String lookupMessageById(Result result, ToolComponent driver, Optional<ReportingDescriptor> rule) throws SarifFormatException {
-        String messageId = result.getMessage().getId().orElseThrow(() -> new SarifFormatException("Either text or id must be present"));
+        String messageId = result.message().getOptionalId().orElseThrow(() -> new SarifFormatException("Either text or id must be present"));
 
-        var ruleMessageString = rule.flatMap(ReportingDescriptor::getMessageStrings).map(MessageStrings::getAdditionalProperties).map(strings -> strings.get(messageId));
-        var globalMessageString = driver.getGlobalMessageStrings().map(GlobalMessageStrings::getAdditionalProperties).map(strings -> strings.get(messageId));
+        var ruleMessageString = rule.flatMap(ReportingDescriptor::getOptionalMessageStrings).map(MessageStrings::additionalProperties).map(strings -> strings.get(messageId));
+        var globalMessageString = driver.getOptionalGlobalMessageStrings().map(GlobalMessageStrings::additionalProperties).map(strings -> strings.get(messageId));
 
         var messageString = ruleMessageString.or(() -> globalMessageString).orElseThrow(() -> new SarifFormatException("Message lookup failed"));
-        return messageString.getText();
+        return messageString.text();
     }
 
     private static Optional<ReportingDescriptor> lookupRuleById(String ruleId, Map<String, ReportingDescriptor> ruleOfId) {

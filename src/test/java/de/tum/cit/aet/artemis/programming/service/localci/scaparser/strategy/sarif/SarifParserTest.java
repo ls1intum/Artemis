@@ -18,7 +18,7 @@ class SarifParserTest {
 
         @Override
         public String categorizeRule(ReportingDescriptor rule) {
-            return rule.getFullDescription().orElseThrow().getText();
+            return rule.getOptionalFullDescription().orElseThrow().text();
         }
     }
 
