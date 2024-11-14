@@ -1,12 +1,6 @@
 <div class="mt-3 row m-0 align-items-center justify-content-between">
     <h5 class="m-0 col-md-auto p-0" [jhiTranslate]="'artemisApp.' + courseCompetencyType() + '.title'"></h5>
     <div class="col-md-auto p-0 d-flex">
-        @if (irisCompetencyGenerationEnabled()) {
-            <a class="btn btn-sm btn-secondary" id="generateButton" [routerLink]="['/course-management', courseId, 'competency-management', 'generate']">
-                <fa-icon [icon]="faRobot" />
-                <span>{{ 'artemisApp.competency.manageCompetencies.generateButton' | artemisTranslate }}</span>
-            </a>
-        }
         <div ngbDropdown class="ms-3">
             <button id="importCompetenciesDropdown" class="btn btn-sm btn-secondary" ngbDropdownToggle>
                 <fa-icon [icon]="faFileImport" />

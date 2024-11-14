@@ -8,23 +8,16 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Routes, provideRouter } from '@angular/router';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
-import { of, throwError } from 'rxjs';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { PROFILE_IRIS } from 'app/app.constants';
-import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { of } from 'rxjs';
 import { CompetencyService } from '../../../../../../main/webapp/app/course/competencies/competency.service';
 import { PrerequisiteService } from '../../../../../../main/webapp/app/course/competencies/prerequisite.service';
 
 describe('CourseCompetenciesManagementTable', () => {
     let component: CourseCompetenciesManagementTableComponent;
     let fixture: ComponentFixture<CourseCompetenciesManagementTableComponent>;
-    let profileService: ProfileService;
-    let irisSettingsService: IrisSettingsService;
     let alertService: AlertService;
     let competencyService: CompetencyService;
 
@@ -76,18 +69,6 @@ describe('CourseCompetenciesManagementTable', () => {
                     useClass: MockAlertService,
                 },
                 {
-                    provide: IrisSettingsService,
-                    useValue: {
-                        getCombinedCourseSettings: jest.fn(() => of(<IrisSettings>{ irisCompetencyGenerationSettings: { enabled: true } })),
-                    },
-                },
-                {
-                    provide: ProfileService,
-                    useValue: {
-                        getProfileInfo: jest.fn(() => of(<ProfileInfo>{ activeProfiles: [PROFILE_IRIS] })),
-                    },
-                },
-                {
                     provide: NgbModal,
                     useValue: {
                         open: jest.fn(),
@@ -110,8 +91,6 @@ describe('CourseCompetenciesManagementTable', () => {
             ],
         }).compileComponents();
 
-        profileService = TestBed.inject(ProfileService);
-        irisSettingsService = TestBed.inject(IrisSettingsService);
         alertService = TestBed.inject(AlertService);
         competencyService = TestBed.inject(CompetencyService);
 
@@ -126,28 +105,6 @@ describe('CourseCompetenciesManagementTable', () => {
 
     afterEach(() => {
         jest.clearAllMocks();
-    });
-
-    it('should load profileInfo', async () => {
-        const getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo');
-        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
-
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(getProfileInfoSpy).toHaveBeenCalledOnce();
-        expect(getCourseSettingsSpy).toHaveBeenCalledExactlyOnceWith(courseId);
-        expect(component.irisCompetencyGenerationEnabled()).toBeTrue();
-    });
-
-    it('should show error on load profileInfo error', async () => {
-        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValueOnce(throwError(() => new Error('Error')));
-        const errorSpy = jest.spyOn(alertService, 'addAlert');
-
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(errorSpy).toHaveBeenCalledOnce();
     });
 
     it('should show data in table', () => {
