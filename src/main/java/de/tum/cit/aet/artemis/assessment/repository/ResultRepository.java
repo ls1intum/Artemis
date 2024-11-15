@@ -620,7 +620,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
-    // Valid JPQL syntax, only SCA is not able to parse it due to mixing primitive and object types
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,

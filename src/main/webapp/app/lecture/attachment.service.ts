@@ -6,6 +6,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { Attachment } from 'app/entities/attachment.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { objectToJsonBlob } from 'app/utils/blob-util';
+import { cloneDeep } from 'lodash-es';
 
 type EntityResponseType = HttpResponse<Attachment>;
 type EntityArrayResponseType = HttpResponse<Attachment[]>;
@@ -34,8 +35,11 @@ export class AttachmentService {
             copy.lecture.posts = undefined;
         }
 
+        /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
+         * See: https://issues.chromium.org/issues/374550348
+         **/
         return this.http
-            .post<Attachment>(this.resourceUrl, this.createFormData(copy, file), { observe: 'response' })
+            .post<Attachment>(this.resourceUrl, this.createFormData(copy, file), { headers: { 'ngsw-bypass': 'true' }, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
     }
 
@@ -50,8 +54,11 @@ export class AttachmentService {
         const options = createRequestOption(req);
         const copy = this.convertAttachmentDatesFromClient(attachment);
 
+        /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
+         * See: https://issues.chromium.org/issues/374550348
+         **/
         return this.http
-            .put<Attachment>(this.resourceUrl + '/' + attachmentId, this.createFormData(copy, file), { params: options, observe: 'response' })
+            .put<Attachment>(this.resourceUrl + '/' + attachmentId, this.createFormData(copy, file), { headers: { 'ngsw-bypass': 'true' }, params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
     }
 
@@ -96,11 +103,11 @@ export class AttachmentService {
     }
 
     convertAttachmentDatesFromClient(attachment: Attachment): Attachment {
-        const copy: Attachment = Object.assign({}, attachment, {
+        // Deep clone is applied to preserve all nested properties of the attachment
+        return Object.assign({}, cloneDeep(attachment), {
             releaseDate: convertDateFromClient(attachment.releaseDate),
             uploadDate: convertDateFromClient(attachment.uploadDate),
         });
-        return copy;
     }
 
     convertAttachmentDatesFromServer(attachment?: Attachment) {

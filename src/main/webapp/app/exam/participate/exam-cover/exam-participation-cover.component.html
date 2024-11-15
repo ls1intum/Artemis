@@ -14,9 +14,11 @@
                 <jhi-exam-live-events-button [examStartDate]="exam.startDate!" />
             </div>
         </div>
-        <hr class="mt-2" />
-        <jhi-exam-start-information [exam]="exam" [studentExam]="studentExam" [formattedStartText]="formattedGeneralInformation" />
-        <div class="d-inline-flex align-items-center my-4">
+        <hr class="my-0" />
+        <div class="mt-3">
+            <jhi-exam-start-information [exam]="exam" [studentExam]="studentExam" [formattedStartText]="formattedGeneralInformation" />
+        </div>
+        <div class="d-inline-flex align-items-center my-3">
             <div class="ps-1">
                 <input
                     [(ngModel)]="confirmed"
@@ -133,7 +135,7 @@
                 }
             </div>
         }
-        <div class="d-inline-flex align-items-center my-4">
+        <div class="d-inline-flex align-items-center my-3">
             <div>
                 <input
                     [(ngModel)]="confirmed"
