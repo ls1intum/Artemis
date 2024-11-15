@@ -57,7 +57,7 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { tap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 @Component({
@@ -229,11 +229,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             this.programmingExercise.submissionPolicy = submissionPolicy;
                         }),
                     ),
-                    tap(() =>
-                        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
-                            this.processGitDiffReport(gitDiffReport);
-                        }),
-                    ),
+                    switchMap(() => this.programmingExerciseService.getDiffReport(this.programmingExercise.id!)),
+                    tap((gitDiffReport) => {
+                        this.processGitDiffReport(gitDiffReport);
+                    }),
                     tap(() => {
                         if (this.programmingExercise.isAtLeastEditor) {
                             this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatistics) => {
