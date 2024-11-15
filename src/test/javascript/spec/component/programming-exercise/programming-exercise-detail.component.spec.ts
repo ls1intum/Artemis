@@ -34,8 +34,9 @@ import {
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { BuildConfig } from '../../../../../main/webapp/app/entities/programming/build-config.model';
 
-describe('ProgrammingExercise Management Detail Component', () => {
+describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
     let statisticsService: StatisticsService;
@@ -59,6 +60,9 @@ describe('ProgrammingExercise Management Detail Component', () => {
         solutionParticipation: {
             id: 2,
         } as SolutionProgrammingExerciseParticipation,
+        buildConfig: {
+            testwiseCoverageEnabled: true,
+        } as BuildConfig,
     } as ProgrammingExercise;
 
     const exerciseStatistics = {
@@ -290,7 +294,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
         jest.spyOn(exerciseService, 'getLatestFullTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
         comp.programmingExercise = mockProgrammingExercise;
-        comp.programmingExercise.buildConfig!.testwiseCoverageEnabled = true;
+        comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
         comp.onParticipationChange();
         tick();
         expect(loadDiffSpy).toHaveBeenCalledOnce();
