@@ -127,6 +127,8 @@ class GroupNotificationFactoryTest {
 
     private static User user = new User();
 
+    private static final Long USER_ID = 1L;
+
     private String expectedTitle;
 
     private String expectedText;
@@ -196,6 +198,7 @@ class GroupNotificationFactoryTest {
         user = new User();
         user.setFirstName("John");
         user.setLastName("Smith");
+        user.setId(USER_ID);
 
         post = new Post();
         post.setConversation(new Channel());
