@@ -61,9 +61,7 @@ export class GeneralCourseInfoSectionComponent {
     public async saveGeneralInformation() {
         try {
             this.isLoading.set(true);
-            if (this.generalCourseInformation()) {
-                await this.courseDashboardService.updateGeneralCourseInformation(this.courseId(), this.generalCourseInformation()!);
-            }
+            await this.courseDashboardService.updateGeneralCourseInformation(this.courseId(), this.generalCourseInformation() ?? '');
         } catch (error) {
             this.alertService.error(error);
         } finally {

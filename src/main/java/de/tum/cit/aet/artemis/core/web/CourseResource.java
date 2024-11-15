@@ -1511,7 +1511,8 @@ public class CourseResource {
 
     @PostMapping("courses/{courseId}/general-information")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> updateGeneralInformation(@PathVariable long courseId, @RequestBody String generalInformation) {
+    public ResponseEntity<Void> updateGeneralInformation(@PathVariable long courseId, @RequestBody(required = false) String generalInformation) {
+        log.debug("REST request to set general course in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         course.setGeneralInformation(generalInformation);
         courseRepository.save(course);
