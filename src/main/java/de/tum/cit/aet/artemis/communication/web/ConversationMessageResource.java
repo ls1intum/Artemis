@@ -60,12 +60,15 @@ public class ConversationMessageResource {
 
     private final CourseRepository courseRepository;
 
+    private final AnswerMessageResource answerMessageResource;
+
     public ConversationMessageResource(ConversationMessagingService conversationMessagingService, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, AnswerMessageResource answerMessageResource) {
         this.conversationMessagingService = conversationMessagingService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
+        this.answerMessageResource = answerMessageResource;
     }
 
     /**

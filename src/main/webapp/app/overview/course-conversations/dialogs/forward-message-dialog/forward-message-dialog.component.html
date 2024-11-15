@@ -1,58 +1,97 @@
 <div class="modal-header">
     <h4 class="modal-title">Forward this message</h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
+    <button type="button" class="btn-close" aria-label="Close" (click)="({})"></button>
 </div>
 <div class="modal-body">
-    <div class="tag-input-container" (click)="focusInput()">
-        <div class="selected-tags">
-            <span class="badge bg-primary me-1" *ngFor="let channel of selectedChannels">
-                {{ channel.name }}
-                <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChannel(channel)"></button>
-            </span>
-            <span class="badge bg-secondary me-1" *ngFor="let chat of selectedChats">
-                {{ chat.otherUserName }}
-                <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChat(chat)"></button>
-            </span>
+    <div class="autocomplete-container mt-1 mb-2">
+        <div class="tag-input-container" (click)="focusInput()">
+            <ng-container *ngFor="let channel of selectedChannels">
+                <span class="badge bg-primary me-1">
+                    {{ channel.name }}
+                    <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChannel(channel)"></button>
+                </span>
+            </ng-container>
+            <ng-container *ngFor="let chat of selectedChats">
+                <span class="badge bg-secondary me-1">
+                    {{ chat.otherUserName }}
+                    <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChat(chat)"></button>
+                </span>
+            </ng-container>
             <input
                 #searchInput
                 type="text"
                 class="tag-input"
-                [placeholder]="shouldShowPlaceholder ? 'Search channels or names' : ''"
-                (input)="filterItems($event)"
+                placeholder="Search channels or chats"
                 [(ngModel)]="searchTerm"
+                (input)="filterItems($event)"
                 (focus)="onInputFocus()"
                 (blur)="onInputBlur()"
             />
         </div>
+        <ul class="list-group autocomplete-dropdown" *ngIf="showDropdown && filteredOptions.length > 0">
+            <li
+                *ngFor="let option of filteredOptions"
+                class="list-group-item list-group-item-action"
+                [ngClass]="{ 'channel-option': option.type === 'channel', 'chat-option': option.type === 'chat' }"
+                (mousedown)="selectOption(option)"
+            >
+                @if (option.type === 'channel') {
+                    <span class="me-2">#</span>
+                } @else {
+                    <jhi-profile-picture
+                        imageSizeInRem="1.5"
+                        fontSizeInRem="0.6"
+                        imageId="user-profile-picture"
+                        defaultPictureId="user-default-profile-picture"
+                        [authorId]="postToForward?.author?.id"
+                        [authorName]="postToForward?.author?.name"
+                        [imageUrl]="option.img"
+                        style="margin-right: 0.2rem"
+                    />
+                }
+                {{ option.name }}
+            </li>
+        </ul>
     </div>
 
-    <h5>Channels</h5>
-    <ul class="list-group mb-3" style="max-height: 200px; overflow-y: auto">
-        <li
-            *ngFor="let channel of filteredChannels"
-            class="list-group-item d-flex align-items-center"
-            [class.active]="isChannelSelected(channel)"
-            (click)="toggleChannelSelection(channel)"
-            style="cursor: pointer"
-        >
-            <input type="checkbox" [checked]="isChannelSelected(channel)" (click)="$event.stopPropagation(); toggleChannelSelection(channel)" class="me-2" />
-            {{ channel.name }}
-        </li>
-    </ul>
+    <h5>Add a message</h5>
+    <jhi-markdown-editor-monaco
+        class="markdown-editor background-editor-color w-100"
+        [markdown]="newPost.content"
+        (markdownChange)="updateField($event)"
+        [enableResize]="false"
+        [showDefaultPreview]="true"
+        [defaultActions]="defaultActions"
+        [colorAction]="undefined"
+        [metaActions]="[]"
+        [headerActions]="undefined"
+        [initialEditorHeight]="editorHeight"
+        [resizableMinHeight]="editorHeight"
+        [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
+    ></jhi-markdown-editor-monaco>
 
-    <h5>Chats</h5>
-    <ul class="list-group" style="max-height: 200px; overflow-y: auto">
-        <li
-            *ngFor="let chat of filteredChats"
-            class="list-group-item d-flex align-items-center"
-            [class.active]="isChatSelected(chat)"
-            (click)="toggleChatSelection(chat)"
-            style="cursor: pointer"
-        >
-            <input type="checkbox" [checked]="isChatSelected(chat)" (click)="$event.stopPropagation(); toggleChatSelection(chat)" class="me-2" />
-            {{ chat.otherUserName }}
-        </li>
-    </ul>
+    <div *ngIf="postToForward" class="forwarded-message-container">
+        <div class="left-border-line"></div>
+        <div class="forwarded-message-content">
+            <div class="forwarded-message-header">
+                <jhi-profile-picture
+                    imageSizeInRem="1.5"
+                    fontSizeInRem="0.6"
+                    imageId="user-profile-picture"
+                    defaultPictureId="user-default-profile-picture"
+                    [authorId]="postToForward?.author?.id"
+                    [authorName]="postToForward?.author?.name"
+                    [imageUrl]="postToForward?.author?.imageUrl"
+                    style="margin-right: 0.2rem"
+                >
+                </jhi-profile-picture>
+                <span>{{ postToForward?.author?.name }}</span>
+            </div>
+            <div class="forwarded-message-body" [ngClass]="{ 'preserve-line-breaks': postToForward?.content?.includes('\n') }">
+                {{ postToForward?.content }}
+            </div>
+        </div>
+    </div>
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-primary" [disabled]="!hasSelections()" (click)="send()">Send</button>

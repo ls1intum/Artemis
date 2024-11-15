@@ -81,7 +81,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     }
 
     forwardMessage(): void {
-        this.openForwardMessageView(this.posting);
+        this.openForwardMessageView(this.posting, false);
     }
 
     /**

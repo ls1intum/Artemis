@@ -75,13 +75,11 @@
 
 .forwarded-message-container {
     display: flex;
-    margin: 1rem 0;
     padding-left: 0.7rem;
     padding-top: 0.3rem;
     padding-bottom: 0.3rem;
-    border-left: 4px solid var(--metis-blue);
-    background-color: #f9f9f9;
-    border-radius: 5px;
+    border-left: 4px solid var(--metis-gray);
+    border-radius: 1px;
 
     .forwarded-message-content {
         display: flex;

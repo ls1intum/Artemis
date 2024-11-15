@@ -9,7 +9,6 @@ import { Course } from 'app/entities/course.model';
 import { map } from 'rxjs/internal/operators/map';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ForwardMessageDialogComponent } from 'app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
-import { Post } from 'app/entities/metis/post.model';
 import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
@@ -128,11 +127,11 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
         this.metisService.deletePost(this.posting);
     }
 
-    openForwardMessageView(post: Post): void {
+    openForwardMessageView(post: Posting, isAnswer: boolean): void {
         if (!this.course()?.id) {
             return;
         }
-
+        console.log('open cagrildi mi');
         this.channels = [];
         this.chats = [];
 
@@ -156,14 +155,15 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
 
                     modalRef.componentInstance.chats = this.chats;
                     modalRef.componentInstance.channels = this.channels;
+                    modalRef.componentInstance.postToForward = post;
 
                     modalRef.result.then(
-                        (selection: { channels: Conversation[]; chats: Conversation[] }) => {
+                        (selection: { channels: Conversation[]; chats: Conversation[]; messageContent: string }) => {
                             if (selection) {
                                 const allSelections = [...selection.channels, ...selection.chats];
                                 allSelections.forEach((conversation) => {
                                     if (conversation && conversation.id) {
-                                        this.forwardPost(post, conversation);
+                                        this.forwardPost(post, conversation, selection.messageContent, isAnswer);
                                     }
                                 });
                             }
@@ -179,8 +179,9 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
             });
     }
 
-    forwardPost(post: Post, conversation: Conversation): void {
-        this.metisService.forwardPost(post, conversation, '').subscribe({
+    forwardPost(post: Posting, conversation: Conversation, content: string, isAnswer: boolean): void {
+        console.log('su an reaction forwardda');
+        this.metisService.createForwardedMessages([post], conversation, isAnswer, content).subscribe({
             error: (error) => {
                 console.error('Error forwarding post:', error);
             },

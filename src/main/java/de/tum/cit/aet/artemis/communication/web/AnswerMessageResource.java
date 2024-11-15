@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -91,5 +92,20 @@ public class AnswerMessageResource {
         log.info("deleteAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
         // deletion of answerMessages should not trigger alert
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET /courses/{courseId}/answer-messages/{id} : Get an answer message by its id
+     *
+     * @param courseId        id of the course the message belongs to
+     * @param answerMessageId id of the answer message to delete
+     * @return ResponseEntity with status 200 (OK),
+     *         or 400 (Bad Request) if the checks on user or course validity fail
+     */
+    @GetMapping("courses/{courseId}/answer-messages/{answerMessageId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<AnswerPost> getAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId) {
+        AnswerPost newAnswer = answerMessageService.findById(answerMessageId);
+        return new ResponseEntity<>(newAnswer, null, HttpStatus.OK);
     }
 }

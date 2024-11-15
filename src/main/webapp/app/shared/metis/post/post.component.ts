@@ -27,7 +27,7 @@ import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-c
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { Channel, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { animate, style, transition, trigger } from '@angular/animations';
@@ -35,6 +35,7 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT } from '@angular/common';
+import { Posting } from 'app/entities/metis/posting.model';
 
 @Component({
     selector: 'jhi-post',
@@ -79,7 +80,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly DisplayPriority = DisplayPriority;
     mayEditOrDelete: boolean = false;
     canPin: boolean = false;
-    originalPostDetails: Post | null = null;
+    originalPostDetails: Post | AnswerPost | undefined = undefined;
     sourceName: string | undefined = '';
 
     // Icons
@@ -184,22 +185,37 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.sortAnswerPosts();
-        this.fetchOriginalPost();
+        this.fetchForwardedPost();
     }
 
-    fetchOriginalPost(): void {
-        if (this.posting.originalPostId) {
-            console.log('forwarded mesaj var');
-            this.metisService.getPostById(this.posting.originalPostId).subscribe((post) => {
-                this.originalPostDetails = post.body;
-                this.changeDetector.markForCheck();
-                console.log(this.originalPostDetails);
-                if (this.originalPostDetails && this.originalPostDetails?.conversation?.type == 'channel') {
-                    this.sourceName = (this.originalPostDetails?.conversation as Channel)?.name;
-                } else {
-                    this.sourceName = 'Direct Message';
-                }
-            });
+    fetchForwardedPost(): void {
+        if (this.posting.forwardedMessages && this.posting.forwardedMessages.length > 0) {
+            const forwardedMessage = this.posting.forwardedMessages[0];
+
+            if (forwardedMessage.sourceType?.valueOf() == 'POST') {
+                console.log('ifte');
+                this.metisService.getPostById(forwardedMessage.sourceId)!.subscribe(
+                    (post) => {
+                        console.log('Forwarded Post Details:', post.body);
+                        this.originalPostDetails = post.body as Posting;
+                        this.changeDetector.markForCheck();
+                    },
+                    (error) => {
+                        console.error('Failed to fetch forwarded post', error);
+                    },
+                );
+            } else if (forwardedMessage.sourceType?.valueOf() === 'ANSWER_POST') {
+                console.log('else de');
+                this.metisService.getAnswerPostById(forwardedMessage.sourceId)!.subscribe(
+                    (answerPost) => {
+                        this.originalPostDetails = answerPost.body as Posting;
+                        this.changeDetector.markForCheck();
+                    },
+                    (error) => {
+                        console.log('Failed to fetch forwarded answer post', error);
+                    },
+                );
+            }
         }
     }
 

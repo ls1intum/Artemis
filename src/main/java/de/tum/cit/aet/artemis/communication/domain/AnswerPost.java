@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -42,6 +43,18 @@ public class AnswerPost extends Posting {
     @JsonProperty("resolvesPost")
     public Boolean doesResolvePost() {
         return resolvesPost;
+    }
+
+    @OneToMany(mappedBy = "destinationAnswerPost", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties(value = { "destinationPost", "destinationAnswerPost" }, allowSetters = true)
+    private Set<ForwardedMessage> forwardedMessages = new HashSet<>();
+
+    public Set<ForwardedMessage> getForwardedMessages() {
+        return forwardedMessages;
+    }
+
+    public void setForwardedMessages(Set<ForwardedMessage> forwardedMessages) {
+        this.forwardedMessages = forwardedMessages;
     }
 
     public void setResolvesPost(Boolean resolvesPost) {

@@ -47,10 +47,6 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
         return Object.values(this.reactionMetaDataMap).some((reaction) => reaction.count >= 1);
     }
 
-    forwardMessage(): void {
-        console.log('answer i forwardlayacakk');
-    }
-
     /**
      * invokes the metis service to delete an answer post
      */
@@ -83,6 +79,10 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
 
     editPosting() {
         this.openPostingCreateEditModal.emit();
+    }
+
+    forwardMessage(): void {
+        this.openForwardMessageView(this.posting, true);
     }
 
     /**

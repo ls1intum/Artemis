@@ -21,6 +21,7 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT } from '@angular/common';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-answer-post',
@@ -41,6 +42,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
     isAnswerPost = true;
+    course: Course;
 
     @Input()
     isReadOnlyMode = false;
@@ -62,6 +64,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
         @Inject(DOCUMENT) private document: Document,
     ) {
         super();
+        this.course = this.metisService.getCourse();
     }
 
     get reactionsBar() {

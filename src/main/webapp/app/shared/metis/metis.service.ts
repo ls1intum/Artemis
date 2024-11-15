@@ -1,6 +1,6 @@
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, Observable, ReplaySubject, Subscription, map, tap } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subscription, forkJoin, map, switchMap, tap } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -31,6 +31,8 @@ import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/c
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
+import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.service';
+import { ForwardedMessage, SourceType } from 'app/entities/metis/forwarded-message.model';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -56,6 +58,7 @@ export class MetisService implements OnDestroy {
         protected reactionService: ReactionService,
         protected accountService: AccountService,
         protected exerciseService: ExerciseService,
+        protected forwardedMessageService: ForwardedMessageService,
         private jhiWebsocketService: JhiWebsocketService,
         private conversationService: ConversationService,
         notificationService: NotificationService,
@@ -211,10 +214,6 @@ export class MetisService implements OnDestroy {
                 }
             }),
         );
-    }
-
-    getPostById(postId: number) {
-        return this.postService.getPost(this.courseId, postId);
     }
 
     /**
@@ -657,22 +656,80 @@ export class MetisService implements OnDestroy {
         }
     }
 
+    getPostById(postId: number | undefined) {
+        if (postId) return this.postService.getPost(this.courseId, postId);
+        else return;
+    }
+
+    getAnswerPostById(answerPostId: number | undefined) {
+        console.log('burda');
+        if (answerPostId) return this.answerPostService.getAnswerPostById(this.courseId, answerPostId);
+        else return;
+    }
+
     /**
-     * Forwards an existing post to a different conversation or channel.
-     * @param {Post} originalPost - The post to be forwarded.
-     * @param {number} targetConversationId - The ID of the target conversation/channel.
-     * @param {string} [newContent] - Optional new content for the forwarded post.
-     * @return {Observable<Post>} forwarded post
+     * Creates new ForwardedMessages by first creating a new Post.
+     * @param originalPostIds The IDs of the original posts to be forwarded.
+     * @param conversation The target conversation to forward the posts to.
+     * @param newContent Optional new content for the forwarded posts.
+     * @return {Observable<ForwardedMessage[]>} created ForwardedMessages
      */
-    forwardPost(originalPost: Post, conversation: Conversation, newContent?: string): Observable<Post> {
+    createForwardedMessages(originalPosts: Posting[], targetConversation: Conversation, isAnswer: boolean, newContent?: string): Observable<ForwardedMessage[]> {
         if (!this.courseId) {
             throw new Error('Course ID is not set. Ensure that setCourse() is called before forwarding posts.');
         }
 
-        return this.postService.forwardPost(this.courseId, originalPost, conversation, newContent).pipe(
-            map((res: HttpResponse<Post>) => res.body!),
-            tap((forwardedPost: Post) => {
-                this.addTags(forwardedPost.tags);
+        // Öncelikle yeni bir Post oluşturuyoruz
+        const newPost: Post = {
+            // Yeni Post'un gerekli alanlarını burada doldurun
+            content: newContent || '',
+            conversation: targetConversation,
+            // Diğer alanlar...
+        };
+
+        let sourceType = SourceType.POST;
+        if (isAnswer) {
+            sourceType = SourceType.ANSWER_POST;
+        }
+
+        return this.postService.create(this.courseId, newPost).pipe(
+            switchMap((createdPost: HttpResponse<Post>) => {
+                const createdPostBody = createdPost.body!;
+                const forwardedMessages: ForwardedMessage[] = originalPosts.map((post) => ({
+                    sourceId: post.id,
+                    sourceType: sourceType,
+                    destinationPost: { id: createdPostBody.id } as Post,
+                    destinationAnswerPost: undefined,
+                    content: newContent || '',
+                }));
+
+                const createForwardedMessageObservables = forwardedMessages.map((fm) =>
+                    this.forwardedMessageService.createForwardedMessage(fm).pipe(map((res: HttpResponse<ForwardedMessage>) => res.body!)),
+                );
+
+                // Tüm ForwardedMessage'lar oluşturulduktan sonra sonuçları döndürüyoruz
+                return forkJoin(createForwardedMessageObservables).pipe(
+                    tap((createdForwardedMessages: ForwardedMessage[]) => {
+                        // Yeni oluşturulan Post'u cache'lenmiş posts içerisinde ekliyoruz
+                        this.cachedPosts = [createdPostBody, ...this.cachedPosts];
+                        this.posts$.next(this.cachedPosts);
+
+                        // Her bir ForwardedMessage'ı ilgili Post'a ekliyoruz
+                        createdForwardedMessages.forEach((fm) => {
+                            const postIndex = this.cachedPosts.findIndex((post) => post.id === fm.destinationPost?.id);
+                            if (postIndex > -1) {
+                                const post = this.cachedPosts[postIndex];
+                                if (!post.forwardedMessages) {
+                                    post.forwardedMessages = [];
+                                }
+                                post.forwardedMessages.push(fm);
+                                // Cache'i güncelliyoruz
+                                this.cachedPosts[postIndex] = { ...post };
+                            }
+                        });
+                        this.posts$.next(this.cachedPosts);
+                    }),
+                );
             }),
         );
     }

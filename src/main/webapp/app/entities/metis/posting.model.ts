@@ -3,6 +3,7 @@ import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { UserRole } from 'app/shared/metis/metis.util';
+import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
 
 export abstract class Posting implements BaseEntity {
     public id?: number;
@@ -12,4 +13,5 @@ export abstract class Posting implements BaseEntity {
     public updatedDate?: dayjs.Dayjs;
     public content?: string;
     public reactions?: Reaction[];
+    public forwardedMessages?: ForwardedMessage[];
 }

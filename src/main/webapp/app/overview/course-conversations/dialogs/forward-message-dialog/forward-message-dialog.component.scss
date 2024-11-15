@@ -52,6 +52,7 @@
 
 .list-group-item {
     cursor: pointer;
+    font-weight: 500;
 }
 
 .list-group-item:hover {
@@ -60,4 +61,69 @@
 
 .list-group-item.active:hover {
     background-color: var(--bs-primary);
+}
+
+.autocomplete-container {
+    position: relative;
+}
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.selected-tags .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5em 0.75em;
+    font-size: 0.875rem;
+}
+
+.forwarded-message-container {
+    display: flex;
+    padding-left: 0.7rem;
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+    border-left: 4px solid var(--metis-blue);
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    margin-top: 1rem;
+
+    .forwarded-message-content {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .forwarded-message-header {
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .forwarded-message-body {
+        font-size: 0.9rem;
+        color: #555;
+        margin-bottom: 0.5rem;
+    }
+
+    .forwarded-message-footer {
+        display: flex;
+        justify-content: flex-end;
+        font-size: 0.8rem;
+        color: #777;
+
+        .forwarded-message-channel {
+            margin-right: 1rem;
+        }
+
+        .forwarded-message-time {
+        }
+    }
 }

@@ -53,23 +53,7 @@
             @if (!displayInlineInput) {
                 <div class="message-container" [class.force-hover]="showDropdown" (contextmenu)="onRightClick($event)">
                     <div class="message-content" [ngClass]="{ 'mx-0': !isThreadSidebar }">
-                        @if (originalPostDetails) {
-                            <div *ngIf="originalPostDetails" class="forwarded-message-container">
-                                <div class="left-border-line"></div>
-                                <div class="forwarded-message-content">
-                                    <div class="forwarded-message-header">
-                                        <span class="forwarded-message-author">{{ originalPostDetails?.author?.name }}</span>
-                                    </div>
-                                    <div class="forwarded-message-body">
-                                        {{ originalPostDetails?.content }}
-                                    </div>
-                                    <div class="forwarded-message-footer">
-                                        <span class="forwarded-message-channel">{{ sourceName }}</span>
-                                        <span class="forwarded-message-time">{{ originalPostDetails?.creationDate }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        } @else {
+                        @if (posting.content) {
                             <jhi-posting-content
                                 [previewMode]="previewMode"
                                 [content]="posting.content"
@@ -83,6 +67,44 @@
                                 (userReferenceClicked)="onUserReferenceClicked($event)"
                                 (channelReferenceClicked)="onChannelReferenceClicked($event)"
                             ></jhi-posting-content>
+                        }
+                        @if (originalPostDetails) {
+                            <div *ngIf="originalPostDetails" class="forwarded-message-container">
+                                <div class="left-border-line"></div>
+                                <div class="forwarded-message-content">
+                                    <div class="forwarded-message-header">
+                                        <jhi-profile-picture
+                                            imageSizeInRem="1.5"
+                                            fontSizeInRem="0.6"
+                                            imageId="user-profile-picture"
+                                            defaultPictureId="user-default-profile-picture"
+                                            [authorId]="originalPostDetails?.author?.id"
+                                            [authorName]="originalPostDetails?.author?.name"
+                                            [imageUrl]="originalPostDetails?.author?.imageUrl"
+                                            style="margin-right: 0.2rem"
+                                        >
+                                        </jhi-profile-picture>
+                                        <span class="forwarded-message-author">{{ originalPostDetails?.author?.name }}</span>
+                                    </div>
+                                    <div class="forwarded-message-body" [ngClass]="{ 'preserve-line-breaks': originalPostDetails?.content?.includes('\n') }">
+                                        {{ originalPostDetails?.content }}
+                                    </div>
+                                    <div class="forwarded-message-footer">
+                                        <span class="forwarded-message-channel fs-x-small">{{ sourceName }}</span>
+                                        @if (postingIsOfToday) {
+                                            <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-x-small"></span>,
+                                        }
+                                        <span
+                                            class="fs-x-small"
+                                            style="margin-right: 1rem"
+                                            [disableTooltip]="postingIsOfToday"
+                                            ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}"
+                                        >
+                                            {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         }
                         <div class="hover-actions post-content-margin" [ngClass]="{ 'mb-2': previewMode }">
                             @if (!previewMode) {

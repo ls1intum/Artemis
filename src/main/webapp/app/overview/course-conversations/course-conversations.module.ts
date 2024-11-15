@@ -33,6 +33,8 @@ import { CourseWideSearchComponent } from 'app/overview/course-conversations/cou
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { ForwardMessageDialogComponent } from 'app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 const routes: Routes = [
     {
@@ -57,6 +59,7 @@ const routes: Routes = [
         InfiniteScrollModule,
         CourseUsersSelectorModule,
         ProfilePictureComponent,
+        ArtemisMarkdownEditorModule,
     ],
     declarations: [
         CourseConversationsComponent,
@@ -84,5 +87,6 @@ const routes: Routes = [
         CourseWideSearchComponent,
         ForwardMessageDialogComponent,
     ],
+    providers: [MetisService],
 })
 export class CourseConversationsModule {}
