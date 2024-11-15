@@ -152,6 +152,18 @@ describe('ProgrammingExerciseDetailComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('should reload on participation change', fakeAsync(() => {
+        const loadDiffSpy = jest.spyOn(comp, 'loadGitDiffReport');
+        jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
+        jest.spyOn(exerciseService, 'getLatestFullTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
+        comp.onParticipationChange();
+        tick();
+        expect(loadDiffSpy).toHaveBeenCalledOnce();
+        expect(comp.programmingExercise.coveredLinesRatio).toBe(0.5);
+    }));
+
     describe('onInit for course exercise', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
@@ -160,18 +172,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
             const route = TestBed.inject(ActivatedRoute);
             route.data = of({ programmingExercise });
         });
-
-        it('should reload on participation change', fakeAsync(() => {
-            const loadDiffSpy = jest.spyOn(comp, 'loadGitDiffReport');
-            jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
-            jest.spyOn(exerciseService, 'getLatestFullTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
-            comp.programmingExercise = mockProgrammingExercise;
-            comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
-            comp.onParticipationChange();
-            tick();
-            expect(loadDiffSpy).toHaveBeenCalledOnce();
-            expect(comp.programmingExercise.coveredLinesRatio).toBe(0.5);
-        }));
 
         it('should not be in exam mode', async () => {
             // WHEN
