@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -155,29 +156,32 @@ public abstract class PushNotificationService implements InstantNotificationServ
         }
 
         final String date = Instant.now().toString();
-        var notificationData = new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date,
-                Constants.PUSH_NOTIFICATION_VERSION);
 
-        try {
-            final String payload = mapper.writeValueAsString(notificationData);
-            final byte[] initializationVector = new byte[16];
+        final byte[] initializationVector = new byte[16];
 
-            List<RelayNotificationRequest> notificationRequests = userDeviceConfigurations.stream().flatMap(deviceConfiguration -> {
-                random.nextBytes(initializationVector);
+        List<RelayNotificationRequest> notificationRequests = userDeviceConfigurations.stream().flatMap(deviceConfiguration -> {
+            String payload;
+            try {
+                var notificationData = new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date,
+                        Constants.PUSH_NOTIFICATION_VERSION);
+                payload = mapper.writeValueAsString(notificationData);
+            }
+            catch (JsonProcessingException e) {
+                log.error("Error creating push notification payload!", e);
+                return null;
+            }
 
-                SecretKey key = new SecretKeySpec(deviceConfiguration.getSecretKey(), "AES");
+            random.nextBytes(initializationVector);
 
-                String ivAsString = Base64.getEncoder().encodeToString(initializationVector);
-                Optional<String> payloadCiphertext = encrypt(payload, key, initializationVector);
+            SecretKey key = new SecretKeySpec(deviceConfiguration.getSecretKey(), "AES");
 
-                return payloadCiphertext.stream().map(s -> new RelayNotificationRequest(ivAsString, s, deviceConfiguration.getToken()));
-            }).toList();
+            String ivAsString = Base64.getEncoder().encodeToString(initializationVector);
+            Optional<String> payloadCiphertext = encrypt(payload, key, initializationVector);
 
-            sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl.get());
-        }
-        catch (JsonProcessingException e) {
-            log.error("Error creating push notification payload!", e);
-        }
+            return payloadCiphertext.stream().map(s -> new RelayNotificationRequest(ivAsString, s, deviceConfiguration.getToken()));
+        }).toList();
+
+        sendNotificationRequestsToEndpoint(notificationRequests.stream().filter(Objects::nonNull).toList(), relayServerBaseUrl.get());
     }
 
     protected abstract PushNotificationDeviceConfigurationRepository getRepository();

@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfigurationId;
 import de.tum.cit.aet.artemis.communication.dto.PushNotificationRegisterBody;
@@ -100,10 +101,12 @@ public class PushNotificationResource {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
+        PushNotificationApiType apiType = pushNotificationRegisterBody.apiType() != null ? pushNotificationRegisterBody.apiType() : PushNotificationApiType.DEFAULT;
+
         User user = userRepository.getUser();
 
         PushNotificationDeviceConfiguration deviceConfiguration = new PushNotificationDeviceConfiguration(pushNotificationRegisterBody.token(),
-                pushNotificationRegisterBody.deviceType(), expirationDate, newKey.getEncoded(), user);
+                pushNotificationRegisterBody.deviceType(), expirationDate, newKey.getEncoded(), user, apiType);
         pushNotificationDeviceConfigurationRepository.save(deviceConfiguration);
 
         var encodedKey = Base64.getEncoder().encodeToString(newKey.getEncoded());
