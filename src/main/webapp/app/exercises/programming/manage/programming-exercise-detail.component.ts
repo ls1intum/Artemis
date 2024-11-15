@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, of } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -59,6 +59,7 @@ import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -231,7 +232,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     tap((gitDiffReport) => {
                         this.processGitDiffReport(gitDiffReport);
                     }),
-                    switchMap(() => (this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : [])),
+                    switchMap(() =>
+                        this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : of([] as BuildLogStatisticsDTO),
+                    ),
                     tap((buildLogStatistics) => {
                         if (this.programmingExercise.isAtLeastEditor) {
                             this.programmingExercise.buildLogStatistics = buildLogStatistics;
@@ -803,7 +806,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     loadGitDiffReport() {
         this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
             this.processGitDiffReport(gitDiffReport);
-            this.getExerciseDetails();
+            this.exerciseDetailSections = this.getExerciseDetails();
         });
     }
 
