@@ -352,65 +352,60 @@ test.describe('Exam participation', () => {
             }
         });
 
-        test('Instructor changes problem statement and all participants are informed', async ({
-            browser,
-            login,
-            navigationBar,
-            courseManagement,
-            examManagement,
-            examExerciseGroups,
-            editExam,
-            textExerciseCreation,
-        }) => {
-            await login(instructor);
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExamsOfCourse(course.id!);
-            await examManagement.openExam(exam.id!);
+        test(
+            'Instructor changes problem statement and all participants are informed',
+            { tag: '@fast' },
+            async ({ browser, login, navigationBar, courseManagement, examManagement, examExerciseGroups, editExam, textExerciseCreation }) => {
+                await login(instructor);
+                await navigationBar.openCourseManagement();
+                await courseManagement.openExamsOfCourse(course.id!);
+                await examManagement.openExam(exam.id!);
 
-            const studentPages = [];
+                const studentPages = [];
 
-            for (const student of students) {
-                const studentContext = await browser.newContext();
-                const studentPage = await studentContext.newPage();
-                studentPages.push(studentPage);
+                for (const student of students) {
+                    const studentContext = await browser.newContext();
+                    const studentPage = await studentContext.newPage();
+                    studentPages.push(studentPage);
 
-                await Commands.login(studentPage, student);
-                await studentPage.goto(`/courses/${course.id!}/exams/${exam.id!}`);
-                const examStartEnd = new ExamStartEndPage(studentPage);
-                await examStartEnd.startExam(false);
-                const examNavigation = new ExamNavigationBar(studentPage);
-                await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
-            }
+                    await Commands.login(studentPage, student);
+                    await studentPage.goto(`/courses/${course.id!}/exams/${exam.id!}`);
+                    const examStartEnd = new ExamStartEndPage(studentPage);
+                    await examStartEnd.startExam(false);
+                    const examNavigation = new ExamNavigationBar(studentPage);
+                    await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
+                }
 
-            await editExam.openExerciseGroups();
-            await examExerciseGroups.clickEditExercise(exercise.exerciseGroup!.id!, exercise.id!);
+                await editExam.openExerciseGroups();
+                await examExerciseGroups.clickEditExercise(exercise.exerciseGroup!.id!, exercise.id!);
 
-            const problemStatementText = textExerciseTemplate.problemStatement;
-            const startOfChangesIndex = problemStatementText.lastIndexOf(' ') + 1;
-            const removedText = problemStatementText.slice(startOfChangesIndex);
-            const unchangedText = problemStatementText.slice(0, startOfChangesIndex);
-            const addedText = 'Changed';
-            await textExerciseCreation.clearProblemStatement();
-            await textExerciseCreation.typeProblemStatement(unchangedText + addedText);
-            await textExerciseCreation.create();
+                const problemStatementText = textExerciseTemplate.problemStatement;
+                const startOfChangesIndex = problemStatementText.lastIndexOf(' ') + 1;
+                const removedText = problemStatementText.slice(startOfChangesIndex);
+                const unchangedText = problemStatementText.slice(0, startOfChangesIndex);
+                const addedText = 'Changed';
+                await textExerciseCreation.clearProblemStatement();
+                await textExerciseCreation.typeProblemStatement(unchangedText + addedText);
+                await textExerciseCreation.create();
 
-            for (const studentPage of studentPages) {
-                const modalDialog = new ModalDialogBox(studentPage);
-                const exerciseUpdateMessage = `The problem statement of the exercise '${exercise.exerciseGroup!.title!}' was updated. Please open the exercise to see the changes.`;
-                await modalDialog.checkDialogType('Problem Statement Update');
-                await modalDialog.checkDialogMessage(exerciseUpdateMessage);
-                await modalDialog.checkDialogAuthor(instructor.username);
-                await modalDialog.pressModalButton('Navigate to exercise');
-                const examParticipationActions = new ExamParticipationActions(studentPage);
-                await examParticipationActions.checkExerciseProblemStatementDifference([
-                    { text: unchangedText, differenceType: TextDifferenceType.NONE },
-                    { text: removedText, differenceType: TextDifferenceType.DELETE },
-                    { text: addedText, differenceType: TextDifferenceType.ADD },
-                ]);
-                await studentPage.locator('#highlightDiffButton').click();
-                await examParticipationActions.checkExerciseProblemStatementDifference([{ text: unchangedText + addedText, differenceType: TextDifferenceType.NONE }]);
-            }
-        });
+                for (const studentPage of studentPages) {
+                    const modalDialog = new ModalDialogBox(studentPage);
+                    const exerciseUpdateMessage = `The problem statement of the exercise '${exercise.exerciseGroup!.title!}' was updated. Please open the exercise to see the changes.`;
+                    await modalDialog.checkDialogType('Problem Statement Update');
+                    await modalDialog.checkDialogMessage(exerciseUpdateMessage);
+                    await modalDialog.checkDialogAuthor(instructor.username);
+                    await modalDialog.pressModalButton('Navigate to exercise');
+                    const examParticipationActions = new ExamParticipationActions(studentPage);
+                    await examParticipationActions.checkExerciseProblemStatementDifference([
+                        { text: unchangedText, differenceType: TextDifferenceType.NONE },
+                        { text: removedText, differenceType: TextDifferenceType.DELETE },
+                        { text: addedText, differenceType: TextDifferenceType.ADD },
+                    ]);
+                    await studentPage.locator('#highlightDiffButton').click();
+                    await examParticipationActions.checkExerciseProblemStatementDifference([{ text: unchangedText + addedText, differenceType: TextDifferenceType.NONE }]);
+                }
+            },
+        );
     });
 
     test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
