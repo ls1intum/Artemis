@@ -82,7 +82,7 @@ public class ConversationNotificationService {
         }
         var imageUrl = createdMessage.getAuthor().getImageUrl() == null ? "" : createdMessage.getAuthor().getImageUrl();
         String[] placeholders = createPlaceholdersNewMessageChannelText(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
-                conversationName, createdMessage.getAuthor().getName(), conversationType, imageUrl, createdMessage.getAuthor().getId());
+                conversationName, createdMessage.getAuthor().getName(), conversationType, imageUrl, createdMessage.getAuthor().getId().toString());
         ConversationNotification notification = createConversationMessageNotification(course.getId(), createdMessage, notificationType, notificationText, true, placeholders);
         save(notification, mentionedUsers, placeholders);
         return notification;
@@ -90,8 +90,8 @@ public class ConversationNotificationService {
 
     @NotificationPlaceholderCreator(values = { CONVERSATION_NEW_MESSAGE })
     public static String[] createPlaceholdersNewMessageChannelText(String courseTitle, String messageContent, String messageCreationDate, String conversationName,
-            String authorName, String conversationType, String imageUrl, Long userId) {
-        return new String[] { courseTitle, messageContent, messageCreationDate, conversationName, authorName, conversationType, imageUrl, userId.toString() };
+            String authorName, String conversationType, String imageUrl, String userId) {
+        return new String[] { courseTitle, messageContent, messageCreationDate, conversationName, authorName, conversationType, imageUrl, userId };
     }
 
     private void save(ConversationNotification notification, Set<User> mentionedUsers, String[] placeHolders) {

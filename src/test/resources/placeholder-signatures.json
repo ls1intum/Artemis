@@ -75,6 +75,12 @@
   }, {
     "fieldName" : "conversationType",
     "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "imageUrl",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "userId",
+    "fieldType" : "java.lang.String"
   } ]
 }, {
   "notificationType" : "CONVERSATION_NEW_REPLY_MESSAGE",
@@ -101,6 +107,12 @@
     "fieldType" : "java.lang.String"
   }, {
     "fieldName" : "conversationName",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "imageUrl",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "userId",
     "fieldType" : "java.lang.String"
   } ]
 }, {
@@ -149,6 +161,12 @@
     "fieldType" : "java.lang.String"
   }, {
     "fieldName" : "conversationName",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "imageUrl",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "userId",
     "fieldType" : "java.lang.String"
   } ]
 }, {
@@ -297,6 +315,12 @@
   }, {
     "fieldName" : "postAuthorName",
     "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "imageUrl",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "authorId",
+    "fieldType" : "java.lang.String"
   } ]
 }, {
   "notificationType" : "NEW_CPC_PLAGIARISM_CASE_STUDENT",
@@ -357,6 +381,12 @@
   }, {
     "fieldName" : "conversationName",
     "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "imageUrl",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "userId",
+    "fieldType" : "java.lang.String"
   } ]
 }, {
   "notificationType" : "NEW_REPLY_FOR_EXAM_POST",
@@ -383,6 +413,12 @@
     "fieldType" : "java.lang.String"
   }, {
     "fieldName" : "conversationName",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "imageUrl",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "userId",
     "fieldType" : "java.lang.String"
   } ]
 }, {
@@ -411,6 +447,12 @@
   }, {
     "fieldName" : "conversationName",
     "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "imageUrl",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "userId",
+    "fieldType" : "java.lang.String"
   } ]
 }, {
   "notificationType" : "NEW_REPLY_FOR_LECTURE_POST",
@@ -437,6 +479,12 @@
     "fieldType" : "java.lang.String"
   }, {
     "fieldName" : "conversationName",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "imageUrl",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "userId",
     "fieldType" : "java.lang.String"
   } ]
 }, {
