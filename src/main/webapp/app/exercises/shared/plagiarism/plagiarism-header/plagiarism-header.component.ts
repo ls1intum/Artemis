@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -19,6 +19,8 @@ export class PlagiarismHeaderComponent {
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
+
+    @Output() isLockFilesEnabledChange = new EventEmitter<boolean>();
 
     protected readonly faLock: IconDefinition = faLock;
     protected readonly faUnlock: IconDefinition = faUnlock;
@@ -81,7 +83,11 @@ export class PlagiarismHeaderComponent {
         this.splitControlSubject.next('even');
     }
 
+    /**
+     * Toggles the state of file locking and emits the new state to the parent component.
+     */
     toggleLockFiles() {
         this.isLockFilesEnabled = !this.isLockFilesEnabled;
+        this.isLockFilesEnabledChange.emit(this.isLockFilesEnabled);
     }
 }

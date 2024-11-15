@@ -10,6 +10,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { HttpResponse } from '@angular/common/http';
 import { SimpleMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMatch';
 import dayjs from 'dayjs/esm';
+import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -27,10 +28,12 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     @Input() splitControlSubject: Subject<string>;
     @Input() sortByStudentLogin: string;
     @Input() forStudent: boolean;
+    @Input() isLockFilesEnabled = false;
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
     plagiarismComparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+    fileSelectedSubject = new Subject<{ idx: number; file: FileWithHasMatch }>();
 
     public split: Split.Instance;
 
@@ -45,7 +48,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 
     /**
-     * Initialize third party libs inside this lifecycle hook.
+     * Initialize third-party libraries inside this lifecycle hook.
      */
     ngAfterViewInit(): void {
         const paneElements = this.panes.map((pane: SplitPaneDirective) => pane.elementRef.nativeElement);
@@ -122,7 +125,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
      * @param matches list of objects containing the index and length of matched elements
      * @param submission the submission to map the elements of
      */
-    mapMatchesToElements(matches: SimpleMatch[], submission: PlagiarismSubmission<TextSubmissionElement>) {
+    private mapMatchesToElements(matches: SimpleMatch[], submission: PlagiarismSubmission<TextSubmissionElement>) {
         // sort submission elements so that from and to indexes from matches reference correct elements
         const elements = submission.elements?.sort((a, b) => a.id - b.id);
         const filesToMatchedElements = new Map<string, FromToElement[]>();

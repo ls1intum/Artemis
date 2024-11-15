@@ -5,7 +5,14 @@
                 <jhi-modeling-submission-viewer [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()" [hideContent]="false" />
             }
             @if (isProgrammingOrTextExercise) {
-                <jhi-text-submission-viewer [exercise]="exercise" [matches]="matchesA" [plagiarismSubmission]="getTextSubmissionA()" [hideContent]="false" />
+                <jhi-text-submission-viewer
+                    [fileSelectedSubject]="fileSelectedSubject"
+                    [exercise]="exercise"
+                    [matches]="matchesA"
+                    [plagiarismSubmission]="getTextSubmissionA()"
+                    [isLockFilesEnabled]="isLockFilesEnabled"
+                    [hideContent]="false"
+                />
             }
         }
     </div>
@@ -20,9 +27,11 @@
             }
             @if (isProgrammingOrTextExercise) {
                 <jhi-text-submission-viewer
+                    [fileSelectedSubject]="fileSelectedSubject"
                     [exercise]="exercise"
                     [matches]="matchesB"
                     [plagiarismSubmission]="getTextSubmissionB()"
+                    [isLockFilesEnabled]="isLockFilesEnabled"
                     [hideContent]="forStudent && dayjs(exercise.dueDate).isAfter(dayjs())"
                 />
             }
