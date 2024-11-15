@@ -760,7 +760,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * @param {Course} course in which the metis service is used
      */
     setFaqs(course: Course | undefined): void {
-        if (course) {
+        if (course?.faqEnabled) {
             this.faqService
                 .findAllByCourseIdAndState(this.courseId, FaqState.ACCEPTED)
                 .pipe(map((res: HttpResponse<Faq[]>) => res.body))
