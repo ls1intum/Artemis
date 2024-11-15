@@ -15,6 +15,22 @@
     color: inherit;
 }
 
+.hover-actions {
+    position: absolute;
+    top: -1.8rem;
+    right: 1%;
+    display: flex;
+    gap: 10px;
+    visibility: hidden;
+    transition:
+        opacity 0.2s ease-in-out,
+        visibility 0.2s ease-in-out;
+    background: var(--metis-selection-option-background);
+    padding: 5px;
+    border-radius: 5px;
+    border: 0.01rem solid var(--metis-gray);
+}
+
 .message-container {
     position: relative;
     border-radius: 5px;
@@ -36,22 +52,6 @@
 
 .message-content:hover {
     background: var(--metis-selection-option-hover-background);
-}
-
-.hover-actions {
-    position: absolute;
-    top: -1.8rem;
-    right: 1%;
-    display: flex;
-    gap: 10px;
-    visibility: hidden;
-    transition:
-        opacity 0.2s ease-in-out,
-        visibility 0.2s ease-in-out;
-    background: var(--metis-selection-option-background);
-    padding: 5px;
-    border-radius: 5px;
-    border: 0.01rem solid var(--metis-gray);
 }
 
 .message-container:hover .hover-actions {

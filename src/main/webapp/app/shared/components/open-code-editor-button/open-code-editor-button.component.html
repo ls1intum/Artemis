@@ -9,7 +9,7 @@
             [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
             [buttonLoading]="loading"
             [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
+            [hideLabelMobile]="hideLabelMobile"
             [routerLink]="[courseAndExerciseNavigationUrl, participations[0].id]"
         ></button>
     }
@@ -22,7 +22,7 @@
             [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
             [buttonLoading]="loading"
             [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
+            [hideLabelMobile]="hideLabelMobile"
             [ngbPopover]="popContent"
             [autoClose]="'outside'"
             placement="right auto"
@@ -44,7 +44,7 @@
             [buttonLabel]="'artemisApp.exerciseActions.' + (isPracticeMode ? 'openPracticeCodeEditor' : 'openGradedCodeEditor') | artemisTranslate"
             [buttonLoading]="loading"
             [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
+            [hideLabelMobile]="hideLabelMobile"
             [routerLink]="[courseAndExerciseNavigationUrl, activeParticipation.id]"
         ></button>
     </ng-template>

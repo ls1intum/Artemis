@@ -26,7 +26,6 @@ import { GenericConfirmationDialogComponent } from './dialogs/generic-confirmati
 import { ConversationSettingsComponent } from './dialogs/conversation-detail-dialog/tabs/conversation-settings/conversation-settings.component';
 import { OneToOneChatCreateDialogComponent } from './dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { GroupChatCreateDialogComponent } from './dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
-import { GroupChatIconComponent } from './other/group-chat-icon/group-chat-icon.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { CourseConversationsCodeOfConductComponent } from 'app/overview/course-conversations/code-of-conduct/course-conversations-code-of-conduct.component';
 import { CourseWideSearchComponent } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
@@ -83,7 +82,6 @@ const routes: Routes = [
         ConversationSettingsComponent,
         OneToOneChatCreateDialogComponent,
         GroupChatCreateDialogComponent,
-        GroupChatIconComponent,
         CourseWideSearchComponent,
         ForwardMessageDialogComponent,
     ],
