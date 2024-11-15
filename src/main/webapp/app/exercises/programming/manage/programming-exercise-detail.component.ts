@@ -193,41 +193,45 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.loadingTemplateParticipationResults = false;
                         this.loadingSolutionParticipationResults = false;
                     }),
-                    tap(() =>
-                        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                            if (profileInfo) {
-                                if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId) {
-                                    this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
-                                        profileInfo.buildPlanURLTemplate,
-                                        this.programmingExercise.projectKey,
-                                        this.programmingExercise.templateParticipation.buildPlanId,
-                                    );
+                    tap(
+                        () =>
+                            (this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                                if (profileInfo) {
+                                    if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId) {
+                                        this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
+                                            profileInfo.buildPlanURLTemplate,
+                                            this.programmingExercise.projectKey,
+                                            this.programmingExercise.templateParticipation.buildPlanId,
+                                        );
+                                    }
+                                    if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation?.buildPlanId) {
+                                        this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
+                                            profileInfo.buildPlanURLTemplate,
+                                            this.programmingExercise.projectKey,
+                                            this.programmingExercise.solutionParticipation.buildPlanId,
+                                        );
+                                    }
+                                    this.supportsAuxiliaryRepositories =
+                                        this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)
+                                            .auxiliaryRepositoriesSupported ?? false;
+                                    this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+                                    this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
+                                    this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
+                                    if (this.irisEnabled) {
+                                        this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                                            this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
+                                        });
+                                    }
                                 }
-                                if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation?.buildPlanId) {
-                                    this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
-                                        profileInfo.buildPlanURLTemplate,
-                                        this.programmingExercise.projectKey,
-                                        this.programmingExercise.solutionParticipation.buildPlanId,
-                                    );
-                                }
-                                this.supportsAuxiliaryRepositories =
-                                    this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ??
-                                    false;
-                                this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                                this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
-                                this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-                                if (this.irisEnabled) {
-                                    this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                                        this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
-                                    });
-                                }
-                            }
-                        }),
+                            })),
                     ),
-                    tap(() =>
-                        this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!).subscribe((submissionPolicy) => {
-                            this.programmingExercise.submissionPolicy = submissionPolicy;
-                        }),
+                    tap(
+                        () =>
+                            (this.submissionPolicySubscription = this.programmingExerciseSubmissionPolicyService
+                                .getSubmissionPolicyOfProgrammingExercise(exerciseId!)
+                                .subscribe((submissionPolicy) => {
+                                    this.programmingExercise.submissionPolicy = submissionPolicy;
+                                })),
                     ),
                     switchMap(() => this.programmingExerciseService.getDiffReport(this.programmingExercise.id!)),
                     tap((gitDiffReport) => {
@@ -235,7 +239,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     }),
                     tap(() => {
                         if (this.programmingExercise.isAtLeastEditor) {
-                            this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatistics) => {
+                            this.buildLogsSubscription = this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatistics) => {
                                 this.programmingExercise.buildLogStatistics = buildLogStatistics;
                             });
                         }
