@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { Subject, Subscription } from 'rxjs';
+import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
 
 /**
  * A file name that additionally stores if a plagiarism match has been found for it.
@@ -18,7 +19,7 @@ export type FileWithHasMatch = {
 export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     @Input() files: FileWithHasMatch[];
     @Input() studentLogin: string;
-    @Input() fileSelectedSubject!: Subject<{ idx: number; file: FileWithHasMatch }>;
+    @Input() fileSelectedSubject!: Subject<TextPlagiarismFileElement>;
     @Input() isLockFilesEnabled!: boolean;
 
     @Output() selectFile = new EventEmitter<string>();
@@ -33,8 +34,6 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.fileSelectSubscription = this.fileSelectedSubject.subscribe((val) => {
-            console.log('passed file', val);
-            console.log('passed and current index', val.idx, this.activeFileIndex);
             if (val.file && this.isLockFilesEnabled) {
                 this.handleFileSelectWithoutPropagation(val.file, val.idx);
             }
@@ -67,6 +66,11 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
         return this.files[this.activeFileIndex].file;
     }
 
+    /**
+     * handles selection of file from dropdown, propagates change to fileslectionsubject component for lock sync
+     * @param file to be selected
+     * @param idx index of the file from the dropdown
+     */
     handleFileSelect(file: FileWithHasMatch, idx: number): void {
         this.fileSelectedSubject.next({ idx: idx, file: file });
         this.activeFileIndex = idx;
@@ -74,6 +78,11 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
         this.selectFile.emit(file.file);
     }
 
+    /**
+     * handles selection of file from dropdown, do NOT propagates change to fileslectionsubject component for lock sync
+     * @param file to be selected
+     * @param idx index of the file from the dropdown
+     */
     handleFileSelectWithoutPropagation(file: FileWithHasMatch, idx: number) {
         this.activeFileIndex = idx;
         this.showFiles = false;

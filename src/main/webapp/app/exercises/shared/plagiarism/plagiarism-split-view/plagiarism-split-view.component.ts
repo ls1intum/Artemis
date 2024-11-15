@@ -10,7 +10,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { HttpResponse } from '@angular/common/http';
 import { SimpleMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMatch';
 import dayjs from 'dayjs/esm';
-import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
+import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -33,7 +33,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
     plagiarismComparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
-    fileSelectedSubject = new Subject<{ idx: number; file: FileWithHasMatch }>();
+    fileSelectedSubject = new Subject<TextPlagiarismFileElement>();
 
     public split: Split.Instance;
 

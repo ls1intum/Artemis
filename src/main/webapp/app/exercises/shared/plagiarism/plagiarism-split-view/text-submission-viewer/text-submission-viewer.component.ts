@@ -13,6 +13,7 @@ import { escape } from 'lodash-es';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { Subject } from 'rxjs';
+import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
 
 type FilesWithType = { [p: string]: FileType };
 
@@ -27,7 +28,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
     @Input() matches: Map<string, FromToElement[]>;
     @Input() plagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>;
     @Input() hideContent: boolean;
-    @Input() fileSelectedSubject!: Subject<{ idx: number; file: FileWithHasMatch }>;
+    @Input() fileSelectedSubject!: Subject<TextPlagiarismFileElement>;
     @Input() isLockFilesEnabled = false;
 
     /**
