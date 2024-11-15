@@ -416,7 +416,7 @@ public class FileResource {
     @GetMapping("files/attachments/lecture/{lectureId}/{filename}")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
+        log.debug("REST request to get lecture attachment : {}", filename);
         String fileNameWithoutSpaces = filename.replaceAll(" ", "_");
         sanitizeFilenameElseThrow(fileNameWithoutSpaces);
 
@@ -430,24 +430,6 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-
-        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
-    }
-
-    /**
-     * GET /files/courses/{courseId}/attachments/{attachmentId} : Returns the file associated with the
-     * given attachment ID as a downloadable resource
-     *
-     * @param courseId     The ID of the course that the Attachment belongs to
-     * @param attachmentId the ID of the attachment to retrieve
-     * @return ResponseEntity containing the file as a resource
-     */
-    @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
-    @EnforceAtLeastEditorInCourse
-    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId) {
-        Attachment attachment = attachmentRepository.findByIdElseThrow(attachmentId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        checkAttachmentExistsInCourseOrThrow(course, attachment);
 
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
@@ -494,8 +476,9 @@ public class FileResource {
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/*")
     @EnforceAtLeastStudent
+    // TODO: this method is kind of redundant to the method getAttachmentFile below, double check if both are actually needed
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
-        log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
+        log.debug("REST request to get the file for attachment unit {} for students", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 
         // get the course for a lecture's attachment unit
@@ -509,7 +492,7 @@ public class FileResource {
     }
 
     /**
-     * GET files/courses/{courseId}/attachment-units/{attachmenUnitId} : Returns the file associated with the
+     * GET files/courses/{courseId}/attachment-units/{attachmentUnitId} : Returns the file associated with the
      * given attachmentUnit ID as a downloadable resource
      *
      * @param courseId         The ID of the course that the Attachment belongs to
@@ -519,11 +502,30 @@ public class FileResource {
     @GetMapping("files/courses/{courseId}/attachment-units/{attachmentUnitId}")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<byte[]> getAttachmentUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentUnitId) {
-        log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
+        log.debug("REST request to get the file for attachment unit {} for editors", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Attachment attachment = attachmentUnit.getAttachment();
         checkAttachmentUnitExistsInCourseOrThrow(course, attachmentUnit);
+
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
+    }
+
+    /**
+     * GET /files/courses/{courseId}/attachments/{attachmentId} : Returns the file associated with the
+     * given attachment ID as a downloadable resource
+     *
+     * @param courseId     The ID of the course that the Attachment belongs to
+     * @param attachmentId the ID of the attachment to retrieve
+     * @return ResponseEntity containing the file as a resource
+     */
+    @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId) {
+        log.debug("REST request to get attachment file : {}", attachmentId);
+        Attachment attachment = attachmentRepository.findByIdElseThrow(attachmentId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        checkAttachmentExistsInCourseOrThrow(course, attachment);
 
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
