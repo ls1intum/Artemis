@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.7.0"
+version = "7.7.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -55,11 +55,15 @@ idea {
 }
 
 spotless {
+
     // allows to execute the code formatting commands ./gradlew spotlessApply and ./gradlew spotlessCheck
     java {
         target {
             fileTree(rootDir) {
-                include "**/*.java"
+                include (
+                    "src/main/java/**/*.java",
+                    "src/test/java/**/*.java",
+                )
                 exclude(
                         "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
                         "**/node_modules/**",
@@ -71,7 +75,6 @@ spotless {
                         "**/src/main/resources/templates/**",
                         "/docker/**",
                         "checked-out-repos/**",
-                        "**/src/main/java/org/eclipse/**",
                         "supporting_scripts/**"
                 )
             }
@@ -348,7 +351,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.13.6"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.14.0"
     implementation "net.logstash.logback:logstash-logback-encoder:8.0"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
@@ -411,8 +414,8 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.3"
     implementation "org.springframework.cloud:spring-cloud-commons:4.1.4"
 
-    implementation "io.netty:netty-all:4.1.114.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.1.23"
+    implementation "io.netty:netty-all:4.1.115.Final"
+    implementation "io.projectreactor.netty:reactor-netty:1.2.0"
     implementation "org.springframework:spring-messaging:6.1.14"
     implementation "org.springframework.retry:spring-retry:2.0.10"
 
@@ -533,10 +536,10 @@ dependencies {
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.177"
+    testImplementation "io.github.classgraph:classgraph:4.8.179"
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.10.2"
+    testImplementation "org.gradle:gradle-tooling-api:8.11"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.2"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
@@ -618,7 +621,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.10.2"
+    gradleVersion = "8.11"
 }
 
 tasks.register("stage") {

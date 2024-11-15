@@ -12,4 +12,5 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 export class FeedbackModalComponent {
     feedbackDetail = input.required<FeedbackDetail>();
     activeModal = inject(NgbActiveModal);
+    readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis';
 }

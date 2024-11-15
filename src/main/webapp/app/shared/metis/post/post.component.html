@@ -149,11 +149,11 @@
         </button>
     }
     @if (mayEditOrDelete) {
-        <button class="dropdown-item d-flex" (click)="editPosting()">
+        <button class="dropdown-item d-flex editIcon" (click)="editPosting()">
             <fa-icon [icon]="faPencilAlt" class="item-icon"></fa-icon>
             <span jhiTranslate="artemisApp.metis.post.editMessage"></span>
         </button>
-        <button class="dropdown-item d-flex" (click)="deletePost()">
+        <button class="dropdown-item d-flex deleteIcon" (click)="deletePost()">
             <fa-icon [icon]="faTrash" class="item-icon"></fa-icon>
             <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>
         </button>
