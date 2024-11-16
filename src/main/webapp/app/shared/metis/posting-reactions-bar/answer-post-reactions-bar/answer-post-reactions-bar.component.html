@@ -90,7 +90,7 @@
             <button
                 class="reaction-button clickable px-2 fs-small bookmark"
                 (click)="bookmarkPosting()"
-                [ngbTooltip]="posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : ('artemisApp.metis.post.bookmarkPost' | artemisTranslate)"
+                [ngbTooltip]="(posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost') | artemisTranslate"
             >
                 <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" cdkOverlayOrigin></fa-icon>
             </button>

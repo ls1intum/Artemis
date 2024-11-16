@@ -22,13 +22,21 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
 
     SavedPost findSavedPostByUserIdAndPostIdAndPostType(Long userId, Long postId, PostingType postType);
 
-    List<SavedPost> findSavedPostsByUserIdAndStatusOrderById(Long userId, SavedPostStatus status);
+    List<SavedPost> findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(Long userId, SavedPostStatus status);
+
+    List<SavedPost> findSavedPostsByUserId(Long userId);
 
     List<SavedPost> findByCompletedAtBefore(ZonedDateTime cutoffDate);
 
+    /***
+     * The value "sp.postType = 0" represents a post, given by the enum {{@link PostingType}}
+     */
     @Query("SELECT sp FROM SavedPost sp " + "LEFT JOIN Post p ON sp.postId = p.id " + "WHERE sp.postType = 0 AND p.id IS NULL")
     List<SavedPost> findOrphanedPostReferences();
 
+    /***
+     * The value "sp.postType = 1" represents an answer post, given by the enum {{@link PostingType}}
+     */
     @Query("SELECT sp FROM SavedPost sp " + "LEFT JOIN AnswerPost ap ON sp.postId = ap.id " + "WHERE sp.postType = 1 AND ap.id IS NULL")
     List<SavedPost> findOrphanedAnswerReferences();
 }

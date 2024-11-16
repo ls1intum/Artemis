@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { PostingSummaryComponent } from 'app/overview/course-conversations/posting-summary/posting-summary.component';
 import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
 import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
@@ -135,10 +135,12 @@ describe('PostingSummaryComponent', () => {
     });
 
     describe('Template rendering', () => {
-        beforeEach(() => {
+        beforeEach(fakeAsync(() => {
             fixture.componentRef.setInput('post', mockPost);
             fixture.detectChanges();
-        });
+            tick();
+            fixture.detectChanges();
+        }));
 
         it('should render author name', () => {
             const authorElement = fixture.nativeElement.querySelector('.posting-summary-author-content');

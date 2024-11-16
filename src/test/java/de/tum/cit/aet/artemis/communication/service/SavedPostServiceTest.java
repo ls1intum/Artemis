@@ -137,7 +137,7 @@ class SavedPostServiceTest {
     @Test
     void shouldReturnListFromRepositoryWhenQueriedByCurrentUser() {
         SavedPostStatus status = SavedPostStatus.IN_PROGRESS;
-        when(savedPostRepository.findSavedPostsByUserIdAndStatusOrderById(testUser.getId(), status)).thenReturn(List.of(testSavedPost));
+        when(savedPostRepository.findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(testUser.getId(), status)).thenReturn(List.of(testSavedPost));
 
         List<SavedPost> result = savedPostService.getSavedPostsForCurrentUser(status);
 

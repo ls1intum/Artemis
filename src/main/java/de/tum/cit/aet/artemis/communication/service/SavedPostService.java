@@ -44,7 +44,7 @@ public class SavedPostService {
         }
 
         PostingType type = post instanceof Post ? PostingType.POST : PostingType.ANSWER;
-        var author = userRepository.getUserWithGroupsAndAuthorities();
+        var author = userRepository.getUser();
         var savedPost = new SavedPost(author, post.getId(), type, SavedPostStatus.IN_PROGRESS, null);
         savedPostRepository.save(savedPost);
     }
@@ -54,14 +54,16 @@ public class SavedPostService {
      *
      * @param post post to remove from bookmarks
      */
-    public void removeSavedPostForCurrentUser(Posting post) {
+    public boolean removeSavedPostForCurrentUser(Posting post) {
         var existingSavedPost = this.getSavedPostForCurrentUser(post);
 
         if (existingSavedPost == null) {
-            return;
+            return false;
         }
 
         savedPostRepository.delete(existingSavedPost);
+
+        return true;
     }
 
     /**
@@ -89,9 +91,9 @@ public class SavedPostService {
      * @return a list of all saved posts of the current user with the given status
      */
     public List<SavedPost> getSavedPostsForCurrentUser(SavedPostStatus status) {
-        var currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        var currentUser = userRepository.getUser();
 
-        return savedPostRepository.findSavedPostsByUserIdAndStatusOrderById(currentUser.getId(), status);
+        return savedPostRepository.findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(currentUser.getId(), status);
     }
 
     /**
@@ -100,7 +102,7 @@ public class SavedPostService {
      * @return true if max saved post it reached, false otherwise
      */
     public boolean isMaximumSavedPostsReached() {
-        var currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        var currentUser = userRepository.getUser();
 
         return MAX_SAVED_POSTS_PER_USER <= savedPostRepository.countByUserId(currentUser.getId());
     }
@@ -113,7 +115,7 @@ public class SavedPostService {
      */
     private SavedPost getSavedPostForCurrentUser(Posting post) {
         PostingType type = post instanceof Post ? PostingType.POST : PostingType.ANSWER;
-        var author = userRepository.getUserWithGroupsAndAuthorities();
+        var author = userRepository.getUser();
 
         return savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(author.getId(), post.getId(), type);
     }

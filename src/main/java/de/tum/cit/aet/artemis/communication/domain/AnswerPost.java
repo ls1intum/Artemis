@@ -39,7 +39,10 @@ public class AnswerPost extends Posting {
     @OneToMany(mappedBy = "answerPost", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Reaction> reactions = new HashSet<>();
 
-    @OneToMany(mappedBy = "postId", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+    /***
+     * The value 1 represents an answer post, given by the enum {{@link PostingType}}
+     */
+    @OneToMany(mappedBy = "postId", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @SQLRestriction("post_type = 1")
     private Set<SavedPost> savedPosts = new HashSet<>();
 

@@ -1,6 +1,6 @@
 <div class="posting-summary rounded p-2" (click)="onTriggerNavigateToPost()">
     @if (post() !== undefined) {
-        @if (post()!.conversation !== undefined && post()!.conversation!.type !== undefined && post()!.conversation!.title !== undefined) {
+        @if (isShowSummary) {
             <div class="posting-summary-conversation fs-x-small text-secondary d-flex align-items-center mb-1">
                 <span class="d-inline-block">
                     <fa-icon [icon]="post()!.conversation!.type! == ConversationType.CHANNEL ? faHashtag : faLock"></fa-icon>
@@ -13,7 +13,7 @@
                 </span>
             </div>
         }
-        @if (post()!.author !== undefined && post()!.content !== undefined && post()!.postingType !== undefined) {
+        @if (isShowContent) {
             <div class="posting-summary-wrap">
                 @if (isAnswerPost) {
                     <div class="text-secondary">

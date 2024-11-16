@@ -98,10 +98,10 @@
                 "mobileDisclaimerCallToAction": "Konversation wählen",
                 "savedPosts": "Gespeicherte Nachrichten",
                 "progress": "In Bearbeitung",
-                "completed": "Abgeschlossen",
+                "completed": "Erledigt",
                 "archived": "Archiviert",
-                "emptySavedPosts": "Hier ist noch nichts. Speichere Nachrichten damit sie hier auftauchen.",
-                "deleteNoticeSavedPosts": "Abgeschlossene und archivierte Lesezeichen werden nach 100 Tagen gelöscht."
+                "emptySavedPosts": "Hier ist noch nichts. Speichere Nachrichten, damit sie hier auftauchen.",
+                "deleteNoticeSavedPosts": "Erledigte und archivierte Lesezeichen werden nach 100 Tagen gelöscht."
             },
             "post": {
                 "context": "Kontext",

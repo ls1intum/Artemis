@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -150,7 +151,9 @@ public class SavedPostResource {
 
         var post = retrievePostingElseThrow(postId, type);
 
-        this.savedPostService.removeSavedPostForCurrentUser(post);
+        if (!this.savedPostService.removeSavedPostForCurrentUser(post)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to delete this bookmark.");
+        }
 
         log.info("deletePost took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(null, null, HttpStatus.NO_CONTENT);

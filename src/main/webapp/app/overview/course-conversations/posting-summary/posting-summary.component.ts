@@ -21,6 +21,9 @@ export class PostingSummaryComponent {
 
     protected isAnswerPost = false;
     protected postingIsOfToday = false;
+    protected isShowPosting = false;
+    protected isShowSummary = false;
+    protected isShowContent = false;
 
     // Icons
     readonly faLock = faLock;
@@ -32,6 +35,10 @@ export class PostingSummaryComponent {
 
     constructor() {
         effect(() => {
+            this.isShowPosting = this.post() !== undefined;
+            this.isShowSummary =
+                this.isShowPosting && this.post()!.conversation !== undefined && this.post()!.conversation!.type !== undefined && this.post()!.conversation!.title !== undefined;
+            this.isShowContent = this.isShowPosting && this.post()!.author !== undefined && this.post()!.content !== undefined && this.post()!.postingType !== undefined;
             this.isAnswerPost = this.post()?.postingType === PostingType.ANSWER.valueOf();
             if (this.post()) {
                 this.postingIsOfToday = dayjs().isSame(this.post()!.creationDate, 'day');
