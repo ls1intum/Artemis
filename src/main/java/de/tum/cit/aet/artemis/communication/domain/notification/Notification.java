@@ -78,6 +78,12 @@ public abstract class Notification extends DomainObject {
     @Column(name = "target")
     private String target;
 
+    @Column(name = "version", columnDefinition = "tinyint default 1")
+    private short version;
+
+    @Column(name = "minor_version", columnDefinition = "tinyint default 1")
+    private short minorVersion;
+
     /**
      * The String target is created based on a custom JAVA class
      * which hold the needed information to build a valid URL/Link
@@ -241,6 +247,14 @@ public abstract class Notification extends DomainObject {
 
     public void setAuthor(User user) {
         this.author = user;
+    }
+
+    protected void setVersion(short version) {
+        this.version = version;
+    }
+
+    protected void setMinorVersion(short minorVersion) {
+        this.minorVersion = minorVersion;
     }
 
     @Override
