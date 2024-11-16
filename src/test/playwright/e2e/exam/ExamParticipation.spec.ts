@@ -17,7 +17,8 @@ import { ExamParticipationActions } from '../../support/pageobjects/exam/ExamPar
 const textFixture = 'loremIpsum.txt';
 const textFixtureShort = 'loremIpsum-short.txt';
 
-test.describe('Exam participation', { tag: '@slow' }, () => {
+test.describe('Exam participation', () => {
+    test.setTimeout(90000);
     let course: Course;
     let exerciseArray: Array<Exercise> = [];
     let studentTwoName: string;
@@ -221,7 +222,7 @@ test.describe('Exam participation', { tag: '@slow' }, () => {
         });
     });
 
-    test.describe('Normal Hand-in', () => {
+    test.describe('Normal Hand-in', { tag: '@slow' }, () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
