@@ -13,6 +13,7 @@ config = configparser.ConfigParser()
 config.read('config.ini')
 
 # Constants from config file
+SERVER_URL: str = config.get('Settings', 'server_url')
 CLIENT_URL: str = config.get('Settings', 'client_url')
 MAX_THREADS: int = int(config.get('Settings', 'max_threads'))
 
@@ -21,7 +22,7 @@ user_credentials: List[Tuple[str, str]] = []
 
 def make_create_user_post_request(session: Session, user_details: dict) -> None:
     """Send a POST request to create a user."""
-    url = f"{CLIENT_URL}/admin/users"
+    url = f"{SERVER_URL}/admin/users"
     headers = {"Content-Type": "application/json"}
     response = session.post(url, json=user_details, headers=headers)
 
