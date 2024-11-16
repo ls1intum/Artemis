@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, of } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -59,6 +59,7 @@ import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -193,55 +194,50 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.loadingTemplateParticipationResults = false;
                         this.loadingSolutionParticipationResults = false;
                     }),
-                    tap(
-                        () =>
-                            (this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                                if (profileInfo) {
-                                    if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId) {
-                                        this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
-                                            profileInfo.buildPlanURLTemplate,
-                                            this.programmingExercise.projectKey,
-                                            this.programmingExercise.templateParticipation.buildPlanId,
-                                        );
-                                    }
-                                    if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation?.buildPlanId) {
-                                        this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
-                                            profileInfo.buildPlanURLTemplate,
-                                            this.programmingExercise.projectKey,
-                                            this.programmingExercise.solutionParticipation.buildPlanId,
-                                        );
-                                    }
-                                    this.supportsAuxiliaryRepositories =
-                                        this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)
-                                            .auxiliaryRepositoriesSupported ?? false;
-                                    this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                                    this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
-                                    this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-                                    if (this.irisEnabled) {
-                                        this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                                            this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
-                                        });
-                                    }
-                                }
-                            })),
-                    ),
-                    tap(
-                        () =>
-                            (this.submissionPolicySubscription = this.programmingExerciseSubmissionPolicyService
-                                .getSubmissionPolicyOfProgrammingExercise(exerciseId!)
-                                .subscribe((submissionPolicy) => {
-                                    this.programmingExercise.submissionPolicy = submissionPolicy;
-                                })),
-                    ),
+                    switchMap(() => this.profileService.getProfileInfo()),
+                    tap(async (profileInfo) => {
+                        if (profileInfo) {
+                            if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId) {
+                                this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
+                                    profileInfo.buildPlanURLTemplate,
+                                    this.programmingExercise.projectKey,
+                                    this.programmingExercise.templateParticipation.buildPlanId,
+                                );
+                            }
+                            if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation?.buildPlanId) {
+                                this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
+                                    profileInfo.buildPlanURLTemplate,
+                                    this.programmingExercise.projectKey,
+                                    this.programmingExercise.solutionParticipation.buildPlanId,
+                                );
+                            }
+                            this.supportsAuxiliaryRepositories =
+                                this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ??
+                                false;
+                            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+                            this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
+                            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
+                            if (this.irisEnabled) {
+                                this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                                    this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
+                                });
+                            }
+                        }
+                    }),
+                    switchMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!)),
+                    tap((submissionPolicy) => {
+                        this.programmingExercise.submissionPolicy = submissionPolicy;
+                    }),
                     switchMap(() => this.programmingExerciseService.getDiffReport(this.programmingExercise.id!)),
                     tap((gitDiffReport) => {
                         this.processGitDiffReport(gitDiffReport);
                     }),
-                    tap(() => {
+                    switchMap(() =>
+                        this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : of([] as BuildLogStatisticsDTO),
+                    ),
+                    tap((buildLogStatistics) => {
                         if (this.programmingExercise.isAtLeastEditor) {
-                            this.buildLogsSubscription = this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatistics) => {
-                                this.programmingExercise.buildLogStatistics = buildLogStatistics;
-                            });
+                            this.programmingExercise.buildLogStatistics = buildLogStatistics;
                         }
                     }),
                 )
