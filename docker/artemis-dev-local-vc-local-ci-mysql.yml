@@ -17,7 +17,7 @@ services:
         group_add:
             - "999"
         ports:
-            - "8080:8080"
+            - "8080:9000"
             - "5005:5005" # Java Remote Debugging port declared in the java cmd options
         # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
