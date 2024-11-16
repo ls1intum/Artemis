@@ -1,6 +1,6 @@
 <div [id]="'exercise-' + modelingExercise?.id">
     @if (displayHeader) {
-        <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingParticiapationHeader.exercise!" [participation]="modelingParticiapationHeader">
+        <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingParticipationHeader.exercise!" [participation]="modelingParticipationHeader">
             <span pagetitle>
                 {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}:
                 <span class="font-weight-normal">{{ examMode ? modelingExercise?.exerciseGroup?.title : modelingExercise?.title }}</span>

@@ -71,7 +71,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     isOwnerOfParticipation: boolean;
 
     modelingExercise: ModelingExercise;
-    modelingParticiapationHeader: StudentParticipation;
+    modelingParticipationHeader: StudentParticipation;
     course?: Course;
     result?: Result;
     resultWithComplaint?: Result;
@@ -284,8 +284,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
 
         // In the header we always want to display the latest submission, even when we are viewing a specific submission
-        this.modelingParticiapationHeader = modelingSubmission.participation as StudentParticipation;
-        this.modelingParticiapationHeader.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
+        this.modelingParticipationHeader = modelingSubmission.participation as StudentParticipation;
+        this.modelingParticipationHeader.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
 
         // If isFeedbackView is true and submissionId is present, we want to find the corresponding submission and not get the latest one
         if (this.isFeedbackView && this.submissionId && this.sortedSubmissionHistory) {
