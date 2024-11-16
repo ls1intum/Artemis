@@ -300,7 +300,11 @@ public class SharedQueueManagementService {
     }
 
     private String getIdOfQueuedJobFromParticipation(long participationId) {
-        return queue.stream().filter(job -> job.participationId() == participationId).map(BuildJobQueueItem::id).toList().getLast();
+        var participationBuildJobIds = queue.stream().filter(job -> job.participationId() == participationId).map(BuildJobQueueItem::id).toList();
+        if (participationBuildJobIds.isEmpty()) {
+            return null;
+        }
+        return participationBuildJobIds.getLast();
     }
 
     public ZonedDateTime getBuildJobEstimatedQueueReleaseDate(long participationId) {
@@ -387,5 +391,24 @@ public class SharedQueueManagementService {
     private void getBuildAgentsCapacity() {
         buildAgentsCapacity = buildAgentInformation.values().stream().mapToInt(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).sum();
         runningBuildJobCount = buildAgentInformation.values().stream().mapToInt(BuildAgentInformation::numberOfCurrentBuildJobs).sum();
+    }
+
+    /**
+     * Check if a submission is currently being processed.
+     *
+     * @param participationId the id of the participation
+     * @param commitHash      the commit hash
+     * @return the build start date and estimated completion date of the submission if it is currently being processed, null otherwise
+     */
+    public BuildTimingInfo isSubmissionProcessing(long participationId, String commitHash) {
+        var buildJob = processingJobs.values().stream().filter(job -> job.participationId() == participationId && Objects.equals(commitHash, job.buildConfig().commitHashToBuild()))
+                .findFirst();
+        if (buildJob.isPresent()) {
+            return new BuildTimingInfo(buildJob.get().jobTimingInfo().buildStartDate(), buildJob.get().jobTimingInfo().estimatedCompletionDate());
+        }
+        return null;
+    }
+
+    public record BuildTimingInfo(ZonedDateTime buildStartDate, ZonedDateTime estimatedCompletionDate) {
     }
 }

@@ -257,6 +257,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     .receive(newSubmissionTopic)
                     .pipe(
                         tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
+                            console.log('Received submission', submission);
                             if (checkIfSubmissionIsError(submission)) {
                                 const programmingSubmissionError = submission as ProgrammingSubmissionError;
                                 this.emitFailedSubmission(programmingSubmissionError.participationId, exerciseId);
@@ -267,6 +268,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             let buildTimingInfo: BuildTimingInfo | undefined = undefined;
 
                             if (this.isLocalCIProfile) {
+                                console.log('Local CI profile detected, skipping queue estimation');
+                                console.log('isProcessing', programmingSubmission.isProcessing);
+                                console.log('commitHash', this.didSubmissionStartProcessing(programmingSubmission.commitHash!));
                                 if (!programmingSubmission.isProcessing && !this.didSubmissionStartProcessing(programmingSubmission.commitHash!)) {
                                     const queueRemainingTime = this.getExpectedRemainingTimeForQueue(programmingSubmission);
                                     if (queueRemainingTime > 0) {
@@ -307,6 +311,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     .receive(newSubmissionTopic)
                     .pipe(
                         tap((submissionProcessing: SubmissionProcessingDTO) => {
+                            console.log('Received submission processing', submissionProcessing);
                             const programmingSubmission = this.getSubmissionByCommitHash(submissionProcessing);
                             // It is possible that the submission started processing before it got saved to the database and the message was sent to the client.
                             // In this case, we cache that the submission started processing and do not emit the building state.
@@ -715,7 +720,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             };
                         }
                     } else {
-                        const buildTimingInfo = this.startedProcessingCache.get(submission.commitHash!);
+                        let buildTimingInfo: BuildTimingInfo | undefined = {
+                            estimatedCompletionDate: submission.estimatedCompletionDate,
+                            buildStartDate: submission.buildStartDate,
+                        };
+                        buildTimingInfo = buildTimingInfo ?? this.startedProcessingCache.get(submission.commitHash!);
                         this.removeSubmissionFromProcessingCache(submission.commitHash!);
                         const remainingTime = this.getExpectedRemainingTimeForBuild(submission);
                         if (remainingTime > 0) {

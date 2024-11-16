@@ -7,6 +7,8 @@ export class ProgrammingSubmission extends Submission {
     public buildFailed?: boolean;
     public buildArtifact?: boolean; // whether the result includes a build artifact or not
     public isProcessing?: boolean;
+    public buildStartDate?: dayjs.Dayjs;
+    public estimatedCompletionDate?: dayjs.Dayjs;
 
     constructor() {
         super(SubmissionExerciseType.PROGRAMMING);

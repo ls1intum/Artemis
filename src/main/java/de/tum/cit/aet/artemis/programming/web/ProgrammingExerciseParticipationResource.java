@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 
 @Profile(PROFILE_CORE)
 @RestController
@@ -92,11 +94,14 @@ public class ProgrammingExerciseParticipationResource {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    private final Optional<SharedQueueManagementService> sharedQueueManagementService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
-            StudentExamRepository studentExamRepository, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+            StudentExamRepository studentExamRepository, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            Optional<SharedQueueManagementService> sharedQueueManagementService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -110,6 +115,7 @@ public class ProgrammingExerciseParticipationResource {
         this.studentExamRepository = studentExamRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.vcsAccessLogRepository = vcsAccessLogRepository;
+        this.sharedQueueManagementService = sharedQueueManagementService;
     }
 
     /**
@@ -208,7 +214,7 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("programming-exercise-participations/{participationId}/latest-pending-submission")
     @EnforceAtLeastStudent
-    public ResponseEntity<ProgrammingSubmission> getLatestPendingSubmission(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
+    public ResponseEntity<SubmissionDTO> getLatestPendingSubmission(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
         Optional<ProgrammingSubmission> submissionOpt;
         try {
             submissionOpt = submissionService.getLatestPendingSubmission(participationId, lastGraded);
@@ -216,9 +222,25 @@ public class ProgrammingExerciseParticipationResource {
         catch (IllegalArgumentException ex) {
             throw new EntityNotFoundException("participation", participationId);
         }
+        if (submissionOpt.isEmpty()) {
+            return ResponseEntity.ok(null);
+        }
+        ProgrammingSubmission programmingSubmission = submissionOpt.get();
+        boolean isSubmissionProcessing = false;
+        ZonedDateTime buildStartDate = null;
+        ZonedDateTime estimatedCompletionDate = null;
+        if (sharedQueueManagementService.isPresent()) {
+            var buildTimingInfo = sharedQueueManagementService.get().isSubmissionProcessing(participationId, programmingSubmission.getCommitHash());
+            isSubmissionProcessing = buildTimingInfo != null;
+            if (isSubmissionProcessing) {
+                buildStartDate = buildTimingInfo.buildStartDate();
+                estimatedCompletionDate = buildTimingInfo.estimatedCompletionDate();
+            }
+        }
         // Remove participation, is not needed in the response.
-        submissionOpt.ifPresent(submission -> submission.setParticipation(null));
-        return ResponseEntity.ok(submissionOpt.orElse(null));
+        programmingSubmission.setParticipation(null);
+        var submissionDTO = SubmissionDTO.of(programmingSubmission, isSubmissionProcessing, buildStartDate, estimatedCompletionDate);
+        return ResponseEntity.ok(submissionDTO);
     }
 
     /**

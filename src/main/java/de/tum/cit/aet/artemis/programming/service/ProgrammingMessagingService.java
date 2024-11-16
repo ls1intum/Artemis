@@ -95,7 +95,7 @@ public class ProgrammingMessagingService {
      * @param isProcessing whether the submission started processing or not
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId, boolean isProcessing) {
-        var submissionDTO = SubmissionDTO.of(submission, isProcessing);
+        var submissionDTO = SubmissionDTO.of(submission, isProcessing, null, null);
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             if (studentParticipation.getParticipant() instanceof Team team) {
                 // eager load the team with students so their information can be used for the messages below
