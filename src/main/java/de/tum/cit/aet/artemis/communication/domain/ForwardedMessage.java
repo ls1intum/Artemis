@@ -4,7 +4,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -27,33 +26,21 @@ public class ForwardedMessage {
     @Column(name = "id")
     private Long id;
 
-    /**
-     * Kaynak mesajın ID'si (post veya answer_post).
-     */
     @NotNull
     @Column(name = "source_id", nullable = false)
     private Long sourceId;
 
-    /**
-     * Kaynak mesajın tipi: 'post' veya 'answer_post'.
-     */
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(name = "source_type", nullable = false, length = 20)
     private SourceType sourceType;
 
-    /**
-     * Hedef post. Nullable.
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "destination_post_id")
     @JsonIncludeProperties({ "id" })
     private Post destinationPost;
 
-    /**
-     * Hedef answer_post. Nullable.
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "destination_answer_id")
     @JsonIncludeProperties({ "id" })
     private AnswerPost destinationAnswerPost;
@@ -67,8 +54,6 @@ public class ForwardedMessage {
         setDestinationPost(destinationPost);
         setDestinationAnswerPost(destinationAnswerPost);
     }
-
-    // Getter ve Setter'lar
 
     public Long getId() {
         return id;
