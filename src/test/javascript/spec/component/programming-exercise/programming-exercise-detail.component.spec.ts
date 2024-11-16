@@ -22,9 +22,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { HttpResponse } from '@angular/common/http';
@@ -45,8 +43,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
     let profileService: ProfileService;
     let programmingLanguageFeatureService: ProgrammingLanguageFeatureService;
     let statisticsServiceStub: jest.SpyInstance;
-    let gitDiffReportStub: jest.SpyInstance;
-    let buildLogStatisticsStub: jest.SpyInstance;
     let findWithTemplateAndSolutionParticipationStub: jest.SpyInstance;
     let router: Router;
     let modalService: NgbModal;
@@ -78,30 +74,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         numberOfResolvedPosts: 2,
         resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
-
-    const gitDiffReport = {
-        templateRepositoryCommitHash: 'x1',
-        solutionRepositoryCommitHash: 'x2',
-        entries: [
-            {
-                previousFilePath: '/src/test.java',
-                filePath: '/src/test.java',
-                previousStartLine: 1,
-                startLine: 1,
-                previousLineCount: 2,
-                lineCount: 2,
-            },
-        ],
-    } as ProgrammingExerciseGitDiffReport;
-
-    const buildLogStatistics = {
-        buildCount: 5,
-        agentSetupDuration: 2.5,
-        testDuration: 3,
-        scaDuration: 2,
-        totalJobDuration: 7.5,
-        dependenciesDownloadedCount: 6,
-    } as BuildLogStatisticsDTO;
 
     const profileInfo = {
         activeProfiles: [],
@@ -139,8 +111,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         findWithTemplateAndSolutionParticipationStub = jest
             .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
             .mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })));
-        gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
-        buildLogStatisticsStub = jest.spyOn(exerciseService, 'getBuildLogStatistics').mockReturnValue(of(buildLogStatistics));
 
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
         jest.spyOn(programmingLanguageFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
@@ -179,7 +149,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
             // THEN
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
-            expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             await Promise.resolve();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
@@ -187,28 +156,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
             expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
             expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
-            expect(comp.programmingExercise.gitDiffReport).toBeDefined();
-            expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
         });
-
-        it.each([true, false])(
-            'should only call service method to get build log statistics onInit if the user is at least an editor for this exercise',
-            async (isEditor: boolean) => {
-                const programmingExercise = new ProgrammingExercise(new Course(), undefined);
-                programmingExercise.id = 123;
-                programmingExercise.isAtLeastEditor = isEditor;
-                jest.spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
-                    of({ body: programmingExercise } as unknown as HttpResponse<ProgrammingExercise>),
-                );
-                comp.ngOnInit();
-                await new Promise((r) => setTimeout(r, 100));
-                if (isEditor) {
-                    expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
-                } else {
-                    expect(buildLogStatisticsStub).not.toHaveBeenCalled();
-                }
-            },
-        );
     });
 
     describe('onInit for exam exercise', () => {
@@ -233,12 +181,9 @@ describe('ProgrammingExerciseDetailComponent', () => {
             await Promise.resolve();
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
-            expect(gitDiffReportStub).toHaveBeenCalledOnce();
             await Promise.resolve();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeTrue();
-            expect(comp.programmingExercise.gitDiffReport).toBeDefined();
-            expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
         }));
     });
 
