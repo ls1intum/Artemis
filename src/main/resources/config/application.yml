@@ -22,6 +22,7 @@ logging:
         org.springframework.web.socket.config: INFO
         liquibase: INFO
         de.jplag.Submission: ERROR
+        org.hibernate.SQL_SLOW: INFO
     logback:
         rollingpolicy:
             max-history: 90
@@ -198,6 +199,7 @@ spring:
             hibernate.jdbc.lob.non_contextual_creation: true
             # limit fetch depth to prevent queries from getting too large because of eager fetching
             hibernate.max_fetch_depth: 2
+            hibernate.session.events.log.LOG_QUERIES_SLOWER_THAN_MS: 200
     liquibase:
         contexts: prod
     messages:
