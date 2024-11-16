@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 @Profile(PROFILE_SCHEDULING)
 public class SavedPostScheduleService {
 
-    private final static int DAYS_UNTIL_ARCHIVED_ARE_DELETED = 100;
+    private static final int DAYS_UNTIL_ARCHIVED_ARE_DELETED = 100;
 
     private static final Logger log = LoggerFactory.getLogger(SavedPostScheduleService.class);
 

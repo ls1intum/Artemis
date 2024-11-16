@@ -91,7 +91,7 @@ class PostingServiceUnitTest {
         savedPost = new SavedPost();
         savedAnswer = new SavedPost();
 
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(userRepository.getUser()).thenReturn(testUser);
     }
 
     @AfterEach

@@ -52,7 +52,7 @@ class SavedPostServiceTest {
 
         testSavedPost = new SavedPost(testUser, testPost.getId(), PostingType.POST, SavedPostStatus.IN_PROGRESS, null);
 
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(userRepository.getUser()).thenReturn(testUser);
     }
 
     @Test

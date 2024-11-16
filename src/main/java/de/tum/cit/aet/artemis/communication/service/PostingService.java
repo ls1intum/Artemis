@@ -87,7 +87,7 @@ public abstract class PostingService {
      */
     public void preparePostForBroadcast(Post post) {
         try {
-            var user = userRepository.getUserWithGroupsAndAuthorities();
+            var user = userRepository.getUser();
             var savedPost = savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(user.getId(), post.getId(), PostingType.POST);
             post.setIsSaved(savedPost != null);
             post.getAnswers().forEach(answer -> {
