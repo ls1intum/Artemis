@@ -143,12 +143,14 @@
             "userRoles": {
                 "instructor": "Instructor",
                 "tutor": "Tutor",
-                "student": "Student"
+                "student": "Student",
+                "deleted": "Deleted"
             },
             "userAuthorityTooltips": {
                 "instructor": "Instructor: Responsible for course conduction.",
                 "tutor": "Tutor: Responsible for helping users with their questions about the course and exercises.",
-                "student": "Student: Takes courses, participates in exercises, and asks questions."
+                "student": "Student: Takes courses, participates in exercises, and asks questions.",
+                "deleted": "Deleted: This user was deleted."
             }
         }
     }
