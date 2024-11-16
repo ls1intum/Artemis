@@ -22,7 +22,6 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
@@ -97,9 +96,8 @@ public class Post extends Posting {
     @Column(name = "vote_count")
     private int voteCount;
 
-    @OneToMany(mappedBy = "destinationPost", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JsonIgnoreProperties(value = { "destinationPost", "destinationAnswerPost" }, allowSetters = true)
-    private Set<ForwardedMessage> forwardedMessages = new HashSet<>();
+    @Column(name = "has_forwarded_messages")
+    private boolean hasForwardedMessages;
 
     public Post() {
     }
@@ -116,12 +114,12 @@ public class Post extends Posting {
         this.title = title;
     }
 
-    public Set<ForwardedMessage> getForwardedMessages() {
-        return forwardedMessages;
+    public boolean getHasForwardedMessages() {
+        return hasForwardedMessages;
     }
 
-    public void setForwardedMessages(Set<ForwardedMessage> forwardedMessages) {
-        this.forwardedMessages = forwardedMessages;
+    public void setHasForwardedMessages(boolean hasForwardedMessages) {
+        this.hasForwardedMessages = hasForwardedMessages;
     }
 
     public Boolean isVisibleForStudents() {

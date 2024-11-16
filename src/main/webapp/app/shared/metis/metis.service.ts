@@ -656,6 +656,11 @@ export class MetisService implements OnDestroy {
         }
     }
 
+    getForwardedMessagesByPostId(postId: number | undefined) {
+        if (postId) return this.postService.getForwardedMessages(postId);
+        else return;
+    }
+
     getPostById(postId: number | undefined) {
         if (postId) return this.postService.getPost(this.courseId, postId);
         else return;
@@ -681,6 +686,7 @@ export class MetisService implements OnDestroy {
         const newPost: Post = {
             content: newContent || '',
             conversation: targetConversation,
+            hasForwardedMessages: true,
         };
 
         let sourceType = SourceType.POST;
@@ -713,8 +719,7 @@ export class MetisService implements OnDestroy {
                                 const postIndex = this.cachedPosts.findIndex((post) => post.id === fm.destinationPost?.id);
                                 if (postIndex > -1) {
                                     const post = this.cachedPosts[postIndex];
-                                    const updatedForwardedMessages = [...(post.forwardedMessages || []), fm];
-                                    const updatedPost = { ...post, forwardedMessages: updatedForwardedMessages };
+                                    const updatedPost = { ...post, hasForwardedMessages: true };
                                     this.cachedPosts[postIndex] = updatedPost;
                                 }
                             });

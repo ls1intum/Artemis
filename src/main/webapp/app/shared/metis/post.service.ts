@@ -7,6 +7,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingService } from 'app/shared/metis/posting.service';
 import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
 
 type EntityResponseType = HttpResponse<Post>;
 type EntityArrayResponseType = HttpResponse<Post[]>;
@@ -126,6 +127,15 @@ export class PostService extends PostingService<Post> {
      */
     delete(courseId: number, post: Post): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(undefined, post)}/${post.id}`, { observe: 'response' });
+    }
+
+    /**
+     * gets forwarded messages in a post
+     * @param {postId} post
+     * @return {Observable<HttpResponse<void>>}
+     */
+    getForwardedMessages(postId: number): Observable<HttpResponse<ForwardedMessage[]>> {
+        return this.http.get<ForwardedMessage[]>(`api/forwarded-messages/post/${postId}`, { observe: 'response' }).pipe();
     }
 
     /**

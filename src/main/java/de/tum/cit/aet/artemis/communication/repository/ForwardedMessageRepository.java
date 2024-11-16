@@ -19,7 +19,7 @@ public interface ForwardedMessageRepository extends ArtemisJpaRepository<Forward
     @Query("SELECT fm FROM ForwardedMessage fm WHERE fm.destinationPost.id = :destinationPostId")
     Set<ForwardedMessage> findAllByDestinationPostId(@Param("destinationPostId") Long destinationPostId);
 
-    @Query("SELECT fm FROM ForwardedMessage fm WHERE fm.destinationAnswerPost.id = :destinationAnswerId")
-    Set<ForwardedMessage> findAllByDestinationAnswerId(@Param("destinationAnswerId") Long destinationAnswerId);
+    @Query("SELECT fm FROM ForwardedMessage fm WHERE fm.destinationAnswerPost.id = :destinationAnswerPostId")
+    Set<ForwardedMessage> findAllByDestinationAnswerPostId(@Param("destinationAnswerPostId") Long destinationAnswerPostId);
 
 }

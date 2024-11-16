@@ -20,8 +20,6 @@ export class ForwardedMessageService {
      * @returns The created ForwardedMessage.
      */
     createForwardedMessage(forwardedMessage: ForwardedMessage): Observable<EntityResponseType> {
-        console.log('postlayacakkk');
-        console.log(forwardedMessage);
         const copy = this.convertForwardedMessage(forwardedMessage);
         return this.http.post<ForwardedMessage>(`${this.resourceUrl}`, copy, { observe: 'response' }).pipe(map((res: HttpResponse<ForwardedMessage>) => this.convertResponse(res)));
     }
@@ -42,7 +40,7 @@ export class ForwardedMessageService {
      */
     findAllByDestinationPostId(destinationPostId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<ForwardedMessage[]>(`${this.resourceUrl}/destination-post/${destinationPostId}`, { observe: 'response' })
+            .get<ForwardedMessage[]>(`${this.resourceUrl}/post/${destinationPostId}`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ForwardedMessage[]>) => this.convertArrayResponse(res)));
     }
 
@@ -53,7 +51,7 @@ export class ForwardedMessageService {
      */
     findAllByDestinationAnswerId(destinationAnswerId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<ForwardedMessage[]>(`${this.resourceUrl}/destination-answer/${destinationAnswerId}`, { observe: 'response' })
+            .get<ForwardedMessage[]>(`${this.resourceUrl}/answer/${destinationAnswerId}`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ForwardedMessage[]>) => this.convertArrayResponse(res)));
     }
 
