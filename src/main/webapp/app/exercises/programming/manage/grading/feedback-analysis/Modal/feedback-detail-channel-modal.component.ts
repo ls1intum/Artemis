@@ -1,0 +1,69 @@
+import { Component, input, output, signal } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
+import { ConfirmFeedbackChannelCreationModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/confirm-feedback-channel-creation-modal.component';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
+@Component({
+    selector: 'jhi-feedback-detail-channel-modal',
+    templateUrl: './feedback-detail-channel-modal.component.html',
+    imports: [ArtemisSharedCommonModule],
+    standalone: true,
+})
+export class FeedbackDetailChannelModalComponent {
+    affectedStudentsCount = input.required<number>();
+    feedbackDetail = input.required<FeedbackDetail>();
+    formSubmitted = output<{ channelDto: ChannelDTO; navigate: boolean }>();
+
+    isConfirmModalOpen = signal(false);
+    form: FormGroup;
+    readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel';
+
+    constructor(
+        private fb: FormBuilder,
+        private activeModal: NgbActiveModal,
+        private modalService: NgbModal,
+    ) {
+        this.form = this.fb.group({
+            name: ['', [Validators.required, Validators.maxLength(30), Validators.pattern('^[a-z0-9-]{1}[a-z0-9-]{0,30}$')]],
+            description: ['', [Validators.required, Validators.maxLength(250)]],
+            isPublic: [true, Validators.required],
+            isAnnouncementChannel: [false, Validators.required],
+        });
+    }
+
+    async submitForm(navigate: boolean): Promise<void> {
+        if (this.form.valid && !this.isConfirmModalOpen()) {
+            this.isConfirmModalOpen.set(true);
+            const modalRef = this.modalService.open(ConfirmFeedbackChannelCreationModalComponent, { centered: true });
+            modalRef.componentInstance.affectedStudentsCount = this.affectedStudentsCount;
+            try {
+                const result = await modalRef.result;
+                if (result) {
+                    const channelDTO = new ChannelDTO();
+                    channelDTO.name = this.form.get('name')?.value;
+                    channelDTO.description = this.form.get('description')?.value;
+                    channelDTO.isPublic = this.form.get('isPublic')?.value;
+                    channelDTO.isAnnouncementChannel = this.form.get('isAnnouncementChannel')?.value;
+
+                    this.formSubmitted.emit({ channelDto: channelDTO, navigate });
+                    this.closeModal();
+                }
+            } catch (error) {
+                console.error(error);
+            } finally {
+                this.isConfirmModalOpen.set(false);
+            }
+        }
+    }
+
+    closeModal(): void {
+        this.activeModal.close();
+    }
+
+    dismissModal(): void {
+        this.activeModal.dismiss();
+    }
+}

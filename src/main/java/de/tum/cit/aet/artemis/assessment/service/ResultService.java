@@ -692,4 +692,19 @@ public class ResultService {
         List<Feedback> feedbacks = new ArrayList<>(feedbackList);
         result.updateAllFeedbackItems(feedbacks, true);
     }
+
+    /**
+     * Retrieves the number of students affected by a specific feedback detail text for a given exercise.
+     * <p>
+     * This method queries the repository to count the distinct students whose submissions were impacted
+     * by feedback entries matching the provided detail text within the specified exercise.
+     * </p>
+     *
+     * @param exerciseId the ID of the exercise for which the affected student count is requested.
+     * @param detailText the feedback detail text used to filter affected students.
+     * @return the total number of distinct students affected by the feedback detail text.
+     */
+    public long getAffectedStudentCountByFeedbackDetailText(long exerciseId, String detailText) {
+        return studentParticipationRepository.countAffectedStudentsByFeedbackDetailText(exerciseId, detailText);
+    }
 }

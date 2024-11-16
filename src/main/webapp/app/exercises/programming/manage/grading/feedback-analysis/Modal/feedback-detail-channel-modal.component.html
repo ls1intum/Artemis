@@ -1,0 +1,79 @@
+<div class="modal-header">
+    <h4 class="modal-title">
+        <span [jhiTranslate]="TRANSLATION_BASE + '.title'"></span>
+    </h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismissModal()"></button>
+</div>
+<div class="modal-body">
+    <div class="mb-3 text-muted">
+        <p [jhiTranslate]="TRANSLATION_BASE + '.description'"></p>
+    </div>
+    <form [formGroup]="form" (ngSubmit)="submitForm(false)">
+        <div class="form-group">
+            <label for="name" [jhiTranslate]="TRANSLATION_BASE + '.label'"></label>
+            <input type="text" class="form-control" id="name" formControlName="name" placeholder="This field can not be empty" />
+            @if (form.get('name')?.invalid && (form.get('name')?.dirty || form.get('name')?.touched)) {
+                <div class="alert alert-danger mt-2">
+                    @if (form.get('name')?.errors?.['required']) {
+                        <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.requiredValidationError"></div>
+                    }
+                    @if (form.get('name')?.errors?.['maxlength']) {
+                        <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.maxLengthValidationError" [translateValues]="{ max: '30' }"></div>
+                    }
+                    @if (!form.get('name')?.errors?.['required'] && !form.get('name')?.errors?.['maxlength'] && form.get('name')?.errors?.['pattern']) {
+                        <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.regexValidationError"></div>
+                    }
+                </div>
+            }
+        </div>
+        <div class="form-group">
+            <label for="description">Description</label>
+            <input type="text" class="form-control" id="description" formControlName="description" placeholder="This field can not be empty" />
+            @if (form.get('description')?.invalid && (form.get('description')?.dirty || form.get('description')?.touched)) {
+                <div class="alert alert-danger mt-2">
+                    @if (form.get('description')?.errors?.['required']) {
+                        <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.descriptionInput.requiredValidationError"></div>
+                    }
+                    @if (form.get('description')?.errors?.['maxlength']) {
+                        <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.descriptionInput.maxLengthValidationError" [translateValues]="{ max: '250' }"></div>
+                    }
+                </div>
+            }
+        </div>
+        <div class="form-group">
+            <label [jhiTranslate]="TRANSLATION_BASE + '.channelVisibility'"></label>
+            <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" id="public" formControlName="isPublic" [value]="true" />
+                <label for="public" class="btn btn-outline-secondary" [jhiTranslate]="TRANSLATION_BASE + '.visibilityPublic'"></label>
+                <input type="radio" class="btn-check" id="private" formControlName="isPublic" [value]="false" />
+                <label for="private" class="btn btn-outline-secondary" [jhiTranslate]="TRANSLATION_BASE + '.visibilityPrivate'"></label>
+            </div>
+        </div>
+        <div class="form-group">
+            <label [jhiTranslate]="TRANSLATION_BASE + '.announcementChannel'"></label>
+            <div class="btn-group" role="group">
+                <input type="radio" class="btn-check" id="announcement" formControlName="isAnnouncementChannel" [value]="true" />
+                <label for="announcement" class="btn btn-outline-secondary" [jhiTranslate]="TRANSLATION_BASE + '.announcementChannelYes'"></label>
+                <input type="radio" class="btn-check" id="regular" formControlName="isAnnouncementChannel" [value]="false" />
+                <label for="regular" class="btn btn-outline-secondary" [jhiTranslate]="TRANSLATION_BASE + '.announcementChannelNo'"></label>
+            </div>
+        </div>
+        <div class="form-group mt-3">
+            <p class="text-info">
+                <strong [jhiTranslate]="TRANSLATION_BASE + '.studentNumber'" [translateValues]="{ count: affectedStudentsCount }"></strong>
+            </p>
+        </div>
+        <div class="mt-3 text-muted">
+            <p>
+                <strong [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateLabel'"></strong>
+                <span [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateDescription'"></span>
+            </p>
+            <p>
+                <strong [jhiTranslate]="TRANSLATION_BASE + '.createChannelLabel'"></strong>
+                <span [jhiTranslate]="TRANSLATION_BASE + '.createChannelDescription'"></span>
+            </p>
+        </div>
+        <button (click)="submitForm(true)" type="button" class="btn btn-primary me-2" [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateButton'"></button>
+        <button (click)="submitForm(false)" type="button" class="btn btn-primary" [jhiTranslate]="TRANSLATION_BASE + '.createChannelButton'"></button>
+    </form>
+</div>

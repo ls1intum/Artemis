@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,6 +52,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
 
 @Profile(PROFILE_CORE)
@@ -80,10 +82,13 @@ public class ChannelResource extends ConversationManagementResource {
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     public ChannelResource(ConversationParticipantRepository conversationParticipantRepository, SingleUserNotificationService singleUserNotificationService,
             ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository,
-            ConversationService conversationService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
+            ConversationService conversationService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
+            StudentParticipationRepository studentParticipationRepository) {
         super(courseRepository);
         this.channelService = channelService;
         this.channelRepository = channelRepository;
@@ -95,6 +100,7 @@ public class ChannelResource extends ConversationManagementResource {
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.conversationParticipantRepository = conversationParticipantRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
     }
 
     /**
@@ -458,6 +464,38 @@ public class ChannelResource extends ConversationManagementResource {
         usersToDeRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
                 NotificationType.CONVERSATION_REMOVE_USER_CHANNEL));
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST /api/courses/:courseId/channels/: Creates a new feedback-specific channel in a course.
+     * <p>
+     * This endpoint allows authorized users to create a new channel within a course that is specifically designed for discussions
+     * around a particular exercise's feedback. The channel is populated with all affected students based on the provided feedback detail text.
+     * </p>
+     *
+     * @param courseId           the ID of the course where the channel is being created.
+     * @param exerciseId         the ID of the exercise for which the feedback channel is being created.
+     * @param channelDTO         the DTO containing the properties of the channel to be created, such as name, description, and visibility.
+     * @param feedbackDetailText a string representing the feedback detail text used to determine the affected students to be added to the channel.
+     * @return ResponseEntity with status 201 (Created) and the body containing the details of the created channel.
+     * @throws URISyntaxException       if the URI for the created resource cannot be constructed.
+     * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
+     */
+    @PostMapping("{courseId}/{exerciseId}/feedback-channel")
+    @EnforceAtLeastStudent
+    public ResponseEntity<ChannelDTO> createFeedbackChannel(@PathVariable Long courseId, @PathVariable Long exerciseId, @RequestBody ChannelDTO channelDTO,
+            @RequestHeader("feedback-detail-text") String feedbackDetailText) throws URISyntaxException {
+        log.debug("REST request to create feedback channel in course {} with properties: {}", courseId, channelDTO);
+
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+
+        checkCommunicationEnabledElseThrow(course);
+        channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser);
+
+        var createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailText, requestingUser);
+
+        return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }
 
     private void checkEntityIdMatchesPathIds(Channel channel, Optional<Long> courseId, Optional<Long> conversationId) {

@@ -357,6 +357,7 @@
                     "filter": "Filters",
                     "noData": "No Feedback Entries could be found for the Programming Exercise.",
                     "noDataFilter": "No Feedback Entries could be found for the specified filter or search Term.",
+                    "channelSuccess": "Channel successfully created.",
                     "feedbackModal": {
                         "header": "Error Details",
                         "feedbackTitle": "Test Case Feedback",
@@ -379,6 +380,30 @@
                         "repository": "Repository",
                         "totalItems": "In total {{count}} item(s)",
                         "error": "There was an error while loading the affected Students for this feedback."
+                    },
+                    "feedbackDetailChannel": {
+                        "title": "Create Feedback Discussion Channel",
+                        "studentNumber": "Number of students which will be added to the channel: {{count}}",
+                        "description": "This channel is intended to facilitate discussions around specific feedback for the provided exercise feedback. It will allow all affected students and instructors to collaborate and address the feedback effectively.",
+                        "label": "Channel Name",
+                        "channelVisibility": "Channel Visibility",
+                        "visibilityPublic": "Public",
+                        "visibilityPrivate": "Private",
+                        "announcementChannel": "Announcement Channel",
+                        "announcementChannelYes": "Yes",
+                        "announcementChannelNo": "No",
+                        "createAndNavigateLabel": "Create and Navigate:",
+                        "createAndNavigateDescription": "Creates the channel and automatically navigates to the channel.",
+                        "createChannelLabel": "Create Channel:",
+                        "createChannelDescription": "Creates the channel without navigating away from this page.",
+                        "createAndNavigateButton": "Create and Navigate",
+                        "createChannelButton": "Create Channel",
+                        "confirmationModal": {
+                            "header": "Confirm Channel Creation",
+                            "confirmationMessage": "Are you sure you want to create this channel? This will create a channel with <strong>{{count}}</strong> student(s).",
+                            "cancel": "Cancel",
+                            "confirm": "Yes, Create"
+                        }
                     }
                 },
                 "help": {
