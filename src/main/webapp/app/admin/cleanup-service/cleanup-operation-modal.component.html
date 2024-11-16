@@ -1,0 +1,36 @@
+<div class="modal-header">
+    <h4 class="modal-title" [jhiTranslate]="'cleanupService.operation.' + operation.name"></h4>
+    <button type="button" class="btn-close" (click)="close()" aria-label="Close"></button>
+</div>
+<div class="modal-body">
+    <p
+        [jhiTranslate]="'cleanupService.execute.question'"
+        [translateValues]="{
+            operationName: 'cleanupService.operation.' + operation.name | artemisTranslate,
+            deleteFrom: operation.deleteFrom | artemisDate,
+            deleteTo: operation.deleteTo | artemisDate,
+        }"
+    ></p>
+    <div>
+        <p jhiTranslate="cleanupService.modal.affectedEntities"></p>
+        <ul>
+            @for (key of cleanupKeys(beforeExecutionCounts); track key) {
+                <li>
+                    <span [jhiTranslate]="'cleanupService.entities.' + key"></span>
+                    : {{ beforeExecutionCounts[key] }}
+                    @if (afterExecutionCounts) {
+                        @if (beforeExecutionCounts[key] > afterExecutionCounts[key]) {
+                            <fa-icon [icon]="faTimes" class="text-danger" />
+                        } @else {
+                            <fa-icon [icon]="faCheckCircle" class="text-success" />
+                        }
+                    }
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="close()" jhiTranslate="cleanupService.button.close"></button>
+    <button type="button" class="btn btn-danger" (click)="executeCleanupOperation()" jhiTranslate="cleanupService.button.execute"></button>
+</div>
