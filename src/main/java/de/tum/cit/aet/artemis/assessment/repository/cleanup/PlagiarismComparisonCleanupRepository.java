@@ -32,13 +32,6 @@ public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaReposit
             """)
     int deleteByIdsIn(@Param("ids") List<Long> ids);
 
-    @Query("""
-            SELECT COUNT(pc)
-            FROM PlagiarismComparison pc
-            WHERE pc.id IN :ids
-            """)
-    int countByIdsIn(@Param("ids") List<Long> ids);
-
     @Modifying
     @Transactional // ok because of delete
     @Query("""
@@ -79,13 +72,6 @@ public interface PlagiarismComparisonCleanupRepository extends ArtemisJpaReposit
             WHERE pc.id IN :ids
             """)
     int setPlagiarismSubmissionsToNullInComparisonsWithIds(@Param("ids") List<Long> ids);
-
-    @Query("""
-            SELECT COUNT(pc)
-            FROM PlagiarismComparison pc
-            WHERE pc.id IN :ids AND (pc.submissionA IS NOT NULL OR pc.submissionB IS NOT NULL)
-            """)
-    int countPlagiarismSubmissionsNotNullInComparisonsWithIds(@Param("ids") List<Long> ids);
 
     @Modifying
     @Transactional // ok because of delete
