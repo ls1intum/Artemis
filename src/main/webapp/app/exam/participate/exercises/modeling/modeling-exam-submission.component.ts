@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild, input, output } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -34,12 +34,17 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     exercise: ModelingExercise;
     umlModel: UMLModel; // input model for Apollon+
 
+    // explicitly needed to track if submission.isSynced is changed, otherwise component
+    // does not update the state due to onPush strategy
+    isSubmissionSynced = input<boolean>();
+    saveCurrentExercise = output<void>();
+
     explanationText: string; // current explanation text
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     // Icons
-    farListAlt = faListAlt;
+    protected readonly faListAlt = faListAlt;
 
     constructor(changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);
@@ -153,5 +158,12 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
             // if we do not call this, apollon doesn't show the updated model
             this.changeDetectorReference.detectChanges();
         }
+    }
+
+    /**
+     * Trigger save action in exam participation component
+     */
+    notifyTriggerSave() {
+        this.saveCurrentExercise.emit();
     }
 }

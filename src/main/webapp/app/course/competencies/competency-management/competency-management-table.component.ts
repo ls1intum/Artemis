@@ -95,7 +95,8 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
      */
     updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
         const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is CourseCompetency => !!element);
-        this.courseCompetencies.push(...importedCompetencies);
+        const newCourseCompetencies = importedCompetencies.filter((competency) => !this.courseCompetencies.some((existingCompetency) => existingCompetency.id === competency.id));
+        this.courseCompetencies.push(...newCourseCompetencies);
         this.allCompetencies.update((allCourseCompetencies) => allCourseCompetencies.concat(importedCompetencies));
     }
 
