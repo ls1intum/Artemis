@@ -16,6 +16,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
@@ -291,10 +293,6 @@ public class ProgrammingExerciseIntegrationTestService {
         GitService.commit(localGit).setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
         localGit.push().call();
 
-        // we use the temp repository as remote origin for all repositories that are created during the
-        // TODO: distinguish between template, test and solution
-        doReturn(new GitUtilService.MockFileRepositoryUri(remoteRepoFile)).when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
-
         this.plagiarismChecksTestReposDir = Files.createTempDirectory("jplag-repos").toFile();
     }
 
@@ -388,8 +386,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // Export with excludePracticeSubmissions
         var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
         final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
-        var exportOptions = new RepositoryExportOptionsDTO();
-        exportOptions.setExcludePracticeSubmissions(excludePracticeSubmissions);
+        var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, excludePracticeSubmissions, false, false, false, false);
 
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
@@ -402,7 +399,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Make sure that the practice submission is not included
         assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
-                .noneMatch(entry -> entry.toString().matches(".*practice-[^\\/]*student2.*.git$"));
+                .noneMatch(entry -> entry.toString().matches(".*practice-[^/]*student2.*.git$"));
     }
 
     void testExportSubmissionsByParticipationIds_includePracticeSubmissions() throws Exception {
@@ -410,7 +407,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Make sure that the practice submission is included
         assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
-                .anyMatch(entry -> entry.toString().matches(".*practice-[^\\/]*student2.*.git$"));
+                .anyMatch(entry -> entry.toString().matches(".*practice-[^/]*student2.*.git$"));
     }
 
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
@@ -439,8 +436,7 @@ public class ProgrammingExerciseIntegrationTestService {
         final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/"
                 + String.join(",", List.of(participation.get().getId().toString()));
         // all options false by default, only test if export works at all
-        var exportOptions = new RepositoryExportOptionsDTO();
-        exportOptions.setAddParticipantName(true);
+        var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
 
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
@@ -483,8 +479,7 @@ public class ProgrammingExerciseIntegrationTestService {
         final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/"
                 + String.join(",", List.of(participation.get().getId().toString()));
         // all options false by default, only test if export works at all
-        var exportOptions = new RepositoryExportOptionsDTO();
-        exportOptions.setAddParticipantName(true);
+        var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, true, false, false, false);
 
         downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
         assertThat(downloadedFile).exists();
@@ -538,8 +533,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Rest call
         final var path = "/api/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + participation1.getId();
-        var exportOptions = getOptions();
-        exportOptions.setAddParticipantName(false);
         downloadedFile = request.postWithResponseBodyFile(path, getOptions(), HttpStatus.OK);
         assertThat(downloadedFile).exists();
 
@@ -602,14 +595,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private RepositoryExportOptionsDTO getOptions() {
-        final var repositoryExportOptions = new RepositoryExportOptionsDTO();
-        repositoryExportOptions.setFilterLateSubmissions(true);
-        repositoryExportOptions.setExcludePracticeSubmissions(false);
-        repositoryExportOptions.setCombineStudentCommits(true);
-        repositoryExportOptions.setAnonymizeRepository(true);
-        repositoryExportOptions.setAddParticipantName(true);
-        repositoryExportOptions.setNormalizeCodeStyle(true);
-        return repositoryExportOptions;
+        return new RepositoryExportOptionsDTO(false, true, false, null, false, true, true, true, true);
     }
 
     void testProgrammingExerciseDelete() throws Exception {
@@ -1444,6 +1430,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void importProgrammingExercise_updatesTestCaseIds() throws Exception {
+        doReturn(new GitUtilService.MockFileRepositoryUri(remoteRepoFile)).when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
+
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(programmingExercise.getId());
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         var test1 = tests.getFirst();
@@ -1475,6 +1463,8 @@ public class ProgrammingExerciseIntegrationTestService {
         var savedProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(response.getId());
 
         assertThat(savedProgrammingExercise.getProblemStatement()).isEqualTo(newProblemStatement);
+
+        reset(versionControlService);
     }
 
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
@@ -1488,8 +1478,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void exportSubmissionsByStudentLogins_exportAllAsTutor_forbidden() throws Exception {
-        final var options = getOptions();
-        options.setExportAllParticipants(true);
+        final var options = new RepositoryExportOptionsDTO(true, true, false, null, false, true, true, true, true);
         request.post(getDefaultAPIEndpointForExportRepos(), options, HttpStatus.FORBIDDEN);
     }
 
@@ -1546,15 +1535,8 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        final var updates = testCases.stream().map(testCase -> {
-            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
-            testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
-            testCaseUpdate.setWeight(testCase.getId() + 42.0);
-            testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
-            testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
-            return testCaseUpdate;
-        }).toList();
+        final var updates = testCases.stream().map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getId() + 42.0, testCase.getId() + 1.0,
+                testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
         final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
@@ -1578,15 +1560,8 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockTriggerBuildFailed(programmingExercise.getTemplateParticipation());
 
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        final var updates = testCases.stream().map(testCase -> {
-            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
-            testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
-            testCaseUpdate.setWeight(testCase.getId() + 42.0);
-            testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
-            testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
-            return testCaseUpdate;
-        }).toList();
+        final var updates = testCases.stream().map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getId() + 42.0, testCase.getId() + 1.0,
+                testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
         final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
@@ -1596,14 +1571,14 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTestCases_nonExistingExercise_notFound() throws Exception {
-        final var update = new ProgrammingExerciseTestCaseDTO();
+        final var update = new ProgrammingExerciseTestCaseDTO(null, null, null, null, null);
         final var endpoint = "/programming-exercises/" + (programmingExercise.getId() + 1337) + "/update-test-cases";
         request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.NOT_FOUND);
     }
 
     void updateTestCases_instructorInWrongCourse_forbidden() throws Exception {
         userUtilService.addInstructor("other-instructors", userPrefix + "other-instructor");
-        final var update = new ProgrammingExerciseTestCaseDTO();
+        final var update = new ProgrammingExerciseTestCaseDTO(null, null, null, null, null);
         final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         request.patchWithResponseBody("/api" + endpoint, List.of(update), String.class, HttpStatus.FORBIDDEN);
@@ -1611,15 +1586,8 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void updateTestCases_testCaseWeightSmallerThanZero_badRequest() throws Exception {
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
-        final var updates = testCases.stream().map(testCase -> {
-            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
-            testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setVisibility(Visibility.AFTER_DUE_DATE);
-            testCaseUpdate.setWeight(-1.);
-            testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
-            testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
-            return testCaseUpdate;
-        }).toList();
+        final var updates = testCases.stream()
+                .map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), -1., testCase.getId() + 1.0, testCase.getId() + 2.0, Visibility.AFTER_DUE_DATE)).toList();
         final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         request.patchWithResponseBody("/api" + endpoint, updates, String.class, HttpStatus.BAD_REQUEST);
@@ -1628,7 +1596,9 @@ public class ProgrammingExerciseIntegrationTestService {
     void updateTestCases_testCaseMultiplierSmallerThanZero_badRequest() throws Exception {
         final var testCases = List.copyOf(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()));
         final var updates = transformTestCasesToDto(testCases);
-        updates.getFirst().setBonusMultiplier(-1.0);
+        var firstUpdate = updates.getFirst();
+        firstUpdate = new ProgrammingExerciseTestCaseDTO(firstUpdate.id(), firstUpdate.weight(), -1.0, firstUpdate.bonusPoints(), firstUpdate.visibility());
+        updates.set(0, firstUpdate);
         final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         request.performMvcRequest(
@@ -1653,26 +1623,22 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
 
         final var updates = transformTestCasesToDto(testCases);
-        updates.getFirst().setBonusPoints(null);
+        var firstUpdate = updates.getFirst();
+        firstUpdate = new ProgrammingExerciseTestCaseDTO(firstUpdate.id(), firstUpdate.weight(), firstUpdate.bonusMultiplier(), null, firstUpdate.visibility());
+        updates.set(0, firstUpdate);
+
         final var endpoint = "/programming-exercises/" + programmingExercise.getId() + "/update-test-cases";
 
         final var testCasesResponse = request.patchWithResponseBody("/api" + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
-        final var updatedTestCase = testCasesResponse.stream().filter(testCase -> testCase.getId().equals(updates.getFirst().getId())).findFirst().orElseThrow();
+        final var updatedTestCase = testCasesResponse.stream().filter(testCase -> testCase.getId().equals(updates.getFirst().id())).findFirst().orElseThrow();
         assertThat(updatedTestCase.getBonusPoints()).isZero();
         assertThat(testCasesResponse.stream().filter(testCase -> !testCase.getId().equals(updatedTestCase.getId()))).allMatch(testCase -> testCase.getBonusPoints() == 1d);
     }
 
     private static List<ProgrammingExerciseTestCaseDTO> transformTestCasesToDto(Collection<ProgrammingExerciseTestCase> testCases) {
-        return testCases.stream().map(testCase -> {
-            final var testCaseUpdate = new ProgrammingExerciseTestCaseDTO();
-            testCaseUpdate.setId(testCase.getId());
-            testCaseUpdate.setVisibility(testCase.getVisibility());
-            testCaseUpdate.setWeight(testCase.getWeight());
-            testCaseUpdate.setBonusMultiplier(testCase.getBonusMultiplier());
-            testCaseUpdate.setBonusPoints(testCase.getBonusPoints());
-            return testCaseUpdate;
-        }).toList();
+        return testCases.stream().map(testCase -> new ProgrammingExerciseTestCaseDTO(testCase.getId(), testCase.getWeight(), testCase.getBonusMultiplier(),
+                testCase.getBonusPoints(), testCase.getVisibility())).collect(Collectors.toCollection(ArrayList::new));
     }
 
     void resetTestCaseWeights_asInstructor() throws Exception {
@@ -1955,11 +1921,11 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testValidateValidAuxiliaryRepository() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults();
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
-        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.BAD_REQUEST);
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
 
@@ -1988,12 +1954,12 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testValidateAuxiliaryRepositoryWithoutCheckoutDirectory() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory();
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory("   ");
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory() throws Exception {
@@ -2016,7 +1982,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutDescription();
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
@@ -2077,9 +2043,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // Two participations exist with build plans before reset
         var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
         assertThat(participations).hasSize(2);
-        participations.forEach(participation -> {
-            assertThat(participation.getBuildPlanId()).isNotNull();
-        });
+        participations.forEach(participation -> assertThat(participation.getBuildPlanId()).isNotNull());
 
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false, false, false);
         request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
@@ -2087,9 +2051,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // Two participations exist with build plans removed after reset
         participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
         assertThat(participations).hasSize(2);
-        participations.forEach(participation -> {
-            assertThat(participation.getBuildPlanId()).isNull();
-        });
+        participations.forEach(participation -> assertThat(participation.getBuildPlanId()).isNull());
     }
 
     void testResetDeleteBuildPlansAndDeleteStudentRepositoriesSuccess() throws Exception {
@@ -2197,7 +2159,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private String defaultAuxiliaryRepositoryEndpoint() {
-        return "/api/programming-exercises/setup";
+        return "/api/programming-exercises";
     }
 
     private String defaultResetEndpoint() {
@@ -2230,17 +2192,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
         programmingExercise.setAuxiliaryRepositories(body);
-        programmingExercise.setId(null);
-        programmingExercise.setSolutionParticipation(null);
-        programmingExercise.setTemplateParticipation(null);
-        programmingExercise.setChannelName("pe-test");
-        programmingExercise.setShortName("ExerciseTitle");
-        programmingExercise.setTitle("Title");
-        if (expectedStatus == HttpStatus.CREATED) {
-            mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
-            mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
-        }
-        request.postWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, ProgrammingExercise.class, expectedStatus);
+        request.putWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, ProgrammingExercise.class, expectedStatus);
     }
 
     private static class AuxiliaryRepositoryBuilder {
@@ -2314,8 +2266,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden(String testPrefix) throws Exception {
+        userUtilService.addInstructor("other-instructors", testPrefix + "instructoralt");
         programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExercise, HttpStatus.FORBIDDEN);

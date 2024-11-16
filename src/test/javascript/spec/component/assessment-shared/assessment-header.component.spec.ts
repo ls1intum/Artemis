@@ -12,7 +12,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateDirective, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
@@ -50,7 +50,7 @@ describe('AssessmentHeaderComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgbTooltipMocksModule, NgbAlertsMocksModule, RouterModule.forRoot([])],
-            declarations: [AssessmentHeaderComponent, AssessmentWarningComponent, AlertOverlayComponent, TranslateDirective, ArtemisTranslatePipe, MockTranslateValuesDirective],
+            declarations: [AssessmentHeaderComponent, AssessmentWarningComponent, AlertOverlayComponent, ArtemisTranslatePipe, MockTranslateValuesDirective],
             providers: [
                 {
                     provide: AlertService,

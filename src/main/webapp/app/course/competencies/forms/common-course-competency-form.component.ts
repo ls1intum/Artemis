@@ -1,11 +1,9 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { intersection } from 'lodash-es';
-import { CompetencyTaxonomy, CourseCompetencyType, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
+import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -17,6 +15,7 @@ import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.mo
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { merge } from 'rxjs';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { DateTimePickerType } from 'app/shared/date-time-picker/date-time-picker.component';
 
 @Component({
     selector: 'jhi-common-course-competency-form',
@@ -50,17 +49,14 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     @Input()
     form: FormGroup;
     @Input()
-    competencyType: CourseCompetencyType;
+    courseCompetency: CourseCompetency;
 
-    @Output()
-    onLectureUnitSelectionChange = new EventEmitter<LectureUnit[]>();
     @Output()
     onTitleOrDescriptionChange = new EventEmitter<void>();
 
     protected readonly competencyValidators = CourseCompetencyValidators;
+    protected readonly DateTimePickerType = DateTimePickerType;
 
-    selectedLectureInDropdown: Lecture;
-    selectedLectureUnitsInTable: LectureUnit[] = [];
     suggestedTaxonomies: string[] = [];
 
     // Icons
@@ -120,44 +116,7 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
 
     private setFormValues(formData: CourseCompetencyFormData) {
         this.form.patchValue(formData);
-        if (formData.connectedLectureUnits) {
-            this.selectedLectureUnitsInTable = formData.connectedLectureUnits;
-            this.onLectureUnitSelectionChange.next(this.selectedLectureUnitsInTable);
-        }
     }
-
-    selectLectureInDropdown(lecture: Lecture) {
-        this.selectedLectureInDropdown = lecture;
-    }
-
-    selectLectureUnitInTable(lectureUnit: LectureUnit) {
-        if (this.isLectureUnitAlreadySelectedInTable(lectureUnit)) {
-            this.selectedLectureUnitsInTable.forEach((selectedLectureUnit, index) => {
-                if (selectedLectureUnit.id === lectureUnit.id) {
-                    this.selectedLectureUnitsInTable.splice(index, 1);
-                }
-            });
-        } else {
-            this.selectedLectureUnitsInTable.push(lectureUnit);
-        }
-        this.onLectureUnitSelectionChange.next(this.selectedLectureUnitsInTable);
-    }
-
-    isLectureUnitAlreadySelectedInTable(lectureUnit: LectureUnit) {
-        return this.selectedLectureUnitsInTable.map((selectedLectureUnit) => selectedLectureUnit.id).includes(lectureUnit.id);
-    }
-
-    getLectureTitleForDropdown(lecture: Lecture) {
-        const noOfSelectedUnitsInLecture = intersection(
-            this.selectedLectureUnitsInTable.map((unit) => unit.id),
-            lecture.lectureUnits?.map((unit) => unit.id),
-        ).length;
-        return this.translateService.instant('artemisApp.courseCompetency.create.dropdown', {
-            lectureTitle: lecture.title,
-            noOfConnectedUnits: noOfSelectedUnitsInLecture,
-        });
-    }
-
     /**
      * Suggest some taxonomies based on keywords used in the title or description.
      * Triggered after the user changes the title or description input field.

@@ -39,6 +39,7 @@
                   "markdown-it-highlightjs",
                   "mobile-drag-drop",
                   "papaparse",
+                  "pako",
                   "pepjs",
                   "prop-types",
                   "react",

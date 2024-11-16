@@ -34,6 +34,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() showBadge = false;
     @Input() showIcon = true;
     @Input() isInSidebarCard = false;
+    @Input() showCompletion = true;
     @Input() showProgressBar = false;
     @Output() showResult = new EventEmitter<void>();
     /**

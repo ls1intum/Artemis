@@ -62,6 +62,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     @Input() showBadge = false;
     @Input() showIcon = true;
     @Input() isInSidebarCard = false;
+    @Input() showCompletion = true;
     @Input() missingResultInfo = MissingResultInformation.NONE;
     @Input() exercise?: Exercise;
     @Input() estimatedCompletionDate?: dayjs.Dayjs;

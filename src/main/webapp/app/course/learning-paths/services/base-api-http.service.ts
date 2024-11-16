@@ -10,7 +10,7 @@ export abstract class BaseApiHttpService {
     private readonly baseUrl = 'api';
 
     /**
-     * Debounces a function call to prevent it from being called multiple times in a short period.
+     * Debounce a function call to prevent it from being called multiple times in a short period.
      * @param callback The function to debounce.
      * @param delay The delay in milliseconds to wait before calling the function.
      */
@@ -52,17 +52,18 @@ export abstract class BaseApiHttpService {
                 | {
                       [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
                   };
-            responseType?: 'json';
+            responseType?: 'json' | 'text';
         },
     ): Promise<T> {
         try {
             const response = await lastValueFrom(
-                this.httpClient.request<T>(method, `${this.baseUrl}/${url}`, {
-                    observe: 'response',
+                this.httpClient.request(method, `${this.baseUrl}/${url}`, {
+                    observe: 'body',
                     ...options,
+                    responseType: options?.responseType ?? 'json',
                 }),
             );
-            return response.body!;
+            return response as T;
         } catch (error) {
             throw error as HttpErrorResponse;
         }
@@ -108,6 +109,7 @@ export abstract class BaseApiHttpService {
                 | {
                       [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
                   };
+            responseType?: 'json' | 'text';
         },
     ): Promise<T> {
         return await this.request<T>(HttpMethod.Get, url, options);
@@ -139,6 +141,7 @@ export abstract class BaseApiHttpService {
                 | {
                       [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
                   };
+            responseType?: 'json' | 'text';
         },
     ): Promise<T> {
         return await this.request<T>(HttpMethod.Post, url, { body: body, ...options });
@@ -168,6 +171,7 @@ export abstract class BaseApiHttpService {
                 | {
                       [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
                   };
+            responseType?: 'json' | 'text';
         },
     ): Promise<T> {
         return await this.request<T>(HttpMethod.Delete, url, options);
@@ -198,6 +202,7 @@ export abstract class BaseApiHttpService {
                 | {
                       [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
                   };
+            responseType?: 'json' | 'text';
         },
     ): Promise<T> {
         return await this.request<T>(HttpMethod.Patch, url, { body: body, ...options });
@@ -228,6 +233,7 @@ export abstract class BaseApiHttpService {
                 | {
                       [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
                   };
+            responseType?: 'json' | 'text';
         },
     ): Promise<T> {
         return await this.request<T>(HttpMethod.Put, url, { body: body, ...options });

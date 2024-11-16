@@ -22,8 +22,12 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -739,13 +743,11 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback.setTestCase(testCase);
 
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
-
         Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
-
         participationUtilService.addFeedbackToResult(feedback, result);
 
         String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=detailText&sortingOrder=ASCENDING"
-                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=";
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=";
 
         FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
 
@@ -755,6 +757,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(feedbackDetail.relativeCount()).isEqualTo(100.0);
         assertThat(feedbackDetail.detailText()).isEqualTo("Some feedback");
         assertThat(feedbackDetail.testCaseName()).isEqualTo("test1");
+        assertThat(response.errorCategories()).containsExactlyInAnyOrder("Student Error", "Ares Error", "AST Error");
 
         assertThat(response.totalItems()).isEqualTo(1);
     }
@@ -789,7 +792,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         participationUtilService.addFeedbackToResult(feedback3, result1);
 
         String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=detailText&sortingOrder=ASCENDING"
-                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=";
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=";
 
         FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
 
@@ -810,6 +813,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(secondFeedbackDetail.relativeCount()).isEqualTo(50.0);
         assertThat(secondFeedbackDetail.detailText()).isEqualTo("Some different feedback");
         assertThat(secondFeedbackDetail.testCaseName()).isEqualTo("test1");
+        assertThat(response.errorCategories()).containsExactlyInAnyOrder("Student Error", "Ares Error", "AST Error");
 
         assertThat(response.totalItems()).isEqualTo(2);
     }
@@ -861,4 +865,42 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
         assertThat(maxCount).isEqualTo(2);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetParticipationForFeedbackId() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        testCase.setId(1L);
+
+        Feedback feedback = new Feedback();
+        feedback.setPositive(false);
+        feedback.setDetailText("Feedback for student");
+        feedback.setTestCase(testCase);
+        feedback = feedbackRepository.saveAndFlush(feedback);
+
+        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
+        participationUtilService.addFeedbackToResult(feedback, result);
+
+        String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING";
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("feedbackIds", String.valueOf(feedback.getId()));
+
+        String jsonResponse = request.get(url, HttpStatus.OK, String.class, headers);
+
+        JsonNode jsonNode = new ObjectMapper().readTree(jsonResponse);
+        assertThat(jsonNode.has("content")).isTrue();
+        assertThat(jsonNode.has("pageable")).isTrue();
+        assertThat(jsonNode.has("last")).isTrue();
+        assertThat(jsonNode.has("totalElements")).isTrue();
+        assertThat(jsonNode.has("totalPages")).isTrue();
+        assertThat(jsonNode.has("first")).isTrue();
+        assertThat(jsonNode.has("size")).isTrue();
+        assertThat(jsonNode.has("number")).isTrue();
+        assertThat(jsonNode.has("sort")).isTrue();
+        assertThat(jsonNode.has("numberOfElements")).isTrue();
+        assertThat(jsonNode.has("empty")).isTrue();
+    }
+
 }
