@@ -58,6 +58,32 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
     int deleteParticipantScoresForNonLatestLastResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
+     * Counts {@link ParticipantScore} entries where the associated {@link Result} is not the latest rated result
+     * for a {@link Participation}, within courses conducted between the specified date range.
+     */
+    @Query("""
+            SELECT COUNT(ps)
+            FROM ParticipantScore ps
+            WHERE ps.lastResult IN (
+                SELECT r
+                FROM Result r
+                    LEFT JOIN r.participation p
+                    LEFT JOIN p.exercise e
+                    LEFT JOIN e.course c
+                WHERE r.id NOT IN (
+                    SELECT MAX(r2.id)
+                    FROM Result r2
+                    WHERE r2.participation.id = p.id
+                        AND r2.rated = TRUE
+                    )
+                    AND r.rated = TRUE
+                    AND c.endDate < :deleteTo
+                    AND c.startDate > :deleteFrom
+                )
+            """)
+    int countParticipantScoresForNonLatestLastResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+
+    /**
      * Deletes {@link ParticipantScore} entries where the associated last rated {@link Result} is not the latest rated result
      * for a {@link Participation}, within courses conducted between the specified date range.
      * This query removes participant scores linked to rated results that are not the most recent rated results, for courses
@@ -89,6 +115,32 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
                 )
             """)
     int deleteParticipantScoresForNonLatestLastRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+
+    /**
+     * Counts {@link ParticipantScore} entries where the associated last rated {@link Result} is not the latest rated result
+     * for a {@link Participation}, within courses conducted between the specified date range.
+     */
+    @Query("""
+            SELECT COUNT(ps)
+            FROM ParticipantScore ps
+            WHERE ps.lastRatedResult IN (
+                SELECT r
+                FROM Result r
+                    LEFT JOIN r.participation p
+                    LEFT JOIN p.exercise e
+                    LEFT JOIN e.course c
+                WHERE r.id NOT IN (
+                    SELECT MAX(r2.id)
+                    FROM Result r2
+                    WHERE r2.participation.id = p.id
+                        AND r2.rated = TRUE
+                    )
+                    AND r.rated = TRUE
+                    AND c.endDate < :deleteTo
+                    AND c.startDate > :deleteFrom
+                )
+            """)
+    int countParticipantScoresForNonLatestLastRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
      * Deletes {@link ParticipantScore} entries where the associated {@link Result} is not the latest result and is non-rated,
@@ -123,6 +175,32 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
     int deleteParticipantScoresForLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
+     * Counts {@link ParticipantScore} entries where the associated {@link Result} is not the latest result and is non-rated,
+     * and the course's start and end dates are between the specified date range.
+     */
+    @Query("""
+            SELECT COUNT(ps)
+            FROM ParticipantScore ps
+            WHERE ps.lastResult IN (
+                SELECT r
+                FROM Result r
+                    LEFT JOIN r.participation p
+                    LEFT JOIN p.exercise e
+                    LEFT JOIN e.course c
+                WHERE r.id NOT IN (
+                    SELECT MAX(r2.id)
+                    FROM Result r2
+                    WHERE r2.participation.id = p.id
+                        AND r2.rated = FALSE
+                    )
+                    AND r.rated = FALSE
+                    AND c.endDate < :deleteTo
+                    AND c.startDate > :deleteFrom
+                )
+            """)
+    int countParticipantScoresForLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+
+    /**
      * Deletes {@link ParticipantScore} entries where the associated {@link Result} is not latest and is non-rated, even though
      * it is marked as the last rated result, to prevent potential integrity violations.
      * The deletion is based on courses whose start and end dates fall within the specified range.
@@ -155,4 +233,30 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
                 )
             """)
     int deleteParticipantScoresForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+
+    /**
+     * Counts {@link ParticipantScore} entries where the associated {@link Result} is not latest and is non-rated, even though
+     * it is marked as the last rated result.
+     */
+    @Query("""
+            SELECT COUNT(ps)
+            FROM ParticipantScore ps
+            WHERE ps.lastRatedResult IN (
+                SELECT r
+                FROM Result r
+                    LEFT JOIN r.participation p
+                    LEFT JOIN p.exercise e
+                    LEFT JOIN e.course c
+                WHERE r.id NOT IN (
+                    SELECT MAX(r2.id)
+                    FROM Result r2
+                    WHERE r2.participation.id = p.id
+                        AND r2.rated = FALSE
+                    )
+                    AND r.rated = FALSE
+                    AND c.endDate < :deleteTo
+                    AND c.startDate > :deleteFrom
+                )
+            """)
+    int countParticipantScoresForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }
