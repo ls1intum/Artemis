@@ -183,7 +183,7 @@ test.describe('Exam assessment', { tag: '@slow' }, () => {
     });
 });
 
-test.describe('Exam grading', () => {
+test.describe('Exam grading', { tag: '@fast' }, () => {
     test.describe.serial('Instructor sets grades and student receives a grade', () => {
         let exam: Exam;
 
