@@ -31,4 +31,16 @@ public interface StudentScoreCleanupRepository extends ArtemisJpaRepository<Stud
             WHERE ps.user IS NULL
             """)
     int deleteOrphanStudentScore();
+
+    /**
+     * Counts {@link StudentScore} entries where the associated user is {@code null}.
+     *
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(ps)
+            FROM StudentScore ps
+            WHERE ps.user IS NULL
+            """)
+    int countOrphanStudentScore();
 }
