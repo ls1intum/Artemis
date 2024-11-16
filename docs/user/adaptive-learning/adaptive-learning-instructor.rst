@@ -51,11 +51,10 @@ Create/Edit Competencies
   Besides a title and description, they can set a `taxonomy <https://en.wikipedia.org/wiki/Bloom%27s_taxonomy>`_.
 | The mastery threshold describes the minimum mastery required for a student to consider the competency as mastered.
   The current average mastery shown on this page can be used as a basis for defining a reasonable threshold value.
-| Instructors can link competencies to lecture units on this page by first choosing a lecture and then selecting desired lecture units.
 
 |instructor-competency-edit|
 
-Alternatively, instructors can also link competencies to an exercise or lecture unit on the respective management page using the selection box shown below.
+Instructors can link competencies to an exercise or lecture unit on the respective management page using the selection box shown below.
 
 |instructor-competency-link|
 

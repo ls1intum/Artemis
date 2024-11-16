@@ -7,9 +7,10 @@
                 "editLabel": "Programmieraufgabe bearbeiten",
                 "importLabel": "Programmieraufgabe importieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
-                "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
-                "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
-                "nextStepLabel": "Weiter"
+                "switchToSimpleMode": "Zum einfachen Modus wechseln",
+                "simpleModeTooltip": "Der einfache Modus reduziert die Ansicht auf Konfigurationsoptionen die für eine grundlegende Programmieraufgabe benötigt werden. Änderungen aus dem erweiterten Modus werden beim Speichern übernommen.",
+                "switchToAdvancedMode": "Zum erweiterten Modus wechseln",
+                "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten."
             },
             "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
@@ -350,10 +351,12 @@
                     "task": "Aufgabe",
                     "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
-                    "totalItems": "Insgesamt {{count}} Elemente",
+                    "totalItems": "Insgesamt {{count}} Element(e)",
                     "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten.",
                     "search": "Suche ...",
                     "filter": "Filter",
+                    "noData": "Es konnten keine Feedback Einträge für die Programmieraufgabe gefunden werden.",
+                    "noDataFilter": "Für den spezifizierten Filter oder Suchbegriff konnten keine Feedback Einträge gefunden werden.",
                     "feedbackModal": {
                         "header": "Fehlerdetails",
                         "feedbackTitle": "Feedback zu Testfällen",
@@ -363,10 +366,19 @@
                         "modalTitle": "Filteroptionen",
                         "task": "Tasks",
                         "testcase": "Testfälle",
+                        "errorCategory": "Fehlerkategorien",
                         "occurrence": "Häufigkeit",
                         "clear": "Filter zurücksetzen",
                         "cancel": "Abbrechen",
                         "apply": "Filter anwenden"
+                    },
+                    "affectedStudentsModal": {
+                        "header": "Betroffene Studierende",
+                        "name": "Name",
+                        "login": "Login",
+                        "repository": "Repository",
+                        "totalItems": "Insgesamt {{count}} Element(e)",
+                        "error": "Beim Laden der betroffenen Studierenden ist ein Fehler aufgetreten."
                     }
                 },
                 "help": {
@@ -550,7 +562,8 @@
                 },
                 "invalidDirectoryName": {
                     "pattern": "Checkout-Verzeichnisse dürfen nur Wörter, '_', '-', und '/' Zeichen beinhalten, aber nicht mit '/' beginnen oder enden."
-                }
+                },
+                "invalidConfigurationPreventsSwitchingEditMode": "Bitte ändere die Hilfs-Repository-Konfiguration zu einer validen Konfiguration um zum Simple Mode zu wechseln."
             },
             "submissionPolicy": {
                 "title": "Abgaberichtlinie",
@@ -599,10 +612,10 @@
                     },
                     "submission_penalty": {
                         "title": "Punktabzug je Überschreitung",
-                        "tooltip": "Das System zieht für jede Abgabe, die das Abgabelimit überschreitet, Punkte vom Gesamtergebnis ab. Versuche, innerhalb der erlaubten Abgaben zu bleiben, um Abzüge zu vermeiden!"
+                        "tooltip": "Das System zieht für jede Abgabe, die das Abgabelimit überschreitet, Punkte vom Gesamtergebnis ab. Der Punktabzug für diese Aufgabe ist -{{points}} Punkte."
                     }
                 },
-                "submissionLimitTitle": "Abgabelimit",
+                "submissionLimitTitle": "Abgaben",
                 "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
                 "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet und (de)aktiviert werden.",
                 "goToGradingToEditInformation": "Gehe zur Bewertungsseite, um die Abgaberichtlinie zu bearbeiten.",
@@ -713,7 +726,8 @@
             }
         },
         "error": {
-            "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben."
+            "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
+            "shortNameGenerationFailed": "Der Kurzname konnte nicht generiert werden, bitte wechsle zum erweiterten Modus und setze den Kurznamen manuell."
         }
     }
 }

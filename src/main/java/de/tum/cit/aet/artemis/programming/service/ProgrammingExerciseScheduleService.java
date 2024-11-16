@@ -961,45 +961,46 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         // TODO: we should think about executing those operations again in batches to avoid issues on the vcs server
 
         // Create a threadpool to execute the operation with a fixed amount of threads
-        ExecutorService threadPool = Executors.newFixedThreadPool(10);
-        var participations = programmingExercise.getStudentParticipations();
-        List<CompletableFuture<ProgrammingExerciseStudentParticipation>> futures = new ArrayList<>();
-        for (StudentParticipation studentParticipation : participations) {
-            Supplier<ProgrammingExerciseStudentParticipation> action = () -> {
-                // We need to set the authorization object for every thread
-                SecurityUtils.setAuthorizationObject();
-                var programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
+        try (ExecutorService threadPool = Executors.newFixedThreadPool(10)) {
+            var participations = programmingExercise.getStudentParticipations();
+            List<CompletableFuture<ProgrammingExerciseStudentParticipation>> futures = new ArrayList<>();
+            for (StudentParticipation studentParticipation : participations) {
+                Supplier<ProgrammingExerciseStudentParticipation> action = () -> {
+                    // We need to set the authorization object for every thread
+                    SecurityUtils.setAuthorizationObject();
+                    var programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
 
-                if (condition.test(programmingExerciseStudentParticipation)) {
-                    operation.accept(programmingExercise, programmingExerciseStudentParticipation);
+                    if (condition.test(programmingExerciseStudentParticipation)) {
+                        operation.accept(programmingExercise, programmingExerciseStudentParticipation);
+                    }
+
+                    return programmingExerciseStudentParticipation;
+                };
+
+                CompletableFuture<ProgrammingExerciseStudentParticipation> future = CompletableFuture.supplyAsync(action, threadPool);
+                futures.add(future);
+            }
+
+            for (var future : futures) {
+                future.whenComplete((participation, exception) -> {
+                    if (exception != null) {
+                        log.error(String.format("'%s' failed for programming exercise with id %d for student repository with participation id %d", operationName,
+                                programmingExercise.getId(), participation.getId()), exception);
+                        failedOperations.add(participation);
+                    }
+                });
+            }
+
+            return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).thenApply(ignore -> {
+                threadPool.shutdown();
+                log.info("Finished executing (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExercise.getId());
+                if (!failedOperations.isEmpty()) {
+                    var failedIds = failedOperations.stream().map(participation -> participation.getId().toString()).collect(Collectors.joining(","));
+                    log.warn("The (scheduled) task '{}' for programming exercise {} failed for these {} participations: {}", operation, programmingExercise.getId(),
+                            failedOperations.size(), failedIds);
                 }
-
-                return programmingExerciseStudentParticipation;
-            };
-
-            CompletableFuture<ProgrammingExerciseStudentParticipation> future = CompletableFuture.supplyAsync(action, threadPool);
-            futures.add(future);
-        }
-
-        for (var future : futures) {
-            future.whenComplete((participation, exception) -> {
-                if (exception != null) {
-                    log.error(String.format("'%s' failed for programming exercise with id %d for student repository with participation id %d", operationName,
-                            programmingExercise.getId(), participation.getId()), exception);
-                    failedOperations.add(participation);
-                }
+                return failedOperations;
             });
         }
-
-        return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).thenApply(ignore -> {
-            threadPool.shutdown();
-            log.info("Finished executing (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExercise.getId());
-            if (!failedOperations.isEmpty()) {
-                var failedIds = failedOperations.stream().map(participation -> participation.getId().toString()).collect(Collectors.joining(","));
-                log.warn("The (scheduled) task '{}' for programming exercise {} failed for these {} participations: {}", operation, programmingExercise.getId(),
-                        failedOperations.size(), failedIds);
-            }
-            return failedOperations;
-        });
     }
 }

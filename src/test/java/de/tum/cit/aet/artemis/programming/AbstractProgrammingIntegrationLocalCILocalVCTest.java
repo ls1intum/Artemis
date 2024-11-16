@@ -53,6 +53,9 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
 
     // Services
     @Autowired
+    protected ProgrammingExerciseIntegrationTestService programmingExerciseIntegrationTestService;
+
+    @Autowired
     protected AeolusRequestMockProvider aeolusRequestMockProvider;
 
     @Autowired
