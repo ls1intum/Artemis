@@ -1,0 +1,30 @@
+artemis:
+  telemetry:
+    enabled: false  # setting this to false will disable sending any information to the telemetry service
+  user-management:
+    use-external: false
+    internal-admin:
+      username:  artemis_admin
+      password:  artemis_admin
+    login:
+      account-name: TUM
+  version-control:
+    url: http://localhost:8080
+    use-version-control-access-token: true
+    show-clone-url-without-token: true
+  continuous-integration:
+    # Only necessary on ARM-based systems, the default is amd64 for Intel/AMD systems
+    # ARM-based systems include Apple M-series, Raspberry Pi, etc.
+    image-architecture: amd64
+    # Only necessary on Windows:
+    specify-concurrent-builds: true
+    # The number of concurrent builds that can be executed
+    concurrent-build-size: 2
+server:
+  port: 8080
+  url: http://localhost
+eureka:
+  client:
+    enabled: false
+info:
+  operatorName: Test Operator
