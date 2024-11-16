@@ -45,6 +45,24 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
     int deleteLongFeedbackTextForOrphanResult();
 
     /**
+     * Counts {@link LongFeedbackText} entries linked to {@link Feedback} where the associated
+     * {@link Result} has no participation and no submission.
+     *
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(lft)
+            FROM LongFeedbackText lft
+            WHERE lft.feedback.id IN (
+                SELECT f.id
+                FROM Feedback f
+                WHERE f.result.participation IS NULL
+                    AND f.result.submission IS NULL
+                )
+            """)
+    int countLongFeedbackTextForOrphanResult();
+
+    /**
      * Deletes {@link LongFeedbackText} linked to {@link Feedback} with a {@code null} result.
      *
      * @return the number of deleted {@link LongFeedbackText} entities
@@ -60,6 +78,22 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                 )
             """)
     int deleteLongFeedbackTextForOrphanedFeedback();
+
+    /**
+     * Counts {@link LongFeedbackText} linked to {@link Feedback} with a {@code null} result.
+     *
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(lft)
+            FROM LongFeedbackText lft
+            WHERE lft.feedback IN (
+                SELECT f
+                FROM Feedback f
+                WHERE f.result IS NULL
+                )
+            """)
+    int countLongFeedbackTextForOrphanedFeedback();
 
     /**
      * Deletes {@link LongFeedbackText} entries associated with rated {@link Result} that are not the latest rated result
@@ -96,6 +130,37 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
     int deleteLongFeedbackTextForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
+     * Counts {@link LongFeedbackText} entries associated with rated {@link Result} that are not the latest rated result
+     * for a {@link Participation}, within courses conducted between the specified date range.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(lft)
+            FROM LongFeedbackText lft
+            WHERE lft.feedback IN (
+                SELECT f
+                FROM Feedback f
+                    LEFT JOIN f.result r
+                    LEFT JOIN r.participation p
+                    LEFT JOIN p.exercise e
+                    LEFT JOIN e.course c
+                WHERE f.result.id NOT IN (
+                    SELECT MAX(r2.id)
+                    FROM Result r2
+                    WHERE r2.participation.id = p.id
+                        AND r2.rated = TRUE
+                    )
+                    AND c.endDate < :deleteTo
+                    AND c.startDate > :deleteFrom
+                    AND r.rated = TRUE
+                )
+            """)
+    int countLongFeedbackTextForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+
+    /**
      * Deletes {@link LongFeedbackText} entries linked to non-rated {@link Feedback} that are not the latest non-rated result where the associated course's start
      * and end dates are between the specified date range.
      * This query deletes long feedback text for feedback associated with non-rated results, within courses whose
@@ -128,4 +193,35 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
                 )
             """)
     int deleteLongFeedbackTextForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+
+    /**
+     * Counts {@link LongFeedbackText} entries linked to non-rated {@link Feedback} that are not the latest non-rated result where the associated course's start
+     * and end dates are between the specified date range.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(lft)
+            FROM LongFeedbackText lft
+            WHERE lft.feedback IN (
+                SELECT f
+                FROM Feedback f
+                    LEFT JOIN f.result r
+                    LEFT JOIN r.participation p
+                    LEFT JOIN p.exercise e
+                    LEFT JOIN e.course c
+                WHERE f.result.id NOT IN (
+                    SELECT MAX(r2.id)
+                    FROM Result r2
+                    WHERE r2.participation.id = p.id
+                        AND r2.rated = FALSE
+                    )
+                    AND r.rated = FALSE
+                    AND c.endDate < :deleteTo
+                    AND c.startDate > :deleteFrom
+                )
+            """)
+    int countLongFeedbackTextForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }
