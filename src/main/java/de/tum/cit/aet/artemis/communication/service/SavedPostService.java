@@ -53,6 +53,7 @@ public class SavedPostService {
      * Removes a bookmark of a post for the currently logged-in user, if post is not saved it returns
      *
      * @param post post to remove from bookmarks
+     * @return false if the saved post was not found, true if post was found and deleted
      */
     public boolean removeSavedPostForCurrentUser(Posting post) {
         var existingSavedPost = this.getSavedPostForCurrentUser(post);
