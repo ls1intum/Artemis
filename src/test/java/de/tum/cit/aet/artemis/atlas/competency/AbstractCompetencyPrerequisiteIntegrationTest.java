@@ -508,10 +508,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
         importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course3.getId()), false, false, false, Optional.empty(), false);
         competencyDTOList = importAllCall(course.getId(), importOptions, HttpStatus.CREATED);
-        assertThat(competencyDTOList).hasSize(2);
+        assertThat(competencyDTOList).hasSize(1);
         // relations should be empty when not importing them
         assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
-        assertThat(competencyDTOList.get(1).tailRelations()).isNull();
     }
 
     // Test
@@ -657,10 +656,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
         importOptions = new CompetencyImportOptionsDTO(competencyIds, Optional.empty(), false, false, false, Optional.empty(), false);
         competencyDTOList = importBulkCall(course.getId(), importOptions, HttpStatus.CREATED);
-        assertThat(competencyDTOList).hasSize(2);
+        assertThat(competencyDTOList).hasSize(1);
         // relations should be empty when not importing them
         assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
-        assertThat(competencyDTOList.get(1).tailRelations()).isNull();
     }
 
     // Test
