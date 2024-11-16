@@ -9,6 +9,42 @@ export interface CleanupServiceExecutionRecordDTO {
     jobType: string;
 }
 
+export interface CleanupCount {
+    totalCount: number;
+}
+
+export interface OrphanCleanupCountDTO extends CleanupCount {
+    orphanFeedback: number;
+    orphanLongFeedbackText: number;
+    orphanTextBlock: number;
+    orphanStudentScore: number;
+    orphanTeamScore: number;
+    orphanFeedbackForOrphanResults: number;
+    orphanLongFeedbackTextForOrphanResults: number;
+    orphanTextBlockForOrphanResults: number;
+    orphanRating: number;
+    orphanResultsWithoutParticipation: number;
+}
+
+export interface PlagiarismComparisonCleanupCountDTO extends CleanupCount {
+    plagiarismComparison: number;
+    plagiarismElements: number;
+    plagiarismSubmissions: number;
+    plagiarismMatches: number;
+}
+
+export interface NonLatestNonRatedResultsCleanupCountDTO extends CleanupCount {
+    longFeedbackText: number;
+    textBlock: number;
+    feedback: number;
+}
+
+export interface NonLatestRatedResultsCleanupCountDTO extends CleanupCount {
+    longFeedbackText: number;
+    textBlock: number;
+    feedback: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DataCleanupService {
     private readonly adminResourceUrl = 'api/admin/cleanup';
@@ -72,6 +108,61 @@ export class DataCleanupService {
      */
     getLastExecutions(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO[]>> {
         return this.http.get<CleanupServiceExecutionRecordDTO[]>(`${this.adminResourceUrl}/last-executions`, {
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Send GET request to count orphaned data.
+     * @returns An observable of type HttpResponse<OrphanCleanupCountDTO>.
+     */
+    countOrphans(): Observable<HttpResponse<OrphanCleanupCountDTO>> {
+        return this.http.get<OrphanCleanupCountDTO>(`${this.adminResourceUrl}/orphans/count`, {
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Send GET request to count plagiarism comparisons within a specific date range.
+     * @param deleteFrom the start date for counting
+     * @param deleteTo the end date for counting
+     * @returns An observable of type HttpResponse<PlagiarismComparisonCleanupCountDTO>.
+     */
+    countPlagiarismComparisons(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<PlagiarismComparisonCleanupCountDTO>> {
+        const deleteFromString = convertDateFromClient(deleteFrom)!;
+        const deleteToString = convertDateFromClient(deleteTo)!;
+        return this.http.get<PlagiarismComparisonCleanupCountDTO>(`${this.adminResourceUrl}/plagiarism-comparisons/count`, {
+            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Send GET request to count non-rated results within a specific date range.
+     * @param deleteFrom the start date for counting
+     * @param deleteTo the end date for counting
+     * @returns An observable of type HttpResponse<NonLatestNonRatedResultsCleanupCountDTO>.
+     */
+    countNonRatedResults(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<NonLatestNonRatedResultsCleanupCountDTO>> {
+        const deleteFromString = convertDateFromClient(deleteFrom)!;
+        const deleteToString = convertDateFromClient(deleteTo)!;
+        return this.http.get<NonLatestNonRatedResultsCleanupCountDTO>(`${this.adminResourceUrl}/non-rated-results/count`, {
+            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Send GET request to count old rated results within a specific date range.
+     * @param deleteFrom the start date for counting
+     * @param deleteTo the end date for counting
+     * @returns An observable of type HttpResponse<NonLatestRatedResultsCleanupCountDTO>.
+     */
+    countOldRatedResults(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<NonLatestRatedResultsCleanupCountDTO>> {
+        const deleteFromString = convertDateFromClient(deleteFrom)!;
+        const deleteToString = convertDateFromClient(deleteTo)!;
+        return this.http.get<NonLatestRatedResultsCleanupCountDTO>(`${this.adminResourceUrl}/old-rated-results/count`, {
+            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
             observe: 'response',
         });
     }
