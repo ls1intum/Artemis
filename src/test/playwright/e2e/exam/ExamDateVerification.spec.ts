@@ -6,7 +6,7 @@ import { admin, studentOne } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { Fixtures } from '../../fixtures/fixtures';
 
-test.describe('Exam date verification', () => {
+test.describe('Exam date verification', { tag: '@fast' }, () => {
     let course: Course;
     let examTitle: string;
 
