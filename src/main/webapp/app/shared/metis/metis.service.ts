@@ -662,14 +662,13 @@ export class MetisService implements OnDestroy {
     }
 
     getAnswerPostById(answerPostId: number | undefined) {
-        console.log('burda');
         if (answerPostId) return this.answerPostService.getAnswerPostById(this.courseId, answerPostId);
         else return;
     }
 
     /**
      * Creates new ForwardedMessages by first creating a new Post.
-     * @param originalPostIds The IDs of the original posts to be forwarded.
+     * @param originalPosts The original posts to be forwarded.
      * @param conversation The target conversation to forward the posts to.
      * @param newContent Optional new content for the forwarded posts.
      * @return {Observable<ForwardedMessage[]>} created ForwardedMessages
@@ -679,12 +678,9 @@ export class MetisService implements OnDestroy {
             throw new Error('Course ID is not set. Ensure that setCourse() is called before forwarding posts.');
         }
 
-        // Öncelikle yeni bir Post oluşturuyoruz
         const newPost: Post = {
-            // Yeni Post'un gerekli alanlarını burada doldurun
             content: newContent || '',
             conversation: targetConversation,
-            // Diğer alanlar...
         };
 
         let sourceType = SourceType.POST;
@@ -707,27 +703,25 @@ export class MetisService implements OnDestroy {
                     this.forwardedMessageService.createForwardedMessage(fm).pipe(map((res: HttpResponse<ForwardedMessage>) => res.body!)),
                 );
 
-                // Tüm ForwardedMessage'lar oluşturulduktan sonra sonuçları döndürüyoruz
                 return forkJoin(createForwardedMessageObservables).pipe(
                     tap((createdForwardedMessages: ForwardedMessage[]) => {
-                        // Yeni oluşturulan Post'u cache'lenmiş posts içerisinde ekliyoruz
-                        this.cachedPosts = [createdPostBody, ...this.cachedPosts];
-                        this.posts$.next(this.cachedPosts);
+                        if (targetConversation.id === this.currentConversation?.id) {
+                            this.cachedPosts = [createdPostBody, ...this.cachedPosts];
+                            this.posts$.next(this.cachedPosts);
 
-                        // Her bir ForwardedMessage'ı ilgili Post'a ekliyoruz
-                        createdForwardedMessages.forEach((fm) => {
-                            const postIndex = this.cachedPosts.findIndex((post) => post.id === fm.destinationPost?.id);
-                            if (postIndex > -1) {
-                                const post = this.cachedPosts[postIndex];
-                                if (!post.forwardedMessages) {
-                                    post.forwardedMessages = [];
+                            createdForwardedMessages.forEach((fm) => {
+                                const postIndex = this.cachedPosts.findIndex((post) => post.id === fm.destinationPost?.id);
+                                if (postIndex > -1) {
+                                    const post = this.cachedPosts[postIndex];
+                                    const updatedForwardedMessages = [...(post.forwardedMessages || []), fm];
+                                    const updatedPost = { ...post, forwardedMessages: updatedForwardedMessages };
+                                    this.cachedPosts[postIndex] = updatedPost;
                                 }
-                                post.forwardedMessages.push(fm);
-                                // Cache'i güncelliyoruz
-                                this.cachedPosts[postIndex] = { ...post };
-                            }
-                        });
-                        this.posts$.next(this.cachedPosts);
+                            });
+                            this.posts$.next(this.cachedPosts);
+                            this.cachedTotalNumberOfPosts += 1;
+                            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+                        }
                     }),
                 );
             }),

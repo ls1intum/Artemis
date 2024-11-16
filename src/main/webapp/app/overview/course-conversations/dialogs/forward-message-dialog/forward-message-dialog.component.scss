@@ -84,13 +84,17 @@
     font-size: 0.875rem;
 }
 
+.left-border-line {
+    background-color: var(--metis-gray);
+    width: 4px;
+    border-radius: 3px;
+    margin-right: 0.5rem;
+}
+
 .forwarded-message-container {
     display: flex;
-    padding-left: 0.7rem;
     padding-top: 0.3rem;
     padding-bottom: 0.3rem;
-    border-left: 4px solid var(--metis-blue);
-    background-color: #f9f9f9;
     border-radius: 5px;
     margin-top: 1rem;
 
@@ -102,14 +106,15 @@
 
     .forwarded-message-header {
         font-size: 0.9rem;
-        font-weight: bold;
-        color: #333;
         margin-bottom: 0.5rem;
+    }
+
+    .forwarded-message-author {
+        font-weight: bold;
     }
 
     .forwarded-message-body {
         font-size: 0.9rem;
-        color: #555;
         margin-bottom: 0.5rem;
     }
 

@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingService } from 'app/shared/metis/posting.service';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 
 type EntityResponseType = HttpResponse<AnswerPost>;
@@ -59,23 +59,12 @@ export class AnswerPostService extends PostingService<AnswerPost> {
      * @return {Observable<HttpResponse<void>>}
      */
     getAnswerPostById(courseId: number, answerPostId: number): Observable<EntityResponseType> {
-        console.log('API çağrısı yapılıyor:', `${this.resourceUrl}${courseId}/answer-messages/${answerPostId}`);
         return this.http.get<AnswerPost>(`${this.resourceUrl}${courseId}/answer-messages/${answerPostId}`, { observe: 'response' }).pipe(
             map((response) => {
-                console.log('Yanıt başarılı şekilde döndü:');
-                console.log('HTTP Durum Kodu:', response.status);
-                console.log('Yanıt Gövdesi (body):', response.body);
                 return response;
             }),
-            // Hata durumlarını loglamak için catchError ekliyoruz
             catchError((error) => {
-                console.error('HTTP isteği sırasında bir hata oluştu!');
-                console.error('Hata Detayları:', error);
-                return throwError(() => new Error(`Hata oluştu: ${error.message || error.statusText}`));
-            }),
-            // Son olarak tamamlanma durumunu loglayabilirsiniz
-            tap({
-                complete: () => console.log('HTTP isteği tamamlandı.'),
+                return throwError(() => new Error(`${error.message || error.statusText}`));
             }),
         );
     }

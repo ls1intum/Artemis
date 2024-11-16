@@ -1,6 +1,6 @@
 <div class="modal-header">
     <h4 class="modal-title">Forward this message</h4>
-    <button type="button" class="btn-close" aria-label="Close" (click)="({})"></button>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
 </div>
 <div class="modal-body">
     <div class="autocomplete-container mt-1 mb-2">
@@ -21,7 +21,7 @@
                 #searchInput
                 type="text"
                 class="tag-input"
-                placeholder="Search channels or chats"
+                placeholder="Search channels or names"
                 [(ngModel)]="searchTerm"
                 (input)="filterItems($event)"
                 (focus)="onInputFocus()"
@@ -85,7 +85,7 @@
                     style="margin-right: 0.2rem"
                 >
                 </jhi-profile-picture>
-                <span>{{ postToForward?.author?.name }}</span>
+                <span class="forwarded-message-author">{{ postToForward?.author?.name }}</span>
             </div>
             <div class="forwarded-message-body" [ngClass]="{ 'preserve-line-breaks': postToForward?.content?.includes('\n') }">
                 {{ postToForward?.content }}

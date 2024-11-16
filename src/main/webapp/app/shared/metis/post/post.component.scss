@@ -73,13 +73,18 @@
     background-color: var(--artemis-alert-warning-background);
 }
 
+.left-border-line {
+    background-color: var(--metis-gray);
+    width: 4px;
+    border-radius: 3px;
+    margin-right: 0.5rem;
+}
+
 .forwarded-message-container {
     display: flex;
-    padding-left: 0.7rem;
     padding-top: 0.3rem;
     padding-bottom: 0.3rem;
-    border-left: 4px solid var(--metis-gray);
-    border-radius: 1px;
+    position: relative;
 
     .forwarded-message-content {
         display: flex;
@@ -89,28 +94,16 @@
 
     .forwarded-message-header {
         font-size: 0.9rem;
-        font-weight: bold;
-        color: #333;
         margin-bottom: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .forwarded-message-author {
+        font-weight: bold;
     }
 
     .forwarded-message-body {
         font-size: 0.9rem;
-        color: #555;
         margin-bottom: 0.5rem;
-    }
-
-    .forwarded-message-footer {
-        display: flex;
-        justify-content: flex-end;
-        font-size: 0.8rem;
-        color: #777;
-
-        .forwarded-message-channel {
-            margin-right: 1rem;
-        }
-
-        .forwarded-message-time {
-        }
     }
 }

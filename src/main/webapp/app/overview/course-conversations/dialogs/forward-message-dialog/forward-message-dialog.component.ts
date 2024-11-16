@@ -84,7 +84,6 @@ export class ForwardMessageDialogComponent implements OnInit {
                 })),
         ];
 
-        this.showDropdown = true;
         this.filterOptions();
         this.focusInput();
     }

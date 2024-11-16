@@ -188,16 +188,39 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.fetchForwardedPost();
     }
 
+    updateSourceName(post: Post | AnswerPost) {
+        let conversation = null;
+        if ('post' in post) {
+            conversation = post.post?.conversation;
+            if (conversation?.type?.valueOf() == 'channel') {
+                this.sourceName = 'a thread in #' + (conversation as any)?.name;
+            } else if (conversation?.type?.valueOf() == 'oneToOneChat') {
+                this.sourceName = 'a direct message';
+            } else {
+                this.sourceName = 'a group message';
+            }
+        } else {
+            conversation = (post as Post).conversation;
+            if (conversation?.type?.valueOf() == 'channel') {
+                this.sourceName = '#' + (conversation as any)?.name;
+            } else if (conversation?.type?.valueOf() == 'oneToOneChat') {
+                this.sourceName = 'a direct message';
+            } else {
+                this.sourceName = 'a group message';
+            }
+        }
+    }
+
     fetchForwardedPost(): void {
         if (this.posting.forwardedMessages && this.posting.forwardedMessages.length > 0) {
             const forwardedMessage = this.posting.forwardedMessages[0];
 
             if (forwardedMessage.sourceType?.valueOf() == 'POST') {
-                console.log('ifte');
                 this.metisService.getPostById(forwardedMessage.sourceId)!.subscribe(
                     (post) => {
-                        console.log('Forwarded Post Details:', post.body);
-                        this.originalPostDetails = post.body as Posting;
+                        //console.log('Forwarded Post Details:', post.body);
+                        this.originalPostDetails = post.body as Post;
+                        this.updateSourceName(post.body!);
                         this.changeDetector.markForCheck();
                     },
                     (error) => {
@@ -205,10 +228,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                     },
                 );
             } else if (forwardedMessage.sourceType?.valueOf() === 'ANSWER_POST') {
-                console.log('else de');
                 this.metisService.getAnswerPostById(forwardedMessage.sourceId)!.subscribe(
                     (answerPost) => {
                         this.originalPostDetails = answerPost.body as Posting;
+                        this.updateSourceName(answerPost.body!);
                         this.changeDetector.markForCheck();
                     },
                     (error) => {
@@ -228,6 +251,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
         this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
         this.sortAnswerPosts();
+        this.fetchForwardedPost();
     }
 
     /**

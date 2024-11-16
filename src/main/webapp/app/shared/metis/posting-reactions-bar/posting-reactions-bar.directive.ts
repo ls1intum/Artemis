@@ -131,7 +131,6 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
         if (!this.course()?.id) {
             return;
         }
-        console.log('open cagrildi mi');
         this.channels = [];
         this.chats = [];
 
@@ -180,7 +179,6 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     }
 
     forwardPost(post: Posting, conversation: Conversation, content: string, isAnswer: boolean): void {
-        console.log('su an reaction forwardda');
         this.metisService.createForwardedMessages([post], conversation, isAnswer, content).subscribe({
             error: (error) => {
                 console.error('Error forwarding post:', error);
