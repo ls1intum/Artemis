@@ -207,6 +207,7 @@ public class SecurityConfiguration {
                     // Websocket and other specific endpoints allowed without authentication.
                     .requestMatchers("/websocket/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
+                    .requestMatchers("/.well-known/assetlinks.json").permitAll()
                     // Prometheus endpoint protected by IP address.
                     .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())));
 
