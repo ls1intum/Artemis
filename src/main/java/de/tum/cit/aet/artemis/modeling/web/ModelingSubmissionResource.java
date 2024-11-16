@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -434,7 +433,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
                 else {
                     return result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA; // Only include Athena results if the assessment period is not over
                 }
-            }).peek(Result::filterSensitiveInformation).sorted(Comparator.comparing(Result::getCompletionDate).reversed()).collect(Collectors.toList());
+            }).peek(Result::filterSensitiveInformation).sorted(Comparator.comparing(Result::getCompletionDate).reversed()).toList();
 
             // Set filtered results back into the submission if any results remain after filtering
             if (!filteredResults.isEmpty()) {
@@ -442,7 +441,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
                 return true; // Include submission as it has relevant results
             }
             return false;
-        }).collect(Collectors.toList());
+        }).toList();
 
         return ResponseEntity.ok().body(submissionsWithResults);
     }
