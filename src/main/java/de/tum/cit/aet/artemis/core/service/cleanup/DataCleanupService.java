@@ -23,6 +23,10 @@ import de.tum.cit.aet.artemis.assessment.repository.cleanup.TextBlockCleanupRepo
 import de.tum.cit.aet.artemis.core.domain.CleanupJobExecution;
 import de.tum.cit.aet.artemis.core.domain.CleanupJobType;
 import de.tum.cit.aet.artemis.core.dto.CleanupServiceExecutionRecordDTO;
+import de.tum.cit.aet.artemis.core.dto.NonLatestNonRatedResultsCleanupCountDTO;
+import de.tum.cit.aet.artemis.core.dto.NonLatestRatedResultsCleanupCountDTO;
+import de.tum.cit.aet.artemis.core.dto.OrphanCleanupCountDTO;
+import de.tum.cit.aet.artemis.core.dto.PlagiarismComparisonCleanupCountDTO;
 import de.tum.cit.aet.artemis.core.repository.cleanup.CleanupJobExecutionRepository;
 
 @Profile(PROFILE_CORE)
@@ -206,6 +210,80 @@ public class DataCleanupService {
         // log.info("Deleted {} non-latest rated results between {} and {}", deletedNonLatestRatedResults, deleteFrom, deleteTo);
 
         return CleanupServiceExecutionRecordDTO.of(createCleanupJobExecution(CleanupJobType.RATED_RESULTS, deleteFrom, deleteTo));
+    }
+
+    /**
+     * Counts orphaned entities that are no longer associated with valid results or participations.
+     * This includes feedback, text blocks, and scores that reference null results, participations, or submissions.
+     *
+     * @return an {@link OrphanCleanupCountDTO} representing the counts of orphaned entities that would be deleted
+     */
+    public OrphanCleanupCountDTO countOrphans() {
+        int orphanFeedbackCount = feedbackCleanupRepository.countOrphanFeedback();
+        int orphanLongFeedbackTextCount = longFeedbackTextCleanupRepository.countLongFeedbackTextForOrphanedFeedback();
+        int orphanTextBlockCount = textBlockCleanupRepository.countTextBlockForEmptyFeedback();
+        int orphanStudentScoreCount = studentScoreCleanupRepository.countOrphanStudentScore();
+        int orphanTeamScoreCount = teamScoreCleanupRepository.countOrphanTeamScore();
+        int orphanLongFeedbackTextForOrphanResultsCount = longFeedbackTextCleanupRepository.countLongFeedbackTextForOrphanResult();
+        int orphanTextBlockForOrphanResultsCount = textBlockCleanupRepository.countTextBlockForOrphanResults();
+        int orphanFeedbackForOrphanResultsCount = feedbackCleanupRepository.countFeedbackForOrphanResults();
+        int orphanRatingCount = ratingCleanupRepository.countOrphanRating();
+        int orphanResultsWithoutParticipationCount = resultCleanupRepository.countResultWithoutParticipationAndSubmission();
+
+        return new OrphanCleanupCountDTO(orphanFeedbackCount, orphanLongFeedbackTextCount, orphanTextBlockCount, orphanStudentScoreCount, orphanTeamScoreCount,
+                orphanFeedbackForOrphanResultsCount, orphanLongFeedbackTextForOrphanResultsCount, orphanTextBlockForOrphanResultsCount, orphanRatingCount,
+                orphanResultsWithoutParticipationCount);
+    }
+
+    /**
+     * Counts plagiarism comparisons with a status of "None" that belong to courses within the specified date range.
+     * It retrieves the IDs of the plagiarism comparisons matching the criteria and counts the related data,
+     * including plagiarism elements, submissions, and matches.
+     *
+     * @param deleteFrom the start date for selecting plagiarism comparisons
+     * @param deleteTo   the end date for selecting plagiarism comparisons
+     * @return a {@link PlagiarismComparisonCleanupCountDTO} representing the counts of entities related to plagiarism comparisons
+     */
+    public PlagiarismComparisonCleanupCountDTO countPlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
+        var pcIds = plagiarismComparisonCleanupRepository.findPlagiarismComparisonIdWithStatusNoneThatBelongToCourseWithDates(deleteFrom, deleteTo);
+        int plagiarismComparisonCount = pcIds.size();
+        int plagiarismElementsCount = plagiarismComparisonCleanupRepository.countPlagiarismSubmissionElementsByComparisonIdsIn(pcIds);
+        int plagiarismSubmissionsCount = plagiarismComparisonCleanupRepository.countPlagiarismSubmissionsByComparisonIdsIn(pcIds);
+        int plagiarismMatchesCount = plagiarismComparisonCleanupRepository.countPlagiarismComparisonMatchesByComparisonIdsIn(pcIds);
+
+        return new PlagiarismComparisonCleanupCountDTO(plagiarismComparisonCount, plagiarismElementsCount, plagiarismSubmissionsCount, plagiarismMatchesCount);
+    }
+
+    /**
+     * Counts non-rated results that are not the latest non-rated result for each participation, within the specified date range.
+     * This includes associated long feedback texts, text blocks, and feedback items that would be affected.
+     *
+     * @param deleteFrom The start of the date range for counting non-rated results.
+     * @param deleteTo   The end of the date range for counting non-rated results.
+     * @return a {@link NonLatestNonRatedResultsCleanupCountDTO} representing the counts of entities related to non-latest non-rated results
+     */
+    public NonLatestNonRatedResultsCleanupCountDTO countNonLatestNonRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
+        int longFeedbackTextCount = longFeedbackTextCleanupRepository.countLongFeedbackTextForNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        int textBlockCount = textBlockCleanupRepository.countTextBlockForNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        int feedbackCount = feedbackCleanupRepository.countOldNonRatedFeedbackWhereCourseDateBetween(deleteFrom, deleteTo);
+
+        return new NonLatestNonRatedResultsCleanupCountDTO(longFeedbackTextCount, textBlockCount, feedbackCount);
+    }
+
+    /**
+     * Counts rated results that are not the latest rated result for each participation, for courses conducted within the specified date range.
+     * This includes associated long feedback texts, text blocks, and feedback items that would be affected.
+     *
+     * @param deleteFrom The start of the date range for counting rated results.
+     * @param deleteTo   The end of the date range for counting rated results.
+     * @return a {@link NonLatestRatedResultsCleanupCountDTO} representing the counts of entities related to non-latest rated results
+     */
+    public NonLatestRatedResultsCleanupCountDTO countNonLatestRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
+        int longFeedbackTextCount = longFeedbackTextCleanupRepository.countLongFeedbackTextForRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        int textBlockCount = textBlockCleanupRepository.countTextBlockForRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        int feedbackCount = feedbackCleanupRepository.countOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+
+        return new NonLatestRatedResultsCleanupCountDTO(longFeedbackTextCount, textBlockCount, feedbackCount);
     }
 
     /**
