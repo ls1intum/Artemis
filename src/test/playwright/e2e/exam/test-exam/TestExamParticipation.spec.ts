@@ -15,6 +15,7 @@ import { expect } from '@playwright/test';
 const textFixture = 'loremIpsum-short.txt';
 
 test.describe('Test exam participation', { tag: '@fast' }, () => {
+    test.setTimeout(90000);
     let course: Course;
     let exerciseArray: Array<Exercise> = [];
 

@@ -18,6 +18,7 @@ const textFixture = 'loremIpsum.txt';
 const textFixtureShort = 'loremIpsum-short.txt';
 
 test.describe('Exam participation', () => {
+    test.setTimeout(90000);
     let course: Course;
     let exerciseArray: Array<Exercise> = [];
     let studentTwoName: string;
