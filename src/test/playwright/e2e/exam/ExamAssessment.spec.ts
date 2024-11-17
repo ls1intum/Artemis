@@ -53,12 +53,13 @@ test.beforeAll('Create course', async ({ browser }) => {
     studentOneName = (await users.getUserInfo(studentOne.username, page)).name!;
 });
 
-test.describe('Exam assessment', { tag: '@slow' }, () => {
+test.describe('Exam assessment', () => {
+    test.setTimeout(120000);
     let programmingAssessmentSuccessful = false;
     let modelingAssessmentSuccessful = false;
     let textAssessmentSuccessful = false;
 
-    test.describe.serial('Programming exercise assessment', () => {
+    test.describe.serial('Programming exercise assessment', { tag: '@slow' }, () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
             examEnd = dayjs().add(2, 'minutes');
             const page = await newBrowserPage(browser);
