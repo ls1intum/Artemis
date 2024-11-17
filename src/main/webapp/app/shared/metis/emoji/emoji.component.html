@@ -1,7 +1,6 @@
 <!-- Using two instances to 'rerender' if the theme changes -->
-@if (!dark) {
+@if (!dark()) {
     <ngx-emoji [backgroundImageFn]="utils.EMOJI_SHEET_URL" class="emoji" [emoji]="emoji" [size]="16" />
-}
-@if (dark) {
+} @else {
     <ngx-emoji [imageUrlFn]="utils.singleDarkModeEmojiUrlFn" [backgroundImageFn]="utils.EMOJI_SHEET_URL" class="emoji" [emoji]="emoji" [size]="16" />
 }
