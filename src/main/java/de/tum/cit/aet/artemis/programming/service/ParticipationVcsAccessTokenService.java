@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -25,10 +26,13 @@ public class ParticipationVcsAccessTokenService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    private final TeamRepository teamRepository;
+
     public ParticipationVcsAccessTokenService(ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, TeamRepository teamRepository) {
         this.participationVcsAccessTokenRepository = participationVCSAccessTokenRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -55,6 +59,7 @@ public class ParticipationVcsAccessTokenService {
      */
     public ParticipationVCSAccessToken findByUserAndParticipationIdOrElseThrow(User user, long participationId) {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        loadTeamStudentsForTeamExercise(participation);
         if (participation.isOwnedBy(user)) {
             return participationVcsAccessTokenRepository.findByUserIdAndParticipationIdOrElseThrow(user.getId(), participationId);
         }
@@ -73,11 +78,23 @@ public class ParticipationVcsAccessTokenService {
     public ParticipationVCSAccessToken createVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, long participationId) {
         participationVcsAccessTokenRepository.findByUserIdAndParticipationIdAndThrowIfExists(user.getId(), participationId);
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        loadTeamStudentsForTeamExercise(participation);
         if (participation.isOwnedBy(user)) {
             return createParticipationVCSAccessToken(user, participation);
         }
         else {
             throw new AccessForbiddenException("Participation not owned by user");
+        }
+    }
+
+    /**
+     * Loads the team students of a participation's team, if it has a team
+     *
+     * @param participation the participation which team's students are not loaded yet
+     */
+    private void loadTeamStudentsForTeamExercise(StudentParticipation participation) {
+        if (participation.getTeam().isPresent()) {
+            participation.getTeam().get().setStudents(teamRepository.findWithStudentsById(participation.getTeam().get().getId()).get().getStudents());
         }
     }
 
