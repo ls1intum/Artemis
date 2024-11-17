@@ -346,11 +346,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.prepareAssessmentData();
                 });
             } else if (this.result) {
-                // Defer the assignment to avoid ExpressionChangedAfterItHasBeenCheckedError
-                setTimeout(() => {
-                    this.assessmentResult = this.modelingAssessmentService.convertResult(this.result!);
-                    this.prepareAssessmentData();
-                }, 0);
+                this.assessmentResult = this.modelingAssessmentService.convertResult(this.result!);
+                this.prepareAssessmentData();
             }
         }
         this.isLoading = false;
