@@ -244,4 +244,11 @@ public class TeamUtilService {
         team.setExercise(exercise);
         return teamRepo.saveAndFlush(team);
     }
+
+    /**
+     * Deletes all teams
+     */
+    public void deleteAll() {
+        teamRepo.deleteAll();
+    }
 }
