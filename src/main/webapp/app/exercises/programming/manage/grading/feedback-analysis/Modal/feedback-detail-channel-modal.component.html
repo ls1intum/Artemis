@@ -11,7 +11,7 @@
     <form [formGroup]="form" (ngSubmit)="submitForm(false)">
         <div class="form-group">
             <label for="name" [jhiTranslate]="TRANSLATION_BASE + '.label'"></label>
-            <input type="text" class="form-control" id="name" formControlName="name" placeholder="This field can not be empty" />
+            <input type="text" class="form-control" id="name" formControlName="name" [attr.placeholder]="TRANSLATION_BASE + '.placeholder' | artemisTranslate" />
             @if (form.get('name')?.invalid && (form.get('name')?.dirty || form.get('name')?.touched)) {
                 <div class="alert alert-danger mt-2">
                     @if (form.get('name')?.errors?.['required']) {
@@ -28,7 +28,7 @@
         </div>
         <div class="form-group">
             <label for="description">Description</label>
-            <input type="text" class="form-control" id="description" formControlName="description" placeholder="This field can not be empty" />
+            <input type="text" class="form-control" id="description" formControlName="description" [attr.placeholder]="TRANSLATION_BASE + '.placeholder' | artemisTranslate" />
             @if (form.get('description')?.invalid && (form.get('description')?.dirty || form.get('description')?.touched)) {
                 <div class="alert alert-danger mt-2">
                     @if (form.get('description')?.errors?.['required']) {
