@@ -408,7 +408,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Students can only see their own models (to prevent cheating). TAs, instructors and admins can see all models.
-        if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise))) {
+        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user);
+        if (!(authCheckService.isOwnerOfParticipation(participation) || isAtLeastTutor)) {
             throw new AccessForbiddenException();
         }
 
@@ -416,6 +417,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         if (!authCheckService.isAllowedToGetExamResult(modelingExercise, participation, user)) {
             throw new AccessForbiddenException();
         }
+
+        boolean isStudent = !isAtLeastTutor;
 
         // Get the submissions associated with the participation
         Set<Submission> submissions = participation.getSubmissions();
@@ -427,11 +430,16 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
             // Filter results within each submission based on assessment type and period
             List<Result> filteredResults = submission.getResults().stream().filter(result -> {
-                if (ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
-                    return true; // Include all results if the assessment period is over
+                if (isStudent) {
+                    if (ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
+                        return true; // Include all results if the assessment period is over
+                    }
+                    else {
+                        return result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA; // Only include Athena results if the assessment period is not over
+                    }
                 }
                 else {
-                    return result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA; // Only include Athena results if the assessment period is not over
+                    return true; // Tutors and above can see all results
                 }
             }).peek(Result::filterSensitiveInformation).sorted(Comparator.comparing(Result::getCompletionDate).reversed()).toList();
 
