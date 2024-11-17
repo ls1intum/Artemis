@@ -1,0 +1,153 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-detail-channel-modal.component';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+
+describe('FeedbackDetailChannelModalComponent', () => {
+    let fixture: ComponentFixture<FeedbackDetailChannelModalComponent>;
+    let component: FeedbackDetailChannelModalComponent;
+    let activeModal: NgbActiveModal;
+    let modalService: NgbModal;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TranslateModule.forRoot(), ReactiveFormsModule, FeedbackDetailChannelModalComponent],
+            providers: [NgbActiveModal, NgbModal, FormBuilder],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(FeedbackDetailChannelModalComponent);
+        component = fixture.componentInstance;
+        activeModal = TestBed.inject(NgbActiveModal);
+        modalService = TestBed.inject(NgbModal);
+
+        fixture.componentRef.setInput('affectedStudentsCount', 42);
+        fixture.componentRef.setInput('feedbackDetail', {
+            detailText: 'Sample feedback',
+            concatenatedFeedbackIds: [1],
+            count: 10,
+            relativeCount: 50,
+            testCaseName: 'testCase1',
+            taskName: 'Task 1',
+            errorCategory: 'StudentError',
+        } as any);
+        fixture.componentInstance.isConfirmModalOpen.set(false);
+        fixture.detectChanges();
+    });
+
+    it('should initialize form and inputs', () => {
+        expect(component.affectedStudentsCount()).toBe(42);
+        expect(component.feedbackDetail().detailText).toBe('Sample feedback');
+        expect(component.form).toBeDefined();
+        expect(component.form.valid).toBeFalse();
+    });
+
+    it('should call activeModal.close when closeModal is triggered', () => {
+        const closeSpy = jest.spyOn(activeModal, 'close');
+        component.closeModal();
+        expect(closeSpy).toHaveBeenCalled();
+    });
+
+    it('should call activeModal.dismiss when dismissModal is triggered', () => {
+        const dismissSpy = jest.spyOn(activeModal, 'dismiss');
+        component.dismissModal();
+        expect(dismissSpy).toHaveBeenCalled();
+    });
+
+    it('should open confirmation modal and emit formSubmitted on successful confirmation', async () => {
+        jest.spyOn(component, 'handleModal').mockResolvedValue(true);
+
+        component.form.setValue({
+            name: 'channel',
+            description: 'channelDescription',
+            isPublic: true,
+            isAnnouncementChannel: false,
+        });
+
+        const formSubmittedSpy = jest.spyOn(component.formSubmitted, 'emit');
+        await component.submitForm(false);
+
+        expect(component.isConfirmModalOpen()).toBeFalse();
+        expect(formSubmittedSpy).toHaveBeenCalledWith({
+            channelDto: expect.objectContaining({
+                creationDate: undefined,
+                creator: undefined,
+                description: 'channelDescription',
+                hasChannelModerationRights: undefined,
+                hasUnreadMessage: undefined,
+                id: undefined,
+                isAnnouncementChannel: false,
+                isArchived: undefined,
+                isChannelModerator: undefined,
+                isCourseWide: undefined,
+                isCreator: undefined,
+                isFavorite: undefined,
+                isHidden: undefined,
+                isMember: undefined,
+                isMuted: undefined,
+                isPublic: true,
+                lastMessageDate: undefined,
+                lastReadDate: undefined,
+                name: 'channel',
+                numberOfMembers: undefined,
+                subType: undefined,
+                subTypeReferenceId: undefined,
+                topic: undefined,
+                tutorialGroupId: undefined,
+                tutorialGroupTitle: undefined,
+                type: 'channel',
+                unreadMessagesCount: undefined,
+            }),
+            navigate: false,
+        });
+    });
+
+    it('should call handleModal and proceed if confirmed', async () => {
+        jest.spyOn(component, 'handleModal').mockResolvedValue(true);
+        const formSubmittedSpy = jest.spyOn(component.formSubmitted, 'emit');
+
+        component.form.setValue({
+            name: 'channel',
+            description: 'channelDescription',
+            isPublic: true,
+            isAnnouncementChannel: false,
+        });
+
+        await component.submitForm(false);
+
+        expect(component.handleModal).toHaveBeenCalled();
+        expect(formSubmittedSpy).toHaveBeenCalledWith({
+            channelDto: expect.objectContaining({
+                name: 'channel',
+                description: 'channelDescription',
+                isPublic: true,
+                isAnnouncementChannel: false,
+            }),
+            navigate: false,
+        });
+    });
+
+    it('should not proceed if modal is dismissed', async () => {
+        jest.spyOn(component, 'handleModal').mockResolvedValue(false);
+
+        const formSubmittedSpy = jest.spyOn(component.formSubmitted, 'emit');
+
+        component.form.setValue({
+            name: 'channel',
+            description: 'channelDescription',
+            isPublic: true,
+            isAnnouncementChannel: false,
+        });
+
+        await component.submitForm(false);
+
+        expect(component.handleModal).toHaveBeenCalled();
+        expect(formSubmittedSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not open confirmation modal if form is invalid', async () => {
+        const modalSpy = jest.spyOn(modalService, 'open');
+        await component.submitForm(true);
+        expect(modalSpy).not.toHaveBeenCalled();
+    });
+});

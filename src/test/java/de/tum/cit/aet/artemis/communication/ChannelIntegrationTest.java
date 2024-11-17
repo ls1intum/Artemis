@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -32,6 +34,8 @@ import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
@@ -62,6 +66,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @BeforeEach
     @Override
@@ -899,6 +906,31 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         conversationRepository.deleteById(publicChannelWhereMember.getId());
         lectureRepository.deleteById(lecture.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void createFeedbackChannel_asStudent_shouldReturnForbidden() {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        ChannelDTO channelDTO = new ChannelDTO();
+        channelDTO.setName("feedback-channel");
+        channelDTO.setDescription("Discussion channel for feedback");
+        channelDTO.setIsPublic(true);
+        channelDTO.setIsAnnouncementChannel(false);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("feedback-detail-text", "Sample feedback text");
+
+        String BASE_ENDPOINT = "api/courses/{courseId}/{exerciseId}/feedback-channel";
+
+        try {
+            request.postWithoutResponseBody(BASE_ENDPOINT.replace("{courseId}", course.getId().toString()).replace("{exerciseId}", programmingExercise.getId().toString()),
+                    channelDTO, HttpStatus.FORBIDDEN, headers);
+        }
+        catch (Exception e) {
+            Assertions.fail("Request failed unexpectedly", e);
+        }
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {

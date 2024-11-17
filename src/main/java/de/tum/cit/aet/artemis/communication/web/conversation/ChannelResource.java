@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
@@ -482,7 +483,7 @@ public class ChannelResource extends ConversationManagementResource {
      * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
      */
     @PostMapping("{courseId}/{exerciseId}/feedback-channel")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<ChannelDTO> createFeedbackChannel(@PathVariable Long courseId, @PathVariable Long exerciseId, @RequestBody ChannelDTO channelDTO,
             @RequestHeader("feedback-detail-text") String feedbackDetailText) throws URISyntaxException {
         log.debug("REST request to create feedback channel in course {} with properties: {}", courseId, channelDTO);

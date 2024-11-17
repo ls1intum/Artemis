@@ -132,4 +132,21 @@ describe('FeedbackAnalysisService', () => {
             expect(result.content[1].firstName).toBe('Jane');
         });
     });
+
+    describe('getAffectedStudentCount', () => {
+        it('should retrieve the count of affected students for a feedback detail text', async () => {
+            const exerciseId = 1;
+            const feedbackDetailText = 'Test feedback detail';
+            const affectedStudentCountMock = 42;
+
+            const responsePromise = service.getAffectedStudentCount(exerciseId, feedbackDetailText);
+
+            const req = httpMock.expectOne(`api/exercises/${exerciseId}/feedback-detail/affected-students?detailText=${encodeURIComponent(feedbackDetailText)}`);
+            expect(req.request.method).toBe('GET');
+            req.flush(affectedStudentCountMock);
+
+            const result = await responsePromise;
+            expect(result).toBe(affectedStudentCountMock);
+        });
+    });
 });
