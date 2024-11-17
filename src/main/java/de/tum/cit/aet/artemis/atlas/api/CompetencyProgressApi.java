@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
@@ -18,6 +21,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 
 @Controller
+@Profile(PROFILE_CORE)
 public class CompetencyProgressApi extends AbstractAtlasApi {
 
     private final CompetencyProgressService competencyProgressService;

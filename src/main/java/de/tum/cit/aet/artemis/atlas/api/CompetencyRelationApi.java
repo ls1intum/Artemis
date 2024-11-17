@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -11,6 +14,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkReposito
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 
 @Controller
+@Profile(PROFILE_CORE)
 public class CompetencyRelationApi extends AbstractAtlasApi {
 
     private final CompetencyRelationRepository competencyRelationRepository;
