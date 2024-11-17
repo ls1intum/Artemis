@@ -952,7 +952,7 @@ public class UserTestService {
         submissionRepository.delete(submission);
         participationVCSAccessTokenRepository.deleteAll();
         participationRepository.deleteById(submission.getParticipation().getId());
-        teamUtilService.deleteAll();
+        teamUtilService.deleteTeam(team);
     }
 
     // Test
