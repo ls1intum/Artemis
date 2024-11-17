@@ -94,6 +94,7 @@ public class PyrisPipelineService {
      *
      * @param name          the name of the pipeline to be executed
      * @param variant       the variant of the pipeline
+     * @param event         an optional event variant that can be used to trigger specific event of the given pipeline
      * @param jobToken      a unique job token for tracking the pipeline execution
      * @param dtoMapper     a function to create the concrete DTO type for this pipeline from the base DTO
      * @param statusUpdater a consumer to update the status of the pipeline execution
@@ -142,6 +143,7 @@ public class PyrisPipelineService {
      * @param latestSubmission the latest submission of the student
      * @param exercise         the programming exercise
      * @param session          the chat session
+     * @param eventVariant     if this function triggers a pipeline execution due to a specific event, this is the used event variant
      * @see PyrisPipelineService#executePipeline for more details on the pipeline execution process.
      */
     public void executeExerciseChatPipeline(String variant, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise, IrisExerciseChatSession session,
@@ -188,7 +190,7 @@ public class PyrisPipelineService {
         var studentId = session.getUser().getId();
         executePipeline("course-chat", variant, eventVariant, pyrisJobService.addCourseChatJob(courseId, session.getId()), executionDto -> {
             var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
-            return new PyrisCourseChatPipelineExecutionDTO(PyrisExtendedCourseDTO.of(fullCourse),
+            return new PyrisCourseChatPipelineExecutionDTO<>(PyrisExtendedCourseDTO.of(fullCourse),
                     learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId), generateEventPayloadFromObjectType(eventDtoClass, eventObject),
                     pyrisDTOService.toPyrisMessageDTOList(session.getMessages()), new PyrisUserDTO(session.getUser()), executionDto.settings(), // flatten the execution dto here
                     executionDto.initialStages());
