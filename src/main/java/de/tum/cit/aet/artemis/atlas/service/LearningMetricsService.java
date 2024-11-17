@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.service;
+package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
@@ -18,7 +18,6 @@ import java.util.function.ToDoubleFunction;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.api.CompetencyMetricsApi;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyProgressDTO;
@@ -30,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.ScoreDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyMetricsRepository;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitMetricsRepository;
@@ -45,13 +45,13 @@ public class LearningMetricsService {
 
     private final LectureUnitMetricsRepository lectureUnitMetricsRepository;
 
-    private final CompetencyMetricsApi competencyMetricsApi;
+    private final CompetencyMetricsRepository competencyMetricsRepository;
 
     public LearningMetricsService(ExerciseMetricsRepository exerciseMetricsRepository, LectureUnitMetricsRepository lectureUnitMetricsRepository,
-            CompetencyMetricsApi competencyMetricsApi) {
+            CompetencyMetricsRepository competencyMetricsRepository) {
         this.exerciseMetricsRepository = exerciseMetricsRepository;
         this.lectureUnitMetricsRepository = lectureUnitMetricsRepository;
-        this.competencyMetricsApi = competencyMetricsApi;
+        this.competencyMetricsRepository = competencyMetricsRepository;
     }
 
     /**
@@ -136,26 +136,26 @@ public class LearningMetricsService {
      * @return the metrics for the student in the course
      */
     public CompetencyStudentMetricsDTO getStudentCompetencyMetrics(long userId, long courseId) {
-        final var competencyInfo = competencyMetricsApi.findAllCompetencyInformationByCourseId(courseId);
+        final var competencyInfo = competencyMetricsRepository.findAllCompetencyInformationByCourseId(courseId);
         final var competencyInfoMap = competencyInfo.stream().collect(toMap(CompetencyInformationDTO::id, identity()));
 
         final var competencyIds = competencyInfoMap.keySet();
 
-        final var competencyExerciseMapEntries = competencyMetricsApi.findAllExerciseIdsByCompetencyIds(competencyIds);
+        final var competencyExerciseMapEntries = competencyMetricsRepository.findAllExerciseIdsByCompetencyIds(competencyIds);
         final var exerciseMap = competencyExerciseMapEntries.stream().collect(groupingBy(MapEntryLongLong::key, mapping(MapEntryLongLong::value, toSet())));
 
-        final var competencyLectureUnitMapEntries = competencyMetricsApi.findAllLectureUnitIdsByCompetencyIds(competencyIds);
+        final var competencyLectureUnitMapEntries = competencyMetricsRepository.findAllLectureUnitIdsByCompetencyIds(competencyIds);
         final var lectureUnitMap = competencyLectureUnitMapEntries.stream().collect(groupingBy(MapEntryLongLong::key, mapping(MapEntryLongLong::value, toSet())));
 
-        final var competencyProgress = competencyMetricsApi.findAllCompetencyProgressForUserByCompetencyIds(userId, competencyIds);
+        final var competencyProgress = competencyMetricsRepository.findAllCompetencyProgressForUserByCompetencyIds(userId, competencyIds);
         final var competencyProgressMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::progress));
         final var competencyConfidenceMap = competencyProgress.stream().collect(toMap(CompetencyProgressDTO::competencyId, CompetencyProgressDTO::confidence));
 
-        final var currentJolValues = competencyMetricsApi.findAllLatestCompetencyJolValuesForUserByCompetencyIds(userId, competencyIds);
+        final var currentJolValues = competencyMetricsRepository.findAllLatestCompetencyJolValuesForUserByCompetencyIds(userId, competencyIds);
         final var currentJolValuesMap = currentJolValues.stream().collect(toMap(CompetencyJolDTO::competencyId, identity()));
 
         final var currentJolIds = currentJolValues.stream().map(CompetencyJolDTO::id).collect(toSet());
-        final var priorJolValues = competencyMetricsApi.findAllLatestCompetencyJolValuesForUserByCompetencyIdsExcludeJolIds(userId, competencyIds, currentJolIds);
+        final var priorJolValues = competencyMetricsRepository.findAllLatestCompetencyJolValuesForUserByCompetencyIdsExcludeJolIds(userId, competencyIds, currentJolIds);
         final var priorJolValuesMap = priorJolValues.stream().collect(toMap(CompetencyJolDTO::competencyId, identity()));
 
         return new CompetencyStudentMetricsDTO(competencyInfoMap, exerciseMap, lectureUnitMap, competencyProgressMap, competencyConfidenceMap, currentJolValuesMap,
