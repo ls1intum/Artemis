@@ -345,7 +345,7 @@ In total there are four Docker containers started in the Bamboo build agent:
   for nginx, including settings for load balancing and timeouts, are mounted into the container via volumes.
   SSL certificates are also included to enable HTTPS support. The client container depends on the Artemis application
   container to ensure it only starts after the application is running. It exposes ports 80 and 443 for HTTP and HTTPS
-  traffic, respectively, and includes a health check to monitor the Nginx service's status.
+  traffic, respectively, and includes a health check to monitor the nginx service's status.
 
 4. Playwright
 
