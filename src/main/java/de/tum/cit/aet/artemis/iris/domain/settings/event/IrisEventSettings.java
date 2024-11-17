@@ -18,8 +18,6 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
-import javax.annotation.Nullable;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -67,7 +65,6 @@ public abstract class IrisEventSettings extends DomainObject {
     private String selectedEventVariant;
 
     // The session type of the event which type of session the event will be triggered in
-    @Nullable
     @Enumerated(EnumType.STRING)
     @Column(name = "session_type", nullable = false)
     private IrisEventSessionType sessionType;
@@ -116,12 +113,11 @@ public abstract class IrisEventSettings extends DomainObject {
         this.allowedEventVariants = allowedEventVariants;
     }
 
-    @Nullable
     public String getSelectedEventVariant() {
         return selectedEventVariant;
     }
 
-    public void setSelectedEventVariant(@Nullable String selectedVariant) {
+    public void setSelectedEventVariant(String selectedVariant) {
         this.selectedEventVariant = selectedVariant;
     }
 
