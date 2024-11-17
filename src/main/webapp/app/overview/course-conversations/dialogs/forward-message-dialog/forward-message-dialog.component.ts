@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Input, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
@@ -46,12 +46,14 @@ export class ForwardMessageDialogComponent implements OnInit {
 
     @ViewChild('searchInput') searchInput!: ElementRef;
 
-    // Yeni değişkenler
     showDropdown: boolean = false;
     combinedOptions: CombinedOption[] = [];
     filteredOptions: CombinedOption[] = [];
 
-    constructor(public activeModal: NgbActiveModal) {}
+    constructor(
+        public renderer: Renderer2,
+        public activeModal: NgbActiveModal,
+    ) {}
 
     ngOnInit(): void {
         this.filteredChannels = this.channels;
@@ -162,21 +164,16 @@ export class ForwardMessageDialogComponent implements OnInit {
         return this.selectedChannels.length > 0 || this.selectedChats.length > 0;
     }
 
-    isChannelSelected(channel: ChannelDTO): boolean {
-        return this.selectedChannels.some((c) => c.id === channel.id);
-    }
-
-    isChatSelected(chat: OneToOneChatWithName): boolean {
-        return this.selectedChats.some((c) => c.id === chat.id);
-    }
-
     onInputFocus(): void {
         this.isInputFocused = true;
         this.showDropdown = true;
     }
 
-    onInputBlur(): void {
-        // Dropdown'u kısa bir süre sonra kapat (seçim yapılması için)
+    onInputBlur(event: FocusEvent): void {
+        const relatedTarget = event.relatedTarget as HTMLElement;
+        if (relatedTarget && this.searchInput?.nativeElement.contains(relatedTarget)) {
+            return;
+        }
         setTimeout(() => {
             this.isInputFocused = false;
             this.showDropdown = false;
@@ -184,7 +181,9 @@ export class ForwardMessageDialogComponent implements OnInit {
     }
 
     focusInput(): void {
-        this.searchInput.nativeElement.focus();
+        if (this.searchInput) {
+            this.renderer.selectRootElement(this.searchInput.nativeElement, true).focus();
+        }
     }
 
     @HostListener('document:click', ['$event'])

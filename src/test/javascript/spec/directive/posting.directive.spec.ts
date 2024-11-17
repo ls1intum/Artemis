@@ -4,6 +4,7 @@ import { Posting } from 'app/entities/metis/posting.model';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
+import dayjs from 'dayjs/esm';
 
 class MockPosting implements Posting {
     content: string;
@@ -17,6 +18,7 @@ class MockReactionsBar {
     editPosting = jest.fn();
     togglePin = jest.fn();
     deletePosting = jest.fn();
+    forwardMessage = jest.fn();
     checkIfPinned = jest.fn().mockReturnValue(DisplayPriority.NONE);
     selectReaction = jest.fn();
 }
@@ -125,5 +127,16 @@ describe('PostingDirective', () => {
 
         component.toggleEmojiSelect();
         expect(component.showReactionSelector).toBeFalse();
+    });
+
+    it('should call forwardMessage on reactionsBar', () => {
+        component.forwardMessage();
+        expect(mockReactionsBar.forwardMessage).toHaveBeenCalled();
+    });
+
+    it('should return "artemisApp.metis.today" when posting is created today', () => {
+        jest.spyOn(dayjs(), 'isSame').mockReturnValue(true); // Mock dayjs behavior
+        const todayFlag = component.getTodayFlag();
+        expect(todayFlag).toBe('artemisApp.metis.today');
     });
 });

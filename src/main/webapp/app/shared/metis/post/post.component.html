@@ -92,9 +92,9 @@
                                         <span class="post-header-date-separator">-</span>
                                         <span class="post-header-date">
                                             @if (postingIsOfToday) {
-                                                <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-small"></span>
+                                                <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-x-small"></span>
                                             }
-                                            <span class="fs-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+                                            <span class="fs-x-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
                                                 {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
                                             </span>
                                         </span>

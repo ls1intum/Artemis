@@ -5,18 +5,22 @@
 <div class="modal-body">
     <div class="autocomplete-container mt-1 mb-2">
         <div class="tag-input-container" (click)="focusInput()">
-            <ng-container *ngFor="let channel of selectedChannels">
-                <span class="badge bg-primary me-1">
-                    {{ channel.name }}
-                    <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChannel(channel)"></button>
-                </span>
-            </ng-container>
-            <ng-container *ngFor="let chat of selectedChats">
-                <span class="badge bg-secondary me-1">
-                    {{ chat.otherUserName }}
-                    <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChat(chat)"></button>
-                </span>
-            </ng-container>
+            @for (channel of selectedChannels; track channel) {
+                <ng-container>
+                    <span class="badge bg-primary me-1">
+                        {{ channel.name }}
+                        <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChannel(channel)"></button>
+                    </span>
+                </ng-container>
+            }
+            @for (chat of selectedChats; track chat) {
+                <ng-container>
+                    <span class="badge bg-secondary me-1">
+                        {{ chat.otherUserName }}
+                        <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChat(chat)"></button>
+                    </span>
+                </ng-container>
+            }
             <input
                 #searchInput
                 type="text"
@@ -25,33 +29,36 @@
                 [(ngModel)]="searchTerm"
                 (input)="filterItems($event)"
                 (focus)="onInputFocus()"
-                (blur)="onInputBlur()"
+                (blur)="onInputBlur($event)"
             />
         </div>
-        <ul class="list-group autocomplete-dropdown" *ngIf="showDropdown && filteredOptions.length > 0">
-            <li
-                *ngFor="let option of filteredOptions"
-                class="list-group-item list-group-item-action"
-                [ngClass]="{ 'channel-option': option.type === 'channel', 'chat-option': option.type === 'chat' }"
-                (mousedown)="selectOption(option)"
-            >
-                @if (option.type === 'channel') {
-                    <span class="me-2">#</span>
-                } @else {
-                    <jhi-profile-picture
-                        imageSizeInRem="1.5"
-                        fontSizeInRem="0.6"
-                        imageId="user-profile-picture"
-                        defaultPictureId="user-default-profile-picture"
-                        [authorId]="postToForward?.author?.id"
-                        [authorName]="postToForward?.author?.name"
-                        [imageUrl]="option.img"
-                        style="margin-right: 0.2rem"
-                    />
+        @if (showDropdown && filteredOptions.length > 0) {
+            <ul class="list-group autocomplete-dropdown" tabindex="0">
+                @for (option of filteredOptions; track option) {
+                    <li
+                        class="list-group-item list-group-item-action"
+                        [ngClass]="{ 'channel-option': option.type === 'channel', 'chat-option': option.type === 'chat' }"
+                        (mousedown)="selectOption(option)"
+                    >
+                        @if (option.type === 'channel') {
+                            <span class="me-2">#</span>
+                        } @else {
+                            <jhi-profile-picture
+                                imageSizeInRem="1.5"
+                                fontSizeInRem="0.6"
+                                imageId="user-profile-picture"
+                                defaultPictureId="user-default-profile-picture"
+                                [authorId]="postToForward?.author?.id"
+                                [authorName]="postToForward?.author?.name"
+                                [imageUrl]="option.img"
+                                style="margin-right: 0.2rem"
+                            />
+                        }
+                        {{ option.name }}
+                    </li>
                 }
-                {{ option.name }}
-            </li>
-        </ul>
+            </ul>
+        }
     </div>
 
     <h5>Add a message</h5>
@@ -70,28 +77,30 @@
         [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
     ></jhi-markdown-editor-monaco>
 
-    <div *ngIf="postToForward" class="forwarded-message-container">
-        <div class="left-border-line"></div>
-        <div class="forwarded-message-content">
-            <div class="forwarded-message-header">
-                <jhi-profile-picture
-                    imageSizeInRem="1.5"
-                    fontSizeInRem="0.6"
-                    imageId="user-profile-picture"
-                    defaultPictureId="user-default-profile-picture"
-                    [authorId]="postToForward?.author?.id"
-                    [authorName]="postToForward?.author?.name"
-                    [imageUrl]="postToForward?.author?.imageUrl"
-                    style="margin-right: 0.2rem"
-                >
-                </jhi-profile-picture>
-                <span class="forwarded-message-author">{{ postToForward?.author?.name }}</span>
-            </div>
-            <div class="forwarded-message-body" [ngClass]="{ 'preserve-line-breaks': postToForward?.content?.includes('\n') }">
-                {{ postToForward?.content }}
+    @if (postToForward) {
+        <div class="forwarded-message-container">
+            <div class="left-border-line"></div>
+            <div class="forwarded-message-content">
+                <div class="forwarded-message-header">
+                    <jhi-profile-picture
+                        imageSizeInRem="1.5"
+                        fontSizeInRem="0.6"
+                        imageId="user-profile-picture"
+                        defaultPictureId="user-default-profile-picture"
+                        [authorId]="postToForward?.author?.id"
+                        [authorName]="postToForward?.author?.name"
+                        [imageUrl]="postToForward?.author?.imageUrl"
+                        style="margin-right: 0.2rem"
+                    >
+                    </jhi-profile-picture>
+                    <span class="forwarded-message-author">{{ postToForward?.author?.name }}</span>
+                </div>
+                <div class="forwarded-message-body" [ngClass]="{ 'preserve-line-breaks': postToForward?.content?.includes('\n') }">
+                    {{ postToForward?.content }}
+                </div>
             </div>
         </div>
-    </div>
+    }
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-primary" [disabled]="!hasSelections()" (click)="send()">Send</button>

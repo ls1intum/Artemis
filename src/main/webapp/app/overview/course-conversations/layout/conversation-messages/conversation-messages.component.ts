@@ -318,7 +318,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                     }
 
                     if (sourceRequests.length > 0) {
-                        // Wait for all source posts and answer posts to be fetched
                         forkJoin(sourceRequests).subscribe((responses) => {
                             let fetchedPosts: Post[] = [];
                             let fetchedAnswerPosts: AnswerPost[] = [];
