@@ -678,6 +678,7 @@ public class CourseService {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         boolean isAdmin = authCheckService.isAdmin(user);
         if (isAdmin && !onlyActive) {
+            // TODO: we should avoid using findAll() here, as it might return a huge amount of data
             return courseRepository.findAll();
         }
 

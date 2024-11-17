@@ -66,15 +66,16 @@ public interface BuildLogStatisticsEntryRepository extends ArtemisJpaRepository<
         var studentStatistics = findAverageStudentBuildLogStatistics(exercise);
         var exerciseStatistics = findAverageExerciseBuildLogStatistics(exercise.getTemplateParticipation() != null ? exercise.getTemplateParticipation().getId() : null,
                 exercise.getSolutionParticipation() != null ? exercise.getSolutionParticipation().getId() : null);
-        // combine both based on the count
+        // build the average of two values based on the count
         var studentCount = studentStatistics.buildCount();
         var exerciseCount = exerciseStatistics.buildCount();
-        return new BuildLogStatisticsDTO(studentCount + exerciseCount,
-                studentStatistics.agentSetupDuration() * studentCount + exerciseStatistics.agentSetupDuration() * exerciseCount,
-                studentStatistics.testDuration() * studentCount + exerciseStatistics.testDuration() * exerciseCount,
-                studentStatistics.scaDuration() * studentCount + exerciseStatistics.scaDuration() * exerciseCount,
-                studentStatistics.totalJobDuration() * studentCount + exerciseStatistics.totalJobDuration() * exerciseCount,
-                studentStatistics.dependenciesDownloadedCount() * studentCount + exerciseStatistics.dependenciesDownloadedCount() * exerciseCount);
+        var count = studentCount + exerciseCount;
+        return new BuildLogStatisticsDTO(count,
+                count == 0 ? 0.0 : (studentStatistics.agentSetupDuration() * studentCount + exerciseStatistics.agentSetupDuration() * exerciseCount) / count,
+                count == 0 ? 0.0 : (studentStatistics.testDuration() * studentCount + exerciseStatistics.testDuration() * exerciseCount) / count,
+                count == 0 ? 0.0 : (studentStatistics.scaDuration() * studentCount + exerciseStatistics.scaDuration() * exerciseCount) / count,
+                count == 0 ? 0.0 : (studentStatistics.totalJobDuration() * studentCount + exerciseStatistics.totalJobDuration() * exerciseCount) / count,
+                count == 0 ? 0.0 : (studentStatistics.dependenciesDownloadedCount() * studentCount + exerciseStatistics.dependenciesDownloadedCount() * exerciseCount) / count);
 
     }
 

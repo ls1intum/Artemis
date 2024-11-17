@@ -180,7 +180,7 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.892
+                minimum = 0.895
             }
             limit {
                 counter = "CLASS"
@@ -351,7 +351,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.13.6"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.14.1"
     implementation "net.logstash.logback:logstash-logback-encoder:8.0"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
@@ -403,7 +403,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:3.2.7"
+    implementation "org.springframework.ldap:spring-ldap-core:3.2.8"
     implementation "org.springframework.data:spring-data-ldap:3.3.5"
 
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.3") {
@@ -414,8 +414,8 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.3"
     implementation "org.springframework.cloud:spring-cloud-commons:4.1.4"
 
-    implementation "io.netty:netty-all:4.1.114.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.1.23"
+    implementation "io.netty:netty-all:4.1.115.Final"
+    implementation "io.projectreactor.netty:reactor-netty:1.2.0"
     implementation "org.springframework:spring-messaging:6.1.14"
     implementation "org.springframework.retry:spring-retry:2.0.10"
 
@@ -425,7 +425,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:9.46"
+    implementation "com.nimbusds:nimbus-jose-jwt:9.47"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -536,10 +536,10 @@ dependencies {
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.177"
+    testImplementation "io.github.classgraph:classgraph:4.8.179"
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.10.2"
+    testImplementation "org.gradle:gradle-tooling-api:8.11"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.2"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
@@ -621,7 +621,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.10.2"
+    gradleVersion = "8.11"
 }
 
 tasks.register("stage") {
