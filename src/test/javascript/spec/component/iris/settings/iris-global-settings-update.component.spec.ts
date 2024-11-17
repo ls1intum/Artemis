@@ -12,6 +12,7 @@ import { IrisGlobalSettingsUpdateComponent } from 'app/iris/settings/iris-global
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
+import { IrisEventSettingsUpdateComponent } from '../../../../../../main/webapp/app/iris/settings/iris-settings-update/iris-event-settings-update/iris-event-settings-update.component';
 
 describe('IrisGlobalSettingsUpdateComponent Component', () => {
     let comp: IrisGlobalSettingsUpdateComponent;
@@ -26,6 +27,7 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
                 IrisGlobalSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,
                 MockComponent(IrisCommonSubSettingsUpdateComponent),
+                MockComponent(IrisEventSettingsUpdateComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(NgModel),
             ],
@@ -52,7 +54,7 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
         expect(comp.settingsUpdateComponent).toBeTruthy();
         expect(getSettingsSpy).toHaveBeenCalledOnce();
 
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(4);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(5);
     });
 
     it('Can deactivate correctly', () => {

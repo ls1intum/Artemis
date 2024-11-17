@@ -8,8 +8,8 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 @Component({
     selector: 'jhi-iris-event-settings-update',
     standalone: true,
-    imports: [ArtemisSharedCommonModule],
     templateUrl: './iris-event-settings-update.component.html',
+    imports: [ArtemisSharedCommonModule],
 })
 export class IrisEventSettingsUpdateComponent {
     eventSettings = model.required<IrisEventSettings>();
