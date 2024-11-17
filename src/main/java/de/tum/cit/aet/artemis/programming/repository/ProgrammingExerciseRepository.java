@@ -341,11 +341,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndSolutionEntriesAndBuildConfig(
             @Param("exerciseId") long exerciseId);
 
-    default ProgrammingExercise findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigElseThrow(long exerciseId)
-            throws EntityNotFoundException {
-        return getValueElseThrow(findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(exerciseId), exerciseId);
-    }
-
     @Query("""
             SELECT p
             FROM ProgrammingExercise p
