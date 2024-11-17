@@ -163,7 +163,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentToBeEdited.set(this.attachmentUnit()!.attachment!);
             this.attachmentToBeEdited()!.version!++;
             this.attachmentToBeEdited()!.uploadDate = dayjs();
-            this.attachmentUnit()!.hiddenPages = finalHiddenPages;
 
             const formData = new FormData();
             formData.append('file', pdfFile);
@@ -180,15 +179,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                         attachmentWithHiddenPages.id = undefined;
                         attachmentWithHiddenPages.name = `${attachmentWithHiddenPages.name}_hidden`;
                         attachmentUnitWithHiddenPages.id = undefined;
-                        attachmentUnitWithHiddenPages.hiddenPages = undefined;
-                        //attachmentUnitWithHiddenPages.parentAttachmentUnit = this.attachmentUnit();
 
                         const formData = new FormData();
 
                         formData.append('file', pdfFileWithHiddenPages!);
                         formData.append('attachment', objectToJsonBlob(attachmentWithHiddenPages!));
                         formData.append('attachmentUnit', objectToJsonBlob(attachmentUnitWithHiddenPages!));
-                        formData.append('parentAttachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
 
                         this.attachmentUnitService.getAttachmentUnitByParentAttachmentUnitId(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!).subscribe({
                             next: async (attachmentUnitRes) => {

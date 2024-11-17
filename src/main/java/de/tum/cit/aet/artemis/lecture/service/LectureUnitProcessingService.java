@@ -108,7 +108,7 @@ public class LectureUnitProcessingService {
                 attachment.setUploadDate(ZonedDateTime.now());
 
                 MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
-                AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, null, multipartFile, true);
+                AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, multipartFile, true);
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentUnit, multipartFile.getOriginalFilename());
                 documentUnits.getFirst().close(); // make sure to close the document
                 units.add(savedAttachmentUnit);

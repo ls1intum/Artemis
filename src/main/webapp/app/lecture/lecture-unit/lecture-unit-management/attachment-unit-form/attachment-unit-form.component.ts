@@ -20,7 +20,6 @@ export interface FormProperties {
     version?: number;
     updateNotificationText?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
-    hiddenPages?: string;
 }
 
 // file input is a special case and is not included in the reactive form structure

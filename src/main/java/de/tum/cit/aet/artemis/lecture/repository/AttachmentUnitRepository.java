@@ -63,12 +63,4 @@ public interface AttachmentUnitRepository extends ArtemisJpaRepository<Attachmen
             WHERE attachmentUnit.id = :attachmentUnitId
             """)
     AttachmentUnit findOneWithSlidesAndCompetencies(@Param("attachmentUnitId") long attachmentUnitId);
-
-    @Query("""
-            SELECT attachmentUnit
-            FROM AttachmentUnit attachmentUnit
-            WHERE attachmentUnit.lecture.id = :lectureId
-                 AND attachmentUnit.parentAttachmentUnit.id = :parentAttachmentUnitId
-            """)
-    AttachmentUnit findAttachmentUnitByLectureIdAndParentAttachmentUnitId(@Param("lectureId") Long lectureId, @Param("parentAttachmentUnitId") Long parentAttachmentUnitId);
 }

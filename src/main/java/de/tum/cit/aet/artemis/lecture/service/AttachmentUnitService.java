@@ -77,14 +77,12 @@ public class AttachmentUnitService {
      * @param keepFilename   Whether to keep the original filename or not.
      * @return The created attachment unit
      */
-    public AttachmentUnit createAttachmentUnit(AttachmentUnit attachmentUnit, Attachment attachment, Lecture lecture, AttachmentUnit parentAttachmentUnit, MultipartFile file,
-            boolean keepFilename) {
+    public AttachmentUnit createAttachmentUnit(AttachmentUnit attachmentUnit, Attachment attachment, Lecture lecture, MultipartFile file, boolean keepFilename) {
         // persist lecture unit before lecture to prevent "null index column for collection" error
         attachmentUnit.setLecture(null);
 
         AttachmentUnit savedAttachmentUnit = lectureUnitService.saveWithCompetencyLinks(attachmentUnit, attachmentUnitRepository::saveAndFlush);
 
-        savedAttachmentUnit.setParentAttachmentUnit(parentAttachmentUnit);
         attachmentUnit.setLecture(lecture);
         lecture.addLectureUnit(savedAttachmentUnit);
 
@@ -119,7 +117,6 @@ public class AttachmentUnitService {
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
         existingAttachmentUnit.setName(updateUnit.getName());
         existingAttachmentUnit.setReleaseDate(updateUnit.getReleaseDate());
-        existingAttachmentUnit.setHiddenPages(updateUnit.getHiddenPages());
 
         AttachmentUnit savedAttachmentUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentUnit, attachmentUnitRepository::saveAndFlush);
 

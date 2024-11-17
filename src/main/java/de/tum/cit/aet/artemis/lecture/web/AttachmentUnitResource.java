@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -142,20 +141,18 @@ public class AttachmentUnitResource {
     /**
      * POST lectures/:lectureId/attachment-units : creates a new attachment unit.
      *
-     * @param lectureId            the id of the lecture to which the attachment unit should be added
-     * @param attachmentUnit       the attachment unit that should be created
-     * @param attachment           the attachment that should be created
-     * @param parentAttachmentUnit the parent attachment unit of the new attachment unit
-     * @param file                 the file to upload
-     * @param keepFilename         specifies if the original filename should be kept or not
+     * @param lectureId      the id of the lecture to which the attachment unit should be added
+     * @param attachmentUnit the attachment unit that should be created
+     * @param attachment     the attachment that should be created
+     * @param file           the file to upload
+     * @param keepFilename   specifies if the original filename should be kept or not
      * @return the ResponseEntity with status 201 (Created) and with body the new attachment unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "lectures/{lectureId}/attachment-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentUnit> createAttachmentUnit(@PathVariable Long lectureId, @RequestPart AttachmentUnit attachmentUnit, @RequestPart Attachment attachment,
-            @RequestPart AttachmentUnit parentAttachmentUnit, @RequestPart MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename)
-            throws URISyntaxException {
+            @RequestPart MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename) throws URISyntaxException {
         log.debug("REST request to create AttachmentUnit {} with Attachment {}", attachmentUnit, attachment);
         if (attachmentUnit.getId() != null) {
             throw new BadRequestAlertException("A new attachment unit cannot already have an ID", ENTITY_NAME, "idexists");
@@ -170,7 +167,7 @@ public class AttachmentUnitResource {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, parentAttachmentUnit, file, keepFilename);
+        AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, file, keepFilename);
         lectureRepository.save(lecture);
         if (Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
             slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
@@ -334,19 +331,5 @@ public class AttachmentUnitResource {
         if (!filePath.toString().endsWith(".pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
-    }
-
-    /**
-     * GET /lectures/:lectureId/attachment-units/:parentAttachmentUnitId/hiddenAttachment : retrieve the hidden attachment unit associated with the given parent attachment unit ID.
-     *
-     * @param lectureId              the ID of the lecture to which the attachment unit belongs
-     * @param parentAttachmentUnitId the ID of the parent attachment unit for which to retrieve the hidden attachment unit
-     * @return the ResponseEntity with status 200 (OK) and the AttachmentUnit in the body, or a 404 (Not Found) if no matching attachment unit exists
-     */
-    @GetMapping("lectures/{lectureId}/attachment-units/{parentAttachmentUnitId}/hiddenAttachment")
-    @EnforceAtLeastTutor
-    public ResponseEntity<AttachmentUnit> getAttachmentUnitByParentAttachmentUnitId(@PathVariable Long lectureId, @PathVariable Long parentAttachmentUnitId) {
-        log.debug("REST request to get attachment unit by the parent attachment unit Id : {}", parentAttachmentUnitId);
-        return ResponseEntity.ok(attachmentUnitRepository.findAttachmentUnitByLectureIdAndParentAttachmentUnitId(lectureId, parentAttachmentUnitId));
     }
 }
