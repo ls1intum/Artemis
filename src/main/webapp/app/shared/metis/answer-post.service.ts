@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingService } from 'app/shared/metis/posting.service';
-import { catchError, map } from 'rxjs/operators';
-import { throwError } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Post } from 'app/entities/metis/post.model';
 
 type EntityResponseType = HttpResponse<AnswerPost>;
 
@@ -53,20 +53,14 @@ export class AnswerPostService extends PostingService<AnswerPost> {
     }
 
     /**
-     * gets an answer post
+     * gets source answer posts(original (forwarded) answer posts in posts) of posts
      * @param {number} courseId
-     * @param {Post} post
-     * @return {Observable<HttpResponse<void>>}
+     * @param {number[]} postIds
+     * @return {Observable<AnswerPost[]>}
      */
-    getAnswerPostById(courseId: number, answerPostId: number): Observable<EntityResponseType> {
-        return this.http.get<AnswerPost>(`${this.resourceUrl}${courseId}/answer-messages/${answerPostId}`, { observe: 'response' }).pipe(
-            map((response) => {
-                return response;
-            }),
-            catchError((error) => {
-                return throwError(() => new Error(`${error.message || error.statusText}`));
-            }),
-        );
+    getSourceAnswerPostsByIds(courseId: number, answerPostIds: number[]): Observable<AnswerPost[]> {
+        const params = new HttpParams().set('answerPostIds', answerPostIds.join(','));
+        return this.http.get<Post[]>(`${this.resourceUrl}${courseId}/answer-messages/source-answer-posts`, { params, observe: 'response' }).pipe(map((response) => response.body!));
     }
 
     private static getResourceEndpoint(param: AnswerPost): string {

@@ -7,7 +7,6 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingService } from 'app/shared/metis/posting.service';
 import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
 
 type EntityResponseType = HttpResponse<Post>;
 type EntityArrayResponseType = HttpResponse<Post[]>;
@@ -130,22 +129,14 @@ export class PostService extends PostingService<Post> {
     }
 
     /**
-     * gets forwarded messages in a post
-     * @param {postId} post
-     * @return {Observable<HttpResponse<void>>}
-     */
-    getForwardedMessages(postId: number): Observable<HttpResponse<ForwardedMessage[]>> {
-        return this.http.get<ForwardedMessage[]>(`api/forwarded-messages/post/${postId}`, { observe: 'response' }).pipe();
-    }
-
-    /**
-     * gets a post
+     * gets source posts(original (forwarded) posts in posts) of posts
      * @param {number} courseId
-     * @param {Post} post
-     * @return {Observable<HttpResponse<void>>}
+     * @param {number[]} postIds
+     * @return {Observable<Post[]>}
      */
-    getPost(courseId: number, postId: number): Observable<EntityResponseType> {
-        return this.http.get(`${this.resourceUrl}${courseId}/messages/${postId}`, { observe: 'response' }).pipe(map(this.convertPostingResponseDateFromServer));
+    getSourcePostsByIds(courseId: number, postIds: number[]): Observable<Post[]> {
+        const params = new HttpParams().set('postIds', postIds.join(','));
+        return this.http.get<Post[]>(`${this.resourceUrl}${courseId}/messages/source-posts`, { params, observe: 'response' }).pipe(map((response) => response.body!));
     }
 
     /**

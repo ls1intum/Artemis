@@ -16,10 +16,10 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface ForwardedMessageRepository extends ArtemisJpaRepository<ForwardedMessage, Long> {
 
-    @Query("SELECT fm FROM ForwardedMessage fm WHERE fm.destinationPost.id = :destinationPostId")
-    Set<ForwardedMessage> findAllByDestinationPostId(@Param("destinationPostId") Long destinationPostId);
+    @Query("SELECT fm FROM ForwardedMessage fm WHERE fm.destinationPost.id IN :destinationPostIds")
+    Set<ForwardedMessage> findAllByDestinationPostIds(@Param("destinationPostIds") Set<Long> destinationPostIds);
 
-    @Query("SELECT fm FROM ForwardedMessage fm WHERE fm.destinationAnswerPost.id = :destinationAnswerPostId")
-    Set<ForwardedMessage> findAllByDestinationAnswerPostId(@Param("destinationAnswerPostId") Long destinationAnswerPostId);
+    @Query("SELECT fm FROM ForwardedMessage fm WHERE fm.destinationAnswerPost.id IN :destinationAnswerPostIds")
+    Set<ForwardedMessage> findAllByDestinationAnswerPostIds(@Param("destinationAnswerPostIds") Set<Long> destinationAnswerPostIds);
 
 }

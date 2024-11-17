@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,10 +14,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.ForwardedMessage;
@@ -29,7 +30,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping(value = "api/")
+@RequestMapping(value = "api")
 public class ForwardedMessageResource {
 
     private static final Logger log = LoggerFactory.getLogger(ForwardedMessageResource.class);
@@ -53,7 +54,7 @@ public class ForwardedMessageResource {
      *         or with status 400 (Bad Request) if the forwarded message has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("forwarded-messages")
+    @PostMapping("/forwarded-messages")
     public ResponseEntity<ForwardedMessageDTO> createForwardedMessage(@RequestBody ForwardedMessage forwardedMessage) throws URISyntaxException {
         log.debug("REST request to save ForwardedMessage : {}");
         if (forwardedMessage.getId() != null) {
@@ -64,36 +65,24 @@ public class ForwardedMessageResource {
         return ResponseEntity.created(new URI("/api/forwarded-messages/" + savedMessage.getId())).body(dto);
     }
 
-    /**
-     * GET /forwarded-messages/post/{dest_post_id} : gets the forwarded messages that has specific destination post id.
-     *
-     * @param dest_post_id the id of the forwarded message to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the forwarded message, or with status 404 (Not Found)
-     */
+    @GetMapping("/forwarded-messages/posts")
+    public ResponseEntity<Map<Long, Set<ForwardedMessageDTO>>> getForwardedMessagesByDestPostIds(@RequestParam Set<Long> dest_post_ids) {
+        Set<ForwardedMessage> forwardedMessages = forwardedMessageRepository.findAllByDestinationPostIds(dest_post_ids);
 
-    @GetMapping("forwarded-messages/post/{dest_post_id}")
-    public ResponseEntity<Set<ForwardedMessageDTO>> getForwardedMessagesByDestPostId(@PathVariable Long dest_post_id) {
-        log.debug("REST request to get ForwardedMessage : {}", dest_post_id);
-        Set<ForwardedMessage> forwardedMessages = forwardedMessageRepository.findAllByDestinationPostId(dest_post_id);
-        Set<ForwardedMessageDTO> dtos = forwardedMessages.stream().map(ForwardedMessageDTO::new).collect(Collectors.toSet());
+        Map<Long, Set<ForwardedMessageDTO>> groupedDtos = forwardedMessages.stream()
+                .collect(Collectors.groupingBy(fm -> fm.getDestinationPost().getId(), Collectors.mapping(ForwardedMessageDTO::new, Collectors.toSet())));
 
-        return ResponseEntity.ok(dtos);
+        return ResponseEntity.ok(groupedDtos);
     }
 
-    /**
-     * GET /forwarded-messages/answer/{dest_answer_post_id} : gets the forwarded messages that has specific destination post id.
-     *
-     * @param dest_answer_post_id the id of the forwarded message to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the forwarded message, or with status 404 (Not Found)
-     */
+    @GetMapping("/forwarded-messages/answers")
+    public ResponseEntity<Map<Long, Set<ForwardedMessageDTO>>> getForwardedMessagesByDestAnswerPostIds(@RequestParam Set<Long> dest_answer_post_ids) {
+        Set<ForwardedMessage> forwardedMessages = forwardedMessageRepository.findAllByDestinationAnswerPostIds(dest_answer_post_ids);
 
-    @GetMapping("forwarded-messages/answer/{dest_answer_post_id}")
-    public ResponseEntity<Set<ForwardedMessageDTO>> getForwardedMessagesByDestAnswerPostId(@PathVariable Long dest_answer_post_id) {
-        log.debug("REST request to get ForwardedMessage : {}", dest_answer_post_id);
-        Set<ForwardedMessage> forwardedMessages = forwardedMessageRepository.findAllByDestinationAnswerPostId(dest_answer_post_id);
-        Set<ForwardedMessageDTO> dtos = forwardedMessages.stream().map(ForwardedMessageDTO::new).collect(Collectors.toSet());
+        Map<Long, Set<ForwardedMessageDTO>> groupedDtos = forwardedMessages.stream()
+                .collect(Collectors.groupingBy(fm -> fm.getDestinationAnswerPost().getId(), Collectors.mapping(ForwardedMessageDTO::new, Collectors.toSet())));
 
-        return ResponseEntity.ok(dtos);
+        return ResponseEntity.ok(groupedDtos);
     }
 
     /**

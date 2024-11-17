@@ -419,8 +419,8 @@ public class ConversationMessagingService extends PostingService {
         return updatedMessage;
     }
 
-    public Post getMessageById(Long messageId) {
-        return conversationMessageRepository.findMessagePostByIdElseThrow(messageId);
+    public List<Post> getMessageById(List<Long> sourcePostIds) {
+        return conversationMessageRepository.findByPostIdsWithEagerRelationships(sourcePostIds);
     }
 
     private Conversation mayUpdateOrDeleteMessageElseThrow(Post existingMessagePost, User user) {

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
@@ -94,18 +96,10 @@ public class AnswerMessageResource {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * GET /courses/{courseId}/answer-messages/{id} : Get an answer message by its id
-     *
-     * @param courseId        id of the course the message belongs to
-     * @param answerMessageId id of the answer message to delete
-     * @return ResponseEntity with status 200 (OK),
-     *         or 400 (Bad Request) if the checks on user or course validity fail
-     */
-    @GetMapping("courses/{courseId}/answer-messages/{answerMessageId}")
+    @GetMapping("courses/{courseId}/answer-messages/source-answer-posts")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPost> getAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId) {
-        AnswerPost newAnswer = answerMessageService.findById(answerMessageId);
-        return new ResponseEntity<>(newAnswer, null, HttpStatus.OK);
+    public ResponseEntity<List<AnswerPost>> getSourceAnswerPostsByIds(@PathVariable Long courseId, @RequestParam List<Long> answerPostIds) {
+        List<AnswerPost> answerPosts = answerMessageService.findByIdIn(answerPostIds);
+        return ResponseEntity.ok().body(answerPosts);
     }
 }

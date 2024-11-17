@@ -205,11 +205,11 @@ public class ConversationMessageResource {
         return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
     }
 
-    @GetMapping("courses/{courseId}/messages/{messageId}")
+    @GetMapping("courses/{courseId}/messages/source-posts")
     @EnforceAtLeastStudent
-    public ResponseEntity<Post> getPostById(@PathVariable Long courseId, @PathVariable Long messageId) {
-        Post requestedPost = conversationMessagingService.getMessageById(messageId);
-        return ResponseEntity.ok().body(requestedPost);
+    public ResponseEntity<List<Post>> getSourcePostsByIds(@PathVariable Long courseId, @RequestParam List<Long> postIds) {
+        List<Post> posts = conversationMessagingService.getMessageById(postIds);
+        return ResponseEntity.ok().body(posts);
     }
 
     /**

@@ -35,8 +35,6 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT } from '@angular/common';
-import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
-import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-post',
@@ -82,7 +80,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     mayEditOrDelete: boolean = false;
     canPin: boolean = false;
     originalPostDetails: Post | AnswerPost | undefined = undefined;
-    forwardedMessages: ForwardedMessage[];
     sourceName: string | undefined = '';
 
     // Icons
@@ -95,6 +92,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faShare = faShare;
 
     isConsecutive = input<boolean>(false);
+    forwardedPosts = input<Post[]>([]);
+    forwardedAnswerPosts = input<AnswerPost[]>([]);
     dropdownPosition = { x: 0, y: 0 };
     course: Course;
     @ViewChild(PostReactionsBarComponent) private reactionsBarComponent!: PostReactionsBarComponent;
@@ -187,7 +186,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.sortAnswerPosts();
-        this.fetchForwardedPosts();
+        this.fetchForwardedMessages();
     }
 
     updateSourceName(post: Post | AnswerPost) {
@@ -213,47 +212,26 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
-    fetchForwardedPosts(): void {
-        if (this.posting.hasForwardedMessages) {
-            this.metisService.getForwardedMessagesByPostId(this.posting.id)!.subscribe(
-                (messages: HttpResponse<ForwardedMessage[]>) => {
-                    this.forwardedMessages = messages.body || [];
-                    console.log('Forwarded messages:', this.forwardedMessages);
+    fetchForwardedMessages(): void {
+        if (this.forwardedPosts().length > 0) {
+            const forwardedMessage = this.forwardedPosts()[0];
 
-                    if (this.forwardedMessages.length > 0) {
-                        const forwardedMessage = this.forwardedMessages[0];
+            if (forwardedMessage) {
+                console.log('Forwarded Post Details:', forwardedMessage);
+                this.originalPostDetails = forwardedMessage;
+                this.updateSourceName(forwardedMessage);
+                this.changeDetector.markForCheck();
+            }
+        }
+        if (this.forwardedAnswerPosts().length > 0) {
+            const forwardedMessage = this.forwardedAnswerPosts()[0];
 
-                        if (forwardedMessage.sourceType?.valueOf() === 'POST') {
-                            this.metisService.getPostById(forwardedMessage!.sourceId)!.subscribe(
-                                (post: HttpResponse<Post>) => {
-                                    console.log('Forwarded Post Details:', post.body);
-                                    this.originalPostDetails = post.body as Post;
-                                    this.updateSourceName(post.body!);
-                                    this.changeDetector.markForCheck();
-                                },
-                                (error: any) => {
-                                    console.error('Failed to fetch forwarded post', error);
-                                },
-                            );
-                        } else if (forwardedMessage.sourceType?.valueOf() === 'ANSWER_POST') {
-                            this.metisService.getAnswerPostById(forwardedMessage.sourceId)!.subscribe(
-                                (answerPost: HttpResponse<AnswerPost>) => {
-                                    console.log('Forwarded Answer Post Details:', answerPost.body);
-                                    this.originalPostDetails = answerPost.body as AnswerPost;
-                                    this.updateSourceName(answerPost.body!);
-                                    this.changeDetector.markForCheck();
-                                },
-                                (error: any) => {
-                                    console.error('Failed to fetch forwarded answer post', error);
-                                },
-                            );
-                        }
-                    }
-                },
-                (error: any) => {
-                    console.error('Failed to fetch forwarded messages', error);
-                },
-            );
+            if (forwardedMessage) {
+                console.log('Forwarded Answer Post Details:', forwardedMessage);
+                this.originalPostDetails = forwardedMessage;
+                this.updateSourceName(forwardedMessage);
+                this.changeDetector.markForCheck();
+            }
         }
     }
 

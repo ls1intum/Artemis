@@ -656,18 +656,18 @@ export class MetisService implements OnDestroy {
         }
     }
 
-    getForwardedMessagesByPostId(postId: number | undefined) {
-        if (postId) return this.postService.getForwardedMessages(postId);
+    getForwardedMessagesByPostIds(postIds: number[]) {
+        if (postIds) return this.forwardedMessageService.getForwardedMessages(postIds);
         else return;
     }
 
-    getPostById(postId: number | undefined) {
-        if (postId) return this.postService.getPost(this.courseId, postId);
+    getSourcePostsByIds(postIds: number[]) {
+        if (postIds) return this.postService.getSourcePostsByIds(this.courseId, postIds);
         else return;
     }
 
-    getAnswerPostById(answerPostId: number | undefined) {
-        if (answerPostId) return this.answerPostService.getAnswerPostById(this.courseId, answerPostId);
+    getSourceAnswerPostsByIds(answerPostIds: number[]) {
+        if (answerPostIds) return this.answerPostService.getSourceAnswerPostsByIds(this.courseId, answerPostIds);
         else return;
     }
 

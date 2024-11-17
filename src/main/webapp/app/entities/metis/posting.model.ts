@@ -13,4 +13,5 @@ export abstract class Posting implements BaseEntity {
     public content?: string;
     public reactions?: Reaction[];
     public hasForwardedMessages?: boolean = false;
+    public isConsecutive?: boolean = false;
 }
