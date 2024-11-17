@@ -268,14 +268,20 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             let buildTimingInfo: BuildTimingInfo | undefined = undefined;
 
                             if (this.isLocalCIProfile) {
-                                console.log('Local CI profile detected, skipping queue estimation');
-                                console.log('isProcessing', programmingSubmission.isProcessing);
-                                console.log('commitHash', this.didSubmissionStartProcessing(programmingSubmission.commitHash!));
                                 if (!programmingSubmission.isProcessing && !this.didSubmissionStartProcessing(programmingSubmission.commitHash!)) {
                                     const queueRemainingTime = this.getExpectedRemainingTimeForQueue(programmingSubmission);
                                     if (queueRemainingTime > 0) {
-                                        this.emitQueuedSubmission(submissionParticipationId, exerciseId, programmingSubmission);
-                                        this.startQueueEstimateTimer(submissionParticipationId, exerciseId, programmingSubmission, queueRemainingTime);
+                                        this.emitQueuedSubmission(
+                                            submissionParticipationId,
+                                            this.participationIdToExerciseId.get(submissionParticipationId)!,
+                                            programmingSubmission,
+                                        );
+                                        this.startQueueEstimateTimer(
+                                            submissionParticipationId,
+                                            this.participationIdToExerciseId.get(submissionParticipationId)!,
+                                            programmingSubmission,
+                                            queueRemainingTime,
+                                        );
                                         return;
                                     }
                                 }
@@ -324,7 +330,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                                 return;
                             }
                             programmingSubmission.isProcessing = true;
-                            const submissionParticipationId = programmingSubmission.participation!.id!;
+                            const submissionParticipationId = submissionProcessing.participationId!;
+                            const exerciseId = this.participationIdToExerciseId.get(submissionParticipationId)!;
 
                             if (!this.isNewestSubmission(programmingSubmission, exerciseId, submissionParticipationId)) {
                                 return;
@@ -336,12 +343,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             };
                             this.removeSubmissionFromProcessingCache(programmingSubmission.commitHash!);
                             this.resetQueueEstimateTimer(submissionParticipationId);
-                            this.emitBuildingSubmission(
-                                submissionParticipationId,
-                                this.participationIdToExerciseId.get(submissionParticipationId)!,
-                                programmingSubmission,
-                                buildTimingInfo,
-                            );
+                            this.emitBuildingSubmission(submissionParticipationId, exerciseId, programmingSubmission, buildTimingInfo);
                             // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
                             this.startResultWaitingTimer(submissionParticipationId);
                         }),
