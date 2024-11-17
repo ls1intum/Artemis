@@ -127,25 +127,18 @@ public class ProgrammingExerciseParticipationService {
     /**
      * Tries to retrieve a team participation for the given exercise and team short name.
      *
-     * @param exercise        the exercise for which to find a participation.
-     * @param teamShortName   of the team to which the participation belongs.
-     * @param withSubmissions true if the participation should be fetched with its submissions.
+     * @param exercise      the exercise for which to find a participation.
+     * @param teamShortName of the team to which the participation belongs.
      * @return the participation for the given exercise and team.
      * @throws EntityNotFoundException if the team participation was not found.
      */
-    public ProgrammingExerciseStudentParticipation findTeamParticipationByExerciseAndTeamShortNameOrThrow(ProgrammingExercise exercise, String teamShortName,
-            boolean withSubmissions) {
+    public ProgrammingExerciseStudentParticipation findTeamParticipationByExerciseAndTeamShortNameOrThrow(ProgrammingExercise exercise, String teamShortName) {
 
         Optional<ProgrammingExerciseStudentParticipation> participationOptional;
 
         // It is important to fetch all students of the team here, because the local VC and local CI system use this participation to check if the authenticated user is part of the
         // team.
-        if (withSubmissions) {
-            participationOptional = studentParticipationRepository.findWithSubmissionsAndEagerStudentsByExerciseIdAndTeamShortName(exercise.getId(), teamShortName);
-        }
-        else {
-            participationOptional = studentParticipationRepository.findWithEagerStudentsByExerciseIdAndTeamShortName(exercise.getId(), teamShortName);
-        }
+        participationOptional = studentParticipationRepository.findWithSubmissionsAndEagerStudentsByExerciseIdAndTeamShortName(exercise.getId(), teamShortName);
 
         if (participationOptional.isEmpty()) {
             throw new EntityNotFoundException("Participation could not be found by exerciseId " + exercise.getId() + " and team short name " + teamShortName);
@@ -169,25 +162,19 @@ public class ProgrammingExerciseParticipationService {
     /**
      * Tries to retrieve a student participation for the given exercise and username and test run flag.
      *
-     * @param exercise        the exercise for which to find a participation.
-     * @param username        of the user to which the participation belongs.
-     * @param isTestRun       true if the participation is a test run participation.
-     * @param withSubmissions true if the participation should be loaded with its submissions.
+     * @param exercise  the exercise for which to find a participation.
+     * @param username  of the user to which the participation belongs.
+     * @param isTestRun true if the participation is a test run participation.
      * @return the participation for the given exercise and user.
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
     @NotNull
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(ProgrammingExercise exercise, String username,
-            boolean isTestRun, boolean withSubmissions) {
+            boolean isTestRun) {
 
         Optional<ProgrammingExerciseStudentParticipation> participationOptional;
 
-        if (withSubmissions) {
-            participationOptional = studentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
-        }
-        else {
-            participationOptional = studentParticipationRepository.findByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
-        }
+        participationOptional = studentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
 
         if (participationOptional.isEmpty()) {
             throw new EntityNotFoundException("Participation could not be found by exerciseId " + exercise.getId() + " and user " + username);
@@ -449,39 +436,29 @@ public class ProgrammingExerciseParticipationService {
      * @param exercise                 the exercise for which to get the participation.
      * @param repositoryTypeOrUserName the repository type ("exercise", "solution", or "tests") or username (e.g. "artemis_test_user_1") as extracted from the repository URI.
      * @param isPracticeRepository     whether the repository is a practice repository, i.e. the repository URI contains "-practice-".
-     * @param withSubmissions          whether submissions should be loaded with the participation. This is needed for the local CI system.
+     *
      * @return the participation.
      * @throws EntityNotFoundException if the participation could not be found.
      */
-    public ProgrammingExerciseParticipation retrieveParticipationForRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName, boolean isPracticeRepository,
-            boolean withSubmissions) {
+    public ProgrammingExerciseParticipation retrieveParticipationWithSubmissionsByRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName,
+            boolean isPracticeRepository) {
 
         boolean isAuxiliaryRepository = auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise);
 
         // For pushes to the tests repository, the solution repository is built first, and thus we need the solution participation.
         // Can possibly be used by auxiliary repositories
         if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString()) || isAuxiliaryRepository) {
-            if (withSubmissions) {
-                return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
-            }
-            else {
-                return solutionParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
-            }
+            return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
         }
 
         if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
-            if (withSubmissions) {
-                return templateParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
-            }
-            else {
-                return templateParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
-            }
+            return templateParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
         }
 
         if (exercise.isTeamMode()) {
             // The repositoryTypeOrUserName is the team short name.
             // For teams, there is no practice participation.
-            return findTeamParticipationByExerciseAndTeamShortNameOrThrow(exercise, repositoryTypeOrUserName, withSubmissions);
+            return findTeamParticipationByExerciseAndTeamShortNameOrThrow(exercise, repositoryTypeOrUserName);
         }
 
         // If the exercise is an exam exercise and the repository's owner is at least an editor, the repository could be a test run repository, or it could be the instructor's
@@ -492,14 +469,10 @@ public class ProgrammingExerciseParticipationService {
         boolean isExamEditorRepository = exercise.isExamExercise()
                 && authorizationCheckService.isAtLeastEditorForExercise(exercise, userRepository.getUserByLoginElseThrow(repositoryTypeOrUserName));
         if (isExamEditorRepository) {
-            if (withSubmissions) {
-                return studentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(exercise.getId(), repositoryTypeOrUserName);
-            }
-
-            return studentParticipationRepository.findByExerciseIdAndStudentLoginOrThrow(exercise.getId(), repositoryTypeOrUserName);
+            return studentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(exercise.getId(), repositoryTypeOrUserName);
         }
 
-        return findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(exercise, repositoryTypeOrUserName, isPracticeRepository, withSubmissions);
+        return findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(exercise, repositoryTypeOrUserName, isPracticeRepository);
     }
 
     /**
@@ -510,17 +483,17 @@ public class ProgrammingExerciseParticipationService {
      * @param repositoryURI            the participation's repository URL
      * @return the participation belonging to the provided repositoryURI and repository type or username
      */
-    public ProgrammingExerciseParticipation retrieveParticipationForRepository(String repositoryTypeOrUserName, String repositoryURI) {
+    public ProgrammingExerciseParticipation retrieveParticipationWithSubmissionsByRepository(String repositoryTypeOrUserName, String repositoryURI) {
         if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
-            return solutionParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
+            return solutionParticipationRepository.findWithSubmissionsByRepositoryUriElseThrow(repositoryURI);
         }
         if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
-            return templateParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
+            return templateParticipationRepository.findWithSubmissionsByRepositoryUriElseThrow(repositoryURI);
         }
         if (repositoryTypeOrUserName.equals(RepositoryType.AUXILIARY.toString())) {
             throw new EntityNotFoundException("Auxiliary repositories do not have participations.");
         }
-        return studentParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
+        return studentParticipationRepository.findWithSubmissionsByRepositoryUriElseThrow(repositoryURI);
     }
 
     /**

@@ -21,6 +21,8 @@ public class ArtemisGitServletService extends GitServlet {
 
     private final LocalVCServletService localVCServletService;
 
+    private int c;
+
     /**
      * Constructor for ArtemisGitServlet.
      *
@@ -53,14 +55,19 @@ public class ArtemisGitServletService extends GitServlet {
 
         // Add filters that every request to the JGit Servlet goes through, one for each fetch request, and one for each push request.
         this.addUploadPackFilter(new LocalVCFetchFilter(localVCServletService));
-        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService));
+
+        // TODO figure out a way to keep state for an HTTP session
+        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService, (v) -> {
+            this.c = v + 1;
+            return c;
+        }));
 
         this.setReceivePackFactory((request, repository) -> {
             ReceivePack receivePack = new ReceivePack(repository);
             // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
-            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, (User) request.getAttribute("user")));
+            receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, (User) request.getSession().getAttribute("user")));
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
-            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
+            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, request));
             return receivePack;
         });
 
@@ -71,5 +78,9 @@ public class ArtemisGitServletService extends GitServlet {
             uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(localVCServletService, request));
             return uploadPack;
         });
+    }
+
+    void setC(int c) {
+        this.c = c;
     }
 }

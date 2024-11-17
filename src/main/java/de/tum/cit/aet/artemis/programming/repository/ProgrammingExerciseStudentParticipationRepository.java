@@ -78,14 +78,11 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
 
-    default ProgrammingExerciseStudentParticipation findByExerciseIdAndStudentLoginOrThrow(long exerciseId, String username) {
-        return getValueElseThrow(findByExerciseIdAndStudentLogin(exerciseId, username));
-    }
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByRepositoryUri(String repositoryUri);
 
-    Optional<ProgrammingExerciseStudentParticipation> findByRepositoryUri(String repositoryUri);
-
-    default ProgrammingExerciseStudentParticipation findByRepositoryUriElseThrow(String repositoryUri) {
-        return getValueElseThrow(findByRepositoryUri(repositoryUri));
+    default ProgrammingExerciseStudentParticipation findWithSubmissionsByRepositoryUriElseThrow(String repositoryUri) {
+        return getValueElseThrow(findWithSubmissionsByRepositoryUri(repositoryUri));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })

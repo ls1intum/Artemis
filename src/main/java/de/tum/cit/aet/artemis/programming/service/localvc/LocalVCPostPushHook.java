@@ -2,7 +2,11 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Optional;
 
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.apache.sshd.server.session.ServerSession;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.PostReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
@@ -10,6 +14,10 @@ import org.eclipse.jgit.transport.ReceivePack;
 
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
 
 /**
  * Contains an onPostReceive method that is called by JGit after a push has been received (i.e. after the pushed files were successfully written to disk).
@@ -18,8 +26,24 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
     private final LocalVCServletService localVCServletService;
 
-    public LocalVCPostPushHook(LocalVCServletService localVCServletService) {
+    private final ProgrammingExerciseParticipation participation;
+
+    private final ProgrammingExercise exercise;
+
+    private final VcsAccessLog vcsAccessLog;
+
+    public LocalVCPostPushHook(LocalVCServletService localVCServletService, ServerSession serverSession) {
         this.localVCServletService = localVCServletService;
+        this.participation = serverSession.getAttribute(SshConstants.PARTICIPATION_KEY);
+        this.exercise = serverSession.getAttribute(SshConstants.REPOSITORY_EXERCISE_KEY);
+        this.vcsAccessLog = serverSession.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
+    }
+
+    public LocalVCPostPushHook(LocalVCServletService localVCServletService, HttpServletRequest request) {
+        this.localVCServletService = localVCServletService;
+        this.participation = (ProgrammingExerciseParticipation) request.getSession().getAttribute(HttpsConstants.PARTICIPATION_KEY);
+        this.exercise = (ProgrammingExercise) request.getSession().getAttribute(HttpsConstants.EXERCISE_KEY);
+        this.vcsAccessLog = (VcsAccessLog) request.getSession().getAttribute(HttpsConstants.VCS_ACCESS_LOG_KEY);
     }
 
     /**
@@ -60,7 +84,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         Repository repository = receivePack.getRepository();
 
         try {
-            localVCServletService.processNewPush(commitHash, repository);
+            localVCServletService.processNewPush(commitHash, repository, Optional.ofNullable(exercise), Optional.ofNullable(participation), Optional.ofNullable(vcsAccessLog));
         }
         catch (LocalCIException e) {
             // Return an error message to the user.

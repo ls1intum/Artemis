@@ -7,6 +7,7 @@ import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 import org.apache.sshd.git.GitLocationResolver;
 import org.apache.sshd.server.session.ServerSession;
@@ -71,6 +72,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         // git-upload-pack means fetch (read operation), git-receive-pack means push (write operation)
         final var repositoryAction = gitCommand.equals("git-upload-pack") ? RepositoryActionType.READ : gitCommand.equals("git-receive-pack") ? RepositoryActionType.WRITE : null;
         final var user = session.getAttribute(SshConstants.USER_KEY);
+        session.setAttribute(SshConstants.REPOSITORY_EXERCISE_KEY, exercise);
 
         if (session.getAttribute(SshConstants.IS_BUILD_AGENT_KEY) && repositoryAction == RepositoryActionType.READ) {
             // We already checked for build agent authenticity
@@ -78,7 +80,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         else {
             try {
                 localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, AuthenticationMechanism.SSH, session.getClientAddress().toString(),
-                        localVCRepositoryUri);
+                        localVCRepositoryUri, Optional.empty(), Optional.of(session));
             }
             catch (LocalVCForbiddenException e) {
                 log.error("User {} does not have access to the repository {}", user.getLogin(), repositoryPath);

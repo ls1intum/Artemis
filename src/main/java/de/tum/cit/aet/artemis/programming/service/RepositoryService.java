@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.service.localvc.VcsAccessLogService;
@@ -454,12 +455,10 @@ public class RepositoryService {
      * @param domainId   the id of the domain Object (participation) owning the repository
      * @throws GitAPIException if the staging/committing process fails.
      */
-    public void commitChanges(Repository repository, User user, Long domainId) throws GitAPIException {
+    public Optional<VcsAccessLog> commitChanges(Repository repository, User user, Long domainId) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, "Changes by Online Editor", true, user);
-        if (vcsAccessLogService.isPresent()) {
-            vcsAccessLogService.get().storeCodeEditorAccessLog(repository, user, domainId);
-        }
+        return vcsAccessLogService.isPresent() ? vcsAccessLogService.get().createPreliminaryCodeEditorAccessLog(repository, user, domainId) : Optional.empty();
     }
 
     /**

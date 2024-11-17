@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
+import java.util.Optional;
+
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -82,6 +84,10 @@ public class VcsAccessLogService {
         });
     }
 
+    public void saveVcsAccesslog(VcsAccessLog vcsAccessLog) {
+        vcsAccessLogRepository.save(vcsAccessLog);
+    }
+
     /**
      * Stores the log for a push from the code editor.
      *
@@ -90,17 +96,17 @@ public class VcsAccessLogService {
      * @param participationId The id of the participation belonging to the repository
      * @throws GitAPIException if an error occurs while retrieving the git log
      */
-    public void storeCodeEditorAccessLog(Repository repo, User user, Long participationId) throws GitAPIException {
+    public Optional<VcsAccessLog> createPreliminaryCodeEditorAccessLog(Repository repo, User user, Long participationId) throws GitAPIException {
         try (Git git = new Git(repo)) {
             String lastCommitHash = git.log().setMaxCount(1).call().iterator().next().getName();
             var participation = participationRepository.findById(participationId);
             if (participation.isPresent() && participation.get() instanceof ProgrammingExerciseParticipation programmingParticipation) {
                 log.debug("Storing access operation for user {}", user);
 
-                VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) programmingParticipation, user.getName(), user.getEmail(), RepositoryActionType.WRITE,
-                        AuthenticationMechanism.CODE_EDITOR, lastCommitHash, null);
-                vcsAccessLogRepository.save(accessLogEntry);
+                return Optional.of(new VcsAccessLog(user, (Participation) programmingParticipation, user.getName(), user.getEmail(), RepositoryActionType.WRITE,
+                        AuthenticationMechanism.CODE_EDITOR, lastCommitHash, null));
             }
         }
+        return Optional.empty();
     }
 }

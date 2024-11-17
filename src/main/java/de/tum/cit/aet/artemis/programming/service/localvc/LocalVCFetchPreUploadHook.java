@@ -8,6 +8,8 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.PreUploadHook;
 import org.eclipse.jgit.transport.UploadPack;
 
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+
 public class LocalVCFetchPreUploadHook implements PreUploadHook {
 
     private final LocalVCServletService localVCServletService;
@@ -21,7 +23,11 @@ public class LocalVCFetchPreUploadHook implements PreUploadHook {
 
     @Override
     public void onBeginNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int clientOffered) {
-        localVCServletService.updateVCSAccessLogForCloneAndPullHTTPS(request, clientOffered);
+        var vcsAccessLog = request.getAttribute(HttpsConstants.VCS_ACCESS_LOG_KEY);
+        String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+        if (vcsAccessLog instanceof VcsAccessLog log) {
+            localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(log, authorizationHeader, clientOffered);
+        }
     }
 
     @Override
