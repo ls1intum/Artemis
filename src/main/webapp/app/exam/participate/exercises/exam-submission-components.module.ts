@@ -18,6 +18,7 @@ import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-e
 import { ArtemisFullscreenModule } from 'app/shared/fullscreen/fullscreen.module';
 import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/modeling-editor.module';
 import { ArtemisProgrammingSubmissionPolicyStatusModule } from 'app/exercises/programming/participate/programming-submission-policy-status.module';
+import { ExerciseSaveButtonComponent } from './exercise-save-button/exercise-save-button.component';
 
 @NgModule({
     declarations: [
@@ -42,6 +43,7 @@ import { ArtemisProgrammingSubmissionPolicyStatusModule } from 'app/exercises/pr
         ArtemisModelingEditorModule,
         ArtemisProgrammingSubmissionPolicyStatusModule,
         ExamExerciseUpdateHighlighterModule,
+        ExerciseSaveButtonComponent,
     ],
     exports: [FileUploadExamSubmissionComponent, QuizExamSubmissionComponent, ProgrammingExamSubmissionComponent, TextExamSubmissionComponent, ModelingExamSubmissionComponent],
 })

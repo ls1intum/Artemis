@@ -121,7 +121,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
      *
      * @param startDate the minimum submission date
      * @param endDate   the maximum submission date
-     * @return a list of active users
+     * @return a count of active users
      */
     @Query("""
             SELECT COUNT(DISTINCT p.student.id)
