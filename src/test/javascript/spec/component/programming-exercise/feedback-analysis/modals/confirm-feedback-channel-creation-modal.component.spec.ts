@@ -28,12 +28,12 @@ describe('ConfirmFeedbackChannelCreationModalComponent', () => {
     it('should call close on activeModal with true when confirm is triggered', () => {
         const closeSpy = jest.spyOn(activeModal, 'close');
         component.confirm();
-        expect(closeSpy).toHaveBeenCalledWith(true);
+        expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
     });
 
     it('should call dismiss on activeModal when dismiss is triggered', () => {
         const dismissSpy = jest.spyOn(activeModal, 'dismiss');
         component.dismiss();
-        expect(dismissSpy).toHaveBeenCalled();
+        expect(dismissSpy).toHaveBeenCalledOnce();
     });
 });

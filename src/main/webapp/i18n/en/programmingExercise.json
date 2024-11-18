@@ -399,6 +399,7 @@
                         "createAndNavigateButton": "Create and Navigate",
                         "createChannelButton": "Create Channel",
                         "placeholder": "This field should not be empty",
+                        "descriptionLabel": "Description",
                         "confirmationModal": {
                             "header": "Confirm Channel Creation",
                             "confirmationMessage": "Are you sure you want to create this channel? This will create a channel with <strong>{{count}}</strong> student(s).",

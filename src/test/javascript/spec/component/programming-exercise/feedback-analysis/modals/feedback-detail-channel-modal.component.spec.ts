@@ -45,13 +45,13 @@ describe('FeedbackDetailChannelModalComponent', () => {
     it('should call activeModal.close when closeModal is triggered', () => {
         const closeSpy = jest.spyOn(activeModal, 'close');
         component.closeModal();
-        expect(closeSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalledOnce();
     });
 
     it('should call activeModal.dismiss when dismissModal is triggered', () => {
         const dismissSpy = jest.spyOn(activeModal, 'dismiss');
         component.dismissModal();
-        expect(dismissSpy).toHaveBeenCalled();
+        expect(dismissSpy).toHaveBeenCalledOnce();
     });
 
     it('should open confirmation modal and emit formSubmitted on successful confirmation', async () => {
@@ -68,7 +68,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
         await component.submitForm(false);
 
         expect(component.isConfirmModalOpen()).toBeFalse();
-        expect(formSubmittedSpy).toHaveBeenCalledWith({
+        expect(formSubmittedSpy).toHaveBeenCalledExactlyOnceWith({
             channelDto: expect.objectContaining({
                 creationDate: undefined,
                 creator: undefined,
@@ -115,8 +115,8 @@ describe('FeedbackDetailChannelModalComponent', () => {
 
         await component.submitForm(false);
 
-        expect(component.handleModal).toHaveBeenCalled();
-        expect(formSubmittedSpy).toHaveBeenCalledWith({
+        expect(component.handleModal).toHaveBeenCalledOnce();
+        expect(formSubmittedSpy).toHaveBeenCalledExactlyOnceWith({
             channelDto: expect.objectContaining({
                 name: 'channel',
                 description: 'channelDescription',
@@ -141,13 +141,13 @@ describe('FeedbackDetailChannelModalComponent', () => {
 
         await component.submitForm(false);
 
-        expect(component.handleModal).toHaveBeenCalled();
-        expect(formSubmittedSpy).not.toHaveBeenCalled();
+        expect(component.handleModal).toHaveBeenCalledOnce();
+        expect(formSubmittedSpy).not.toHaveBeenCalledOnce();
     });
 
     it('should not open confirmation modal if form is invalid', async () => {
         const modalSpy = jest.spyOn(modalService, 'open');
         await component.submitForm(true);
-        expect(modalSpy).not.toHaveBeenCalled();
+        expect(modalSpy).not.toHaveBeenCalledOnce();
     });
 });

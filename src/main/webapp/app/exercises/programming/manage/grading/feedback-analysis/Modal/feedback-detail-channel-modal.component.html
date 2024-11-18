@@ -27,7 +27,7 @@
             }
         </div>
         <div class="form-group">
-            <label for="description">Description</label>
+            <label for="description" [jhiTranslate]="TRANSLATION_BASE + '.descriptionLabel'"></label>
             <input type="text" class="form-control" id="description" formControlName="description" [attr.placeholder]="TRANSLATION_BASE + '.placeholder' | artemisTranslate" />
             @if (form.get('description')?.invalid && (form.get('description')?.dirty || form.get('description')?.touched)) {
                 <div class="alert alert-danger mt-2">
