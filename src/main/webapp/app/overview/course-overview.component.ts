@@ -528,7 +528,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
 
         if (!this.conversationServiceInstantiated && this.communicationRouteLoaded) {
-            console.log(this.course);
             this.metisConversationService
                 .setUpConversationService(this.course!)
                 .pipe(takeUntil(this.ngUnsubscribe))

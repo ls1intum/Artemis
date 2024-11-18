@@ -139,8 +139,6 @@ export class MetisService implements OnDestroy {
      * @param {Course} course in which the metis service is used
      */
     setCourse(course: Course | undefined): void {
-        console.log('Metis Service');
-        console.log(course);
         if (course && (this.courseId === undefined || this.courseId !== course.id)) {
             this.courseId = course.id!;
             this.course = course;
