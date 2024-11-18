@@ -459,6 +459,9 @@ public class LocalVCServletService {
             }
         }
         catch (EntityNotFoundException e) {
+            if (isRepositoryAuxiliaryRepository(exercise, repositoryTypeOrUserName)) {
+                throw new LocalVCForbiddenException(e);
+            }
             throw new LocalVCInternalException(
                     "No participation found for repository with repository type or username " + repositoryTypeOrUserName + " in exercise " + exercise.getId(), e);
         }
@@ -470,6 +473,10 @@ public class LocalVCServletService {
             throw new LocalVCForbiddenException(e);
         }
         return Optional.of(participation);
+    }
+
+    private boolean isRepositoryAuxiliaryRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName) {
+        return auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise);
     }
 
     /**
@@ -590,9 +597,18 @@ public class LocalVCServletService {
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
         String projectKey = localVCRepositoryUri.getProjectKey();
         ProgrammingExercise exercise = cachedExercise.orElseGet(() -> getProgrammingExercise(projectKey));
-
-        ProgrammingExerciseParticipation participation = cachedParticipation.orElseGet(() -> retrieveParticipationFromLocalVCRepositoryUri(localVCRepositoryUri));
-
+        ProgrammingExerciseParticipation participation;
+        try {
+            participation = cachedParticipation.orElseGet(() -> retrieveParticipationFromLocalVCRepositoryUri(localVCRepositoryUri));
+        }
+        catch (EntityNotFoundException e) {
+            if (isRepositoryAuxiliaryRepository(exercise, repositoryTypeOrUserName)) {
+                participation = retrieveSolutionParticipation(exercise);
+            }
+            else {
+                throw e;
+            }
+        }
         RepositoryType repositoryType = getRepositoryType(repositoryTypeOrUserName, exercise);
 
         try {
@@ -624,7 +640,8 @@ public class LocalVCServletService {
             }
             else {
                 // for HTTPs we cannot keep the vcsAccessLog in the session
-                vcsAccessLogService.ifPresent(service -> service.updateCommitHash(participation, finalCommitHash));
+                var finalParticipation = participation;
+                vcsAccessLogService.ifPresent(service -> service.updateCommitHash(finalParticipation, finalCommitHash));
             }
         }
         catch (GitAPIException | IOException e) {
@@ -636,6 +653,10 @@ public class LocalVCServletService {
 
         log.debug("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUri.getURI(), commitHash,
                 TimeLogUtil.formatDurationFrom(timeNanoStart));
+    }
+
+    private ProgrammingExerciseParticipation retrieveSolutionParticipation(ProgrammingExercise exercise) {
+        return programmingExerciseParticipationService.retrieveSolutionPar(exercise);
     }
 
     private ProgrammingExercise getProgrammingExercise(String projectKey) {
@@ -725,6 +746,19 @@ public class LocalVCServletService {
             return RepositoryType.USER;
         }
     }
+    //
+    // private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(LocalVCRepositoryUri localVCRepositoryUri, String repositoryTypeOrUserName,
+    // ProgrammingExercise exercise) {
+    // ProgrammingExerciseParticipation participation;
+    // try {
+    // participation = programmingExerciseParticipationService.retrieveParticipationWithSubmissionsByRepository(exercise, repositoryTypeOrUserName,
+    // localVCRepositoryUri.isPracticeRepository());
+    // }
+    // catch (EntityNotFoundException e) {
+    // throw new VersionControlException("Could not find participation for repository " + repositoryTypeOrUserName + " of exercise " + exercise, e);
+    // }
+    // return participation;
+    // }
 
     /**
      * TODO: this could be done asynchronously to shorten the duration of the push operation
@@ -791,17 +825,6 @@ public class LocalVCServletService {
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
         var repositoryURL = localVCRepositoryUri.toString().replace("/git-upload-pack", "").replace("/git-receive-pack", "");
         return programmingExerciseParticipationService.retrieveParticipationWithSubmissionsByRepository(repositoryTypeOrUserName, repositoryURL);
-    }
-
-    /**
-     * Retrieves the participation for a programming exercise based on the HTTP request.
-     *
-     * @param request the {@link HttpServletRequest} containing the repository URI.
-     * @return the {@link ProgrammingExerciseParticipation} corresponding to the repository details in the request.
-     */
-    private ProgrammingExerciseParticipation getExerciseParticipationFromRequest(HttpServletRequest request) {
-        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
-        return retrieveParticipationFromLocalVCRepositoryUri(localVCRepositoryUri);
     }
 
     /**
@@ -886,7 +909,8 @@ public class LocalVCServletService {
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
             AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;
-            var participation = getExerciseParticipationFromRequest(servletRequest);
+            LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(servletRequest);
+            var participation = retrieveParticipationFromLocalVCRepositoryUri(localVCRepositoryUri);
             var ipAddress = servletRequest.getRemoteAddr();
             vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
         }
