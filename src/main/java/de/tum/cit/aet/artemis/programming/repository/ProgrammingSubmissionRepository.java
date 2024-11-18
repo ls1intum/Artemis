@@ -158,18 +158,4 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     default ProgrammingSubmission findByResultIdElseThrow(long resultId) {
         return getValueElseThrow(findByResultId(resultId));
     }
-
-    @Query("""
-            SELECT s
-            FROM ProgrammingSubmission s
-                LEFT JOIN FETCH s.participation p
-            WHERE p.id = :participationId
-                AND s.commitHash = :commitHash
-            ORDER BY s.id DESC
-            """)
-    List<ProgrammingSubmission> findByParticipationIdAndCommitHashOrderByIdDesc(@Param("participationId") long participationId, @Param("commitHash") String commitHash);
-
-    default ProgrammingSubmission findFirstByParticipationIdAndCommitHashOrderByIdDesc(long participationId, String commitHash) {
-        return findByParticipationIdAndCommitHashOrderByIdDesc(participationId, commitHash).stream().findFirst().orElse(null);
-    }
 }

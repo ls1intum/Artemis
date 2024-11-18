@@ -84,18 +84,7 @@ public class ProgrammingMessagingService {
      * @param exerciseId used to build the correct topic
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId) {
-        notifyUserAboutSubmission(submission, exerciseId, false);
-    }
-
-    /**
-     * Notify user on a new programming submission.
-     *
-     * @param submission   ProgrammingSubmission
-     * @param exerciseId   used to build the correct topic
-     * @param isProcessing whether the submission started processing or not
-     */
-    public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId, boolean isProcessing) {
-        var submissionDTO = SubmissionDTO.of(submission, isProcessing, null, null);
+        var submissionDTO = SubmissionDTO.of(submission, false, null, null);
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             if (studentParticipation.getParticipant() instanceof Team team) {
                 // eager load the team with students so their information can be used for the messages below
@@ -196,6 +185,15 @@ public class ProgrammingMessagingService {
         }
     }
 
+    /**
+     * Notifies the user about the processing of a submission.
+     * This method sends a notification to the user that their submission is processing
+     * It handles both student participations and template/solution participations.
+     *
+     * @param submission      the submission processing data transfer object containing the submission details
+     * @param exerciseId      the ID of the exercise associated with the submission
+     * @param participationId the ID of the participation associated with the submission
+     */
     public void notifyUserAboutSubmissionProcessing(SubmissionProcessingDTO submission, long exerciseId, long participationId) {
         Participation participation = participationRepository.findWithProgrammingExerciseWithBuildConfigById(participationId).orElseThrow();
         if (participation instanceof StudentParticipation studentParticipation) {
