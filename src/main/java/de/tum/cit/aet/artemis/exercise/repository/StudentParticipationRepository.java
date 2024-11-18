@@ -29,6 +29,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -417,7 +418,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
-             """)
+            """)
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
@@ -455,12 +456,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<StudentParticipation> findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissionsAndTeamStudents(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
 
+    // NOTE: we should not fetch too elements here so we leave out feedback and test cases, otherwise the query will be very slow
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.results r
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
@@ -487,13 +487,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param exerciseId      the exercise id the participations should belong to
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
+    // NOTE: we should not fetch too elements here so we leave out feedback and test cases, otherwise the query will be very slow
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions submission
                 LEFT JOIN FETCH submission.results result
-                LEFT JOIN FETCH result.feedbacks feedbacks
-                LEFT JOIN FETCH feedbacks.testCase
                 LEFT JOIN FETCH result.assessor
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
@@ -503,7 +502,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     WHERE r2.assessor IS NOT NULL
                         AND (r2.rated IS NULL OR r2.rated = FALSE)
                         AND r2.submission = submission
-                ) AND :correctionRound = (
+                )
+                AND :correctionRound = (
                     SELECT COUNT(r)
                     FROM Result r
                     WHERE r.assessor IS NOT NULL
@@ -514,14 +514,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                             de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
                             de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                         ) AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
-                ) AND :correctionRound = (
+                )
+                AND :correctionRound = (
                     SELECT COUNT(prs)
                     FROM p.results prs
                     WHERE prs.assessmentType IN (
                         de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL,
                         de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                     )
-                ) AND submission.submitted = TRUE
+                )
+                AND submission.submitted = TRUE
                 AND submission.id = (SELECT MAX(s.id) FROM p.submissions s)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") long exerciseId,
@@ -529,13 +531,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     Set<StudentParticipation> findDistinctAllByExerciseIdInAndStudentId(Set<Long> exerciseIds, Long studentId);
 
+    // NOTE: we should not fetch too elements here so we leave out feedback and test cases, otherwise the query will be very slow
     @Query("""
             SELECT DISTINCT p
             FROM Participation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
             WHERE p.exercise.id = :exerciseId
                 AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
                 AND p.testRun = FALSE
@@ -1016,7 +1017,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * Get a mapping of participation ids to the number of submission for each participation.
      *
      * @param exerciseId the id of the exercise for which to consider participations
-     * @return the number of submissions per participation in the given exercise
+     * @return a map of submissions per participation in the given exercise
      */
     default Map<Long, Integer> countSubmissionsPerParticipationByExerciseIdAsMap(long exerciseId) {
         return convertListOfCountsIntoMap(countSubmissionsPerParticipationByExerciseId(exerciseId));
@@ -1027,7 +1028,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      *
      * @param courseId      the id of the course for which to consider participations
      * @param teamShortName the short name of the team for which to consider participations
-     * @return the number of submissions per participation in the given course for the team
+     * @return a map of submissions per participation in the given course for the team
      */
     default Map<Long, Integer> countLegalSubmissionsPerParticipationByCourseIdAndTeamShortNameAsMap(long courseId, String teamShortName) {
         return convertListOfCountsIntoMap(countLegalSubmissionsPerParticipationByCourseIdAndTeamShortName(courseId, teamShortName));
@@ -1217,7 +1218,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * - Occurrence range: Filters feedback where the number of occurrences (COUNT) is between the specified minimum and maximum values (inclusive).
      * - Error categories: Filters feedback based on error categories, which can be "Student Error", "Ares Error", or "AST Error".
      * <br>
-     * Grouping is done by feedback detail text, test case name, and error category. The occurrence count is filtered using the HAVING clause.
+     * Grouping is done by feedback detail text, test case name and error category. The occurrence count is filtered using the HAVING clause.
      *
      * @param exerciseId            The ID of the exercise for which feedback details should be retrieved.
      * @param searchTerm            The search term used for filtering the feedback detail text (optional).
@@ -1233,6 +1234,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
                 SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
+                    LISTAGG(CAST(f.id AS string), ',') WITHIN GROUP (ORDER BY f.id),
                     COUNT(f.id),
                     0,
                     f.detailText,
@@ -1240,7 +1242,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     COALESCE((
                         SELECT MAX(t.taskName)
                         FROM ProgrammingExerciseTask t
-                        JOIN t.testCases tct
+                        LEFT JOIN t.testCases tct
                         WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
                     ), 'Not assigned to task'),
                     CASE
@@ -1250,12 +1252,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     END
                 )
                 FROM StudentParticipation p
-                JOIN p.results r ON r.id = (
+                LEFT JOIN p.results r ON r.id = (
                     SELECT MAX(pr.id)
                     FROM p.results pr
                     WHERE pr.participation.id = p.id
                 )
-                JOIN r.feedbacks f
+                LEFT JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                     AND p.testRun = FALSE
                     AND f.positive = FALSE
@@ -1264,7 +1266,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     AND (:#{#filterTaskNames != NULL && #filterTaskNames.size() < 1} = TRUE OR f.testCase.testName NOT IN (
                             SELECT tct.testName
                             FROM ProgrammingExerciseTask t
-                            JOIN t.testCases tct
+                            LEFT JOIN t.testCases tct
                             WHERE t.taskName IN (:filterTaskNames)
                         ))
                     AND (:#{#filterErrorCategories != NULL && #filterErrorCategories.size() < 1} = TRUE OR CASE
@@ -1290,7 +1292,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT COUNT(DISTINCT r.id)
             FROM StudentParticipation p
-                JOIN p.results r ON r.id = (
+                LEFT JOIN p.results r ON r.id = (
                          SELECT MAX(pr.id)
                          FROM p.results pr
                          WHERE pr.participation.id = p.id
@@ -1311,17 +1313,18 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param exerciseId The ID of the exercise for which the maximum feedback count is to be retrieved.
      * @return The maximum count of feedback occurrences for the given exercise.
      */
+    // TODO: move this query to a more appropriate repository, either feedbackRepository or exerciseRepository
     @Query("""
             SELECT MAX(feedbackCounts.feedbackCount)
             FROM (
                 SELECT COUNT(f.id) AS feedbackCount
                 FROM StudentParticipation p
-                JOIN p.results r ON r.id = (
+                LEFT JOIN p.results r ON r.id = (
                     SELECT MAX(pr.id)
                     FROM p.results pr
                     WHERE pr.participation.id = p.id
                 )
-                JOIN r.feedbacks f
+                LEFT JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                   AND p.testRun = FALSE
                   AND f.positive = FALSE
@@ -1329,4 +1332,33 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             ) AS feedbackCounts
             """)
     long findMaxCountForExercise(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Retrieves a paginated list of students affected by specific feedback entries for a given programming exercise.
+     * <br>
+     *
+     * @param exerciseId  for which the affected student participation data is requested.
+     * @param feedbackIds used to filter the participation to only those affected by specific feedback entries.
+     * @param pageable    A {@link Pageable} object to control pagination and sorting of the results, specifying page number, page size, and sort order.
+     * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
+     */
+    @Query("""
+                SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO(
+                                p.exercise.course.id,
+                                p.id,
+                                p.student.firstName,
+                                p.student.lastName,
+                                p.student.login,
+                                p.repositoryUri
+                            )
+                FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN p.submissions s
+                LEFT JOIN s.results r
+                LEFT JOIN r.feedbacks f
+                WHERE p.exercise.id = :exerciseId
+                      AND f.id IN :feedbackIds
+                      AND p.testRun = FALSE
+                ORDER BY p.student.firstName ASC
+            """)
+    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackId(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds, Pageable pageable);
 }
