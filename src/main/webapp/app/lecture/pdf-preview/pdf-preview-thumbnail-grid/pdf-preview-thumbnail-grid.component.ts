@@ -1,4 +1,4 @@
-import { Component, ElementRef, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnChanges, SimpleChanges, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import * as PDFJS from 'pdfjs-dist';
 import 'pdfjs-dist/build/pdf.worker';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -14,7 +14,7 @@ import { clone } from 'lodash-es';
     standalone: true,
     imports: [ArtemisSharedModule, PdfPreviewEnlargedCanvasComponent],
 })
-export class PdfPreviewThumbnailGridComponent {
+export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
     readonly DEFAULT_SLIDE_WIDTH = 250;
@@ -42,10 +42,15 @@ export class PdfPreviewThumbnailGridComponent {
     // Injected services
     private readonly alertService = inject(AlertService);
 
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['hiddenPages']) {
+            this.newHiddenPages.set(clone(this.hiddenPages()!));
+        }
+    }
+
     constructor() {
         effect(
             () => {
-                this.newHiddenPages.set(clone(this.hiddenPages()!));
                 this.loadOrAppendPdf(this.currentPdfUrl()!, this.appendFile());
             },
             { allowSignalWrites: true },

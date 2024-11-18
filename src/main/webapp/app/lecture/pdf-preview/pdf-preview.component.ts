@@ -114,7 +114,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Triggers the file input to select files.
      */
     triggerFileInput(): void {
-        this.fileInput().nativeElement.click();
+        //this.fileInput().nativeElement.click();
+        console.log(this.hiddenPages());
     }
 
     /**
@@ -228,9 +229,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const pagesToDelete = Array.from(this.selectedPages()!)
                 .map((page) => page - 1)
                 .sort((a, b) => b - a);
-            pagesToDelete.forEach((pageIndex) => {
-                pdfDoc.removePage(pageIndex);
-            });
+
+            this.updateHiddenPages(pagesToDelete);
+            pagesToDelete.forEach((pageIndex) => pdfDoc.removePage(pageIndex));
 
             this.isFileChanged.set(true);
             const pdfBytes = await pdfDoc.save();
@@ -246,6 +247,27 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         } finally {
             this.isPdfLoading.set(false);
         }
+    }
+
+    /**
+     * Updates hidden pages after selected pages are deleted.
+     * @param pagesToDelete - Array of pages to be deleted (0-indexed).
+     */
+    private updateHiddenPages(pagesToDelete: number[]) {
+        const updatedHiddenPages = new Set<number>();
+        this.hiddenPages().forEach((hiddenPage) => {
+            // Adjust hiddenPage based on the deleted pages
+            const adjustedPage = pagesToDelete.reduce((acc, pageIndex) => {
+                if (acc === pageIndex + 1) {
+                    return;
+                }
+                return pageIndex < acc - 1 ? acc - 1 : acc;
+            }, hiddenPage);
+            if (adjustedPage !== -1) {
+                updatedHiddenPages.add(adjustedPage!);
+            }
+        });
+        this.hiddenPages.set(updatedHiddenPages);
     }
 
     /**
