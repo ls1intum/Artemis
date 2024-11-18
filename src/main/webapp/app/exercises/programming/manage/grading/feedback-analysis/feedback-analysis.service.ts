@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
+import { PageableResult, PageableSearch, SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
-import { HttpParams } from '@angular/common/http';
+import { HttpHeaders, HttpParams } from '@angular/common/http';
 import { FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
 
 export interface FeedbackAnalysisResponse {
@@ -12,12 +12,21 @@ export interface FeedbackAnalysisResponse {
     errorCategories: string[];
 }
 export interface FeedbackDetail {
+    concatenatedFeedbackIds: number[];
     count: number;
     relativeCount: number;
     detailText: string;
     testCaseName: string;
     taskName: string;
     errorCategory: string;
+}
+export interface FeedbackAffectedStudentDTO {
+    courseId: number;
+    participationId: number;
+    firstName: string;
+    lastName: string;
+    login: string;
+    repositoryURI: string;
 }
 @Injectable()
 export class FeedbackAnalysisService extends BaseApiHttpService {
@@ -38,5 +47,19 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
 
     getMaxCount(exerciseId: number): Promise<number> {
         return this.get<number>(`exercises/${exerciseId}/feedback-details-max-count`);
+    }
+
+    async getParticipationForFeedbackIds(exerciseId: number, feedbackIds: number[], pageable: PageableSearch): Promise<PageableResult<FeedbackAffectedStudentDTO>> {
+        const feedbackIdsHeader = feedbackIds.join(',');
+
+        const params = new HttpParams()
+            .set('page', pageable.page.toString())
+            .set('pageSize', pageable.pageSize.toString())
+            .set('sortedColumn', pageable.sortedColumn)
+            .set('sortingOrder', pageable.sortingOrder);
+
+        const headers = new HttpHeaders().set('feedbackIds', feedbackIdsHeader);
+
+        return this.get<PageableResult<FeedbackAffectedStudentDTO>>(`exercises/${exerciseId}/feedback-details-participation`, { params, headers });
     }
 }
