@@ -77,11 +77,11 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
     Optional<VcsAccessLog> findNewestByParticipationId(@Param("participationId") long participationId);
 
     @Query("""
-                SELECT vcsAccessLog
-                FROM VcsAccessLog vcsAccessLog
-                LEFT JOIN FETCH ProgrammingExerciseStudentParticipation participation ON vcsAccessLog.participation.id = participation.id
+                SELECT log
+                FROM VcsAccessLog log
+                LEFT JOIN TREAT (log.participation AS ProgrammingExerciseStudentParticipation) participation
                 WHERE participation.repositoryUri = :repositoryUri
-                ORDER BY vcsAccessLog.id DESC
+                ORDER BY log.id DESC
                 LIMIT 1
             """)
     Optional<VcsAccessLog> findNewestByRepositoryUri(@Param("repositoryUri") String repositoryUri);

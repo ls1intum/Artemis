@@ -279,7 +279,7 @@ public class LocalVCServletService {
             }
 
             String finalCommitHash = commitHash;
-            RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH : RepositoryActionType.CLONE;
+            RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH : RepositoryActionType.PULL;
             vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, finalRepositoryAction, authenticationMechanism, finalCommitHash, ipAddress));
         }
     }
@@ -836,7 +836,9 @@ public class LocalVCServletService {
      *                          if the action is a clone (if 0) or a pull (if greater than 0).
      */
     public void updateAndStoreVCSAccessLogForCloneAndPullHTTPS(HttpServletRequest request, String authorizationHeader, int clientOffered) {
-
+        if (!request.getMethod().equals("POST")) {
+            return;
+        }
         try {
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             String userName = usernameAndPassword.username();
