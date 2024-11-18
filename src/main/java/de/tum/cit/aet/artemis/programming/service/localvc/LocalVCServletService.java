@@ -569,9 +569,13 @@ public class LocalVCServletService {
 
     /**
      * Create a submission, trigger the respective build, and process the results.
+     * This method can be called with some values, to avoid loading them again from the database
      *
-     * @param commitHash the hash of the last commit.
-     * @param repository the remote repository which was pushed to. //TODO fix docs
+     * @param commitHash          the hash of the last commit.
+     * @param repository          the remote repository which was pushed to.
+     * @param cachedExercise      the exercise which is potentially already loaded
+     * @param cachedParticipation the participation which is potentially already loaded
+     * @param vcsAccessLog        the vcsAccessLog which is potentially already loaded
      * @throws ContinuousIntegrationException if something goes wrong with the CI configuration.
      * @throws VersionControlException        if the commit belongs to the wrong branch (i.e. not the default branch of the participation).
      */
@@ -586,8 +590,8 @@ public class LocalVCServletService {
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
         String projectKey = localVCRepositoryUri.getProjectKey();
         ProgrammingExercise exercise = cachedExercise.orElseGet(() -> getProgrammingExercise(projectKey));
-        ProgrammingExerciseParticipation participation = cachedParticipation
-                .orElseGet(() -> getProgrammingExerciseParticipation(localVCRepositoryUri, repositoryTypeOrUserName, exercise));
+
+        ProgrammingExerciseParticipation participation = cachedParticipation.orElseGet(() -> retrieveParticipationFromLocalVCRepositoryUri(localVCRepositoryUri));
 
         RepositoryType repositoryType = getRepositoryType(repositoryTypeOrUserName, exercise);
 
@@ -632,19 +636,6 @@ public class LocalVCServletService {
 
         log.debug("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUri.getURI(), commitHash,
                 TimeLogUtil.formatDurationFrom(timeNanoStart));
-    }
-
-    private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(LocalVCRepositoryUri localVCRepositoryUri, String repositoryTypeOrUserName,
-            ProgrammingExercise exercise) {
-        ProgrammingExerciseParticipation participation;
-        try {
-            participation = programmingExerciseParticipationService.retrieveParticipationWithSubmissionsByRepository(exercise, repositoryTypeOrUserName,
-                    localVCRepositoryUri.isPracticeRepository());
-        }
-        catch (EntityNotFoundException e) {
-            throw new VersionControlException("Could not find participation for repository " + repositoryTypeOrUserName + " of exercise " + exercise, e);
-        }
-        return participation;
     }
 
     private ProgrammingExercise getProgrammingExercise(String projectKey) {
@@ -830,10 +821,11 @@ public class LocalVCServletService {
      * This method logs the access information based on the incoming HTTP request. It checks if the action
      * is performed by a build job user and, if not, records the user's repository action (clone or pull).
      * The action type is determined based on the number of offers (`clientOffered`).
-     * // TODO docs
      *
-     * @param clientOffered the number of objects offered by the client in the operation, used to determine
-     *                          if the action is a clone (if 0) or a pull (if greater than 0).
+     * @param request             the request from the user
+     * @param authorizationHeader the authorization header containing the user's credentials
+     * @param clientOffered       the number of objects offered by the client in the operation, used to determine
+     *                                if the action is a clone (if 0) or a pull (if greater than 0).
      */
     public void updateAndStoreVCSAccessLogForCloneAndPullHTTPS(HttpServletRequest request, String authorizationHeader, int clientOffered) {
         if (!request.getMethod().equals("POST")) {
@@ -849,35 +841,6 @@ public class LocalVCServletService {
             RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
 
             vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(localVCRepositoryUri, repositoryActionType));
-        }
-        catch (Exception ignored) {
-        }
-    }
-
-    /**
-     * Updates the VCS access log for a push action using HTTPS.
-     * <p>
-     * This method logs the access information if the HTTP request is a POST request and the action
-     * is not performed by a build job user. The repository action type is set as a push action.
-     *
-     * @param method              the HTTP method of the request (expected to be "POST" for logging to occur)
-     * @param authorizationHeader the authorization header containing the username and password in basic authentication format
-     *                                <p>
-     *                                This method is asynchronous.
-     */
-    @Async
-    public void updateAndStoreVCSAccessLogForPushHTTPS(String method, HttpServletRequest servletRequest, String authorizationHeader) {
-        if (!method.equals("POST")) {
-            return;
-        }
-        try {
-            UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
-            String userName = usernameAndPassword.username();
-            if (userName.equals(BUILD_USER_NAME)) {
-                return;
-            }
-            LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(servletRequest);
-            vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(localVCRepositoryUri, RepositoryActionType.PUSH));
         }
         catch (Exception ignored) {
         }

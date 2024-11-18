@@ -430,52 +430,6 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Get the participation for a given exercise and a repository type or user name. This method is used by the local VC system and by the local CI system to get the
-     * participation.
-     *
-     * @param exercise                 the exercise for which to get the participation.
-     * @param repositoryTypeOrUserName the repository type ("exercise", "solution", or "tests") or username (e.g. "artemis_test_user_1") as extracted from the repository URI.
-     * @param isPracticeRepository     whether the repository is a practice repository, i.e. the repository URI contains "-practice-".
-     *
-     * @return the participation.
-     * @throws EntityNotFoundException if the participation could not be found.
-     */
-    public ProgrammingExerciseParticipation retrieveParticipationWithSubmissionsByRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName,
-            boolean isPracticeRepository) {
-
-        boolean isAuxiliaryRepository = auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise);
-
-        // For pushes to the tests repository, the solution repository is built first, and thus we need the solution participation.
-        // Can possibly be used by auxiliary repositories
-        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString()) || isAuxiliaryRepository) {
-            return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
-        }
-
-        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
-            return templateParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
-        }
-
-        if (exercise.isTeamMode()) {
-            // The repositoryTypeOrUserName is the team short name.
-            // For teams, there is no practice participation.
-            return findTeamParticipationByExerciseAndTeamShortNameOrThrow(exercise, repositoryTypeOrUserName);
-        }
-
-        // If the exercise is an exam exercise and the repository's owner is at least an editor, the repository could be a test run repository, or it could be the instructor's
-        // assignment repository.
-        // There is no way to tell from the repository URI, and only one participation will be created, even if both are used.
-        // This participation has "testRun = true" set if the test run was created first, and "testRun = false" set if the instructor's assignment repository was created first.
-        // If the exercise is an exam exercise, and the repository's owner is at least an editor, get the participation without regard for the testRun flag.
-        boolean isExamEditorRepository = exercise.isExamExercise()
-                && authorizationCheckService.isAtLeastEditorForExercise(exercise, userRepository.getUserByLoginElseThrow(repositoryTypeOrUserName));
-        if (isExamEditorRepository) {
-            return studentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(exercise.getId(), repositoryTypeOrUserName);
-        }
-
-        return findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(exercise, repositoryTypeOrUserName, isPracticeRepository);
-    }
-
-    /**
      * Get the participation for a given repository url and a repository type or user name. This method is used by the local VC system to get the
      * participation for logging operations on the repository.
      *

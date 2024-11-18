@@ -4,8 +4,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Optional;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import org.apache.sshd.server.session.ServerSession;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.PostReceiveHook;
@@ -32,8 +30,6 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
     private final VcsAccessLog vcsAccessLog;
 
-    private HttpServletRequest request;
-
     public LocalVCPostPushHook(LocalVCServletService localVCServletService, ServerSession serverSession) {
         this.localVCServletService = localVCServletService;
         this.participation = serverSession.getAttribute(SshConstants.PARTICIPATION_KEY);
@@ -43,7 +39,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
     public LocalVCPostPushHook(LocalVCServletService localVCServletService) {
         this.localVCServletService = localVCServletService;
-        // For HTTPs we are unable to store the attributes in the sesseion or request unfortunately
+        // For HTTPs we are unable to store the attributes in the session or request unfortunately
         this.participation = null;
         this.exercise = null;
         this.vcsAccessLog = null;
