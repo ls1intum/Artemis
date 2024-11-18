@@ -235,7 +235,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var successfulSubmission = recentSubmissions.stream()
                 .anyMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() == SUCCESS_THRESHOLD);
         if (!successfulSubmission && recentSubmissions.size() >= 3) {
-            var listOfScores = recentSubmissions.stream().map(Submission::getLatestResult).map(Result::getScore).toList();
+            var listOfScores = recentSubmissions.stream().map(Submission::getLatestResult).filter(Objects::nonNull).map(Result::getScore).toList();
 
             // Check if the student needs intervention based on their recent score trajectory
             var needsIntervention = needsIntervention(listOfScores, 3);

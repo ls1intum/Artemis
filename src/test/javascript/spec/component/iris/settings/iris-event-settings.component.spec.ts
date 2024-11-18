@@ -39,6 +39,10 @@ describe('IrisEventSettingsUpdateComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
@@ -65,7 +69,7 @@ describe('IrisEventSettingsUpdateComponent', () => {
 
     it('should compute isSettingsSwitchDisabled correctly', () => {
         expect(component.isSettingsSwitchDisabled()).toBeFalsy();
-        // If the parent event settings are disabled, the switch should be
+        // If the parent event settings are disabled, the switch should be disabled
         componentRef.setInput('proactivityDisabled', true);
         fixture.detectChanges();
         expect(component.isSettingsSwitchDisabled()).toBeTruthy();
@@ -105,7 +109,7 @@ describe('IrisEventSettingsUpdateComponent', () => {
     });
 
     it('should disable buttons when isSettingsSwitchDisabled is true', () => {
-        componentRef.setInput('proactivityDisabled', true);
+        componentRef.setInput('proactivityDisabled', true); // should disable the switch
         fixture.detectChanges();
         expect(component.isSettingsSwitchDisabled()).toBeTruthy();
         fixture.detectChanges();

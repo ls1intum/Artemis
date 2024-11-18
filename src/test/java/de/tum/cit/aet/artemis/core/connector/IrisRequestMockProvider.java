@@ -138,22 +138,24 @@ public class IrisRequestMockProvider {
         });
     }
 
-    public void mockSubmissionFailedEventRunResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/tutor-chat/submission_failed/run")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
-            var mockRequest = (MockClientHttpRequest) request;
-            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
-            responseConsumer.accept(dto);
-            return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
-        });
+    public void mockBuildFailedRunResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
+        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/tutor-chat/default/run?event=build_failed")).andExpect(method(HttpMethod.POST))
+                .andRespond(request -> {
+                    var mockRequest = (MockClientHttpRequest) request;
+                    var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisExerciseChatPipelineExecutionDTO.class);
+                    responseConsumer.accept(dto);
+                    return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+                });
     }
 
-    public void mockSubmissionSuccessfulEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/course-chat/submission_successful/run")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
-            var mockRequest = (MockClientHttpRequest) request;
-            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisCourseChatPipelineExecutionDTO.class);
-            responseConsumer.accept(dto);
-            return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
-        });
+    public void mockProgressStalledEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
+        mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/tutor-chat/default/run?event=progress_stalled")).andExpect(method(HttpMethod.POST))
+                .andRespond(request -> {
+                    var mockRequest = (MockClientHttpRequest) request;
+                    var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisCourseChatPipelineExecutionDTO.class);
+                    responseConsumer.accept(dto);
+                    return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+                });
     }
 
     public void mockJolEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {

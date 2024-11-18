@@ -262,7 +262,7 @@ public class PyrisPipelineService {
      * @param object   the object to generate the DTO from
      * @param <T>      the type of the object
      * @param <U>      the type of the DTO
-     * @return PyrisEventDTO<U>
+     * @return PyrisEventDTO<U> the generated DTO
      */
     private <T, U> PyrisEventDTO<U> generateEventPayloadFromObjectType(Class<U> dtoClass, T object) {
 
@@ -270,6 +270,37 @@ public class PyrisPipelineService {
             return null;
         }
         // Get the 'of' method from the DTO class
+        Method ofMethod = getOfMethod(dtoClass, object);
+
+        // Invoke the 'of' method with the object as argument
+        try {
+            Object result = ofMethod.invoke(null, object);
+            return new PyrisEventDTO<>(dtoClass.cast(result), object.getClass().getSimpleName());
+        }
+        catch (IllegalArgumentException e) {
+            throw new UnsupportedOperationException("The 'of' method's parameter type doesn't match the provided object", e);
+        }
+        catch (IllegalAccessException e) {
+            throw new UnsupportedOperationException("The 'of' method is not accessible", e);
+        }
+        catch (InvocationTargetException e) {
+            throw new UnsupportedOperationException("The 'of' method threw an exception", e.getCause());
+        }
+        catch (ClassCastException e) {
+            throw new UnsupportedOperationException("The 'of' method's return type is not compatible with " + dtoClass.getSimpleName(), e);
+        }
+    }
+
+    /**
+     * Get the 'of' method from the DTO class that accepts the object type as argument.
+     *
+     * @param dtoClass the class of the DTO
+     * @param object   the object to generate the DTO from
+     * @return Method the 'of' method
+     * @param <T> the type of the object
+     * @param <U> the type of the DTO
+     */
+    private static <T, U> Method getOfMethod(Class<U> dtoClass, T object) {
         Method ofMethod = null;
         Class<?> currentClass = object.getClass();
 
@@ -289,23 +320,6 @@ public class PyrisPipelineService {
         if (ofMethod == null) {
             throw new UnsupportedOperationException("Failed to find suitable 'of' method in " + dtoClass.getSimpleName() + " for " + object.getClass().getSimpleName());
         }
-
-        // Invoke the 'of' method with the object as argument
-        try {
-            Object result = ofMethod.invoke(null, object);
-            return new PyrisEventDTO<>(dtoClass.cast(result), object.getClass().getSimpleName());
-        }
-        catch (IllegalArgumentException e) {
-            throw new UnsupportedOperationException("The 'of' method's parameter type doesn't match the provided object", e);
-        }
-        catch (IllegalAccessException e) {
-            throw new UnsupportedOperationException("The 'of' method is not accessible", e);
-        }
-        catch (InvocationTargetException e) {
-            throw new UnsupportedOperationException("The 'of' method threw an exception", e.getCause());
-        }
-        catch (ClassCastException e) {
-            throw new UnsupportedOperationException("The 'of' method's return type is not compatible with " + dtoClass.getSimpleName(), e);
-        }
+        return ofMethod;
     }
 }

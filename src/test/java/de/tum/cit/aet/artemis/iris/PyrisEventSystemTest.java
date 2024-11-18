@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -20,24 +22,36 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisBuildFailedEventSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisJolEventSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisProgressStalledEventSettings;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisEvent;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
@@ -74,7 +88,17 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     @Autowired
     private CompetencyUtilService competencyUtilService;
 
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private TeamRepository teamRepo;
+
+    private ProgrammingExercise exercise;
+
     private Course course;
+
+    private ProgrammingExerciseStudentParticipation studentParticipation;
 
     private AtomicBoolean pipelineDone;
 
@@ -86,7 +110,7 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         competency = competencyUtilService.createCompetency(course);
-        ProgrammingExercise exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setTestRepositoryUri(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
@@ -106,7 +130,7 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         String assignmentRepositorySlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
 
         // Add a participation for student1.
-        ProgrammingExerciseStudentParticipation studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         studentParticipation.setRepositoryUri(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, assignmentRepositorySlug));
         studentParticipation.setBranch(defaultBranch);
 
@@ -126,6 +150,95 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         activateIrisFor(exercise);
 
         pipelineDone = new AtomicBoolean(false);
+    }
+
+    private Result createSubmissionWithScore(ProgrammingExerciseStudentParticipation studentParticipation, int score) {
+        // Create a submission for the student.
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+
+        submission.setType(SubmissionType.MANUAL);
+        submission.setParticipation(studentParticipation);
+        submission = submissionRepository.saveAndFlush(submission);
+
+        Result result = ParticipationFactory.generateResult(true, score);
+        result.setParticipation(studentParticipation);
+        result.setSubmission(submission);
+        result.completionDate(ZonedDateTime.now());
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        submission.addResult(result);
+        submissionRepository.saveAndFlush(submission);
+
+        return resultRepository.save(result);
+    }
+
+    private Result createFailingSubmission(ProgrammingExerciseStudentParticipation studentParticipation) {
+        // Create a failing build submission for the student.
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setBuildFailed(true);
+
+        submission.setType(SubmissionType.MANUAL);
+        submission.setParticipation(studentParticipation);
+        submission = submissionRepository.saveAndFlush(submission);
+
+        Result result = ParticipationFactory.generateResult(true, 0);
+        result.setParticipation(studentParticipation);
+        result.setSubmission(submission);
+        result.completionDate(ZonedDateTime.now());
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
+        submission.addResult(result);
+        submissionRepository.saveAndFlush(submission);
+
+        return resultRepository.save(result);
+    }
+
+    private ProgrammingExerciseStudentParticipation createTeamParticipation(User owner) {
+        var team = teamUtilService.addTeamForExercise(exercise, owner);
+        var teamParticipation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
+        teamParticipation
+                .setRepositoryUri(String.format(localVCBaseUrl + "/git/%s/%s-%s.git", exercise.getProjectKey(), exercise.getProjectKey().toLowerCase(), team.getShortName()));
+        return programmingExerciseStudentParticipationRepository.save(teamParticipation);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testShouldFireProgressStalledEvent() {
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        // Create three submissions for the student.
+        createSubmissionWithScore(studentParticipation, 40);
+        createSubmissionWithScore(studentParticipation, 40);
+        var result = createSubmissionWithScore(studentParticipation, 40);
+        irisRequestMockProvider.mockProgressStalledEventRunResponse((dto) -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            pipelineDone.set(true);
+        });
+
+        pyrisEventService.trigger(new NewResultEvent(result));
+        verify(irisExerciseChatSessionService, times(1)).onNewResult(eq(result));
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+
+        verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise),
+                eq(irisSession), eq(Optional.of("progress_stalled")));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testShouldFireBuildFailedEvent() {
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        // Create a failing submissions for the student.
+        var result = createFailingSubmission(studentParticipation);
+        irisRequestMockProvider.mockBuildFailedRunResponse((dto) -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            pipelineDone.set(true);
+        });
+
+        pyrisEventService.trigger(new NewResultEvent(result));
+        verify(irisExerciseChatSessionService, times(1)).onBuildFailure(eq(result));
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+
+        verify(pyrisPipelineService, times(1)).executeExerciseChatPipeline(eq("default"), eq(Optional.ofNullable((ProgrammingSubmission) result.getSubmission())), eq(exercise),
+                eq(irisSession), eq(Optional.of("build_failed")));
     }
 
     @Test
@@ -159,13 +272,109 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
 
     }
 
+    @Test()
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testShouldNotFireProgressStalledEventWithEventDisabled() {
+        deactivateEventSettingsFor(IrisProgressStalledEventSettings.class, course);
+        createSubmissionWithScore(studentParticipation, 40);
+        createSubmissionWithScore(studentParticipation, 40);
+        var result = createSubmissionWithScore(studentParticipation, 40);
+        assertThrows(AccessForbiddenAlertException.class, () -> pyrisEventService.trigger(new NewResultEvent(result)));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testShouldNotFireJolEventWhenEventSettingDisabled() throws AccessForbiddenAlertException {
+    void testShouldNotFireBuildFailedEventWhenEventSettingDisabled() {
+        deactivateEventSettingsFor(IrisBuildFailedEventSettings.class, course);
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        // Create a failing submission for the student.
+        var result = createFailingSubmission(studentParticipation);
+        assertThrows(AccessForbiddenAlertException.class, () -> irisExerciseChatSessionService.onBuildFailure(result));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testShouldNotFireJolEventWhenEventSettingDisabled() {
         deactivateEventSettingsFor(IrisJolEventSettings.class, course);
         var jol = competencyUtilService.createJol(competency, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), (short) 3, ZonedDateTime.now(), 0.0D, 0.0D);
-        assertThatExceptionOfType(AccessForbiddenAlertException.class).isThrownBy(() -> pyrisEventService.trigger(new CompetencyJolSetEvent(jol)))
-                .withMessageContaining("The Iris JOL event is disabled for this course");
+        assertThrows(AccessForbiddenAlertException.class, () -> pyrisEventService.trigger(new CompetencyJolSetEvent(jol)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testShouldShouldNotFireProgressStalledEventWithExistingSuccessfulSubmission() {
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        irisRequestMockProvider.mockProgressStalledEventRunResponse((dto) -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            pipelineDone.set(true);
+        });
+        createSubmissionWithScore(studentParticipation, 100);
+        var result = createSubmissionWithScore(studentParticipation, 50);
+
+        pyrisEventService.trigger(new NewResultEvent(result));
+
+        await().atMost(2, TimeUnit.SECONDS);
+
+        result = createSubmissionWithScore(studentParticipation, 50);
+
+        pyrisEventService.trigger(new NewResultEvent(result));
+        await().atMost(2, TimeUnit.SECONDS);
+
+        verify(irisExerciseChatSessionService, times(2)).onNewResult(any(Result.class));
+        verify(pyrisPipelineService, times(0)).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testShouldNotFireProgressStalledEventWithLessThanThreeSubmissions() {
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        // Create two failing submissions for the student.
+        createSubmissionWithScore(studentParticipation, 20);
+        var result = createSubmissionWithScore(studentParticipation, 20);
+
+        pyrisEventService.trigger(new NewResultEvent(result));
+
+        verify(irisExerciseChatSessionService, times(1)).onNewResult(any(Result.class));
+        verify(pyrisPipelineService, times(0)).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testShouldNotFireProgressStalledEventWithIncreasingScores() {
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        // Create three submissions with increasing scores for the student.
+        createSubmissionWithScore(studentParticipation, 20);
+        createSubmissionWithScore(studentParticipation, 30);
+        var result = createSubmissionWithScore(studentParticipation, 40);
+
+        pyrisEventService.trigger(new NewResultEvent(result));
+
+        verify(irisExerciseChatSessionService, times(1)).onNewResult(any(Result.class));
+        verify(pyrisPipelineService, times(0)).executeExerciseChatPipeline(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testShouldNotFireBuildFailedEventForTeamSubmission() {
+        var owner = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var teamParticipation = createTeamParticipation(owner);
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, owner);
+        var result = createFailingSubmission(teamParticipation);
+
+        assertThrows(ConflictException.class, () -> irisExerciseChatSessionService.onBuildFailure(result));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testShouldNotFireProgressStalledEventForTeamSubmission() {
+        var owner = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var teamParticipation = createTeamParticipation(owner);
+        irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, owner);
+        createSubmissionWithScore(teamParticipation, 40);
+        createSubmissionWithScore(teamParticipation, 40);
+        var result = createSubmissionWithScore(teamParticipation, 40);
+
+        assertThrows(ConflictException.class, () -> irisExerciseChatSessionService.onNewResult(result));
     }
 
 }
