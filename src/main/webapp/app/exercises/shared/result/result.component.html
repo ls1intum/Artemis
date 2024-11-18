@@ -15,11 +15,15 @@
         }
         @case (ResultTemplateStatus.IS_BUILDING) {
             @if (showProgressBar && estimatedRemaining) {
-                <div class="progress position-relative" role="progressbar" [style.min-width.px]="250" [style.height.px]="30">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated" [style.width.%]="progressBarValue"></div>
-                    <span class="position-absolute fw-bold" style="top: 6px; left: 70px" [style.font-size.px]="14.4">{{
-                        'Remaining: ' + (estimatedRemaining | artemisDurationFromSeconds)
-                    }}</span>
+                <div class="d-flex justify-content-center align-items-center">
+                    <div class="progress position-relative" role="progressbar" [style.min-width.px]="200" [style.height.px]="30">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" [style.width.%]="progressBarValue"></div>
+                        <div class="position-absolute fw-bold" style="top: 6px; left: 70px" [style.font-size.px]="14.4">
+                            <span jhiTranslate="artemisApp.editor.eta"></span>
+                            <span>{{ estimatedRemaining | artemisDurationFromSeconds }}</span>
+                        </div>
+                    </div>
+                    <jhi-help-icon class="ms-2" text="artemisApp.editor.etaInfo" />
                 </div>
             } @else {
                 <span class="text-primary">

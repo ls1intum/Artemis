@@ -32,6 +32,8 @@
             "buildOutput": "&nbsp; Build Output",
             "building": "Building and testing...",
             "queued": "Queued...",
+            "eta": "ETA:",
+            "etaInfo": "Estimated time until build is finished. This is an estimate and can vary.",
             "buildFailed": "Build failed",
             "noBuildOutput": "No build results available",
             "generatingFeedback": "Generating feedback...",
