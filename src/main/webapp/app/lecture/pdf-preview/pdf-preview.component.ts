@@ -17,7 +17,6 @@ import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { PDFDocument } from 'pdf-lib';
-import { cloneDeep } from 'lodash-es';
 
 @Component({
     selector: 'jhi-pdf-preview-component',
@@ -128,9 +127,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     getHiddenPages() {
-        return Array.from(document.querySelectorAll('[id^="show-button-"]'))
-            .map((el) => el.id.match(/show-button-(\d+)/)?.[1])
-            .join(',');
+        return Array.from(document.querySelectorAll('[id^="show-button-"]')).map((el) => el.id.match(/show-button-(\d+)/)?.[1]);
     }
 
     /**
@@ -159,7 +156,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 },
             });
         } else if (this.attachmentUnit()) {
-            const finalHiddenPages = this.getHiddenPages();
+            const finalHiddenPages = this.getHiddenPages().join(',');
             this.attachmentToBeEdited.set(this.attachmentUnit()!.attachment!);
             this.attachmentToBeEdited()!.version!++;
             this.attachmentToBeEdited()!.uploadDate = dayjs();
@@ -169,57 +166,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
             formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit()!));
 
-            this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData).subscribe({
+            this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData, undefined, finalHiddenPages).subscribe({
                 next: async () => {
-                    if (finalHiddenPages!.length > 0) {
-                        const pdfFileWithHiddenPages = await this.createHiddenVersionOfAttachment(Array.from(finalHiddenPages!.split(',').map(Number)));
-                        const attachmentUnitWithHiddenPages = cloneDeep(this.attachmentUnit()!);
-                        const attachmentWithHiddenPages = cloneDeep(this.attachmentUnit()!.attachment!);
-
-                        attachmentWithHiddenPages.id = undefined;
-                        attachmentWithHiddenPages.name = `${attachmentWithHiddenPages.name}_hidden`;
-                        attachmentUnitWithHiddenPages.id = undefined;
-
-                        const formData = new FormData();
-
-                        formData.append('file', pdfFileWithHiddenPages!);
-                        formData.append('attachment', objectToJsonBlob(attachmentWithHiddenPages!));
-                        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnitWithHiddenPages!));
-
-                        this.attachmentUnitService.getAttachmentUnitByParentAttachmentUnitId(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!).subscribe({
-                            next: async (attachmentUnitRes) => {
-                                if (attachmentUnitRes.body && attachmentUnitRes.body.id) {
-                                    this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, attachmentUnitRes.body.id, formData).subscribe({
-                                        next: () => {
-                                            this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                                            this.alertService.success('artemisApp.attachment.pdfPreview.hiddenAttachmentUnitUpdateSuccess');
-                                            this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
-                                        },
-                                        error: (error) => {
-                                            this.alertService.error('artemisApp.attachment.pdfPreview.hiddenAttachmentUnitUpdateError', { error: error.message });
-                                        },
-                                    });
-                                } else {
-                                    this.attachmentUnitService.create(formData, this.attachmentUnit()!.lecture!.id!).subscribe({
-                                        next: () => {
-                                            this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                                            this.alertService.success('artemisApp.attachment.pdfPreview.hiddenAttachmentUnitCreateSuccess');
-                                            this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
-                                        },
-                                        error: (error) => {
-                                            this.alertService.error('artemisApp.attachment.pdfPreview.hiddenAttachmentUnitCreateError', { error: error.message });
-                                        },
-                                    });
-                                }
-                            },
-                            error: (error) => {
-                                this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
-                            },
-                        });
-                    } else {
-                        this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                        this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
-                    }
+                    this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+                    this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
                 },
                 error: (error) => {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });

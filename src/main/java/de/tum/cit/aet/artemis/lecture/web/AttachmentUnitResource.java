@@ -123,7 +123,7 @@ public class AttachmentUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId, @RequestPart AttachmentUnit attachmentUnit,
             @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestParam(value = "notificationText", required = false) String notificationText, @RequestParam(value = "hiddenPages", required = false) String hiddenPages) {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         AttachmentUnit existingAttachmentUnit = attachmentUnitRepository.findOneWithSlidesAndCompetencies(attachmentUnitId);
         checkAttachmentUnitCourseAndLecture(existingAttachmentUnit, lectureId);
@@ -133,6 +133,10 @@ public class AttachmentUnitResource {
 
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment(), notificationText);
+        }
+
+        if (Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
+            slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit, hiddenPages);
         }
 
         return ResponseEntity.ok(savedAttachmentUnit);
@@ -170,7 +174,7 @@ public class AttachmentUnitResource {
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, file, keepFilename);
         lectureRepository.save(lecture);
         if (Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
-            slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+            slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit, null);
         }
         attachmentUnitService.prepareAttachmentUnitForClient(savedAttachmentUnit);
         competencyProgressService.updateProgressByLearningObjectAsync(savedAttachmentUnit);

@@ -31,11 +31,12 @@ export class AttachmentUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    update(lectureId: number, attachmentUnitId: number, formData: FormData, notificationText?: string): Observable<EntityResponseType> {
+    update(lectureId: number, attachmentUnitId: number, formData: FormData, notificationText?: string, hiddenPages?: string): Observable<EntityResponseType> {
         return this.httpClient
             .put<AttachmentUnit>(
                 `${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}?keepFilename=true` +
-                    (notificationText ? `&notificationText=${notificationText}` : ''),
+                    (notificationText ? `&notificationText=${notificationText}` : '') +
+                    (hiddenPages ? `&hiddenPages=${hiddenPages}` : ''),
                 formData,
                 { observe: 'response' },
             )
@@ -70,18 +71,5 @@ export class AttachmentUnitService {
      */
     getAttachmentFile(courseId: number, attachmentUnitId: number): Observable<Blob> {
         return this.httpClient.get(`${this.resourceURL}/files/courses/${courseId}/attachment-units/${attachmentUnitId}`, { responseType: 'blob' });
-    }
-
-    /**
-     * Retrieve the hidden attachment unit associated with a given parent attachment unit ID
-     *
-     * @param lectureId The ID of the lecture that the attachment unit belongs to
-     * @param parentAttachmentUnitId The ID of the parent attachment unit whose hidden attachment unit is to be retrieved
-     * @returns An Observable that emits an EntityResponseType containing the Attachment Unit object when the HTTP request completes successfully
-     */
-    getAttachmentUnitByParentAttachmentUnitId(lectureId: number, parentAttachmentUnitId: number): Observable<EntityResponseType> {
-        return this.httpClient
-            .get<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${parentAttachmentUnitId}/hiddenAttachment`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 }
