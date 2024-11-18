@@ -7,7 +7,6 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingService } from 'app/shared/metis/posting.service';
 import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { Posting } from 'app/entities/metis/posting.model';
 
 type EntityResponseType = HttpResponse<Post>;
 type EntityArrayResponseType = HttpResponse<Post[]>;
@@ -127,12 +126,6 @@ export class PostService extends PostingService<Post> {
      */
     delete(courseId: number, post: Post): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(undefined, post)}/${post.id}`, { observe: 'response' });
-    }
-
-    getSourceMessagesByIds(courseId: number, postIds: { id: number; type: string }[]): Observable<Posting[]> {
-        const formattedPostIds = postIds.map((post) => `${post.type}:${post.id}`);
-        const params = new HttpParams().set('postIdsWithType', formattedPostIds.join(','));
-        return this.http.get<Posting[]>(`${this.resourceUrl}${courseId}/messages/source-messages`, { params, observe: 'response' }).pipe(map((response) => response.body!));
     }
 
     /**

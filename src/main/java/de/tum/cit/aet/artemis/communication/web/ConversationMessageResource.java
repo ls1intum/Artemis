@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
-import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -61,15 +60,12 @@ public class ConversationMessageResource {
 
     private final CourseRepository courseRepository;
 
-    private final AnswerMessageService answerMessageService;
-
     public ConversationMessageResource(ConversationMessagingService conversationMessagingService, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, AnswerMessageService answerMessageService) {
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
         this.conversationMessagingService = conversationMessagingService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
-        this.answerMessageService = answerMessageService;
     }
 
     /**

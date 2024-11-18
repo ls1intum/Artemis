@@ -2,7 +2,6 @@ import { Posting } from 'app/entities/metis/posting.model';
 import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
-import dayjs from 'dayjs/esm';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
@@ -34,8 +33,6 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
     ngOnInit(): void {
         this.content = this.posting.content;
-        this.postingIsOfToday = dayjs().isSame(this.posting.creationDate, 'day');
-        this.todayFlag = this.getTodayFlag();
     }
 
     ngOnDestroy(): void {
@@ -45,17 +42,6 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
         if (this.deleteInterval !== undefined) {
             clearInterval(this.deleteInterval);
-        }
-    }
-
-    /**
-     * sets a flag that replaces the date by "Today" in the posting's header if applicable
-     */
-    getTodayFlag(): string | undefined {
-        if (this.postingIsOfToday) {
-            return 'artemisApp.metis.today';
-        } else {
-            return undefined;
         }
     }
 

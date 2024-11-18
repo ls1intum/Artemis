@@ -70,7 +70,6 @@
         [showDefaultPreview]="true"
         [defaultActions]="defaultActions"
         [colorAction]="undefined"
-        [metaActions]="[]"
         [headerActions]="undefined"
         [initialEditorHeight]="editorHeight"
         [resizableMinHeight]="editorHeight"
@@ -95,9 +94,12 @@
                     </jhi-profile-picture>
                     <span class="forwarded-message-author">{{ postToForward?.author?.name }}</span>
                 </div>
-                <div class="forwarded-message-body" [ngClass]="{ 'preserve-line-breaks': postToForward?.content?.includes('\n') }">
-                    {{ postToForward?.content }}
+                <div class="forwarded-message-body" [ngClass]="{ expanded: showFullForwardedMessage }" #messageContent>
+                    <div class="preserve-line-breaks">{{ displayedForwardedContent() }}</div>
                 </div>
+                <button *ngIf="isContentLong" type="button" class="btn btn-link p-0" style="width: fit-content" (click)="toggleShowFullForwardedMessage()">
+                    {{ showFullForwardedMessage ? 'Show less' : 'Show more' }}
+                </button>
             </div>
         </div>
     }

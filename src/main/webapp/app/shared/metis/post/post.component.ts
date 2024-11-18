@@ -80,7 +80,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     mayEditOrDelete: boolean = false;
     canPin: boolean = false;
     originalPostDetails: Post | AnswerPost | undefined = undefined;
-    sourceName: string | undefined = '';
 
     // Icons
     readonly faBullhorn = faBullhorn;
@@ -189,29 +188,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.fetchForwardedMessages();
     }
 
-    updateSourceName(post: Post | AnswerPost) {
-        let conversation = null;
-        if ('post' in post) {
-            conversation = post.post?.conversation;
-            if (conversation?.type?.valueOf() == 'channel') {
-                this.sourceName = 'a thread in #' + (conversation as any)?.name;
-            } else if (conversation?.type?.valueOf() == 'oneToOneChat') {
-                this.sourceName = 'a direct message';
-            } else {
-                this.sourceName = 'a group message';
-            }
-        } else {
-            conversation = (post as Post).conversation;
-            if (conversation?.type?.valueOf() == 'channel') {
-                this.sourceName = '#' + (conversation as any)?.name;
-            } else if (conversation?.type?.valueOf() == 'oneToOneChat') {
-                this.sourceName = 'a direct message';
-            } else {
-                this.sourceName = 'a group message';
-            }
-        }
-    }
-
     fetchForwardedMessages(): void {
         if (this.forwardedPosts().length > 0) {
             const forwardedMessage = this.forwardedPosts()[0];
@@ -219,7 +195,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             if (forwardedMessage) {
                 console.log('Forwarded Post Details:', forwardedMessage);
                 this.originalPostDetails = forwardedMessage;
-                this.updateSourceName(forwardedMessage);
                 this.changeDetector.markForCheck();
             }
         }
@@ -229,7 +204,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             if (forwardedMessage) {
                 console.log('Forwarded Answer Post Details:', forwardedMessage);
                 this.originalPostDetails = forwardedMessage;
-                this.updateSourceName(forwardedMessage);
                 this.changeDetector.markForCheck();
             }
         }

@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, Input, OnInit, Renderer2, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, Input, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
@@ -30,7 +30,7 @@ interface CombinedOption {
     templateUrl: './forward-message-dialog.component.html',
     styleUrls: ['./forward-message-dialog.component.scss'],
 })
-export class ForwardMessageDialogComponent implements OnInit {
+export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     @Input() channels: ChannelDTO[] = [];
     @Input() chats: OneToOneChatDTO[] = [];
     @Input() postToForward: Post;
@@ -43,16 +43,20 @@ export class ForwardMessageDialogComponent implements OnInit {
     newPost: Post = new Post();
     defaultActions: TextEditorAction[];
     @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
-
     @ViewChild('searchInput') searchInput!: ElementRef;
+    @ViewChild('messageContent') messageContent!: ElementRef;
 
     showDropdown: boolean = false;
     combinedOptions: CombinedOption[] = [];
     filteredOptions: CombinedOption[] = [];
+    showFullForwardedMessage: boolean = false;
+    maxLines: number = 5;
+    isContentLong: boolean = false;
 
     constructor(
         public renderer: Renderer2,
         public activeModal: NgbActiveModal,
+        private cdr: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
@@ -88,6 +92,37 @@ export class ForwardMessageDialogComponent implements OnInit {
 
         this.filterOptions();
         this.focusInput();
+    }
+
+    ngAfterViewInit(): void {
+        setTimeout(() => {
+            this.checkIfContentOverflows();
+        }, 0);
+    }
+
+    checkIfContentOverflows(): void {
+        if (this.messageContent) {
+            const nativeElement = this.messageContent.nativeElement;
+            this.isContentLong = nativeElement.scrollHeight > nativeElement.clientHeight;
+            this.cdr.detectChanges();
+        }
+    }
+
+    displayedForwardedContent(): string {
+        if (!this.postToForward || !this.postToForward.content) {
+            return '';
+        }
+
+        if (this.showFullForwardedMessage || !this.isContentLong) {
+            return this.postToForward.content;
+        } else {
+            const lines = this.postToForward.content.split('\n');
+            return lines.slice(0, this.maxLines).join('\n') + '...';
+        }
+    }
+
+    toggleShowFullForwardedMessage(): void {
+        this.showFullForwardedMessage = !this.showFullForwardedMessage;
     }
 
     updateField(content: string): void {

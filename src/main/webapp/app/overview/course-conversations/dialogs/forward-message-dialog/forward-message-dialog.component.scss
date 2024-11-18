@@ -91,13 +91,16 @@
     margin-right: 0.5rem;
 }
 
+.preserve-line-breaks {
+    white-space: pre-wrap;
+}
+
 .forwarded-message-container {
     display: flex;
     padding-top: 0.3rem;
     padding-bottom: 0.3rem;
     border-radius: 5px;
     margin-top: 1rem;
-
     .forwarded-message-content {
         display: flex;
         flex-direction: column;
@@ -116,6 +119,17 @@
     .forwarded-message-body {
         font-size: 0.9rem;
         margin-bottom: 0.5rem;
+        max-height: 120px;
+        display: -webkit-box;
+        -webkit-line-clamp: 5;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        transition: all 0.3s ease;
+
+        &.expanded {
+            max-height: none;
+            -webkit-line-clamp: none;
+        }
     }
 
     .forwarded-message-footer {
@@ -126,9 +140,6 @@
 
         .forwarded-message-channel {
             margin-right: 1rem;
-        }
-
-        .forwarded-message-time {
         }
     }
 }

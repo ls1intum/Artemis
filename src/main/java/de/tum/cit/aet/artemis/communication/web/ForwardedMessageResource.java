@@ -85,19 +85,4 @@ public class ForwardedMessageResource {
         return ResponseEntity.ok(groupedDtos);
     }
 
-    /**
-     * DELETE /forwarded-messages/{id} : delete the forwarded message by id.
-     *
-     * @param id the id of the forwarded message to delete
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    /*
-     * @DeleteMapping("/{id}")
-     * public ResponseEntity<Void> deleteForwardedMessage(@PathVariable Long id) {
-     * log.debug("REST request to delete ForwardedMessage : {}", id);
-     * forwardedMessageRepository.deleteById(id);
-     * return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
-     * }
-     */
-
 }
