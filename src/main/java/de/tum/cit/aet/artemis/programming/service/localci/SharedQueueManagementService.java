@@ -300,15 +300,16 @@ public class SharedQueueManagementService {
         return new PageImpl<>(orderedBuildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.getTotalElements());
     }
 
-    private String getIdOfQueuedJobFromParticipation(long participationId) {
-        var participationBuildJobIds = queue.stream().filter(job -> job.participationId() == participationId).map(BuildJobQueueItem::id).toList();
-        if (participationBuildJobIds.isEmpty()) {
-            return null;
-        }
-        return participationBuildJobIds.getLast();
-    }
-
-    public ZonedDateTime getBuildJobEstimatedQueueReleaseDate(long participationId) {
+    /**
+     * Estimates the queue release date for a build job based on the participation ID.
+     * This method calculates the estimated queue duration for a buildjob with the given participation ID.
+     * It takes into account the current queue state, the capacity of build agents,
+     * and the remaining duration of currently processing jobs.
+     *
+     * @param participationId the ID of the participation for which the queue release date is estimated
+     * @return the estimated queue release date as a {@link ZonedDateTime}
+     */
+    public ZonedDateTime getBuildJobEstimatedQueueDuration(long participationId) {
         if (queue.isEmpty() || this.buildAgentsCapacity > this.runningBuildJobCount + queue.size()) {
             return ZonedDateTime.now();
         }
@@ -340,7 +341,14 @@ public class SharedQueueManagementService {
         else {
             return now.plusSeconds(calculateNextJobQueueDuration(agentAvailabilities, jobsQueuedBefore));
         }
+    }
 
+    private String getIdOfQueuedJobFromParticipation(long participationId) {
+        var participationBuildJobIds = queue.stream().filter(job -> job.participationId() == participationId).map(BuildJobQueueItem::id).toList();
+        if (participationBuildJobIds.isEmpty()) {
+            return null;
+        }
+        return participationBuildJobIds.getLast();
     }
 
     private Long calculateNextJobQueueDuration(List<Long> agentAvailabilities, List<BuildJobQueueItem> jobsQueuedBefore) {

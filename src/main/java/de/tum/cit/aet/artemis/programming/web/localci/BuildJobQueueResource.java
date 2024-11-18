@@ -197,7 +197,7 @@ public class BuildJobQueueResource {
         if (participationId == 0) {
             ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(localCIBuildJobQueueService.getBuildJobEstimatedQueueReleaseDate(participationId));
+        return ResponseEntity.ok(localCIBuildJobQueueService.getBuildJobEstimatedQueueDuration(participationId));
     }
 
 }
