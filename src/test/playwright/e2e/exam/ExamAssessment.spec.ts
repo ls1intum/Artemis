@@ -54,12 +54,12 @@ test.beforeAll('Create course', async ({ browser }) => {
 });
 
 test.describe('Exam assessment', () => {
-    test.setTimeout(150000);
+    test.describe.configure({ mode: 'serial' });
     let programmingAssessmentSuccessful = false;
     let modelingAssessmentSuccessful = false;
     let textAssessmentSuccessful = false;
 
-    test.describe.serial('Programming exercise assessment', { tag: '@slow' }, () => {
+    test.describe.serial('Programming exercise assessment', { tag: '@sequential' }, () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
             examEnd = dayjs().add(2, 'minutes');
             const page = await newBrowserPage(browser);
@@ -86,7 +86,7 @@ test.describe('Exam assessment', () => {
         });
     });
 
-    test.describe.serial('Modeling exercise assessment', () => {
+    test.describe.serial('Modeling exercise assessment', { tag: '@slow' }, () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
             examEnd = dayjs().add(45, 'seconds');
             const page = await newBrowserPage(browser);
@@ -127,7 +127,7 @@ test.describe('Exam assessment', () => {
         });
     });
 
-    test.describe.serial('Text exercise assessment', () => {
+    test.describe.serial('Text exercise assessment', { tag: '@slow' }, () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
             examEnd = dayjs().add(40, 'seconds');
             const page = await newBrowserPage(browser);
@@ -154,7 +154,7 @@ test.describe('Exam assessment', () => {
         });
     });
 
-    test.describe('Quiz exercise assessment', () => {
+    test.describe('Quiz exercise assessment', { tag: '@slow' }, () => {
         let resultDate: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
@@ -223,7 +223,7 @@ test.describe('Exam grading', { tag: '@fast' }, () => {
     });
 });
 
-test.describe('Exam statistics', { tag: '@slow' }, () => {
+test.describe('Exam statistics', { tag: '@sequential' }, () => {
     let exercise: Exercise;
     const students = [studentOne, studentTwo, studentThree, studentFour];
 

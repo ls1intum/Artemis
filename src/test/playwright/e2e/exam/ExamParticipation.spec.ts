@@ -18,7 +18,6 @@ const textFixture = 'loremIpsum.txt';
 const textFixtureShort = 'loremIpsum-short.txt';
 
 test.describe('Exam participation', () => {
-    test.setTimeout(150000);
     let course: Course;
     let exerciseArray: Array<Exercise> = [];
     let studentTwoName: string;
@@ -44,7 +43,7 @@ test.describe('Exam participation', () => {
         studentFourName = studentFourInfo.name!;
     });
 
-    test.describe('Early Hand-in', () => {
+    test.describe('Early Hand-in', { tag: '@slow' }, () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
@@ -118,7 +117,7 @@ test.describe('Exam participation', () => {
         });
     });
 
-    test.describe('Early hand-in with continue and reload page', () => {
+    test.describe('Early hand-in with continue and reload page', { tag: '@slow' }, () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
@@ -222,7 +221,7 @@ test.describe('Exam participation', () => {
         });
     });
 
-    test.describe('Normal Hand-in', { tag: '@slow' }, () => {
+    test.describe('Normal Hand-in', { tag: '@sequential' }, () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
@@ -259,7 +258,7 @@ test.describe('Exam participation', () => {
         });
     });
 
-    test.describe('Exam announcements', () => {
+    test.describe('Exam announcements', { tag: '@slow' }, () => {
         let exam: Exam;
         const students = [studentOne, studentTwo];
 

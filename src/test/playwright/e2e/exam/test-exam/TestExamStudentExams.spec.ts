@@ -17,8 +17,7 @@ const studentNames = new Map<UserCredentials, string>();
 
 let examExercise: Exercise;
 
-test.describe('Test Exam - student exams', { tag: '@fast' }, () => {
-    test.setTimeout(150000);
+test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
     let course: Course;
     let exam: Exam;
 

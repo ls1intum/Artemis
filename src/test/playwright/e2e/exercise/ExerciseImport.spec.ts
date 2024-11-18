@@ -125,7 +125,7 @@ test.describe('Import exercises', () => {
 
         test(
             'Imports programming exercise',
-            { tag: '@slow' },
+            { tag: '@sequential' },
             async ({ login, page, courseManagementExercises, programmingExerciseCreation, courseOverview, programmingExerciseEditor }) => {
                 await login(instructor, `/course-management/${secondCourse.id}/exercises`);
                 await courseManagementExercises.importProgrammingExercise();

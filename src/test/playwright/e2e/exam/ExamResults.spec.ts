@@ -16,7 +16,6 @@ import { Page } from '@playwright/test';
 import { StudentExam } from 'app/entities/student-exam.model';
 
 test.describe('Exam Results', () => {
-    test.setTimeout(150000);
     let course: Course;
 
     test.beforeEach('Create course', async ({ browser }) => {
@@ -129,7 +128,7 @@ test.describe('Exam Results', () => {
 
                 test(
                     `Check exam ${exerciseTypeString} exercise results`,
-                    { tag: testCase.exerciseType === ExerciseType.PROGRAMMING ? '@slow' : '@fast' },
+                    { tag: testCase.exerciseType === ExerciseType.PROGRAMMING ? '@sequential' : '@slow' },
                     async ({ page, login, examParticipation, examResultsPage }) => {
                         await login(studentOne);
                         await waitForExamEnd(examEndDate, page);
