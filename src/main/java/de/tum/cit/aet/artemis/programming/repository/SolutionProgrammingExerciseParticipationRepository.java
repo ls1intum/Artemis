@@ -43,19 +43,6 @@ public interface SolutionProgrammingExerciseParticipationRepository
             """)
     Optional<SolutionProgrammingExerciseParticipation> findByBuildPlanIdWithResults(@Param("buildPlanId") String buildPlanId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    Optional<SolutionProgrammingExerciseParticipation> findWithSubmissionsByRepositoryUri(String repositoryUri);
-
-    default SolutionProgrammingExerciseParticipation findWithSubmissionsByRepositoryUriElseThrow(String repositoryUri) {
-        return getValueElseThrow(findWithSubmissionsByRepositoryUri(repositoryUri));
-    }
-
-    Optional<SolutionProgrammingExerciseParticipation> findByRepositoryUri(String repositoryUri);
-
-    default SolutionProgrammingExerciseParticipation findByRepositoryUriElseThrow(String repositoryUri) {
-        return getValueElseThrow(findByRepositoryUri(repositoryUri));
-    }
-
     @EntityGraph(type = LOAD, attributePaths = { "results", "submissions", "submissions.results" })
     Optional<SolutionProgrammingExerciseParticipation> findWithEagerResultsAndSubmissionsByProgrammingExerciseId(long exerciseId);
 
