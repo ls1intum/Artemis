@@ -162,6 +162,14 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
         activateSubSettings(exerciseSettings.getIrisChatSettings());
         activateSubSettings(exerciseSettings.getIrisTextExerciseChatSettings());
+        activateProactivitySettings(exerciseSettings.getIrisProactivitySettings());
+
+        // Active Iris events
+        var eventSettings = exerciseSettings.getIrisProactivitySettings().getEventSettings();
+
+        activateEventSettingsFor(IrisProgressStalledEventSettings.class, eventSettings);
+        activateEventSettingsFor(IrisBuildFailedEventSettings.class, eventSettings);
+        activateEventSettingsFor(IrisJolEventSettings.class, eventSettings);
         irisSettingsRepository.save(exerciseSettings);
     }
 

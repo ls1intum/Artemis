@@ -773,6 +773,17 @@ public class IrisSettingsService {
         settings.setExercise(exercise);
         settings.setIrisChatSettings(new IrisChatSubSettings());
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
+
+        var eventSettings = new HashSet<IrisEventSettings>();
+        eventSettings.add(new IrisBuildFailedEventSettings());
+        eventSettings.add(new IrisProgressStalledEventSettings());
+
+        var proactivitySettings = new IrisProactivitySubSettings();
+        proactivitySettings.setEventSettings(eventSettings);
+        eventSettings.forEach(event -> event.setProactivitySubSettings(proactivitySettings));
+
+        settings.setIrisProactivitySettings(proactivitySettings);
+
         return settings;
     }
 
