@@ -30,7 +30,7 @@ services:
           chmod 777 /root &&
           npm ci &&
           npm run playwright:setup &&
-          npm run playwright:test:slow;
+          npm run playwright:test;
           rm ./test-reports/results-fast.xml ./test-reports/results-slow.xml
           '
         volumes:
