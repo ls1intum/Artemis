@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, input } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
@@ -41,6 +41,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
 
     @Output() showAnswersChange = new EventEmitter<boolean>();
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
+    @Output() closePostingCreateEditModal = new EventEmitter<void>();
     @Output() openThread = new EventEmitter<void>();
     @Input() previewMode: boolean;
     isAtLeastInstructorInCourse: boolean;
@@ -51,6 +52,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     @Input() isEmojiCount = false;
     @Input() hoverBar: boolean = true;
     @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
+    hasChannelModerationRights = input<boolean>(false);
 
     constructor(
         metisService: MetisService,
@@ -61,6 +63,16 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
 
     isAnyReactionCountAboveZero(): boolean {
         return Object.values(this.reactionMetaDataMap).some((reaction) => reaction.count >= 1);
+    }
+
+    openAnswerView() {
+        this.showAnswersChange.emit(true);
+        this.openPostingCreateEditModal.emit();
+    }
+
+    closeAnswerView() {
+        this.showAnswersChange.emit(false);
+        this.closePostingCreateEditModal.emit();
     }
 
     /**
@@ -188,8 +200,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     setMayEditOrDelete(): void {
         this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
         const isCourseWideChannel = getAsChannelDTO(this.posting.conversation)?.isCourseWide ?? false;
-        const mayEditOrDeleteOtherUsersAnswer =
-            (isCourseWideChannel && this.isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
+        const mayEditOrDeleteOtherUsersAnswer = (isCourseWideChannel && this.isAtLeastInstructorInCourse) || (this.hasChannelModerationRights() ?? false);
         this.mayEditOrDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
         this.mayEditOrDeleteOutput.emit(this.mayEditOrDelete);
     }

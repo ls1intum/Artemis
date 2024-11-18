@@ -54,6 +54,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     static activeDropdownPost: AnswerPostComponent | null = null;
     mayEditOrDelete: boolean = false;
     @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
+    hasChannelModerationRights = input<boolean>(false);
 
     constructor(
         public changeDetector: ChangeDetectorRef,

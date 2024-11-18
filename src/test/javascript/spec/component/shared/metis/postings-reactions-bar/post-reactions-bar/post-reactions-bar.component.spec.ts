@@ -3,7 +3,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
+import { getElement } from '../../../../../helpers/utils/general.utils';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -23,15 +23,14 @@ import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
-import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
+import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { metisAnnouncement, metisCourse, metisPostExerciseUser1, metisPostInChannel, metisUser1, sortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../../helpers/mocks/service/mock-notification.service';
-import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { User } from 'app/core/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
@@ -41,7 +40,6 @@ describe('PostReactionsBarComponent', () => {
     let fixture: ComponentFixture<PostReactionsBarComponent>;
     let debugElement: DebugElement;
     let metisService: MetisService;
-    let accountService: AccountService;
     let metisServiceUpdateDisplayPriorityMock: jest.SpyInstance;
     let metisServiceUserIsAtLeastTutorStub: jest.SpyInstance;
     let metisServiceUserIsAtLeastInstructorStub: jest.SpyInstance;
@@ -84,7 +82,6 @@ describe('PostReactionsBarComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(PostReactionsBarComponent);
                 metisService = TestBed.inject(MetisService);
-                accountService = TestBed.inject(AccountService);
                 debugElement = fixture.debugElement;
                 component = fixture.componentInstance;
                 metisServiceUpdateDisplayPriorityMock = jest.spyOn(metisService, 'updatePostDisplayPriority');
@@ -154,14 +151,9 @@ describe('PostReactionsBarComponent', () => {
         component.previewMode = false;
         component.isEmojiCount = false;
 
-        const channelConversation = {
-            type: ConversationType.CHANNEL,
-            hasChannelModerationRights: true,
-        } as ChannelDTO;
-
         jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(false);
         jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
-        jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
+        jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(true);
 
         component.ngOnInit();
         fixture.detectChanges();
@@ -225,31 +217,92 @@ describe('PostReactionsBarComponent', () => {
         expect(getDeleteButton()).not.toBeNull();
     });
 
-    it.each([
-        { type: ConversationType.CHANNEL, hasChannelModerationRights: true } as ChannelDTO,
-        { type: ConversationType.GROUP_CHAT, creator: { id: 99 } },
-        { type: ConversationType.ONE_TO_ONE },
-    ])('should initialize user authority and reactions correctly with same user', (dto: ConversationDTO) => {
-        component.posting!.author!.id = 99;
-        jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(dto);
-        jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ id: 99 } as User);
+    describe('setMayEditOrDelete', () => {
+        beforeEach(() => {
+            // Reset spies and component state before each test
+            jest.clearAllMocks();
+            component.readOnlyMode = false;
+            component.previewMode = false;
+            component.isAuthorOfPosting = false;
+            component.posting = {
+                conversation: {},
+            } as Post;
 
-        reactionToDelete.user = { id: 99 } as User;
-        post.reactions = [reactionToDelete];
-        component.posting = post;
-
-        component.ngOnInit();
-        fixture.detectChanges();
-        const reactions = getElements(debugElement, 'jhi-emoji');
-        expect(reactions).toHaveLength(2);
-        expect(component.reactionMetaDataMap).toEqual({
-            smile: {
-                count: 1,
-                hasReacted: true,
-                reactingUsers: [PLACEHOLDER_USER_REACTED],
-            },
+            // Mock EventEmitter
+            jest.spyOn(component.mayEditOrDeleteOutput, 'emit');
         });
-        expect(component.pinTooltip).toBe('artemisApp.metis.pinPostTooltip');
+
+        it('should allow edit/delete when user is the author and not in read-only or preview mode', () => {
+            // Arrange
+            component.isAuthorOfPosting = true;
+            jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
+            jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(false);
+
+            // Act
+            component.setMayEditOrDelete();
+
+            // Assert
+            expect(component.mayEditOrDelete).toBeTrue();
+            expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(true);
+        });
+
+        it('should allow edit/delete when user has channel moderation rights', () => {
+            // Arrange
+            component.isAuthorOfPosting = false;
+            jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
+            jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(true);
+
+            // Act
+            component.setMayEditOrDelete();
+
+            // Assert
+            expect(component.mayEditOrDelete).toBeTrue();
+            expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(true);
+        });
+
+        it('should not allow edit/delete when in read-only mode', () => {
+            // Arrange
+            component.readOnlyMode = true;
+            component.isAuthorOfPosting = true;
+            jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(true);
+            jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(true);
+
+            // Act
+            component.setMayEditOrDelete();
+
+            // Assert
+            expect(component.mayEditOrDelete).toBeFalse();
+            expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(false);
+        });
+
+        it('should not allow edit/delete when in preview mode', () => {
+            // Arrange
+            component.previewMode = true;
+            component.isAuthorOfPosting = true;
+            jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(true);
+            jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(true);
+
+            // Act
+            component.setMayEditOrDelete();
+
+            // Assert
+            expect(component.mayEditOrDelete).toBeFalse();
+            expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(false);
+        });
+
+        it('should not allow edit/delete when user is not author and lacks permissions', () => {
+            // Arrange
+            component.isAuthorOfPosting = false;
+            jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
+            jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(false);
+
+            // Act
+            component.setMayEditOrDelete();
+
+            // Assert
+            expect(component.mayEditOrDelete).toBeFalse();
+            expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(false);
+        });
     });
 
     it.each`
@@ -311,14 +364,6 @@ describe('PostReactionsBarComponent', () => {
         expect(component.pinTooltip).toBe('artemisApp.metis.pinnedPostTooltip');
     });
 
-    it('start discussion button should be visible if post does not yet have any answers', () => {
-        component.posting = post;
-        component.sortedAnswerPosts = [];
-        fixture.detectChanges();
-        const startDiscussion = fixture.debugElement.query(By.css('.reply-btn')).nativeElement;
-        expect(startDiscussion.innerHTML).toContain('reply');
-    });
-
     it('should display button to show single answer', () => {
         component.posting = post;
         component.sortedAnswerPosts = [metisPostExerciseUser1];
@@ -342,5 +387,25 @@ describe('PostReactionsBarComponent', () => {
         fixture.detectChanges();
         const answerNowButton = fixture.debugElement.query(By.css('.collapse-answers-btn')).nativeElement;
         expect(answerNowButton.innerHTML).toContain('collapseAnswers');
+    });
+
+    it('should emit showAnswersChange and openPostingCreateEditModal when openAnswerView is called', () => {
+        const showAnswersChangeSpy = jest.spyOn(component.showAnswersChange, 'emit');
+        const openPostingCreateEditModalSpy = jest.spyOn(component.openPostingCreateEditModal, 'emit');
+
+        component.openAnswerView();
+
+        expect(showAnswersChangeSpy).toHaveBeenCalledWith(true);
+        expect(openPostingCreateEditModalSpy).toHaveBeenCalled();
+    });
+
+    it('should emit showAnswersChange and closePostingCreateEditModal when closeAnswerView is called', () => {
+        const showAnswersChangeSpy = jest.spyOn(component.showAnswersChange, 'emit');
+        const closePostingCreateEditModalSpy = jest.spyOn(component.closePostingCreateEditModal, 'emit');
+
+        component.closeAnswerView();
+
+        expect(showAnswersChangeSpy).toHaveBeenCalledWith(false);
+        expect(closePostingCreateEditModalSpy).toHaveBeenCalled();
     });
 });

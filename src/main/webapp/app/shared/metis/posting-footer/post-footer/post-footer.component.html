@@ -25,7 +25,7 @@
                     (openPostingCreateEditModal)="createAnswerPostModal.open()"
                     (userReferenceClicked)="userReferenceClicked.emit($event)"
                     (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-                    [hasChannelModerationRights]="hasChannelModerationRights"
+                    [hasChannelModerationRights]="hasChannelModerationRights()"
                 />
             }
         }

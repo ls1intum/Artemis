@@ -5,7 +5,6 @@
             [isReadOnlyMode]="isReadOnlyMode"
             [isCommunicationPage]="isCommunicationPage"
             [lastReadDate]="lastReadDate"
-            [hasChannelModerationRights]="hasChannelModerationRights"
             [isDeleted]="isDeleted"
         />
     }
@@ -34,6 +33,7 @@
                         (reactionsUpdated)="onReactionsUpdated($event)"
                         (mayEditOrDeleteOutput)="onMayEditOrDelete($event)"
                         (isDeleteEvent)="onDeleteEvent(true)"
+                        [hasChannelModerationRights]="hasChannelModerationRights()"
                     />
                 </div>
             </div>

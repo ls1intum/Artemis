@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, input } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -27,6 +27,7 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
     readonly faPencilAlt = faPencilAlt;
     @Input() isEmojiCount: boolean = false;
     @Output() postingUpdated = new EventEmitter<void>();
+    hasChannelModerationRights = input<boolean>(false);
 
     constructor(metisService: MetisService) {
         super(metisService);
@@ -70,8 +71,7 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
         this.isAnswerOfAnnouncement = getAsChannelDTO(this.posting.post?.conversation)?.isAnnouncementChannel ?? false;
         const isCourseWideChannel = getAsChannelDTO(this.posting.post?.conversation)?.isCourseWide ?? false;
         const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
-        const mayEditOrDeleteOtherUsersAnswer =
-            (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
+        const mayEditOrDeleteOtherUsersAnswer = (isCourseWideChannel && isAtLeastInstructorInCourse) || (this.hasChannelModerationRights() ?? false);
         this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
         this.mayEditOrDeleteOutput.emit(this.mayEditOrDelete);
     }

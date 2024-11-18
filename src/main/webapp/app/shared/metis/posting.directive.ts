@@ -1,5 +1,5 @@
 import { Posting } from 'app/entities/metis/posting.model';
-import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 
@@ -9,7 +9,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     @Input() isCommunicationPage: boolean;
     @Input() showChannelReference?: boolean;
 
-    @Input() hasChannelModerationRights = false;
+    hasChannelModerationRights = input<boolean>(false);
     @Input() isThreadSidebar: boolean;
     abstract get reactionsBar(): any;
     showDropdown = false;

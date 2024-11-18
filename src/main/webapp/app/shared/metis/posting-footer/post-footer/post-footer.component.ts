@@ -11,6 +11,7 @@ import {
     SimpleChanges,
     ViewChild,
     ViewContainerRef,
+    input,
 } from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
@@ -36,7 +37,6 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     @Input() readOnlyMode = false;
     @Input() previewMode = false;
     @Input() modalRef?: NgbModalRef;
-    @Input() hasChannelModerationRights = false;
     @Input() showAnswers = false;
     @Input() isCommunicationPage = false;
     @Input() sortedAnswerPosts: AnswerPost[] = [];
@@ -48,6 +48,7 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef!: ViewContainerRef;
     @ViewChild('createAnswerPostModal') createAnswerPostModalComponent!: AnswerPostCreateEditModalComponent;
+    hasChannelModerationRights = input<boolean>(false);
 
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse = false;
@@ -171,6 +172,13 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
      */
     openCreateAnswerPostModal() {
         this.createAnswerPostModalComponent.open();
+    }
+
+    /**
+     * Close create answer modal
+     */
+    closeCreateAnswerPostModal() {
+        this.createAnswerPostModalComponent.close();
     }
 
     protected postsTrackByFn(index: number, post: Post): number {
