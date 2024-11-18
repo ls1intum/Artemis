@@ -58,6 +58,10 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         jest.restoreAllMocks();
     });
 
+    it('should create IrisCourseSettingsUpdateComponent', () => {
+        expect(comp).toBeDefined();
+    });
+
     it('Setup works correctly', () => {
         fixture.detectChanges();
         expect(paramsSpy).toHaveBeenCalledOnce();
@@ -96,5 +100,6 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(comp.settingsUpdateComponent!.irisSettings.irisChatSettings).toBeTruthy();
         expect(comp.settingsUpdateComponent!.irisSettings.irisLectureIngestionSettings).toBeTruthy();
         expect(comp.settingsUpdateComponent!.irisSettings.irisCompetencyGenerationSettings).toBeTruthy();
+        expect(comp.settingsUpdateComponent!.irisSettings.irisProactivitySettings).toBeTruthy();
     });
 });

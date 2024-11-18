@@ -26,8 +26,8 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
             declarations: [
                 IrisGlobalSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,
-                MockComponent(IrisCommonSubSettingsUpdateComponent),
                 MockComponent(IrisEventSettingsUpdateComponent),
+                MockComponent(IrisCommonSubSettingsUpdateComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(NgModel),
             ],
@@ -41,12 +41,17 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
                 const irisSettings = mockSettings();
                 getSettingsSpy = jest.spyOn(irisSettingsService, 'getGlobalSettings').mockReturnValue(of(irisSettings));
             });
+        TestBed.createComponent(IrisEventSettingsUpdateComponent);
         fixture = TestBed.createComponent(IrisGlobalSettingsUpdateComponent);
         comp = fixture.componentInstance;
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should create IrisGlobalSettingsUpdateComponent', () => {
+        expect(comp).toBeDefined();
     });
 
     it('Setup works correctly', () => {
@@ -70,6 +75,7 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
         fixture.detectChanges();
         const irisSettings = mockSettings();
         irisSettings.id = undefined;
+        irisSettings.irisProactivitySettings!.eventSettings.forEach((eventSetting) => (eventSetting.id = undefined));
         const irisSettingsSaved = mockSettings();
         const setSettingsSpy = jest.spyOn(irisSettingsService, 'setGlobalSettings').mockReturnValue(of(new HttpResponse<IrisSettings>({ body: irisSettingsSaved })));
         comp.settingsUpdateComponent!.irisSettings = irisSettings;

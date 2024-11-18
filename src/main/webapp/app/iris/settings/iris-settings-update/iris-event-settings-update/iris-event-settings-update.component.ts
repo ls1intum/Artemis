@@ -19,10 +19,10 @@ export class IrisEventSettingsUpdateComponent {
     parentEventSettings = input<IrisEventSettings>();
 
     isAdmin = signal(false);
-    inheritDisabled = computed(() => (this.parentEventSettings() !== undefined ? !this.parentEventSettings()!.enabled : false));
-    isSettingsSwitchDisabled = computed(() => (!this.isAdmin() && this.settingsType() !== IrisSettingsType.EXERCISE) || this.inheritDisabled());
 
     // Computed properties
+    inheritDisabled = computed(() => (this.parentEventSettings() !== undefined ? !this.parentEventSettings()!.enabled : false));
+    isSettingsSwitchDisabled = computed(() => !this.isAdmin() || this.settingsType() === IrisSettingsType.EXERCISE || this.inheritDisabled() || this.proactivityDisabled());
     enabled = computed(() => this.eventSettings().enabled);
 
     // Constants

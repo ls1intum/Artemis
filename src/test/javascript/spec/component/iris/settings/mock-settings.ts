@@ -79,3 +79,29 @@ export function mockVariants() {
         },
     ] as IrisVariant[];
 }
+
+export function mockEvents() {
+    return [
+        {
+            id: 1,
+            enabled: true,
+            selectedEventVariant: 'jol',
+            sessionType: 'COURSE',
+            type: 'jol',
+        } as IrisEventSettings,
+        {
+            id: 2,
+            enabled: true,
+            selectedEventVariant: 'progress_stalled',
+            sessionType: 'COURSE',
+            type: 'progress_stalled',
+        } as IrisEventSettings,
+        {
+            id: 3,
+            enabled: true,
+            selectedEventVariant: 'build_failed',
+            sessionType: 'COURSE',
+            type: 'build_failed',
+        } as IrisEventSettings,
+    ];
+}
