@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
-import { Subject, Subscription, of } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -57,9 +57,8 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { switchMap, tap } from 'rxjs/operators';
+import { mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
-import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -194,7 +193,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.loadingTemplateParticipationResults = false;
                         this.loadingSolutionParticipationResults = false;
                     }),
-                    switchMap(() => this.profileService.getProfileInfo()),
+                    mergeMap(() => this.profileService.getProfileInfo()),
                     tap(async (profileInfo) => {
                         if (profileInfo) {
                             if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId) {
@@ -224,21 +223,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             }
                         }
                     }),
-                    switchMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!)),
+                    mergeMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!)),
                     tap((submissionPolicy) => {
                         this.programmingExercise.submissionPolicy = submissionPolicy;
                     }),
-                    switchMap(() => this.programmingExerciseService.getDiffReport(this.programmingExercise.id!)),
+                    mergeMap(() => this.programmingExerciseService.getDiffReport(this.programmingExercise.id!)),
                     tap((gitDiffReport) => {
                         this.processGitDiffReport(gitDiffReport);
-                    }),
-                    switchMap(() =>
-                        this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : of([] as BuildLogStatisticsDTO),
-                    ),
-                    tap((buildLogStatistics) => {
-                        if (this.programmingExercise.isAtLeastEditor) {
-                            this.programmingExercise.buildLogStatistics = buildLogStatistics;
-                        }
                     }),
                 )
                 .subscribe({
@@ -248,6 +239,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
                             programmingExercise.programmingLanguage,
                         ).plagiarismCheckSupported;
+
+                        /** we make sure to await the results of the subscriptions (mergeMap) to only call {@link getExerciseDetails} once */
                         this.exerciseDetailSections = this.getExerciseDetails();
                     },
                     error: (error) => {
@@ -258,6 +251,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
+
+            if (this.programmingExercise.isAtLeastEditor) {
+                this.buildLogsSubscription = this.programmingExerciseService
+                    .getBuildLogStatistics(exerciseId!)
+                    .subscribe((buildLogStatistics) => (this.programmingExercise.buildLogStatistics = buildLogStatistics));
+                this.exerciseDetailSections = this.getExerciseDetails();
+            }
         });
     }
 
@@ -272,6 +272,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.exerciseStatisticsSubscription?.unsubscribe();
     }
 
+    /**
+     * <strong>BE CAREFUL WHEN CALLING THIS METHOD!</strong><br>
+     * This method can cause child components to re-render, which can lead to re-initializations resulting
+     * in unnecessary requests putting load on the server.
+     *
+     * <strong>When adding a new call to this method, make sure that no duplicated and unnecessary requests are made.</strong>
+     */
     getExerciseDetails(): DetailOverviewSection[] {
         const exercise = this.programmingExercise;
         exercise.buildConfig = this.programmingExerciseBuildConfig;
