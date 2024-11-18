@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject, model } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/entities/competency.model';
@@ -21,7 +21,8 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 })
 export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
     @Input() courseId: number;
-    @Input() courseCompetencies: CourseCompetency[];
+    @Input() courseCompetencies: CourseCompetency[] = [];
+    allCompetencies = model.required<CourseCompetency[]>();
     @Input() competencyType: CourseCompetencyType;
     @Input() standardizedCompetenciesEnabled: boolean;
 
@@ -94,7 +95,9 @@ export class CompetencyManagementTableComponent implements OnInit, OnDestroy {
      */
     updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
         const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is CourseCompetency => !!element);
-        this.courseCompetencies.push(...importedCompetencies);
+        const newCourseCompetencies = importedCompetencies.filter((competency) => !this.courseCompetencies.some((existingCompetency) => existingCompetency.id === competency.id));
+        this.courseCompetencies.push(...newCourseCompetencies);
+        this.allCompetencies.update((allCourseCompetencies) => allCourseCompetencies.concat(importedCompetencies));
     }
 
     /**
