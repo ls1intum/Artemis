@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
 import * as Split from 'split.js';
 import { Subject } from 'rxjs';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -22,7 +22,7 @@ export class SplitPaneDirective {
     styleUrls: ['./plagiarism-split-view.component.scss'],
     templateUrl: './plagiarism-split-view.component.html',
 })
-export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit {
+export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit, OnDestroy {
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
@@ -33,7 +33,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
     plagiarismComparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
-    fileSelectedSubject = new Subject<TextPlagiarismFileElement>();
+    private fileSelectedSubject = new Subject<TextPlagiarismFileElement>();
 
     public split: Split.Instance;
 
@@ -87,6 +87,11 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
         }
     }
 
+    ngOnDestroy() {
+        this.fileSelectedSubject.complete();
+        this.splitControlSubject.unsubscribe();
+    }
+
     /**
      * Swaps fields of A with fields of B in-place.
      * More specifically, swaps submissionA with submissionB and startA with startB in matches.
@@ -104,6 +109,14 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
                 match.startB = tempStart;
             });
         }
+    }
+
+    /**
+     * get the subject/listener for file selection
+     * @returns observable for fileselection
+     */
+    getFileSelectedSubject() {
+        return this.fileSelectedSubject;
     }
 
     parseTextMatches(plagComparison: PlagiarismComparison<TextSubmissionElement>) {
@@ -125,7 +138,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
      * @param matches list of objects containing the index and length of matched elements
      * @param submission the submission to map the elements of
      */
-    public mapMatchesToElements(matches: SimpleMatch[], submission: PlagiarismSubmission<TextSubmissionElement>) {
+    mapMatchesToElements(matches: SimpleMatch[], submission: PlagiarismSubmission<TextSubmissionElement>) {
         // sort submission elements so that from and to indexes from matches reference correct elements
         const elements = submission.elements?.sort((a, b) => a.id - b.id);
         const filesToMatchedElements = new Map<string, FromToElement[]>();

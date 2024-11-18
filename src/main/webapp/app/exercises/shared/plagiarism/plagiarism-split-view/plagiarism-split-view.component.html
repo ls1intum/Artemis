@@ -6,7 +6,7 @@
             }
             @if (isProgrammingOrTextExercise) {
                 <jhi-text-submission-viewer
-                    [fileSelectedSubject]="fileSelectedSubject"
+                    [fileSelectedSubject]="getFileSelectedSubject()"
                     [exercise]="exercise"
                     [matches]="matchesA"
                     [plagiarismSubmission]="getTextSubmissionA()"
@@ -27,7 +27,7 @@
             }
             @if (isProgrammingOrTextExercise) {
                 <jhi-text-submission-viewer
-                    [fileSelectedSubject]="fileSelectedSubject"
+                    [fileSelectedSubject]="getFileSelectedSubject()"
                     [exercise]="exercise"
                     [matches]="matchesB"
                     [plagiarismSubmission]="getTextSubmissionB()"
