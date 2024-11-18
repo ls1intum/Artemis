@@ -22,8 +22,8 @@ export class IrisEventSettingsUpdateComponent {
 
     // Computed properties
     inheritDisabled = computed(() => (this.parentEventSettings() !== undefined ? !this.parentEventSettings()!.enabled : false));
-    isSettingsSwitchDisabled = computed(() => !this.isAdmin() || this.settingsType() === IrisSettingsType.EXERCISE || this.inheritDisabled() || this.proactivityDisabled());
-    enabled = computed(() => this.eventSettings().enabled);
+    isSettingsSwitchDisabled = computed(() => !this.isAdmin() || this.inheritDisabled() || this.proactivityDisabled());
+    enabled = computed(() => this.eventSettings().enabled && !this.inheritDisabled() && !this.proactivityDisabled());
 
     // Constants
     readonly WARNING = ButtonType.WARNING;

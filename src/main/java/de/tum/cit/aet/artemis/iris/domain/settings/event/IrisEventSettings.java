@@ -121,6 +121,10 @@ public abstract class IrisEventSettings extends DomainObject {
         this.selectedEventVariant = selectedVariant;
     }
 
+    public void setSessionType(IrisEventSessionType sessionType) {
+        this.sessionType = sessionType;
+    }
+
     @JsonIgnore
     protected abstract IrisEventSessionType getDefaultSessionType();
 

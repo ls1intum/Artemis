@@ -32,6 +32,10 @@ public class IrisExerciseSettings extends IrisSettings {
     @JoinColumn(name = "iris_text_exercise_chat_settings_id")
     private IrisTextExerciseChatSubSettings irisTextExerciseChatSettings;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "iris_proactivity_settings_id")
+    private IrisProactivitySubSettings irisProactivitySettings;
+
     public Exercise getExercise() {
         return exercise;
     }
@@ -51,11 +55,12 @@ public class IrisExerciseSettings extends IrisSettings {
 
     @Override
     public IrisProactivitySubSettings getIrisProactivitySettings() {
-        return null;
+        return irisProactivitySettings;
     }
 
     @Override
     public void setIrisProactivitySettings(IrisProactivitySubSettings irisProactivitySettings) {
+        this.irisProactivitySettings = irisProactivitySettings;
     }
 
     @Override

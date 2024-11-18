@@ -485,6 +485,12 @@ public class IrisSettingsService {
                 parentSettings.irisTextExerciseChatSettings(),
                 EXERCISE
         ));
+        existingSettings.setIrisProactivitySettings(irisSubSettingsService.update(
+                existingSettings.getIrisProactivitySettings(),
+                settingsUpdate.getIrisProactivitySettings(),
+                parentSettings.irisProactivitySettings(),
+                EXERCISE
+        ));
         // @formatter:on
         return irisSettingsRepository.save(existingSettings);
     }
@@ -578,7 +584,7 @@ public class IrisSettingsService {
      * @return Whether the Iris event is active for the exercise
      */
     public boolean isActivatedFor(IrisEventType type, Exercise exercise) {
-        var settings = getCombinedIrisEventSettingsFor(exercise.getCourseViaExerciseGroupOrCourseMember(), type, true);
+        var settings = getCombinedIrisEventSettingsFor(exercise, type, true);
         return isEventEnabledInSettings(settings, type);
     }
 
@@ -689,6 +695,30 @@ public class IrisSettingsService {
             case JOL -> irisSubSettingsService.combineEventSettingsOf(IrisJolEventSettings.class, settingsList, minimal);
             case PROGRESS_STALLED -> irisSubSettingsService.combineEventSettingsOf(IrisProgressStalledEventSettings.class, settingsList, minimal);
             case BUILD_FAILED -> irisSubSettingsService.combineEventSettingsOf(IrisBuildFailedEventSettings.class, settingsList, minimal);
+        };
+    }
+
+    /**
+     * Get the combined Iris event settings of a specific type for an exercise as an {@link IrisCombinedEventSettingsDTO}.
+     * Combines the global Iris settings with the course Iris settings and the exercise Iris settings.
+     * If minimal is true, only certain attributes are returned. The minimal version can safely be passed to the students.
+     * See also {@link IrisSubSettingsService} for how the combining works in detail
+     *
+     * @param exercise The exercise to get the Iris event settings for
+     * @param type     The type of the event {@link IrisEventType}
+     * @param minimal  Whether to return the minimal version of the settings
+     * @return The combined Iris event settings for the exercise
+     */
+    public IrisCombinedEventSettingsDTO getCombinedIrisEventSettingsFor(Exercise exercise, IrisEventType type, boolean minimal) {
+        var settingsList = new ArrayList<IrisSettings>();
+        settingsList.add(getGlobalSettings());
+        settingsList.add(getRawIrisSettingsFor(exercise.getCourseViaExerciseGroupOrCourseMember()));
+        settingsList.add(getRawIrisSettingsFor(exercise));
+
+        return switch (type) {
+            case PROGRESS_STALLED -> irisSubSettingsService.combineEventSettingsOf(IrisProgressStalledEventSettings.class, settingsList, minimal);
+            case BUILD_FAILED -> irisSubSettingsService.combineEventSettingsOf(IrisBuildFailedEventSettings.class, settingsList, minimal);
+            case JOL -> irisSubSettingsService.combineEventSettingsOf(IrisJolEventSettings.class, settingsList, minimal);
         };
     }
 

@@ -77,11 +77,6 @@ describe('IrisEventSettingsUpdateComponent', () => {
         componentRef.setInput('proactivityDisabled', false);
         fixture.detectChanges();
         expect(component.isSettingsSwitchDisabled()).toBeFalsy();
-
-        // If the settings type is exercise, the switch should be disabled
-        componentRef.setInput('settingsType', IrisSettingsType.EXERCISE);
-        fixture.detectChanges();
-        expect(component.isSettingsSwitchDisabled()).toBeTruthy();
     });
 
     it('should update event settings correctly', () => {

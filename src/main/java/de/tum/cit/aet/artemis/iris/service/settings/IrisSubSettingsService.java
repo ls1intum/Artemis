@@ -158,6 +158,9 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisProactivitySubSettings();
         }
+        if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
+            currentSettings.setEnabled(newSettings.isEnabled());
+        }
         if (authCheckService.isAdmin() && (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.GLOBAL)) {
             currentSettings.setEnabled(newSettings.isEnabled());
         }

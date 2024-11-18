@@ -16,7 +16,14 @@ import {
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { BuildFailedEventSettings, IrisEventSettings, IrisEventType, JolEventSettings, ProgressStalledEventSettings } from 'app/entities/iris/settings/iris-event-settings.model';
+import {
+    BuildFailedEventSettings,
+    IrisEventSessionType,
+    IrisEventSettings,
+    IrisEventType,
+    JolEventSettings,
+    ProgressStalledEventSettings,
+} from 'app/entities/iris/settings/iris-event-settings.model';
 
 @Component({
     selector: 'jhi-iris-settings-update',
@@ -205,4 +212,5 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     }
 
     protected readonly IrisEventType = IrisEventType;
+    protected readonly IrisEventSessionType = IrisEventSessionType;
 }
