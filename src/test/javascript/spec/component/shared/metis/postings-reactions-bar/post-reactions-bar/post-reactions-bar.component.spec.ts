@@ -219,7 +219,6 @@ describe('PostReactionsBarComponent', () => {
 
     describe('setMayEditOrDelete', () => {
         beforeEach(() => {
-            // Reset spies and component state before each test
             jest.clearAllMocks();
             component.readOnlyMode = false;
             component.previewMode = false;
@@ -228,78 +227,62 @@ describe('PostReactionsBarComponent', () => {
                 conversation: {},
             } as Post;
 
-            // Mock EventEmitter
             jest.spyOn(component.mayEditOrDeleteOutput, 'emit');
         });
 
         it('should allow edit/delete when user is the author and not in read-only or preview mode', () => {
-            // Arrange
             component.isAuthorOfPosting = true;
             jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
             jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(false);
 
-            // Act
             component.setMayEditOrDelete();
 
-            // Assert
             expect(component.mayEditOrDelete).toBeTrue();
             expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(true);
         });
 
         it('should allow edit/delete when user has channel moderation rights', () => {
-            // Arrange
             component.isAuthorOfPosting = false;
             jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
             jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(true);
 
-            // Act
             component.setMayEditOrDelete();
 
-            // Assert
             expect(component.mayEditOrDelete).toBeTrue();
             expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(true);
         });
 
         it('should not allow edit/delete when in read-only mode', () => {
-            // Arrange
             component.readOnlyMode = true;
             component.isAuthorOfPosting = true;
             jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(true);
             jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(true);
 
-            // Act
             component.setMayEditOrDelete();
 
-            // Assert
             expect(component.mayEditOrDelete).toBeFalse();
             expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(false);
         });
 
         it('should not allow edit/delete when in preview mode', () => {
-            // Arrange
             component.previewMode = true;
             component.isAuthorOfPosting = true;
             jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(true);
             jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(true);
 
-            // Act
             component.setMayEditOrDelete();
 
-            // Assert
             expect(component.mayEditOrDelete).toBeFalse();
             expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(false);
         });
 
         it('should not allow edit/delete when user is not author and lacks permissions', () => {
-            // Arrange
             component.isAuthorOfPosting = false;
             jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
             jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(false);
 
-            // Act
             component.setMayEditOrDelete();
 
-            // Assert
             expect(component.mayEditOrDelete).toBeFalse();
             expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(false);
         });
