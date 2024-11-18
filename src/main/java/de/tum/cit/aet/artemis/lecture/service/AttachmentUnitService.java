@@ -108,10 +108,11 @@ public class AttachmentUnitService {
      * @param updateAttachment       The new attachment data.
      * @param updateFile             The optional file.
      * @param keepFilename           Whether to keep the original filename or not.
+     * @param hiddenPages            The hidden pages of attachment unit.
      * @return The updated attachment unit.
      */
     public AttachmentUnit updateAttachmentUnit(AttachmentUnit existingAttachmentUnit, AttachmentUnit updateUnit, Attachment updateAttachment, MultipartFile updateFile,
-            boolean keepFilename) {
+            boolean keepFilename, String hiddenPages) {
         Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentUnit.getCompetencyLinks());
 
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
@@ -144,7 +145,7 @@ public class AttachmentUnitService {
             }
             // Split the updated file into single slides only if it is a pdf
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+                slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit, hiddenPages);
             }
             if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
                 pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(savedAttachmentUnit.getLecture().getCourse().getId(), List.of(savedAttachmentUnit));

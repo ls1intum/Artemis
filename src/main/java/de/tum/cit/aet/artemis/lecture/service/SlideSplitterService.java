@@ -107,7 +107,7 @@ public class SlideSplitterService {
                 slide.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) slideNumber).toString());
                 slide.setSlideNumber(slideNumber);
                 slide.setAttachmentUnit(attachmentUnit);
-                slide.setHidden(hiddenPagesList.contains(slide.getSlideNumber()) ? java.sql.Date.valueOf(FOREVER) : null);
+                slide.setHidden(hiddenPagesList.contains(slideNumber) ? java.sql.Date.valueOf(FOREVER) : null);
                 slideRepository.save(slide);
 
             }

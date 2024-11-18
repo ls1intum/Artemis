@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.AttachmentUnitService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
@@ -75,9 +76,11 @@ public class AttachmentUnitResource {
 
     private final FileService fileService;
 
+    private final SlideRepository slideRepository;
+
     public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, LectureUnitProcessingService lectureUnitProcessingService,
             AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService,
-            CompetencyProgressService competencyProgressService, SlideSplitterService slideSplitterService, FileService fileService) {
+            CompetencyProgressService competencyProgressService, SlideSplitterService slideSplitterService, FileService fileService, SlideRepository slideRepository) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -87,6 +90,7 @@ public class AttachmentUnitResource {
         this.competencyProgressService = competencyProgressService;
         this.slideSplitterService = slideSplitterService;
         this.fileService = fileService;
+        this.slideRepository = slideRepository;
     }
 
     /**
@@ -130,14 +134,10 @@ public class AttachmentUnitResource {
         checkAttachmentUnitCourseAndLecture(existingAttachmentUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentUnit.getLecture().getCourse(), null);
 
-        AttachmentUnit savedAttachmentUnit = attachmentUnitService.updateAttachmentUnit(existingAttachmentUnit, attachmentUnit, attachment, file, keepFilename);
+        AttachmentUnit savedAttachmentUnit = attachmentUnitService.updateAttachmentUnit(existingAttachmentUnit, attachmentUnit, attachment, file, keepFilename, hiddenPages);
 
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment(), notificationText);
-        }
-
-        if (Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
-            slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit, hiddenPages);
         }
 
         return ResponseEntity.ok(savedAttachmentUnit);
@@ -336,5 +336,17 @@ public class AttachmentUnitResource {
         if (!filePath.toString().endsWith(".pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
+    }
+
+    @GetMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}/hidden-slides")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<Integer>> getAttachmentUnitHiddenSlides(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
+        log.debug("REST request to get hidden slides of AttachmentUnit : {}", attachmentUnitId);
+        List<Integer> hiddenSlides = slideRepository.findHiddenSlideNumbersByAttachmentUnitId(attachmentUnitId);
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        checkAttachmentUnitCourseAndLecture(attachmentUnit, lectureId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
+
+        return ResponseEntity.ok().body(hiddenSlides);
     }
 }

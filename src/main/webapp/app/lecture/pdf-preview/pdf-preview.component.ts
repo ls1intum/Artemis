@@ -79,7 +79,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit.set(data.attachmentUnit);
-                this.hiddenPages.set(new Set(data.attachmentUnit.hiddenPages?.split(',').map(Number) || []));
+                this.attachmentUnitService.getHiddenSlides(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!).subscribe({
+                    next: (hiddenPages: number[]) => {
+                        this.hiddenPages.set(new Set(hiddenPages));
+                    },
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
                 this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course()!.id!, this.attachmentUnit()!.id!).subscribe({
                     next: (blob: Blob) => {
                         this.currentPdfBlob.set(blob);
@@ -174,7 +179,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentUnitService.update(this.attachmentUnit()!.lecture!.id!, this.attachmentUnit()!.id!, formData, undefined, finalHiddenPages).subscribe({
                 next: async () => {
                     this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
-                    this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+                    this.router.navigate(['course-management', this.course()?.id, 'lectures', this.attachmentUnit()!.lecture!.id, 'unit-management']);
                 },
                 error: (error) => {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });

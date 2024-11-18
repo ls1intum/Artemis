@@ -119,7 +119,7 @@ public class LectureUnitImportService {
                 attachment.setAttachmentUnit(attachmentUnit);
                 attachmentRepository.save(attachment);
                 if (attachment.getLink().endsWith(".pdf")) {
-                    slideSplitterService.splitAttachmentUnitIntoSingleSlides(attachmentUnit);
+                    slideSplitterService.splitAttachmentUnitIntoSingleSlides(attachmentUnit, null);
                 }
                 attachmentUnit.setAttachment(attachment);
                 return attachmentUnit;
