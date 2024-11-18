@@ -17,7 +17,7 @@ import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 
-test.describe('Import exercises', () => {
+test.describe('Import exercises', { tag: '@slow' }, () => {
     let course: Course;
     let secondCourse: Course;
     let textExercise: TextExercise;
