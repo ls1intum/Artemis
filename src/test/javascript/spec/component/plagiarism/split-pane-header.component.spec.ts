@@ -10,6 +10,8 @@ import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plag
 import { PlagiarismRunDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
 import { PlagiarismSidebarComponent } from 'app/exercises/shared/plagiarism/plagiarism-sidebar/plagiarism-sidebar.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
+import { Subject } from 'rxjs';
 
 describe('SplitPaneHeaderComponent', () => {
     let comp: SplitPaneHeaderComponent;
@@ -42,6 +44,7 @@ describe('SplitPaneHeaderComponent', () => {
                 comp.files = [];
                 comp.studentLogin = 'ts10abc';
                 comp.selectFile = new EventEmitter<string>();
+                comp.fileSelectedSubject = new Subject<TextPlagiarismFileElement>();
             });
     });
 
