@@ -7,7 +7,6 @@ import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 
 import org.apache.sshd.git.GitLocationResolver;
 import org.apache.sshd.server.session.ServerSession;
@@ -79,8 +78,9 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         }
         else {
             try {
-                localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, AuthenticationMechanism.SSH, session.getClientAddress().toString(),
-                        localVCRepositoryUri, Optional.empty(), Optional.of(session));
+                var participation = localVCServletService.authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, true);
+                localVCServletService.cacheAttributesInSshSession(user, participation, repositoryAction, AuthenticationMechanism.SSH, session.getClientAddress().toString(),
+                        localVCRepositoryUri, session);
             }
             catch (LocalVCForbiddenException e) {
                 log.error("User {} does not have access to the repository {}", user.getLogin(), repositoryPath);

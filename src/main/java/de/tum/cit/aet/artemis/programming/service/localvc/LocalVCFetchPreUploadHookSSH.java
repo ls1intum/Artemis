@@ -25,9 +25,11 @@ public class LocalVCFetchPreUploadHookSSH implements PreUploadHook {
 
     @Override
     public void onEndNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int i, int i1, boolean b) {
+        int bs = 4;
     }
 
     @Override
     public void onSendPack(UploadPack uploadPack, Collection<? extends ObjectId> collection, Collection<? extends ObjectId> collection1) {
+        int ss = 4;
     }
 }

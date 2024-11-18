@@ -32,6 +32,8 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
     private final VcsAccessLog vcsAccessLog;
 
+    private HttpServletRequest request;
+
     public LocalVCPostPushHook(LocalVCServletService localVCServletService, ServerSession serverSession) {
         this.localVCServletService = localVCServletService;
         this.participation = serverSession.getAttribute(SshConstants.PARTICIPATION_KEY);
@@ -39,11 +41,12 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         this.vcsAccessLog = serverSession.getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
     }
 
-    public LocalVCPostPushHook(LocalVCServletService localVCServletService, HttpServletRequest request) {
+    public LocalVCPostPushHook(LocalVCServletService localVCServletService) {
         this.localVCServletService = localVCServletService;
-        this.participation = (ProgrammingExerciseParticipation) request.getSession().getAttribute(HttpsConstants.PARTICIPATION_KEY);
-        this.exercise = (ProgrammingExercise) request.getSession().getAttribute(HttpsConstants.EXERCISE_KEY);
-        this.vcsAccessLog = (VcsAccessLog) request.getSession().getAttribute(HttpsConstants.VCS_ACCESS_LOG_KEY);
+        // For HTTPs we are unable to store the attributes in the sesseion or request unfortunately
+        this.participation = null;
+        this.exercise = null;
+        this.vcsAccessLog = null;
     }
 
     /**

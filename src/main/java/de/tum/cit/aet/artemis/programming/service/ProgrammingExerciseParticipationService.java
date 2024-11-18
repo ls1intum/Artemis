@@ -494,6 +494,28 @@ public class ProgrammingExerciseParticipationService {
             throw new EntityNotFoundException("Auxiliary repositories do not have participations.");
         }
         return studentParticipationRepository.findWithSubmissionsByRepositoryUriElseThrow(repositoryURI);
+
+    }
+
+    /**
+     * Get the participation for a given repository url and a repository type or user name. This method is used by the local VC system to get the
+     * participation for logging operations on the repository.
+     *
+     * @param repositoryTypeOrUserName the name of the user or the type of the repository
+     * @param repositoryURI            the participation's repository URL
+     * @return the participation belonging to the provided repositoryURI and repository type or username
+     */
+    public ProgrammingExerciseParticipation retrieveParticipationByRepository(String repositoryTypeOrUserName, String repositoryURI) {
+        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+            return solutionParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
+        }
+        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+            return templateParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
+        }
+        if (repositoryTypeOrUserName.equals(RepositoryType.AUXILIARY.toString())) {
+            throw new EntityNotFoundException("Auxiliary repositories do not have participations.");
+        }
+        return studentParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
     }
 
     /**

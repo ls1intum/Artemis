@@ -26,21 +26,80 @@ import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 @Repository
 public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLog, Long> {
 
-    /**
-     * Find the access log entry which does not have any commit hash yet
-     *
-     * @param participationId The id of the participation the repository belongs to
-     * @return a log entry belonging to the participationId, which has no commit hash
-     */
-    @Query("""
+    // @Transactional // ok because of modifying query
+    // @Modifying
+    // @Query("""
+    // UPDATE VcsAccessLog vcsAccessLog
+    // SET vcsAccessLog.repositoryActionType = :repositoryActionType
+    // WHERE vcsAccessLog.id = (
+    // SELECT MAX(log.id)
+    // FROM VcsAccessLog log
+    // WHERE log.participation.id = :participationId
+    // )
+    // """)
+    // void updateRepositoryActionTypeForNewestLog(@Param("participationId") long participationId, @Param("repositoryActionType") RepositoryActionType repositoryActionType);
 
-            SELECT vcsAccessLog
+    // @Transactional // ok because of modifying query
+    // @Modifying
+    // @Query("""
+    // UPDATE VcsAccessLog vcsAccessLog
+    // SET vcsAccessLog.repositoryActionType = :repositoryActionType
+    // WHERE vcsAccessLog.id = (
+    // SELECT log.id
+    // FROM VcsAccessLog log
+    // JOIN ProgrammingExerciseStudentParticipation participation ON log.participation.id = participation.id
+    // WHERE participation.repositoryUri = :repositoryUri
+    // ORDER BY log.id DESC
+    // LIMIT 1
+    // )
+    // """)
+    // void updateRepositoryActionTypeForNewestLog(@Param("repositoryUri") String repositoryUri, @Param("repositoryActionType") RepositoryActionType repositoryActionType);
+    //
+    //
+    // @Transactional // ok because of modifying query
+    // @Modifying
+    // @Query("""
+    // UPDATE VcsAccessLog vcsAccessLog
+    // SET vcsAccessLog.commitHash = :commitHash
+    // WHERE vcsAccessLog.participation.id = :participationId
+    // ORDER BY vcsAccessLog.id DESC
+    // LIMIT 1
+    // """)
+    // void updateCommitHashForNewestLog(@Param("participationId") long participationId, @Param("commitHash") String commitHash);
+
+    @Query("""
+                SELECT vcsAccessLog
                 FROM VcsAccessLog vcsAccessLog
                 WHERE vcsAccessLog.participation.id = :participationId
-                ORDER BY vcsAccessLog.timestamp DESC
+                ORDER BY vcsAccessLog.id DESC
                 LIMIT 1
             """)
     Optional<VcsAccessLog> findNewestByParticipationId(@Param("participationId") long participationId);
+
+    @Query("""
+                SELECT vcsAccessLog
+                FROM VcsAccessLog vcsAccessLog
+                LEFT JOIN FETCH ProgrammingExerciseStudentParticipation participation ON vcsAccessLog.participation.id = participation.id
+                WHERE participation.repositoryUri = :repositoryUri
+                ORDER BY vcsAccessLog.id DESC
+                LIMIT 1
+            """)
+    Optional<VcsAccessLog> findNewestByRepositoryUri(@Param("repositoryUri") String repositoryUri);
+
+    // @Transactional // ok because of modifying query
+    // @Modifying
+    // @Query("""
+    // UPDATE VcsAccessLog vcsAccessLog
+    // SET vcsAccessLog.commitHash = :commitHash
+    // WHERE vcsAccessLog.id = (
+    // SELECT MAX(log.id)
+    // FROM VcsAccessLog log
+    // LEFT JOIN FETCH ProgrammingExerciseStudentParticipation participation ON log.participation
+    // WHERE participation.repositoryUri = :repositoryUri
+    // )
+    // """)
+    // void updateCommitHashForNewestLog(@Param("repositoryUri") String repositoryUri, @Param("commitHash") String commitHash);
+    //
 
     /**
      * Retrieves a list of {@link VcsAccessLog} entities associated with the specified participation ID.

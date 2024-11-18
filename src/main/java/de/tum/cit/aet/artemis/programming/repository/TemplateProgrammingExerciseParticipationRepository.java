@@ -55,6 +55,12 @@ public interface TemplateProgrammingExerciseParticipationRepository
         return getValueElseThrow(findWithSubmissionsByRepositoryUri(repositoryUri));
     }
 
+    Optional<TemplateProgrammingExerciseParticipation> findByRepositoryUri(String repositoryUri);
+
+    default TemplateProgrammingExerciseParticipation findByRepositoryUriElseThrow(String repositoryUri) {
+        return getValueElseThrow(findByRepositoryUri(repositoryUri));
+    }
+
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "submissions" })
     Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(long exerciseId);
 

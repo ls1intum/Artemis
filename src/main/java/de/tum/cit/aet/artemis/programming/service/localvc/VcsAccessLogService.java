@@ -65,25 +65,23 @@ public class VcsAccessLogService {
      */
     @Async
     public void updateCommitHash(ProgrammingExerciseParticipation participation, String commitHash) {
-        vcsAccessLogRepository.findNewestByParticipationId(participation.getId()).ifPresent(entry -> {
-            entry.setCommitHash(commitHash);
-            vcsAccessLogRepository.save(entry);
-        });
+        var vcsAccessLog = vcsAccessLogRepository.findNewestByParticipationId(participation.getId());
+        if (vcsAccessLog.isPresent()) {
+            vcsAccessLog.get().setCommitHash(commitHash);
+            vcsAccessLogRepository.save(vcsAccessLog.get());
+        }
     }
 
-    /**
-     * Updates the repository action type of the newest log entry. This method is not Async, as it should already be called from an @Async context
-     *
-     * @param participation        The participation to which the repository belongs to
-     * @param repositoryActionType The repositoryActionType which should get set for the newest access log entry
-     */
-    public void updateRepositoryActionType(ProgrammingExerciseParticipation participation, RepositoryActionType repositoryActionType) {
-        vcsAccessLogRepository.findNewestByParticipationId(participation.getId()).ifPresent(entry -> {
-            entry.setRepositoryActionType(repositoryActionType);
-            vcsAccessLogRepository.save(entry);
-        });
+    @Async
+    public void updateRepositoryActionType(LocalVCRepositoryUri localVCRepositoryUri, RepositoryActionType repositoryActionType) {
+        var vcsAccessLog = vcsAccessLogRepository.findNewestByRepositoryUri(localVCRepositoryUri.toString());
+        if (vcsAccessLog.isPresent()) {
+            vcsAccessLog.get().setRepositoryActionType(repositoryActionType);
+            vcsAccessLogRepository.save(vcsAccessLog.get());
+        }
     }
 
+    @Async
     public void saveVcsAccesslog(VcsAccessLog vcsAccessLog) {
         vcsAccessLogRepository.save(vcsAccessLog);
     }
@@ -109,4 +107,5 @@ public class VcsAccessLogService {
         }
         return Optional.empty();
     }
+
 }

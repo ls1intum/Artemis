@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import java.io.IOException;
-import java.util.function.IntUnaryOperator;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,7 +15,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
-import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -28,11 +26,8 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
 
     private final LocalVCServletService localVCServletService;
 
-    private final IntUnaryOperator callbck;
-
-    public LocalVCPushFilter(LocalVCServletService localVCServletService, IntUnaryOperator op) {
+    public LocalVCPushFilter(LocalVCServletService localVCServletService) {
         this.localVCServletService = localVCServletService;
-        this.callbck = op;
     }
 
     /**
@@ -56,11 +51,8 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         // We need to extract the content of the request here as it is garbage collected before it can be used asynchronously
         String authorizationHeader = servletRequest.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
         String method = servletRequest.getMethod();
-        var vcsAccessLog = servletRequest.getAttribute(HttpsConstants.VCS_ACCESS_LOG_KEY);
-        if (vcsAccessLog instanceof VcsAccessLog accessLog) {
-            this.localVCServletService.updateAndStoreVCSAccessLogForPushHTTPS(method, authorizationHeader, accessLog);
-        }
-        this.callbck.applyAsInt(4);
+        // this.localVCServletService.updateAndStoreVCSAccessLogForPushHTTPS(method, servletRequest, authorizationHeader);
+
         filterChain.doFilter(servletRequest, servletResponse);
     }
 }
