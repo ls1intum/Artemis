@@ -88,6 +88,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         // 1 DB call to get all plagiarism cases
         // 1 DB call to get the grading scale
         // 1 DB call to get the batch of a live quiz. No Batches of other quizzes are retrieved
+        // 1 DB call to get the faqs
     }
 
     @Test
