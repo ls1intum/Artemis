@@ -147,10 +147,9 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         pipelineDone = new AtomicBoolean(false);
     }
 
-    private Result createSubmissionWithScore(ProgrammingExerciseStudentParticipation studentParticipation, int score) {
-        // Create a submission for the student.
+    private Result createSubmission(ProgrammingExerciseStudentParticipation studentParticipation, int score, boolean buildFailed) {
         ProgrammingSubmission submission = new ProgrammingSubmission();
-
+        submission.setBuildFailed(buildFailed);
         submission.setType(SubmissionType.MANUAL);
         submission.setParticipation(studentParticipation);
         submission = submissionRepository.saveAndFlush(submission);
@@ -166,24 +165,12 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         return resultRepository.save(result);
     }
 
+    private Result createSubmissionWithScore(ProgrammingExerciseStudentParticipation studentParticipation, int score) {
+        return createSubmission(studentParticipation, score, false);
+    }
+
     private Result createFailingSubmission(ProgrammingExerciseStudentParticipation studentParticipation) {
-        // Create a failing build submission for the student.
-        ProgrammingSubmission submission = new ProgrammingSubmission();
-        submission.setBuildFailed(true);
-
-        submission.setType(SubmissionType.MANUAL);
-        submission.setParticipation(studentParticipation);
-        submission = submissionRepository.saveAndFlush(submission);
-
-        Result result = ParticipationFactory.generateResult(true, 0);
-        result.setParticipation(studentParticipation);
-        result.setSubmission(submission);
-        result.completionDate(ZonedDateTime.now());
-        result.setAssessmentType(AssessmentType.AUTOMATIC);
-        submission.addResult(result);
-        submissionRepository.saveAndFlush(submission);
-
-        return resultRepository.save(result);
+        return createSubmission(studentParticipation, 0, true);
     }
 
     private ProgrammingExerciseStudentParticipation createTeamParticipation(User owner) {
