@@ -89,7 +89,6 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
     ngOnDestroy() {
         this.fileSelectedSubject.complete();
-        this.splitControlSubject.unsubscribe();
     }
 
     /**
