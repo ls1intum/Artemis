@@ -26,6 +26,7 @@ export class FeedbackAnalysisComponent {
     exerciseTitle = input.required<string>();
     exerciseId = input.required<number>();
     courseId = input.required<number>();
+    isCommunicationEnabled = input.required<boolean>();
 
     private feedbackAnalysisService = inject(FeedbackAnalysisService);
     private alertService = inject(AlertService);

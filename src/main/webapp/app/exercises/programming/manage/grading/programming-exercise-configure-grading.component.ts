@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { IssuesMap, ProgrammingExerciseGradingStatistics } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
@@ -788,4 +788,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.staticCodeAnalysisCategoriesForCharts = this.staticCodeAnalysisCategoriesForTable;
         this.backupStaticCodeAnalysisCategories = this.staticCodeAnalysisCategoriesForTable;
     }
+
+    protected readonly isCommunicationEnabled = isCommunicationEnabled;
 }

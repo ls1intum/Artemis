@@ -73,7 +73,15 @@
                 <span [jhiTranslate]="TRANSLATION_BASE + '.createChannelDescription'"></span>
             </p>
         </div>
-        <button (click)="submitForm(true)" type="button" class="btn btn-primary me-2" [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateButton'"></button>
-        <button (click)="submitForm(false)" type="button" class="btn btn-primary" [jhiTranslate]="TRANSLATION_BASE + '.createChannelButton'"></button>
+        <div class="d-flex justify-content-end mt-3">
+            <button
+                (click)="submitForm(true)"
+                type="button"
+                class="btn btn-primary me-2"
+                [disabled]="!form.valid"
+                [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateButton'"
+            ></button>
+            <button (click)="submitForm(false)" type="button" class="btn btn-primary" [disabled]="!form.valid" [jhiTranslate]="TRANSLATION_BASE + '.createChannelButton'"></button>
+        </div>
     </form>
 </div>
