@@ -117,6 +117,7 @@ public class AttachmentUnitResource {
      * @param file             the optional file to upload
      * @param keepFilename     specifies if the original filename should be kept or not
      * @param notificationText the text to be used for the notification. No notification will be sent if the parameter is not set
+     * @param hiddenPages      the pages to be hidden in the attachment unit. No hidden pages will be sent if the parameter is not set
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
     @PutMapping(value = "lectures/{lectureId}/attachment-units/{attachmentUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

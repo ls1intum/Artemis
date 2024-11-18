@@ -126,6 +126,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         return false;
     }
 
+    /**
+     * Retrieves an array of hidden page numbers from elements with IDs starting with "show-button-".
+     *
+     * @returns An array of strings representing the hidden page numbers.
+     */
     getHiddenPages() {
         return Array.from(document.querySelectorAll('[id^="show-button-"]')).map((el) => el.id.match(/show-button-(\d+)/)?.[1]);
     }
@@ -235,30 +240,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
         } finally {
             this.isPdfLoading.set(false);
-        }
-    }
-
-    /**
-     * Creates a hidden version of the current PDF attachment by removing specified pages.
-     *
-     * @param hiddenPages - An array of page numbers to be removed from the original PDF.
-     * @returns A promise that resolves to a new `File` object representing the modified PDF, or undefined if an error occurs.
-     */
-    async createHiddenVersionOfAttachment(hiddenPages: number[]) {
-        try {
-            const fileName = this.attachmentUnit()!.attachment!.name;
-            const existingPdfBytes = await this.currentPdfBlob()!.arrayBuffer();
-            const hiddenPdfDoc = await PDFDocument.load(existingPdfBytes);
-
-            const pagesToDelete = hiddenPages.map((page) => page - 1).sort((a, b) => b - a);
-            pagesToDelete.forEach((pageIndex) => {
-                hiddenPdfDoc.removePage(pageIndex);
-            });
-
-            const pdfBytes = await hiddenPdfDoc.save();
-            return new File([pdfBytes], `${fileName}_hidden.pdf`, { type: 'application/pdf' });
-        } catch (error) {
-            this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
         }
     }
 

@@ -59,6 +59,7 @@ public class SlideSplitterService {
      * Splits an Attachment Unit file into single slides and saves them as PNG files asynchronously.
      *
      * @param attachmentUnit The attachment unit to which the slides belong.
+     * @param hiddenPages    The hidden pages of the attachment unit.
      */
     @Async
     public void splitAttachmentUnitIntoSingleSlides(AttachmentUnit attachmentUnit, String hiddenPages) {
@@ -80,6 +81,7 @@ public class SlideSplitterService {
      * @param attachmentUnit The attachment unit to which the slides belong.
      * @param document       The PDF document that is already loaded.
      * @param pdfFilename    The name of the PDF file.
+     * @param hiddenPages    The hidden pages of the attachment unit.
      */
     public void splitAttachmentUnitIntoSingleSlides(PDDocument document, AttachmentUnit attachmentUnit, String pdfFilename, String hiddenPages) {
         log.debug("Splitting Attachment Unit file {} into single slides", attachmentUnit.getAttachment().getName());
