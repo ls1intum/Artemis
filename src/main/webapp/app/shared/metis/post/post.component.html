@@ -1,5 +1,5 @@
-<div class="mb-3" [ngClass]="{ 'mx-0': !isThreadSidebar }">
-    <div>
+<div class="mb-1" [ngClass]="{ 'mx-0': !isThreadSidebar, 'pinned-message': isPinned() }">
+    @if (!isConsecutive()) {
         <jhi-post-header
             [previewMode]="previewMode"
             [readOnlyMode]="readOnlyMode"
@@ -9,9 +9,8 @@
             [hasChannelModerationRights]="hasChannelModerationRights"
             (isModalOpen)="displayInlineInput = true"
             [lastReadDate]="lastReadDate"
-            (isDeleteEvent)="onDeleteEvent(true)"
         />
-    </div>
+    }
     <div class="align-items-center post-content-margin">
         <div class="col">
             <div class="mb-1">
@@ -52,19 +51,43 @@
                 }
             </div>
             @if (!displayInlineInput) {
-                <jhi-posting-content
-                    [previewMode]="previewMode"
-                    [content]="posting.content"
-                    [author]="posting.author"
-                    [isEdited]="!!posting.updatedDate"
-                    [posting]="posting"
-                    [isReply]="false"
-                    [isDeleted]="isDeleted"
-                    [deleteTimerInSeconds]="deleteTimerInSeconds"
-                    (onUndoDeleteEvent)="onDeleteEvent(false)"
-                    (userReferenceClicked)="onUserReferenceClicked($event)"
-                    (channelReferenceClicked)="onChannelReferenceClicked($event)"
-                />
+                <div class="message-container" [class.force-hover]="showDropdown" (contextmenu)="onRightClick($event)">
+                    <div class="message-content" [ngClass]="{ 'mx-0': !isThreadSidebar }">
+                        <jhi-posting-content
+                            [previewMode]="previewMode"
+                            [content]="posting.content"
+                            [author]="posting.author"
+                            [isEdited]="!!posting.updatedDate"
+                            [posting]="posting"
+                            [isReply]="false"
+                            [isDeleted]="isDeleted"
+                            [deleteTimerInSeconds]="deleteTimerInSeconds"
+                            (onUndoDeleteEvent)="onDeleteEvent(false)"
+                            (userReferenceClicked)="onUserReferenceClicked($event)"
+                            (channelReferenceClicked)="onChannelReferenceClicked($event)"
+                        ></jhi-posting-content>
+                        <div class="hover-actions post-content-margin" [ngClass]="{ 'mb-2': previewMode }">
+                            @if (!previewMode) {
+                                <jhi-post-reactions-bar
+                                    [lastReadDate]="lastReadDate"
+                                    [readOnlyMode]="readOnlyMode"
+                                    [previewMode]="previewMode"
+                                    [posting]="posting"
+                                    [(showAnswers)]="showAnswers"
+                                    [sortedAnswerPosts]="sortedAnswerPosts"
+                                    [isCommunicationPage]="isCommunicationPage"
+                                    [isThreadSidebar]="isThreadSidebar"
+                                    (openPostingCreateEditModal)="openCreateAnswerPostModal()"
+                                    (openThread)="openThread.emit()"
+                                    (isModalOpen)="displayInlineInput = true"
+                                    (mayEditOrDeleteOutput)="onMayEditOrDelete($event)"
+                                    (canPinOutput)="onCanPin($event)"
+                                    (isDeleteEvent)="onDeleteEvent(true)"
+                                />
+                            }
+                        </div>
+                    </div>
+                </div>
             }
         </div>
     </div>
@@ -74,12 +97,13 @@
         </div>
     }
     @if (!isDeleted) {
-        <div class="post-content-margin me-0 mt-2 justify-content-between" [ngClass]="{ 'mb-2': previewMode }" @fade>
+        <div class="post-content-margin justify-content-between" [ngClass]="{ 'mb-2': previewMode }">
             <!-- Post reactions -->
             @if (!previewMode) {
                 <jhi-post-reactions-bar
                     [lastReadDate]="lastReadDate"
                     [readOnlyMode]="readOnlyMode"
+                    [previewMode]="previewMode"
                     [posting]="posting"
                     [(showAnswers)]="showAnswers"
                     [sortedAnswerPosts]="sortedAnswerPosts"
@@ -87,6 +111,9 @@
                     [isThreadSidebar]="isThreadSidebar"
                     (openPostingCreateEditModal)="openCreateAnswerPostModal()"
                     (openThread)="openThread.emit()"
+                    (isModalOpen)="displayInlineInput = true"
+                    [isEmojiCount]="true"
+                    [hoverBar]="false"
                 />
             }
         </div>
@@ -108,3 +135,44 @@
     (channelReferenceClicked)="onChannelReferenceClicked($event)"
     [hasChannelModerationRights]="hasChannelModerationRights"
 />
+
+<!-- Right-Click Dropdown -->
+<div *ngIf="showDropdown" [ngStyle]="{ position: 'fixed', 'top.px': dropdownPosition.y, 'left.px': dropdownPosition.x }" class="dropdown-menu show">
+    <button class="dropdown-item d-flex" (click)="addReaction($event)">
+        <fa-icon [icon]="faSmile" class="item-icon"></fa-icon>
+        <span jhiTranslate="artemisApp.metis.post.addReaction"></span>
+    </button>
+    @if (canPin) {
+        <button class="dropdown-item d-flex" (click)="togglePin()">
+            <fa-icon [icon]="faThumbtack" class="item-icon"></fa-icon>
+            <span [jhiTranslate]="checkIfPinned() === DisplayPriority.PINNED ? 'artemisApp.metis.post.unpinMessage' : 'artemisApp.metis.post.pinMessage'"></span>
+        </button>
+    }
+    @if (mayEditOrDelete) {
+        <button class="dropdown-item d-flex editIcon" (click)="editPosting()">
+            <fa-icon [icon]="faPencilAlt" class="item-icon"></fa-icon>
+            <span jhiTranslate="artemisApp.metis.post.editMessage"></span>
+        </button>
+        <button class="dropdown-item d-flex deleteIcon" (click)="deletePost()">
+            <fa-icon [icon]="faTrash" class="item-icon"></fa-icon>
+            <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>
+        </button>
+    }
+    <button class="dropdown-item d-flex" (click)="openThread.emit()">
+        <fa-icon [icon]="faComments" class="item-icon"></fa-icon>
+        <span jhiTranslate="artemisApp.metis.post.replyMessage"></span>
+    </button>
+</div>
+
+<div #emojiPickerTrigger="cdkOverlayOrigin" cdkOverlayOrigin [ngStyle]="{ position: 'fixed', 'top.px': clickPosition.y, 'left.px': clickPosition.x }"></div>
+
+<ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayHasBackdrop]="true"
+    [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
+    [cdkConnectedOverlayOrigin]="emojiPickerTrigger"
+    [cdkConnectedOverlayOpen]="showReactionSelector"
+    (backdropClick)="toggleEmojiSelect()"
+>
+    <jhi-emoji-picker *ngIf="!readOnlyMode" (emojiSelect)="selectReaction($event)"></jhi-emoji-picker>
+</ng-template>

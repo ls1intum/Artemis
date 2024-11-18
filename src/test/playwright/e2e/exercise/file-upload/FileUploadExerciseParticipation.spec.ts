@@ -6,7 +6,7 @@ import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
 
-test.describe('File upload exercise participation', () => {
+test.describe('File upload exercise participation', { tag: '@fast' }, () => {
     let course: Course;
     let exercise: FileUploadExercise;
 

@@ -22,6 +22,8 @@ export class OpenCodeEditorButtonComponent implements OnChanges {
     courseAndExerciseNavigationUrlSegment: any[];
     @Input()
     exercise: Exercise;
+    @Input()
+    hideLabelMobile = false;
 
     courseAndExerciseNavigationUrl: string;
     activeParticipation: ProgrammingExerciseStudentParticipation;

@@ -31,6 +31,7 @@ import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.mo
 import { ArtemisExerciseInfoModule } from 'app/exercises/shared/exercise-info/exercise-info.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { ExerciseHeadersInformationComponent } from 'app/exercises/shared/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 
 const routes: Routes = [
     {
@@ -44,6 +45,8 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
 ];
+
+const standaloneComponents = [ExerciseHeadersInformationComponent];
 
 @NgModule({
     imports: [
@@ -71,6 +74,7 @@ const routes: Routes = [
         ArtemisExerciseInfoModule,
         IrisModule,
         DiscussionSectionComponent,
+        [...standaloneComponents],
     ],
     declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent, ProblemStatementComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, ProblemStatementComponent],
