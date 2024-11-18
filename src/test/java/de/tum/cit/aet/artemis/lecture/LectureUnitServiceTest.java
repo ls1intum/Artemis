@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
@@ -86,5 +87,19 @@ class LectureUnitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit1.getId(), student1.getId())).isEmpty();
         assertThat(lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(unit2.getId(), student1.getId())).isEmpty();
+    }
+
+    @Test
+    void testSaveWithCompetencyLinksWithNullLinks() {
+        AttachmentUnit lectureUnit = new AttachmentUnit();
+        lectureUnit.setCompetencyLinks(null);
+
+        LectureUnit savedLectureUnit = lectureUnitService.saveWithCompetencyLinks(lectureUnit, unit -> {
+            unit.setId(1L);
+            return unit;
+        });
+
+        assertThat(savedLectureUnit).isNotNull();
+        assertThat(savedLectureUnit.getCompetencyLinks()).isEmpty();
     }
 }
