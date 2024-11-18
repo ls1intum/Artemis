@@ -111,7 +111,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         private profileService: ProfileService,
     ) {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.isLocalCIProfile = !!profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
+            this.setLocalCIProfile(!!profileInfo?.activeProfiles.includes(PROFILE_LOCALCI));
         });
     }
 
@@ -120,6 +120,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         Object.values(this.resultTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         Object.values(this.queueEstimateTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         this.submissionTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
+        this.submissionProcessingTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
     }
 
     get exerciseBuildState() {
@@ -257,7 +258,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     .receive(newSubmissionTopic)
                     .pipe(
                         tap((submission: ProgrammingSubmission | ProgrammingSubmissionError) => {
-                            console.log('Received submission', submission);
                             if (checkIfSubmissionIsError(submission)) {
                                 const programmingSubmissionError = submission as ProgrammingSubmissionError;
                                 this.emitFailedSubmission(programmingSubmissionError.participationId, exerciseId);
@@ -317,7 +317,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     .receive(newSubmissionTopic)
                     .pipe(
                         tap((submissionProcessing: SubmissionProcessingDTO) => {
-                            console.log('Received submission processing', submissionProcessing);
                             const programmingSubmission = this.getSubmissionByCommitHash(submissionProcessing);
                             // It is possible that the submission started processing before it got saved to the database and the message was sent to the client.
                             // In this case, we cache that the submission started processing and do not emit the building state.
@@ -334,6 +333,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             const exerciseId = this.participationIdToExerciseId.get(submissionParticipationId)!;
 
                             if (!this.isNewestSubmission(programmingSubmission, exerciseId, submissionParticipationId)) {
+                                this.removeSubmissionFromProcessingCache(programmingSubmission.commitHash!);
                                 return;
                             }
 
@@ -858,6 +858,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         this.submissionTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
         this.submissionTopicsSubscribed.forEach((_, participationId) => this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participationId, exercise));
         this.submissionTopicsSubscribed.clear();
+        this.submissionProcessingTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
+        this.submissionProcessingTopicsSubscribed.clear();
         this.submissionSubjects = {};
         this.exerciseBuildStateSubjects.delete(exercise.id!);
     }
@@ -879,5 +881,30 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 this.websocketService.unsubscribe(submissionTopic);
             }
         }
+        const submissionProcessingTopic = this.submissionProcessingTopicsSubscribed.get(participationId);
+        if (submissionProcessingTopic) {
+            this.submissionProcessingTopicsSubscribed.delete(participationId);
+
+            const openSubscriptionsForTopic = [...this.submissionProcessingTopicsSubscribed.values()].filter((topic: string) => topic === submissionProcessingTopic).length;
+            // Only unsubscribe if no other participations are using this topic
+            if (openSubscriptionsForTopic === 0) {
+                this.websocketService.unsubscribe(submissionProcessingTopic);
+            }
+        }
+    }
+
+    /**
+     * Set the local CI profile to determine which build system is used. Used to set the state in tests.
+     * @param isLocalCIProfile
+     */
+    public setLocalCIProfile(isLocalCIProfile: boolean) {
+        this.isLocalCIProfile = isLocalCIProfile;
+    }
+
+    /**
+     * Get the local CI profile to determine which build system is used.
+     */
+    public getIsLocalCIProfile() {
+        return this.isLocalCIProfile;
     }
 }

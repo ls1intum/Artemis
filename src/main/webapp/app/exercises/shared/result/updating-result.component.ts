@@ -179,6 +179,25 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         this.isQueued = submissionState === ProgrammingSubmissionState.IS_QUEUED;
         this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
 
+        if (this.submissionService.getIsLocalCIProfile()) {
+            this.updateBuildTimingInfo(submissionState, buildTimingInfo);
+        }
+
+        if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {
+            this.missingResultInfo = this.generateMissingResultInfoForFailedProgrammingExerciseSubmission();
+        } else {
+            // everything ok, remove the warning
+            this.missingResultInfo = MissingResultInformation.NONE;
+        }
+    }
+
+    /**
+     * Updates the build timing information based on the submission state.
+     *
+     * @param {ProgrammingSubmissionState} submissionState - The current state of the submission.
+     * @param {BuildTimingInfo} [buildTimingInfo] - Optional object containing the build start time and the estimated completion time.
+     */
+    private updateBuildTimingInfo(submissionState: ProgrammingSubmissionState, buildTimingInfo?: BuildTimingInfo) {
         if (submissionState === ProgrammingSubmissionState.IS_QUEUED) {
             this.buildStartDate = undefined;
             this.submissionService.fetchQueueReleaseDateEstimationByParticipationId(this.participation.id!).subscribe((releaseDate) => {
@@ -193,13 +212,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         ) {
             this.estimatedCompletionDate = buildTimingInfo?.estimatedCompletionDate;
             this.buildStartDate = buildTimingInfo?.buildStartDate;
-        }
-
-        if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {
-            this.missingResultInfo = this.generateMissingResultInfoForFailedProgrammingExerciseSubmission();
-        } else {
-            // everything ok, remove the warning
-            this.missingResultInfo = MissingResultInformation.NONE;
         }
     }
 }
