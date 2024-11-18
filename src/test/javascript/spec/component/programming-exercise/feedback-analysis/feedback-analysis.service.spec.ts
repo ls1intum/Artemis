@@ -9,15 +9,32 @@ describe('FeedbackAnalysisService', () => {
     let httpMock: HttpTestingController;
 
     const feedbackDetailsMock: FeedbackDetail[] = [
-        { detailText: 'Feedback 1', testCaseName: 'test1', count: 5, relativeCount: 25.0, taskName: '1', errorCategory: 'StudentError' },
-        { detailText: 'Feedback 2', testCaseName: 'test2', count: 3, relativeCount: 15.0, taskName: '2', errorCategory: 'StudentError' },
+        {
+            concatenatedFeedbackIds: [1, 2],
+            detailText: 'Feedback 1',
+            testCaseName: 'test1',
+            count: 5,
+            relativeCount: 25.0,
+            taskName: '1',
+            errorCategory: 'StudentError',
+        },
+        {
+            concatenatedFeedbackIds: [3, 4],
+            detailText: 'Feedback 2',
+            testCaseName: 'test2',
+            count: 3,
+            relativeCount: 15.0,
+            taskName: '2',
+            errorCategory: 'StudentError',
+        },
     ];
 
     const feedbackAnalysisResponseMock = {
         feedbackDetails: { resultsOnPage: feedbackDetailsMock, numberOfPages: 1 },
         totalItems: 2,
-        totalAmountOfTasks: 2,
+        taskNames: ['task1', 'task2'],
         testCaseNames: ['test1', 'test2'],
+        errorCategories: ['StudentError'],
     };
 
     beforeEach(() => {
@@ -34,7 +51,7 @@ describe('FeedbackAnalysisService', () => {
     });
 
     describe('search', () => {
-        it('should retrieve feedback details for a given exercise', async () => {
+        it('should retrieve feedback details for a given exercise with concatenatedFeedbackIds', async () => {
             const pageable = {
                 page: 1,
                 pageSize: 10,
@@ -53,6 +70,8 @@ describe('FeedbackAnalysisService', () => {
 
             const result = await responsePromise;
             expect(result).toEqual(feedbackAnalysisResponseMock);
+            expect(result.feedbackDetails.resultsOnPage[0].concatenatedFeedbackIds).toStrictEqual([1, 2]);
+            expect(result.feedbackDetails.resultsOnPage[1].concatenatedFeedbackIds).toStrictEqual([3, 4]);
         });
     });
 
@@ -66,6 +85,51 @@ describe('FeedbackAnalysisService', () => {
 
             const result = await responsePromise;
             expect(result).toBe(10);
+        });
+    });
+
+    describe('getParticipationForFeedbackIds', () => {
+        it('should retrieve paginated participation details for specified feedback IDs', async () => {
+            const feedbackIds = [1, 2];
+            const pageable = {
+                page: 1,
+                pageSize: 10,
+                sortedColumn: 'participationId',
+                sortingOrder: SortingOrder.ASCENDING,
+            };
+            const participationResponseMock = {
+                content: [
+                    {
+                        courseId: 1,
+                        participationId: 101,
+                        firstName: 'John',
+                        lastName: 'Doe',
+                        login: 'johndoe',
+                        repositoryName: 'repo1',
+                    },
+                    {
+                        courseId: 1,
+                        participationId: 102,
+                        firstName: 'Jane',
+                        lastName: 'Smith',
+                        login: 'janesmith',
+                        repositoryName: 'repo2',
+                    },
+                ],
+                numberOfPages: 1,
+                totalItems: 2,
+            };
+
+            const responsePromise = service.getParticipationForFeedbackIds(1, feedbackIds, pageable);
+
+            const req = httpMock.expectOne('api/exercises/1/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING');
+            expect(req.request.method).toBe('GET');
+            req.flush(participationResponseMock);
+
+            const result = await responsePromise;
+            expect(result).toEqual(participationResponseMock);
+            expect(result.content[0].firstName).toBe('John');
+            expect(result.content[1].firstName).toBe('Jane');
         });
     });
 });
