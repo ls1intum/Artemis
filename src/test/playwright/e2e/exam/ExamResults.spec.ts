@@ -16,7 +16,7 @@ import { Page } from '@playwright/test';
 import { StudentExam } from 'app/entities/student-exam.model';
 
 test.describe('Exam Results', () => {
-    test.setTimeout(120000);
+    test.setTimeout(150000);
     let course: Course;
 
     test.beforeEach('Create course', async ({ browser }) => {

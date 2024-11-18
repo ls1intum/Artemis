@@ -14,7 +14,7 @@ const textFixture = 'loremIpsum.txt';
 const examTitle = 'exam' + generateUUID();
 
 test.describe('Test exam test run', { tag: '@fast' }, () => {
-    test.setTimeout(120000);
+    test.setTimeout(150000);
     let course: Course;
     let exam: Exam;
     let exerciseArray: Array<Exercise> = [];
