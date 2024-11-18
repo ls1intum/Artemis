@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 
 import java.net.URLEncoder;
@@ -8,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,9 +84,9 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         // temporarily remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
 
-        JobTimingInfo jobTimingInfo1 = new JobTimingInfo(ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), ZonedDateTime.now().plusMinutes(3), null, 0);
-        JobTimingInfo jobTimingInfo2 = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), null, 0);
-        JobTimingInfo jobTimingInfo3 = new JobTimingInfo(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(9), ZonedDateTime.now().plusSeconds(150), null, 0);
+        JobTimingInfo jobTimingInfo1 = new JobTimingInfo(ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), ZonedDateTime.now().plusMinutes(3), null, 20);
+        JobTimingInfo jobTimingInfo2 = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), null, 20);
+        JobTimingInfo jobTimingInfo3 = new JobTimingInfo(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(9), ZonedDateTime.now().plusSeconds(150), null, 20);
 
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
@@ -93,8 +95,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         buildAgent = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
 
         job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
-        job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
-        agent1 = new BuildAgentInformation(buildAgent, 1, 0, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, new ArrayList<>(List.of(job2)), null);
+        job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
+        agent1 = new BuildAgentInformation(buildAgent, 2, 1, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, new ArrayList<>(List.of(job2)), null);
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", buildAgent, 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
         BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", buildAgent, 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo2,
@@ -369,5 +371,39 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
         request.put("/api/admin/agent/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
         await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildJob() throws Exception {
+        var now = ZonedDateTime.now();
+        JobTimingInfo jobTimingInfo1 = new JobTimingInfo(now, now, null, now.plusSeconds(24), 24);
+        JobTimingInfo jobTimingInfo2 = new JobTimingInfo(now, now.plusSeconds(5), null, now.plusSeconds(29), 24);
+        JobTimingInfo jobTimingInfo3 = new JobTimingInfo(now.plusSeconds(1), null, null, null, 24);
+        JobTimingInfo jobTimingInfo4 = new JobTimingInfo(now.plusSeconds(2), null, null, null, 24);
+        JobTimingInfo jobTimingInfo5 = new JobTimingInfo(now.plusSeconds(3), null, null, null, 24);
+
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
+        RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
+
+        var job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
+        var job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
+        var job3 = new BuildJobQueueItem("3", "job3", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo3, buildConfig, null);
+        var job4 = new BuildJobQueueItem("4", "job4", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo4, buildConfig, null);
+        var job5 = new BuildJobQueueItem("5", "job5", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo5, buildConfig, null);
+
+        processingJobs.clear();
+        processingJobs.put(job1.id(), job1);
+        processingJobs.put(job2.id(), job2);
+        queuedJobs.clear();
+        queuedJobs.put(job3);
+        queuedJobs.put(job4);
+        queuedJobs.put(job5);
+
+        agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentInformation.BuildAgentStatus.ACTIVE, null, null);
+        buildAgentInformation.put(buildAgent.memberAddress(), agent1);
+
+        var queueDurationEstimation = sharedQueueManagementService.getBuildJobEstimatedQueueReleaseDate(job4.participationId());
+        assertThat(queueDurationEstimation).isCloseTo(now.plusSeconds(48), within(1, ChronoUnit.SECONDS));
     }
 }

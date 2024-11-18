@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIREC
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -21,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +61,7 @@ import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -92,6 +95,10 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     private String commitHash;
 
+    private IQueue<BuildJobQueueItem> queuedJobs;
+
+    private IMap<String, BuildJobQueueItem> processingJobs;
+
     @BeforeAll
     void setupAll() {
         CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
@@ -121,6 +128,9 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
                 Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
 
         localVCLocalCITestService.mockInspectImage(dockerClient);
+
+        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
+        processingJobs = hazelcastInstance.getMap("processingJobs");
     }
 
     @AfterEach
@@ -502,5 +512,34 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         hazelcastInstance.getTopic("resumeBuildAgentTopic").publish(buildAgentName);
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testBuildJobTimingInfo() {
+        // Pause build agent processing
+        sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        buildConfig.setBuildDurationSeconds(20);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+
+        await().until(() -> queuedJobs.stream().anyMatch(buildJobQueueItem -> buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash)
+                && buildJobQueueItem.participationId() == studentParticipation.getId()));
+
+        BuildJobQueueItem item = queuedJobs.stream().filter(i -> i.buildConfig().commitHashToBuild().equals(commitHash) && i.participationId() == studentParticipation.getId())
+                .findFirst().orElseThrow();
+        assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(24);
+        sharedQueueProcessingService.init();
+
+        await().until(() -> processingJobs.values().stream().anyMatch(buildJobQueueItem -> buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash)
+                && buildJobQueueItem.participationId() == studentParticipation.getId()));
+        item = processingJobs.values().stream().filter(i -> i.buildConfig().commitHashToBuild().equals(commitHash) && i.participationId() == studentParticipation.getId())
+                .findFirst().orElseThrow();
+        assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(24);
+        assertThat(item.jobTimingInfo().estimatedCompletionDate()).isCloseTo(item.jobTimingInfo().buildStartDate().plusSeconds(24), within(500, ChronoUnit.MILLIS));
     }
 }

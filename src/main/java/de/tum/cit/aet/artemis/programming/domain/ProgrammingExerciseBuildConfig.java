@@ -110,7 +110,8 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.setAllowBranching(originalBuildConfig.isAllowBranching());
         this.setBranchRegex(originalBuildConfig.getBranchRegex());
         this.setProgrammingExercise(null);
-        this.buildDurationSeconds = originalBuildConfig.buildDurationSeconds;
+        this.setBuildDurationSeconds(0);
+        this.setSuccessfulBuildCount(0);
         this.buildPlanAccessSecret = null;
     }
 

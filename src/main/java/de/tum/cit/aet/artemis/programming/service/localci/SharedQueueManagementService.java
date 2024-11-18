@@ -99,6 +99,7 @@ public class SharedQueueManagementService {
         this.pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
         this.resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
         this.buildAgentInformation.addEntryListener(new BuildAgentListener(), false);
+        this.getBuildAgentsCapacity();
     }
 
     /**
