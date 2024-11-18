@@ -452,10 +452,11 @@ public class LocalVCServletService {
         ProgrammingExerciseParticipation participation;
         try {
             if (usingSSH) {
-                participation = programmingExerciseParticipationService.retrieveParticipationWithSubmissionsByRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
+                participation = programmingExerciseParticipationService.retrieveParticipationWithSubmissionsByRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString(),
+                        exercise);
             }
             else {
-                participation = programmingExerciseParticipationService.retrieveParticipationByRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
+                participation = programmingExerciseParticipationService.retrieveParticipationByRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString(), exercise);
             }
         }
         catch (EntityNotFoundException e) {
@@ -493,8 +494,12 @@ public class LocalVCServletService {
      */
     private boolean checkIfRepositoryIsAuxiliaryOrTestRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName, RepositoryActionType repositoryActionType,
             User user) throws LocalVCForbiddenException {
-        if (authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) && (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())
-                || auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise))) {
+        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user) && repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+            throw new LocalVCForbiddenException();
+        }
+
+        if (authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)
+                && (auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise))) {
             try {
                 repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryActionType == RepositoryActionType.WRITE, exercise, user, repositoryTypeOrUserName);
             }
@@ -599,7 +604,7 @@ public class LocalVCServletService {
         ProgrammingExercise exercise = cachedExercise.orElseGet(() -> getProgrammingExercise(projectKey));
         ProgrammingExerciseParticipation participation;
         try {
-            participation = cachedParticipation.orElseGet(() -> retrieveParticipationFromLocalVCRepositoryUri(localVCRepositoryUri));
+            participation = cachedParticipation.orElseGet(() -> retrieveParticipationFromLocalVCRepositoryUri(localVCRepositoryUri, exercise));
         }
         catch (EntityNotFoundException e) {
             if (isRepositoryAuxiliaryRepository(exercise, repositoryTypeOrUserName)) {
@@ -821,10 +826,10 @@ public class LocalVCServletService {
      * @param localVCRepositoryUri the {@link LocalVCRepositoryUri} containing details about the repository.
      * @return the {@link ProgrammingExerciseParticipation} corresponding to the repository URI.
      */
-    private ProgrammingExerciseParticipation retrieveParticipationFromLocalVCRepositoryUri(LocalVCRepositoryUri localVCRepositoryUri) {
+    private ProgrammingExerciseParticipation retrieveParticipationFromLocalVCRepositoryUri(LocalVCRepositoryUri localVCRepositoryUri, ProgrammingExercise exercise) {
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
         var repositoryURL = localVCRepositoryUri.toString().replace("/git-upload-pack", "").replace("/git-receive-pack", "");
-        return programmingExerciseParticipationService.retrieveParticipationWithSubmissionsByRepository(repositoryTypeOrUserName, repositoryURL);
+        return programmingExerciseParticipationService.retrieveParticipationWithSubmissionsByRepository(repositoryTypeOrUserName, repositoryURL, exercise);
     }
 
     /**
@@ -910,7 +915,7 @@ public class LocalVCServletService {
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
             AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;
             LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(servletRequest);
-            var participation = retrieveParticipationFromLocalVCRepositoryUri(localVCRepositoryUri);
+            var participation = retrieveParticipationFromLocalVCRepositoryUri(localVCRepositoryUri, null);
             var ipAddress = servletRequest.getRemoteAddr();
             vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
         }

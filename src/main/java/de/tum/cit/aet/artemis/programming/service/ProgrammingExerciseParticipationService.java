@@ -485,9 +485,9 @@ public class ProgrammingExerciseParticipationService {
      * @param repositoryURI            the participation's repository URL
      * @return the participation belonging to the provided repositoryURI and repository type or username
      */
-    public ProgrammingExerciseParticipation retrieveParticipationWithSubmissionsByRepository(String repositoryTypeOrUserName, String repositoryURI) {
+    public ProgrammingExerciseParticipation retrieveParticipationWithSubmissionsByRepository(String repositoryTypeOrUserName, String repositoryURI, ProgrammingExercise exercise) {
         if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
-            return solutionParticipationRepository.findWithSubmissionsByRepositoryUriElseThrow(repositoryURI);
+            return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
         }
         if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
             return templateParticipationRepository.findWithSubmissionsByRepositoryUriElseThrow(repositoryURI);
@@ -508,9 +508,9 @@ public class ProgrammingExerciseParticipationService {
      * @param repositoryURI            the participation's repository URL
      * @return the participation belonging to the provided repositoryURI and repository type or username
      */
-    public ProgrammingExerciseParticipation retrieveParticipationByRepository(String repositoryTypeOrUserName, String repositoryURI) {
+    public ProgrammingExerciseParticipation retrieveParticipationByRepository(String repositoryTypeOrUserName, String repositoryURI, ProgrammingExercise exercise) {
         if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
-            return solutionParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
+            return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
         }
         if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
             return templateParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
