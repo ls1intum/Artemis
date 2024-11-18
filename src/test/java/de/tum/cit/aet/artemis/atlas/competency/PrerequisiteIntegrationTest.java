@@ -280,6 +280,12 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportAllCompetenciesWithSomeExisting() throws Exception {
+        shouldImportAllCompetenciesWithSomeExisting(Prerequisite::new, 3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldImportAllExerciseAndLectureWithCompetency() throws Exception {
         super.shouldImportAllExerciseAndLectureWithCompetency();
     }

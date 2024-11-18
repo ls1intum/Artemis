@@ -362,7 +362,7 @@ public class LocalVCServletService {
         return isAllowedRepository && authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
 
-    private LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
+    public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
         return new LocalVCRepositoryUri(request.getRequestURL().toString().replace("/info/refs", ""));
     }
 
@@ -797,24 +797,26 @@ public class LocalVCServletService {
      * This method logs the access information if the HTTP request is a POST request and the action
      * is not performed by a build job user. The repository action type is set as a push action.
      *
-     * This method is asynchronous.
+     * @param method              the HTTP method of the request (expected to be "POST" for logging to occur)
+     * @param authorizationHeader the authorization header containing the username and password in basic authentication format
+     * @param localVcUri          the {@link LocalVCRepositoryUri} identifying the repository in the local version control system
      *
-     * @param request the {@link HttpServletRequest} containing the HTTP request data, including headers.
+     *                                This method is asynchronous.
+     *
      */
     @Async
-    public void updateVCSAccessLogForPushHTTPS(HttpServletRequest request) {
-        if (!request.getMethod().equals("POST")) {
+    public void updateVCSAccessLogForPushHTTPS(String method, String authorizationHeader, LocalVCRepositoryUri localVcUri) {
+        if (!method.equals("POST")) {
             return;
         }
         try {
-            String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             String userName = usernameAndPassword.username();
             if (userName.equals(BUILD_USER_NAME)) {
                 return;
             }
             RepositoryActionType repositoryActionType = RepositoryActionType.PUSH;
-            var participation = getExerciseParticipationFromRequest(request);
+            var participation = retrieveParticipationFromLocalVCRepositoryUri(localVcUri);
 
             vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(participation, repositoryActionType));
         }
