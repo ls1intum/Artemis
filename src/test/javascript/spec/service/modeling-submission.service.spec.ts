@@ -118,6 +118,25 @@ describe('ModelingSubmission Service', () => {
         tick();
     }));
 
+    it('should get submissions with results for participation', fakeAsync(() => {
+        const { participationId, returnedFromService } = getDefaultValues();
+        const submissions = [returnedFromService];
+
+        service
+            .getSubmissionsWithResultsForParticipation(participationId)
+            .pipe(take(1))
+            .subscribe((resp) => {
+                expect(resp).toEqual([returnedFromService]);
+            });
+
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: `api/participations/${participationId}/submissions-with-results`,
+        });
+        req.flush(submissions);
+        tick();
+    }));
+
     afterEach(() => {
         httpMock.verify();
     });
