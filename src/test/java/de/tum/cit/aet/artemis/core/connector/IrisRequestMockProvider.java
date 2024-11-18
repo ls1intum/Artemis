@@ -157,7 +157,7 @@ public class IrisRequestMockProvider {
     }
 
     public void mockJolEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
-        mockServer.expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/course-chat/jol/run")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+        mockServer.expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/course-chat/default/run?event=jol")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
             var mockRequest = (MockClientHttpRequest) request;
             var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisCourseChatPipelineExecutionDTO.class);
             responseConsumer.accept(dto);

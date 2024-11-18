@@ -139,10 +139,10 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         });
         competencyJolService.setJudgementOfLearning(competency.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), (short) jolValue);
 
-        await().atMost(3, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
         verify(irisCourseChatSessionService, times(1)).onJudgementOfLearningSet(any(CompetencyJol.class));
-        verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("jol"), eq(irisSession), any(CompetencyJol.class));
+        verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), eq(irisSession), any(CompetencyJol.class));
 
     }
 
