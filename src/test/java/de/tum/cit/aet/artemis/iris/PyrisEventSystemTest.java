@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.iris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -35,7 +34,6 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisBuildFailedEventSettings;
@@ -90,9 +88,6 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private TeamUtilService teamUtilService;
-
-    @Autowired
-    private TeamRepository teamRepo;
 
     private ProgrammingExercise exercise;
 
@@ -279,7 +274,7 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         createSubmissionWithScore(studentParticipation, 40);
         createSubmissionWithScore(studentParticipation, 40);
         var result = createSubmissionWithScore(studentParticipation, 40);
-        assertThrows(AccessForbiddenAlertException.class, () -> pyrisEventService.trigger(new NewResultEvent(result)));
+        assertThatExceptionOfType(AccessForbiddenAlertException.class).isThrownBy(() -> pyrisEventService.trigger(new NewResultEvent(result)));
     }
 
     @Test
@@ -289,7 +284,7 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         // Create a failing submission for the student.
         var result = createFailingSubmission(studentParticipation);
-        assertThrows(AccessForbiddenAlertException.class, () -> irisExerciseChatSessionService.onBuildFailure(result));
+        assertThatExceptionOfType(AccessForbiddenAlertException.class).isThrownBy(() -> pyrisEventService.trigger(new NewResultEvent(result)));
     }
 
     @Test
@@ -297,7 +292,7 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     void testShouldNotFireJolEventWhenEventSettingDisabled() {
         deactivateEventSettingsFor(IrisJolEventSettings.class, course);
         var jol = competencyUtilService.createJol(competency, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), (short) 3, ZonedDateTime.now(), 0.0D, 0.0D);
-        assertThrows(AccessForbiddenAlertException.class, () -> pyrisEventService.trigger(new CompetencyJolSetEvent(jol)));
+        assertThatExceptionOfType(AccessForbiddenAlertException.class).isThrownBy(() -> pyrisEventService.trigger(new CompetencyJolSetEvent(jol)));
     }
 
     @Test
@@ -361,7 +356,8 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, owner);
         var result = createFailingSubmission(teamParticipation);
 
-        assertThrows(ConflictException.class, () -> irisExerciseChatSessionService.onBuildFailure(result));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> irisExerciseChatSessionService.onBuildFailure(result))
+                .withMessageStartingWith("Build failure event is not supported for team participations");
     }
 
     @Test
@@ -374,7 +370,8 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         createSubmissionWithScore(teamParticipation, 40);
         var result = createSubmissionWithScore(teamParticipation, 40);
 
-        assertThrows(ConflictException.class, () -> irisExerciseChatSessionService.onNewResult(result));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> irisExerciseChatSessionService.onNewResult(result))
+                .withMessageStartingWith("Progress stalled event is not supported for team participations");
     }
 
 }
