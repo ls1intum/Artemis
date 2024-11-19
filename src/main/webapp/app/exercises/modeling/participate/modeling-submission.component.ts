@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
@@ -640,14 +640,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return versionMatch && !modelMatch;
         }
         return false;
-    }
-
-    // displays the alert for confirming leaving the page if there are unsaved changes
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification(event: any): void {
-        if (!this.canDeactivate()) {
-            event.returnValue = this.translateService.instant('pendingChanges');
-        }
     }
 
     /**

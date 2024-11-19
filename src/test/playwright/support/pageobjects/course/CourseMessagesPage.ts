@@ -213,9 +213,8 @@ export class CourseMessagesPage {
      * @param message - The message to be written.
      */
     async writeMessage(message: string) {
-        const messageField = this.page.locator('.markdown-editor .monaco-editor');
-        await messageField.click();
-        await messageField.pressSequentially(message);
+        const messageField = this.page.locator('.markdown-editor .monaco-editor textarea');
+        await messageField.fill(message);
     }
 
     /**
@@ -243,10 +242,17 @@ export class CourseMessagesPage {
      */
     async editMessage(messageId: number, message: string) {
         const postLocator = this.getSinglePost(messageId);
-        await postLocator.locator('.editIcon').click();
-        const editorLocator = postLocator.locator('.markdown-editor .monaco-editor');
-        await editorLocator.click();
-        await editorLocator.pressSequentially(message);
+        await postLocator.locator('.message-container').click({ button: 'right' });
+        await this.page.waitForSelector('.dropdown-menu.show');
+
+        const editButton = postLocator.locator('.dropdown-menu.show .editIcon');
+        if (await editButton.isVisible()) {
+            await editButton.click();
+        } else {
+            await postLocator.locator('.reaction-button.edit').click();
+        }
+        const editorLocator = postLocator.locator('.markdown-editor .monaco-editor textarea');
+        await editorLocator.fill(message);
         const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/messages/*`);
         await postLocator.locator('#save').click();
         await responsePromise;
@@ -258,9 +264,16 @@ export class CourseMessagesPage {
      */
     async deleteMessage(messageId: number) {
         const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/messages/*`);
-        const deleteIcon = this.getSinglePost(messageId).locator('.deleteIcon');
-        await deleteIcon.click();
-        await deleteIcon.click();
+        const postLocator = this.getSinglePost(messageId);
+        await postLocator.locator('.message-container').click({ button: 'right' });
+        await this.page.waitForSelector('.dropdown-menu.show');
+
+        const deleteButton = postLocator.locator('.dropdown-menu.show .deleteIcon');
+        if (await deleteButton.isVisible()) {
+            await deleteButton.click();
+        } else {
+            await postLocator.locator('.reaction-button.delete').click();
+        }
         await responsePromise;
     }
 

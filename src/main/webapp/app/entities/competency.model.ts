@@ -46,6 +46,12 @@ export enum CourseCompetencyType {
 
 export const DEFAULT_MASTERY_THRESHOLD = 100;
 
+export const HIGH_COMPETENCY_LINK_WEIGHT = 1;
+export const MEDIUM_COMPETENCY_LINK_WEIGHT = 0.5;
+export const LOW_COMPETENCY_LINK_WEIGHT = 0.25;
+export const LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF = 0.375; // halfway between low and medium
+export const MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = 0.75; // halfway between medium and high
+
 export abstract class BaseCompetency implements BaseEntity {
     id?: number;
     title?: string;
@@ -62,8 +68,8 @@ export abstract class CourseCompetency extends BaseCompetency {
     masteryThreshold?: number;
     optional?: boolean;
     linkedStandardizedCompetency?: StandardizedCompetency;
-    exercises?: Exercise[];
-    lectureUnits?: LectureUnit[];
+    exerciseLinks?: CompetencyExerciseLink[];
+    lectureUnitLinks?: CompetencyLectureUnitLink[];
     userProgress?: CompetencyProgress[];
     courseProgress?: CourseCompetencyProgress;
     course?: Course;
@@ -74,12 +80,41 @@ export abstract class CourseCompetency extends BaseCompetency {
     protected constructor(type: CourseCompetencyType) {
         super();
         this.type = type;
+        this.masteryThreshold = DEFAULT_MASTERY_THRESHOLD;
     }
 }
 
 export class Competency extends CourseCompetency {
     constructor() {
         super(CourseCompetencyType.COMPETENCY);
+    }
+}
+
+export class CompetencyLearningObjectLink {
+    competency?: CourseCompetency;
+    weight: number;
+
+    constructor(competency: CourseCompetency | undefined, weight: number) {
+        this.competency = competency;
+        this.weight = weight;
+    }
+}
+
+export class CompetencyExerciseLink extends CompetencyLearningObjectLink {
+    exercise?: Exercise;
+
+    constructor(competency: CourseCompetency | undefined, exercise: Exercise | undefined, weight: number) {
+        super(competency, weight);
+        this.exercise = exercise;
+    }
+}
+
+export class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
+    lectureUnit?: LectureUnit;
+
+    constructor(competency: CourseCompetency | undefined, lectureUnit: LectureUnit | undefined, weight: number) {
+        super(competency, weight);
+        this.lectureUnit = lectureUnit;
     }
 }
 
@@ -145,6 +180,8 @@ export enum ConfidenceReason {
     MORE_EASY_POINTS = 'MORE_EASY_POINTS',
     MORE_HARD_POINTS = 'MORE_HARD_POINTS',
     QUICKLY_SOLVED_EXERCISES = 'QUICKLY_SOLVED_EXERCISES',
+    MORE_LOW_WEIGHTED_EXERCISES = 'MORE_LOW_WEIGHTED_EXERCISES',
+    MORE_HIGH_WEIGHTED_EXERCISES = 'MORE_HIGH_WEIGHTED_EXERCISES',
 }
 
 export class CompetencyProgress {

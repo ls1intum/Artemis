@@ -27,6 +27,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { CreateExerciseUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
+import { CompetencyLectureUnitLink } from '../../../../../../main/webapp/app/entities/competency.model';
 
 @Component({ selector: 'jhi-video-unit-form', template: '' })
 class VideoUnitFormStubComponent {
@@ -164,14 +165,18 @@ describe('LectureWizardUnitComponent', () => {
             releaseDate: dayjs().year(2010).month(3).date(5),
             description: 'Lorem Ipsum',
             source: 'https://youtu.be/dQw4w9WgXcQ',
-            competencies: [
-                {
-                    id: 1,
-                    masteryThreshold: 0,
-                    optional: false,
-                    taxonomy: undefined,
-                    title: 'Test',
-                },
+            competencyLinks: [
+                new CompetencyLectureUnitLink(
+                    {
+                        id: 1,
+                        masteryThreshold: 0,
+                        optional: false,
+                        taxonomy: undefined,
+                        title: 'Test',
+                    },
+                    undefined,
+                    1,
+                ),
             ],
         };
 
@@ -201,7 +206,7 @@ describe('LectureWizardUnitComponent', () => {
             expect(videoUnitCallArgument.description).toEqual(formData.description);
             expect(videoUnitCallArgument.releaseDate).toEqual(formData.releaseDate);
             expect(videoUnitCallArgument.source).toEqual(formData.source);
-            expect(videoUnitCallArgument.competencies).toEqual(formData.competencies);
+            expect(videoUnitCallArgument.competencyLinks).toEqual(formData.competencyLinks);
             expect(lectureIdCallArgument).toBe(1);
 
             expect(createStub).toHaveBeenCalledOnce();
@@ -237,14 +242,18 @@ describe('LectureWizardUnitComponent', () => {
             name: 'Test',
             releaseDate: dayjs().year(2010).month(3).date(5),
             content: 'Lorem Ipsum',
-            competencies: [
-                {
-                    id: 1,
-                    masteryThreshold: 0,
-                    optional: false,
-                    taxonomy: undefined,
-                    title: 'Test',
-                },
+            competencyLinks: [
+                new CompetencyLectureUnitLink(
+                    {
+                        id: 1,
+                        masteryThreshold: 0,
+                        optional: false,
+                        taxonomy: undefined,
+                        title: 'Test',
+                    },
+                    undefined,
+                    1,
+                ),
             ],
         };
 
@@ -279,7 +288,7 @@ describe('LectureWizardUnitComponent', () => {
             expect(textUnitCallArgument.name).toEqual(formData.name);
             expect(textUnitCallArgument.content).toEqual(formData.content);
             expect(textUnitCallArgument.releaseDate).toEqual(formData.releaseDate);
-            expect(textUnitCallArgument.competencies).toEqual(formData.competencies);
+            expect(textUnitCallArgument.competencyLinks).toEqual(formData.competencyLinks);
             expect(lectureIdCallArgument).toBe(1);
 
             expect(createStub).toHaveBeenCalledOnce();
@@ -396,14 +405,18 @@ describe('LectureWizardUnitComponent', () => {
             releaseDate: dayjs().year(2010).month(3).date(5),
             description: 'Lorem Ipsum',
             source: 'https://www.example.com',
-            competencies: [
-                {
-                    id: 1,
-                    masteryThreshold: 0,
-                    optional: false,
-                    taxonomy: undefined,
-                    title: 'Test',
-                },
+            competencyLinks: [
+                new CompetencyLectureUnitLink(
+                    {
+                        id: 1,
+                        masteryThreshold: 0,
+                        optional: false,
+                        taxonomy: undefined,
+                        title: 'Test',
+                    },
+                    undefined,
+                    1,
+                ),
             ],
         };
 
@@ -433,7 +446,7 @@ describe('LectureWizardUnitComponent', () => {
             expect(onlineUnitCallArgument.description).toEqual(formDate.description);
             expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
             expect(onlineUnitCallArgument.source).toEqual(formDate.source);
-            expect(onlineUnitCallArgument.competencies).toEqual(formDate.competencies);
+            expect(onlineUnitCallArgument.competencyLinks).toEqual(formDate.competencyLinks);
             expect(lectureIdCallArgument).toBe(1);
 
             expect(createStub).toHaveBeenCalledOnce();
@@ -474,14 +487,18 @@ describe('LectureWizardUnitComponent', () => {
                 releaseDate: dayjs().year(2010).month(3).date(5),
                 version: 2,
                 updateNotificationText: 'lorem ipsum',
-                competencies: [
-                    {
-                        id: 1,
-                        masteryThreshold: 0,
-                        optional: false,
-                        taxonomy: undefined,
-                        title: 'Test',
-                    },
+                competencyLinks: [
+                    new CompetencyLectureUnitLink(
+                        {
+                            id: 1,
+                            masteryThreshold: 0,
+                            optional: false,
+                            taxonomy: undefined,
+                            title: 'Test',
+                        },
+                        undefined,
+                        1,
+                    ),
                 ],
             },
             fileProperties: {

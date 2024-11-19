@@ -11,7 +11,7 @@ import { expect } from '@playwright/test';
 const uid = generateUUID();
 const examTitle = 'test-exam' + uid;
 
-test.describe('Test Exam management', () => {
+test.describe('Test Exam management', { tag: '@slow' }, () => {
     let course: Course;
     let exam: Exam;
 
@@ -90,6 +90,7 @@ test.describe('Test Exam management', () => {
             await examManagement.openExerciseGroups(exam.id!);
             await examExerciseGroups.clickAddProgrammingExercise(exerciseGroup.id!);
             const programmingExerciseTitle = 'programming' + uid;
+            await programmingExerciseCreation.changeEditMode();
             await programmingExerciseCreation.setTitle(programmingExerciseTitle);
             await programmingExerciseCreation.setShortName(programmingExerciseTitle);
             await programmingExerciseCreation.setPackageName('de.test');

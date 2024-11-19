@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportReposi
 import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageReportEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.settings.IdeRepository;
 import de.tum.cit.aet.artemis.programming.repository.settings.UserIdeMappingRepository;
@@ -38,6 +37,7 @@ import de.tum.cit.aet.artemis.programming.service.hestia.CodeHintService;
 import de.tum.cit.aet.artemis.programming.service.hestia.ExerciseHintService;
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
@@ -79,7 +79,7 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
     protected ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
-    protected ProgrammingExerciseTaskRepository taskRepository;
+    protected ProgrammingExerciseTaskTestRepository taskRepository;
 
     @Autowired
     protected ProgrammingExerciseTestCaseTestRepository testCaseRepository;

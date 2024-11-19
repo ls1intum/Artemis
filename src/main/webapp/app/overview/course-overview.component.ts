@@ -12,12 +12,14 @@ import {
     ViewChild,
     ViewChildren,
     ViewContainerRef,
+    inject,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
     IconDefinition,
     faChalkboardUser,
     faChartBar,
+    faChartColumn,
     faChevronLeft,
     faChevronRight,
     faCircleNotch,
@@ -29,7 +31,6 @@ import {
     faFlag,
     faGraduationCap,
     faListAlt,
-    faListCheck,
     faNetworkWired,
     faPersonChalkboard,
     faQuestion,
@@ -67,6 +68,7 @@ import { CourseConversationsComponent } from 'app/overview/course-conversations/
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 import { LtiService } from 'app/shared/service/lti.service';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 
 interface CourseActionItem {
     title: string;
@@ -96,6 +98,9 @@ interface SidebarItem {
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private ngUnsubscribe = new Subject<void>();
+    private closeSidebarEventSubscription: Subscription;
+    private openSidebarEventSubscription: Subscription;
+    private toggleSidebarEventSubscription: Subscription;
 
     // course id of the course that is currently displayed
     private courseId: number;
@@ -125,19 +130,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isExamStarted = false;
     private examStartedSubscription: Subscription;
     readonly MIN_DISPLAYED_COURSES: number = 6;
-    isLti: boolean = false;
+    isShownViaLti = false;
     private ltiSubscription: Subscription;
 
     // Properties to track hidden items for dropdown menu
-    dropdownOpen: boolean = false;
-    anyItemHidden: boolean = false;
+    anyItemHidden = false;
     hiddenItems: SidebarItem[] = [];
-    thresholdsForEachSidebarItem: number[] = [];
-    dropdownOffset: number;
-    dropdownClickNumber: number = 0;
     readonly WINDOW_OFFSET: number = 300;
     readonly ITEM_HEIGHT: number = 38;
-    readonly BREADCRUMB_AND_NAVBAR_HEIGHT: number = 88;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -179,12 +179,15 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     facSidebar = facSidebar;
     faEllipsis = faEllipsis;
     faQuestion = faQuestion;
+    faChartColumn = faChartColumn;
 
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
 
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly isCommunicationEnabled = isCommunicationEnabled;
+
+    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
 
     constructor(
         private courseService: CourseManagementService,
@@ -206,6 +209,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     ) {}
 
     async ngOnInit() {
+        this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
+            this.isSidebarCollapsed = true;
+        });
+
+        this.closeSidebarEventSubscription = this.courseSidebarService.closeSidebar$.subscribe(() => {
+            this.isSidebarCollapsed = false;
+        });
+
+        this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
+            this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? !this.isSidebarCollapsed;
+        });
         this.subscription = this.route.params.subscribe((params) => {
             this.courseId = Number(params.courseId);
         });
@@ -242,8 +256,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
         this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
-        this.ltiSubscription = this.ltiService.isLti$.subscribe((isLti) => {
-            this.isLti = isLti;
+        this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
+            this.isShownViaLti = isShownViaLti;
         });
     }
 
@@ -483,7 +497,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
         const exercisesItem: SidebarItem = {
             routerLink: 'exercises',
-            icon: faListCheck,
+            icon: faListAlt,
             title: 'Exercises',
             translation: 'artemisApp.courseOverview.menu.exercises',
             hidden: false,
@@ -491,7 +505,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
         const statisticsItem: SidebarItem = {
             routerLink: 'statistics',
-            icon: faListAlt,
+            icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
             hasInOrionProperty: true,
@@ -751,6 +765,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.dashboardSubscription?.unsubscribe();
+        this.closeSidebarEventSubscription?.unsubscribe();
+        this.openSidebarEventSubscription?.unsubscribe();
+        this.toggleSidebarEventSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         this.ltiSubscription?.unsubscribe();

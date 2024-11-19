@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, input, output } from '@angular/core';
-import { faFilter, faFilterCircleXmark, faHashtag, faPlusCircle, faSearch, faUser, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, effect, input, output } from '@angular/core';
+import { faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
@@ -40,6 +40,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     inCommunication = input<boolean>(false);
     searchValue = '';
     isCollapsed: boolean = false;
+    readonly reEmitNonDistinctSidebarEvents = input<boolean>(false);
 
     exerciseId: string;
 
@@ -56,7 +57,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     readonly faFilter = faFilter;
     readonly faFilterCurrentlyApplied = faFilterCircleXmark;
     readonly faUser = faUser;
-    readonly faUsers = faUsers;
+    readonly faPeopleGroup = faPeopleGroup;
     readonly faPlusCircle = faPlusCircle;
     readonly faSearch = faSearch;
     readonly faHashtag = faHashtag;
@@ -71,7 +72,11 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         private profileService: ProfileService,
         private sidebarEventService: SidebarEventService,
         private modalService: NgbModal,
-    ) {}
+    ) {
+        effect(() => {
+            this.subscribeToSidebarEvents();
+        });
+    }
 
     createNewChannel() {
         this.onCreateChannelPressed.emit();
@@ -94,23 +99,33 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo?.testServer ?? false;
         });
-        this.sidebarEventSubscription = this.sidebarEventService
-            .sidebarCardEventListener()
-            .pipe(
-                distinctUntilChanged(), // This ensures the function is only called when the actual value changes
-            )
-            .subscribe((itemId) => {
-                if (itemId) {
-                    this.storeLastSelectedItem(itemId);
-                    if (this.sidebarData.sidebarType == 'conversation') {
-                        this.onSelectConversation.emit(+itemId);
-                        this.onUpdateSidebar.emit();
-                    }
+    }
+
+    private subscribeToSidebarEvents() {
+        this.sidebarEventSubscription?.unsubscribe();
+        const listener = this.sidebarEventService.sidebarCardEventListener();
+        let pipe;
+        if (this.reEmitNonDistinctSidebarEvents()) {
+            pipe = listener;
+        } else {
+            pipe = listener.pipe(
+                distinctUntilChanged(),
+                // switchMap(sidebarCardEvent => sidebarCardEvent.onEvent),
+            );
+        }
+        this.sidebarEventSubscription = pipe.subscribe((itemId) => {
+            if (itemId) {
+                this.storeLastSelectedItem(itemId);
+                if (this.sidebarData.sidebarType == 'conversation') {
+                    this.onSelectConversation.emit(+itemId);
+                    this.onUpdateSidebar.emit();
                 }
-            });
+            }
+        });
     }
 
     ngOnChanges() {
+        this.paramSubscription?.unsubscribe();
         this.paramSubscription = this.route.params?.subscribe((params) => {
             this.routeParams = params;
         });

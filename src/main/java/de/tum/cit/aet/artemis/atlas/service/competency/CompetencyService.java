@@ -2,19 +2,21 @@ package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
@@ -26,6 +28,8 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
@@ -38,14 +42,19 @@ public class CompetencyService extends CourseCompetencyService {
 
     private final CompetencyRepository competencyRepository;
 
+    private final CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+
     public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
             LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService,
             CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService,
-            LearningObjectImportService learningObjectImportService, CourseRepository courseRepository) {
+            LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository,
+            CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
         super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, lectureUnitService,
-                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService, courseRepository);
+                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService,
+                competencyLectureUnitLinkRepository, courseRepository);
         this.competencyRepository = competencyRepository;
+        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
     }
 
     /**
@@ -57,17 +66,7 @@ public class CompetencyService extends CourseCompetencyService {
      * @return The set of imported competencies, each also containing the relations it is the tail competency for.
      */
     public Set<CompetencyWithTailRelationDTO> importCompetencies(Course course, Collection<? extends CourseCompetency> competencies, CompetencyImportOptionsDTO importOptions) {
-        var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
-
-        for (var competency : competencies) {
-            Competency importedCompetency = new Competency(competency);
-            importedCompetency.setCourse(course);
-
-            importedCompetency = competencyRepository.save(importedCompetency);
-            idToImportedCompetency.put(competency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
-        }
-
-        return importCourseCompetencies(course, competencies, idToImportedCompetency, importOptions);
+        return importCourseCompetencies(course, competencies, importOptions, Competency::new);
     }
 
     /**
@@ -79,18 +78,6 @@ public class CompetencyService extends CourseCompetencyService {
      */
     public List<CourseCompetency> importStandardizedCompetencies(List<Long> competencyIdsToImport, Course course) {
         return super.importStandardizedCompetencies(competencyIdsToImport, course, Competency::new);
-    }
-
-    /**
-     * Creates a new competency and links it to a course and lecture units.
-     *
-     * @param competency the competency to create
-     * @param course     the course to link the competency to
-     * @return the persisted competency
-     */
-    public Competency createCompetency(CourseCompetency competency, Course course) {
-        Competency competencyToCreate = new Competency(competency);
-        return createCourseCompetency(competencyToCreate, course);
     }
 
     /**
@@ -130,5 +117,27 @@ public class CompetencyService extends CourseCompetencyService {
     public List<Competency> findCompetenciesWithProgressForUserByCourseId(Long courseId, Long userId) {
         List<Competency> competencies = competencyRepository.findByCourseIdOrderById(courseId);
         return findProgressForCompetenciesAndUser(competencies, userId);
+    }
+
+    /**
+     * Creates competency links for exercise units of the lecture.
+     * <p>
+     * As exercise units can not be linked to competencies but only via the exercise itself, we add temporary links to the exercise units.
+     * Although they can not be persisted, this makes it easier to display the linked competencies in the client consistently across all lecture unit type.
+     *
+     * @param lecture the lecture to augment the exercise unit links for
+     */
+    public void addCompetencyLinksToExerciseUnits(Lecture lecture) {
+        var exerciseUnits = lecture.getLectureUnits().stream().filter(unit -> unit instanceof ExerciseUnit);
+        exerciseUnits.forEach(unit -> {
+            var exerciseUnit = (ExerciseUnit) unit;
+            var exercise = exerciseUnit.getExercise();
+            if (exercise != null) {
+                var competencyExerciseLinks = competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exercise.getId());
+                var competencyLectureUnitLinks = competencyExerciseLinks.stream().map(link -> new CompetencyLectureUnitLink(link.getCompetency(), exerciseUnit, link.getWeight()))
+                        .collect(Collectors.toSet());
+                exerciseUnit.setCompetencyLinks(competencyLectureUnitLinks);
+            }
+        });
     }
 }

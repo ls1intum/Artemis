@@ -3,22 +3,41 @@ import { SidebarCardItemComponent } from 'app/shared/sidebar/sidebar-card-item/s
 import { SidebarCardSize } from 'app/types/sidebar';
 import { ArtemisTestModule } from '../../../test.module';
 import { DifficultyLevel } from 'app/entities/exercise.model';
+import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { input, runInInjectionContext } from '@angular/core';
+import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
+import { ProfilePictureComponent } from '../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';
+import { MockComponent } from 'ng-mocks';
 
 describe('SidebarCardItemComponent', () => {
     let component: SidebarCardItemComponent;
     let fixture: ComponentFixture<SidebarCardItemComponent>;
+    let sidebarItemMock: any;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [SidebarCardItemComponent],
+            declarations: [SidebarCardItemComponent, MockComponent(ProfilePictureComponent)],
         }).compileComponents();
-    });
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(SidebarCardItemComponent);
         component = fixture.componentInstance;
+
+        sidebarItemMock = {
+            title: 'testTitle',
+            id: 'testId',
+            size: 'M' as SidebarCardSize,
+            difficulty: DifficultyLevel.EASY,
+            type: 'oneToOneChat',
+            conversation: {
+                members: [
+                    { id: 2, name: 'RequestingUser', isRequestingUser: true },
+                    { id: 1, name: 'User1', isRequestingUser: false },
+                ],
+            } as OneToOneChatDTO,
+        };
+
+        component.sidebarItem = sidebarItemMock;
         fixture.detectChanges();
     });
 
@@ -27,16 +46,8 @@ describe('SidebarCardItemComponent', () => {
     });
 
     it('should display item title', () => {
-        const testItem = {
-            title: 'testTitle',
-            id: 'testId',
-            size: 'M' as SidebarCardSize,
-            difficulty: DifficultyLevel.EASY,
-        };
-        component.sidebarItem = testItem;
-        fixture.detectChanges();
         const compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('#test-sidebar-card-title').textContent).toContain(testItem.title);
+        expect(compiled.querySelector('#test-sidebar-card-title').textContent).toContain(sidebarItemMock.title);
     });
 
     it('should format unreadCount correctly when count is less than 99', () => {
@@ -53,5 +64,17 @@ describe('SidebarCardItemComponent', () => {
             component.ngOnInit();
             expect(component.formattedUnreadCount).toBe('99+');
         });
+    });
+
+    it('should set group icon for group chats in extractMessageUser', () => {
+        component.sidebarItem.type = 'groupChat';
+        component.sidebarItem.icon = undefined;
+        component.extractMessageUser();
+        expect(component.sidebarItem.icon).toBe(faPeopleGroup);
+    });
+
+    it('should set otherUser for one-to-one chat in extractMessageUser', () => {
+        component.extractMessageUser();
+        expect(component.otherUser).toEqual(sidebarItemMock.conversation.members[1]);
     });
 });

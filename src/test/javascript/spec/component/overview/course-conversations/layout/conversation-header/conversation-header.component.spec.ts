@@ -3,7 +3,6 @@ import { ConversationHeaderComponent } from 'app/overview/course-conversations/l
 import { Location } from '@angular/common';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
-import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -28,6 +27,7 @@ import { MetisModule } from 'app/shared/metis/metis.module';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
+import { ProfilePictureComponent } from '../../../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),
@@ -51,7 +51,7 @@ examples.forEach((activeConversation) => {
                 declarations: [
                     ConversationHeaderComponent,
                     MockComponent(ChannelIconComponent),
-                    MockComponent(GroupChatIconComponent),
+                    MockComponent(ProfilePictureComponent),
                     MockComponent(FaIconComponent),
                     MockPipe(ArtemisTranslatePipe),
                 ],
@@ -137,6 +137,19 @@ examples.forEach((activeConversation) => {
                 expect(toggleSearchSpy).toHaveBeenCalledOnce();
             });
         }));
+
+        it('should set otherUser to the non-requesting user in a one-to-one conversation', () => {
+            const oneToOneChat = generateOneToOneChatDTO({});
+            oneToOneChat.members = [
+                { id: 1, isRequestingUser: true },
+                { id: 2, isRequestingUser: false },
+            ];
+
+            component.activeConversation = oneToOneChat;
+            component.getOtherUser();
+
+            expect(component.otherUser).toEqual(oneToOneChat.members[1]);
+        });
 
         if (activeConversation instanceof ChannelDTO && activeConversation.subType !== ChannelSubType.GENERAL) {
             it(

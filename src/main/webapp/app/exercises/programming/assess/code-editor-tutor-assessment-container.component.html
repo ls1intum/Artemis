@@ -39,8 +39,8 @@
         [correctionRound]="correctionRound"
         [isProgrammingExercise]="true"
         (save)="save()"
-        (submit)="submit()"
-        (cancel)="cancel()"
+        (onSubmit)="submit()"
+        (onCancel)="cancel()"
         (nextSubmission)="nextSubmission()"
         (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
     >
@@ -85,15 +85,15 @@
         <ng-template #editorTitle>
             <span>
                 <span>{{ exercise?.title }}</span>
-                <span>&nbsp;[</span>
-                <span>{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}</span>
-                @if (exercise.bonusPoints) {
-                    <span>, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
-                }
-                @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                    <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
-                }
-                <span>]</span>
+                <span
+                    [jhiTranslate]="exercise.bonusPoints ? 'artemisApp.examParticipation.bonus' : 'artemisApp.examParticipation.points'"
+                    [translateValues]="{ points: exercise.maxPoints, bonusPoints: exercise.bonusPoints }"
+                ></span>
+                <span>
+                    @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                        <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
+                    }
+                </span>
             </span>
         </ng-template>
         <ng-template #editorToolbar>
@@ -138,15 +138,18 @@
         </ng-template>
         <ng-template #editorBottom>
             <div class="row mt-3">
-                <jhi-unreferenced-feedback
-                    [(feedbacks)]="unreferencedFeedback"
-                    [feedbackSuggestions]="unreferencedFeedbackSuggestions"
-                    (feedbacksChange)="validateFeedback()"
-                    [readOnly]="readOnly()"
-                    [highlightDifferences]="highlightDifferences"
-                    (onAcceptSuggestion)="removeSuggestion($event)"
-                    (onDiscardSuggestion)="removeSuggestion($event)"
-                />
+                @if (manualResult && manualResult.id) {
+                    <jhi-unreferenced-feedback
+                        [(feedbacks)]="unreferencedFeedback"
+                        [feedbackSuggestions]="unreferencedFeedbackSuggestions"
+                        (feedbacksChange)="validateFeedback()"
+                        [readOnly]="readOnly()"
+                        [highlightDifferences]="highlightDifferences"
+                        (onAcceptSuggestion)="removeSuggestion($event)"
+                        (onDiscardSuggestion)="removeSuggestion($event)"
+                        [resultId]="manualResult.id"
+                    />
+                }
             </div>
         </ng-template>
     </ng-template>

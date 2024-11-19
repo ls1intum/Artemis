@@ -26,20 +26,14 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
 
-    @Input()
-    loading = false;
-    @Input()
-    useParticipationVcsAccessToken = false;
-    @Input()
-    smallButtons: boolean;
-    @Input()
-    repositoryUri?: string;
-    @Input()
-    routerLinkForRepositoryView?: string | (string | number)[];
-    @Input()
-    participations?: ProgrammingExerciseStudentParticipation[];
-    @Input()
-    exercise?: ProgrammingExercise;
+    @Input() loading = false;
+    @Input() useParticipationVcsAccessToken = false;
+    @Input() smallButtons: boolean;
+    @Input() repositoryUri?: string;
+    @Input() routerLinkForRepositoryView?: string | (string | number)[];
+    @Input() participations?: ProgrammingExerciseStudentParticipation[];
+    @Input() exercise?: ProgrammingExercise;
+    @Input() hideLabelMobile = false;
 
     useSsh = false;
     useToken = false;
@@ -86,27 +80,18 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         private ideSettingsService: IdeSettingsService,
     ) {}
 
-    ngOnInit() {
-        this.accountService
-            .identity()
-            .then((user) => {
-                this.user = user!;
-                this.refreshTokenState();
+    async ngOnInit() {
+        const user = await this.accountService.identity();
+        if (!user) {
+            return;
+        }
+        this.user = user;
 
-                this.copyEnabled = true;
-                this.useSsh = this.localStorage.retrieve('useSsh') || false;
-                this.useToken = this.localStorage.retrieve('useToken') || false;
-                this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
-                this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
+        this.refreshTokenState();
 
-                if (this.useSsh) {
-                    this.useSshUrl();
-                }
-                if (this.useToken) {
-                    this.useHttpsUrlWithToken();
-                }
-            })
-            .then(() => this.loadParticipationVcsAccessTokens());
+        this.copyEnabled = true;
+        this.useSsh = this.localStorage.retrieve('useSsh') || false;
+        this.useToken = this.localStorage.retrieve('useToken') || false;
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -131,9 +116,17 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 this.sshSettingsUrl = profileInfo.sshKeysURL;
             }
             this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
+
+            if (this.useSsh) {
+                this.useSshUrl();
+            }
+            if (this.useToken) {
+                this.useHttpsUrlWithToken();
+            }
+            this.loadParticipationVcsAccessTokens();
         });
 
-        this.ideSettingsService.loadIdePreferences().subscribe((programmingLanguageToIde) => {
+        this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
             if (programmingLanguageToIde.size) {
                 this.programmingLanguageToIde = programmingLanguageToIde;
             }
@@ -166,7 +159,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     public useHttpsUrlWithToken() {
         this.useSsh = false;
         this.useToken = true;
-        this.copyEnabled = !!(this.accessTokensEnabled && this.useToken && ((!!this.user.vcsAccessToken && !this.isTokenExpired()) || this.useParticipationVcsAccessToken));
+        this.copyEnabled = !!(this.accessTokensEnabled && ((!!this.user.vcsAccessToken && !this.isTokenExpired()) || this.useParticipationVcsAccessToken));
         this.refreshTokenState();
         this.storeToLocalStorage();
     }
@@ -240,6 +233,9 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 if (error.status == 404) {
                     this.createNewVcsAccessToken(participation);
                 }
+                if (error.status == 403) {
+                    this.useParticipationVcsAccessToken = false;
+                }
             },
         });
     }
@@ -257,7 +253,11 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                     }
                 }
             },
-            error: () => {},
+            error: (error: HttpErrorResponse) => {
+                if (error.status == 403) {
+                    this.useParticipationVcsAccessToken = false;
+                }
+            },
         });
     }
 

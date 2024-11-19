@@ -10,6 +10,7 @@ import {
 } from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { Router } from '@angular/router';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
@@ -60,6 +61,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     @Input() showBadge = false;
     @Input() showIcon = true;
     @Input() isInSidebarCard = false;
+    @Input() showCompletion = true;
     @Input() missingResultInfo = MissingResultInformation.NONE;
     @Input() exercise?: Exercise;
 
@@ -89,6 +91,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         @Optional() private exerciseCacheService: ExerciseCacheService,
         private resultService: ResultService,
         private csvDownloadService: CsvDownloadService,
+        private router: Router,
     ) {}
 
     /**
@@ -190,7 +193,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      */
     evaluate() {
         this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding, this.missingResultInfo);
-
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
@@ -260,6 +262,17 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      */
     showDetails(result: Result) {
         const exerciseService = this.exerciseCacheService ?? this.exerciseService;
+        if (this.exercise?.type === ExerciseType.TEXT) {
+            const courseId = getCourseFromExercise(this.exercise)?.id;
+            let submissionId = result.submission?.id;
+            // In case of undefined result submission try the latest submission as this can happen before reloading the component
+            if (!submissionId) {
+                submissionId = result.participation?.submissions?.last()?.id;
+            }
+            this.router.navigate(['/courses', courseId, 'exercises', 'text-exercises', this.exercise?.id, 'participate', result.participation?.id, 'submission', submissionId]);
+            return undefined;
+        }
+
         const feedbackComponentParameters = prepareFeedbackComponentParameters(this.exercise, result, this.participation, this.templateStatus, this.latestDueDate, exerciseService);
 
         if (this.exercise?.type === ExerciseType.QUIZ) {
