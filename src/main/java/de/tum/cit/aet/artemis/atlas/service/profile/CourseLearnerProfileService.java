@@ -22,8 +22,7 @@ public class CourseLearnerProfileService {
 
     private final LearnerProfileRepository learnerProfileRepository;
 
-    public CourseLearnerProfileService(CourseLearnerProfileRepository courseLearnerProfileRepository, LearnerProfileService learnerProfileService,
-            LearnerProfileRepository learnerProfileRepository) {
+    public CourseLearnerProfileService(CourseLearnerProfileRepository courseLearnerProfileRepository, LearnerProfileRepository learnerProfileRepository) {
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
         this.learnerProfileRepository = learnerProfileRepository;
     }

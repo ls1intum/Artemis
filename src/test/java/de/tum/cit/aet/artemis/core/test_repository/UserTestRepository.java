@@ -59,8 +59,8 @@ public interface UserTestRepository extends UserRepository {
         return new PageImpl<>(users, pageable, total);
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
-    Optional<User> findOneWithLearningPathsByLogin(String login);
+    @EntityGraph(type = LOAD, attributePaths = { "learningPaths", "learnerProfile", "learnerProfile.courseLearnerProfiles" })
+    Optional<User> findOneWithLearningPathsAndLearnerProfileByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
     Optional<User> findWithLearningPathsById(long userId);
