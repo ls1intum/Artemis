@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
+import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyNameDTO;
@@ -541,6 +543,40 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
         verifyNavigationResult(result, textUnit, textExercise, null);
         assertThat(result.progress()).isEqualTo(20);
+    }
+
+    /**
+     * Provides all possible preferences for the course learner profile that can influence the navigation
+     *
+     * @return all possible combinations for a three tuple with the values between 0 and 5 (inclusive)
+     */
+    static Stream<Arguments> getLearningPathNavigationPreferencesProvider() {
+        return IntStream.range(0, 6 * 6 * 6).mapToObj(i -> Arguments.of(i / 36, i / 6 % 6, i % 6));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("getLearningPathNavigationPreferencesProvider")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+    void testGetLearningPathNavigationPreferences(int aimForGradeOrBonus, int timeInvestment, int repetitionIntensity) throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+
+        final var student = userTestRepository.findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(STUDENT1_OF_COURSE, course.getId()).orElseThrow();
+        CourseLearnerProfile learnerProfile = student.getLearnerProfile().getCourseLearnerProfiles().stream().filter(clp -> clp.getCourse().getId().equals(course.getId()))
+                .findFirst().orElseThrow();
+        learnerProfile.setAimForGradeOrBonus(aimForGradeOrBonus);
+        learnerProfile.setTimeInvestment(timeInvestment);
+        learnerProfile.setRepetitionIntensity(repetitionIntensity);
+        courseLearnerProfileRepository.save(learnerProfile);
+
+        createAndLinkTextUnit(student, competencies[2], false);
+        createAndLinkTextExercise(competencies[3], false);
+
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.OK, LearningPathNavigationDTO.class);
+
+        assertThat(result.predecessorLearningObject().completed()).isTrue();
+        assertThat(result.currentLearningObject().completed()).isFalse();
+        assertThat(result.successorLearningObject().completed()).isFalse();
     }
 
     @Test
