@@ -23,14 +23,15 @@ import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
-import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
+import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { metisAnnouncement, metisCourse, metisPostExerciseUser1, metisPostInChannel, metisUser1, sortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../../helpers/mocks/service/mock-notification.service';
-import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { User } from 'app/core/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
@@ -40,6 +41,7 @@ describe('PostReactionsBarComponent', () => {
     let fixture: ComponentFixture<PostReactionsBarComponent>;
     let debugElement: DebugElement;
     let metisService: MetisService;
+    let accountService: AccountService;
     let metisServiceUpdateDisplayPriorityMock: jest.SpyInstance;
     let metisServiceUserIsAtLeastTutorStub: jest.SpyInstance;
     let metisServiceUserIsAtLeastInstructorStub: jest.SpyInstance;
@@ -82,6 +84,7 @@ describe('PostReactionsBarComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(PostReactionsBarComponent);
                 metisService = TestBed.inject(MetisService);
+                accountService = TestBed.inject(AccountService);
                 debugElement = fixture.debugElement;
                 component = fixture.componentInstance;
                 metisServiceUpdateDisplayPriorityMock = jest.spyOn(metisService, 'updatePostDisplayPriority');
@@ -151,9 +154,14 @@ describe('PostReactionsBarComponent', () => {
         component.previewMode = false;
         component.isEmojiCount = false;
 
+        const channelConversation = {
+            type: ConversationType.CHANNEL,
+            hasChannelModerationRights: true,
+        } as ChannelDTO;
+
         jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(false);
         jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
-        jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(true);
+        jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
 
         component.ngOnInit();
         fixture.detectChanges();
@@ -217,75 +225,30 @@ describe('PostReactionsBarComponent', () => {
         expect(getDeleteButton()).not.toBeNull();
     });
 
-    describe('setMayEditOrDelete', () => {
-        beforeEach(() => {
-            jest.clearAllMocks();
-            component.readOnlyMode = false;
-            component.previewMode = false;
-            component.isAuthorOfPosting = false;
-            component.posting = {
-                conversation: {},
-            } as Post;
+    it.each([
+        { type: ConversationType.CHANNEL, hasChannelModerationRights: true } as ChannelDTO,
+        { type: ConversationType.GROUP_CHAT, creator: { id: 99 } },
+        { type: ConversationType.ONE_TO_ONE },
+    ])('should initialize user authority and reactions correctly with same user', (dto: ConversationDTO) => {
+        component.posting!.author!.id = 99;
+        jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(dto);
+        jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ id: 99 } as User);
 
-            jest.spyOn(component.mayEditOrDeleteOutput, 'emit');
+        reactionToDelete.user = { id: 99 } as User;
+        post.reactions = [reactionToDelete];
+        component.posting = post;
+
+        component.ngOnInit();
+        component.isEmojiCount = true;
+        fixture.detectChanges();
+        expect(component.reactionMetaDataMap).toEqual({
+            smile: {
+                count: 1,
+                hasReacted: true,
+                reactingUsers: [PLACEHOLDER_USER_REACTED],
+            },
         });
-
-        it('should allow edit/delete when user is the author and not in read-only or preview mode', () => {
-            component.isAuthorOfPosting = true;
-            jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
-            jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(false);
-
-            component.setMayEditOrDelete();
-
-            expect(component.mayEditOrDelete).toBeTrue();
-            expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(true);
-        });
-
-        it('should allow edit/delete when user has channel moderation rights', () => {
-            component.isAuthorOfPosting = false;
-            jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
-            jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(true);
-
-            component.setMayEditOrDelete();
-
-            expect(component.mayEditOrDelete).toBeTrue();
-            expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(true);
-        });
-
-        it('should not allow edit/delete when in read-only mode', () => {
-            component.readOnlyMode = true;
-            component.isAuthorOfPosting = true;
-            jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(true);
-            jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(true);
-
-            component.setMayEditOrDelete();
-
-            expect(component.mayEditOrDelete).toBeFalse();
-            expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(false);
-        });
-
-        it('should not allow edit/delete when in preview mode', () => {
-            component.previewMode = true;
-            component.isAuthorOfPosting = true;
-            jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(true);
-            jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(true);
-
-            component.setMayEditOrDelete();
-
-            expect(component.mayEditOrDelete).toBeFalse();
-            expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(false);
-        });
-
-        it('should not allow edit/delete when user is not author and lacks permissions', () => {
-            component.isAuthorOfPosting = false;
-            jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
-            jest.spyOn(component, 'hasChannelModerationRights').mockReturnValue(false);
-
-            component.setMayEditOrDelete();
-
-            expect(component.mayEditOrDelete).toBeFalse();
-            expect(component.mayEditOrDeleteOutput.emit).toHaveBeenCalledWith(false);
-        });
+        expect(component.pinTooltip).toBe('artemisApp.metis.pinPostTooltip');
     });
 
     it.each`
