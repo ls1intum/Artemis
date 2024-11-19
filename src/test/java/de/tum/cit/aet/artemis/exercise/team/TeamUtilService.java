@@ -246,7 +246,7 @@ public class TeamUtilService {
     }
 
     /**
-     * Deletes all teams
+     * Deletes a team
      */
     public void deleteTeam(Team team) {
         teamRepo.delete(team);
