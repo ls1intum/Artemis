@@ -27,11 +27,6 @@ public class AuthenticationIntegrationTestHelper {
         }
     }
 
-    public static void authenticationBearerTokenAssertions(String authorizationHeader) {
-        assertThat(authorizationHeader).isNotNull();
-        assertThat(authorizationHeader).startsWith("Bearer ");
-    }
-
     public static void toolTokenAssertions(TokenProvider tokenProvider, String token, long initialLifetime, ToolTokenType... tools) {
         assertThat(token).isNotNull();
 

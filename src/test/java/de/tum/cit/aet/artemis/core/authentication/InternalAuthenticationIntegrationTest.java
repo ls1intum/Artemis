@@ -13,6 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -31,6 +32,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.connector.GitlabRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -242,12 +246,15 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
-        AuthenticationIntegrationTestHelper.authenticationBearerTokenAssertions(response.getHeader("Authorization"));
+
+        var responseBody = new ObjectMapper().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
+        });
+        assertThat(tokenProvider.validateTokenForAuthority(responseBody.get("access_token").toString())).isTrue();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testTheiaTokenGeneration() throws Exception {
+    void testScorpioTokenGeneration() throws Exception {
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
 
         Cookie cookie = new Cookie(responseCookie.getName(), responseCookie.getValue());
