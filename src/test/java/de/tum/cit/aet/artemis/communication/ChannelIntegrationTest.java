@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -956,7 +955,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
                     ChannelDTO.class, HttpStatus.CREATED, headers);
         }
         catch (Exception e) {
-            Assertions.fail("Failed to create feedback channel", e);
+            fail("Failed to create feedback channel", e);
         }
 
         assertThat(response).isNotNull();
