@@ -70,7 +70,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     public PROGRAMMING_EXERCISE_RESOURCE_URL = 'api/programming-exercises/';
     // Default value: 2 minutes.
     private DEFAULT_EXPECTED_RESULT_ETA = 2 * 60 * 1000;
-    // Default value: 30 seconds.
+    // Default value: 60 seconds.
     private DEFAULT_EXPECTED_QUEUE_ESTIMATE = 60 * 1000;
     private SUBMISSION_TEMPLATE_TOPIC = '/topic/exercise/%exerciseId%/newSubmissions';
 

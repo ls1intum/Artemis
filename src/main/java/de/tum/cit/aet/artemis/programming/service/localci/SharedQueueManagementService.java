@@ -324,22 +324,23 @@ public class SharedQueueManagementService {
 
         ZonedDateTime now = ZonedDateTime.now();
 
-        List<Long> agentAvailabilities = new ArrayList<>(processingJobs.values().stream().map(job -> buildJobRemainingDuration(job, now)).sorted().toList());
+        List<Long> agentsAvailabilities = new ArrayList<>(processingJobs.values().stream().map(job -> buildJobRemainingDuration(job, now)).sorted().toList());
 
-        if (agentAvailabilities.size() < this.buildAgentsCapacity) {
-            int agentsToAdd = this.buildAgentsCapacity - agentAvailabilities.size();
-            agentAvailabilities.addAll(Collections.nCopies(agentsToAdd, 0L));
+        if (agentsAvailabilities.size() < this.buildAgentsCapacity) {
+            int agentsToAdd = this.buildAgentsCapacity - agentsAvailabilities.size();
+            agentsAvailabilities.addAll(Collections.nCopies(agentsToAdd, 0L));
         }
         else {
-            agentAvailabilities = agentAvailabilities.subList(0, this.buildAgentsCapacity);
-            log.warn("There are more agents available than expected. This should not happen. Processing jobs: {}, Build agents: {}", processingJobs, buildAgentInformation);
+            agentsAvailabilities = agentsAvailabilities.subList(0, this.buildAgentsCapacity);
+            log.warn("There are more processing jobs than the build agents' capacity. This should not happen. Processing jobs: {}, Build agents: {}", processingJobs,
+                    buildAgentInformation);
         }
 
-        if (jobsQueuedBefore.size() < agentAvailabilities.size()) {
-            return now.plusSeconds(agentAvailabilities.get(jobsQueuedBefore.size()));
+        if (jobsQueuedBefore.size() < agentsAvailabilities.size()) {
+            return now.plusSeconds(agentsAvailabilities.get(jobsQueuedBefore.size()));
         }
         else {
-            return now.plusSeconds(calculateNextJobQueueDuration(agentAvailabilities, jobsQueuedBefore));
+            return now.plusSeconds(calculateNextJobQueueDuration(agentsAvailabilities, jobsQueuedBefore));
         }
     }
 
@@ -351,8 +352,8 @@ public class SharedQueueManagementService {
         return participationBuildJobIds.getLast();
     }
 
-    private Long calculateNextJobQueueDuration(List<Long> agentAvailabilities, List<BuildJobQueueItem> jobsQueuedBefore) {
-        PriorityQueue<Long> agentAvailabilitiesQueue = new PriorityQueue<>(agentAvailabilities);
+    private Long calculateNextJobQueueDuration(List<Long> agentsAvailabilities, List<BuildJobQueueItem> jobsQueuedBefore) {
+        PriorityQueue<Long> agentAvailabilitiesQueue = new PriorityQueue<>(agentsAvailabilities);
         for (BuildJobQueueItem job : jobsQueuedBefore) {
             Long agentRemainingTimeObj = agentAvailabilitiesQueue.poll();
             long agentRemainingTime = agentRemainingTimeObj == null ? 0 : agentRemainingTimeObj;

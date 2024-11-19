@@ -230,13 +230,19 @@ public class ProgrammingExerciseParticipationResource {
         ZonedDateTime buildStartDate = null;
         ZonedDateTime estimatedCompletionDate = null;
         if (sharedQueueManagementService.isPresent()) {
-            var buildTimingInfo = sharedQueueManagementService.get().isSubmissionProcessing(participationId, programmingSubmission.getCommitHash());
-            isSubmissionProcessing = buildTimingInfo != null;
-            if (isSubmissionProcessing) {
-                buildStartDate = buildTimingInfo.buildStartDate();
-                estimatedCompletionDate = buildTimingInfo.estimatedCompletionDate();
+            try {
+                var buildTimingInfo = sharedQueueManagementService.get().isSubmissionProcessing(participationId, programmingSubmission.getCommitHash());
+                if (buildTimingInfo != null) {
+                    isSubmissionProcessing = true;
+                    buildStartDate = buildTimingInfo.buildStartDate();
+                    estimatedCompletionDate = buildTimingInfo.estimatedCompletionDate();
+                }
+            }
+            catch (Exception e) {
+                log.warn("Failed to get build timing info for submission {} of participation {}: {}", programmingSubmission.getCommitHash(), participationId, e.getMessage());
             }
         }
+
         // Remove participation, is not needed in the response.
         programmingSubmission.setParticipation(null);
         var submissionDTO = SubmissionDTO.of(programmingSubmission, isSubmissionProcessing, buildStartDate, estimatedCompletionDate);

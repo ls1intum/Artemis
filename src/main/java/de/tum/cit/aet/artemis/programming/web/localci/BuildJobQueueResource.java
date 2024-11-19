@@ -202,7 +202,7 @@ public class BuildJobQueueResource {
     @EnforceAtLeastStudent
     public ResponseEntity<ZonedDateTime> getBuildJobQueueDurationEstimation(@RequestParam long participationId) {
         var start = System.nanoTime();
-        if (participationId == 0) {
+        if (participationId <= 0) {
             ResponseEntity.badRequest().build();
         }
         var estimatedQueueDuration = localCIBuildJobQueueService.getBuildJobEstimatedQueueDuration(participationId);

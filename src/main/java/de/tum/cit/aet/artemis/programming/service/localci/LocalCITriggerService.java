@@ -101,6 +101,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final ExerciseDateService exerciseDateService;
 
+    private static final int DEFAULT_BUILD_DURATION = 17;
+
+    private static final double BUILD_DURATION_SAFETY_FACTOR = 1.2;
+
     public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
@@ -191,8 +195,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         var programmingExerciseBuildConfig = loadBuildConfig(programmingExercise);
 
-        long estimatedDuration = programmingExerciseBuildConfig.getBuildDurationSeconds() == 0 ? 17 : programmingExerciseBuildConfig.getBuildDurationSeconds();
-        estimatedDuration = Math.round(estimatedDuration * 1.2);
+        long estimatedDuration = programmingExerciseBuildConfig.getBuildDurationSeconds() == 0 ? DEFAULT_BUILD_DURATION : programmingExerciseBuildConfig.getBuildDurationSeconds();
+        estimatedDuration = Math.round(estimatedDuration * BUILD_DURATION_SAFETY_FACTOR);
 
         JobTimingInfo jobTimingInfo = new JobTimingInfo(submissionDate, null, null, null, estimatedDuration);
 
