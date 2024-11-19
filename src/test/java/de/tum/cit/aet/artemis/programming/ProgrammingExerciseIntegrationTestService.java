@@ -16,6 +16,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -291,10 +292,6 @@ public class ProgrammingExerciseIntegrationTestService {
         // create two empty commits
         GitService.commit(localGit).setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
         localGit.push().call();
-
-        // we use the temp repository as remote origin for all repositories that are created during the
-        // TODO: distinguish between template, test and solution
-        doReturn(new GitUtilService.MockFileRepositoryUri(remoteRepoFile)).when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
 
         this.plagiarismChecksTestReposDir = Files.createTempDirectory("jplag-repos").toFile();
     }
@@ -1433,6 +1430,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void importProgrammingExercise_updatesTestCaseIds() throws Exception {
+        doReturn(new GitUtilService.MockFileRepositoryUri(remoteRepoFile)).when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
+
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(programmingExercise.getId());
         var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         var test1 = tests.getFirst();
@@ -1464,6 +1463,8 @@ public class ProgrammingExerciseIntegrationTestService {
         var savedProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(response.getId());
 
         assertThat(savedProgrammingExercise.getProblemStatement()).isEqualTo(newProblemStatement);
+
+        reset(versionControlService);
     }
 
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
@@ -1920,11 +1921,11 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testValidateValidAuxiliaryRepository() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults();
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testValidateAuxiliaryRepositoryIdSetOnRequest() throws Exception {
-        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.BAD_REQUEST);
+        testAuxRepo(AuxiliaryRepositoryBuilder.defaults().withId(0L), HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
 
@@ -1953,12 +1954,12 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testValidateAuxiliaryRepositoryWithoutCheckoutDirectory() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutCheckoutDirectory();
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testValidateAuxiliaryRepositoryWithBlankCheckoutDirectory() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withCheckoutDirectory("   ");
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testValidateAuxiliaryRepositoryWithTooLongCheckoutDirectory() throws Exception {
@@ -1981,7 +1982,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testValidateAuxiliaryRepositoryWithoutDescription() throws Exception {
         AuxiliaryRepositoryBuilder auxRepoBuilder = AuxiliaryRepositoryBuilder.defaults().withoutDescription();
-        testAuxRepo(auxRepoBuilder, HttpStatus.CREATED);
+        testAuxRepo(auxRepoBuilder, HttpStatus.OK);
     }
 
     void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
@@ -2158,7 +2159,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     private String defaultAuxiliaryRepositoryEndpoint() {
-        return "/api/programming-exercises/setup";
+        return "/api/programming-exercises";
     }
 
     private String defaultResetEndpoint() {
@@ -2191,17 +2192,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private void testAuxRepo(List<AuxiliaryRepository> body, HttpStatus expectedStatus) throws Exception {
         programmingExercise.setAuxiliaryRepositories(body);
-        programmingExercise.setId(null);
-        programmingExercise.setSolutionParticipation(null);
-        programmingExercise.setTemplateParticipation(null);
-        programmingExercise.setChannelName("pe-test");
-        programmingExercise.setShortName("ExerciseTitle");
-        programmingExercise.setTitle("Title");
-        if (expectedStatus == HttpStatus.CREATED) {
-            mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
-            mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
-        }
-        request.postWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, ProgrammingExercise.class, expectedStatus);
+        request.putWithResponseBody(defaultAuxiliaryRepositoryEndpoint(), programmingExercise, ProgrammingExercise.class, expectedStatus);
     }
 
     private static class AuxiliaryRepositoryBuilder {
@@ -2275,8 +2266,8 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", userPrefix + "instructoralt");
+    void testReEvaluateAndUpdateProgrammingExercise_instructorNotInCourse_forbidden(String testPrefix) throws Exception {
+        userUtilService.addInstructor("other-instructors", testPrefix + "instructoralt");
         programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().getFirst();
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExercise, HttpStatus.FORBIDDEN);

@@ -23,7 +23,7 @@ const examData = {
     confirmationEndText: 'Exam confirmation end text',
 };
 
-test.describe('Test Exam creation/deletion', () => {
+test.describe('Test Exam creation/deletion', { tag: '@slow' }, () => {
     let course: Course;
     let exam: Exam;
 
