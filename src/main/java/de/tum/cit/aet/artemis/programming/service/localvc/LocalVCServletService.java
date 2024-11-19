@@ -472,6 +472,8 @@ public class LocalVCServletService {
      * @param exercise                 The exercise the repository belongs to.
      * @param repositoryActionType     The type of the action the user wants to perform.
      * @param localVCRepositoryUri     The URI of the local repository.
+     * @param usingSSH                 The flag specifying whether the method is called from the SSH or HTTPs context
+     * @return the ProgrammingParticipation Optional, containing the participation fetched during authorization
      * @throws LocalVCForbiddenException If the user is not allowed to access the repository.
      */
     public Optional<ProgrammingExerciseParticipation> authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise,
@@ -525,10 +527,10 @@ public class LocalVCServletService {
      * Checks if the provided repository is an auxiliary or test repository.
      * Only load auxiliary repositories if a user is at least teaching assistant; students are not allowed to access them
      *
-     * @param exercise
-     * @param repositoryTypeOrUserName
-     * @param repositoryActionType
-     * @param user
+     * @param exercise                 the exercise, where the repository belongs to
+     * @param repositoryTypeOrUserName the type or username of the repository
+     * @param repositoryActionType     the action that should be performed on of the repository
+     * @param user                     the user who tries to access the repository
      * @return true if user is TA and
      * @throws LocalVCForbiddenException
      */
@@ -567,6 +569,7 @@ public class LocalVCServletService {
      * @param authenticationMechanism the mechanism used for authentication (e.g., token, basic auth)
      * @param ipAddress               the IP address of the user accessing the repository
      * @param localVCRepositoryUri    the URI of the localVC repository
+     * @param serverSession           the SSH serverSession, where the data gets stored
      */
     public void cacheAttributesInSshSession(User user, Optional<ProgrammingExerciseParticipation> optionalParticipation, RepositoryActionType repositoryActionType,
             AuthenticationMechanism authenticationMechanism, String ipAddress, LocalVCRepositoryUri localVCRepositoryUri, ServerSession serverSession) {

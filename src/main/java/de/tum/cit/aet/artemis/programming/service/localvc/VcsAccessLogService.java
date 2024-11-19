@@ -99,11 +99,12 @@ public class VcsAccessLogService {
     }
 
     /**
-     * Stores the log for a push from the code editor.
+     * Creates a preliminary access log for a push from the code editor, and returns it
      *
      * @param repo            The repository to which the push is executed
      * @param user            The user submitting the change
      * @param participationId The id of the participation belonging to the repository
+     * @return an Optional containing the preliminary VcsAccessLog, if one was created
      * @throws GitAPIException if an error occurs while retrieving the git log
      */
     public Optional<VcsAccessLog> createPreliminaryCodeEditorAccessLog(Repository repo, User user, Long participationId) throws GitAPIException {

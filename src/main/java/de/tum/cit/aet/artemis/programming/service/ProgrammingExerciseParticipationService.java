@@ -376,6 +376,7 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param repositoryTypeOrUserName the name of the user or the type of the repository
      * @param repositoryURI            the participation's repository URL
+     * @param exercise                 the exercise the participation belongs to
      * @return the participation belonging to the provided repositoryURI and repository type or username
      */
     public ProgrammingExerciseParticipation fetchParticipationWithSubmissionsByRepository(String repositoryTypeOrUserName, String repositoryURI, ProgrammingExercise exercise) {
@@ -400,6 +401,7 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param repositoryTypeOrUserName the name of the user or the type of the repository
      * @param repositoryURI            the participation's repository URL
+     * @param exercise                 the exercise the participation belongs to
      * @return the participation belonging to the provided repositoryURI and repository type or username
      */
     public ProgrammingExerciseParticipation fetchParticipationByRepository(String repositoryTypeOrUserName, String repositoryURI, ProgrammingExercise exercise) {
