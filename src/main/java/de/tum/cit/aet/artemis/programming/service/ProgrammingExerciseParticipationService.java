@@ -390,7 +390,7 @@ public class ProgrammingExerciseParticipationService {
 
     }
 
-    public ProgrammingExerciseParticipation retrieveSolutionPar(Exercise exercise) {
+    public ProgrammingExerciseParticipation retrieveSolutionParticipation(Exercise exercise) {
         return solutionParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
     }
 

@@ -72,6 +72,12 @@ public class VcsAccessLogService {
         }
     }
 
+    /**
+     * Updates the commit hash of the newest log entry
+     *
+     * @param localVCRepositoryUri The localVCRepositoryUri of the participation to which vcsAccessLog belongs to
+     * @param repositoryActionType The repository action type to which the vcsAccessLog should get updated to
+     */
     @Async
     public void updateRepositoryActionType(LocalVCRepositoryUri localVCRepositoryUri, RepositoryActionType repositoryActionType) {
         var repositoryURL = localVCRepositoryUri.toString().replace("/git-upload-pack", "").replace("/git-receive-pack", "");
@@ -82,6 +88,11 @@ public class VcsAccessLogService {
         }
     }
 
+    /**
+     * Saves an vcsAccessLog
+     *
+     * @param vcsAccessLog The vcsAccessLog to save
+     */
     @Async
     public void saveVcsAccesslog(VcsAccessLog vcsAccessLog) {
         vcsAccessLogRepository.save(vcsAccessLog);

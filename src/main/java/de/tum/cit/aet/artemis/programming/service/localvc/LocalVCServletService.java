@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -221,7 +220,7 @@ public class LocalVCServletService {
 
         String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
 
-        // The first request does not contain an authorizationHeader
+        // The first request does not contain an authorizationHeader, the client expects this response
         if (authorizationHeader == null) {
             throw new LocalVCAuthException("No authorization header provided");
         }
@@ -305,6 +304,18 @@ public class LocalVCServletService {
         return AuthenticationMechanism.PARTICIPATION_VCS_ACCESS_TOKEN;
     }
 
+    /**
+     * Authenticates a user based on the provided authorization header for a specific programming exercise/repository.
+     * Authentication is tried with: 1) user VCS access token, 2) user participation VCS access token 3) password
+     *
+     * @param authorizationHeader  the authorization header containing authentication credentials
+     * @param exercise             the programming exercise the user is attempting to access
+     * @param localVCRepositoryUri the URI of the local version control repository the user is attempting to access
+     *
+     * @return the authenticated {@link User} if authentication is successful
+     * @throws LocalVCAuthException    if an error occurs during authentication with the local version control system
+     * @throws AuthenticationException if the authentication credentials are invalid or authentication fails
+     */
     private User authenticateUser(String authorizationHeader, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri)
             throws LocalVCAuthException, AuthenticationException {
 
@@ -318,7 +329,7 @@ public class LocalVCServletService {
             SecurityUtils.checkUsernameAndPasswordValidity(username, passwordOrToken);
         }
         catch (AccessForbiddenException | AuthenticationException e) {
-            if (!StringUtils.isEmpty(passwordOrToken)) {
+            if (StringUtils.isNotEmpty(passwordOrToken)) {
                 log.warn("Failed login attempt for user {} with password {} due to issue: {}", username, passwordOrToken, e.getMessage());
             }
             throw new LocalVCAuthException(e.getMessage());
@@ -331,7 +342,7 @@ public class LocalVCServletService {
         }
 
         // check user participation VCS access token
-        if (tryAuthenticationWithVCSAccessToken(user, passwordOrToken, exercise, localVCRepositoryUri)) {
+        if (tryAuthenticationWithParticipationVCSAccessToken(user, passwordOrToken, exercise, localVCRepositoryUri)) {
             return user;
         }
 
@@ -343,7 +354,16 @@ public class LocalVCServletService {
         return user;
     }
 
-    private boolean tryAuthenticationWithVCSAccessToken(User user, String providedToken, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri)
+    /**
+     * Attempts to authenticate a user with the provided participation VCS access token
+     *
+     * @param user                 the user attempting authentication
+     * @param providedToken        the participation VCS access token provided by the user
+     * @param exercise             the programming exercise containing the repository the user tries to access
+     * @param localVCRepositoryUri the URI of the local version control repository the user tries to access
+     * @return {@code true} if the authentication is successful, {@code false} otherwise
+     */
+    private boolean tryAuthenticationWithParticipationVCSAccessToken(User user, String providedToken, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri)
             throws LocalVCAuthException {
 
         // Note: we first check if the user has used a vcs access token instead of a password
@@ -362,9 +382,9 @@ public class LocalVCServletService {
                     studentParticipation = participations.stream().filter(participation -> participation.getRepositoryUri().equals(localVCRepositoryUri.toString())).findAny();
                 }
                 if (studentParticipation.isPresent()) {
-                    var token = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), studentParticipation.get().getId());
-                    if (token.isPresent() && Objects.equals(token.get().getVcsAccessToken(), providedToken)) {
-                        user.setVcsAccessToken(token.get().getVcsAccessToken());
+                    var storedToken = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), studentParticipation.get().getId());
+                    if (storedToken.isPresent() && Objects.equals(storedToken.get().getVcsAccessToken(), providedToken)) {
+                        user.setVcsAccessToken(storedToken.get().getVcsAccessToken());
                         return true;
                     }
                 }
@@ -413,6 +433,13 @@ public class LocalVCServletService {
         }
     }
 
+    /**
+     * Extracts the username and password from a Basic Authorization header.
+     *
+     * @param authorizationHeader the authorization header containing Basic credentials
+     * @return a {@link UsernameAndPassword} object with the extracted username and password
+     * @throws LocalVCAuthException if the header is missing, invalid, or improperly formatted
+     */
     private UsernameAndPassword extractUsernameAndPassword(String authorizationHeader) throws LocalVCAuthException {
         if (authorizationHeader == null) {
             throw new LocalVCAuthException("No authorization header provided");
@@ -462,7 +489,7 @@ public class LocalVCServletService {
     }
 
     private ProgrammingExerciseParticipation tryToLoadParticipation(boolean usingSSH, String repositoryTypeOrUserName, LocalVCRepositoryUri localVCRepositoryUri,
-            ProgrammingExercise exercise) throws LocalVCForbiddenException {
+            ProgrammingExercise exercise) throws LocalVCInternalException {
         ProgrammingExerciseParticipation participation;
         try {
             if (usingSSH) {
@@ -626,7 +653,8 @@ public class LocalVCServletService {
         ;
 
         try {
-            participation = cachedParticipation.orElseGet(() -> fetchParticipationFromLocalVCRepositoryUri(localVCRepositoryUri, exercise));
+            participation = cachedParticipation.orElseGet(() -> programmingExerciseParticipationService
+                    .fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(), localVCRepositoryUri.toString(), exercise));
         }
         catch (EntityNotFoundException e) {
             repositoryType = getRepositoryType(repositoryTypeOrUserName, exercise);
@@ -634,7 +662,7 @@ public class LocalVCServletService {
                 participation = retrieveSolutionParticipation(exercise);
             }
             else {
-                throw e;
+                throw new VersionControlException("Could not find participation for repository", e);
             }
         }
 
@@ -682,7 +710,7 @@ public class LocalVCServletService {
     }
 
     private ProgrammingExerciseParticipation retrieveSolutionParticipation(ProgrammingExercise exercise) {
-        return programmingExerciseParticipationService.retrieveSolutionPar(exercise);
+        return programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
     }
 
     private ProgrammingExercise getProgrammingExercise(String projectKey) {
@@ -844,28 +872,6 @@ public class LocalVCServletService {
     }
 
     /**
-     * Retrieves the participation for a programming exercise based on the repository URI.
-     *
-     * @param localVCRepositoryUri the {@link LocalVCRepositoryUri} containing details about the repository.
-     * @return the {@link ProgrammingExerciseParticipation} corresponding to the repository URI.
-     */
-    private ProgrammingExerciseParticipation fetchParticipationFromLocalVCRepositoryUri(LocalVCRepositoryUri localVCRepositoryUri, ProgrammingExercise exercise) {
-        return programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
-                localVCRepositoryUri.toString(), exercise);
-    }
-
-    /**
-     * Determine the default branch of the given repository.
-     *
-     * @param repository the repository for which the default branch should be determined.
-     * @return the name of the default branch.
-     */
-    public static String getDefaultBranchOfRepository(Repository repository) {
-        Path repositoryFolderPath = repository.getDirectory().toPath();
-        return LocalVCService.getDefaultBranchOfRepository(repositoryFolderPath.toString());
-    }
-
-    /**
      * Updates the VCS (Version Control System) access log for clone and pull actions using HTTPS.
      * <p>
      * This method logs the access information based on the incoming HTTP request. It checks if the action
@@ -907,7 +913,6 @@ public class LocalVCServletService {
      * @param clientOffered the number of objects offered by the client in the operation, used to determine
      *                          if the action is a clone (if 0) or a pull (if greater than 0).
      */
-    @Async
     public void updateAndStoreVCSAccessLogForCloneAndPullSSH(ServerSession session, int clientOffered) {
         try {
             if (session.getAttribute(SshConstants.USER_KEY).getName().equals(BUILD_USER_NAME)) {
@@ -937,7 +942,8 @@ public class LocalVCServletService {
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
             AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;
             LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(servletRequest);
-            var participation = fetchParticipationFromLocalVCRepositoryUri(localVCRepositoryUri, null);
+            var participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
+                    localVCRepositoryUri.toString(), null);
             var ipAddress = servletRequest.getRemoteAddr();
             vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
         }

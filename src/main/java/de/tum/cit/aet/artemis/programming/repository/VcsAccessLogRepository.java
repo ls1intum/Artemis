@@ -48,11 +48,11 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
      * @return an Optional containing the newest {@link VcsAccessLog} of the participation, or empty if none exists.
      */
     @Query("""
-                SELECT log
-                FROM VcsAccessLog log
-                LEFT JOIN TREAT (log.participation AS ProgrammingExerciseStudentParticipation) participation
+                SELECT vcsAccessLog
+                FROM VcsAccessLog vcsAccessLog
+                LEFT JOIN TREAT (vcsAccessLog.participation AS ProgrammingExerciseStudentParticipation) participation
                 WHERE participation.repositoryUri = :repositoryUri
-                ORDER BY log.id DESC
+                ORDER BY vcsAccessLog.id DESC
                 LIMIT 1
             """)
     Optional<VcsAccessLog> findNewestByRepositoryUri(@Param("repositoryUri") String repositoryUri);

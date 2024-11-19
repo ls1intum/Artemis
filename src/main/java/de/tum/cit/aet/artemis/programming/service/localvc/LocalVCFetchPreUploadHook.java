@@ -23,7 +23,6 @@ public class LocalVCFetchPreUploadHook implements PreUploadHook {
     public void onBeginNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int clientOffered) {
         String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
         localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, authorizationHeader, clientOffered);
-
     }
 
     @Override
