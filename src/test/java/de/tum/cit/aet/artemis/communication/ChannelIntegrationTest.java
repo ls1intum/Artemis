@@ -937,9 +937,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFeedbackChannel_asInstructor_shouldCreateChannel() {
-        // Given
-        Long courseId = 1L; // Existing course ID
-        Long exerciseId = 1L; // Existing exercise ID
+        Long courseId = 1L;
+        Long exerciseId = 1L;
         ChannelDTO channelDTO = new ChannelDTO();
         channelDTO.setName("feedback-channel");
         channelDTO.setDescription("Discussion channel for feedback");
@@ -950,18 +949,16 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         headers.set("feedback-detail-text", "Sample feedback text");
 
         String BASE_ENDPOINT = "/api/courses/{courseId}/{exerciseId}/feedback-channel";
-        // When
+
         ChannelDTO response = null;
         try {
             response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", courseId.toString()).replace("{exerciseId}", exerciseId.toString()), channelDTO,
-                    ChannelDTO.class, HttpStatus.OK,  // Expecting 200 OK here instead of 201 Created
-                    headers);
+                    ChannelDTO.class, HttpStatus.CREATED, headers);
         }
         catch (Exception e) {
             Assertions.fail("Failed to create feedback channel", e);
         }
 
-        // Then
         assertThat(response).isNotNull();
         assertThat(response.getName()).isEqualTo("feedback-channel");
         assertThat(response.getDescription()).isEqualTo("Discussion channel for feedback");

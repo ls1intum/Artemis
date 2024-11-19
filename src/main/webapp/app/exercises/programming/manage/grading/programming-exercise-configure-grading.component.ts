@@ -92,6 +92,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     readonly RESET_TABLE = ProgrammingGradingChartsDirective.RESET_TABLE;
     readonly chartFilterType = ChartFilterType;
     readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly isCommunicationEnabled = isCommunicationEnabled;
 
     // We have to separate these test cases in order to separate the table and chart presentation if the table is filtered by the chart
     staticCodeAnalysisCategoriesForTable: StaticCodeAnalysisCategory[] = [];
@@ -788,6 +789,4 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.staticCodeAnalysisCategoriesForCharts = this.staticCodeAnalysisCategoriesForTable;
         this.backupStaticCodeAnalysisCategories = this.staticCodeAnalysisCategoriesForTable;
     }
-
-    protected readonly isCommunicationEnabled = isCommunicationEnabled;
 }

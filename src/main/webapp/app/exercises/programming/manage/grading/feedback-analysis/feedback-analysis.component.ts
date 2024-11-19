@@ -210,7 +210,8 @@ export class FeedbackAnalysisComponent {
         modalRef.componentInstance.formSubmitted.subscribe(async ({ channelDto, navigate }: { channelDto: ChannelDTO; navigate: boolean }) => {
             try {
                 const createdChannel = await this.feedbackAnalysisService.createChannel(this.courseId(), this.exerciseId(), channelDto, feedbackDetail.detailText);
-                this.alertService.success(this.TRANSLATION_BASE + '.channelSuccess');
+                const name = createdChannel.name;
+                this.alertService.success(this.TRANSLATION_BASE + '.channelSuccess', { name });
                 if (navigate) {
                     window.location.href = `/courses/${this.courseId()}/communication?conversationId=${createdChannel.id}`;
                 }
@@ -221,6 +222,7 @@ export class FeedbackAnalysisComponent {
         try {
             await modalRef.result;
         } catch {
+            // modal dismissed
         } finally {
             this.isFeedbackDetailChannelModalOpen = false;
         }

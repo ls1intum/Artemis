@@ -357,7 +357,7 @@
                     "filter": "Filters",
                     "noData": "No Feedback Entries could be found for the Programming Exercise.",
                     "noDataFilter": "No Feedback Entries could be found for the specified filter or search Term.",
-                    "channelSuccess": "Channel successfully created.",
+                    "channelSuccess": "Channel {{channelName}} successfully created.",
                     "feedbackModal": {
                         "header": "Error Details",
                         "feedbackTitle": "Test Case Feedback",

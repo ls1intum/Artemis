@@ -357,7 +357,7 @@
                     "filter": "Filter",
                     "noData": "Es konnten keine Feedback Einträge für die Programmieraufgabe gefunden werden.",
                     "noDataFilter": "Für den spezifizierten Filter oder Suchbegriff konnten keine Feedback Einträge gefunden werden.",
-                    "channelSuccess": "Kanal erfolgreich erstellt.",
+                    "channelSuccess": "Kanal {{channelName}} erfolgreich erstellt.",
                     "feedbackModal": {
                         "header": "Fehlerdetails",
                         "feedbackTitle": "Feedback zu Testfällen",
