@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
@@ -46,18 +47,24 @@ public class ParticipationVcsAccessTokenService {
     }
 
     /**
-     * Retrieves the participationVCSAccessToken for a User,Participation pair if it exists
+     * Retrieves the participationVCSAccessToken for a User,Participation pair if it exists and if the user owns the participation
      *
-     * @param userId          the user's id which is owner of the token
+     * @param user            the user which is owner of the token
      * @param participationId the participation's id which the token belongs to
      * @return an Optional participationVCSAccessToken,
      */
-    public ParticipationVCSAccessToken findByUserIdAndParticipationIdOrElseThrow(long userId, long participationId) {
-        return participationVcsAccessTokenRepository.findByUserIdAndParticipationIdOrElseThrow(userId, participationId);
+    public ParticipationVCSAccessToken findByUserAndParticipationIdOrElseThrow(User user, long participationId) {
+        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        if (participation.isOwnedBy(user)) {
+            return participationVcsAccessTokenRepository.findByUserIdAndParticipationIdOrElseThrow(user.getId(), participationId);
+        }
+        else {
+            throw new AccessForbiddenException("Participation not owned by user");
+        }
     }
 
     /**
-     * Checks if the participationVCSAccessToken for a User,Participation pair exists, and creates a new one if not
+     * Checks if the participationVCSAccessToken for a User,Participation pair exists, and creates a new one if not; if the user owns the participation
      *
      * @param user            the user's id which is owner of the token
      * @param participationId the participation's id which the token belongs to
@@ -66,7 +73,12 @@ public class ParticipationVcsAccessTokenService {
     public ParticipationVCSAccessToken createVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, long participationId) {
         participationVcsAccessTokenRepository.findByUserIdAndParticipationIdAndThrowIfExists(user.getId(), participationId);
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        return createParticipationVCSAccessToken(user, participation);
+        if (participation.isOwnedBy(user)) {
+            return createParticipationVCSAccessToken(user, participation);
+        }
+        else {
+            throw new AccessForbiddenException("Participation not owned by user");
+        }
     }
 
     /**
