@@ -417,22 +417,17 @@ public class ChannelService {
 
     /**
      * Creates a feedback-specific channel for an exercise within a course.
-     * <p>
-     * This method sets up a new channel and adds affected students based on the provided feedback detail text.
-     * It validates the channel name, creates the channel, and registers affected students as members. Additionally,
-     * it sends notifications to the added users about the new channel.
-     * </p>
      *
-     * @param course             the course in which the channel is being created.
-     * @param exerciseId         the ID of the exercise associated with the feedback channel.
-     * @param channelDTO         the DTO containing the properties of the channel to be created, such as name, description, and visibility.
-     * @param feedbackDetailText the feedback detail text used to identify the students affected by the feedback.
-     * @param requestingUser     the user initiating the channel creation request.
+     * @param course             in which the channel is being created.
+     * @param exerciseId         of the exercise associated with the feedback channel.
+     * @param channelDTO         containing the properties of the channel to be created, such as name, description, and visibility.
+     * @param feedbackDetailText used to identify the students affected by the feedback.
+     * @param requestingUser     initiating the channel creation request.
      * @return the created {@link Channel} object with its properties.
      * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
      */
     public Channel createFeedbackChannel(Course course, Long exerciseId, ChannelDTO channelDTO, String feedbackDetailText, User requestingUser) {
-        var channelToCreate = new Channel();
+        Channel channelToCreate = new Channel();
         channelToCreate.setName(channelDTO.getName());
         channelToCreate.setIsPublic(channelDTO.getIsPublic());
         channelToCreate.setIsAnnouncementChannel(channelDTO.getIsAnnouncementChannel());
@@ -443,7 +438,7 @@ public class ChannelService {
             throw new BadRequestAlertException("User generated channels cannot start with $", "channel", "channelNameInvalid");
         }
 
-        var createdChannel = createChannel(course, channelToCreate, Optional.of(requestingUser));
+        Channel createdChannel = createChannel(course, channelToCreate, Optional.of(requestingUser));
 
         List<String> userLogins = studentParticipationRepository.findAffectedLoginsByFeedbackDetailText(exerciseId, feedbackDetailText);
 

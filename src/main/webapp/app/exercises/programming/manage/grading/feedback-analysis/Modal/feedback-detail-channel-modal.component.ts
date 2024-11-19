@@ -14,27 +14,23 @@ import { AlertService } from 'app/core/util/alert.service';
     standalone: true,
 })
 export class FeedbackDetailChannelModalComponent {
+    protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel';
     affectedStudentsCount = input.required<number>();
     feedbackDetail = input.required<FeedbackDetail>();
     formSubmitted = output<{ channelDto: ChannelDTO; navigate: boolean }>();
 
     isConfirmModalOpen = signal(false);
-    form: FormGroup;
-    readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel';
-    private alertService = inject(AlertService);
 
-    constructor(
-        private fb: FormBuilder,
-        private activeModal: NgbActiveModal,
-        private modalService: NgbModal,
-    ) {
-        this.form = this.fb.group({
-            name: ['', [Validators.required, Validators.maxLength(30), Validators.pattern('^[a-z0-9-]{1}[a-z0-9-]{0,30}$')]],
-            description: ['', [Validators.required, Validators.maxLength(250)]],
-            isPublic: [true, Validators.required],
-            isAnnouncementChannel: [false, Validators.required],
-        });
-    }
+    private alertService = inject(AlertService);
+    private readonly formBuilder = inject(FormBuilder);
+    private readonly activeModal = inject(NgbActiveModal);
+    private readonly modalService = inject(NgbModal);
+    form: FormGroup = this.formBuilder.group({
+        name: ['', [Validators.required, Validators.maxLength(30), Validators.pattern('^[a-z0-9-]{1}[a-z0-9-]{0,30}$')]],
+        description: ['', [Validators.required, Validators.maxLength(250)]],
+        isPublic: [true, Validators.required],
+        isAnnouncementChannel: [false, Validators.required],
+    });
 
     async submitForm(navigate: boolean): Promise<void> {
         if (this.form.valid && !this.isConfirmModalOpen()) {

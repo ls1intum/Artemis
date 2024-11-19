@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -931,6 +932,39 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         catch (Exception e) {
             fail("There was an error executing the post request.", e);
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createFeedbackChannel_asInstructor_shouldCreateChannel() {
+        // Given
+        Long courseId = 1L; // Existing course ID
+        Long exerciseId = 1L; // Existing exercise ID
+        ChannelDTO channelDTO = new ChannelDTO();
+        channelDTO.setName("feedback-channel");
+        channelDTO.setDescription("Discussion channel for feedback");
+        channelDTO.setIsPublic(true);
+        channelDTO.setIsAnnouncementChannel(false);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("feedback-detail-text", "Sample feedback text");
+
+        String BASE_ENDPOINT = "/api/courses/{courseId}/{exerciseId}/feedback-channel";
+        // When
+        ChannelDTO response = null;
+        try {
+            response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", courseId.toString()).replace("{exerciseId}", exerciseId.toString()), channelDTO,
+                    ChannelDTO.class, HttpStatus.OK,  // Expecting 200 OK here instead of 201 Created
+                    headers);
+        }
+        catch (Exception e) {
+            Assertions.fail("Failed to create feedback channel", e);
+        }
+
+        // Then
+        assertThat(response).isNotNull();
+        assertThat(response.getName()).isEqualTo("feedback-channel");
+        assertThat(response.getDescription()).isEqualTo("Discussion channel for feedback");
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {

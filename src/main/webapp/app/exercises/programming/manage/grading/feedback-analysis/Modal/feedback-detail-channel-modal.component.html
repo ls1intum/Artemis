@@ -15,13 +15,13 @@
             @if (form.get('name')?.invalid && (form.get('name')?.dirty || form.get('name')?.touched)) {
                 <div class="alert alert-danger mt-2">
                     @if (form.get('name')?.errors?.['required']) {
-                        <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.requiredValidationError"></div>
+                        <div [jhiTranslate]="TRANSLATION_BASE + '.requiredValidationErrorName'"></div>
                     }
                     @if (form.get('name')?.errors?.['maxlength']) {
-                        <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.maxLengthValidationError" [translateValues]="{ max: '30' }"></div>
+                        <div [jhiTranslate]="TRANSLATION_BASE + '.maxLengthValidationErrorName'" [translateValues]="{ max: '30' }"></div>
                     }
                     @if (!form.get('name')?.errors?.['required'] && !form.get('name')?.errors?.['maxlength'] && form.get('name')?.errors?.['pattern']) {
-                        <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.nameInput.regexValidationError"></div>
+                        <div [jhiTranslate]="TRANSLATION_BASE + '.regexValidationErrorName'"></div>
                     }
                 </div>
             }
@@ -32,10 +32,13 @@
             @if (form.get('description')?.invalid && (form.get('description')?.dirty || form.get('description')?.touched)) {
                 <div class="alert alert-danger mt-2">
                     @if (form.get('description')?.errors?.['required']) {
-                        <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.descriptionInput.requiredValidationError"></div>
+                        <div [jhiTranslate]="TRANSLATION_BASE + '.requiredValidationErrorDescription'"></div>
                     }
                     @if (form.get('description')?.errors?.['maxlength']) {
-                        <div jhiTranslate="artemisApp.dialogs.createChannel.channelForm.descriptionInput.maxLengthValidationError" [translateValues]="{ max: '250' }"></div>
+                        <div
+                            jhiTranslate="artemisApp.dialogs.createChannel.channelForm.descriptionInput.maxLengthValidationErrorDescription"
+                            [translateValues]="{ max: '250' }"
+                        ></div>
                     }
                 </div>
             }

@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTO
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -469,14 +470,10 @@ public class ChannelResource extends ConversationManagementResource {
 
     /**
      * POST /api/courses/:courseId/channels/: Creates a new feedback-specific channel in a course.
-     * <p>
-     * This endpoint allows authorized users to create a new channel within a course that is specifically designed for discussions
-     * around a particular exercise's feedback. The channel is populated with all affected students based on the provided feedback detail text.
-     * </p>
      *
-     * @param courseId           the ID of the course where the channel is being created.
-     * @param exerciseId         the ID of the exercise for which the feedback channel is being created.
-     * @param channelDTO         the DTO containing the properties of the channel to be created, such as name, description, and visibility.
+     * @param courseId           where the channel is being created.
+     * @param exerciseId         for which the feedback channel is being created.
+     * @param channelDTO         containing the properties of the channel to be created, such as name, description, and visibility.
      * @param feedbackDetailText a string representing the feedback detail text used to determine the affected students to be added to the channel.
      * @return ResponseEntity with status 201 (Created) and the body containing the details of the created channel.
      * @throws URISyntaxException       if the URI for the created resource cannot be constructed.
@@ -488,13 +485,11 @@ public class ChannelResource extends ConversationManagementResource {
             @RequestHeader("feedback-detail-text") String feedbackDetailText) throws URISyntaxException {
         log.debug("REST request to create feedback channel in course {} with properties: {}", courseId, channelDTO);
 
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        var course = courseRepository.findByIdElseThrow(courseId);
-
+        User requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
         checkCommunicationEnabledElseThrow(course);
         channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser);
-
-        var createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailText, requestingUser);
+        Channel createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailText, requestingUser);
 
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }

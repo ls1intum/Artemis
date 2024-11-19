@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
@@ -9,10 +9,9 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     standalone: true,
 })
 export class ConfirmFeedbackChannelCreationModalComponent {
-    affectedStudentsCount = input.required<number>();
     readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel.confirmationModal';
-
-    constructor(private activeModal: NgbActiveModal) {}
+    affectedStudentsCount = input.required<number>();
+    private activeModal = inject(NgbActiveModal);
 
     confirm(): void {
         this.activeModal.close(true);

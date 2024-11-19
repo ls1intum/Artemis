@@ -400,6 +400,11 @@
                         "createChannelButton": "Create Channel",
                         "placeholder": "This field should not be empty",
                         "descriptionLabel": "Description",
+                        "requiredValidationErrorName": "The channel name is required.",
+                        "maxLengthValidationErrorName": "Channel name can be max {{ max }} characters long!",
+                        "regexValidationError": "Names can only contain lowercase letters, numbers, and dashes. Only Artemis can create channels that start with a $.",
+                        "requiredValidationErrorDescription": "The channel description is required.",
+                        "maxLengthValidationErrorDescription": "Channel description can be max {{ max }} characters long!",
                         "confirmationModal": {
                             "header": "Confirm Channel Creation",
                             "confirmationMessage": "Are you sure you want to create this channel? This will create a channel with <strong>{{count}}</strong> student(s).",

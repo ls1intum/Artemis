@@ -400,6 +400,11 @@
                         "createChannelButton": "Kanal erstellen",
                         "placeholder": "Dieses Feld bitte nicht leer lassen",
                         "descriptionLabel": "Kanalbeschreibung",
+                        "requiredValidationErrorName": "Der Kanalname ist ein Pflichtfeld.",
+                        "maxLengthValidationErrorName": "Kanalname kann max {{ max }} Zeichen lang sein!",
+                        "regexValidationError": "Namen können nur Kleinbuchstaben, Zahlen und Striche enthalten. Nur Artemis kann Kanäle erstellen, die mit $ beginnen.",
+                        "requiredValidationErrorDescription": "Die Kanalbeschreibung ist ein Pflichtfeld.",
+                        "maxLengthValidationErrorDescription": "Kanalbeschreibung kann max {{ max }} Zeichen lang sein!",
                         "confirmationModal": {
                             "header": "Kanal Erstellen bestätigen",
                             "confirmationMessage": "Sind Sie sicher, dass Sie diesen Kanal erstellen möchten? Dies wird einen Kanal mit <strong>{{count}}</strong> Student(en) erstellen.",
