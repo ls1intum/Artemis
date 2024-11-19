@@ -621,15 +621,21 @@ public class LocalVCServletService {
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
         String projectKey = localVCRepositoryUri.getProjectKey();
         ProgrammingExercise exercise = cachedExercise.orElseGet(() -> getProgrammingExercise(projectKey));
-        RepositoryType repositoryType = getRepositoryType(repositoryTypeOrUserName, exercise);
-
-        ProgrammingExerciseParticipation participation = cachedParticipation.orElseGet(() -> fetchParticipationFromLocalVCRepositoryUri(localVCRepositoryUri, exercise));
-
         ProgrammingExerciseParticipation participation;
-        if (repositoryType.equals(RepositoryType.AUXILIARY) || repositoryType.equals(RepositoryType.TESTS)) {
-            participation = retrieveSolutionParticipation(exercise);
+        RepositoryType repositoryType = getRepositoryTypeWithoutAuxiliary(repositoryTypeOrUserName, exercise);
+        ;
+
+        try {
+            participation = cachedParticipation.orElseGet(() -> fetchParticipationFromLocalVCRepositoryUri(localVCRepositoryUri, exercise));
         }
-        else {
+        catch (EntityNotFoundException e) {
+            repositoryType = getRepositoryType(repositoryTypeOrUserName, exercise);
+            if (repositoryType.equals(RepositoryType.AUXILIARY) || repositoryType.equals(RepositoryType.TESTS)) {
+                participation = retrieveSolutionParticipation(exercise);
+            }
+            else {
+                throw e;
+            }
         }
 
         try {
@@ -766,19 +772,21 @@ public class LocalVCServletService {
             return RepositoryType.USER;
         }
     }
-    //
-    // private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(LocalVCRepositoryUri localVCRepositoryUri, String repositoryTypeOrUserName,
-    // ProgrammingExercise exercise) {
-    // ProgrammingExerciseParticipation participation;
-    // try {
-    // participation = programmingExerciseParticipationService.retrieveParticipationWithSubmissionsByRepository(exercise, repositoryTypeOrUserName,
-    // localVCRepositoryUri.isPracticeRepository());
-    // }
-    // catch (EntityNotFoundException e) {
-    // throw new VersionControlException("Could not find participation for repository " + repositoryTypeOrUserName + " of exercise " + exercise, e);
-    // }
-    // return participation;
-    // }
+
+    private RepositoryType getRepositoryTypeWithoutAuxiliary(String repositoryTypeOrUserName, ProgrammingExercise exercise) {
+        if (repositoryTypeOrUserName.equals("exercise")) {
+            return RepositoryType.TEMPLATE;
+        }
+        else if (repositoryTypeOrUserName.equals("solution")) {
+            return RepositoryType.SOLUTION;
+        }
+        else if (repositoryTypeOrUserName.equals("tests")) {
+            return RepositoryType.TESTS;
+        }
+        else {
+            return RepositoryType.USER;
+        }
+    }
 
     /**
      * TODO: this could be done asynchronously to shorten the duration of the push operation
