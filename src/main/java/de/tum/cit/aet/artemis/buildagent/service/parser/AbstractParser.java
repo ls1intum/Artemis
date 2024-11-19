@@ -7,7 +7,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.testsuite.Failure;
 import de.tum.cit.aet.artemis.buildagent.dto.testsuite.TestCase;
 import de.tum.cit.aet.artemis.buildagent.dto.testsuite.TestSuite;
 
-public abstract class AbstractParser {
+abstract class AbstractParser {
 
     protected static void processTestSuite(TestSuite testSuite, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests) {
         for (TestCase testCase : testSuite.testCases()) {
