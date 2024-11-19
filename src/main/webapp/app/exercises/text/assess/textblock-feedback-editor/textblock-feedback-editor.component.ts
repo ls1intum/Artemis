@@ -18,7 +18,7 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 export class TextblockFeedbackEditorComponent implements AfterViewInit {
     protected route = inject(ActivatedRoute);
     protected modalService = inject(NgbModal);
-    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
     readonly FeedbackType = FeedbackType;
