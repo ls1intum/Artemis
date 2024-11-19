@@ -10,6 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -26,6 +27,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.core.connector.GitlabRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -35,6 +39,7 @@ import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -49,6 +54,9 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private TokenProvider tokenProvider;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -227,7 +235,10 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         MockHttpServletResponse response = request.postWithoutResponseBody("/api/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
-        AuthenticationIntegrationTestHelper.authenticationBearerTokenAssertions(response.getHeader("Authorization"));
+
+        var responseBody = new ObjectMapper().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
+        });
+        assertThat(tokenProvider.validateTokenForAuthority(responseBody.get("access_token").toString())).isTrue();
     }
 
     @Test

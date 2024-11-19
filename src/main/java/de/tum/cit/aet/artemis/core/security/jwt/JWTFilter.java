@@ -34,14 +34,18 @@ public class JWTFilter extends GenericFilterBean {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
+        String jwtToken;
+        try {
+            jwtToken = extractValidJwt(httpServletRequest, this.tokenProvider);
+        }
+        catch (IllegalArgumentException e) {
+            httpServletResponse.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
 
-        String jwtToken = extractValidJwt(httpServletRequest, httpServletResponse, this.tokenProvider);
         if (jwtToken != null) {
             Authentication authentication = this.tokenProvider.getAuthentication(jwtToken);
             SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
-        else if (httpServletResponse.getStatus() == HttpServletResponse.SC_BAD_REQUEST) {
-            return; // Stop further processing if a bad request status is set
         }
 
         filterChain.doFilter(servletRequest, servletResponse);
@@ -54,7 +58,7 @@ public class JWTFilter extends GenericFilterBean {
      * @param tokenProvider      the Artemis token provider used to generate and validate jwt's
      * @return the valid jwt or null if not found or invalid
      */
-    public static @Nullable String extractValidJwt(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, TokenProvider tokenProvider) {
+    public static @Nullable String extractValidJwt(HttpServletRequest httpServletRequest, TokenProvider tokenProvider) {
         var cookie = WebUtils.getCookie(httpServletRequest, JWT_COOKIE_NAME);
         var authHeader = httpServletRequest.getHeader("Authorization");
 
@@ -64,8 +68,7 @@ public class JWTFilter extends GenericFilterBean {
 
         if (cookie != null && authHeader != null) {
             // Single Method Enforcement: Only one method of authentication is allowed
-            httpServletResponse.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return null;
+            throw new IllegalArgumentException("Only one method of authentication is allowed");
         }
 
         String jwtToken = cookie != null ? getJwtFromCookie(cookie) : getJwtFromBearer(authHeader);

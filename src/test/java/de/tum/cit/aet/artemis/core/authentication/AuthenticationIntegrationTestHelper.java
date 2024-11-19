@@ -21,9 +21,4 @@ public class AuthenticationIntegrationTestHelper {
             assertThat(cookie.getValue()).isNotEmpty();
         }
     }
-
-    public static void authenticationBearerTokenAssertions(String authorizationHeader) {
-        assertThat(authorizationHeader).isNotNull();
-        assertThat(authorizationHeader).startsWith("Bearer ");
-    }
 }
