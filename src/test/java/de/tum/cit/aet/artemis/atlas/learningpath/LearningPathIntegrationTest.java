@@ -248,10 +248,11 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
         request.postWithResponseBody("/api/courses/" + course.getId() + "/enroll", null, Set.class, HttpStatus.OK);
-        final var user = userTestRepository.findOneWithLearningPathsByLogin(TEST_PREFIX + "student1337").orElseThrow();
+        final var user = userTestRepository.findOneWithLearningPathsAndLearnerProfileByLogin(TEST_PREFIX + "student1337").orElseThrow();
 
         assertThat(user.getLearningPaths()).isNotNull();
-        assertThat(user.getLearningPaths().size()).as("should create LearningPath for student").isEqualTo(1);
+        assertThat(user.getLearningPaths()).as("should create LearningPath for student").hasSize(1);
+        assertThat(user.getLearnerProfile().getCourseLearnerProfiles()).hasSize(1);
     }
 
     @Test

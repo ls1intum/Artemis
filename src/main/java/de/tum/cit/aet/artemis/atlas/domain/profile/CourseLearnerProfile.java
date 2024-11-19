@@ -7,6 +7,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -24,12 +26,18 @@ public class CourseLearnerProfile extends DomainObject {
     private Course course;
 
     @Column(name = "aim_for_grade_or_bonus")
+    @Min(0)
+    @Max(5)
     private int aimForGradeOrBonus;
 
     @Column(name = "time_investment")
+    @Min(0)
+    @Max(5)
     private int timeInvestment;
 
     @Column(name = "repetition_intensity")
+    @Min(0)
+    @Max(5)
     private int repetitionIntensity;
 
     public void setLearnerProfile(LearnerProfile learnerProfile) {
