@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
@@ -94,7 +95,9 @@ public class ParticipationVcsAccessTokenService {
      */
     private void loadTeamStudentsForTeamExercise(StudentParticipation participation) {
         if (participation.getTeam().isPresent()) {
-            participation.getTeam().get().setStudents(teamRepository.findWithStudentsById(participation.getTeam().get().getId()).get().getStudents());
+            Team team = participation.getTeam().get();
+            Team teamWithStudents = teamRepository.findWithStudentsByIdElseThrow(team.getId());
+            participation.getTeam().get().setStudents(teamWithStudents.getStudents());
         }
     }
 

@@ -245,9 +245,6 @@ public class TeamUtilService {
         return teamRepo.saveAndFlush(team);
     }
 
-    /**
-     * Deletes a team
-     */
     public void deleteTeam(Team team) {
         teamRepo.delete(team);
     }
