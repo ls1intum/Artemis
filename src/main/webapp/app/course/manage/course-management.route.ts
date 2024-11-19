@@ -36,6 +36,7 @@ import { LearningPathInstructorPageComponent } from 'app/course/learning-paths/p
 import { FaqComponent } from 'app/faq/faq.component';
 import { FaqUpdateComponent } from 'app/faq/faq-update.component';
 import { FaqResolve } from 'app/faq/faq.routes';
+import { CourseLearnerProfileComponent } from 'app/learner-profile/course-learner-profile/course-learner-profile.component';
 
 export const courseManagementState: Routes = [
     {
@@ -388,6 +389,15 @@ export const courseManagementState: Routes = [
                                 ],
                             },
                         ],
+                    },
+                    {
+                        path: 'course-learner-profile',
+                        component: CourseLearnerProfileComponent,
+                        data: {
+                            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                            pageTitle: 'artemisApp.courseLearnerProfile.title',
+                        },
+                        canActivate: [UserRouteAccessService],
                     },
                 ],
             },

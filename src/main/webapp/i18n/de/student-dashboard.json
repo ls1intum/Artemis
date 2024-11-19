@@ -100,7 +100,8 @@
                 "communication": "Kommunikation",
                 "plagiarismCases": "Plagiatsfälle",
                 "gradingSystem": "Notenschlüssel",
-                "faq": "FAQ"
+                "faq": "FAQ",
+                "profile": "Kursprofil"
             },
             "exerciseFilter": {
                 "filter": "Filter",

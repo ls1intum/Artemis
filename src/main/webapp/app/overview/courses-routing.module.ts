@@ -277,6 +277,16 @@ const routes: Routes = [
                 },
             },
             {
+                path: 'profile',
+                loadComponent: () => import('../learner-profile/course-learner-profile/course-learner-profile.component').then((m) => m.CourseLearnerProfileComponent),
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.courseProfile',
+                    hasSidebar: false,
+                    showRefreshButton: true,
+                },
+            },
+            {
                 path: '',
                 redirectTo: 'dashboard', // dashboard will redirect to exercises if not enabled
                 pathMatch: 'full',

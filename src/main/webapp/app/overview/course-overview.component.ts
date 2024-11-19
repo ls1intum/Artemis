@@ -37,6 +37,7 @@ import {
     faSync,
     faTable,
     faTimes,
+    faUser,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -164,22 +165,23 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     @ViewChild('itemsDrop', { static: true }) itemsDrop: NgbDropdown;
 
     // Icons
-    faTimes = faTimes;
-    faEye = faEye;
-    faWrench = faWrench;
-    faTable = faTable;
-    faFlag = faFlag;
-    faListAlt = faListAlt;
     faChartBar = faChartBar;
-    faClipboard = faClipboard;
-    faSync = faSync;
-    faCircleNotch = faCircleNotch;
-    faChevronRight = faChevronRight;
+    faChartColumn = faChartColumn;
     faChevronLeft = faChevronLeft;
+    faChevronRight = faChevronRight;
+    faCircleNotch = faCircleNotch;
+    faClipboard = faClipboard;
     facSidebar = facSidebar;
     faEllipsis = faEllipsis;
+    faEye = faEye;
+    faFlag = faFlag;
+    faListAlt = faListAlt;
     faQuestion = faQuestion;
-    faChartColumn = faChartColumn;
+    faSync = faSync;
+    faTable = faTable;
+    faTimes = faTimes;
+    faUser = faUser;
+    faWrench = faWrench;
 
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
@@ -368,6 +370,12 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             sidebarItems.push(faqItem);
         }
 
+        //TODO decide wether profile should be default
+        if (true) {
+            const profileItem: SidebarItem = this.getProfileItem();
+            sidebarItems.push(profileItem);
+        }
+
         return sidebarItems;
     }
 
@@ -487,6 +495,19 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             hidden: false,
         };
         return faqItem;
+    }
+
+    getProfileItem() {
+        const profileitem: SidebarItem = {
+            routerLink: 'profile',
+            icon: faUser,
+            title: 'Profile',
+            translation: 'artemisApp.courseOverview.menu.courseProfile',
+            hasInOrionProperty: false,
+            showInOrionWindow: false,
+            hidden: false,
+        };
+        return profileitem;
     }
 
     getDefaultItems() {
