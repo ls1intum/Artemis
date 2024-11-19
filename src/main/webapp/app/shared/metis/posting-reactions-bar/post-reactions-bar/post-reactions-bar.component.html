@@ -1,4 +1,12 @@
-<div class="d-flex flex-wrap gap-2 fs-xx-small align-items-center">
+<div class="d-flex flex-wrap gap-2 fs-xx-small align-items-center" style="width: max-content">
+    @if (hoverBar && sortedAnswerPosts.length === 0) {
+        <div>
+            <button class="reaction-button clickable reply-btn" (click)="isCommunicationPage ? openThread.emit() : openAnswerView()">
+                <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
+                <span jhiTranslate="artemisApp.conversationsLayout.threadSideBar.reply" class="emoji-count px-2"></span>
+            </button>
+        </div>
+    }
     @if (!isCommunicationPage) {
         @if (sortedAnswerPosts.length) {
             <!-- collapse answers -->
@@ -25,15 +33,6 @@
         }
     } @else {
         @if (!isThreadSidebar) {
-            <!-- start discussion -->
-            @if (hoverBar && sortedAnswerPosts.length === 0) {
-                <div>
-                    <button class="reaction-button clickable reply-btn" (click)="openThread.emit()">
-                        <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
-                        <span jhiTranslate="artemisApp.conversationsLayout.threadSideBar.reply" class="emoji-count px-2"></span>
-                    </button>
-                </div>
-            }
             <!-- expand answers -->
             @if (!showAnswers && sortedAnswerPosts.length) {
                 <div>
@@ -134,7 +133,7 @@
         }
     </div>
     <div>
-        @if (getShowNewMessageIcon()) {
+        @if (isEmojiCount && getShowNewMessageIcon()) {
             <div jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></div>
         }
     </div>
