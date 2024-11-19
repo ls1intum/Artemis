@@ -37,9 +37,6 @@ public final class CustomFeedbackParser extends AbstractParser {
         final CustomFeedback feedback;
         try {
             feedback = mapper.readValue(testResultFileString, CustomFeedback.class);
-            if (feedback.getMessage() != null && feedback.getMessage().trim().isEmpty()) {
-                feedback.setMessage(null);
-            }
             validateCustomFeedback(fileName, feedback);
         }
         catch (IOException e) {
@@ -62,10 +59,10 @@ public final class CustomFeedbackParser extends AbstractParser {
      * @throws InvalidPropertiesFormatException if one of the invariants described above does not hold.
      */
     private static void validateCustomFeedback(final String fileName, final CustomFeedback feedback) throws InvalidPropertiesFormatException {
-        if (feedback.getName() == null || feedback.getName().trim().isEmpty()) {
+        if (feedback.name() == null || feedback.name().trim().isEmpty()) {
             throw new InvalidPropertiesFormatException(String.format("Custom feedback from file %s needs to have a name attribute.", fileName));
         }
-        if (!feedback.isSuccessful() && feedback.getMessage() == null) {
+        if (!feedback.successful() && feedback.message() == null) {
             throw new InvalidPropertiesFormatException(String.format("Custom non-success feedback from file %s needs to have a message", fileName));
         }
     }
@@ -78,13 +75,13 @@ public final class CustomFeedbackParser extends AbstractParser {
      */
     private static TestSuite customFeedbackToTestSuite(final CustomFeedback feedback) {
         final TestCase testCase;
-        if (feedback.isSuccessful()) {
-            testCase = new TestCase(feedback.getName(), null, null, null, feedback.getMessage());
+        if (feedback.successful()) {
+            testCase = new TestCase(feedback.name(), null, null, null, feedback.message());
         }
         else {
             final Failure failure = new Failure();
-            failure.setMessage(feedback.getMessage());
-            testCase = new TestCase(feedback.getName(), failure, null, null, null);
+            failure.setMessage(feedback.message());
+            testCase = new TestCase(feedback.name(), failure, null, null, null);
         }
         return new TestSuite(List.of(testCase), List.of());
     }
