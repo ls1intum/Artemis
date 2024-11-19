@@ -3,7 +3,6 @@ import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms'
 import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
 import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -48,7 +47,6 @@ export interface CourseCompetencyFormData {
     taxonomy?: CompetencyTaxonomy;
     optional?: boolean;
     masteryThreshold?: number;
-    connectedLectureUnits?: LectureUnit[];
 }
 
 @Component({ template: '' })
@@ -76,14 +74,10 @@ export abstract class CourseCompetencyFormComponent {
     formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
 
     form: FormGroup;
-    selectedLectureUnitsInTable: LectureUnit[] = [];
 
     // Icons
     protected readonly faTimes = faTimes;
     protected readonly faQuestionCircle = faQuestionCircle;
-
-    // Constants
-    protected readonly competencyTaxonomy = CompetencyTaxonomy;
 
     protected constructor(
         protected fb: FormBuilder,
@@ -137,7 +131,6 @@ export abstract class CourseCompetencyFormComponent {
             masteryThreshold: [DEFAULT_MASTERY_THRESHOLD, [Validators.min(0), Validators.max(100)]],
             optional: [false],
         });
-        this.selectedLectureUnitsInTable = [];
     }
 
     cancelForm() {
@@ -146,9 +139,5 @@ export abstract class CourseCompetencyFormComponent {
 
     get isSubmitPossible() {
         return !this.form.invalid;
-    }
-
-    protected onLectureUnitSelectionChange(lectureUnits: LectureUnit[]) {
-        this.selectedLectureUnitsInTable = lectureUnits;
     }
 }

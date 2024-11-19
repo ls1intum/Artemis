@@ -8,7 +8,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { Competency } from 'app/entities/competency.model';
 import { By } from '@angular/platform-browser';
@@ -106,13 +105,11 @@ describe('CreateCompetency', () => {
         const router: Router = TestBed.inject(Router);
         const competencyService = TestBed.inject(CompetencyService);
 
-        const textUnit: TextUnit = new TextUnit();
-        textUnit.id = 1;
         const formData: CourseCompetencyFormData = {
             title: 'Test',
             description: 'Lorem Ipsum',
             optional: true,
-            connectedLectureUnits: [textUnit],
+            masteryThreshold: 100,
         };
 
         const response: HttpResponse<Competency> = new HttpResponse({
@@ -133,7 +130,6 @@ describe('CreateCompetency', () => {
             competency.title = formData.title;
             competency.description = formData.description;
             competency.optional = formData.optional;
-            competency.lectureUnits = formData.connectedLectureUnits;
 
             expect(createSpy).toHaveBeenCalledWith(competency, 1);
             expect(createSpy).toHaveBeenCalledOnce();

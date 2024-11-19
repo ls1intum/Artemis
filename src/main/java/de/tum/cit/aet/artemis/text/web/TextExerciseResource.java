@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -226,7 +227,7 @@ public class TextExerciseResource {
         // Check that only allowed athena modules are used
         athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
-        TextExercise result = textExerciseRepository.save(textExercise);
+        TextExercise result = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
@@ -284,7 +285,8 @@ public class TextExerciseResource {
 
         channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
 
-        TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
+        TextExercise updatedTextExercise = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
+
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(textExerciseBeforeUpdate, updatedTextExercise);
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedTextExercise, textExerciseBeforeUpdate.getDueDate());
@@ -421,44 +423,49 @@ public class TextExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
-        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
+        if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
+            // We want to have the preliminary feedback before the assessment due date too
+            Set<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
+                    .collect(Collectors.toSet());
+            participation.setResults(athenaResults);
+        }
+
+        Set<Submission> submissions = participation.getSubmissions();
         participation.setSubmissions(new HashSet<>());
 
-        if (optionalSubmission.isPresent()) {
-            TextSubmission textSubmission = (TextSubmission) optionalSubmission.get();
+        for (Submission submission : submissions) {
+            if (submission != null) {
+                TextSubmission textSubmission = (TextSubmission) submission;
 
-            // set reference to participation to null, since we are already inside a participation
-            textSubmission.setParticipation(null);
+                // set reference to participation to null, since we are already inside a participation
+                textSubmission.setParticipation(null);
 
-            if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
-                // We want to have the preliminary feedback before the assessment due date too
-                List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
-                textSubmission.setResults(athenaResults);
-                Set<Result> athenaResultsSet = new HashSet<Result>(athenaResults);
-                participation.setResults(athenaResultsSet);
-            }
-
-            Result result = textSubmission.getLatestResult();
-            if (result != null) {
-                // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
-                final var textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
-                textSubmission.setBlocks(textBlocks);
-
-                if (textSubmission.isSubmitted() && result.getCompletionDate() != null) {
-                    List<Feedback> assessments = feedbackRepository.findByResult(result);
-                    result.setFeedbacks(assessments);
+                if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
+                    // We want to have the preliminary feedback before the assessment due date too
+                    List<Result> athenaResults = submission.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+                    textSubmission.setResults(athenaResults);
                 }
 
-                if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
-                    result.filterSensitiveInformation();
+                Result result = textSubmission.getLatestResult();
+                if (result != null) {
+                    // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
+                    final var textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
+                    textSubmission.setBlocks(textBlocks);
+
+                    if (textSubmission.isSubmitted() && result.getCompletionDate() != null) {
+                        List<Feedback> assessments = feedbackRepository.findByResult(result);
+                        result.setFeedbacks(assessments);
+                    }
+
+                    if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
+                        result.filterSensitiveInformation();
+                    }
+
+                    // only send the one latest result to the client
+                    textSubmission.setResults(List.of(result));
                 }
-
-                // only send the one latest result to the client
-                textSubmission.setResults(List.of(result));
-                participation.setResults(Set.of(result));
+                participation.addSubmission(textSubmission);
             }
-
-            participation.addSubmission(textSubmission);
         }
 
         if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {

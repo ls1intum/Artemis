@@ -10,7 +10,7 @@ import { CourseManagementAPIRequests } from '../../support/requests/CourseManage
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../support/requests/ExerciseAPIRequests';
 
-test.describe('Exam management', () => {
+test.describe('Exam management', { tag: '@fast' }, () => {
     test.describe('Exercise group', () => {
         let course: Course;
         let exam: Exam;
@@ -80,6 +80,7 @@ test.describe('Exam management', () => {
                 const uid = generateUUID();
                 const programmingExerciseTitle = 'Programming ' + uid;
                 const programmingExerciseShortName = 'programming' + uid;
+                await programmingExerciseCreation.changeEditMode();
                 await programmingExerciseCreation.setTitle(programmingExerciseTitle);
                 await programmingExerciseCreation.setShortName(programmingExerciseShortName);
                 await programmingExerciseCreation.setPackageName('de.test');

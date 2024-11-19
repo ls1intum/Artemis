@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextBlockType;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -58,10 +59,12 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final CompetencyProgressService competencyProgressService;
 
+    private final ExerciseService exerciseService;
+
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository,
-            TextSubmissionRepository textSubmissionRepository, ChannelService channelService, FeedbackService feedbackService,
-            CompetencyProgressService competencyProgressService) {
+            TextSubmissionRepository textSubmissionRepository, ChannelService channelService, FeedbackService feedbackService, CompetencyProgressService competencyProgressService,
+            ExerciseService exerciseService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
@@ -69,6 +72,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         this.textSubmissionRepository = textSubmissionRepository;
         this.channelService = channelService;
         this.competencyProgressService = competencyProgressService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -91,7 +95,7 @@ public class TextExerciseImportService extends ExerciseImportService {
             newExercise.setFeedbackSuggestionModule(null);
         }
 
-        TextExercise newTextExercise = textExerciseRepository.save(newExercise);
+        TextExercise newTextExercise = exerciseService.saveWithCompetencyLinks(newExercise, textExerciseRepository::save);
 
         channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));

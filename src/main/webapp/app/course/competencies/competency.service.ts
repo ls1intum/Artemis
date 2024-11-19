@@ -71,7 +71,7 @@ export class CompetencyService extends CourseCompetencyService {
 
     importAll(courseId: number, sourceCourseId: number, importRelations: boolean) {
         return this.httpClient.post<Array<CompetencyWithTailRelationDTO>>(
-            `${this.resourceURL}/courses/${courseId}/competencies/import-all/${sourceCourseId}`,
+            `${this.resourceURL}/courses/${courseId}/competencies/import-all`,
             {
                 importExercises: false,
                 importRelations: importRelations,

@@ -16,12 +16,12 @@
                 <p jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.description"></p>
             </div>
             <div class="col-sm-6 mx-auto text-end">
-                @if (hasCancelButton) {
+                @if (hasCancelButton()) {
                     <button type="button" (click)="cancelForm()" class="btn btn-default">
                         <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                     </button>
                 }
-                @if (hasCreateExerciseButton) {
+                @if (hasCreateExerciseButton()) {
                     <button
                         id="createExerciseButton"
                         type="button"

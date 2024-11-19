@@ -11,7 +11,7 @@ import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/guided-tour/tours/course-exercise-detail-tour';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -29,7 +29,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { Complaint } from 'app/entities/complaint.model';
 import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
@@ -44,7 +44,13 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ChatServiceMode } from 'app/iris/iris-chat.service';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
+interface InstructorActionItem {
+    routerLink: string;
+    icon?: IconDefinition;
+    translation: string;
+}
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
@@ -56,6 +62,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     readonly PlagiarismVerdict = PlagiarismVerdict;
     readonly QuizStatus = QuizStatus;
     readonly QUIZ_ENDED_STATUS: (QuizStatus | undefined)[] = [QuizStatus.CLOSED, QuizStatus.OPEN_FOR_PRACTICE];
+    readonly QUIZ_EDITABLE_STATUS: (QuizStatus | undefined)[] = [QuizStatus.VISIBLE, QuizStatus.INVISIBLE];
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
@@ -100,6 +107,8 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     isProduction = true;
     isTestServer = false;
     isGeneratingFeedback: boolean = false;
+    instructorActionItems: InstructorActionItem[] = [];
+    exerciseIcon: IconProp;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
@@ -165,21 +174,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         });
     }
 
-    ngOnDestroy() {
-        if (this.participationUpdateListener) {
-            this.participationUpdateListener.unsubscribe();
-            if (this.studentParticipations) {
-                this.studentParticipations.forEach((participation) => {
-                    this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id!, this.exercise!);
-                });
-            }
-        }
-        this.teamAssignmentUpdateListener?.unsubscribe();
-        this.submissionSubscription?.unsubscribe();
-        this.paramsSubscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
-    }
-
     loadExercise() {
         this.irisSettings = undefined;
         this.studentParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exerciseId);
@@ -224,6 +218,10 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.subscribeToTeamAssignmentUpdates();
 
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
+        if (this.exercise?.type) {
+            this.exerciseIcon = getIcon(this.exercise?.type);
+        }
+        this.createInstructorActions();
     }
 
     /**
@@ -255,7 +253,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.sortedHistoryResults = this.studentParticipations
                 .flatMap((participation) => participation.results ?? [])
                 .sort(this.resultSortFunction)
-                .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && dayjs().isBefore(result.completionDate)));
+                .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && !result.successful));
         }
     }
 
@@ -312,12 +310,17 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
                     if (
-                        (changedParticipation.results?.length || 0) > (this.gradedStudentParticipation?.results?.length || 0) &&
+                        ((changedParticipation.results?.length || 0) > (this.gradedStudentParticipation?.results?.length || 0) ||
+                            changedParticipation.results?.last()?.completionDate === undefined) &&
                         changedParticipation.results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
                         changedParticipation.results?.last()?.successful !== undefined
                     ) {
                         this.isGeneratingFeedback = false;
-                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+                        if (changedParticipation.results?.last()?.successful === true) {
+                            this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+                        } else {
+                            this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
+                        }
                     }
                     if (this.studentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
                         this.exercise.studentParticipations = this.studentParticipations.map((participation) =>
@@ -438,5 +441,125 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
     }
 
-    setIsGeneratingFeedback() {}
+    // INSTRUCTOR ACTIONS
+    createInstructorActions() {
+        if (this.exercise?.isAtLeastTutor) {
+            this.instructorActionItems = this.createTutorActions();
+        }
+        if (this.exercise?.isAtLeastEditor) {
+            this.instructorActionItems.push(...this.createEditorActions());
+        }
+        if (this.exercise?.isAtLeastInstructor && this.QUIZ_ENDED_STATUS.includes(this.quizExerciseStatus)) {
+            this.instructorActionItems.push(this.getReEvaluateItem());
+        }
+    }
+
+    createTutorActions(): InstructorActionItem[] {
+        const tutorActionItems = [...this.getDefaultItems()];
+        if (this.exercise?.type === ExerciseType.QUIZ) {
+            tutorActionItems.push(...this.getQuizItems());
+        } else {
+            tutorActionItems.push(this.getParticipationItem());
+        }
+        return tutorActionItems;
+    }
+
+    getDefaultItems(): InstructorActionItem[] {
+        return [
+            {
+                routerLink: `${this.baseResource}`,
+                icon: faEye,
+                translation: 'entity.action.view',
+            },
+            {
+                routerLink: `${this.baseResource}scores`,
+                icon: faTable,
+                translation: 'entity.action.scores',
+            },
+        ];
+    }
+
+    getQuizItems(): InstructorActionItem[] {
+        return [
+            {
+                routerLink: `${this.baseResource}preview`,
+                icon: faEye,
+                translation: 'artemisApp.quizExercise.preview',
+            },
+            {
+                routerLink: `${this.baseResource}solution`,
+                icon: faEye,
+                translation: 'artemisApp.quizExercise.solution',
+            },
+        ];
+    }
+
+    getParticipationItem(): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource}participations`,
+            icon: faListAlt,
+            translation: 'artemisApp.exercise.participations',
+        };
+    }
+
+    createEditorActions(): InstructorActionItem[] {
+        const editorItems: InstructorActionItem[] = [];
+        if (this.exercise?.type === ExerciseType.QUIZ) {
+            editorItems.push(this.getStatisticItem('quiz-point-statistic'));
+            if (this.QUIZ_EDITABLE_STATUS.includes(this.quizExerciseStatus)) {
+                editorItems.push(this.getQuizEditItem());
+            }
+        } else if (this.exercise?.type === ExerciseType.MODELING) {
+            editorItems.push(this.getStatisticItem('exercise-statistics'));
+        } else if (this.exercise?.type === ExerciseType.PROGRAMMING) {
+            editorItems.push(this.getGradingItem());
+        }
+        return editorItems;
+    }
+
+    getStatisticItem(routerLink: string): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource}${routerLink}`,
+            icon: faSignal,
+            translation: 'artemisApp.courseOverview.exerciseDetails.instructorActions.statistics',
+        };
+    }
+
+    getGradingItem(): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource}grading/test-cases`,
+            icon: faFileSignature,
+            translation: 'artemisApp.programmingExercise.configureGrading.shortTitle',
+        };
+    }
+
+    getQuizEditItem(): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource}edit`,
+            icon: faWrench,
+            translation: 'entity.action.edit',
+        };
+    }
+
+    getReEvaluateItem(): InstructorActionItem {
+        return {
+            routerLink: `${this.baseResource}re-evaluate`,
+            icon: faWrench,
+            translation: 'entity.action.re-evaluate',
+        };
+    }
+
+    ngOnDestroy() {
+        this.participationUpdateListener?.unsubscribe();
+        this.studentParticipations?.forEach((participation) => {
+            if (participation.id && this.exercise) {
+                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id, this.exercise);
+            }
+        });
+
+        this.teamAssignmentUpdateListener?.unsubscribe();
+        this.submissionSubscription?.unsubscribe();
+        this.paramsSubscription?.unsubscribe();
+        this.profileSubscription?.unsubscribe();
+    }
 }

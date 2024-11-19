@@ -22,8 +22,9 @@ export class ExamExerciseGroupsPage {
     async clickEditGroup(groupID: number) {
         await this.page.click(`#group-${groupID} .edit-group`);
     }
+
     async clickEditGroupForTestExam() {
-        await this.page.getByText('Edit').click();
+        await this.page.getByRole('link', { name: 'Edit' }).click();
     }
 
     async clickDeleteGroup(groupID: number, groupName: string) {

@@ -125,7 +125,15 @@
                 "exerciseOrLecture": "Übung / Vorlesung",
                 "showAllPosts": "Zeige alle Nachrichten",
                 "showContent": "Inhalt ausklappen",
-                "collapseContent": "Inhalt einklappen"
+                "collapseContent": "Inhalt einklappen",
+                "addReaction": "Reaktion hinzufügen",
+                "pinMessage": "Nachricht anheften",
+                "unpinMessage": "Nachricht lösen",
+                "editMessage": "Nachricht bearbeiten",
+                "deleteMessage": "Nachricht löschen",
+                "replyMessage": "Antworten im Thread",
+                "deletedContent": "Beitrag wird in {{ progress }} Sekunde(n) gelöscht.",
+                "undoDelete": "Löschen umkehren"
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
@@ -134,12 +142,14 @@
             "userRoles": {
                 "instructor": "Instruktor",
                 "tutor": "Tutor",
-                "student": "Student"
+                "student": "Student",
+                "deleted": "Gelöscht"
             },
             "userAuthorityTooltips": {
                 "instructor": "Lehrkraft: Verantwortlich für die Kursdurchführung.",
                 "tutor": "Tutor:in: Verantwortlich für die Unterstützung der Studierenden bei ihren Fragen zum Kurs und zu den Übungen.",
-                "student": "Studierende:r: Nimmt an Kursen und Übungen teil und stellt Fragen."
+                "student": "Studierende:r: Nimmt an Kursen und Übungen teil und stellt Fragen.",
+                "deleted": "Gelöscht: Nutzer:in wurde gelöscht."
             }
         }
     }

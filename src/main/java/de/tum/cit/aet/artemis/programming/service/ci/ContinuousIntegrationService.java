@@ -219,9 +219,8 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT -> "assignment";
-                    case C_SHARP, SQL, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
-                        throw new UnsupportedOperationException("Unsupported programming language: " + language);
+                    case JAVA, PYTHON, C, HASKELL, KOTLIN, VHDL, ASSEMBLER, SWIFT, OCAML, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT, C_SHARP -> "assignment";
+                    case SQL, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP -> throw new UnsupportedOperationException("Unsupported programming language: " + language);
                 };
             }
         },
@@ -231,9 +230,8 @@ public interface ContinuousIntegrationService {
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
                     case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT -> "";
-                    case C, VHDL, ASSEMBLER, OCAML -> "tests";
-                    case C_SHARP, SQL, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
-                        throw new UnsupportedOperationException("Unsupported programming language: " + language);
+                    case C, VHDL, ASSEMBLER, OCAML, C_SHARP -> "tests";
+                    case SQL, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP -> throw new UnsupportedOperationException("Unsupported programming language: " + language);
                 };
             }
         },
