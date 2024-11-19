@@ -95,6 +95,10 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
             this.userAuthority = 'tutor';
             this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
             this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
+        } else {
+            this.userAuthority = 'student';
+            this.userRoleBadge = 'artemisApp.metis.userRoles.deleted';
+            this.userAuthorityTooltip = 'artemisApp.metis.userAuthorityTooltips.deleted';
         }
     }
 }
