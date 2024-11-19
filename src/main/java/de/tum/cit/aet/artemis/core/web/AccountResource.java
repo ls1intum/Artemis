@@ -229,7 +229,7 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/participation-vcs-access-token : get the vcsToken for of a user for a participation
+     * PUT account/participation-vcs-access-token : add a vcsToken for of a user for a participation
      *
      * @param participationId the participation for which the access token should be fetched
      *
