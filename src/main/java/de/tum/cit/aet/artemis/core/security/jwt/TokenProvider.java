@@ -189,9 +189,9 @@ public class TokenProvider {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
     }
 
-    public String getClaim(String token, String claimName) {
+    public <T> T getClaim(String token, String claimName, Class<T> claimType) {
         Claims claims = parseClaims(token);
-        return claims.get(claimName, String.class);
+        return claims.get(claimName, claimType);
     }
 
     public Date getExpirationDate(String authToken) {

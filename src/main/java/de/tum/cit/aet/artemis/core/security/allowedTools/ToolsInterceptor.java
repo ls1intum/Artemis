@@ -44,7 +44,7 @@ public class ToolsInterceptor implements HandlerInterceptor {
             }
 
             // Extract the "tools" claim from the JWT token
-            String toolsClaim = tokenProvider.getClaim(jwtToken, "tools");
+            String toolsClaim = tokenProvider.getClaim(jwtToken, "tools", String.class);
 
             // If no @AllowedTools annotation is present and the token is a tool token, reject the request
             if (allowedToolsAnnotation == null && toolsClaim != null) {
