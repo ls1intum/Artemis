@@ -36,17 +36,11 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisGlobalSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisProactivitySubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisBuildFailedEventSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
-import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisJolEventSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisProgressStalledEventSettings;
-import de.tum.cit.aet.artemis.iris.dto.IrisCombinedEventSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -116,7 +110,6 @@ public class IrisSettingsService {
         initializeIrisTextExerciseChatSettings(settings);
         initializeIrisLectureIngestionSettings(settings);
         initializeIrisCompetencyGenerationSettings(settings);
-        initializeIrisProactiveSettings(settings);
 
         irisSettingsRepository.save(settings);
     }
@@ -147,36 +140,6 @@ public class IrisSettingsService {
         var irisLectureIngestionSettings = settings.getIrisLectureIngestionSettings();
         irisLectureIngestionSettings = initializeSettings(irisLectureIngestionSettings, IrisLectureIngestionSubSettings::new);
         settings.setIrisLectureIngestionSettings(irisLectureIngestionSettings);
-    }
-
-    private void initializeIrisProactiveSettings(IrisGlobalSettings settings) {
-        var irisProactivitySettings = settings.getIrisProactivitySettings();
-
-        if (irisProactivitySettings == null) {
-            irisProactivitySettings = new IrisProactivitySubSettings();
-            irisProactivitySettings.setEnabled(false);
-        }
-        initializeIrisEventSettings(irisProactivitySettings);
-        settings.setIrisProactivitySettings(irisProactivitySettings);
-    }
-
-    private void initializeIrisEventSettings(IrisProactivitySubSettings settings) {
-        HashSet<IrisEventSettings> eventSettings = new HashSet<>();
-
-        var jolEventSettings = new IrisJolEventSettings();
-        jolEventSettings.setEnabled(false);
-        eventSettings.add(jolEventSettings);
-
-        var submissionFailedEventSettings = new IrisBuildFailedEventSettings();
-        submissionFailedEventSettings.setEnabled(false);
-        eventSettings.add(submissionFailedEventSettings);
-
-        var submissionSuccessfulEventSettings = new IrisProgressStalledEventSettings();
-        submissionSuccessfulEventSettings.setEnabled(false);
-        eventSettings.add(submissionSuccessfulEventSettings);
-
-        eventSettings.forEach(event -> event.setProactivitySubSettings(settings));
-        settings.setEventSettings(eventSettings);
     }
 
     private void initializeIrisCompetencyGenerationSettings(IrisGlobalSettings settings) {
@@ -294,9 +257,6 @@ public class IrisSettingsService {
         ));
         // @formatter:on
 
-        existingSettings.setIrisProactivitySettings(
-                irisSubSettingsService.update(existingSettings.getIrisProactivitySettings(), settingsUpdate.getIrisProactivitySettings(), null, GLOBAL));
-
         return irisSettingsRepository.save(existingSettings);
     }
 
@@ -340,9 +300,6 @@ public class IrisSettingsService {
                 COURSE
         ));
         // @formatter:on
-
-        existingSettings.setIrisProactivitySettings(irisSubSettingsService.update(existingSettings.getIrisProactivitySettings(), settingsUpdate.getIrisProactivitySettings(),
-                parentSettings.irisProactivitySettings(), COURSE));
 
         // Automatically update the exercise settings when the enabledForCategories is changed
         var newEnabledForCategoriesExerciseChat = existingSettings.getIrisChatSettings() == null ? new TreeSet<String>()
@@ -485,12 +442,6 @@ public class IrisSettingsService {
                 parentSettings.irisTextExerciseChatSettings(),
                 EXERCISE
         ));
-        existingSettings.setIrisProactivitySettings(irisSubSettingsService.update(
-                existingSettings.getIrisProactivitySettings(),
-                settingsUpdate.getIrisProactivitySettings(),
-                parentSettings.irisProactivitySettings(),
-                EXERCISE
-        ));
         // @formatter:on
         return irisSettingsRepository.save(existingSettings);
     }
@@ -572,7 +523,7 @@ public class IrisSettingsService {
      * @return Whether the Iris event is active for the course
      */
     public boolean isActivatedFor(IrisEventType type, Course course) {
-        var settings = getCombinedIrisEventSettingsFor(course, type, true);
+        var settings = getCombinedIrisSettingsFor(course, true);
         return isEventEnabledInSettings(settings, type);
     }
 
@@ -584,7 +535,7 @@ public class IrisSettingsService {
      * @return Whether the Iris event is active for the exercise
      */
     public boolean isActivatedFor(IrisEventType type, Exercise exercise) {
-        var settings = getCombinedIrisEventSettingsFor(exercise, type, true);
+        var settings = getCombinedIrisSettingsFor(exercise, true);
         return isEventEnabledInSettings(settings, type);
     }
 
@@ -616,8 +567,7 @@ public class IrisSettingsService {
                 irisSubSettingsService.combineChatSettings(settingsList, false),
                 irisSubSettingsService.combineTextExerciseChatSettings(settingsList, false),
                 irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, false),
-                irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, false),
-                irisSubSettingsService.combineProactivitySettings(settingsList, false)
+                irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, false)
         );
         // @formatter:on
     }
@@ -642,8 +592,7 @@ public class IrisSettingsService {
                 irisSubSettingsService.combineChatSettings(settingsList, minimal),
                 irisSubSettingsService.combineTextExerciseChatSettings(settingsList, minimal),
                 irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal),
-                irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal),
-                irisSubSettingsService.combineProactivitySettings(settingsList, minimal)
+                irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal)
         );
         // @formatter:on
     }
@@ -669,57 +618,9 @@ public class IrisSettingsService {
                 irisSubSettingsService.combineChatSettings(settingsList, minimal),
                 irisSubSettingsService.combineTextExerciseChatSettings(settingsList, minimal),
                 irisSubSettingsService.combineLectureIngestionSubSettings(settingsList, minimal),
-                irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal),
-                irisSubSettingsService.combineProactivitySettings(settingsList, minimal)
+                irisSubSettingsService.combineCompetencyGenerationSettings(settingsList, minimal)
         );
         // @formatter:on
-    }
-
-    /**
-     * Get the combined Iris event settings of a specific type for a course as an {@link IrisCombinedEventSettingsDTO}.
-     * Combines the global Iris settings with the course Iris settings and the exercise Iris settings.
-     * If minimal is true, only certain attributes are returned. The minimal version can safely be passed to the students.
-     * See also {@link IrisSubSettingsService} for how the combining works in detail
-     *
-     * @param course  The course to get the Iris event settings for
-     * @param type    The type of the event {@link IrisEventType}
-     * @param minimal Whether to return the minimal version of the settings
-     * @return The combined Iris event settings for the course
-     */
-    public IrisCombinedEventSettingsDTO getCombinedIrisEventSettingsFor(Course course, IrisEventType type, boolean minimal) {
-        var settingsList = new ArrayList<IrisSettings>();
-        settingsList.add(getGlobalSettings());
-        settingsList.add(irisSettingsRepository.findCourseSettings(course.getId()).orElse(null));
-
-        return switch (type) {
-            case JOL -> irisSubSettingsService.combineEventSettingsOf(IrisJolEventSettings.class, settingsList, minimal);
-            case PROGRESS_STALLED -> irisSubSettingsService.combineEventSettingsOf(IrisProgressStalledEventSettings.class, settingsList, minimal);
-            case BUILD_FAILED -> irisSubSettingsService.combineEventSettingsOf(IrisBuildFailedEventSettings.class, settingsList, minimal);
-        };
-    }
-
-    /**
-     * Get the combined Iris event settings of a specific type for an exercise as an {@link IrisCombinedEventSettingsDTO}.
-     * Combines the global Iris settings with the course Iris settings and the exercise Iris settings.
-     * If minimal is true, only certain attributes are returned. The minimal version can safely be passed to the students.
-     * See also {@link IrisSubSettingsService} for how the combining works in detail
-     *
-     * @param exercise The exercise to get the Iris event settings for
-     * @param type     The type of the event {@link IrisEventType}
-     * @param minimal  Whether to return the minimal version of the settings
-     * @return The combined Iris event settings for the exercise
-     */
-    public IrisCombinedEventSettingsDTO getCombinedIrisEventSettingsFor(Exercise exercise, IrisEventType type, boolean minimal) {
-        var settingsList = new ArrayList<IrisSettings>();
-        settingsList.add(getGlobalSettings());
-        settingsList.add(getRawIrisSettingsFor(exercise.getCourseViaExerciseGroupOrCourseMember()));
-        settingsList.add(getRawIrisSettingsFor(exercise));
-
-        return switch (type) {
-            case PROGRESS_STALLED -> irisSubSettingsService.combineEventSettingsOf(IrisProgressStalledEventSettings.class, settingsList, minimal);
-            case BUILD_FAILED -> irisSubSettingsService.combineEventSettingsOf(IrisBuildFailedEventSettings.class, settingsList, minimal);
-            case JOL -> irisSubSettingsService.combineEventSettingsOf(IrisJolEventSettings.class, settingsList, minimal);
-        };
     }
 
     /**
@@ -748,16 +649,6 @@ public class IrisSettingsService {
         settings.setIrisCompetencyGenerationSettings(new IrisCompetencyGenerationSubSettings());
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
 
-        var eventSettings = new HashSet<IrisEventSettings>();
-        eventSettings.add(new IrisJolEventSettings());
-        eventSettings.add(new IrisBuildFailedEventSettings());
-        eventSettings.add(new IrisProgressStalledEventSettings());
-
-        var proactivitySettings = new IrisProactivitySubSettings();
-        proactivitySettings.setEventSettings(eventSettings);
-        eventSettings.forEach(event -> event.setProactivitySubSettings(proactivitySettings));
-
-        settings.setIrisProactivitySettings(proactivitySettings);
         return settings;
     }
 
@@ -773,16 +664,6 @@ public class IrisSettingsService {
         settings.setExercise(exercise);
         settings.setIrisChatSettings(new IrisChatSubSettings());
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
-
-        var eventSettings = new HashSet<IrisEventSettings>();
-        eventSettings.add(new IrisBuildFailedEventSettings());
-        eventSettings.add(new IrisProgressStalledEventSettings());
-
-        var proactivitySettings = new IrisProactivitySubSettings();
-        proactivitySettings.setEventSettings(eventSettings);
-        eventSettings.forEach(event -> event.setProactivitySubSettings(proactivitySettings));
-
-        settings.setIrisProactivitySettings(proactivitySettings);
 
         return settings;
     }
@@ -844,7 +725,6 @@ public class IrisSettingsService {
             case TEXT_EXERCISE_CHAT -> settings.irisTextExerciseChatSettings().enabled();
             case COMPETENCY_GENERATION -> settings.irisCompetencyGenerationSettings().enabled();
             case LECTURE_INGESTION -> settings.irisLectureIngestionSettings().enabled();
-            case PROACTIVITY -> settings.irisProactivitySettings().enabled();
         };
     }
 
@@ -855,9 +735,11 @@ public class IrisSettingsService {
      * @param type     the type of the event
      * @return Whether the settings type is enabled
      */
-    private boolean isEventEnabledInSettings(IrisCombinedEventSettingsDTO settings, IrisEventType type) {
+    private boolean isEventEnabledInSettings(IrisCombinedSettingsDTO settings, IrisEventType type) {
         return switch (type) {
-            case JOL, PROGRESS_STALLED, BUILD_FAILED -> settings.enabled();
+            case PROGRESS_STALLED -> settings.irisChatSettings().proactiveProgressStalledEventEnabled();
+            case BUILD_FAILED -> settings.irisChatSettings().proactiveBuildFailedEventEnabled();
+            default -> throw new IllegalStateException("Unexpected value: " + type); // TODO: Add JOL event, once Timor's PR is created.
         };
     }
 }

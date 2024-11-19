@@ -12,7 +12,6 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { of } from 'rxjs';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { IrisEventSettingsUpdateComponent } from '../../../../../../main/webapp/app/iris/settings/iris-settings-update/iris-event-settings-update/iris-event-settings-update.component';
 
 describe('IrisSettingsUpdateComponent', () => {
     let component: IrisSettingsUpdateComponent;
@@ -28,7 +27,6 @@ describe('IrisSettingsUpdateComponent', () => {
                 IrisCommonSubSettingsUpdateComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ButtonComponent),
-                MockComponent(IrisEventSettingsUpdateComponent),
                 MockDirective(NgModel),
             ],
             providers: [

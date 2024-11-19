@@ -12,18 +12,9 @@ import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
     IrisLectureIngestionSubSettings,
-    IrisProactivitySubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
-import {
-    BuildFailedEventSettings,
-    IrisEventSessionType,
-    IrisEventSettings,
-    IrisEventType,
-    JolEventSettings,
-    ProgressStalledEventSettings,
-} from 'app/entities/iris/settings/iris-event-settings.model';
 
 @Component({
     selector: 'jhi-iris-settings-update',
@@ -38,7 +29,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     public exerciseId?: number;
     public irisSettings?: IrisSettings;
     public parentIrisSettings?: IrisSettings;
-    public parentIrisEventSettings?: { [key: string]: IrisEventSettings };
 
     originalIrisSettings?: IrisSettings;
 
@@ -104,12 +94,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 this.alertService.error('artemisApp.iris.settings.error.noParentSettings');
             }
             this.parentIrisSettings = settings;
-            this.parentIrisEventSettings = {};
-            if (settings?.irisProactivitySettings?.eventSettings) {
-                settings.irisProactivitySettings.eventSettings.forEach((eventSetting) => {
-                    this.parentIrisEventSettings![eventSetting.type] = eventSetting;
-                });
-            }
         });
     }
 
@@ -128,15 +112,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         }
         if (!this.irisSettings.irisCompetencyGenerationSettings) {
             this.irisSettings.irisCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
-        }
-        if (!this.irisSettings.irisProactivitySettings) {
-            this.irisSettings.irisProactivitySettings = new IrisProactivitySubSettings();
-        }
-        if (!this.irisSettings.irisProactivitySettings.eventSettings) {
-            const jolEventSettings = new JolEventSettings();
-            const progressStalledEventSettings = new ProgressStalledEventSettings();
-            const buildFailedEventSettings = new BuildFailedEventSettings();
-            this.irisSettings.irisProactivitySettings.eventSettings = [jolEventSettings, progressStalledEventSettings, buildFailedEventSettings];
         }
     }
 
@@ -199,18 +174,4 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 return this.irisSettingsService.setExerciseSettings(this.exerciseId!, this.irisSettings!);
         }
     }
-
-    eventSettingsChanged(eventSettings: IrisEventSettings): void {
-        if (!this.irisSettings?.irisProactivitySettings) {
-            return;
-        }
-        const eventSettingsIndex = this.irisSettings.irisProactivitySettings.eventSettings.findIndex((setting) => setting.type === eventSettings.type);
-        if (eventSettingsIndex >= 0) {
-            this.irisSettings.irisProactivitySettings.eventSettings[eventSettingsIndex] = eventSettings;
-            this.isDirty = true;
-        }
-    }
-
-    protected readonly IrisEventType = IrisEventType;
-    protected readonly IrisEventSessionType = IrisEventSessionType;
 }

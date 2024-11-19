@@ -32,22 +32,8 @@ public class IrisGlobalSettings extends IrisSettings {
     private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = "iris_proactivity_settings_id")
-    private IrisProactivitySubSettings irisProactivitySettings;
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_competency_generation_settings_id")
     private IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings;
-
-    @Override
-    public IrisProactivitySubSettings getIrisProactivitySettings() {
-        return irisProactivitySettings;
-    }
-
-    @Override
-    public void setIrisProactivitySettings(IrisProactivitySubSettings irisProactivitySettings) {
-        this.irisProactivitySettings = irisProactivitySettings;
-    }
 
     @Override
     public IrisLectureIngestionSubSettings getIrisLectureIngestionSettings() {

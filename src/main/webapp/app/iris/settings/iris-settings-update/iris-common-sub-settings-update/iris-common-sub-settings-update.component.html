@@ -43,6 +43,37 @@
         </div>
     </div>
 }
+@if (subSettings?.type === CHAT) {
+    <div class="mt-3">
+        <span class="form-label fs-4" jhiTranslate="artemisApp.iris.settings.subSettings.proactivitySettings.title"></span>
+        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.iris.settings.subSettings.proactivitySettings.tooltip' | artemisTranslate" />
+    </div>
+    <div class="form-check form-switch mt-2">
+        <input
+            class="form-check-input"
+            type="checkbox"
+            id="proactiveBuildFailedEvent"
+            [disabled]="!isAdmin && !subSettings?.enabled"
+            [ngModel]="subSettings?.proactiveBuildFailedEventEnabled"
+            (ngModelChange)="onEventToggleChange($event, 'proactiveBuildFailedEventEnabled')"
+        />
+        <label class="form-check-label" for="proactiveBuildFailedEvent" jhiTranslate="artemisApp.iris.settings.subSettings.proactivityBuildFailedEventEnabled.label"></label>
+        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.iris.settings.subSettings.proactivityBuildFailedEventEnabled.tooltip' | artemisTranslate" />
+    </div>
+
+    <div class="form-check form-switch">
+        <input
+            class="form-check-input"
+            type="checkbox"
+            id="proactiveProgressStalled"
+            [disabled]="!isAdmin && !subSettings?.enabled"
+            [ngModel]="subSettings?.proactiveProgressStalledEventEnabled"
+            (ngModelChange)="onEventToggleChange($event, 'proactiveProgressStalledEventEnabled')"
+        />
+        <label class="form-check-label" for="proactiveProgressStalled" jhiTranslate="artemisApp.iris.settings.subSettings.proactivityProgressStalledEventEnabled.label"></label>
+        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.iris.settings.subSettings.proactivityProgressStalledEventEnabled.tooltip' | artemisTranslate" />
+    </div>
+}
 <h4 class="form-label mt-3" jhiTranslate="artemisApp.iris.settings.subSettings.variants.title"></h4>
 <span><span class="fw-bold fs-5" jhiTranslate="artemisApp.iris.settings.subSettings.variants.allowedVariants.title"></span>: </span>
 @if (parentSubSettings) {

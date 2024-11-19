@@ -7,7 +7,8 @@ import jakarta.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisCombinedChatSubSettingsDTO(boolean enabled, Integer rateLimit, Integer rateLimitTimeframeHours, @Nullable SortedSet<String> allowedVariants,
-        @Nullable String selectedVariant, @Nullable SortedSet<String> enabledForCategories) {
+public record IrisCombinedChatSubSettingsDTO(boolean enabled, Integer rateLimit, Integer rateLimitTimeframeHours, boolean proactiveBuildFailedEventEnabled,
+        boolean proactiveProgressStalledEventEnabled, @Nullable SortedSet<String> allowedVariants, @Nullable String selectedVariant,
+        @Nullable SortedSet<String> enabledForCategories) {
 
 }

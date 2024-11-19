@@ -3,11 +3,9 @@ import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
     IrisLectureIngestionSubSettings,
-    IrisProactivitySubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisGlobalSettings } from 'app/entities/iris/settings/iris-settings.model';
-import { IrisEventSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-event-settings.model';
 
 export function mockSettings() {
     const mockChatSettings = new IrisChatSubSettings();
@@ -24,38 +22,10 @@ export function mockSettings() {
     mockCompetencyGenerationSettings.id = 5;
     mockCompetencyGenerationSettings.enabled = false;
     const irisSettings = new IrisGlobalSettings();
-    const proactivitySubSettings = new IrisProactivitySubSettings();
-    proactivitySubSettings.id = 9;
-    proactivitySubSettings.enabled = true;
-    proactivitySubSettings.eventSettings = [
-        {
-            id: 10,
-            enabled: true,
-            selectedEventVariant: 'jol',
-            sessionType: 'COURSE',
-            type: 'jol',
-        } as IrisEventSettings,
-        {
-            id: 11,
-            enabled: true,
-            selectedEventVariant: 'progress_stalled',
-            sessionType: 'COURSE',
-            type: 'progress_stalled',
-        } as IrisEventSettings,
-        {
-            id: 12,
-            enabled: true,
-            selectedEventVariant: 'build_failed',
-            sessionType: 'COURSE',
-            type: 'build_failed',
-        } as IrisEventSettings,
-    ];
-    irisSettings.id = 1;
     irisSettings.irisChatSettings = mockChatSettings;
     irisSettings.irisTextExerciseChatSettings = mockTextExerciseChatSettings;
     irisSettings.irisCompetencyGenerationSettings = mockCompetencyGenerationSettings;
     irisSettings.irisLectureIngestionSettings = mockLectureIngestionSettings;
-    irisSettings.irisProactivitySettings = proactivitySubSettings;
     return irisSettings;
 }
 
@@ -78,30 +48,4 @@ export function mockVariants() {
             description: 'Model 2 Description',
         },
     ] as IrisVariant[];
-}
-
-export function mockEvents() {
-    return [
-        {
-            id: 1,
-            enabled: true,
-            selectedEventVariant: 'jol',
-            sessionType: 'COURSE',
-            type: 'jol',
-        } as IrisEventSettings,
-        {
-            id: 2,
-            enabled: true,
-            selectedEventVariant: 'progress_stalled',
-            sessionType: 'COURSE',
-            type: 'progress_stalled',
-        } as IrisEventSettings,
-        {
-            id: 3,
-            enabled: true,
-            selectedEventVariant: 'build_failed',
-            sessionType: 'COURSE',
-            type: 'build_failed',
-        } as IrisEventSettings,
-    ];
 }

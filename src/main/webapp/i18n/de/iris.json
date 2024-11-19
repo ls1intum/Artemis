@@ -32,24 +32,17 @@
                     },
                     "hestiaSettings": "Hestia Einstellungen",
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
+                    "proactivityBuildFailedEventEnabled": {
+                        "label": "Build-Fehler überwachen",
+                        "tooltip": "Wenn aktiviert, wird Iris proaktiv Hilfe-Nachrichten senden, wenn der Build einer Abbgabe fehlschlägt."
+                    },
+                    "proactivityProgressStalledEventEnabled": {
+                        "label": "Übungsleistung überwachen",
+                        "tooltip": "Wenn aktiviert, wird Iris proaktiv Hilfe-Nachrichten senden, wenn sich die Übungsleistung des Studenten nicht verbessert."
+                    },
                     "proactivitySettings": {
                         "title": "Proaktivitätseinstellungen",
-                        "eventSettings": {
-                            "title": "Ereigniseinstellungen",
-                            "progressStalled": "Fortschritt-verzögert Ereignis",
-                            "buildFailed": "Fehlgeschlagenes Build-Ereignis",
-                            "jol": "Lernbeurteilungsereignis",
-                            "active": "Aktiv",
-                            "inactive": "Inaktiv",
-                            "target": "Ziel",
-                            "pipelineVariant": "Pipeline-Variante",
-                            "tooltips": {
-                                "active": "Wenn das Ereignis aktiv ist, wird es für Proaktivität berücksichtigt.",
-                                "inactive": "Wenn das Ereignis inaktiv ist, wird es nicht für Proaktivität berücksichtigt.",
-                                "target": "Das Ziel des Ereignisses. Das Ziel bestimmt den Typ der Iris-Chat-Sitzung, an die die Ereignisantwort übermittelt wird.",
-                                "pipelineVariant": "Die Pyris-Pipeline-Variante, die für das Ereignis verwendet werden soll."
-                            }
-                        }
+                        "tooltip": "Wenn eine der unten aufgeführten Optionen aktiviert ist, wird Iris basierend auf den ausgewählten Bedingungen proaktiv Hilfe-Nachrichten an Studenten senden."
                     },
                     "enabled-disabled": "Aktiviert/Deaktiviert",
                     "enabledForCategories": "Automatisch aktivieren für Kategorien",

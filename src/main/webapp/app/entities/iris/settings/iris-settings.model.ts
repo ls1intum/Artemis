@@ -3,7 +3,6 @@ import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
     IrisLectureIngestionSubSettings,
-    IrisProactivitySubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
 
@@ -20,7 +19,6 @@ export abstract class IrisSettings implements BaseEntity {
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
-    irisProactivitySettings?: IrisProactivitySubSettings;
 }
 
 export class IrisGlobalSettings implements IrisSettings {
@@ -30,7 +28,6 @@ export class IrisGlobalSettings implements IrisSettings {
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
-    irisProactivitySettings?: IrisProactivitySubSettings;
 }
 
 export class IrisCourseSettings implements IrisSettings {
@@ -41,7 +38,6 @@ export class IrisCourseSettings implements IrisSettings {
     irisTextExerciseChatSettings?: IrisTextExerciseChatSubSettings;
     irisLectureIngestionSettings?: IrisLectureIngestionSubSettings;
     irisCompetencyGenerationSettings?: IrisCompetencyGenerationSubSettings;
-    irisProactivitySettings?: IrisProactivitySubSettings;
 }
 
 export class IrisExerciseSettings implements IrisSettings {

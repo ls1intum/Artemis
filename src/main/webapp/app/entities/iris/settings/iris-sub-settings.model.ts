@@ -1,12 +1,10 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { IrisEventSettings } from 'app/entities/iris/settings/iris-event-settings.model';
 
 export enum IrisSubSettingsType {
     TEXT_EXERCISE_CHAT = 'text-exercise-chat',
     CHAT = 'chat', // TODO: Split into PROGRAMMING_EXERCISE_CHAT and COURSE_CHAT
     COMPETENCY_GENERATION = 'competency-generation',
     LECTURE_INGESTION = 'lecture-ingestion',
-    PROACTIVITY = 'proactivity',
 }
 
 export abstract class IrisSubSettings implements BaseEntity {
@@ -16,6 +14,8 @@ export abstract class IrisSubSettings implements BaseEntity {
     allowedVariants?: string[];
     selectedVariant?: string;
     enabledForCategories?: string[];
+    proactiveBuildFailedEventEnabled?: boolean;
+    proactiveProgressStalledEventEnabled?: boolean;
 }
 
 export class IrisChatSubSettings extends IrisSubSettings {
@@ -33,11 +33,6 @@ export class IrisTextExerciseChatSubSettings extends IrisSubSettings {
 export class IrisLectureIngestionSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.LECTURE_INGESTION;
     autoIngestOnLectureAttachmentUpload: boolean;
-}
-
-export class IrisProactivitySubSettings extends IrisSubSettings {
-    type = IrisSubSettingsType.PROACTIVITY;
-    eventSettings: IrisEventSettings[];
 }
 
 export class IrisCompetencyGenerationSubSettings extends IrisSubSettings {

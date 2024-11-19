@@ -4,57 +4,20 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20241021221900" author="kaancayli">
-        <!-- Add new table for iris_proactivity_settings -->
-        <createTable tableName="iris_proactivity_settings">
-            <column name="id" type="bigint" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="enabled" type="boolean" defaultValue="false">
+
+        <!-- Add new column to iris_sub_settings -->
+        <addColumn tableName="iris_sub_settings">
+            <column name="proactive_build_failed_event_enabled" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
-        </createTable>
-
-        <!-- Add new column to iris_settings -->
-        <addColumn tableName="iris_settings">
-            <column name="iris_proactivity_settings_id" type="bigint">
-                <constraints nullable="true"/>
+            <column name="proactive_jol_event_enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="proactive_progress_stalled_event_enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
             </column>
         </addColumn>
 
-        <!-- Add new table for iris_event_settings -->
-        <createTable tableName="iris_event_settings">
-            <column name="id" type="bigint" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="discriminator" type="varchar(64)"/>
-            <column name="enabled" type="boolean" defaultValue="false">
-                <constraints nullable="false"/>
-            </column>
-            <column name="allowed_event_variants" type="varchar(2000)"/>
-            <column name="selected_event_variant" type="varchar(100)"/>
-            <column name="session_type" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="iris_proactivity_settings_id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
-        </createTable>
 
-        <!-- Add foreign key constraint for iris_proactivity_settings_id -->
-        <addForeignKeyConstraint
-                baseColumnNames="iris_proactivity_settings_id"
-                baseTableName="iris_settings"
-                constraintName="FK_IRIS_SETTINGS_ON_IRIS_PROACTIVITY_SETTINGS"
-                referencedColumnNames="id"
-                referencedTableName="iris_proactivity_settings"/>
-
-
-        <!-- Add foreign key constraint for iris_proactivity_settings_id -->
-        <addForeignKeyConstraint
-                baseColumnNames="iris_proactivity_settings_id"
-                baseTableName="iris_event_settings"
-                constraintName="FK_IRIS_EVENT_SETTINGS_ON_IRIS_PROACTIVITY_SETTINGS"
-                referencedColumnNames="id"
-                referencedTableName="iris_proactivity_settings"/>
     </changeSet>
 </databaseChangeLog>

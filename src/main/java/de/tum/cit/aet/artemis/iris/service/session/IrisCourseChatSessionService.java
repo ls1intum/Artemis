@@ -7,8 +7,6 @@ import java.time.ZoneId;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,12 +20,9 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
-import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -43,10 +38,6 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 @Profile(PROFILE_IRIS)
 public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
 
-    private static final Logger log = LoggerFactory.getLogger(IrisCourseChatSessionService.class);
-
-    private final IrisMessageService irisMessageService;
-
     private final IrisSettingsService irisSettingsService;
 
     private final IrisChatWebsocketService irisChatWebsocketService;
@@ -59,20 +50,13 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private final IrisCourseChatSessionRepository irisCourseChatSessionRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final PyrisPipelineService pyrisPipelineService;
-
-    private final SubmissionRepository submissionRepository;
-
-    private final double SUCCESS_THRESHOLD = 80.0; // TODO: Retrieve configuration from Iris settings
 
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
             IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             IrisRateLimitService rateLimitService, IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService,
-            ObjectMapper objectMapper, StudentParticipationRepository studentParticipationRepository, SubmissionRepository submissionRepository) {
+            ObjectMapper objectMapper) {
         super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
-        this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
@@ -80,8 +64,6 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         this.rateLimitService = rateLimitService;
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.pyrisPipelineService = pyrisPipelineService;
-        this.studentParticipationRepository = studentParticipationRepository;
-        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -152,7 +134,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     public void onJudgementOfLearningSet(CompetencyJol competencyJol) {
         var course = competencyJol.getCompetency().getCourse();
 
-        irisSettingsService.isActivatedForElseThrow(IrisEventType.JOL, course);
+        // TODO: Add setting to activate/deactivate course chat for JOLs
 
         var user = competencyJol.getUser();
         user.hasAcceptedIrisElseThrow();

@@ -3,7 +3,7 @@ import { IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings
 import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
 import { AccountService } from 'app/core/auth/account.service';
 import { ButtonType } from 'app/shared/components/button.component';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -52,7 +52,8 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     // Button types
     WARNING = ButtonType.WARNING;
     // Icons
-    faTrash = faTrash;
+    readonly faTrash = faTrash;
+    readonly faQuestionCircle = faQuestionCircle;
 
     protected readonly IrisSubSettings = IrisSubSettings;
     protected readonly IrisSubSettingsType = IrisSubSettingsType;
@@ -170,6 +171,22 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
             this.subSettings.enabledForCategories = this.subSettings.enabledForCategories!.filter((c) => c !== category);
         } else {
             this.subSettings.enabledForCategories = [...(this.subSettings.enabledForCategories ?? []), category];
+        }
+    }
+
+    onEventToggleChange(value: boolean, target: string) {
+        if (!this.subSettings) {
+            return;
+        }
+        switch (target) {
+            case 'proactiveBuildFailedEventEnabled':
+                this.subSettings.proactiveBuildFailedEventEnabled = value;
+                return;
+            case 'proactiveProgressStalledEventEnabled':
+                this.subSettings.proactiveProgressStalledEventEnabled = value;
+                return;
+            default:
+                return;
         }
     }
 

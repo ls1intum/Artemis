@@ -32,24 +32,17 @@
                     },
                     "hestiaSettings": "Hestia Settings",
                     "competencyGenerationSettings": "Competency Generation Settings",
+                    "proactivityBuildFailedEventEnabled": {
+                        "label": "Monitor submission build failures",
+                        "tooltip": "When enabled, Iris will proactively send help messages if a submission build fails."
+                    },
+                    "proactivityProgressStalledEventEnabled": {
+                        "label": "Monitor exercise performance progress",
+                        "tooltip": "When enabled, Iris will proactively send help messages if the student's exercise performance does not improve."
+                    },
                     "proactivitySettings": {
                         "title": "Proactivity Settings",
-                        "eventSettings": {
-                            "title": "Event Settings",
-                            "progressStalled": "Progress Stalled Event",
-                            "buildFailed": "Build Failed Event",
-                            "jol": "Judgement of Learning Event",
-                            "active": "Active",
-                            "inactive": "Inactive",
-                            "target": "Target",
-                            "pipelineVariant": "Pipeline Variant",
-                            "tooltips": {
-                                "active": "If the event is active, it will be considered for proactivity.",
-                                "inactive": "If the event is inactive, it will not be considered for proactivity.",
-                                "target": "The target of the event. Target determines the type of Iris Chat session that the event response will be delivered.",
-                                "pipelineVariant": "The Pyris pipeline variant that should be used for the event."
-                            }
-                        }
+                        "tooltip": "When any of options listed below are activated, Iris will proactively send help messages to students based on the selected conditions."
                     },
                     "enabled-disabled": "Enabled/Disabled",
                     "enabledForCategories": "Automatically enable for categories",

@@ -12,7 +12,6 @@ import { IrisGlobalSettingsUpdateComponent } from 'app/iris/settings/iris-global
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
-import { IrisEventSettingsUpdateComponent } from '../../../../../../main/webapp/app/iris/settings/iris-settings-update/iris-event-settings-update/iris-event-settings-update.component';
 
 describe('IrisGlobalSettingsUpdateComponent Component', () => {
     let comp: IrisGlobalSettingsUpdateComponent;
@@ -26,7 +25,6 @@ describe('IrisGlobalSettingsUpdateComponent Component', () => {
             declarations: [
                 IrisGlobalSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,
-                MockComponent(IrisEventSettingsUpdateComponent),
                 MockComponent(IrisCommonSubSettingsUpdateComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(NgModel),

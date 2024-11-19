@@ -36,14 +36,10 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
-import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisBuildFailedEventSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisJolEventSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisProgressStalledEventSettings;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
-import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisEvent;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
@@ -257,7 +253,11 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     @Test()
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldNotFireProgressStalledEventWithEventDisabled() {
-        deactivateEventSettingsFor(IrisProgressStalledEventSettings.class, course);
+        // Find settings for the current exercise
+        var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
+        settings.getIrisChatSettings().setProactiveProgressStalledEventEnabled(false);
+        irisSettingsRepository.save(settings);
+
         createSubmissionWithScore(studentParticipation, 40);
         createSubmissionWithScore(studentParticipation, 40);
         var result = createSubmissionWithScore(studentParticipation, 40);
@@ -267,19 +267,15 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldNotFireBuildFailedEventWhenEventSettingDisabled() {
-        deactivateEventSettingsFor(IrisBuildFailedEventSettings.class, course);
+        // Find settings for the current exercise
+        var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
+        settings.getIrisChatSettings().setProactiveBuildFailedEventEnabled(false);
+        irisSettingsRepository.save(settings);
+
         irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         // Create a failing submission for the student.
         var result = createFailingSubmission(studentParticipation);
         assertThatExceptionOfType(AccessForbiddenAlertException.class).isThrownBy(() -> pyrisEventService.trigger(new NewResultEvent(result)));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testShouldNotFireJolEventWhenEventSettingDisabled() {
-        deactivateEventSettingsFor(IrisJolEventSettings.class, course);
-        var jol = competencyUtilService.createJol(competency, userUtilService.getUserByLogin(TEST_PREFIX + "student1"), (short) 3, ZonedDateTime.now(), 0.0D, 0.0D);
-        assertThatExceptionOfType(AccessForbiddenAlertException.class).isThrownBy(() -> pyrisEventService.trigger(new CompetencyJolSetEvent(jol)));
     }
 
     @Test

@@ -13,7 +13,6 @@ import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
-import { IrisEventSettingsUpdateComponent } from '../../../../../../main/webapp/app/iris/settings/iris-settings-update/iris-event-settings-update/iris-event-settings-update.component';
 
 describe('IrisCourseSettingsUpdateComponent Component', () => {
     let comp: IrisCourseSettingsUpdateComponent;
@@ -32,7 +31,6 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
                 IrisCourseSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,
                 MockComponent(IrisCommonSubSettingsUpdateComponent),
-                MockComponent(IrisEventSettingsUpdateComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(NgModel),
             ],
