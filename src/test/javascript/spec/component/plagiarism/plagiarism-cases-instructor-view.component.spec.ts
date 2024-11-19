@@ -34,7 +34,6 @@ describe('Plagiarism Cases Instructor View Component', () => {
     let fixture: ComponentFixture<PlagiarismCasesInstructorViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
     let router: MockRouter;
-    const originalConsoleWarn = console.warn;
 
     let route: ActivatedRoute;
 
@@ -133,7 +132,6 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     afterEach(() => {
-        console.warn = originalConsoleWarn;
         jest.restoreAllMocks();
     });
 
@@ -232,18 +230,12 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should navigate to plagiarism detection page on click', fakeAsync(() => {
-        //disable  console warn for testing
-        console.warn = () => {};
-
-        component.ngOnInit();
-
         const courseId = route.snapshot.paramMap.get('courseId');
         // exercise id = exercise1.id for first element of first group (0-0)
         const exerciseId = exercise1.id;
 
         fixture.detectChanges();
-
-        const plagiarismDetectionLink = fixture.debugElement.nativeElement.querySelector('#navigate-plagiarism-detection-0-0');
+        const plagiarismDetectionLink = fixture.debugElement.nativeElement.querySelector('#plagiarism-detection-link-' + exercise1.id);
         expect(plagiarismDetectionLink).toBeTruthy();
         plagiarismDetectionLink.click();
         const routePath = router.navigateByUrl.mock.calls[0][0];

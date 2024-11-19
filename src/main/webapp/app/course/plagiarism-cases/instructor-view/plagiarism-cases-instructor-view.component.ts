@@ -20,6 +20,8 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     groupedPlagiarismCases: GroupedPlagiarismCases;
     exercisesWithPlagiarismCases: Exercise[] = [];
 
+    // method called as html template variable, angular only recognises reference variables in html if they are a property
+    // of the corresponding component class
     getExerciseUrlSegment = getExerciseUrlSegment;
 
     readonly getIcon = getIcon;

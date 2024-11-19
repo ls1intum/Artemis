@@ -10,16 +10,22 @@
                 <button class="btn btn-primary" (click)="exportPlagiarismCases()" jhiTranslate="artemisApp.plagiarism.cases.exportCsv"></button>
             </div>
         </div>
-        @for (exercise of exercisesWithPlagiarismCases; track exercise; let i = $index) {
+        @for (exercise of exercisesWithPlagiarismCases; track exercise.id; let i = $index) {
             <div class="card mb-2">
                 <div class="card-header">
                     <div class="row">
                         <div class="col-3">
                             <h5 class="mb-0">
-                                @if (exercise.type) {
-                                    <fa-icon [icon]="getIcon(exercise.type)" />
-                                }
-                                {{ exercise.title }}
+                                <a
+                                    id="plagiarism-detection-link-{{ exercise.id }}"
+                                    [routerLink]="['/course-management', courseId, getExerciseUrlSegment(exercise.type), exercise.id, 'plagiarism']"
+                                    [attr.aria-label]="'View plagiarism detection'"
+                                >
+                                    @if (exercise.type) {
+                                        <fa-icon [icon]="getIcon(exercise.type)" />
+                                    }
+                                    {{ exercise.title }}</a
+                                >
                             </h5>
                         </div>
                         <div class="col-3">
@@ -58,18 +64,7 @@
                             </div>
                             @if (plagiarismCase.plagiarismSubmissions) {
                                 <div class="col-2 text-center">
-                                    <span
-                                        id="navigate-plagiarism-detection-{{ i }}-{{ j }}"
-                                        [routerLink]="[
-                                            '/course-management',
-                                            courseId,
-                                            getExerciseUrlSegment(plagiarismCase.exercise!.type),
-                                            plagiarismCase.exercise!.id,
-                                            'plagiarism',
-                                        ]"
-                                        class="clickable underline-hover"
-                                        [attr.aria-label]="'View plagiarism detection for ' + plagiarismCase.student?.name"
-                                    >
+                                    <span>
                                         {{
                                             'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissions?.length }
                                         }}
