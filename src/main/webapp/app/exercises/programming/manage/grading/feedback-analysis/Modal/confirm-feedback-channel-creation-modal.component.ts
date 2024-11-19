@@ -9,7 +9,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     standalone: true,
 })
 export class ConfirmFeedbackChannelCreationModalComponent {
-    readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel.confirmationModal';
+    protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel.confirmationModal';
     affectedStudentsCount = input.required<number>();
     private activeModal = inject(NgbActiveModal);
 

@@ -13,6 +13,7 @@ import { SortIconComponent } from 'app/shared/sort/sort-icon.component';
 import { AffectedStudentsModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-affected-students-modal.component';
 import { FeedbackDetailChannelModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-detail-channel-modal.component';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-feedback-analysis',
@@ -32,6 +33,7 @@ export class FeedbackAnalysisComponent {
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
     private localStorage = inject(LocalStorageService);
+    private router = inject(Router);
 
     readonly page = signal<number>(1);
     readonly pageSize = signal<number>(25);
@@ -213,7 +215,10 @@ export class FeedbackAnalysisComponent {
                 const name = createdChannel.name;
                 this.alertService.success(this.TRANSLATION_BASE + '.channelSuccess', { name });
                 if (navigate) {
-                    window.location.href = `/courses/${this.courseId()}/communication?conversationId=${createdChannel.id}`;
+                    const urlTree = this.router.createUrlTree(['courses', this.courseId(), 'communication'], {
+                        queryParams: { conversationId: createdChannel.id },
+                    });
+                    await this.router.navigateByUrl(urlTree);
                 }
             } catch (error) {
                 this.alertService.error(error);

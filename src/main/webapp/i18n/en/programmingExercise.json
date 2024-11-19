@@ -402,7 +402,7 @@
                         "descriptionLabel": "Description",
                         "requiredValidationErrorName": "The channel name is required.",
                         "maxLengthValidationErrorName": "Channel name can be max {{ max }} characters long!",
-                        "regexValidationError": "Names can only contain lowercase letters, numbers, and dashes. Only Artemis can create channels that start with a $.",
+                        "regexValidationErrorName": "Names can only contain lowercase letters, numbers, and dashes. Only Artemis can create channels that start with a $.",
                         "requiredValidationErrorDescription": "The channel description is required.",
                         "maxLengthValidationErrorDescription": "Channel description can be max {{ max }} characters long!",
                         "confirmationModal": {
