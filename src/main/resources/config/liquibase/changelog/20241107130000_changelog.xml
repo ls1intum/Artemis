@@ -15,6 +15,10 @@
 
         <addForeignKeyConstraint baseColumnNames="learner_profile_id" baseTableName="jhi_user" constraintName="FK_user_learner_profile" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="learner_profile" validate="true"/>
 
+        <createIndex tableName="jhi_user" indexName="idx_user_learner_profile">
+            <column name="learner_profile_id"/>
+        </createIndex>
+
         <sql>
             INSERT INTO learner_profile (id)
             SELECT u.id
@@ -43,6 +47,14 @@
 
         <addForeignKeyConstraint baseColumnNames="learner_profile_id" baseTableName="course_learner_profile" constraintName="FK_course_learner_profile_learner_profile" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="learner_profile" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_learner_profile" constraintName="FK_course_learner_profile_course" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+
+        <createIndex tableName="course_learner_profile" indexName="idx_clp_learner_profile">
+            <column name="learner_profile_id"/>
+        </createIndex>
+        <createIndex tableName="course_learner_profile" indexName="idx_clp_course">
+            <column name="course_id"/>
+        </createIndex>
+
 
         <sql>
             INSERT INTO course_learner_profile (learner_profile_id, course_id)
