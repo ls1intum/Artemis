@@ -19,7 +19,7 @@ type OptionalTextBlockRef = TextBlockRef | undefined;
 export class TextblockAssessmentCardComponent {
     protected route = inject(ActivatedRoute);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
-    private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+    textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
     @Input() textBlockRef: TextBlockRef;
     @Input() selected = false;

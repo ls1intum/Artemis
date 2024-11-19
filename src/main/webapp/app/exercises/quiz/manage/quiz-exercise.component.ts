@@ -17,7 +17,7 @@ import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.servi
 })
 export class QuizExerciseComponent extends ExerciseComponent {
     protected exerciseService = inject(ExerciseService);
-    protected quizExerciseService = inject(QuizExerciseService);
+    quizExerciseService = inject(QuizExerciseService);
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
