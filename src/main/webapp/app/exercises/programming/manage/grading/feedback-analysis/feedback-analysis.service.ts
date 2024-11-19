@@ -29,6 +29,10 @@ export interface FeedbackAffectedStudentDTO {
     login: string;
     repositoryURI: string;
 }
+export interface FeedbackChannelRequestDTO {
+    channel: ChannelDTO;
+    feedbackDetailText: string;
+}
 @Injectable()
 export class FeedbackAnalysisService extends BaseApiHttpService {
     search(pageable: SearchTermPageableSearch, options: { exerciseId: number; filters: FilterData }): Promise<FeedbackAnalysisResponse> {
@@ -64,10 +68,8 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
         return this.get<PageableResult<FeedbackAffectedStudentDTO>>(`exercises/${exerciseId}/feedback-details-participation`, { params, headers });
     }
 
-    createChannel(courseId: number, exerciseId: number, channelDTO: ChannelDTO, feedbackDetailText: string): Promise<ChannelDTO> {
-        const headers = new HttpHeaders().set('feedback-detail-text', feedbackDetailText);
-
-        return this.post<ChannelDTO>(`courses/${courseId}/${exerciseId}/feedback-channel`, channelDTO, { headers });
+    createChannel(courseId: number, exerciseId: number, feedbackChannelRequest: FeedbackChannelRequestDTO): Promise<ChannelDTO> {
+        return this.post<ChannelDTO>(`courses/${courseId}/${exerciseId}/feedback-channel`, feedbackChannelRequest);
     }
 
     getAffectedStudentCount(exerciseId: number, feedbackDetailText: string): Promise<number> {

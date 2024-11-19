@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,6 +35,7 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
+import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -471,24 +471,26 @@ public class ChannelResource extends ConversationManagementResource {
     /**
      * POST /api/courses/:courseId/channels/: Creates a new feedback-specific channel in a course.
      *
-     * @param courseId           where the channel is being created.
-     * @param exerciseId         for which the feedback channel is being created.
-     * @param channelDTO         containing the properties of the channel to be created, such as name, description, and visibility.
-     * @param feedbackDetailText a string representing the feedback detail text used to determine the affected students to be added to the channel.
+     * @param courseId               where the channel is being created.
+     * @param exerciseId             for which the feedback channel is being created.
+     * @param feedbackChannelRequest containing a DTO with the properties of the channel (e.g., name, description, visibility)
+     *                                   and the feedback detail text used to determine the affected students to be added to the channel.
      * @return ResponseEntity with status 201 (Created) and the body containing the details of the created channel.
      * @throws URISyntaxException       if the URI for the created resource cannot be constructed.
      * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
      */
     @PostMapping("{courseId}/{exerciseId}/feedback-channel")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<ChannelDTO> createFeedbackChannel(@PathVariable Long courseId, @PathVariable Long exerciseId, @RequestBody ChannelDTO channelDTO,
-            @RequestHeader("feedback-detail-text") String feedbackDetailText) throws URISyntaxException {
-        log.debug("REST request to create feedback channel in course {} with properties: {}", courseId, channelDTO);
+    public ResponseEntity<ChannelDTO> createFeedbackChannel(@PathVariable Long courseId, @PathVariable Long exerciseId,
+            @RequestBody FeedbackChannelRequestDTO feedbackChannelRequest) throws URISyntaxException {
+        log.debug("REST request to create feedback channel for course {} and exercise {} with properties: {}", courseId, exerciseId, feedbackChannelRequest);
+
+        ChannelDTO channelDTO = feedbackChannelRequest.channel();
+        String feedbackDetailText = feedbackChannelRequest.feedbackDetailText();
 
         User requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         checkCommunicationEnabledElseThrow(course);
-        channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser);
         Channel createdChannel = channelService.createFeedbackChannel(course, exerciseId, channelDTO, feedbackDetailText, requestingUser);
 
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));

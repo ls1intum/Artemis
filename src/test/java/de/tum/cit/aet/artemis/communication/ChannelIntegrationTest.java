@@ -16,7 +16,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -24,6 +23,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
+import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -913,20 +913,20 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     void createFeedbackChannel_asStudent_shouldReturnForbidden() {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+
         ChannelDTO channelDTO = new ChannelDTO();
         channelDTO.setName("feedback-channel");
         channelDTO.setDescription("Discussion channel for feedback");
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("feedback-detail-text", "Sample feedback text");
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, "Sample feedback text");
 
         String BASE_ENDPOINT = "api/courses/{courseId}/{exerciseId}/feedback-channel";
 
         try {
             request.postWithoutResponseBody(BASE_ENDPOINT.replace("{courseId}", course.getId().toString()).replace("{exerciseId}", programmingExercise.getId().toString()),
-                    channelDTO, HttpStatus.FORBIDDEN, headers);
+                    feedbackChannelRequest, HttpStatus.FORBIDDEN);
         }
         catch (Exception e) {
             fail("There was an error executing the post request.", e);
@@ -944,15 +944,14 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("feedback-detail-text", "Sample feedback text");
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, "Sample feedback text");
 
         String BASE_ENDPOINT = "/api/courses/{courseId}/{exerciseId}/feedback-channel";
 
         ChannelDTO response = null;
         try {
-            response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", courseId.toString()).replace("{exerciseId}", exerciseId.toString()), channelDTO,
-                    ChannelDTO.class, HttpStatus.CREATED, headers);
+            response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", courseId.toString()).replace("{exerciseId}", exerciseId.toString()), feedbackChannelRequest,
+                    ChannelDTO.class, HttpStatus.CREATED);
         }
         catch (Exception e) {
             fail("Failed to create feedback channel", e);

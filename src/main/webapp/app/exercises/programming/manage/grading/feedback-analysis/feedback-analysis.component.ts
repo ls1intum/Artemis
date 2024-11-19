@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { FeedbackAnalysisService, FeedbackDetail } from './feedback-analysis.service';
+import { FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { faFilter, faMessage, faSort, faSortDown, faSortUp, faUpRightAndDownLeftFromCenter, faUsers } from '@fortawesome/free-solid-svg-icons';
@@ -211,7 +211,11 @@ export class FeedbackAnalysisComponent {
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
         modalRef.componentInstance.formSubmitted.subscribe(async ({ channelDto, navigate }: { channelDto: ChannelDTO; navigate: boolean }) => {
             try {
-                const createdChannel = await this.feedbackAnalysisService.createChannel(this.courseId(), this.exerciseId(), channelDto, feedbackDetail.detailText);
+                const feedbackChannelRequest: FeedbackChannelRequestDTO = {
+                    channel: channelDto,
+                    feedbackDetailText: feedbackDetail.detailText,
+                };
+                const createdChannel = await this.feedbackAnalysisService.createChannel(this.courseId(), this.exerciseId(), feedbackChannelRequest);
                 const name = createdChannel.name;
                 this.alertService.success(this.TRANSLATION_BASE + '.channelSuccess', { name });
                 if (navigate) {

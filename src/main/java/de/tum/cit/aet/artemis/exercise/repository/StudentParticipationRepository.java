@@ -1372,13 +1372,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
                 SELECT DISTINCT p.student.login
                 FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN p.submissions s
-                LEFT JOIN s.results r
-                LEFT JOIN r.feedbacks f
+                INNER JOIN p.submissions s
+                INNER JOIN s.results r ON r.id = (
+                    SELECT MAX(pr.id)
+                    FROM s.results pr
+                    WHERE pr.participation.id = p.id
+                )
+                INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                   AND f.detailText = :detailText
                   AND p.testRun = FALSE
-                  AND f.positive = FALSE
             """)
     List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailText") String detailText);
 
@@ -1396,13 +1399,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
                 SELECT COUNT(DISTINCT p.student.id)
                 FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN p.submissions s
-                LEFT JOIN s.results r
-                LEFT JOIN r.feedbacks f
+                INNER JOIN p.submissions s
+                INNER JOIN s.results r ON r.id = (
+                    SELECT MAX(pr.id)
+                    FROM s.results pr
+                    WHERE pr.participation.id = p.id
+                )
+                INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                   AND f.detailText = :detailText
                   AND p.testRun = FALSE
-                  AND f.positive = FALSE
             """)
     long countAffectedStudentsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailText") String detailText);
 }
