@@ -22,7 +22,7 @@ const SPACE = ' ';
 })
 export class ManualTextSelectionComponent {
     protected route = inject(ActivatedRoute);
-    private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+    textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
     @Input() public textBlockRefGroup: TextBlockRefGroup;
     @Input() submission: TextSubmission;

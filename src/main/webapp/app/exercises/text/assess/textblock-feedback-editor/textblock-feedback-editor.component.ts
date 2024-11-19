@@ -19,7 +19,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     protected route = inject(ActivatedRoute);
     protected modalService = inject(NgbModal);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
-    private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+    textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
     readonly FeedbackType = FeedbackType;
 
