@@ -284,7 +284,6 @@ public class LocalCIResultProcessingService {
     }
 
     private void updateExerciseBuildDuration(ProgrammingExercise exercise) {
-        var start = System.currentTimeMillis();
         try {
             ProgrammingExerciseBuildStatistics buildStatistics = programmingExerciseBuildStatisticsRepository.findByExerciseId(exercise.getId()).orElse(null);
             long successfulBuildJobCountByExerciseId = buildJobRepository.fetchSuccessfulBuildJobCountByExerciseId(exercise.getId());
@@ -309,7 +308,6 @@ public class LocalCIResultProcessingService {
         catch (Exception e) {
             log.error("Could not update exercise build duration", e);
         }
-        log.debug("Updating exercise build duration took {}ms", System.currentTimeMillis() - start);
     }
 
     public class ResultQueueListener implements ItemListener<ResultQueueItem> {
