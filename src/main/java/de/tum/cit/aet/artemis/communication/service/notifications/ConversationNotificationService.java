@@ -92,7 +92,7 @@ public class ConversationNotificationService {
     @NotificationPlaceholderCreator(values = { CONVERSATION_NEW_MESSAGE })
     public static String[] createPlaceholdersNewMessageChannelText(String courseTitle, String messageContent, String messageCreationDate, String conversationName,
             String authorName, String conversationType, String imageUrl, String userId, String postId) {
-        return new String[] { courseTitle, messageContent, messageCreationDate, conversationName, authorName, conversationType, imageUrl, userId };
+        return new String[] { courseTitle, messageContent, messageCreationDate, conversationName, authorName, conversationType, imageUrl, userId, postId };
     }
 
     private void save(ConversationNotification notification, Set<User> mentionedUsers, String[] placeHolders) {
