@@ -71,6 +71,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     modelingExercise: ModelingExercise;
     modelingParticipationHeader: StudentParticipation;
+    modelingExerciseHeader: ModelingExercise;
     course?: Course;
     result?: Result;
     resultWithComplaint?: Result;
@@ -281,6 +282,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         // In the header we always want to display the latest submission, even when we are viewing a specific submission
         this.modelingParticipationHeader = modelingSubmission.participation as StudentParticipation;
         this.modelingParticipationHeader.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
+        this.modelingExerciseHeader = this.modelingParticipationHeader.exercise as ModelingExercise;
+        this.modelingExerciseHeader.studentParticipations = [this.participation];
 
         // If isFeedbackView is true and submissionId is present, we want to find the corresponding submission and not get the latest one
         if (this.isFeedbackView && this.submissionId && this.sortedSubmissionHistory) {
@@ -409,7 +412,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     if (this.assessmentResult.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
                         this.alertService.info('artemisApp.modelingEditor.newAssessment');
                     } else if (newResult.successful === true) {
-                        this.alertService.error('artemisApp.exercise.athenaFeedbackSuccessful');
+                        this.alertService.info('artemisApp.exercise.athenaFeedbackSuccessful');
                     }
                 } else if (newResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA && newResult.successful === false) {
                     this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
@@ -537,10 +540,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submissionChange.next(this.submission);
                     this.participation = this.submission.participation as StudentParticipation;
                     this.participation.exercise = this.modelingExercise;
+                    this.modelingParticipationHeader = this.submission.participation as StudentParticipation;
                     // reconnect so that the submission status is displayed correctly in the result.component
                     this.submission.participation!.submissions = [this.submission];
                     this.participationWebsocketService.addParticipation(this.participation, this.modelingExercise);
                     this.modelingExercise.studentParticipations = [this.participation];
+                    this.modelingExerciseHeader.studentParticipations = [this.participation];
                     this.result = getLatestSubmissionResult(this.submission);
                     this.retryStarted = false;
 
