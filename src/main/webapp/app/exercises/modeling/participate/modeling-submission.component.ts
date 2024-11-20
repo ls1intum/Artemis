@@ -39,7 +39,6 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { of } from 'rxjs';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -127,7 +126,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // mode
     isFeedbackView: boolean = false;
     showResultHistory: boolean = false;
-    resultString: string;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -139,7 +137,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private participationWebsocketService: ParticipationWebsocketService,
         private guidedTourService: GuidedTourService,
         private accountService: AccountService,
-        private resultService: ResultService,
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
@@ -293,7 +290,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
             if (matchingSubmission) {
                 modelingSubmission = matchingSubmission;
-                this.resultString = this.resultService.getResultString(modelingSubmission.latestResult, modelingSubmission.participation?.exercise, false);
             } else {
                 console.warn(`Submission with ID ${this.submissionId} not found in sorted history results.`);
             }
