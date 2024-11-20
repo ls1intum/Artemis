@@ -68,7 +68,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(getSettingsSpy).toHaveBeenCalledWith(1);
         expect(getParentSettingsSpy).toHaveBeenCalledOnce();
 
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(5);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(4);
     });
 
     it('Can deactivate correctly', () => {
@@ -98,6 +98,5 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(comp.settingsUpdateComponent!.irisSettings.irisChatSettings).toBeTruthy();
         expect(comp.settingsUpdateComponent!.irisSettings.irisLectureIngestionSettings).toBeTruthy();
         expect(comp.settingsUpdateComponent!.irisSettings.irisCompetencyGenerationSettings).toBeTruthy();
-        expect(comp.settingsUpdateComponent!.irisSettings.irisProactivitySettings).toBeTruthy();
     });
 });
