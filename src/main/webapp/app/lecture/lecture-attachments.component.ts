@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
 import dayjs from 'dayjs/esm';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
@@ -51,18 +51,21 @@ export class LectureAttachmentsComponent implements OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    private routeDataSubscription?: Subscription;
+
     constructor() {
         effect(
             () => {
                 this.notificationText = undefined;
-                this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
+                this.routeDataSubscription?.unsubscribe(); // in case the subscription was already defined
+                this.routeDataSubscription = this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
                     if (this.lectureId) {
                         this.lectureService.findWithDetails(this.lectureId()).subscribe((lectureResponse: HttpResponse<Lecture>) => {
                             this.lecture.set(lectureResponse.body!);
                             this.loadAttachments();
                         });
                     } else {
-                        this.lecture = lecture;
+                        this.lecture.set(lecture);
                         this.loadAttachments();
                     }
                 });
@@ -82,6 +85,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+        this.routeDataSubscription?.unsubscribe();
     }
 
     isViewButtonAvailable(attachmentLink: string): boolean {
