@@ -28,7 +28,6 @@ export class CourseManagementExercisesComponent implements OnInit {
     filteredModelingExercisesCount = 0;
     filteredFileUploadExercisesCount = 0;
     exerciseFilter: ExerciseFilter;
-    showBackToWizardModeButton = false;
     lectureIdForGoingBack: number;
     lectureWizardStepForGoingBack: number;
 
@@ -55,11 +54,7 @@ export class CourseManagementExercisesComponent implements OnInit {
             }
         });
 
-        this.route.queryParams.subscribe((params) => {
-            this.showBackToWizardModeButton = params.shouldHaveBackButtonToWizard;
-            this.lectureIdForGoingBack = params.lectureId;
-            this.lectureWizardStepForGoingBack = params.step;
-        });
+        // TODO investigate shouldHaveBackButtonToWizard
 
         this.exerciseFilter = new ExerciseFilter('');
     }

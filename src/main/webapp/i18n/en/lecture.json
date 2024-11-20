@@ -13,9 +13,6 @@
                     "filterUnspecifiedDates": "Unspecified Date(s)"
                 },
                 "createOrEditLabel": "Create or Edit Lecture",
-                "switchToGuidedModeLabel": "Switch to guided mode",
-                "switchToTraditionalModeLabel": "Switch to normal mode",
-                "nextStepLabel": "Next",
                 "ingestLecturesInPyrisLabel": "Send Lectures to Iris"
             },
             "created": "Created new lecture with identifier {{ param }}",

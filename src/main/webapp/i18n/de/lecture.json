@@ -13,9 +13,6 @@
                     "filterUnspecifiedDates": "Ohne Zeitangaben"
                 },
                 "createOrEditLabel": "Vorlesung erstellen oder bearbeiten",
-                "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
-                "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
-                "nextStepLabel": "Weiter",
                 "ingestLecturesInPyrisLabel": "Vorlesungen an Iris senden"
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",

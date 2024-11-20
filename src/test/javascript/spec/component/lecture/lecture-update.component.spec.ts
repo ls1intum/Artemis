@@ -197,15 +197,6 @@ describe('LectureUpdateComponent', () => {
         expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated', channelName: 'test1Updated' });
     }));
 
-    it('should switch to wizard mode', fakeAsync(() => {
-        lectureUpdateComponent.isShowingWizardMode = false;
-        const wizardModeButton = jest.spyOn(lectureUpdateComponent, 'toggleWizardMode');
-        lectureUpdateComponent.toggleWizardMode();
-        tick();
-        expect(wizardModeButton).toHaveBeenCalledOnce();
-        expect(lectureUpdateComponent.isShowingWizardMode).toBeTrue();
-    }));
-
     it('should be in wizard mode', fakeAsync(() => {
         activatedRoute = TestBed.inject(ActivatedRoute);
         activatedRoute.queryParams = of({

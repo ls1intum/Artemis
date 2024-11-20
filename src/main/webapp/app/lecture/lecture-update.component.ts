@@ -11,7 +11,6 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
@@ -36,7 +35,6 @@ export class LectureUpdateComponent implements OnInit {
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
-    @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
     @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdateWizardPeriodComponent;
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
     periodSectionDatepickers = viewChildren(FormDateTimePickerComponent);
@@ -57,14 +55,6 @@ export class LectureUpdateComponent implements OnInit {
     isSaving: boolean;
     isProcessing: boolean;
     processUnitMode: boolean;
-    isShowingWizardMode: boolean;
-    /**
-     * Adding attachments and lecture units and attachments requires a lecture id.
-     * We save the lecture in the background on creation to make sure the id is present in case an attachment / lecture unit is added
-     *
-     * Note: this means we have to delete the lecture in case the creation is cancelled
-     */
-    isAutomaticSaveOnCreation: boolean = true;
 
     formStatusSections: FormSectionStatus[];
 
@@ -74,9 +64,6 @@ export class LectureUpdateComponent implements OnInit {
     file: File;
     fileName: string;
     fileInputTouched = false;
-
-    toggleModeFunction = () => this.toggleWizardMode();
-    saveLectureFunction = () => this.save();
 
     constructor(
         protected alertService: AlertService,
@@ -115,7 +102,6 @@ export class LectureUpdateComponent implements OnInit {
         this.isSaving = false;
         this.processUnitMode = false;
         this.isProcessing = false;
-        this.isShowingWizardMode = false;
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
@@ -126,17 +112,8 @@ export class LectureUpdateComponent implements OnInit {
             }
         });
 
-        this.activatedRoute.queryParams.subscribe((params) => {
-            if (params.shouldBeInWizardMode) {
-                this.isShowingWizardMode = params.shouldBeInWizardMode;
-            }
-        });
-
+        // TODO investigate where wizard mode is opened by url
         this.isEditMode.set(!this.router.url.endsWith('/new'));
-
-        if (!this.isEditMode()) {
-            this.save(true);
-        }
     }
 
     /**
@@ -152,25 +129,16 @@ export class LectureUpdateComponent implements OnInit {
      * Save the changes on a lecture
      * This function is called by pressing save after creating or editing a lecture
      */
-    save(isAutomaticSaveOnCreation: boolean = false) {
+    save() {
         this.pressedSave = true;
         this.isSaving = true;
         this.isProcessing = true;
-        this.isAutomaticSaveOnCreation = isAutomaticSaveOnCreation;
         if (this.lecture().id !== undefined) {
             this.subscribeToSaveResponse(this.lectureService.update(this.lecture()));
         } else {
             // Newly created lectures must have a channel name, which cannot be undefined
             this.subscribeToSaveResponse(this.lectureService.create(this.lecture()));
         }
-    }
-
-    /**
-     * Activate or deactivate the wizard mode for easier lecture creation.
-     * This function is called by pressing "Switch to guided mode" when creating a new lecture
-     */
-    toggleWizardMode() {
-        this.isShowingWizardMode = !this.isShowingWizardMode;
     }
 
     proceedToUnitSplit() {
@@ -212,22 +180,7 @@ export class LectureUpdateComponent implements OnInit {
     protected onSaveSuccess(lecture: Lecture) {
         this.isSaving = false;
 
-        const isAutomaticSaveForIdForAttachmentsAndUnits = !this.isEditMode() && this.isAutomaticSaveOnCreation;
-        if (isAutomaticSaveForIdForAttachmentsAndUnits) {
-            this.lectureService.findWithDetails(lecture.id!).subscribe({
-                next: (response: HttpResponse<Lecture>) => {
-                    this.lecture.set(response.body!);
-                },
-            });
-        } else if (this.isShowingWizardMode && !this.lecture().id) {
-            this.lectureService.findWithDetails(lecture.id!).subscribe({
-                next: (response: HttpResponse<Lecture>) => {
-                    this.lecture.set(response.body!);
-                    this.alertService.success(`Lecture with title ${lecture.title} was successfully created.`);
-                    this.wizardComponent.onLectureCreationSucceeded();
-                },
-            });
-        } else if (this.processUnitMode) {
+        if (this.processUnitMode) {
             this.isProcessing = false;
             this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
@@ -245,10 +198,6 @@ export class LectureUpdateComponent implements OnInit {
     protected onSaveError(errorRes: HttpErrorResponse) {
         this.isSaving = false;
 
-        const isAutomaticSaveForIdForAttachmentsAndUnits = this.isAutomaticSaveOnCreation;
-        if (isAutomaticSaveForIdForAttachmentsAndUnits) {
-            return;
-        }
         if (errorRes.error && errorRes.error.title) {
             this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
         } else {
