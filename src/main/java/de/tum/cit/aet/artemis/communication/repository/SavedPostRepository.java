@@ -5,8 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import javax.annotation.Nonnull;
-
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -87,8 +85,7 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
             @CacheEvict(key = "'saved_post_status_0_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_status_1_' + #savedPost.user.id"),
             @CacheEvict(key = "'saved_post_status_2_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_count_' + #savedPost.user.id") })
     @Override
-    @Nonnull
-    <S extends SavedPost> S save(@Nonnull S savedPost);
+    <S extends SavedPost> S save(S savedPost);
 
     /***
      * Deleting should clear the cached queries for a given user
@@ -102,7 +99,7 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
             @CacheEvict(key = "'saved_post_status_0_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_status_1_' + #savedPost.user.id"),
             @CacheEvict(key = "'saved_post_status_2_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_count_' + #savedPost.user.id") })
     @Override
-    void delete(@Nonnull SavedPost savedPost);
+    void delete(SavedPost savedPost);
 
     /***
      * The value "sp.postType = 0" represents a post, given by the enum {{@link PostingType}}
