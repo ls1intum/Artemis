@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -31,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackPageableDTO;
@@ -46,6 +49,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -618,9 +622,8 @@ public class ResultService {
                 maxOccurrence, filterErrorCategories, pageable);
 
         // 10. Process and map feedback details, calculating relative count and assigning task names
-        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.count(),
+        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.concatenatedFeedbackIds(), detail.count(),
                 (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
-
         // 11. Predefined error categories available for filtering on the client side
         final List<String> ERROR_CATEGORIES = List.of("Student Error", "Ares Error", "AST Error");
 
@@ -640,6 +643,25 @@ public class ResultService {
      */
     public long getMaxCountForExercise(long exerciseId) {
         return studentParticipationRepository.findMaxCountForExercise(exerciseId);
+    }
+
+    /**
+     * Retrieves a paginated list of students affected by specific feedback entries for a given exercise.
+     * <br>
+     * This method filters students based on feedback IDs and returns participation details for each affected student. It uses
+     * pagination and sorting (order based on the {@link PageUtil.ColumnMapping#AFFECTED_STUDENTS}) to allow efficient retrieval and sorting of the results, thus supporting large
+     * datasets.
+     * <br>
+     *
+     * @param exerciseId  for which the affected student participation data is requested.
+     * @param feedbackIds used to filter the participation to only those affected by specific feedback entries.
+     * @param data        A {@link PageableSearchDTO} object containing pagination and sorting parameters.
+     * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
+     */
+    public Page<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackId(long exerciseId, String feedbackIds, PageableSearchDTO<String> data) {
+        List<Long> feedbackIdLongs = Arrays.stream(feedbackIds.split(",")).map(Long::valueOf).toList();
+        PageRequest pageRequest = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.AFFECTED_STUDENTS);
+        return studentParticipationRepository.findAffectedStudentsByFeedbackId(exerciseId, feedbackIdLongs, pageRequest);
     }
 
     /**
