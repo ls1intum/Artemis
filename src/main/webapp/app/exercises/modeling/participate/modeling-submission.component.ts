@@ -22,7 +22,7 @@ import { modelingTour } from 'app/guided-tour/tours/modeling-tour';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
-import { faHashtag, faTimeline } from '@fortawesome/free-solid-svg-icons';
+import { faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { stringifyIgnoringFields } from 'app/shared/util/utils';
 import { Subject, Subscription, TeardownLogic } from 'rxjs';
@@ -33,7 +33,7 @@ import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../assess/modeling-assessment.util';
 import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
-import { faCalendarAlt, faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionPatch } from 'app/entities/submission-patch.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { catchError, switchMap, tap } from 'rxjs/operators';
@@ -120,8 +120,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     farListAlt = faListAlt;
     faExclamationTriangle = faExclamationTriangle;
     faTimeline = faTimeline;
-    faCalendarAlt = faCalendarAlt;
-    faHashtag = faHashtag;
 
     // mode
     isFeedbackView: boolean = false;
