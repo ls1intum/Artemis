@@ -35,6 +35,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { BuildConfig } from '../../../../../main/webapp/app/entities/programming/build-config.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
+import { SubmissionPolicyService } from '../../../../../main/webapp/app/exercises/programming/manage/services/submission-policy.service';
 
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -43,9 +44,12 @@ describe('ProgrammingExerciseDetailComponent', () => {
     let exerciseService: ProgrammingExerciseService;
     let alertService: AlertService;
     let profileService: ProfileService;
+    let submissionPolicyService: SubmissionPolicyService;
     let programmingLanguageFeatureService: ProgrammingLanguageFeatureService;
     let statisticsServiceStub: jest.SpyInstance;
     let gitDiffReportStub: jest.SpyInstance;
+    let profileServiceStub: jest.SpyInstance;
+    let submissionPolicyServiceStub: jest.SpyInstance;
     let buildLogStatisticsStub: jest.SpyInstance;
     let findWithTemplateAndSolutionParticipationStub: jest.SpyInstance;
     let router: Router;
@@ -132,6 +136,8 @@ describe('ProgrammingExerciseDetailComponent', () => {
         alertService = fixture.debugElement.injector.get(AlertService);
         exerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
         profileService = fixture.debugElement.injector.get(ProfileService);
+        submissionPolicyService = fixture.debugElement.injector.get(SubmissionPolicyService);
+
         programmingLanguageFeatureService = fixture.debugElement.injector.get(ProgrammingLanguageFeatureService);
         router = fixture.debugElement.injector.get(Router);
         modalService = fixture.debugElement.injector.get(NgbModal);
@@ -140,6 +146,8 @@ describe('ProgrammingExerciseDetailComponent', () => {
             .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
             .mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })));
         gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
+        profileServiceStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+        submissionPolicyServiceStub = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
         buildLogStatisticsStub = jest.spyOn(exerciseService, 'getBuildLogStatistics').mockReturnValue(of(buildLogStatistics));
 
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
@@ -180,6 +188,9 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
             // THEN
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
+            expect(profileServiceStub).toHaveBeenCalledTimes(2);
+            expect(submissionPolicyServiceStub).toHaveBeenCalledOnce();
+            expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             await Promise.resolve();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
@@ -187,6 +198,8 @@ describe('ProgrammingExerciseDetailComponent', () => {
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
             expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
             expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
+            expect(comp.programmingExercise.gitDiffReport).toBeDefined();
+            expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
         });
 
         it.each([true, false])(
@@ -231,9 +244,12 @@ describe('ProgrammingExerciseDetailComponent', () => {
             await Promise.resolve();
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
+            expect(gitDiffReportStub).toHaveBeenCalledOnce();
             await Promise.resolve();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeTrue();
+            expect(comp.programmingExercise.gitDiffReport).toBeDefined();
+            expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
         }));
     });
 
