@@ -311,4 +311,42 @@ describe('PostComponent', () => {
         expect(component.showDropdown).toBeFalse();
         expect(enableBodyScrollSpy).toHaveBeenCalled();
     });
+
+    it('should handle onRightClick correctly based on cursor style', () => {
+        const testCases = [
+            {
+                cursor: 'pointer',
+                preventDefaultCalled: false,
+                showDropdown: false,
+                dropdownPosition: { x: 0, y: 0 },
+            },
+            {
+                cursor: 'default',
+                preventDefaultCalled: true,
+                showDropdown: true,
+                dropdownPosition: { x: 100, y: 200 },
+            },
+        ];
+
+        testCases.forEach(({ cursor, preventDefaultCalled, showDropdown, dropdownPosition }) => {
+            const event = new MouseEvent('contextmenu', { clientX: 100, clientY: 200 });
+
+            const targetElement = document.createElement('div');
+            Object.defineProperty(event, 'target', { value: targetElement });
+
+            jest.spyOn(window, 'getComputedStyle').mockReturnValue({
+                cursor,
+            } as CSSStyleDeclaration);
+
+            const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+
+            component.onRightClick(event);
+
+            expect(preventDefaultSpy).toHaveBeenCalledTimes(preventDefaultCalled ? 1 : 0);
+            expect(component.showDropdown).toBe(showDropdown);
+            expect(component.dropdownPosition).toEqual(dropdownPosition);
+
+            jest.restoreAllMocks();
+        });
+    });
 });

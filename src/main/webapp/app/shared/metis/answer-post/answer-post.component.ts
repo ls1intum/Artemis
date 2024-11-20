@@ -100,24 +100,29 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     }
 
     onRightClick(event: MouseEvent) {
-        event.preventDefault();
+        const targetElement = event.target as HTMLElement;
+        const isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
 
-        if (AnswerPostComponent.activeDropdownPost && AnswerPostComponent.activeDropdownPost !== this) {
-            AnswerPostComponent.activeDropdownPost.showDropdown = false;
-            AnswerPostComponent.activeDropdownPost.enableBodyScroll();
-            AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
+        if (!isPointerCursor) {
+            event.preventDefault();
+
+            if (AnswerPostComponent.activeDropdownPost && AnswerPostComponent.activeDropdownPost !== this) {
+                AnswerPostComponent.activeDropdownPost.showDropdown = false;
+                AnswerPostComponent.activeDropdownPost.enableBodyScroll();
+                AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
+            }
+
+            AnswerPostComponent.activeDropdownPost = this;
+
+            this.dropdownPosition = {
+                x: event.clientX,
+                y: event.clientY,
+            };
+
+            this.showDropdown = true;
+            this.adjustDropdownPosition();
+            this.disableBodyScroll();
         }
-
-        AnswerPostComponent.activeDropdownPost = this;
-
-        this.dropdownPosition = {
-            x: event.clientX,
-            y: event.clientY,
-        };
-
-        this.showDropdown = true;
-        this.adjustDropdownPosition();
-        this.disableBodyScroll();
     }
 
     adjustDropdownPosition() {
