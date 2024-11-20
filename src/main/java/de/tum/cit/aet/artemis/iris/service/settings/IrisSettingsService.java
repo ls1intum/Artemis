@@ -739,7 +739,7 @@ public class IrisSettingsService {
         return switch (type) {
             case PROGRESS_STALLED -> settings.irisChatSettings().proactiveProgressStalledEventEnabled();
             case BUILD_FAILED -> settings.irisChatSettings().proactiveBuildFailedEventEnabled();
-            default -> throw new IllegalStateException("Unexpected value: " + type); // TODO: Add JOL event, once Timor's PR is created.
+            default -> throw new IllegalStateException("Unexpected value: " + type); // TODO: Add JOL event, once Course Chat Settings are implemented
         };
     }
 }
