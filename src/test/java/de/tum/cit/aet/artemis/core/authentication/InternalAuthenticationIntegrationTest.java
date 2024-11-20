@@ -260,7 +260,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         Cookie cookie = new Cookie(responseCookie.getName(), responseCookie.getValue());
         cookie.setMaxAge((int) responseCookie.getMaxAge().toMillis());
 
-        var initialLifetime = tokenProvider.getExpirationDate(cookie.getValue()).getTime() - new Date().getTime();
+        var initialLifetime = tokenProvider.getExpirationDate(cookie.getValue()).getTime() - Date.from(ZonedDateTime.now().toInstant()).getTime();
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("tool", ToolTokenType.SCORPIO.toString());

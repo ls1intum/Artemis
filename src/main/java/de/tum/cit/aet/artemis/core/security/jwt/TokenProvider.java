@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.core.security.jwt;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -111,14 +113,13 @@ public class TokenProvider {
     public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
-        long now = (new Date()).getTime();
-        Date validity = new Date(now + duration);
+        var validity = ZonedDateTime.now().plus(duration, ChronoUnit.MILLIS);
         var jwtBuilder = Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities);
         if (tool != null) {
             jwtBuilder.claim("tools", tool);
         }
 
-        return jwtBuilder.signWith(key, Jwts.SIG.HS512).expiration(validity).compact();
+        return jwtBuilder.signWith(key, Jwts.SIG.HS512).expiration(Date.from(validity.toInstant())).compact();
     }
 
     /**
