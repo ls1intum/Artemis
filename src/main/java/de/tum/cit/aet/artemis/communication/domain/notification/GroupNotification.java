@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.GroupNotificationType;
 import de.tum.cit.aet.artemis.communication.domain.NotificationPriority;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -62,8 +61,6 @@ public class GroupNotification extends Notification {
     }
 
     public GroupNotification() {
-        setVersion((short) Constants.PUSH_NOTIFICATION_VERSION);
-        setMinorVersion((short) Constants.PUSH_NOTIFICATION_MINOR_VERSION);
     }
 
     public GroupNotification(Course course, String title, String notificationText, boolean textIsPlaceholder, String[] placeholderValues, User user, GroupNotificationType type) {
@@ -75,8 +72,6 @@ public class GroupNotification extends Notification {
         this.setTextIsPlaceholder(textIsPlaceholder);
         this.setPlaceholderValues(placeholderValues);
         this.setAuthor(user);
-        setVersion((short) Constants.PUSH_NOTIFICATION_VERSION);
-        setMinorVersion((short) Constants.PUSH_NOTIFICATION_MINOR_VERSION);
     }
 
     public GroupNotification(Course course, String title, String notificationText, boolean textIsPlaceholder, String[] placeholderValues, User user, GroupNotificationType type,
@@ -90,8 +85,6 @@ public class GroupNotification extends Notification {
         this.setPlaceholderValues(placeholderValues);
         this.setAuthor(user);
         this.setPriority(priority);
-        setVersion((short) Constants.PUSH_NOTIFICATION_VERSION);
-        setMinorVersion((short) Constants.PUSH_NOTIFICATION_MINOR_VERSION);
     }
 
     public void setCourse(Course course) {

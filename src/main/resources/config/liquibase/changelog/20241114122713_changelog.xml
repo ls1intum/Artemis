@@ -7,26 +7,10 @@
             <not>
                 <columnExists tableName="push_notification_device_configuration" columnName="api_type"/>
             </not>
-
-            <not>
-                <or>
-                    <columnExists tableName="notification" columnName="version"/>
-                    <columnExists tableName="notification" columnName="minor_version"/>
-                </or>
-            </not>
         </preConditions>
 
         <addColumn tableName="push_notification_device_configuration">
             <column name="api_type" type="tinyint" defaultValue="0">
-                <constraints nullable="false"/>
-            </column>
-        </addColumn>
-
-        <addColumn tableName="notification">
-            <column name="version" type="tinyint" defaultValue="1">
-                <constraints nullable="false"/>
-            </column>
-            <column name="minor_version" type="tinyint" defaultValue="1">
                 <constraints nullable="false"/>
             </column>
         </addColumn>

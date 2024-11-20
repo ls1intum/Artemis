@@ -81,6 +81,9 @@
   }, {
     "fieldName" : "userId",
     "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "postId",
+    "fieldType" : "java.lang.String"
   } ]
 }, {
   "notificationType" : "CONVERSATION_NEW_REPLY_MESSAGE",
@@ -113,6 +116,12 @@
     "fieldType" : "java.lang.String"
   }, {
     "fieldName" : "userId",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "postingId",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "parentPostId",
     "fieldType" : "java.lang.String"
   } ]
 }, {
@@ -167,6 +176,12 @@
     "fieldType" : "java.lang.String"
   }, {
     "fieldName" : "userId",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "postingId",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "parentPostId",
     "fieldType" : "java.lang.String"
   } ]
 }, {
@@ -321,6 +336,9 @@
   }, {
     "fieldName" : "authorId",
     "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "postId",
+    "fieldType" : "java.lang.String"
   } ]
 }, {
   "notificationType" : "NEW_CPC_PLAGIARISM_CASE_STUDENT",
@@ -387,6 +405,12 @@
   }, {
     "fieldName" : "userId",
     "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "postingId",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "parentPostId",
+    "fieldType" : "java.lang.String"
   } ]
 }, {
   "notificationType" : "NEW_REPLY_FOR_EXAM_POST",
@@ -419,6 +443,12 @@
     "fieldType" : "java.lang.String"
   }, {
     "fieldName" : "userId",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "postingId",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "parentPostId",
     "fieldType" : "java.lang.String"
   } ]
 }, {
@@ -453,6 +483,12 @@
   }, {
     "fieldName" : "userId",
     "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "postingId",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "parentPostId",
+    "fieldType" : "java.lang.String"
   } ]
 }, {
   "notificationType" : "NEW_REPLY_FOR_LECTURE_POST",
@@ -485,6 +521,12 @@
     "fieldType" : "java.lang.String"
   }, {
     "fieldName" : "userId",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "postingId",
+    "fieldType" : "java.lang.String"
+  }, {
+    "fieldName" : "parentPostId",
     "fieldType" : "java.lang.String"
   } ]
 }, {

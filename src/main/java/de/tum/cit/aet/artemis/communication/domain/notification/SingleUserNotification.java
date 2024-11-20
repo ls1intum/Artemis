@@ -8,7 +8,6 @@ import jakarta.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
@@ -44,8 +43,6 @@ public class SingleUserNotification extends Notification {
         this.setText(text);
         this.setTextIsPlaceholder(textIsPlaceholder);
         this.setPlaceholderValues(placeholderValues);
-        setVersion((short) Constants.PUSH_NOTIFICATION_VERSION);
-        setMinorVersion((short) Constants.PUSH_NOTIFICATION_MINOR_VERSION);
     }
 
     public SingleUserNotification transientAndStringTarget(NotificationTarget transientAndStringTarget) {

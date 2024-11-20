@@ -244,7 +244,7 @@ public class GroupNotificationFactory {
         text = NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT;
         var imageUrl = post.getAuthor().getImageUrl() == null ? "" : post.getAuthor().getImageUrl();
         placeholderValues = createPlaceholdersNewAnnouncementPost(course.getTitle(), post.getTitle(), Jsoup.parse(post.getContent()).text(), post.getCreationDate().toString(),
-                post.getAuthor().getName(), imageUrl, post.getAuthor().getId().toString());
+                post.getAuthor().getName(), imageUrl, post.getAuthor().getId().toString(), post.getId().toString());
         notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
         notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
         return notification;
@@ -252,8 +252,8 @@ public class GroupNotificationFactory {
 
     @NotificationPlaceholderCreator(values = { NEW_ANNOUNCEMENT_POST })
     public static String[] createPlaceholdersNewAnnouncementPost(String courseTitle, String postTitle, String postContent, String postCreationDate, String postAuthorName,
-            String imageUrl, String authorId) {
-        return new String[] { courseTitle, postTitle, postContent, postCreationDate, postAuthorName, imageUrl, authorId };
+            String imageUrl, String authorId, String postId) {
+        return new String[] { courseTitle, postTitle, postContent, postCreationDate, postAuthorName, imageUrl, authorId, postId };
     }
 
     /**

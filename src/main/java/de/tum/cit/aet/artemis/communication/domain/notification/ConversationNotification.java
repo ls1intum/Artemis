@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
@@ -33,8 +32,7 @@ public class ConversationNotification extends Notification {
     private Conversation conversation;
 
     public ConversationNotification() {
-        setVersion((short) Constants.PUSH_NOTIFICATION_VERSION);
-        setMinorVersion((short) Constants.PUSH_NOTIFICATION_MINOR_VERSION);
+        // Empty constructor needed for Jackson.
     }
 
     public ConversationNotification(User author, Post message, Conversation conversation, String title, String text, boolean textIsPlaceholder, String[] placeholderValues) {
@@ -46,8 +44,6 @@ public class ConversationNotification extends Notification {
         this.setAuthor(new User(author.getId(), null, author.getFirstName(), author.getLastName(), null, null));
         this.setPlaceholderValues(placeholderValues);
         this.setTextIsPlaceholder(textIsPlaceholder);
-        setVersion((short) Constants.PUSH_NOTIFICATION_VERSION);
-        setMinorVersion((short) Constants.PUSH_NOTIFICATION_MINOR_VERSION);
     }
 
     public Post getMessage() {

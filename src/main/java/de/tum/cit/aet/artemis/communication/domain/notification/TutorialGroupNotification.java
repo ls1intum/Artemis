@@ -16,7 +16,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 /**
@@ -43,8 +42,7 @@ public class TutorialGroupNotification extends Notification {
     public NotificationType notificationType;
 
     public TutorialGroupNotification() {
-        setVersion((short) Constants.PUSH_NOTIFICATION_VERSION);
-        setMinorVersion((short) Constants.PUSH_NOTIFICATION_MINOR_VERSION);
+        // Empty constructor needed for Jackson.
     }
 
     public TutorialGroupNotification(TutorialGroup tutorialGroup, String title, String text, boolean textIsPlaceholder, String[] placeholderValues,
@@ -57,8 +55,6 @@ public class TutorialGroupNotification extends Notification {
         this.setText(text);
         this.setTextIsPlaceholder(textIsPlaceholder);
         this.setPlaceholderValues(placeholderValues);
-        setVersion((short) Constants.PUSH_NOTIFICATION_VERSION);
-        setMinorVersion((short) Constants.PUSH_NOTIFICATION_MINOR_VERSION);
     }
 
     public TutorialGroup getTutorialGroup() {
