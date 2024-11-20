@@ -64,6 +64,7 @@ import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exe
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
 import { ExerciseInfoComponent } from 'app/exercises/shared/exercise-info/exercise-info.component';
+import { ExerciseHeadersInformationComponent } from 'app/exercises/shared/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { ScienceService } from 'app/shared/science/science.service';
@@ -164,6 +165,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(LtiInitializerComponent),
                 MockComponent(ModelingEditorComponent),
                 MockComponent(ExerciseInfoComponent),
+                MockComponent(ExerciseHeadersInformationComponent),
             ],
             providers: [
                 provideHttpClient(),

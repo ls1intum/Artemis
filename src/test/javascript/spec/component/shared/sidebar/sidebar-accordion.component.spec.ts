@@ -39,22 +39,23 @@ describe('SidebarAccordionComponent', () => {
 
         component.groupedData = {
             current: {
-                entityData: [{ title: 'Title 1', type: 'Type A', id: 1, size: 'M' }],
+                entityData: [{ title: 'Title 1', type: 'Type A', id: 1, size: 'M', conversation: { unreadMessagesCount: 1 } }],
             },
             past: {
-                entityData: [{ title: 'Title 2', type: 'Type B', id: 2, size: 'M' }],
+                entityData: [{ title: 'Title 2', type: 'Type B', id: 2, size: 'M', conversation: { unreadMessagesCount: 0 } }],
             },
             future: {
-                entityData: [{ title: 'Title 3', type: 'Type C', id: 3, size: 'M' }],
+                entityData: [{ title: 'Title 3', type: 'Type C', id: 3, size: 'M', conversation: { unreadMessagesCount: 1 } }],
             },
             noDate: {
-                entityData: [{ title: 'Title 4', type: 'Type D', id: 4, size: 'M' }],
+                entityData: [{ title: 'Title 4', type: 'Type D', id: 4, size: 'M', conversation: { unreadMessagesCount: 0 } }],
             },
         };
         component.routeParams = { exerciseId: 3 };
         component.collapseState = { current: false, dueSoon: false, past: false, future: true, noDate: true };
         fixture.componentRef.setInput('sidebarItemAlwaysShow', { current: false, dueSoon: false, past: false, future: false, noDate: false });
         fixture.detectChanges();
+        component.calculateUnreadMessagesOfGroup();
     });
 
     afterEach(() => {
@@ -143,5 +144,12 @@ describe('SidebarAccordionComponent', () => {
     it('should expand the group containing the selected item', () => {
         component.expandGroupWithSelectedItem();
         expect(component.collapseState['future']).toBeFalse();
+    });
+
+    it('should calculate unread messages of each group correctly', () => {
+        expect(component.totalUnreadMessagesPerGroup['current']).toBe(1);
+        expect(component.totalUnreadMessagesPerGroup['past']).toBe(0);
+        expect(component.totalUnreadMessagesPerGroup['future']).toBe(1);
+        expect(component.totalUnreadMessagesPerGroup['noDate']).toBe(0);
     });
 });
