@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
-import { Subject, Subscription, of } from 'rxjs';
+import { EMPTY, Subject, Subscription, of } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -57,7 +57,7 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 @Component({
@@ -219,18 +219,23 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             }
                         }
                     }),
-                    switchMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!)),
+                    switchMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId)),
                     tap((submissionPolicy) => {
                         this.programmingExercise.submissionPolicy = submissionPolicy;
                     }),
-                    switchMap(() => this.programmingExerciseService.getDiffReport(this.programmingExercise.id!)),
+                    switchMap(() => this.programmingExerciseService.getDiffReport(exerciseId)),
                     tap((gitDiffReport) => {
                         this.processGitDiffReport(gitDiffReport);
                     }),
                     switchMap(() =>
                         of(this.programmingExercise).pipe(
-                            filter((exercise) => !!exercise.isAtLeastEditor),
-                            switchMap(() => this.programmingExerciseService.getBuildLogStatistics(exerciseId)),
+                            switchMap((exercise) => {
+                                if (exercise.isAtLeastEditor) {
+                                    return this.programmingExerciseService.getBuildLogStatistics(exerciseId);
+                                } else {
+                                    return EMPTY;
+                                }
+                            }),
                         ),
                     ),
                 )
