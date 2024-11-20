@@ -149,11 +149,11 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponent.onCloseLectureUnitForms();
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isOnlineUnitFormOpen).toBeFalse();
-            expect(wizardUnitComponent.isTextUnitFormOpen).toBeFalse();
-            expect(wizardUnitComponent.isExerciseUnitFormOpen).toBeFalse();
-            expect(wizardUnitComponent.isAttachmentUnitFormOpen).toBeFalse();
-            expect(wizardUnitComponent.isVideoUnitFormOpen).toBeFalse();
+            expect(wizardUnitComponent.isOnlineUnitFormOpen()).toBeFalse();
+            expect(wizardUnitComponent.isTextUnitFormOpen()).toBeFalse();
+            expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeFalse();
+            expect(wizardUnitComponent.isAttachmentUnitFormOpen()).toBeFalse();
+            expect(wizardUnitComponent.isVideoUnitFormOpen()).toBeFalse();
         });
     }));
 
@@ -194,7 +194,7 @@ describe('LectureWizardUnitComponent', () => {
 
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
-        wizardUnitComponent.isVideoUnitFormOpen = true;
+        wizardUnitComponent.isVideoUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditVideoUnit(formData);
 
@@ -277,7 +277,7 @@ describe('LectureWizardUnitComponent', () => {
 
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
-        wizardUnitComponent.isTextUnitFormOpen = true;
+        wizardUnitComponent.isTextUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditTextUnit(formData);
 
@@ -434,7 +434,7 @@ describe('LectureWizardUnitComponent', () => {
 
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
-        wizardUnitComponent.isOnlineUnitFormOpen = true;
+        wizardUnitComponent.isOnlineUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditOnlineUnit(formDate);
 
@@ -538,7 +538,7 @@ describe('LectureWizardUnitComponent', () => {
 
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
-        wizardUnitComponent.isAttachmentUnitFormOpen = true;
+        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
 
@@ -607,7 +607,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponent.isEditingLectureUnit = true;
         wizardUnitComponent.currentlyProcessedAttachmentUnit = new AttachmentUnit();
         wizardUnitComponent.currentlyProcessedAttachmentUnit.attachment = new Attachment();
-        wizardUnitComponent.isAttachmentUnitFormOpen = true;
+        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
 
@@ -839,6 +839,6 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
 
         expect(wizardUnitComponent).not.toBeNull();
-        expect(wizardUnitComponent.isExerciseUnitFormOpen).toBeTrue();
+        expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeTrue();
     }));
 });
