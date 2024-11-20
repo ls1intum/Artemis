@@ -12,10 +12,12 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
@@ -71,7 +73,9 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -114,6 +118,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
@@ -150,6 +156,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
     @Autowired
     private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationRepository participationRepository;
+
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     private SubmissionTestRepository submissionRepository;
@@ -205,6 +217,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     @Autowired
     private GradingScaleUtilService gradingScaleUtilService;
 
+    @Autowired
+    private CourseRepository courseRepository;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
     private User student1;
 
     private Course course1;
@@ -230,6 +248,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     private final List<LocalRepository> studentRepos = new ArrayList<>();
 
     private static final int NUMBER_OF_STUDENTS = 2;
+
+    private static final int NUMBER_OF_INSTRUCTORS = 1;
 
     private static final boolean IS_TEST_RUN = false;
 
@@ -839,6 +859,48 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         assertThat(capturedEvent.newWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(capturedEvent.oldWorkingTime()).isEqualTo(oldWorkingTime);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateWorkingTime_ShouldTriggerUnlock() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        programmingExerciseRepository.save(programmingExercise);
+
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        courseRepository.save(course);
+
+        userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 0, 0, NUMBER_OF_INSTRUCTORS);
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student.getLogin());
+        participationRepository.save(participation);
+
+        Exam exam = programmingExercise.getExam();
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        examRepository.save(exam);
+
+        StudentExam studentExam = new StudentExam();
+        studentExam.setUser(student);
+        studentExam.setExercises(List.of(programmingExercise));
+        studentExam.setExam(exam);
+        studentExam.setTestRun(false);
+        studentExam.setWorkingTime(1);
+        studentExamRepository.save(studentExam);
+
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(any());
+
+        int newWorkingTime = 180 * 60;
+
+        StudentExam updatedExam = request.patchWithResponseBody(
+                "/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/working-time", newWorkingTime, StudentExam.class,
+                HttpStatus.OK);
+
+        assertThat(updatedExam).isNotNull();
+        assertThat(updatedExam.getWorkingTime()).isEqualTo(newWorkingTime);
+
+        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepositoryAndParticipation(participation);
     }
 
     private ExamLiveEventBaseDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {
