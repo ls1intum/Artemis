@@ -47,7 +47,7 @@ export class CourseOverviewGuardService implements CanActivate {
     }
 
     handleReturn = (course?: Course, type?: string): Observable<boolean> => {
-        let hasAccess;
+        let hasAccess: boolean;
         switch (type) {
             case 'exams':
                 hasAccess = this.hasVisibleExams(course);
