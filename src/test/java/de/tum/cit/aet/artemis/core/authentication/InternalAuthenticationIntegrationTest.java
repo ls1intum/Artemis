@@ -265,7 +265,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("tool", ToolTokenType.SCORPIO.toString());
 
-        var responseBody = request.performMvcRequest(post("/api/public/tool-token").cookie(cookie).params(params)).andExpect(status().isOk()).andReturn().getResponse()
+        var responseBody = request.performMvcRequest(post("/api/tool-token").cookie(cookie).params(params)).andExpect(status().isOk()).andReturn().getResponse()
                 .getContentAsString();
 
         AuthenticationIntegrationTestHelper.toolTokenAssertions(tokenProvider, responseBody, initialLifetime, ToolTokenType.SCORPIO);

@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.core.security.allowedTools;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -13,6 +16,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
+@Profile(PROFILE_CORE)
 @Component
 public class ToolsInterceptor implements HandlerInterceptor {
 
