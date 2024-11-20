@@ -77,7 +77,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     contextInformation: ContextInformation;
     readonly PageType = PageType;
     readonly DisplayPriority = DisplayPriority;
-    mayEditOrDelete: boolean = false;
+    mayEdit: boolean = false;
+    mayDelete: boolean = false;
     canPin: boolean = false;
 
     // Icons
@@ -112,8 +113,12 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         return this.posting.displayPriority === DisplayPriority.PINNED;
     }
 
-    onMayEditOrDelete(value: boolean) {
-        this.mayEditOrDelete = value;
+    onMayEdit(value: boolean) {
+        this.mayEdit = value;
+    }
+
+    onMayDelete(value: boolean) {
+        this.mayDelete = value;
     }
 
     onCanPin(value: boolean) {
