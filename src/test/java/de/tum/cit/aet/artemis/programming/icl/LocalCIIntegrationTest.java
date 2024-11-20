@@ -42,6 +42,7 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -61,12 +62,13 @@ import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 // TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
@@ -94,6 +96,9 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     private LocalRepository testsRepository;
 
     private String commitHash;
+
+    @Autowired
+    private ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository;
 
     private IQueue<BuildJobQueueItem> queuedJobs;
 
@@ -519,9 +524,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testBuildJobTimingInfo() {
         // Pause build agent processing
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
-        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
-        buildConfig.setBuildDurationSeconds(20);
-        programmingExerciseBuildConfigRepository.save(buildConfig);
+        ProgrammingExerciseBuildStatistics buildStatistics = new ProgrammingExerciseBuildStatistics(programmingExercise.getId(), 20, 100);
+        programmingExerciseBuildStatisticsRepository.save(buildStatistics);
 
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
