@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { Attachment } from 'app/entities/attachment.model';
@@ -25,7 +25,7 @@ import { PDFDocument } from 'pdf-lib';
     standalone: true,
     imports: [ArtemisSharedModule, PdfPreviewThumbnailGridComponent],
 })
-export class PdfPreviewComponent implements OnInit, OnDestroy {
+export class PdfPreviewComponent implements OnInit, OnDestroy, OnChanges {
     fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
     attachmentSub: Subscription;
@@ -45,7 +45,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     selectedPages = signal<Set<number>>(new Set());
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
     hiddenPages = signal<Set<number>>(new Set());
-    newHiddenPages = signal<Set<number>>(new Set());
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
@@ -101,35 +100,16 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.attachmentUnitSub?.unsubscribe();
     }
 
-    constructor() {
-        effect(
-            () => {
-                this.hiddenPagesChanged();
-            },
-            { allowSignalWrites: true },
-        );
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['hiddenPages']) {
+            this.isFileChanged.set(true);
+        }
     }
-
     /**
      * Triggers the file input to select files.
      */
     triggerFileInput(): void {
-        //this.fileInput().nativeElement.click();
-        console.log(this.hiddenPages());
-    }
-
-    /**
-     * Checks if there has been any change between the current set of hidden pages and the new set of hidden pages.
-     *
-     * @returns Returns true if the sets differ in size or if any element in `newHiddenPages` is not found in `hiddenPages`, otherwise false.
-     */
-    hiddenPagesChanged() {
-        if (this.hiddenPages()!.size !== this.newHiddenPages()!.size) return true;
-
-        for (const elem of this.newHiddenPages()!) {
-            if (!this.hiddenPages()!.has(elem)) return true;
-        }
-        return false;
+        this.fileInput().nativeElement.click();
     }
 
     /**
@@ -138,7 +118,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @returns An array of strings representing the hidden page numbers.
      */
     getHiddenPages() {
-        return Array.from(document.querySelectorAll('[id^="show-button-"]')).map((el) => el.id.match(/show-button-(\d+)/)?.[1]);
+        return Array.from(document.querySelectorAll('.hide-show-btn.btn-success'))
+            .map((el) => {
+                const match = el.id.match(/hide-show-button-(\d+)/);
+                return match ? match[1] : null;
+            })
+            .filter((id) => id !== null);
     }
 
     /**

@@ -1,10 +1,37 @@
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-<div class="pdf-container" #pdfContainer>
+<div #pdfContainer class="pdf-container">
+    @for (page of totalPagesArray(); track page) {
+        <div [id]="'pdf-page-' + page" class="pdf-canvas-container" (click)="displayEnlargedCanvas(page); $event.stopPropagation()">
+            @if (hiddenPages()!.has(page)) {
+                <ng-container>
+                    <div class="hidden-overlay pdf-overlay" style="opacity: 1">
+                        <span>
+                            <fa-icon class="hidden-icon" [icon]="faEyeSlash"></fa-icon>
+                        </span>
+                    </div>
+                </ng-container>
+            }
+            <span class="pdf-overlay" [id]="'overlay-' + page">
+                <span>{{ page }}</span>
+            </span>
+            @if (loadedPages().has(page)) {
+                <input type="checkbox" [id]="'checkbox-' + page" (click)="$event.stopPropagation()" (change)="togglePageSelection(page, $event)" />
+            }
+            @if (isAttachmentUnit()) {
+                <button
+                    [id]="'hide-show-button-' + page"
+                    [class]="'hide-show-btn btn ' + (hiddenPages()!.has(page) ? 'btn-success' : 'btn-secondary')"
+                    (click)="toggleVisibility(page, $event)"
+                >
+                    <fa-icon [icon]="hiddenPages()!.has(page) ? faEye : faEyeSlash"></fa-icon>
+                </button>
+            }
+        </div>
+    }
     @if (isEnlargedView()) {
         <jhi-pdf-preview-enlarged-canvas-component
             class="enlarged-canvas"
             [pdfContainer]="pdfContainer"
-            [totalPages]="totalPages()"
+            [totalPages]="totalPagesArray().size"
             [originalCanvas]="originalCanvas()"
             (isEnlargedViewOutput)="isEnlargedView.set($event)"
         />
