@@ -11,8 +11,8 @@ import { CourseTutorialGroupsComponent } from './course-tutorial-groups/course-t
 import { CourseTutorialGroupDetailComponent } from './tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
-import { CourseDashboardGuard } from 'app/overview/course-dashboard/course-dashboard-guard.service';
 import { CourseArchiveComponent } from './course-archive/course-archive.component';
+import { CourseOverviewGuardService } from 'app/overview/course-overview-guard.service';
 
 const routes: Routes = [
     {
@@ -167,6 +167,7 @@ const routes: Routes = [
                     pageTitle: 'overview.competencies',
                     showRefreshButton: true,
                 },
+                canActivate: [CourseOverviewGuardService],
                 children: [
                     {
                         path: '',
@@ -185,7 +186,7 @@ const routes: Routes = [
                     authorities: [Authority.USER],
                     pageTitle: 'overview.dashboard',
                 },
-                canActivate: [UserRouteAccessService, CourseDashboardGuard],
+                canActivate: [UserRouteAccessService, CourseOverviewGuardService],
             },
             {
                 path: 'learning-path',
@@ -196,6 +197,7 @@ const routes: Routes = [
                     pageTitle: 'overview.learningPath',
                     showRefreshButton: true,
                 },
+                canActivate: [CourseOverviewGuardService],
             },
             {
                 path: 'communication',
@@ -216,7 +218,7 @@ const routes: Routes = [
                     hasSidebar: true,
                     showRefreshButton: true,
                 },
-                canActivate: [UserRouteAccessService],
+                canActivate: [UserRouteAccessService, CourseOverviewGuardService],
                 children: [
                     {
                         path: ':tutorialGroupId',
@@ -241,7 +243,7 @@ const routes: Routes = [
                     hasSidebar: true,
                     showRefreshButton: true,
                 },
-                canActivate: [UserRouteAccessService],
+                canActivate: [UserRouteAccessService, CourseOverviewGuardService],
                 children: [
                     {
                         path: ':examId',
@@ -275,6 +277,7 @@ const routes: Routes = [
                     hasSidebar: false,
                     showRefreshButton: true,
                 },
+                canActivate: [CourseOverviewGuardService],
             },
             {
                 path: '',
