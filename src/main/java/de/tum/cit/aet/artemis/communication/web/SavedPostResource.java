@@ -83,7 +83,7 @@ public class SavedPostResource {
             throw new BadRequestAlertException("The provided post status could not be found.", ENTITY_NAME, "savedPostStatusDoesNotExist");
         }
 
-        var savedPosts = savedPostService.getSavedPostsForCurrentUser(savedPostStatus);
+        var savedPosts = savedPostService.getSavedPostsForCurrentUserByStatus(savedPostStatus);
 
         List<Post> posts = postRepository.findByIdIn(savedPosts.stream().filter(savedPost -> savedPost.getPostType() == PostingType.POST).map(SavedPost::getPostId).toList())
                 .stream().filter(post -> Objects.equals(post.getCoursePostingBelongsTo().getId(), courseId)).toList();

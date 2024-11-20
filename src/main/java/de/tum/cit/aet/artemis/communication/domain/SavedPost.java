@@ -49,6 +49,10 @@ public class SavedPost extends DomainObject {
         return postId;
     }
 
+    public void setPostId(Long postId) {
+        this.postId = postId;
+    }
+
     public void setStatus(SavedPostStatus status) {
         this.status = status;
     }

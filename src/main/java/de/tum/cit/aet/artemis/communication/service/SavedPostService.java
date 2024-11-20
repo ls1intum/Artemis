@@ -91,7 +91,7 @@ public class SavedPostService {
      * @param status status to query
      * @return a list of all saved posts of the current user with the given status
      */
-    public List<SavedPost> getSavedPostsForCurrentUser(SavedPostStatus status) {
+    public List<SavedPost> getSavedPostsForCurrentUserByStatus(SavedPostStatus status) {
         var currentUser = userRepository.getUser();
 
         return savedPostRepository.findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(currentUser.getId(), status);

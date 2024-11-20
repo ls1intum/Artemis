@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecip
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Posting;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
-import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
@@ -89,11 +88,9 @@ public abstract class PostingService {
     public void preparePostForBroadcast(Post post) {
         try {
             var user = userRepository.getUser();
-            var savedPost = savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(user.getId(), post.getId(), PostingType.POST);
-            post.setIsSaved(savedPost != null);
-            List<Long> answerIds = post.getAnswers().stream().map(AnswerPost::getId).toList();
-            List<SavedPost> savedAnswerPosts = savedPostRepository.findSavedPostsByUserIdAndPostIdInAndPostType(user.getId(), answerIds, PostingType.ANSWER);
-            Set<Long> savedAnswerIds = savedAnswerPosts.stream().map(SavedPost::getPostId).collect(Collectors.toSet());
+            var savedPostIds = savedPostRepository.findSavedPostIdsByUserIdAndPostType(user.getId(), PostingType.POST);
+            post.setIsSaved(savedPostIds.contains(post.getId()));
+            var savedAnswerIds = savedPostRepository.findSavedPostIdsByUserIdAndPostType(user.getId(), PostingType.ANSWER);
             post.getAnswers().forEach(answer -> answer.setIsSaved(savedAnswerIds.contains(answer.getId())));
         }
         catch (Exception e) {

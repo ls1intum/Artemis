@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -56,13 +57,11 @@ class PostingServiceUnitTest {
 
     private Post testPost;
 
-    private AnswerPost testAnswer1;
-
-    private AnswerPost testAnswer2;
-
     private SavedPost savedPost;
 
     private SavedPost savedAnswer;
+
+    private SavedPost savedAnswer2;
 
     @BeforeEach
     void initTestCase() throws NoSuchMethodException {
@@ -77,10 +76,10 @@ class PostingServiceUnitTest {
         testPost = new Post();
         testPost.setId(2L);
 
-        testAnswer1 = new AnswerPost();
+        AnswerPost testAnswer1 = new AnswerPost();
         testAnswer1.setId(3L);
 
-        testAnswer2 = new AnswerPost();
+        AnswerPost testAnswer2 = new AnswerPost();
         testAnswer2.setId(4L);
 
         Set<AnswerPost> answers = new HashSet<>();
@@ -89,7 +88,11 @@ class PostingServiceUnitTest {
         testPost.setAnswers(answers);
 
         savedPost = new SavedPost();
+        savedPost.setPostId(testPost.getId());
         savedAnswer = new SavedPost();
+        savedAnswer.setPostId(testAnswer1.getId());
+        savedAnswer2 = new SavedPost();
+        savedAnswer2.setPostId(testAnswer2.getId());
 
         when(userRepository.getUser()).thenReturn(testUser);
     }
@@ -217,23 +220,15 @@ class PostingServiceUnitTest {
 
     @Test
     void shouldSetCorrectFlagsWhenPostsAreSaved() {
-        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(
             testUser.getId(),
-            testPost.getId(),
             PostingType.POST
-        )).thenReturn(savedPost);
+        )).thenReturn(List.of(savedPost.getPostId()));
 
-        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(
             testUser.getId(),
-            testAnswer1.getId(),
             PostingType.ANSWER
-        )).thenReturn(savedAnswer);
-
-        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
-            testUser.getId(),
-            testAnswer2.getId(),
-            PostingType.ANSWER
-        )).thenReturn(savedAnswer);
+        )).thenReturn(List.of(savedAnswer.getPostId(), savedAnswer2.getPostId()));
 
         postingService.preparePostForBroadcast(testPost);
 
@@ -245,23 +240,15 @@ class PostingServiceUnitTest {
 
     @Test
     void shouldSetCorrectFlagsWhenPostsAreNotSaved() {
-        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(
             testUser.getId(),
-            testPost.getId(),
             PostingType.POST
-        )).thenReturn(null);
+        )).thenReturn(List.of());
 
-        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
+        when(savedPostRepository.findSavedPostIdsByUserIdAndPostType(
             testUser.getId(),
-            testAnswer1.getId(),
             PostingType.ANSWER
-        )).thenReturn(null);
-
-        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(
-            testUser.getId(),
-            testAnswer2.getId(),
-            PostingType.ANSWER
-        )).thenReturn(null);
+        )).thenReturn(List.of());
 
         postingService.preparePostForBroadcast(testPost);
 

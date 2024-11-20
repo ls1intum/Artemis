@@ -139,7 +139,7 @@ class SavedPostServiceTest {
         SavedPostStatus status = SavedPostStatus.IN_PROGRESS;
         when(savedPostRepository.findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(testUser.getId(), status)).thenReturn(List.of(testSavedPost));
 
-        List<SavedPost> result = savedPostService.getSavedPostsForCurrentUser(status);
+        List<SavedPost> result = savedPostService.getSavedPostsForCurrentUserByStatus(status);
 
         assertThat(result).containsExactly(testSavedPost);
     }
