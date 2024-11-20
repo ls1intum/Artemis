@@ -62,7 +62,7 @@ export class OnlineUnitFormComponent implements OnChanges {
     });
 
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-    isFormValid = computed(() => this.statusChanges() === 'VALID') && this.datePickerComponent()?.isValid();
+    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.datePickerComponent()?.isValid());
 
     get nameControl() {
         return this.form.get('name');
