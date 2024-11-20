@@ -17,8 +17,8 @@ export class CourseOverviewGuardService implements CanActivate {
     private serverDateService = inject(ArtemisServerDateService);
 
     /**
-     * Check if the client can activate a course overview rout route.
-     * @return true if CourseD is enabled for this instance, false otherwise
+     * Check if the client can activate a course overview route.
+     * @return true if the client is allowed to access the route, false otherwise
      */
     canActivate(route: ActivatedRouteSnapshot): Observable<boolean> {
         const courseIdString = route.parent?.paramMap.get('courseId');
