@@ -397,7 +397,7 @@ public class LectureResource {
      */
     @DeleteMapping("lectures/{lectureId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> deleteLecture(@PathVariable Long lectureId, @RequestParam(required = false, defaultValue = "true") boolean displayAlert) {
+    public ResponseEntity<Void> deleteLecture(@PathVariable Long lectureId) {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lectureId);
 
         Course course = lecture.getCourse();
@@ -408,10 +408,6 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture, true);
-
-        if (!displayAlert) {
-            return ResponseEntity.ok().build();
-        }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
     }
 }

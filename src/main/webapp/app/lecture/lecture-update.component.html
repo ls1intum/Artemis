@@ -135,7 +135,7 @@
                 }
                 <div class="d-flex">
                     <div class="flex-grow-1">
-                        <button type="button" id="cancel-save" class="btn btn-secondary" (click)="cancel()">
+                        <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                             <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                         </button>
                         <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnitMode" class="btn btn-primary">
