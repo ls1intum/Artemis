@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild, effect, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
@@ -16,7 +16,7 @@ import { LectureService } from 'app/lecture/lecture.service';
     templateUrl: './lecture-attachments.component.html',
     styleUrls: ['./lecture-attachments.component.scss'],
 })
-export class LectureAttachmentsComponent implements OnInit, OnDestroy {
+export class LectureAttachmentsComponent implements OnDestroy {
     protected readonly faSpinner = faSpinner;
     protected readonly faTimes = faTimes;
     protected readonly faTrash = faTrash;
@@ -28,11 +28,16 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
-    @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
-    @Input() lectureId: number | undefined;
-    @Input() showHeader = true;
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly attachmentService = inject(AttachmentService);
+    private readonly lectureService = inject(LectureService);
+    private readonly fileService = inject(FileService);
 
-    lecture: Lecture;
+    @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
+    lectureId = input.required<number>();
+    showHeader = input<boolean>(true);
+
+    lecture = signal<Lecture>(new Lecture());
     attachments: Attachment[] = [];
     attachmentToBeCreated?: Attachment;
     attachmentBackup?: Attachment;
@@ -46,30 +51,28 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    constructor(
-        protected activatedRoute: ActivatedRoute,
-        private attachmentService: AttachmentService,
-        private lectureService: LectureService,
-        private fileService: FileService,
-    ) {}
-
-    ngOnInit() {
-        this.notificationText = undefined;
-        this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
-            if (this.lectureId) {
-                this.lectureService.findWithDetails(this.lectureId).subscribe((lectureResponse: HttpResponse<Lecture>) => {
-                    this.lecture = lectureResponse.body!;
-                    this.loadAttachments();
+    constructor() {
+        effect(
+            () => {
+                this.notificationText = undefined;
+                this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
+                    if (this.lectureId) {
+                        this.lectureService.findWithDetails(this.lectureId()).subscribe((lectureResponse: HttpResponse<Lecture>) => {
+                            this.lecture.set(lectureResponse.body!);
+                            this.loadAttachments();
+                        });
+                    } else {
+                        this.lecture = lecture;
+                        this.loadAttachments();
+                    }
                 });
-            } else {
-                this.lecture = lecture;
-                this.loadAttachments();
-            }
-        });
+            },
+            { allowSignalWrites: true },
+        );
     }
 
     loadAttachments(): void {
-        this.attachmentService.findAllByLectureId(this.lecture.id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
+        this.attachmentService.findAllByLectureId(this.lecture().id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
             this.attachments = attachmentsResponse.body!;
             this.attachments.forEach((attachment) => {
                 this.viewButtonAvailable[attachment.id!] = this.isViewButtonAvailable(attachment.link!);
@@ -91,7 +94,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
 
     addAttachment(): void {
         const newAttachment = new Attachment();
-        newAttachment.lecture = this.lecture;
+        newAttachment.lecture = this.lecture();
         newAttachment.attachmentType = AttachmentType.FILE;
         newAttachment.version = 0;
         newAttachment.uploadDate = dayjs();
@@ -133,8 +136,8 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
             this.attachmentService.create(this.attachmentToBeCreated!, this.attachmentFile!).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
                     this.attachments.push(attachmentRes.body!);
-                    this.lectureService.findWithDetails(this.lecture.id!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
-                        this.lecture = lectureResponse.body!;
+                    this.lectureService.findWithDetails(this.lecture().id!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
+                        this.lecture.set(lectureResponse.body!);
                     });
                     this.attachmentFile = undefined;
                     this.attachmentToBeCreated = undefined;
