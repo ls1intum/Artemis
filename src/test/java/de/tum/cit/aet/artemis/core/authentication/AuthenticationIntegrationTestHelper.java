@@ -2,9 +2,6 @@ package de.tum.cit.aet.artemis.core.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZonedDateTime;
-import java.util.Date;
-
 import jakarta.servlet.http.Cookie;
 
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
@@ -37,7 +34,7 @@ public class AuthenticationIntegrationTestHelper {
             assertThat(toolClaims).contains(tool.toString());
         }
 
-        var lifetime = tokenProvider.getExpirationDate(token).getTime() - Date.from(ZonedDateTime.now().toInstant()).getTime();
+        var lifetime = tokenProvider.getExpirationDate(token).getTime() - System.currentTimeMillis();
         // assert that the token has a lifetime of less than a day
         assertThat(lifetime).isLessThan(24 * 60 * 60 * 1000);
         assertThat(lifetime).isLessThan(initialLifetime);

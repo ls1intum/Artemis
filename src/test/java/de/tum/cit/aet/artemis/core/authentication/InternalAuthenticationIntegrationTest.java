@@ -10,7 +10,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -260,7 +259,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         Cookie cookie = new Cookie(responseCookie.getName(), responseCookie.getValue());
         cookie.setMaxAge((int) responseCookie.getMaxAge().toMillis());
 
-        var initialLifetime = tokenProvider.getExpirationDate(cookie.getValue()).getTime() - Date.from(ZonedDateTime.now().toInstant()).getTime();
+        var initialLifetime = tokenProvider.getExpirationDate(cookie.getValue()).getTime() - System.currentTimeMillis();
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("tool", ToolTokenType.SCORPIO.toString());

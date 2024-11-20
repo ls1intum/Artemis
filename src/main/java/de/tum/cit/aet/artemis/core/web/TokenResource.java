@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.core.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.Date;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -59,7 +57,7 @@ public class TokenResource {
         }
 
         // get validity of the token
-        long tokenRemainingTime = tokenProvider.getExpirationDate(jwtToken).getTime() - Date.from(ZonedDateTime.now().toInstant()).getTime();
+        long tokenRemainingTime = tokenProvider.getExpirationDate(jwtToken).getTime() - System.currentTimeMillis();
 
         // 1 day validity
         long maxDuration = Duration.ofDays(1).toMillis();
