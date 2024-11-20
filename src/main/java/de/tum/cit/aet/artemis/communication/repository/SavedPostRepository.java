@@ -28,6 +28,8 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
      * Get the amount of saved posts of a user. E.g. for checking if maximum allowed bookmarks are reached.
      * Cached by user id.
      *
+     * @param userId to query for
+     *
      * @return The amount of bookmarks of the user.
      */
     @Cacheable(key = "'saved_post_count_' + #userId")
@@ -36,6 +38,10 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
     /***
      * Get a single saved post by user id, connected post/answer post id and posting type. Not cached.
      *
+     * @param userId   of the bookmark
+     * @param postId   of the bookmark
+     * @param postType of the bookmark
+     *
      * @return The saved post if exists, null otherwise.
      */
     SavedPost findSavedPostByUserIdAndPostIdAndPostType(Long userId, Long postId, PostingType postType);
@@ -43,14 +49,24 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
     /***
      * Query all post ids that a user has saved by a certain posting type. Cached by user id and post type.
      *
+     * @param userId   of the bookmarks
+     * @param postType of the bookmarks
+     *
      * @return List of ids of posts/answer posts of the given user, filtered by the given post type.
      */
-    @Query("SELECT s.postId FROM SavedPost s WHERE s.user.id = :userId AND s.postType = :postType")
+    @Query("""
+                SELECT s.postId
+                FROM SavedPost s
+                WHERE s.user.id = :userId AND s.postType = :postType
+            """)
     @Cacheable(key = "'saved_post_type_' + #postType.getDatabaseKey() + '_' + #userId")
     List<Long> findSavedPostIdsByUserIdAndPostType(@Param("userId") Long userId, @Param("postType") PostingType postType);
 
     /***
      * Query all saved posts of a user by status. E.g. for displaying the saved posts. Cached by user id and status.
+     *
+     * @param userId of the bookmarks
+     * @param status of the bookmarks
      *
      * @return List of saved posts of the given user, filtered by the given status.
      */
@@ -60,12 +76,16 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
     /***
      * Query all SavedPosts for a certain user. Not cached.
      *
+     * @param userId of the bookmarks
+     *
      * @return List of saved posts of the given user.
      */
     List<SavedPost> findSavedPostsByUserId(Long userId);
 
     /***
      * Query to get all SavedPosts that are completed before a certain cutoff date. E.g. for cleanup.
+     *
+     * @param cutoffDate the date from where to query the saved posts
      *
      * @return List of saved posts which were completed before the given date
      */
@@ -79,11 +99,13 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
      * The value "saved_post_status_1" represents in completed, given by the enum {{@link SavedPostStatus}}
      * The value "saved_post_status_2" represents in archived, given by the enum {{@link SavedPostStatus}}
      *
+     * @param savedPost to create / update
+     *
      * @return Newly stored saved post
      */
     @Caching(evict = { @CacheEvict(key = "'saved_post_type_0_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_type_1_' + #savedPost.user.id"),
             @CacheEvict(key = "'saved_post_status_0_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_status_1_' + #savedPost.user.id"),
-            @CacheEvict(key = "'saved_post_status_2_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_count_' + #savedPost.user.id") })
+            @CacheEvict(key = "'saved_post_status_2_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_count_' + #savedPost.user.id"), })
     @Override
     <S extends SavedPost> S save(S savedPost);
 
@@ -94,10 +116,12 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
      * The value "saved_post_status_0" represents in progress, given by the enum {{@link SavedPostStatus}}
      * The value "saved_post_status_1" represents in completed, given by the enum {{@link SavedPostStatus}}
      * The value "saved_post_status_2" represents in archived, given by the enum {{@link SavedPostStatus}}
+     *
+     * @param savedPost to delete
      */
     @Caching(evict = { @CacheEvict(key = "'saved_post_type_0_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_type_1_' + #savedPost.user.id"),
             @CacheEvict(key = "'saved_post_status_0_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_status_1_' + #savedPost.user.id"),
-            @CacheEvict(key = "'saved_post_status_2_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_count_' + #savedPost.user.id") })
+            @CacheEvict(key = "'saved_post_status_2_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_count_' + #savedPost.user.id"), })
     @Override
     void delete(SavedPost savedPost);
 
