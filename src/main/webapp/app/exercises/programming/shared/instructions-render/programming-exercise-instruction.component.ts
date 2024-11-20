@@ -11,6 +11,7 @@ import {
     ViewChild,
     ViewContainerRef,
     createComponent,
+    inject,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/theme.service';
@@ -39,6 +40,7 @@ import diff from 'html-diff-ts';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -46,6 +48,8 @@ import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises
     styleUrls: ['./programming-exercise-instruction.scss'],
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
+    private themeService = inject(ThemeService);
+
     @Input() public exercise: ProgrammingExercise;
     @Input() public participation: Participation;
     @Input() generateHtmlEvents: Observable<void>;
@@ -84,8 +88,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private injectableContentFoundSubscription: Subscription;
     private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;
-    private themeChangeSubscription: Subscription;
     private testCases?: ProgrammingExerciseTestCase[];
+    private themeChangeSubscription = toObservable(this.themeService.currentTheme).subscribe(() => {
+        if (!this.isInitial) {
+            this.updateMarkdown();
+        }
+    });
 
     // Icons
     faSpinner = faSpinner;
@@ -98,16 +106,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseGradingService: ProgrammingExerciseGradingService,
-        themeService: ThemeService,
         private sanitizer: DomSanitizer,
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
         private appRef: ApplicationRef,
         private injector: EnvironmentInjector,
     ) {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
-        this.themeChangeSubscription = themeService.getCurrentThemeObservable().subscribe(() => {
-            this.updateMarkdown();
-        });
     }
 
     /**

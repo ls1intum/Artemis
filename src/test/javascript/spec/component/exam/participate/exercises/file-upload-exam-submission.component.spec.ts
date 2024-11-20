@@ -6,7 +6,7 @@ import { Course } from 'app/entities/course.model';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -22,6 +22,7 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
 
 describe('FileUploadExamSubmissionComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSubmissionComponent>;
@@ -52,10 +53,11 @@ describe('FileUploadExamSubmissionComponent', () => {
                 FileUploadExamSubmissionComponent,
                 FullscreenComponent,
                 ResizeableContainerComponent,
-                TranslatePipeMock,
                 MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),
+                TranslatePipeMock,
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [MockProvider(ChangeDetectorRef), { provide: TranslateService, useClass: MockTranslateService }],
         })
@@ -78,6 +80,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
 
         it('should show static text in header', () => {
+            comp.examTimeline = false;
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent === 'artemisApp.exam.yourSolution');
             expect(el).not.toBeNull();
@@ -87,8 +90,12 @@ describe('FileUploadExamSubmissionComponent', () => {
             const maxScore = 30;
             comp.exercise.maxPoints = maxScore;
             fixture.detectChanges();
-            const el = fixture.debugElement.query((de) => de.nativeElement.textContent.includes(`(${maxScore} artemisApp.examParticipation.points)`));
+            const el = fixture.debugElement.query(By.directive(TranslateDirective));
             expect(el).not.toBeNull();
+
+            const directiveInstance = el.injector.get(TranslateDirective);
+            expect(directiveInstance.jhiTranslate).toBe('artemisApp.examParticipation.points');
+            expect(directiveInstance.translateValues).toEqual({ points: maxScore, bonusPoints: 0 });
         });
 
         it('should show exercise bonus score if any', () => {
@@ -97,11 +104,14 @@ describe('FileUploadExamSubmissionComponent', () => {
             const bonusPoints = 55;
             comp.exercise.bonusPoints = bonusPoints;
             fixture.detectChanges();
-            const el = fixture.debugElement.query((de) =>
-                de.nativeElement.textContent.includes(`(${maxScore} artemisApp.examParticipation.points, ${bonusPoints} artemisApp.examParticipation.bonus)`),
-            );
+            const el = fixture.debugElement.query(By.directive(TranslateDirective));
             expect(el).not.toBeNull();
+
+            const directiveInstance = el.injector.get(TranslateDirective);
+            expect(directiveInstance.jhiTranslate).toBe('artemisApp.examParticipation.bonus');
+            expect(directiveInstance.translateValues).toEqual({ points: maxScore, bonusPoints: bonusPoints });
         });
+
         it('should show problem statement if there is any', () => {
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent === mockExercise.problemStatement);
