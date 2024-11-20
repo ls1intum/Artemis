@@ -36,7 +36,7 @@ import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionPatch } from 'app/entities/submission-patch.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { catchError, switchMap, tap } from 'rxjs/operators';
+import { catchError, skip, switchMap, tap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { of } from 'rxjs';
 
@@ -402,24 +402,27 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (!this.participation || !this.participation.id) {
             return;
         }
-        this.resultUpdateListener = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id, true).subscribe((newResult: Result) => {
-            if (newResult) {
-                if (newResult.completionDate) {
-                    this.assessmentResult = newResult;
-                    this.assessmentResult = this.modelingAssessmentService.convertResult(newResult);
-                    this.prepareAssessmentData();
+        this.resultUpdateListener = this.participationWebsocketService
+            .subscribeForLatestResultOfParticipation(this.participation.id, true)
+            .pipe(skip(1))
+            .subscribe((newResult: Result) => {
+                if (newResult) {
+                    if (newResult.completionDate) {
+                        this.assessmentResult = newResult;
+                        this.assessmentResult = this.modelingAssessmentService.convertResult(newResult);
+                        this.prepareAssessmentData();
 
-                    if (this.assessmentResult.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
-                        this.alertService.info('artemisApp.modelingEditor.newAssessment');
-                    } else if (newResult.successful === true) {
-                        this.alertService.info('artemisApp.exercise.athenaFeedbackSuccessful');
+                        if (this.assessmentResult.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
+                            this.alertService.info('artemisApp.modelingEditor.newAssessment');
+                        } else if (newResult.successful === true) {
+                            this.alertService.info('artemisApp.exercise.athenaFeedbackSuccessful');
+                        }
+                    } else if (newResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA && newResult.successful === false) {
+                        this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     }
-                } else if (newResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA && newResult.successful === false) {
-                    this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
+                    this.isGeneratingFeedback = false;
                 }
-                this.isGeneratingFeedback = false;
-            }
-        });
+            });
     }
 
     /**
