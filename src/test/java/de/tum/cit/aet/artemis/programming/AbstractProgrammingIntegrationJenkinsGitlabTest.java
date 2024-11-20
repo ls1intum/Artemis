@@ -8,6 +8,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
@@ -206,4 +207,7 @@ public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends Ab
 
     @Autowired
     protected UserUtilService userUtilService;
+
+    @Autowired
+    protected LearnerProfileUtilService learnerProfileUtilService;
 }
