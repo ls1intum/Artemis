@@ -83,7 +83,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1337");
 
-        userUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
+        learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
 
         course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).getFirst();
         competencies = competencyUtilService.createCompetencies(course, 5);
