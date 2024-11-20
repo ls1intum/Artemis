@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, of } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -57,7 +57,7 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { mergeMap, tap } from 'rxjs/operators';
+import { filter, mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 @Component({
@@ -67,15 +67,32 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
     encapsulation: ViewEncapsulation.None,
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
-    readonly dayjs = dayjs;
-    readonly ActionType = ActionType;
-    readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
-    readonly FeatureToggle = FeatureToggle;
-    readonly ProgrammingLanguage = ProgrammingLanguage;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly ButtonSize = ButtonSize;
-    readonly AssessmentType = AssessmentType;
-    readonly documentationType: DocumentationType = 'Programming';
+    protected readonly dayjs = dayjs;
+    protected readonly ActionType = ActionType;
+    protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly AssessmentType = AssessmentType;
+    protected readonly documentationType: DocumentationType = 'Programming';
+
+    protected readonly faUndo = faUndo;
+    protected readonly faTrash = faTrash;
+    protected readonly faBook = faBook;
+    protected readonly faWrench = faWrench;
+    protected readonly faCheckDouble = faCheckDouble;
+    protected readonly faTable = faTable;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faFileSignature = faFileSignature;
+    protected readonly faListAlt = faListAlt;
+    protected readonly faChartBar = faChartBar;
+    protected readonly faLightbulb = faLightbulb;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faUsers = faUsers;
+    protected readonly faEye = faEye;
+    protected readonly faUserCheck = faUserCheck;
+    protected readonly faRobot = faRobot;
 
     programmingExercise: ProgrammingExercise;
     programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
@@ -108,34 +125,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private activatedRouteSubscription: Subscription;
     private templateAndSolutionParticipationSubscription: Subscription;
-    private profileInfoSubscription: Subscription;
     private irisSettingsSubscription: Subscription;
-    private submissionPolicySubscription: Subscription;
-    private buildLogsSubscription: Subscription;
     private exerciseStatisticsSubscription: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     exerciseDetailSections: DetailOverviewSection[];
-
-    // Icons
-    faUndo = faUndo;
-    faTrash = faTrash;
-    faBook = faBook;
-    faWrench = faWrench;
-    faCheckDouble = faCheckDouble;
-    faTable = faTable;
-    faExclamationTriangle = faExclamationTriangle;
-    faFileSignature = faFileSignature;
-    faListAlt = faListAlt;
-    faChartBar = faChartBar;
-    faLightbulb = faLightbulb;
-    faPencilAlt = faPencilAlt;
-    faUsers = faUsers;
-    faEye = faEye;
-    faUserCheck = faUserCheck;
-    faRobot = faRobot;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -231,6 +227,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     tap((gitDiffReport) => {
                         this.processGitDiffReport(gitDiffReport);
                     }),
+                    mergeMap(() =>
+                        of(this.programmingExercise).pipe(
+                            filter((exercise) => !!exercise.isAtLeastEditor),
+                            mergeMap(() => this.programmingExerciseService.getBuildLogStatistics(exerciseId)),
+                        ),
+                    ),
                 )
                 .subscribe({
                     next: () => {
@@ -251,13 +253,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
-
-            if (this.programmingExercise.isAtLeastEditor) {
-                this.buildLogsSubscription = this.programmingExerciseService
-                    .getBuildLogStatistics(exerciseId!)
-                    .subscribe((buildLogStatistics) => (this.programmingExercise.buildLogStatistics = buildLogStatistics));
-                this.exerciseDetailSections = this.getExerciseDetails();
-            }
         });
     }
 
@@ -265,10 +260,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
         this.activatedRouteSubscription?.unsubscribe();
         this.templateAndSolutionParticipationSubscription?.unsubscribe();
-        this.profileInfoSubscription?.unsubscribe();
         this.irisSettingsSubscription?.unsubscribe();
-        this.submissionPolicySubscription?.unsubscribe();
-        this.buildLogsSubscription?.unsubscribe();
         this.exerciseStatisticsSubscription?.unsubscribe();
     }
 
