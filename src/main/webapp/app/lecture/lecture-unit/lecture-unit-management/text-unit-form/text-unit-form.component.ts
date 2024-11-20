@@ -49,7 +49,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     });
 
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-    isFormValid = computed(() => this.statusChanges() === 'VALID') && this.datePickerComponent()?.isValid();
+    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.datePickerComponent()?.isValid());
 
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;
