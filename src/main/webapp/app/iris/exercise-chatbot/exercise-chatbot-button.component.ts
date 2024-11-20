@@ -132,8 +132,8 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
      * Checks if the chat bubble is overflowing and sets isOverflowing to true if it is.
      */
     public checkOverflow() {
-        const element = this.chatBubble.nativeElement;
-        this.isOverflowing = element.scrollHeight > element.clientHeight;
+        const element = this.chatBubble?.nativeElement;
+        this.isOverflowing = !!element && element.scrollHeight > element.clientHeight;
     }
 
     /**
