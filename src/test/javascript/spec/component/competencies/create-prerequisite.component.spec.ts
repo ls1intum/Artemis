@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -111,12 +110,11 @@ describe('CreatePrerequisite', () => {
         const router: Router = TestBed.inject(Router);
         const prerequisiteService = TestBed.inject(PrerequisiteService);
 
-        const textUnit: TextUnit = new TextUnit();
-        textUnit.id = 1;
         const formData: CourseCompetencyFormData = {
             title: 'Test',
             description: 'Lorem Ipsum',
             optional: true,
+            masteryThreshold: 100,
         };
 
         const response: HttpResponse<Prerequisite> = new HttpResponse({
