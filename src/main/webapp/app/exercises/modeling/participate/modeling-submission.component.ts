@@ -406,12 +406,19 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return;
         }
         this.resultUpdateListener = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id, true).subscribe((newResult: Result) => {
-            if (newResult && newResult.completionDate) {
-                this.assessmentResult = newResult;
-                this.assessmentResult = this.modelingAssessmentService.convertResult(newResult);
-                this.prepareAssessmentData();
-                if (this.assessmentResult.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
-                    this.alertService.info('artemisApp.modelingEditor.newAssessment');
+            if (newResult) {
+                if (newResult.completionDate) {
+                    this.assessmentResult = newResult;
+                    this.assessmentResult = this.modelingAssessmentService.convertResult(newResult);
+                    this.prepareAssessmentData();
+
+                    if (this.assessmentResult.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
+                        this.alertService.info('artemisApp.modelingEditor.newAssessment');
+                    } else if (newResult.successful === true) {
+                        this.alertService.error('artemisApp.exercise.athenaFeedbackSuccessful');
+                    }
+                } else if (newResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA && newResult.successful === false) {
+                    this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                 }
                 this.isGeneratingFeedback = false;
             }
