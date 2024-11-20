@@ -57,7 +57,7 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { filter, mergeMap, tap } from 'rxjs/operators';
+import { filter, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 @Component({
@@ -189,7 +189,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.loadingTemplateParticipationResults = false;
                         this.loadingSolutionParticipationResults = false;
                     }),
-                    mergeMap(() => this.profileService.getProfileInfo()),
+                    switchMap(() => this.profileService.getProfileInfo()),
                     tap(async (profileInfo) => {
                         if (profileInfo) {
                             if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId) {
@@ -219,18 +219,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             }
                         }
                     }),
-                    mergeMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!)),
+                    switchMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!)),
                     tap((submissionPolicy) => {
                         this.programmingExercise.submissionPolicy = submissionPolicy;
                     }),
-                    mergeMap(() => this.programmingExerciseService.getDiffReport(this.programmingExercise.id!)),
+                    switchMap(() => this.programmingExerciseService.getDiffReport(this.programmingExercise.id!)),
                     tap((gitDiffReport) => {
                         this.processGitDiffReport(gitDiffReport);
                     }),
-                    mergeMap(() =>
+                    switchMap(() =>
                         of(this.programmingExercise).pipe(
                             filter((exercise) => !!exercise.isAtLeastEditor),
-                            mergeMap(() => this.programmingExerciseService.getBuildLogStatistics(exerciseId)),
+                            switchMap(() => this.programmingExerciseService.getBuildLogStatistics(exerciseId)),
                         ),
                     ),
                 )
@@ -242,7 +242,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             programmingExercise.programmingLanguage,
                         ).plagiarismCheckSupported;
 
-                        /** we make sure to await the results of the subscriptions (mergeMap) to only call {@link getExerciseDetails} once */
+                        /** we make sure to await the results of the subscriptions (switchMap) to only call {@link getExerciseDetails} once */
                         this.exerciseDetailSections = this.getExerciseDetails();
                     },
                     error: (error) => {
