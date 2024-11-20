@@ -17,14 +17,13 @@ describe('AttachmentUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip), FormDateTimePickerComponent],
+            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 AttachmentUnitFormComponent,
+                FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencySelectionComponent),
-                MockModule(OwlDateTimeModule),
-                MockModule(OwlNativeDateTimeModule),
             ],
             schemas: [],
         })

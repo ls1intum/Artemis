@@ -19,14 +19,13 @@ describe('VideoUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, FormDateTimePickerComponent, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 VideoUnitFormComponent,
+                FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencySelectionComponent),
-                MockModule(OwlDateTimeModule),
-                MockModule(OwlNativeDateTimeModule),
             ],
             providers: [],
             schemas: [],

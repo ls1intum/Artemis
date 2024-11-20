@@ -46,14 +46,13 @@ describe('TextUnitFormComponent', () => {
         });
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, FormDateTimePickerComponent, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 TextUnitFormComponent,
                 MarkdownEditorStubComponent,
+                FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CompetencySelectionComponent),
-                MockModule(OwlDateTimeModule),
-                MockModule(OwlNativeDateTimeModule),
             ],
             providers: [MockProvider(TranslateService), { provide: Router, useClass: MockRouter }],
             schemas: [],

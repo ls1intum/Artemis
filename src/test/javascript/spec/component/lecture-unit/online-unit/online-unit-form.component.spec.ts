@@ -21,14 +21,13 @@ describe('OnlineUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, FormDateTimePickerComponent, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 OnlineUnitFormComponent,
+                FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencySelectionComponent),
-                MockModule(OwlDateTimeModule),
-                MockModule(OwlNativeDateTimeModule),
             ],
             providers: [MockProvider(OnlineUnitService)],
         })
