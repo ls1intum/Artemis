@@ -702,7 +702,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractProgrammingIntegrationJ
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddStudentOrTutorOrInstructorToCourse() throws Exception {
-        userUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
+        learnerProfileUtilService.createLearnerProfilesForUsers(TEST_PREFIX);
         courseTestService.testAddStudentOrTutorOrEditorOrInstructorToCourse();
     }
 

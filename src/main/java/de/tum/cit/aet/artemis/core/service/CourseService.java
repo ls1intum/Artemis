@@ -1070,9 +1070,6 @@ public class CourseService {
      */
     public void removeUserFromGroup(User user, String group, Course course) {
         userService.removeUserFromGroup(user, group);
-        if (group.equals(course.getStudentGroupName())) {
-            courseLearnerProfileService.deleteCourseLearnerProfile(course, user);
-        }
     }
 
     /**
