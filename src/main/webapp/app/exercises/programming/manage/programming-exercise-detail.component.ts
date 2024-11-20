@@ -57,7 +57,7 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { switchMap, tap } from 'rxjs/operators';
+import { mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 
@@ -190,7 +190,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.loadingTemplateParticipationResults = false;
                         this.loadingSolutionParticipationResults = false;
                     }),
-                    switchMap(() => this.profileService.getProfileInfo()),
+                    mergeMap(() => this.profileService.getProfileInfo()),
                     tap(async (profileInfo) => {
                         if (profileInfo) {
                             if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId) {
@@ -220,15 +220,15 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             }
                         }
                     }),
-                    switchMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId)),
+                    mergeMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId)),
                     tap((submissionPolicy) => {
                         this.programmingExercise.submissionPolicy = submissionPolicy;
                     }),
-                    switchMap(() => this.programmingExerciseService.getDiffReport(exerciseId)),
+                    mergeMap(() => this.programmingExerciseService.getDiffReport(exerciseId)),
                     tap((gitDiffReport) => {
                         this.processGitDiffReport(gitDiffReport);
                     }),
-                    switchMap(() =>
+                    mergeMap(() =>
                         this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : of([] as BuildLogStatisticsDTO),
                     ),
                     tap((buildLogStatistics) => {
