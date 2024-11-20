@@ -5,10 +5,11 @@ import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('AttachmentUnitFormComponent', () => {
     let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentUnitFormComponent>;
@@ -16,13 +17,14 @@ describe('AttachmentUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip)],
+            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip), FormDateTimePickerComponent],
             declarations: [
                 AttachmentUnitFormComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FormDateTimePickerComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencySelectionComponent),
+                MockModule(OwlDateTimeModule),
+                MockModule(OwlNativeDateTimeModule),
             ],
             schemas: [],
         })
