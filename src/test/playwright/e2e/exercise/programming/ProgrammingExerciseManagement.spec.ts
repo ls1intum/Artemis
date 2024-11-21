@@ -7,7 +7,7 @@ import { generateUUID } from '../../../support/utils';
 import { expect } from '@playwright/test';
 import { Exercise, ExerciseMode } from '../../../support/constants';
 
-test.describe('Programming Exercise Management', () => {
+test.describe('Programming Exercise Management', { tag: '@slow' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {

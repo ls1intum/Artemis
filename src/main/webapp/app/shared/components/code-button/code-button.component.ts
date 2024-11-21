@@ -99,7 +99,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         this.copyEnabled = true;
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
         this.useToken = this.localStorage.retrieve('useToken') || false;
-        this.loadParticipationVcsAccessTokens();
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -131,6 +130,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             if (this.useToken) {
                 this.useHttpsUrlWithToken();
             }
+            this.loadParticipationVcsAccessTokens();
 
             this.initTheia(profileInfo);
         });
@@ -168,7 +168,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     public useHttpsUrlWithToken() {
         this.useSsh = false;
         this.useToken = true;
-        this.copyEnabled = !!(this.accessTokensEnabled && this.useToken && ((!!this.user.vcsAccessToken && !this.isTokenExpired()) || this.useParticipationVcsAccessToken));
+        this.copyEnabled = !!(this.accessTokensEnabled && ((!!this.user.vcsAccessToken && !this.isTokenExpired()) || this.useParticipationVcsAccessToken));
         this.refreshTokenState();
         this.storeToLocalStorage();
     }
@@ -242,6 +242,9 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 if (error.status == 404) {
                     this.createNewVcsAccessToken(participation);
                 }
+                if (error.status == 403) {
+                    this.useParticipationVcsAccessToken = false;
+                }
             },
         });
     }
@@ -259,7 +262,11 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                     }
                 }
             },
-            error: () => {},
+            error: (error: HttpErrorResponse) => {
+                if (error.status == 403) {
+                    this.useParticipationVcsAccessToken = false;
+                }
+            },
         });
     }
 
