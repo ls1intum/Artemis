@@ -2,12 +2,15 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -488,6 +491,35 @@ public class BuildLogEntryService {
         // Check parent folder for backwards compatibility
         logPath = buildLogsPath.resolve(buildJobId + ".log");
         return Files.exists(logPath);
+    }
+
+    public List<BuildLogEntry> parseBuildLogEntries(FileSystemResource buildLog) {
+        try {
+            List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(buildLog.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] parts = line.split("\t", 2);
+                    if (parts.length == 2) {
+                        try {
+                            ZonedDateTime time = ZonedDateTime.parse(parts[0]);
+                            buildLogEntries.add(new BuildLogEntry(time, parts[1]));
+                        }
+                        catch (DateTimeParseException e) {
+                            log.warn("Failed to parse build log entry time: {}", parts[0]);
+                        }
+                    }
+                    else if (parts.length == 1 && !parts[0].isBlank()) {
+                        buildLogEntries.add(new BuildLogEntry(null, parts[0]));
+                    }
+                }
+            }
+            return buildLogEntries;
+        }
+        catch (IOException e) {
+            log.error("Error occurred while trying to parse build log entries", e);
+            return new ArrayList<>();
+        }
     }
 
 }

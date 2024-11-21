@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.programming.web.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 @Profile(PROFILE_LOCALCI)
@@ -51,5 +54,20 @@ public class BuildLogResource {
         responseHeaders.setContentType(MediaType.TEXT_PLAIN);
         responseHeaders.setContentDispositionFormData("attachment", "build-" + buildJobId + ".log");
         return new ResponseEntity<>(buildLog, responseHeaders, HttpStatus.OK);
+    }
+
+    @GetMapping("build-log/{buildJobId}/entries")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<BuildLogEntry>> getBuildLogEntriesForBuildJob(@PathVariable String buildJobId) {
+        FileSystemResource buildLog = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJobId);
+        if (buildLog == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var buildLogEntries = buildLogEntryService.parseBuildLogEntries(buildLog);
+        if (buildLogEntries == null || buildLogEntries.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(buildLogEntries);
     }
 }

@@ -7,6 +7,7 @@ import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/en
 import { createNestedRequestOption } from 'app/shared/util/request.util';
 import { HttpResponse } from '@angular/common/http';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';
+import { BuildLogEntry } from 'app/entities/programming/build-log.model';
 
 @Injectable({ providedIn: 'root' })
 export class BuildQueueService {
@@ -185,6 +186,18 @@ export class BuildQueueService {
         return this.http.get<BuildJobStatistics>(`${this.resourceUrl}/courses/${courseId}/build-job-statistics`, { params: { span } }).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to get build job statistics for course ${courseId}\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
+     * Get all build jobs of a course in the queue
+     * @param buildJobId
+     */
+    getBuildJobLogs(buildJobId: string): Observable<BuildLogEntry[]> {
+        return this.http.get<BuildLogEntry[]>(`${this.resourceUrl}/build-log/${buildJobId}/entries`).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to get build logs for build job ${buildJobId}\n${err.message}`));
             }),
         );
     }
