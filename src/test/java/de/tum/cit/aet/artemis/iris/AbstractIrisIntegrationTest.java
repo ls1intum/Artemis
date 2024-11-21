@@ -80,7 +80,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
         // Enable proactive events for chat settings
         if (settings instanceof IrisChatSubSettings chatSettings) {
-            chatSettings.setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.toString(), IrisEventType.BUILD_FAILED.toString())));
+            chatSettings.setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.getName(), IrisEventType.BUILD_FAILED.getName())));
         }
     }
 

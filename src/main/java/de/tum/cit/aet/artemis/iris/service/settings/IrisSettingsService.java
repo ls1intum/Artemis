@@ -121,7 +121,7 @@ public class IrisSettingsService {
             settings.setAllowedVariants(new TreeSet<>(Set.of("default")));
             settings.setSelectedVariant("default");
             if (settings instanceof IrisChatSubSettings chatSettings) {
-                chatSettings.setEnabledForCategories(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.toString(), IrisEventType.PROGRESS_STALLED.toString())));
+                chatSettings.setEnabledForCategories(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.getName(), IrisEventType.PROGRESS_STALLED.getName())));
             }
         }
         return settings;
@@ -649,7 +649,7 @@ public class IrisSettingsService {
         settings.setCourse(course);
         settings.setIrisLectureIngestionSettings(new IrisLectureIngestionSubSettings());
         settings.setIrisChatSettings(new IrisChatSubSettings());
-        settings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.toString(), IrisEventType.PROGRESS_STALLED.toString())));
+        settings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.getName(), IrisEventType.PROGRESS_STALLED.getName())));
         settings.setIrisCompetencyGenerationSettings(new IrisCompetencyGenerationSubSettings());
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
 
@@ -667,7 +667,7 @@ public class IrisSettingsService {
         var settings = new IrisExerciseSettings();
         settings.setExercise(exercise);
         settings.setIrisChatSettings(new IrisChatSubSettings());
-        settings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.toString(), IrisEventType.PROGRESS_STALLED.toString())));
+        settings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.getName(), IrisEventType.PROGRESS_STALLED.getName())));
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
 
         return settings;
@@ -744,7 +744,7 @@ public class IrisSettingsService {
         return switch (type) {
             case PROGRESS_STALLED -> {
                 if (settings.irisChatSettings().enabledProactiveEvents() != null) {
-                    yield settings.irisChatSettings().enabledProactiveEvents().contains(IrisEventType.PROGRESS_STALLED.toString());
+                    yield settings.irisChatSettings().enabledProactiveEvents().contains(IrisEventType.PROGRESS_STALLED.getName());
                 }
                 else {
                     yield false;
@@ -752,7 +752,7 @@ public class IrisSettingsService {
             }
             case BUILD_FAILED -> {
                 if (settings.irisChatSettings().enabledProactiveEvents() != null) {
-                    yield settings.irisChatSettings().enabledProactiveEvents().contains(IrisEventType.BUILD_FAILED.toString());
+                    yield settings.irisChatSettings().enabledProactiveEvents().contains(IrisEventType.BUILD_FAILED.getName());
                 }
                 else {
                     yield false;

@@ -421,7 +421,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         courseSettings.setIrisChatSettings(new IrisChatSubSettings());
         courseSettings.getIrisChatSettings().setEnabled(true);
         courseSettings.getIrisChatSettings().setSelectedVariant(null);
-        courseSettings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.toString())));
+        courseSettings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.getName())));
 
         request.putWithResponseBody("/api/courses/" + course.getId() + "/raw-iris-settings", courseSettings, IrisSettings.class, HttpStatus.OK);
         var loadedCourseSettings = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
@@ -433,7 +433,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         exerciseSettings.setIrisChatSettings(new IrisChatSubSettings());
         exerciseSettings.getIrisChatSettings().setEnabled(true);
         exerciseSettings.getIrisChatSettings().setSelectedVariant(null);
-        exerciseSettings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.toString(), IrisEventType.BUILD_FAILED.toString())));
+        exerciseSettings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.getName(), IrisEventType.BUILD_FAILED.getName())));
 
         request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/raw-iris-settings", exerciseSettings, IrisSettings.class, HttpStatus.OK);
         var loadedExerciseSettings = request.get("/api/exercises/" + programmingExercise.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);

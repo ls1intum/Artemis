@@ -4,25 +4,16 @@ package de.tum.cit.aet.artemis.iris.domain.settings.event;
  * The type of event that can be triggered by the Iris system.
  */
 public enum IrisEventType {
-    BUILD_FAILED {
 
-        @Override
-        public String toString() {
-            return "build_failed";
-        }
-    },
-    PROGRESS_STALLED {
+    BUILD_FAILED("build_failed"), PROGRESS_STALLED("progress_stalled"), JOL("jol");
 
-        @Override
-        public String toString() {
-            return "progress_stalled";
-        }
-    },
-    JOL {
+    private final String name;
 
-        @Override
-        public String toString() {
-            return "jol";
-        }
-    },
+    IrisEventType(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
 }
