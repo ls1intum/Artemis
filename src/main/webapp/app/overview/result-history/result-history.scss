@@ -19,10 +19,6 @@ $result-icon-size: 25px;
                 height: $result-icon-size;
                 border-radius: $result-icon-size;
                 background-color: transparent;
-
-                &.selected-icon fa-icon {
-                    color: royalblue;
-                }
             }
 
             .result-score-info {

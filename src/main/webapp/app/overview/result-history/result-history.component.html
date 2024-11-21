@@ -9,7 +9,7 @@
                     class="result-score-icon"
                     [ngClass]="
                         result.id === selectedResultId
-                            ? 'selected-icon'
+                            ? 'text-primary'
                             : getTextColorClass(result, evaluateTemplateStatus(exercise, result.participation, result, false, MissingResultInfo.NONE))
                     "
                 >
