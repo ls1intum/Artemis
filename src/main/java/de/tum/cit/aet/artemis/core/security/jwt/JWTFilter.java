@@ -24,6 +24,10 @@ public class JWTFilter extends GenericFilterBean {
 
     public static final String JWT_COOKIE_NAME = "jwt";
 
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+
+    private static final String BEARER_PREFIX = "Bearer ";
+
     private final TokenProvider tokenProvider;
 
     public JWTFilter(TokenProvider tokenProvider) {
@@ -60,7 +64,7 @@ public class JWTFilter extends GenericFilterBean {
      */
     public static @Nullable String extractValidJwt(HttpServletRequest httpServletRequest, TokenProvider tokenProvider) {
         var cookie = WebUtils.getCookie(httpServletRequest, JWT_COOKIE_NAME);
-        var authHeader = httpServletRequest.getHeader("Authorization");
+        var authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
 
         if (cookie == null && authHeader == null) {
             return null;
@@ -68,7 +72,7 @@ public class JWTFilter extends GenericFilterBean {
 
         if (cookie != null && authHeader != null) {
             // Single Method Enforcement: Only one method of authentication is allowed
-            throw new IllegalArgumentException("Only one method of authentication is allowed");
+            throw new IllegalArgumentException("Multiple authentication methods detected: Both JWT cookie and Bearer token are present");
         }
 
         String jwtToken = cookie != null ? getJwtFromCookie(cookie) : getJwtFromBearer(authHeader);
@@ -100,11 +104,12 @@ public class JWTFilter extends GenericFilterBean {
      * @return the jwt or null if not found
      */
     private static @Nullable String getJwtFromBearer(@Nullable String jwtBearer) {
-        if (!StringUtils.hasText(jwtBearer) || !jwtBearer.startsWith("Bearer ")) {
+        if (!StringUtils.hasText(jwtBearer) || !jwtBearer.startsWith(BEARER_PREFIX)) {
             return null;
         }
 
-        return jwtBearer.substring(7).trim();
+        String token = jwtBearer.substring(BEARER_PREFIX.length()).trim();
+        return StringUtils.hasText(token) ? token : null;
     }
 
     /**
