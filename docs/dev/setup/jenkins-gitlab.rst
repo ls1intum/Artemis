@@ -890,7 +890,8 @@ and the corresponding Docker image can be found on
 
    .. code:: bash
 
-        docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d
+        docker compose -f docker/<Jenkins setup to be launched>.yml build --no-cache
+        docker compose -f docker/<Jenkins setup to be launched>.yml up -d
 
 3. Build the new Docker image:
 
