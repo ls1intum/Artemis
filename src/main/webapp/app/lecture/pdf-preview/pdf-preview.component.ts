@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { Attachment } from 'app/entities/attachment.model';
@@ -47,6 +47,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
     initialHiddenPages = signal<Set<number>>(new Set());
     hiddenPages = signal<Set<number>>(new Set());
+    areHiddenPagesChanged = signal<boolean>(false);
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
@@ -103,6 +104,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.attachmentUnitSub?.unsubscribe();
     }
 
+    constructor() {
+        effect(
+            () => {
+                this.hiddenPagesChanged();
+            },
+            { allowSignalWrites: true },
+        );
+    }
+
     /**
      * Triggers the file input to select files.
      */
@@ -122,6 +132,20 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 return match ? parseInt(match[1], 10) : null;
             })
             .filter((id) => id !== null);
+    }
+
+    /**
+     * Checks if there has been any change between the current set of hidden pages and the new set of hidden pages.
+     *
+     * @returns Returns true if the sets differ in size or if any element in `newHiddenPages` is not found in `hiddenPages`, otherwise false.
+     */
+    hiddenPagesChanged() {
+        if (this.initialHiddenPages()!.size !== this.hiddenPages()!.size) return true;
+
+        for (const elem of this.initialHiddenPages()!) {
+            if (!this.hiddenPages()!.has(elem)) return true;
+        }
+        return false;
     }
 
     /**
