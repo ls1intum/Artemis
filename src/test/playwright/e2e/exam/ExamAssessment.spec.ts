@@ -53,12 +53,13 @@ test.beforeAll('Create course', async ({ browser }) => {
     studentOneName = (await users.getUserInfo(studentOne.username, page)).name!;
 });
 
-test.describe('Exam assessment', { tag: '@slow' }, () => {
+test.describe('Exam assessment', () => {
+    test.describe.configure({ mode: 'serial' });
     let programmingAssessmentSuccessful = false;
     let modelingAssessmentSuccessful = false;
     let textAssessmentSuccessful = false;
 
-    test.describe.serial('Programming exercise assessment', () => {
+    test.describe.serial('Programming exercise assessment', { tag: '@sequential' }, () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
             examEnd = dayjs().add(2, 'minutes');
             const page = await newBrowserPage(browser);
@@ -85,7 +86,7 @@ test.describe('Exam assessment', { tag: '@slow' }, () => {
         });
     });
 
-    test.describe.serial('Modeling exercise assessment', () => {
+    test.describe.serial('Modeling exercise assessment', { tag: '@slow' }, () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
             examEnd = dayjs().add(45, 'seconds');
             const page = await newBrowserPage(browser);
@@ -126,7 +127,7 @@ test.describe('Exam assessment', { tag: '@slow' }, () => {
         });
     });
 
-    test.describe.serial('Text exercise assessment', () => {
+    test.describe.serial('Text exercise assessment', { tag: '@slow' }, () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
             examEnd = dayjs().add(40, 'seconds');
             const page = await newBrowserPage(browser);
@@ -153,7 +154,7 @@ test.describe('Exam assessment', { tag: '@slow' }, () => {
         });
     });
 
-    test.describe('Quiz exercise assessment', () => {
+    test.describe('Quiz exercise assessment', { tag: '@slow' }, () => {
         let resultDate: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
@@ -183,7 +184,7 @@ test.describe('Exam assessment', { tag: '@slow' }, () => {
     });
 });
 
-test.describe('Exam grading', () => {
+test.describe('Exam grading', { tag: '@fast' }, () => {
     test.describe.serial('Instructor sets grades and student receives a grade', () => {
         let exam: Exam;
 
@@ -222,7 +223,7 @@ test.describe('Exam grading', () => {
     });
 });
 
-test.describe('Exam statistics', { tag: '@slow' }, () => {
+test.describe('Exam statistics', { tag: '@sequential' }, () => {
     let exercise: Exercise;
     const students = [studentOne, studentTwo, studentThree, studentFour];
 
