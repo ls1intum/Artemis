@@ -2,7 +2,7 @@
     <div class="col-12">
         <form [formGroup]="form" (ngSubmit)="submitForm()">
             <div class="form-group">
-                <label for="name">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.name' | artemisTranslate }} *</label>
+                <label for="name">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.name' | artemisTranslate }}*</label>
                 <input
                     type="text"
                     class="form-control"
@@ -105,14 +105,29 @@
             </div>
             <div class="row">
                 <div class="col-12">
-                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isFormValid()">
-                        <span jhiTranslate="entity.action.submit"></span>
-                    </button>
-                    @if (hasCancelButton()) {
-                        <button type="button" (click)="cancelForm()" class="btn btn-default">
-                            <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                    <span
+                        [ngbTooltip]="
+                            !fileInputTouched && nameControl?.invalid
+                                ? ('artemisApp.attachmentUnit.createAttachmentUnit.nameRequiredValidationError' | artemisTranslate) +
+                                  ' ' +
+                                  ('artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError' | artemisTranslate)
+                                : !fileInputTouched
+                                  ? ('artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError' | artemisTranslate)
+                                  : nameControl?.invalid
+                                    ? ('artemisApp.attachmentUnit.createAttachmentUnit.nameRequiredValidationError' | artemisTranslate)
+                                    : null
+                        "
+                        container="body"
+                    >
+                        <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isFormValid()">
+                            <span jhiTranslate="entity.action.submit"></span>
                         </button>
-                    }
+                        @if (hasCancelButton()) {
+                            <button type="button" (click)="cancelForm()" class="btn btn-default">
+                                <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                            </button>
+                        }
+                    </span>
                 </div>
             </div>
         </form>
