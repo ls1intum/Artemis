@@ -42,7 +42,8 @@
                     },
                     "proactivitySettings": {
                         "title": "Proactivity Settings",
-                        "tooltip": "When any of options listed below are activated, Iris will proactively send help messages to students based on the selected conditions."
+                        "tooltip": "When any of options listed below are activated, Iris will proactively send help messages to students based on the selected conditions.",
+                        "parentDisabled": "Iris won't send proactive messages for this option because either the same option or the Iris is disabled in the parent settings."
                     },
                     "enabled-disabled": "Enabled/Disabled",
                     "enabledForCategories": "Automatically enable for categories",

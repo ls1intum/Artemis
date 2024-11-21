@@ -51,7 +51,7 @@
     <div class="form-group">
         <div class="form-group">
             @for (event of events; track event) {
-                <div class="form-check form-switch mt-2">
+                <div class="form-check form-switch mt-2 flex items-center">
                     <input
                         class="form-check-input"
                         type="checkbox"
@@ -61,6 +61,17 @@
                         (ngModelChange)="onEventToggleChange(event)"
                     />
                     <label class="form-check-label" for="{{ event }}" [jhiTranslate]="eventTranslationKeys[event]"></label>
+                    @if (
+                        this.parentSubSettings &&
+                        subSettings?.enabledProactiveEvents?.includes(event) &&
+                        (!this.parentSubSettings.enabledProactiveEvents?.includes(event) || !this.parentSubSettings.enabled)
+                    ) {
+                        <fa-icon
+                            class="text-warning"
+                            [icon]="faCircleExclamation"
+                            [ngbTooltip]="'artemisApp.iris.settings.subSettings.proactivitySettings.parentDisabled' | artemisTranslate"
+                        />
+                    }
                 </div>
             }
         </div>

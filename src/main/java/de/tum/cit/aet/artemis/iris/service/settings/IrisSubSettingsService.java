@@ -87,7 +87,7 @@ public class IrisSubSettingsService {
 
         }
         else if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.EXERCISE) {
-            currentSettings.setEnabledProactiveEvents(selectEnabledProactiveEvents(parentSettings.enabledProactiveEvents(), newSettings.getEnabledProactiveEvents()));
+            currentSettings.setEnabledProactiveEvents(newSettings.getEnabledProactiveEvents());
         }
         currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
         currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
@@ -207,19 +207,6 @@ public class IrisSubSettingsService {
      */
     private SortedSet<String> selectAllowedVariants(SortedSet<String> allowedVariants, SortedSet<String> updatedAllowedVariants) {
         return authCheckService.isAdmin() ? updatedAllowedVariants : allowedVariants;
-    }
-
-    /**
-     * Filters the enabled events of a sub settings object.
-     * Only events that are allowed by the parent settings or the current settings are allowed.
-     *
-     * @param parentEnabledProactiveEvents  The allowed events of the parent settings.
-     * @param updatedEnabledProactiveEvents The allowed events of the updated settings.
-     * @return The filtered allowed events.
-     */
-    private SortedSet<String> selectEnabledProactiveEvents(SortedSet<String> parentEnabledProactiveEvents, SortedSet<String> updatedEnabledProactiveEvents) {
-        updatedEnabledProactiveEvents.retainAll(parentEnabledProactiveEvents);
-        return updatedEnabledProactiveEvents;
     }
 
     /**

@@ -3,7 +3,7 @@ import { IrisEventType, IrisSubSettings, IrisSubSettingsType } from 'app/entitie
 import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
 import { AccountService } from 'app/core/auth/account.service';
 import { ButtonType } from 'app/shared/components/button.component';
-import { faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCircleExclamation, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -56,6 +56,7 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     // Icons
     readonly faTrash = faTrash;
     readonly faQuestionCircle = faQuestionCircle;
+    readonly faCircleExclamation = faCircleExclamation;
 
     protected readonly IrisSubSettings = IrisSubSettings;
     protected readonly IrisSubSettingsType = IrisSubSettingsType;

@@ -42,7 +42,8 @@
                     },
                     "proactivitySettings": {
                         "title": "Proaktivitätseinstellungen",
-                        "tooltip": "Wenn eine der unten aufgeführten Optionen aktiviert ist, wird Iris basierend auf den ausgewählten Bedingungen proaktiv Hilfe-Nachrichten an Studenten senden."
+                        "tooltip": "Wenn eine der unten aufgeführten Optionen aktiviert ist, wird Iris basierend auf den ausgewählten Bedingungen proaktiv Hilfe-Nachrichten an Studenten senden.",
+                        "parentDisabled": "Iris wird keine proaktiven Nachrichten für diese Option senden, da entweder dieselbe Option oder Iris in den übergeordneten Einstellungen deaktiviert ist."
                     },
                     "enabled-disabled": "Aktiviert/Deaktiviert",
                     "enabledForCategories": "Automatisch aktivieren für Kategorien",
