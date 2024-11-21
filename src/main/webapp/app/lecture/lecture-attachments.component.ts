@@ -34,7 +34,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
     private readonly fileService = inject(FileService);
 
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
-    lectureId = input.required<number>();
+    lectureId = input<number>();
     showHeader = input<boolean>(true);
 
     lecture = signal<Lecture>(new Lecture());
@@ -59,8 +59,8 @@ export class LectureAttachmentsComponent implements OnDestroy {
                 this.notificationText = undefined;
                 this.routeDataSubscription?.unsubscribe(); // in case the subscription was already defined
                 this.routeDataSubscription = this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
-                    if (this.lectureId) {
-                        this.lectureService.findWithDetails(this.lectureId()).subscribe((lectureResponse: HttpResponse<Lecture>) => {
+                    if (this.lectureId()) {
+                        this.lectureService.findWithDetails(this.lectureId()!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
                             this.lecture.set(lectureResponse.body!);
                             this.loadAttachments();
                         });

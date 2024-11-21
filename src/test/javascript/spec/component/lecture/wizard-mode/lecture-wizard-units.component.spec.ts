@@ -308,7 +308,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isTextUnitFormOpen = true;
+        wizardUnitComponent.isTextUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditTextUnit(formData);
 
@@ -333,7 +333,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isTextUnitFormOpen = true;
+        wizardUnitComponent.isTextUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditTextUnit(formData);
 
@@ -466,7 +466,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isOnlineUnitFormOpen = true;
+        wizardUnitComponent.isOnlineUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditOnlineUnit(formData);
 
@@ -663,7 +663,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isAttachmentUnitFormOpen = true;
+        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
 
@@ -719,7 +719,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isAttachmentUnitFormOpen = true;
+        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditAttachmentUnit(attachmentUnitFormData);
 
@@ -742,7 +742,7 @@ describe('LectureWizardUnitComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.isAttachmentUnitFormOpen = true;
+        wizardUnitComponent.isAttachmentUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditAttachmentUnit(formData);
 
