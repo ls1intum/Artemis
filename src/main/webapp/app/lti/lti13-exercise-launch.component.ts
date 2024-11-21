@@ -147,7 +147,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
     replaceWindowLocationWrapper(url: string): void {
         this.ltiService.setShownViaLti(true);
-        this.themeService.applyThemeExplicitly(Theme.LIGHT);
+        this.themeService.applyThemePreference(Theme.LIGHT);
         const path = new URL(url).pathname;
 
         this.router.navigate([path], { replaceUrl: true });
