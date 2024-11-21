@@ -2,6 +2,7 @@ import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
 import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
+    IrisEventType,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
@@ -11,6 +12,7 @@ export function mockSettings() {
     const mockChatSettings = new IrisChatSubSettings();
     mockChatSettings.id = 1;
     mockChatSettings.enabled = true;
+    mockChatSettings.enabledProactiveEvents = [IrisEventType.BUILD_FAILED, IrisEventType.PROGRESS_STALLED];
     const mockTextExerciseChatSettings = new IrisTextExerciseChatSubSettings();
     mockTextExerciseChatSettings.id = 13;
     mockTextExerciseChatSettings.enabled = true;

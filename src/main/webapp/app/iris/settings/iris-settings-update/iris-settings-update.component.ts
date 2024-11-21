@@ -11,6 +11,7 @@ import { cloneDeep, isEqual } from 'lodash-es';
 import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
+    IrisEventType,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
@@ -103,6 +104,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         }
         if (!this.irisSettings.irisChatSettings) {
             this.irisSettings.irisChatSettings = new IrisChatSubSettings();
+            this.irisSettings.irisChatSettings.enabledProactiveEvents = [IrisEventType.BUILD_FAILED, IrisEventType.PROGRESS_STALLED];
         }
         if (!this.irisSettings.irisTextExerciseChatSettings) {
             this.irisSettings.irisTextExerciseChatSettings = new IrisTextExerciseChatSubSettings();

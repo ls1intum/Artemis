@@ -44,7 +44,7 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     categories: string[] = [];
 
-    events: IrisEventType[] = this.parentSubSettings ? this.parentSubSettings.enabledProactiveEvents || [] : [IrisEventType.BUILD_FAILED, IrisEventType.PROGRESS_STALLED];
+    exerciseChatEvents: IrisEventType[] = [IrisEventType.BUILD_FAILED, IrisEventType.PROGRESS_STALLED];
 
     // Settings types
     EXERCISE = IrisSettingsType.EXERCISE;

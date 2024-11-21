@@ -120,6 +120,9 @@ public class IrisSettingsService {
             settings.setEnabled(false);
             settings.setAllowedVariants(new TreeSet<>(Set.of("default")));
             settings.setSelectedVariant("default");
+            if (settings instanceof IrisChatSubSettings chatSettings) {
+                chatSettings.setEnabledForCategories(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.toString(), IrisEventType.PROGRESS_STALLED.toString())));
+            }
         }
         return settings;
     }
@@ -127,7 +130,6 @@ public class IrisSettingsService {
     private void initializeIrisChatSettings(IrisGlobalSettings settings) {
         var irisChatSettings = settings.getIrisChatSettings();
         irisChatSettings = initializeSettings(irisChatSettings, IrisChatSubSettings::new);
-        irisChatSettings.setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.toString(), IrisEventType.PROGRESS_STALLED.toString())));
         settings.setIrisChatSettings(irisChatSettings);
     }
 

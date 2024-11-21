@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IrisChatSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { SimpleChange, SimpleChanges } from '@angular/core';
+import { Directive, Input, SimpleChange, SimpleChanges } from '@angular/core';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { mockVariants } from './mock-settings';
 import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
@@ -35,6 +35,13 @@ function mockCategories() {
     ];
 }
 
+@Directive({
+    selector: '[jhiTranslate]',
+})
+class MockTranslateDirective {
+    @Input() jhiTranslate: string;
+}
+
 describe('IrisCommonSubSettingsUpdateComponent Component', () => {
     let comp: IrisCommonSubSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisCommonSubSettingsUpdateComponent>;
@@ -43,7 +50,7 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, FormsModule, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe), MockTranslateDirective],
             declarations: [IrisCommonSubSettingsUpdateComponent],
         })
             .compileComponents()
