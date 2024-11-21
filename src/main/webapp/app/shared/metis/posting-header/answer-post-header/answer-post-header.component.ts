@@ -17,8 +17,8 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
 
     // Icons
-    faCheck = faCheck;
-    faPencilAlt = faPencilAlt;
+    readonly faCheck = faCheck;
+    readonly faPencilAlt = faPencilAlt;
 
     ngOnInit() {
         super.ngOnInit();

@@ -92,7 +92,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
     isConsecutive = input<boolean>(false);
     dropdownPosition = { x: 0, y: 0 };
-    @ViewChild(PostReactionsBarComponent) private reactionsBarComponent!: PostReactionsBarComponent;
+    @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
 
     constructor(
         public metisService: MetisService,
@@ -220,6 +220,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      */
     openCreateAnswerPostModal() {
         this.postFooterComponent.openCreateAnswerPostModal();
+    }
+
+    /**
+     * Close create answer modal
+     */
+    closeCreateAnswerPostModal() {
+        this.postFooterComponent.closeCreateAnswerPostModal();
     }
 
     /**

@@ -172,6 +172,15 @@ describe('PostComponent', () => {
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
 
+    it('should close create answer post modal', () => {
+        component.posting = metisPostExerciseUser1;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'closeCreateAnswerPostModal');
+        component.closeCreateAnswerPostModal();
+        expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
+    });
+
     it('should create or navigate to oneToOneChat when not on messaging page', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         const oneToOneChatService = TestBed.inject(OneToOneChatService);

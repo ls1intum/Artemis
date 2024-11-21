@@ -20,8 +20,8 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
     isAtLeastInstructorInCourse: boolean;
 
     // Icons
-    faPencilAlt = faPencilAlt;
-    faCheckSquare = faCheckSquare;
+    readonly faPencilAlt = faPencilAlt;
+    readonly faCheckSquare = faCheckSquare;
 
     ngOnInit() {
         super.ngOnInit();

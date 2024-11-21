@@ -15,7 +15,6 @@
                 [posting]="posting"
                 [isDeleted]="isDeleted"
                 [isCommunicationPage]="isCommunicationPage"
-                [hasChannelModerationRights]="hasChannelModerationRights"
                 (isModalOpen)="displayInlineInput = true"
                 [lastReadDate]="lastReadDate"
             />
@@ -83,6 +82,7 @@
                         ></jhi-posting-content>
                         <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode }">
                             @if (!previewMode) {
+                                <!-- Post reactions (that appear when post is hovered) -->
                                 <jhi-post-reactions-bar
                                     [lastReadDate]="lastReadDate"
                                     [readOnlyMode]="readOnlyMode"
@@ -126,6 +126,7 @@
                     [isCommunicationPage]="isCommunicationPage"
                     [isThreadSidebar]="isThreadSidebar"
                     (openPostingCreateEditModal)="openCreateAnswerPostModal()"
+                    (closePostingCreateEditModal)="closeCreateAnswerPostModal()"
                     (openThread)="openThread.emit()"
                     (isModalOpen)="displayInlineInput = true"
                     [isEmojiCount]="true"
@@ -175,7 +176,7 @@
             <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>
         </button>
     }
-    <button class="dropdown-item d-flex" (click)="openThread.emit()">
+    <button class="dropdown-item d-flex" (click)="isCommunicationPage ? openThread.emit() : reactionsBarComponent?.openAnswerView()">
         <fa-icon [icon]="faComments" class="item-icon"></fa-icon>
         <span jhiTranslate="artemisApp.metis.post.replyMessage"></span>
     </button>
