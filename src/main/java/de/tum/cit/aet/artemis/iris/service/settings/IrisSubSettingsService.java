@@ -377,7 +377,7 @@ public class IrisSubSettingsService {
      */
     private SortedSet<String> getCombinedEnabledForEvents(List<IrisSettings> settingsList, Function<IrisSettings, IrisChatSubSettings> subSettingsFunction) {
         return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisChatSubSettings::getEnabledProactiveEvents)
-                .filter(Objects::nonNull).filter(models -> !models.isEmpty()).reduce((first, second) -> {
+                .filter(Objects::nonNull).reduce((first, second) -> {
                     second.retainAll(first);
                     return second;
                 }).orElse(new TreeSet<>());
