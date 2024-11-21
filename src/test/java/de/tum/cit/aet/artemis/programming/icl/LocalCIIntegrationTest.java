@@ -42,7 +42,6 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -68,7 +67,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 // TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
@@ -96,9 +94,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     private LocalRepository testsRepository;
 
     private String commitHash;
-
-    @Autowired
-    private ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository;
 
     private IQueue<BuildJobQueueItem> queuedJobs;
 
