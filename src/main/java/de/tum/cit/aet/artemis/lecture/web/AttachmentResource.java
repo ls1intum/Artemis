@@ -29,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -90,6 +91,12 @@ public class AttachmentResource {
     public ResponseEntity<Attachment> createAttachment(@RequestPart Attachment attachment, @RequestPart MultipartFile file) throws URISyntaxException {
         log.debug("REST request to save Attachment : {}", attachment);
         attachment.setId(null);
+
+        if (attachment.getParentAttachment() != null && attachment.getParentAttachment().getId() != null) {
+            Attachment parentAttachment = attachmentRepository.findById(attachment.getParentAttachment().getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Parent attachment not found"));
+            attachment.setParentAttachment(parentAttachment);
+        }
 
         Path basePath = FilePathService.getLectureAttachmentFilePath().resolve(attachment.getLecture().getId().toString());
         Path savePath = fileService.saveFile(file, basePath, true);
@@ -209,5 +216,18 @@ public class AttachmentResource {
             // this catch is required for deleting wrongly formatted attachment database entries
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, attachmentId.toString())).build();
+    }
+
+    /**
+     * GET /attachments/:parentAttachmentId/hiddenAttachment : retrieve the hidden attachment associated with the given parent attachment ID.
+     *
+     * @param parentAttachmentId the ID of the parent attachment for which to retrieve the hidden attachment
+     * @return the ResponseEntity with status 200 (OK) and the Attachment in the body, or a 404 (Not Found) if no matching attachment exists
+     */
+    @GetMapping("attachments/{parentAttachmentId}/hiddenAttachment")
+    @EnforceAtLeastTutor
+    public ResponseEntity<Attachment> getAttachmentByParentAttachmentId(@PathVariable Long parentAttachmentId) {
+        log.debug("REST request to get attachment by the parent attachment Id : {}", parentAttachmentId);
+        return ResponseEntity.ok(attachmentRepository.findAttachmentByParentAttachmentId(parentAttachmentId));
     }
 }

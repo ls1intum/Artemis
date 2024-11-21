@@ -19,6 +19,8 @@ import {
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
 import { FileService } from 'app/shared/http/file.service';
+import { AttachmentService } from 'app/lecture/attachment.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-attachment-unit',
@@ -30,6 +32,8 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
     protected readonly faDownload = faDownload;
 
     private readonly fileService = inject(FileService);
+    private readonly attachmentService = inject(AttachmentService);
+    private readonly alertService = inject(AlertService);
 
     /**
      * Returns the name of the attachment file (including its file extension)
@@ -49,10 +53,24 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
     handleDownload() {
         this.logEvent();
 
-        if (this.lectureUnit().attachment?.link) {
-            const link = this.lectureUnit().attachment!.link!;
-            this.fileService.downloadFile(this.fileService.replaceAttachmentPrefixAndUnderscores(link));
-            this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
+        if (this.lectureUnit().attachment?.id) {
+            let link = '';
+            this.attachmentService.getAttachmentByParentAttachmentId(this.lectureUnit().attachment!.id!).subscribe({
+                next: (res) => {
+                    console.log(res);
+                    if (res.body) {
+                        const hiddenAttachment = res.body;
+                        link = this.fileService.replaceAttachmentPrefixAndUnderscores(hiddenAttachment!.link!);
+                    } else {
+                        link = this.fileService.replaceAttachmentPrefixAndUnderscores(this.lectureUnit().attachment!.link!);
+                    }
+                    this.fileService.downloadFile(link!);
+                    this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
+                },
+                error: (error: any) => {
+                    this.alertService.error('artemisApp.attachment.pdfPreview.hiddenAttachmentRetrievalError', { error: error.message });
+                },
+            });
         }
     }
 

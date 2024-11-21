@@ -420,7 +420,7 @@ public class FileResource {
         String fileNameWithoutSpaces = filename.replaceAll(" ", "_");
         sanitizeFilenameElseThrow(fileNameWithoutSpaces);
 
-        List<Attachment> lectureAttachments = attachmentRepository.findAllByLectureId(lectureId);
+        List<Attachment> lectureAttachments = attachmentRepository.findAllByLectureIdWithHiddenAttachments(lectureId);
         Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> lectureAttachment.getLink().endsWith(fileNameWithoutSpaces)).findAny()
                 .orElseThrow(() -> new EntityNotFoundException("Attachment", filename));
 
