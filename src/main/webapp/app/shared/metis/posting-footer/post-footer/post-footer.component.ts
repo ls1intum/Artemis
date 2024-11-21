@@ -173,6 +173,13 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
         this.createAnswerPostModalComponent.open();
     }
 
+    /**
+     * Close create answer modal
+     */
+    closeCreateAnswerPostModal() {
+        this.createAnswerPostModalComponent.close();
+    }
+
     protected postsTrackByFn(index: number, post: Post): number {
         return post.id!;
     }
