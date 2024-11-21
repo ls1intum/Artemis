@@ -173,6 +173,11 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
             }
             blobParts.push(fields.join(';') + '\n');
         });
-        downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
+        try {
+            downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
+        } catch (error) {
+            console.error('Failed to download plagiarism cases:', error);
+            this.jhiAlertService.error('plagiarismCases.export.error');
+        }
     }
 }
