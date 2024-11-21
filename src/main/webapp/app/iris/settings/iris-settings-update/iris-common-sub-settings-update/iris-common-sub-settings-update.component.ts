@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import { IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisEventType, IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
 import { AccountService } from 'app/core/auth/account.service';
 import { ButtonType } from 'app/shared/components/button.component';
@@ -44,6 +44,8 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     categories: string[] = [];
 
+    events: IrisEventType[] = this.parentSubSettings ? this.parentSubSettings.enabledProactiveEvents || [] : [IrisEventType.BUILD_FAILED, IrisEventType.PROGRESS_STALLED];
+
     // Settings types
     EXERCISE = IrisSettingsType.EXERCISE;
     COURSE = IrisSettingsType.COURSE;
@@ -57,6 +59,11 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     protected readonly IrisSubSettings = IrisSubSettings;
     protected readonly IrisSubSettingsType = IrisSubSettingsType;
+
+    protected readonly eventTranslationKeys = {
+        [IrisEventType.BUILD_FAILED]: 'artemisApp.iris.settings.subSettings.proactivityBuildFailedEventEnabled.label',
+        [IrisEventType.PROGRESS_STALLED]: 'artemisApp.iris.settings.subSettings.proactivityProgressStalledEventEnabled.label',
+    };
 
     constructor(
         accountService: AccountService,
@@ -174,19 +181,17 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         }
     }
 
-    onEventToggleChange(value: boolean, target: string) {
+    onEventToggleChange(event: IrisEventType) {
         if (!this.subSettings) {
             return;
         }
-        switch (target) {
-            case 'proactiveBuildFailedEventEnabled':
-                this.subSettings.proactiveBuildFailedEventEnabled = value;
-                return;
-            case 'proactiveProgressStalledEventEnabled':
-                this.subSettings.proactiveProgressStalledEventEnabled = value;
-                return;
-            default:
-                return;
+        if (!this.subSettings.enabledProactiveEvents) {
+            this.subSettings.enabledProactiveEvents = [];
+        }
+        if (this.subSettings.enabledProactiveEvents?.includes(event)) {
+            this.subSettings.enabledProactiveEvents = this.subSettings.enabledProactiveEvents!.filter((c) => c !== event);
+        } else {
+            this.subSettings.enabledProactiveEvents = [...(this.subSettings.enabledProactiveEvents ?? []), event] as IrisEventType[];
         }
     }
 

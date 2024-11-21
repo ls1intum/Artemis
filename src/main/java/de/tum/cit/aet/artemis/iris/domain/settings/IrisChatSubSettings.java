@@ -32,11 +32,9 @@ public class IrisChatSubSettings extends IrisSubSettings {
     @Convert(converter = IrisListConverter.class)
     private SortedSet<String> enabledForCategories = new TreeSet<>();
 
-    @Column(name = "proactive_build_failed_event_enabled")
-    private boolean proactiveBuildFailedEventEnabled;
-
-    @Column(name = "proactive_progress_stalled_event_enabled")
-    private boolean proactiveProgressStalledEventEnabled;
+    @Column(name = "enabled_proactive_events", nullable = false)
+    @Convert(converter = IrisListConverter.class)
+    private SortedSet<String> enabledProactiveEvents = new TreeSet<>();
 
     @Nullable
     public Integer getRateLimit() {
@@ -64,19 +62,11 @@ public class IrisChatSubSettings extends IrisSubSettings {
         this.enabledForCategories = enabledForCategories;
     }
 
-    public boolean isProactiveProgressStalledEventEnabled() {
-        return proactiveProgressStalledEventEnabled;
+    public SortedSet<String> getEnabledProactiveEvents() {
+        return enabledProactiveEvents;
     }
 
-    public void setProactiveProgressStalledEventEnabled(boolean proactiveProgressStalledEventEnabled) {
-        this.proactiveProgressStalledEventEnabled = proactiveProgressStalledEventEnabled;
-    }
-
-    public boolean isProactiveBuildFailedEventEnabled() {
-        return proactiveBuildFailedEventEnabled;
-    }
-
-    public void setProactiveBuildFailedEventEnabled(boolean proactiveBuildFailedEventEnabled) {
-        this.proactiveBuildFailedEventEnabled = proactiveBuildFailedEventEnabled;
+    public void setEnabledProactiveEvents(SortedSet<String> enabledProactiveEvents) {
+        this.enabledProactiveEvents = enabledProactiveEvents;
     }
 }

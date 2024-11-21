@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -36,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -255,7 +258,7 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     void testShouldNotFireProgressStalledEventWithEventDisabled() {
         // Find settings for the current exercise
         var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
-        settings.getIrisChatSettings().setProactiveProgressStalledEventEnabled(false);
+        settings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.toString())));
         irisSettingsRepository.save(settings);
 
         createSubmissionWithScore(studentParticipation, 40);
@@ -269,7 +272,7 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     void testShouldNotFireBuildFailedEventWhenEventSettingDisabled() {
         // Find settings for the current exercise
         var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
-        settings.getIrisChatSettings().setProactiveBuildFailedEventEnabled(false);
+        settings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.toString())));
         irisSettingsRepository.save(settings);
 
         irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));

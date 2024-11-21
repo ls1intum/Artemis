@@ -7,6 +7,11 @@ export enum IrisSubSettingsType {
     LECTURE_INGESTION = 'lecture-ingestion',
 }
 
+export enum IrisEventType {
+    BUILD_FAILED = 'build_failed',
+    PROGRESS_STALLED = 'progress_stalled',
+}
+
 export abstract class IrisSubSettings implements BaseEntity {
     id?: number;
     type: IrisSubSettingsType;
@@ -14,8 +19,7 @@ export abstract class IrisSubSettings implements BaseEntity {
     allowedVariants?: string[];
     selectedVariant?: string;
     enabledForCategories?: string[];
-    proactiveBuildFailedEventEnabled?: boolean;
-    proactiveProgressStalledEventEnabled?: boolean;
+    enabledProactiveEvents?: IrisEventType[];
 }
 
 export class IrisChatSubSettings extends IrisSubSettings {

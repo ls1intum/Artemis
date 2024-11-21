@@ -51,6 +51,8 @@ public class IrisSubSettingsService {
      * - If the user is not an admin the rate limit will not be updated.
      * - If the user is not an admin the allowed models will not be updated.
      * - If the user is not an admin the preferred model will only be updated if it is included in the allowed models.
+     * - If the user is not an admin the enabled proactive events will only be updated if the settings are exercise or course settings.
+     * - The enabled proactive events will only be updated if the new events are included in the parent settings
      *
      * @param currentSettings Current chat sub settings.
      * @param newSettings     Updated chat sub settings.
@@ -79,8 +81,13 @@ public class IrisSubSettingsService {
         if (authCheckService.isAdmin()) {
             currentSettings.setRateLimit(newSettings.getRateLimit());
             currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
-            currentSettings.setProactiveBuildFailedEventEnabled(newSettings.isProactiveBuildFailedEventEnabled());
-            currentSettings.setProactiveProgressStalledEventEnabled(newSettings.isProactiveProgressStalledEventEnabled());
+        }
+        if (authCheckService.isAdmin() && settingsType == IrisSettingsType.GLOBAL) {
+            currentSettings.setEnabledProactiveEvents(newSettings.getEnabledProactiveEvents());
+
+        }
+        else if (settingsType == IrisSettingsType.COURSE || settingsType == IrisSettingsType.EXERCISE) {
+            currentSettings.setEnabledProactiveEvents(selectEnabledProactiveEvents(parentSettings.enabledProactiveEvents(), newSettings.getEnabledProactiveEvents()));
         }
         currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
         currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
@@ -203,6 +210,19 @@ public class IrisSubSettingsService {
     }
 
     /**
+     * Filters the enabled events of a sub settings object.
+     * Only events that are allowed by the parent settings or the current settings are allowed.
+     *
+     * @param parentEnabledProactiveEvents  The allowed events of the parent settings.
+     * @param updatedEnabledProactiveEvents The allowed events of the updated settings.
+     * @return The filtered allowed events.
+     */
+    private SortedSet<String> selectEnabledProactiveEvents(SortedSet<String> parentEnabledProactiveEvents, SortedSet<String> updatedEnabledProactiveEvents) {
+        updatedEnabledProactiveEvents.retainAll(parentEnabledProactiveEvents);
+        return updatedEnabledProactiveEvents;
+    }
+
+    /**
      * Validates the preferred model of a sub settings object.
      * If the user is an admin, all models are allowed.
      * Otherwise, only models that are allowed by the current settings are allowed.
@@ -259,12 +279,9 @@ public class IrisSubSettingsService {
         var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisChatSettings) : null;
         var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings) : null;
         var enabledForCategories = !minimal ? getCombinedEnabledForCategories(settingsList, IrisSettings::getIrisChatSettings) : null;
-        var proactiveBuildFailedEventEnabled = getCombinedEnabledForEvent(settingsList, IrisSettings::getIrisChatSettings, IrisChatSubSettings::isProactiveBuildFailedEventEnabled);
-        var proactiveProgressStalledEventEnabled = getCombinedEnabledForEvent(settingsList, IrisSettings::getIrisChatSettings,
-                IrisChatSubSettings::isProactiveProgressStalledEventEnabled);
+        var enabledProactiveEvents = !minimal ? getCombinedEnabledForEvents(settingsList, IrisSettings::getIrisChatSettings) : null;
 
-        return new IrisCombinedChatSubSettingsDTO(enabled, rateLimit, null, proactiveBuildFailedEventEnabled, proactiveProgressStalledEventEnabled, allowedVariants,
-                selectedVariant, enabledForCategories);
+        return new IrisCombinedChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant, enabledForCategories, enabledProactiveEvents);
     }
 
     /**
@@ -364,17 +381,18 @@ public class IrisSubSettingsService {
     }
 
     /**
-     * Combines the values of the target event field of multiple {@link IrisSettings} objects.
+     * Combines the enabledProactiveEvents field of multiple {@link IrisSettings} objects.
+     * Simply takes the last enabledProactiveEvents.
      *
-     * @param settingsList          List of {@link IrisSettings} objects to combine.
-     * @param subSettingsFunction   Function to get the sub settings from an IrisSettings object.
-     * @param eventSettingsFunction Function to get the target event field from a sub settings object.
-     * @param <T>                   Sub settings type
-     * @return Combined value of the target event field.
+     * @param settingsList        List of {@link IrisSettings} objects to combine.
+     * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
+     * @return Combined enabledProactiveEvents field.
      */
-    private <T extends IrisSubSettings> boolean getCombinedEnabledForEvent(ArrayList<IrisSettings> settingsList, Function<IrisSettings, T> subSettingsFunction,
-            Function<T, Boolean> eventSettingsFunction) {
-        return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(eventSettingsFunction)
-                .reduce((first, second) -> first && second).orElse(false);
+    private SortedSet<String> getCombinedEnabledForEvents(List<IrisSettings> settingsList, Function<IrisSettings, IrisChatSubSettings> subSettingsFunction) {
+        return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisChatSubSettings::getEnabledProactiveEvents)
+                .filter(Objects::nonNull).filter(models -> !models.isEmpty()).reduce((first, second) -> {
+                    second.retainAll(first);
+                    return second;
+                }).orElse(new TreeSet<>());
     }
 }

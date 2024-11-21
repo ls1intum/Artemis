@@ -127,6 +127,7 @@ public class IrisSettingsService {
     private void initializeIrisChatSettings(IrisGlobalSettings settings) {
         var irisChatSettings = settings.getIrisChatSettings();
         irisChatSettings = initializeSettings(irisChatSettings, IrisChatSubSettings::new);
+        irisChatSettings.setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.toString(), IrisEventType.PROGRESS_STALLED.toString())));
         settings.setIrisChatSettings(irisChatSettings);
     }
 
@@ -523,7 +524,7 @@ public class IrisSettingsService {
      * @return Whether the Iris event is active for the course
      */
     public boolean isActivatedFor(IrisEventType type, Course course) {
-        var settings = getCombinedIrisSettingsFor(course, true);
+        var settings = getCombinedIrisSettingsFor(course, false);
         return isEventEnabledInSettings(settings, type);
     }
 
@@ -535,7 +536,7 @@ public class IrisSettingsService {
      * @return Whether the Iris event is active for the exercise
      */
     public boolean isActivatedFor(IrisEventType type, Exercise exercise) {
-        var settings = getCombinedIrisSettingsFor(exercise, true);
+        var settings = getCombinedIrisSettingsFor(exercise, false);
         return isEventEnabledInSettings(settings, type);
     }
 
@@ -646,6 +647,7 @@ public class IrisSettingsService {
         settings.setCourse(course);
         settings.setIrisLectureIngestionSettings(new IrisLectureIngestionSubSettings());
         settings.setIrisChatSettings(new IrisChatSubSettings());
+        settings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.toString(), IrisEventType.PROGRESS_STALLED.toString())));
         settings.setIrisCompetencyGenerationSettings(new IrisCompetencyGenerationSubSettings());
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
 
@@ -663,6 +665,7 @@ public class IrisSettingsService {
         var settings = new IrisExerciseSettings();
         settings.setExercise(exercise);
         settings.setIrisChatSettings(new IrisChatSubSettings());
+        settings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.toString(), IrisEventType.PROGRESS_STALLED.toString())));
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
 
         return settings;
@@ -737,8 +740,22 @@ public class IrisSettingsService {
      */
     private boolean isEventEnabledInSettings(IrisCombinedSettingsDTO settings, IrisEventType type) {
         return switch (type) {
-            case PROGRESS_STALLED -> settings.irisChatSettings().proactiveProgressStalledEventEnabled();
-            case BUILD_FAILED -> settings.irisChatSettings().proactiveBuildFailedEventEnabled();
+            case PROGRESS_STALLED -> {
+                if (settings.irisChatSettings().enabledProactiveEvents() != null) {
+                    yield settings.irisChatSettings().enabledProactiveEvents().contains(IrisEventType.PROGRESS_STALLED.toString());
+                }
+                else {
+                    yield false;
+                }
+            }
+            case BUILD_FAILED -> {
+                if (settings.irisChatSettings().enabledProactiveEvents() != null) {
+                    yield settings.irisChatSettings().enabledProactiveEvents().contains(IrisEventType.BUILD_FAILED.toString());
+                }
+                else {
+                    yield false;
+                }
+            }
             default -> throw new IllegalStateException("Unexpected value: " + type); // TODO: Add JOL event, once Course Chat Settings are implemented
         };
     }
