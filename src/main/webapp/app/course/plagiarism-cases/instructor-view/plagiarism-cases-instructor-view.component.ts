@@ -134,15 +134,15 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
      * export the plagiarism cases in CSV format
      */
     exportPlagiarismCases(): void {
-        const blobParts: string[] = ['Student Login,Exercise,Verdict, Verdict Date\n'];
+        const blobParts: string[] = ['Student Login;Matr. Nr.; Exercise;Verdict; Verdict Date\n'];
         this.plagiarismCases.forEach((plagiarismCase) => {
             const exerciseTitleCSVSanitized = plagiarismCase.exercise?.title?.replace(',', '","');
             if (plagiarismCase.verdict) {
                 blobParts.push(
-                    `${plagiarismCase.student?.login},${exerciseTitleCSVSanitized},${plagiarismCase.verdict},${plagiarismCase.verdictDate},${plagiarismCase.verdictBy!.name}\n`,
+                    `${plagiarismCase.student?.login};${plagiarismCase.student?.visibleRegistrationNumber || '-'};${exerciseTitleCSVSanitized};${plagiarismCase.verdict};${plagiarismCase.verdictDate};${plagiarismCase.verdictBy!.name}\n`,
                 );
             } else {
-                blobParts.push(`${plagiarismCase.student?.login},${exerciseTitleCSVSanitized}, No verdict yet, -, -\n`);
+                blobParts.push(`${plagiarismCase.student?.login};${plagiarismCase.student?.visibleRegistrationNumber || '-'};${exerciseTitleCSVSanitized}; No verdict yet; -; -\n`);
             }
         });
         downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
