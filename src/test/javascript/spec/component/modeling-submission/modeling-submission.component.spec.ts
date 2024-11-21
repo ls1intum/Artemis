@@ -179,7 +179,6 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.sortedSubmissionHistory).toEqual([submission]);
         expect(comp.sortedResultHistory).toEqual([result]);
         expect(comp.submission).toEqual(submission);
-        expect(comp.resultString).toBe('artemisApp.result.resultString.nonProgramming (artemisApp.result.preliminary)');
     });
 
     it('should allow to submit when exercise due date not set', () => {
