@@ -134,7 +134,8 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
      * export the plagiarism cases in CSV format
      */
     exportPlagiarismCases(): void {
-        const blobParts: string[] = ['Student Login;Matr. Nr.; Exercise;Verdict; Verdict Date\n'];
+        const headers = ['Student Login', 'Matr. Nr.', 'Exercise', 'Verdict', 'Verdict Date'].map(header => header.replace(/;/g, '')); 
+        const blobParts: string[] = [headers.join(';') + '\n'];
         this.plagiarismCases.forEach((plagiarismCase) => {
             const exerciseTitleCSVSanitized = plagiarismCase.exercise?.title?.replace(',', '","');
             if (plagiarismCase.verdict) {
