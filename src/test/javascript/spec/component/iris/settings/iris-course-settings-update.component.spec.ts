@@ -14,6 +14,7 @@ import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
 import { IrisEventType } from '../../../../../../main/webapp/app/entities/iris/settings/iris-sub-settings.model';
+import { MockTranslateDirective } from '../../../helpers/mocks/directive/MockTranslateDirective.directive';
 
 describe('IrisCourseSettingsUpdateComponent Component', () => {
     let comp: IrisCourseSettingsUpdateComponent;
@@ -27,7 +28,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockTranslateDirective],
             declarations: [
                 IrisCourseSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,

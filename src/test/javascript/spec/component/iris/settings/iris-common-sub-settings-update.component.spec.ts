@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IrisChatSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { Directive, Input, SimpleChange, SimpleChanges } from '@angular/core';
+import { SimpleChange, SimpleChanges } from '@angular/core';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { mockVariants } from './mock-settings';
 import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
@@ -14,6 +14,7 @@ import { of } from 'rxjs';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpResponse } from '@angular/common/http';
+import { MockTranslateDirective } from '../../../helpers/mocks/directive/MockTranslateDirective.directive';
 
 function baseSettings() {
     const irisSubSettings = new IrisChatSubSettings();
@@ -33,13 +34,6 @@ function mockCategories() {
         JSON.stringify(new ExerciseCategory('category2', '0x00ff00')),
         JSON.stringify(new ExerciseCategory('category3', '0x0000ff')),
     ];
-}
-
-@Directive({
-    selector: '[jhiTranslate]',
-})
-class MockTranslateDirective {
-    @Input() jhiTranslate: string;
 }
 
 describe('IrisCommonSubSettingsUpdateComponent Component', () => {
