@@ -37,23 +37,31 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
         plagiarismCasesForInstructor$.subscribe({
             next: (res: HttpResponse<PlagiarismCase[]>) => {
                 this.plagiarismCases = res.body!;
-                this.groupedPlagiarismCases = this.plagiarismCases.reduce((acc: { [exerciseId: number]: PlagiarismCase[] }, plagiarismCase) => {
-                    const caseExerciseId = plagiarismCase.exercise?.id;
-                    if (caseExerciseId === undefined) {
+                this.groupedPlagiarismCases = this.plagiarismCases.reduce(
+                    (
+                        acc: {
+                            [exerciseId: number]: PlagiarismCase[];
+                        },
+                        plagiarismCase,
+                    ) => {
+                        const caseExerciseId = plagiarismCase.exercise?.id;
+                        if (caseExerciseId === undefined) {
+                            return acc;
+                        }
+
+                        // Group initialization
+                        if (!acc[caseExerciseId]) {
+                            acc[caseExerciseId] = [];
+                            this.exercisesWithPlagiarismCases.push(plagiarismCase.exercise!);
+                        }
+
+                        // Grouping
+                        acc[caseExerciseId].push(plagiarismCase);
+
                         return acc;
-                    }
-
-                    // Group initialization
-                    if (!acc[caseExerciseId]) {
-                        acc[caseExerciseId] = [];
-                        this.exercisesWithPlagiarismCases.push(plagiarismCase.exercise!);
-                    }
-
-                    // Grouping
-                    acc[caseExerciseId].push(plagiarismCase);
-
-                    return acc;
-                }, {});
+                    },
+                    {},
+                );
             },
         });
     }
@@ -131,20 +139,39 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     }
 
     /**
-     * export the plagiarism cases in CSV format
+     * set placeholder for undefined values and sanitize the operators away
+     * @param value
+     * @private
+     */
+    private sanitizeCSVField(value: any): string {
+        if (value === null || value === undefined) {
+            return '-';
+        }
+        return String(value).replace(/;/g, '";"');
+    }
+
+    /**
+     * export the cases in CSV format
      */
     exportPlagiarismCases(): void {
-        const headers = ['Student Login', 'Matr. Nr.', 'Exercise', 'Verdict', 'Verdict Date'].map(header => header.replace(/;/g, '')); 
+        const headers = ['Student Login', 'Matr. Nr.', 'Exercise', 'Verdict', 'Verdict Date', 'Verdict By'].map((header) => this.sanitizeCSVField(header));
         const blobParts: string[] = [headers.join(';') + '\n'];
         this.plagiarismCases.forEach((plagiarismCase) => {
-            const exerciseTitleCSVSanitized = plagiarismCase.exercise?.title?.replace(',', '","');
+            const fields = [
+                this.sanitizeCSVField(plagiarismCase.student?.login),
+                this.sanitizeCSVField(plagiarismCase.student?.visibleRegistrationNumber),
+                this.sanitizeCSVField(plagiarismCase.exercise?.title),
+            ];
             if (plagiarismCase.verdict) {
-                blobParts.push(
-                    `${plagiarismCase.student?.login};${plagiarismCase.student?.visibleRegistrationNumber || '-'};${exerciseTitleCSVSanitized};${plagiarismCase.verdict};${plagiarismCase.verdictDate};${plagiarismCase.verdictBy!.name}\n`,
+                fields.push(
+                    this.sanitizeCSVField(plagiarismCase.verdict),
+                    this.sanitizeCSVField(plagiarismCase.verdictDate),
+                    this.sanitizeCSVField(plagiarismCase.verdictBy?.name),
                 );
             } else {
-                blobParts.push(`${plagiarismCase.student?.login};${plagiarismCase.student?.visibleRegistrationNumber || '-'};${exerciseTitleCSVSanitized}; No verdict yet; -; -\n`);
+                fields.push('No verdict yet', '-', '-');
             }
+            blobParts.push(fields.join(';') + '\n');
         });
         downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
     }
