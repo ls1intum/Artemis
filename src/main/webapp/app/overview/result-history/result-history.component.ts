@@ -19,6 +19,7 @@ export class ResultHistoryComponent implements OnChanges {
 
     @Input() results: Result[];
     @Input() exercise: Exercise;
+    @Input() selectedResultId: number;
 
     showPreviousDivider = false;
     displayedResults: Result[];

@@ -5,7 +5,15 @@
     @for (result of displayedResults; track result; let i = $index) {
         <div class="result-history-element">
             <div class="result-score">
-                <div class="result-score-icon" [ngClass]="getTextColorClass(result, evaluateTemplateStatus(exercise, result.participation, result, false, MissingResultInfo.NONE))">
+                <div
+                    class="result-score-icon"
+                    [ngClass]="
+                        result.id === selectedResultId
+                            ? 'selected-icon'
+                            : getTextColorClass(result, evaluateTemplateStatus(exercise, result.participation, result, false, MissingResultInfo.NONE))
+                    "
+                >
+                    >
                     <fa-icon [icon]="getResultIconClass(result, evaluateTemplateStatus(exercise, result.participation, result, false, MissingResultInfo.NONE))" size="xl" />
                 </div>
                 <jhi-result

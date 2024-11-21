@@ -54,7 +54,7 @@
         @if (isReadOnlyWithShowResult) {
             @if (showHistory) {
                 <div id="result-history" class="row mb-2">
-                    <jhi-result-history [results]="sortedHistoryResults" [exercise]="textExercise" />
+                    <jhi-result-history [results]="sortedHistoryResults" [exercise]="textExercise" [selectedResultId]="submission.latestResult?.id!" />
                 </div>
             }
         }
