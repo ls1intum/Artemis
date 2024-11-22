@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -234,6 +235,11 @@ public class CacheConfiguration {
                 for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
                     var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
                     String clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
+                    if (Objects.equals(clusterMemberAddress, "[fcfe:0:0:0:0:0:affe:28]:5701") || instance.getHost().contains("affe:28")) {
+                        // This is the address of the local instance that is corrupted, we don't want to connect to it for now
+                        log.info("Skipping local Hazelcast (prod) cluster member {}", clusterMemberAddress);
+                        continue;
+                    }
                     log.info("Adding Hazelcast (prod) cluster member {}", clusterMemberAddress);
                     config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
                 }
