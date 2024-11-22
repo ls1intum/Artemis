@@ -67,19 +67,21 @@ describe('ProgrammingSubmissionService', () => {
         result2 = { id: 32, submission: currentSubmission2 } as any;
         buildTimingInfoEmpty = { buildStartDate: undefined, estimatedCompletionDate: undefined };
         buildTimingInfo = { buildStartDate: dayjs().subtract(10, 'seconds'), estimatedCompletionDate: dayjs().add(10, 'seconds') };
+        currentProgrammingSubmission = { id: 12, submissionDate: dayjs().subtract(20, 'seconds'), participation: { id: participationId }, commitHash: 'abc123' } as any;
+        currentProgrammingSubmissionOld = { id: 11, submissionDate: dayjs().subtract(40, 'seconds'), participation: { id: participationId }, commitHash: 'abc123Old' } as any;
         mockSubmissionProcessingDTO = {
             exerciseId: exerciseId,
             participationId: participationId,
             commitHash: 'abc123',
             estimatedCompletionDate: buildTimingInfo.estimatedCompletionDate,
             buildStartDate: buildTimingInfo.buildStartDate,
+            submissionDate: dayjs().subtract(20, 'seconds'),
         };
         mockSubmissionProcessingDTOOld = {
             ...mockSubmissionProcessingDTO,
             commitHash: 'abc123Old',
+            submissionDate: dayjs().subtract(40, 'seconds'),
         };
-        currentProgrammingSubmission = { id: 12, submissionDate: dayjs().subtract(20, 'seconds'), participation: { id: participationId }, commitHash: 'abc123' } as any;
-        currentProgrammingSubmissionOld = { id: 11, submissionDate: dayjs().subtract(40, 'seconds'), participation: { id: participationId }, commitHash: 'abc123Old' } as any;
 
         TestBed.configureTestingModule({
             imports: [],

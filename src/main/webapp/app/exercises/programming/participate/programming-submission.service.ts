@@ -317,6 +317,13 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                     .receive(newSubmissionTopic)
                     .pipe(
                         tap((submissionProcessing: SubmissionProcessingDTO) => {
+                            const submissionParticipationId = submissionProcessing.participationId!;
+                            const exerciseId = this.participationIdToExerciseId.get(submissionParticipationId)!;
+
+                            if (!this.isNewestSubmission(submissionProcessing, exerciseId, submissionParticipationId)) {
+                                return;
+                            }
+
                             const programmingSubmission = this.getSubmissionByCommitHash(submissionProcessing);
                             // It is possible that the submission started processing before it got saved to the database and the message was sent to the client.
                             // In this case, we cache that the submission started processing and do not emit the building state.
@@ -329,13 +336,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                                 return;
                             }
                             programmingSubmission.isProcessing = true;
-                            const submissionParticipationId = submissionProcessing.participationId!;
-                            const exerciseId = this.participationIdToExerciseId.get(submissionParticipationId)!;
-
-                            if (!this.isNewestSubmission(programmingSubmission, exerciseId, submissionParticipationId)) {
-                                this.removeSubmissionFromProcessingCache(programmingSubmission.commitHash!);
-                                return;
-                            }
 
                             const buildTimingInfo = {
                                 estimatedCompletionDate: submissionProcessing.estimatedCompletionDate,
@@ -354,13 +354,13 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         }
     }
 
-    private isNewestSubmission(newSubmission: ProgrammingSubmission, exerciseId: number, participationId: number): boolean {
+    private isNewestSubmission(newSubmission: SubmissionProcessingDTO, exerciseId: number, participationId: number): boolean {
         const currentSubmission = this.exerciseBuildState[exerciseId]?.[participationId]?.submission;
 
-        if (!currentSubmission?.id) return true;
-        if (!newSubmission?.id) return false;
+        if (!currentSubmission?.submissionDate) return true;
+        if (!newSubmission?.submissionDate) return false;
 
-        return newSubmission.id >= currentSubmission.id;
+        return dayjs(newSubmission.submissionDate).isSameOrAfter(dayjs(currentSubmission.submissionDate));
     }
 
     private getSubmissionByCommitHash(submissionProcessing: SubmissionProcessingDTO): ProgrammingSubmission | undefined {

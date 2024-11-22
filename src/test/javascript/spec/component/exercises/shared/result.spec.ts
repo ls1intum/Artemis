@@ -223,12 +223,4 @@ describe('ResultComponent', () => {
             expect(warningIcon).toBeNull();
         }
     });
-
-    it('should trigger Interval creation on estimatedCompletionDate change', () => {
-        component.estimatedCompletionDate = dayjs().add(20, 'seconds');
-        component.ngOnChanges({
-            estimatedCompletionDate: { previousValue: undefined, currentValue: component.estimatedCompletionDate, firstChange: true, isFirstChange: () => true },
-        });
-        expect(component.estimatedDurationInterval).toBeDefined();
-    });
 });

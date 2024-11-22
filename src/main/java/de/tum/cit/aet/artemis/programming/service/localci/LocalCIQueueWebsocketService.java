@@ -119,7 +119,8 @@ public class LocalCIQueueWebsocketService {
             log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.getValue());
             sendProcessingJobsOverWebsocket(event.getValue().courseId());
             notifyUserAboutBuildProcessing(event.getValue().exerciseId(), event.getValue().participationId(), event.getValue().buildConfig().assignmentCommitHash(),
-                    event.getValue().jobTimingInfo().buildStartDate(), event.getValue().jobTimingInfo().estimatedCompletionDate());
+                    event.getValue().jobTimingInfo().submissionDate(), event.getValue().jobTimingInfo().buildStartDate(),
+                    event.getValue().jobTimingInfo().estimatedCompletionDate());
         }
 
         @Override
@@ -151,8 +152,9 @@ public class LocalCIQueueWebsocketService {
         }
     }
 
-    private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime buildStartDate, ZonedDateTime estimatedCompletionDate) {
-        var submissionProcessingDTO = new SubmissionProcessingDTO(exerciseId, participationId, commitHash, buildStartDate, estimatedCompletionDate);
+    private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime submissionDate, ZonedDateTime buildStartDate,
+            ZonedDateTime estimatedCompletionDate) {
+        var submissionProcessingDTO = new SubmissionProcessingDTO(exerciseId, participationId, commitHash, submissionDate, buildStartDate, estimatedCompletionDate);
         programmingMessagingService.notifyUserAboutSubmissionProcessing(submissionProcessingDTO, exerciseId, participationId);
     }
 }
