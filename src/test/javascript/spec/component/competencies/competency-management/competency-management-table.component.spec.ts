@@ -52,6 +52,8 @@ describe('CompetencyManagementTableComponent', () => {
     });
 
     it('should handle import all data', () => {
+        fixture.componentRef.setInput('allCompetencies', []);
+        fixture.detectChanges();
         component.courseCompetencies = [];
 
         const responseBody: CompetencyWithTailRelationDTO[] = [

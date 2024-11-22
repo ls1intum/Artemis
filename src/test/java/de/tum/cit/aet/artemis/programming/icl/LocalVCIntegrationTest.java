@@ -110,7 +110,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testFetchPush_usingVcsAccessToken() {
         var programmingParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         var student = userUtilService.getUserByLogin(student1Login);
-        var participationVcsAccessToken = localVCLocalCITestService.getParticipationVcsAccessToken(student.getId(), programmingParticipation.getId());
+        var participationVcsAccessToken = localVCLocalCITestService.getParticipationVcsAccessToken(student, programmingParticipation.getId());
         var token = participationVcsAccessToken.getVcsAccessToken();
         programmingExerciseRepository.save(programmingExercise);
 
