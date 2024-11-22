@@ -55,11 +55,14 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -540,5 +543,27 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
                 .findFirst().orElseThrow();
         assertThat(item.jobTimingInfo().estimatedDuration()).isEqualTo(24);
         assertThat(item.jobTimingInfo().estimatedCompletionDate()).isCloseTo(item.jobTimingInfo().buildStartDate().plusSeconds(24), within(500, ChronoUnit.MILLIS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetSubmissionReturnsWhenSubmissionProcessing() throws Exception {
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
+        submission.setCommitHash(commitHash);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+
+        JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now().minusSeconds(30), ZonedDateTime.now(), null, ZonedDateTime.now().plusSeconds(30), 60);
+        BuildConfig buildConfig = new BuildConfig(null, null, commitHash, commitHash, null, null, null, null, false, false, false, null, 0, null, null, null);
+        BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem("1", "1", null, submission.getParticipation().getId(), 1L, programmingExercise.getId(), 0, 1, null, null,
+                jobTimingInfo, buildConfig, null);
+        processingJobs.put(buildJobQueueItem.id(), buildJobQueueItem);
+
+        var submissionDto = request.get("/api/programming-exercise-participations/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
+                SubmissionDTO.class);
+
+        assertThat(submissionDto).isNotNull();
+        assertThat(submissionDto.isProcessing()).isTrue();
+        assertThat(submissionDto.buildStartDate()).isNotNull();
+        assertThat(submissionDto.estimatedCompletionDate()).isNotNull();
     }
 }
