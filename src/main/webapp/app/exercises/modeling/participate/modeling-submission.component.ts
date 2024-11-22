@@ -36,7 +36,7 @@ import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionPatch } from 'app/entities/submission-patch.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { catchError, skip, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, skip, switchMap, tap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { of } from 'rxjs';
 
@@ -64,7 +64,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     @Input() isExamSummary = false;
 
     private subscription: Subscription;
-    private resultUpdateListener: Subscription;
+    private manualResultUpdateListener: Subscription;
+    private athenaResultUpdateListener: Subscription;
 
     participation: StudentParticipation;
     isOwnerOfParticipation: boolean;
@@ -399,30 +400,61 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * and show the new assessment information to the student.
      */
     private subscribeToNewResultsWebsocket(): void {
-        if (!this.participation || !this.participation.id) {
+        if (!this.participation?.id) {
             return;
         }
-        this.resultUpdateListener = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id, true)
-            .pipe(skip(1))
-            .subscribe((newResult: Result) => {
-                if (newResult) {
-                    if (newResult.completionDate) {
-                        this.assessmentResult = newResult;
-                        this.assessmentResult = this.modelingAssessmentService.convertResult(newResult);
-                        this.prepareAssessmentData();
 
-                        if (this.assessmentResult.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
-                            this.alertService.info('artemisApp.modelingEditor.newAssessment');
-                        } else if (newResult.successful === true) {
-                            this.alertService.info('artemisApp.exercise.athenaFeedbackSuccessful');
-                        }
-                    } else if (newResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA && newResult.successful === false) {
-                        this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
-                    }
-                    this.isGeneratingFeedback = false;
-                }
-            });
+        const resultStream$ = this.participationWebsocketService.subscribeForLatestResultOfParticipation(this.participation.id, true);
+
+        // Handle initial results (no skip)
+        this.manualResultUpdateListener = resultStream$
+            .pipe(
+                filter((result): result is Result => !!result),
+                filter((result) => !result.assessmentType || result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA),
+            )
+            .subscribe(this.handleManualAssessment.bind(this));
+
+        // Handle Athena results (with skip)
+        this.athenaResultUpdateListener = resultStream$
+            .pipe(
+                skip(1),
+                filter((result): result is Result => !!result),
+                filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA),
+            )
+            .subscribe(this.handleAthenaAssessment.bind(this));
+    }
+
+    /**
+     * Handles manual assessments (non-Athena). Converts the result, prepares the assessment data, and informs the user of a new assessment.
+     * @param result - The result of the assessment.
+     */
+    private handleManualAssessment(result: Result): void {
+        if (!result.completionDate) {
+            return;
+        }
+
+        this.assessmentResult = this.modelingAssessmentService.convertResult(result);
+        this.prepareAssessmentData();
+        this.alertService.info('artemisApp.modelingEditor.newAssessment');
+    }
+
+    /**
+     * Handles Athena assessments. Converts the result, prepares the assessment data, and provides feedback based on the result's success or failure.
+     * @param result - The result of the Athena assessment.
+     */
+    private handleAthenaAssessment(result: Result): void {
+        if (result.completionDate) {
+            this.assessmentResult = this.modelingAssessmentService.convertResult(result);
+            this.prepareAssessmentData();
+
+            if (result.successful) {
+                this.alertService.info('artemisApp.exercise.athenaFeedbackSuccessful');
+            }
+        } else if (result.successful === false) {
+            this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
+        }
+
+        this.isGeneratingFeedback = false;
     }
 
     /**
@@ -628,8 +660,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (this.automaticSubmissionWebsocketChannel) {
             this.jhiWebsocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
         }
-        if (this.resultUpdateListener) {
-            this.resultUpdateListener.unsubscribe();
+        if (this.manualResultUpdateListener) {
+            this.manualResultUpdateListener.unsubscribe();
+        }
+        if (this.athenaResultUpdateListener) {
+            this.athenaResultUpdateListener.unsubscribe();
         }
     }
 
