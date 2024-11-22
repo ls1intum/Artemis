@@ -173,11 +173,19 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
             }
             blobParts.push(fields.join(';') + '\n');
         });
-        try {
-            downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
-        } catch (error) {
-            console.error('Failed to download plagiarism cases:', error);
-            this.jhiAlertService.error('plagiarismCases.export.error');
-        }
+import { JhiAlertService } from 'ng-jhipster';
+
+    constructor(
+        private plagiarismCasesService: PlagiarismCasesService,
+        private route: ActivatedRoute,
+        private jhiAlertService: JhiAlertService,
+    ) {}
+
+    try {
+        downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
+    } catch (error) {
+        console.error('Failed to download plagiarism cases:', error);
+        this.jhiAlertService.error('plagiarismCases.export.error');
+    }
     }
 }
