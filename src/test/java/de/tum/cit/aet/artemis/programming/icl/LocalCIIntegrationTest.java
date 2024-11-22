@@ -556,10 +556,11 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         BuildConfig buildConfig = new BuildConfig(null, null, commitHash, commitHash, null, null, null, null, false, false, false, null, 0, null, null, null);
         BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem("1", "1", null, submission.getParticipation().getId(), 1L, programmingExercise.getId(), 0, 1, null, null,
                 jobTimingInfo, buildConfig, null);
-        processingJobs.put(buildJobQueueItem.id(), buildJobQueueItem);
 
+        processingJobs.put(buildJobQueueItem.id(), buildJobQueueItem);
         var submissionDto = request.get("/api/programming-exercise-participations/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 SubmissionDTO.class);
+        processingJobs.remove(buildJobQueueItem.id());
 
         assertThat(submissionDto).isNotNull();
         assertThat(submissionDto.isProcessing()).isTrue();
