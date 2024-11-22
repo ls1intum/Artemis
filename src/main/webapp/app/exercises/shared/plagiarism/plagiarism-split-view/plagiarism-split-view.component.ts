@@ -11,6 +11,7 @@ import { HttpResponse } from '@angular/common/http';
 import { SimpleMatch } from 'app/exercises/shared/plagiarism/types/PlagiarismMatch';
 import dayjs from 'dayjs/esm';
 import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
+import { IconDefinition, faLock, faUnlock } from '@fortawesome/free-solid-svg-icons';
 
 @Directive({ selector: '[jhiPane]' })
 export class SplitPaneDirective {
@@ -28,12 +29,13 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     @Input() splitControlSubject: Subject<string>;
     @Input() sortByStudentLogin: string;
     @Input() forStudent: boolean;
-    @Input() isLockFilesEnabled = false;
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
     plagiarismComparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     private fileSelectedSubject = new Subject<TextPlagiarismFileElement>();
+    private showFilesSubject = new Subject<boolean>();
+    private dropdownHoverSubject = new Subject<TextPlagiarismFileElement>();
 
     public split: Split.Instance;
 
@@ -42,8 +44,11 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
     public matchesA: Map<string, FromToElement[]>;
     public matchesB: Map<string, FromToElement[]>;
+    isLockFilesEnabled = false;
 
     readonly dayjs = dayjs;
+    protected readonly faLock: IconDefinition = faLock;
+    protected readonly faUnlock: IconDefinition = faUnlock;
 
     constructor(private plagiarismCasesService: PlagiarismCasesService) {}
 
@@ -89,6 +94,8 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
     ngOnDestroy() {
         this.fileSelectedSubject.complete();
+        this.showFilesSubject.complete();
+        this.dropdownHoverSubject.complete();
     }
 
     /**
@@ -116,6 +123,14 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
      */
     getFileSelectedSubject() {
         return this.fileSelectedSubject;
+    }
+
+    /**
+     * get the subject/listener for checking dropdown toggle status of split-pane-header in text-viewer component
+     * @returns subject for showFile change
+     */
+    getShowFilesSubject() {
+        return this.showFilesSubject;
     }
 
     parseTextMatches(plagComparison: PlagiarismComparison<TextSubmissionElement>) {
@@ -191,5 +206,16 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
                 this.split.setSizes([50, 50]);
             }
         }
+    }
+
+    getDropdownHoverSubject() {
+        return this.dropdownHoverSubject;
+    }
+
+    /**
+     * Toggles the state of file locking and emits the new state to the parent component.
+     */
+    toggleLockFiles() {
+        this.isLockFilesEnabled = !this.isLockFilesEnabled;
     }
 }

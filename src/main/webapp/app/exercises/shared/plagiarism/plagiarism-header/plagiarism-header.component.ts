@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
@@ -8,7 +8,6 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, getCourseId } from 'app/entities/exercise.model';
-import { IconDefinition, faLock, faUnlock } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-plagiarism-header',
@@ -20,13 +19,8 @@ export class PlagiarismHeaderComponent {
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
 
-    @Output() isLockFilesEnabledChange = new EventEmitter<boolean>();
-
-    protected readonly faLock: IconDefinition = faLock;
-    protected readonly faUnlock: IconDefinition = faUnlock;
     readonly plagiarismStatus = PlagiarismStatus;
     isLoading = false;
-    isLockFilesEnabled = false;
 
     constructor(
         private plagiarismCasesService: PlagiarismCasesService,
@@ -81,13 +75,5 @@ export class PlagiarismHeaderComponent {
 
     resetSplitPanes() {
         this.splitControlSubject.next('even');
-    }
-
-    /**
-     * Toggles the state of file locking and emits the new state to the parent component.
-     */
-    toggleLockFiles() {
-        this.isLockFilesEnabled = !this.isLockFilesEnabled;
-        this.isLockFilesEnabledChange.emit(this.isLockFilesEnabled);
     }
 }

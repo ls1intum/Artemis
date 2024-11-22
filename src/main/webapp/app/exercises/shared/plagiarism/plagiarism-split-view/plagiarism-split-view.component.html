@@ -12,9 +12,16 @@
                     [plagiarismSubmission]="getTextSubmissionA()"
                     [isLockFilesEnabled]="isLockFilesEnabled"
                     [hideContent]="false"
+                    [dropdownHoverSubject]="getDropdownHoverSubject()"
+                    [showFilesSubject]="getShowFilesSubject()"
                 />
             }
         }
+    </div>
+    <div class="split-pane-header-color">
+        <button class="btn btn-sm" (click)="toggleLockFiles()" [class.active]="isLockFilesEnabled" data-qa="lock-files-toggle-button">
+            <fa-icon [icon]="isLockFilesEnabled ? faLock : faUnlock" aria-label="Synchronize files while navigating on both sides"></fa-icon>
+        </button>
     </div>
     <div class="plagiarism-split-pane" jhiPane>
         @if (plagiarismComparison) {
@@ -33,6 +40,8 @@
                     [plagiarismSubmission]="getTextSubmissionB()"
                     [isLockFilesEnabled]="isLockFilesEnabled"
                     [hideContent]="forStudent && dayjs(exercise.dueDate).isAfter(dayjs())"
+                    [dropdownHoverSubject]="getDropdownHoverSubject()"
+                    [showFilesSubject]="getShowFilesSubject()"
                 />
             }
         }

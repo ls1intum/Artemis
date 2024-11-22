@@ -1,9 +1,6 @@
 @if (comparison) {
     <div class="plagiarism-details">
-        <jhi-plagiarism-header [splitControlSubject]="splitControlSubject" [exercise]="exercise" [comparison]="comparison" (isLockFilesEnabledChange)="isLockFilesEnabled = $event">
-        </jhi-plagiarism-header>
-
-        <jhi-plagiarism-split-view [comparison]="comparison" [exercise]="exercise" [splitControlSubject]="splitControlSubject" [isLockFilesEnabled]="isLockFilesEnabled">
-        </jhi-plagiarism-split-view>
+        <jhi-plagiarism-header [splitControlSubject]="splitControlSubject" [exercise]="exercise" [comparison]="comparison"> </jhi-plagiarism-header>
+        <jhi-plagiarism-split-view [comparison]="comparison" [exercise]="exercise" [splitControlSubject]="splitControlSubject"> </jhi-plagiarism-split-view>
     </div>
 }

@@ -29,7 +29,9 @@ export class TextSubmissionViewerComponent implements OnChanges {
     @Input() plagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>;
     @Input() hideContent: boolean;
     @Input() fileSelectedSubject!: Subject<TextPlagiarismFileElement>;
-    @Input() isLockFilesEnabled = false;
+    @Input() isLockFilesEnabled: boolean;
+    @Input() showFilesSubject!: Subject<boolean>;
+    @Input() dropdownHoverSubject!: Subject<TextPlagiarismFileElement>;
 
     /**
      * Name of the currently selected file.

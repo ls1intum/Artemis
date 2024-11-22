@@ -11,7 +11,13 @@
     @if (showFiles) {
         <ul class="split-pane-header-files">
             @for (file of files; track file; let idx = $index) {
-                <li class="split-pane-header-file" ngbDropdownItem (click)="handleFileSelect(file, idx)">
+                <li
+                    class="split-pane-header-file"
+                    ngbDropdownItem
+                    (mouseenter)="triggerMouseEnter(file, idx)"
+                    (click)="handleFileSelect(file, idx)"
+                    [ngClass]="{ hover: idx === hoveredFileIdx }"
+                >
                     <span [class.split-pane-header-file-with-match]="file.hasMatch">{{ file.file }}</span>
                 </li>
             }

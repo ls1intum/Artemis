@@ -21,23 +21,81 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     @Input() studentLogin: string;
     @Input() fileSelectedSubject!: Subject<TextPlagiarismFileElement>;
     @Input() isLockFilesEnabled!: boolean;
+    @Input() showFilesSubject!: Subject<boolean>;
+    @Input() dropdownHoverSubject!: Subject<TextPlagiarismFileElement>;
 
     @Output() selectFile = new EventEmitter<string>();
 
     public showFiles = false;
     public activeFileIndex = 0;
 
-    fileSelectSubscription: Subscription;
+    private fileSelectSubscription: Subscription;
+    private showFilesSubscription: Subscription;
 
     // Icons
     faChevronDown = faChevronDown;
+    hoveredFileIdx: number;
 
     ngOnInit(): void {
+        this.subscribeToFileSelection();
+        this.subscribeToShowFiles();
+        this.subscribeToDropdownHover();
+    }
+
+    /**
+     * subscribes to listening onto file changes in component instance
+     * @private helper method
+     */
+    private subscribeToFileSelection(): void {
         this.fileSelectSubscription = this.fileSelectedSubject.subscribe((val) => {
-            if (val.file && this.isLockFilesEnabled) {
-                this.handleFileSelectWithoutPropagation(val.file, val.idx);
+            if (this.isLockFilesEnabled) {
+                this.handleLockedFileSelection(val.file, val.idx);
             }
         });
+    }
+
+    private handleLockedFileSelection(file: FileWithHasMatch, idx: number): void {
+        let index;
+        if (this.files[idx]?.file === file.file) {
+            this.handleFileSelectWithoutPropagation(file, idx);
+        } else if ((index = this.getIndexOf(file)) > 0) {
+            this.handleFileSelectWithoutPropagation(file, index);
+        } else {
+            this.showFiles = false;
+        }
+    }
+
+    /**
+     * subscribes to listening onto dropdown toggle in component instance
+     * @private helper method
+     */
+    private subscribeToShowFiles(): void {
+        this.showFilesSubscription = this.showFilesSubject.subscribe((showFiles) => {
+            if (this.isLockFilesEnabled || (!this.isLockFilesEnabled && !showFiles)) {
+                this.toggleShowFilesWithoutPropagation(showFiles);
+            }
+        });
+    }
+
+    /**
+     * subscribes to listening onto mouse enter changes in dropdown in component instance
+     * @private helper method
+     */
+    private subscribeToDropdownHover(): void {
+        this.dropdownHoverSubject.subscribe((val) => {
+            if (this.isLockFilesEnabled) {
+                this.handleDropdownHover(val.file, val.idx);
+            }
+        });
+    }
+
+    private handleDropdownHover(file: FileWithHasMatch, idx: number): void {
+        let index;
+        if (this.files[idx]?.file === file.file) {
+            this.hoveredFileIdx = idx;
+        } else if ((index = this.getIndexOf(file)) > 0) {
+            this.hoveredFileIdx = index;
+        } else this.hoveredFileIdx = -1;
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -55,6 +113,10 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     ngOnDestroy(): void {
         if (this.fileSelectSubscription) {
             this.fileSelectSubscription.unsubscribe();
+        }
+
+        if (this.showFilesSubscription) {
+            this.showFilesSubscription.unsubscribe();
         }
     }
 
@@ -87,6 +149,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
         this.activeFileIndex = idx;
         this.showFiles = false;
         this.selectFile.emit(file.file);
+        file.hasMatch = true;
     }
 
     hasFiles(): boolean {
@@ -96,6 +159,30 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     toggleShowFiles(): void {
         if (this.hasFiles()) {
             this.showFiles = !this.showFiles;
+            this.showFilesSubject.next(this.showFiles);
         }
+    }
+
+    /**
+     * handles toggle of the dropdown, do NOT propagate change to emit toggle to parent component component for lock sync
+     * @param showFiles dropdown toggle status
+     */
+    toggleShowFilesWithoutPropagation(showFiles: boolean): void {
+        if (this.hasFiles()) {
+            this.showFiles = showFiles;
+        }
+    }
+
+    triggerMouseEnter(file: FileWithHasMatch, idx: number) {
+        this.dropdownHoverSubject.next({ idx: idx, file: file });
+    }
+
+    /**
+     * gets index of the file if it exists
+     * @param file The file to look up.
+     * @returns index if found, -1 otherwise
+     */
+    private getIndexOf(file: FileWithHasMatch): number {
+        return this.files.findIndex((f) => f.file === file.file);
     }
 }

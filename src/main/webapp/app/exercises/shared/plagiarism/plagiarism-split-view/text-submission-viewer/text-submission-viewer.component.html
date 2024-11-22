@@ -3,6 +3,8 @@
     [isLockFilesEnabled]="this.isLockFilesEnabled"
     [fileSelectedSubject]="fileSelectedSubject"
     (selectFile)="handleFileSelect($event)"
+    [showFilesSubject]="showFilesSubject"
+    [dropdownHoverSubject]="dropdownHoverSubject"
     studentLogin="{{ plagiarismSubmission?.studentLogin }}"
 />
 @if (cannotLoadFiles) {
