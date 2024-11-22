@@ -133,7 +133,7 @@
             }
         },
         "export": {
-            "error": "Error exporting CSV."
+            "error": "Fehler beim Exportieren der CSV-Datei."
         }
     }
 }
