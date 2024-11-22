@@ -17,7 +17,7 @@ import { ExamParticipationActions } from '../../support/pageobjects/exam/ExamPar
 const textFixture = 'loremIpsum.txt';
 const textFixtureShort = 'loremIpsum-short.txt';
 
-test.describe('Exam participation', { tag: '@slow' }, () => {
+test.describe('Exam participation', () => {
     let course: Course;
     let exerciseArray: Array<Exercise> = [];
     let studentTwoName: string;
@@ -43,7 +43,7 @@ test.describe('Exam participation', { tag: '@slow' }, () => {
         studentFourName = studentFourInfo.name!;
     });
 
-    test.describe('Early Hand-in', () => {
+    test.describe('Early Hand-in', { tag: '@slow' }, () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
@@ -107,7 +107,6 @@ test.describe('Exam participation', { tag: '@slow' }, () => {
             await examParticipation.startParticipation(studentFour, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                // await
                 await examNavigation.openFromOverviewByTitle(exercise.exerciseGroup!.title!);
                 await examNavigation.openOverview();
             }
@@ -118,7 +117,7 @@ test.describe('Exam participation', { tag: '@slow' }, () => {
         });
     });
 
-    test.describe('Early hand-in with continue and reload page', () => {
+    test.describe('Early hand-in with continue and reload page', { tag: '@slow' }, () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
@@ -222,7 +221,7 @@ test.describe('Exam participation', { tag: '@slow' }, () => {
         });
     });
 
-    test.describe('Normal Hand-in', () => {
+    test.describe('Normal Hand-in', { tag: '@sequential' }, () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
@@ -259,7 +258,7 @@ test.describe('Exam participation', { tag: '@slow' }, () => {
         });
     });
 
-    test.describe('Exam announcements', () => {
+    test.describe('Exam announcements', { tag: '@slow' }, () => {
         let exam: Exam;
         const students = [studentOne, studentTwo];
 
