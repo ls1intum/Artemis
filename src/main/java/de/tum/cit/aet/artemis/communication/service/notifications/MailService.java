@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -64,7 +66,7 @@ public class MailService implements InstantNotificationService {
 
     private final MailSendingService mailSendingService;
 
-    private final MarkdownCustomLinkRendererService markdownCustomLinkRendererService;
+    private final List<MarkdownCustomRendererService> markdownCustomRendererServices;
 
     // notification related variables
 
@@ -91,13 +93,16 @@ public class MailService implements InstantNotificationService {
 
     private static final String WEEKLY_SUMMARY_NEW_EXERCISES = "weeklySummaryNewExercises";
 
+    private final HashMap<Long, String> renderedPosts;
+
     public MailService(MessageSource messageSource, SpringTemplateEngine templateEngine, TimeService timeService, MailSendingService mailSendingService,
-            MarkdownCustomLinkRendererService markdownCustomLinkRendererService) {
+            MarkdownCustomLinkRendererService markdownCustomLinkRendererService, MarkdownCustomReferenceRendererService markdownCustomReferenceRendererService) {
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
         this.timeService = timeService;
         this.mailSendingService = mailSendingService;
-        this.markdownCustomLinkRendererService = markdownCustomLinkRendererService;
+        markdownCustomRendererServices = List.of(markdownCustomLinkRendererService, markdownCustomReferenceRendererService);
+        renderedPosts = new HashMap<>();
     }
 
     /**
@@ -270,12 +275,25 @@ public class MailService implements InstantNotificationService {
 
             // Render markdown content of post to html
             try {
-                Parser parser = Parser.builder().build();
-                HtmlRenderer renderer = HtmlRenderer.builder()
-                        .attributeProviderFactory(attributeContext -> new MarkdownRelativeToAbsolutePathAttributeProvider(artemisServerUrl.toString())).build();
-                String postContent = post.getContent();
-                String renderedPostContent = renderer.render(parser.parse(postContent));
-                post.setContent(markdownCustomLinkRendererService.render(renderedPostContent));
+                String renderedPostContent;
+
+                // To avoid having to re-render the same post multiple times we store it in a hash map
+                if (renderedPosts.containsKey(post.getId())) {
+                    renderedPostContent = renderedPosts.get(post.getId());
+                }
+                else {
+                    Parser parser = Parser.builder().build();
+                    HtmlRenderer renderer = HtmlRenderer.builder()
+                            .attributeProviderFactory(attributeContext -> new MarkdownRelativeToAbsolutePathAttributeProvider(artemisServerUrl.toString())).build();
+                    String postContent = post.getContent();
+                    renderedPostContent = markdownCustomRendererServices.stream().reduce(renderer.render(parser.parse(postContent)), (s, service) -> service.render(s),
+                            (s1, s2) -> s2);
+                    if (post.getId() != null) {
+                        renderedPosts.put(post.getId(), renderedPostContent);
+                    }
+                }
+
+                post.setContent(renderedPostContent);
             }
             catch (Exception e) {
                 // In case something goes wrong, leave content of post as-is

@@ -14,9 +14,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
+/**
+ * This service implements the rendering of markdown tags that represent a link.
+ * It takes the tag, transforms it into an <a></a> tag, and sets the corresponding href.
+ */
 @Profile(PROFILE_CORE)
 @Service
-public class MarkdownCustomLinkRendererService {
+public class MarkdownCustomLinkRendererService implements MarkdownCustomRendererService {
 
     private static final Logger log = LoggerFactory.getLogger(MarkdownCustomLinkRendererService.class);
 
@@ -26,7 +30,7 @@ public class MarkdownCustomLinkRendererService {
     private URL artemisServerUrl;
 
     public MarkdownCustomLinkRendererService() {
-        this.supportedTags = Set.of("programming", "modeling", "quiz", "text", "file-upload", "lecture", "attachment", "lecture-unit", "slide", "user", "channel", "faq");
+        this.supportedTags = Set.of("programming", "modeling", "quiz", "text", "file-upload", "lecture", "attachment", "lecture-unit", "slide", "faq");
     }
 
     /**
