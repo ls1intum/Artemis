@@ -68,12 +68,6 @@ class MailServiceTest {
     private SpringTemplateEngine templateEngine;
 
     @Mock
-    private MarkdownCustomLinkRendererService markdownCustomLinkRendererService;
-
-    @Mock
-    private MarkdownCustomReferenceRendererService markdownCustomReferenceRendererService;
-
-    @Mock
     private TimeService timeService;
 
     private User student1;
@@ -123,7 +117,8 @@ class MailServiceTest {
 
         mailSendingService = new MailSendingService(jHipsterProperties, javaMailSender);
 
-        mailService = new MailService(messageSource, templateEngine, timeService, mailSendingService, markdownCustomLinkRendererService, markdownCustomReferenceRendererService);
+        mailService = new MailService(messageSource, templateEngine, timeService, mailSendingService, new MarkdownCustomLinkRendererService(),
+                new MarkdownCustomReferenceRendererService());
         ReflectionTestUtils.setField(mailService, "artemisServerUrl", new URI("http://localhost:8080").toURL());
     }
 
