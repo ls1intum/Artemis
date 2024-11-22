@@ -156,10 +156,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
                         // If participationId exists and feedback view is needed, fetch history results first
                         if (this.participationId && this.isFeedbackView) {
-                            return this.fetchSubmissionHistory().pipe(
-                                tap((results) => (this.sortedSubmissionHistory = results)),
-                                switchMap(() => this.fetchLatestSubmission()), // After history results, fetch latest submission
-                            );
+                            return this.fetchSubmissionHistory().pipe(switchMap(() => this.fetchLatestSubmission()));
                         }
                         // Otherwise, directly fetch the latest submission
                         return this.fetchLatestSubmission();
@@ -264,12 +261,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.hasElements = this.umlModel.elements && Object.values(this.umlModel.elements).length !== 0;
         }
         this.explanation = this.submission.explanationText ?? '';
-    }
-
-    viewTimeline() {
-        if (this.participationId && this.sortedSubmissionHistory) {
-            this.showResultHistory = !this.showResultHistory;
-        }
     }
 
     /**

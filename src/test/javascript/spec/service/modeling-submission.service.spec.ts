@@ -137,6 +137,20 @@ describe('ModelingSubmission Service', () => {
         tick();
     }));
 
+    it('should get submission without lock', fakeAsync(() => {
+        const { returnedFromService } = getDefaultValues();
+
+        service
+            .getSubmissionWithoutLock(123)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toEqual({ ...elemDefault }));
+
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.urlWithParams === 'api/modeling-submissions/123?withoutResults=true');
+        expect(req.request.params.get('withoutResults')).toBe('true');
+        req.flush(returnedFromService);
+        tick();
+    }));
+
     afterEach(() => {
         httpMock.verify();
     });

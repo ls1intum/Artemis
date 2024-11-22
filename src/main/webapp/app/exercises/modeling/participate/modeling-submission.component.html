@@ -13,7 +13,7 @@
                                 id="toggleTimeline"
                                 [icon]="faTimeline"
                                 [title]="showResultHistory ? 'entity.action.hideTimeline' : 'entity.action.viewTimeline'"
-                                (click)="viewTimeline()"
+                                (click)="showResultHistory = !showResultHistory"
                             />
                         }
                         @if (isActive || !modelingExercise.dueDate) {
