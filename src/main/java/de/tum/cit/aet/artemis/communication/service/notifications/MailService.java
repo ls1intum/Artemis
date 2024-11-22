@@ -64,6 +64,8 @@ public class MailService implements InstantNotificationService {
 
     private final MailSendingService mailSendingService;
 
+    private final MarkdownCustomLinkRendererService markdownCustomLinkRendererService;
+
     // notification related variables
 
     private static final String NOTIFICATION = "notification";
@@ -89,11 +91,13 @@ public class MailService implements InstantNotificationService {
 
     private static final String WEEKLY_SUMMARY_NEW_EXERCISES = "weeklySummaryNewExercises";
 
-    public MailService(MessageSource messageSource, SpringTemplateEngine templateEngine, TimeService timeService, MailSendingService mailSendingService) {
+    public MailService(MessageSource messageSource, SpringTemplateEngine templateEngine, TimeService timeService, MailSendingService mailSendingService,
+            MarkdownCustomLinkRendererService markdownCustomLinkRendererService) {
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
         this.timeService = timeService;
         this.mailSendingService = mailSendingService;
+        this.markdownCustomLinkRendererService = markdownCustomLinkRendererService;
     }
 
     /**
@@ -267,13 +271,15 @@ public class MailService implements InstantNotificationService {
             // Render markdown content of post to html
             try {
                 Parser parser = Parser.builder().build();
-                HtmlRenderer renderer = HtmlRenderer.builder().build();
+                HtmlRenderer renderer = HtmlRenderer.builder()
+                        .attributeProviderFactory(attributeContext -> new MarkdownRelativeToAbsolutePathAttributeProvider(artemisServerUrl.toString())).build();
                 String postContent = post.getContent();
                 String renderedPostContent = renderer.render(parser.parse(postContent));
-                post.setContent(renderedPostContent);
+                post.setContent(markdownCustomLinkRendererService.render(renderedPostContent));
             }
             catch (Exception e) {
                 // In case something goes wrong, leave content of post as-is
+                log.error("Error while parsing post content", e);
             }
         }
         else {
