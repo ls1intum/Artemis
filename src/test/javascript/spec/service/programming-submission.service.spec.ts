@@ -18,7 +18,7 @@ import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from '../../../../main/webapp/app/shared/layouts/profiles/profile.service';
@@ -552,4 +552,39 @@ describe('ProgrammingSubmissionService', () => {
             },
         ]);
     });
+
+    it('should change to building when queue timer ends', fakeAsync(() => {
+        // @ts-ignore
+        submissionService.currentExpectedQueueEstimate = 1000;
+        submissionService.setLocalCIProfile(true);
+        const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
+        // No latest pending submission found.
+        httpGetStub.mockReturnValue(of(undefined));
+        submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((s) => returnedSubmissions.push(s));
+        expect(returnedSubmissions).toEqual([{ submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId }]);
+        // New submission comes in.
+        currentProgrammingSubmission.submissionDate = dayjs();
+        wsSubmissionSubject.next(currentProgrammingSubmission);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+        ]);
+
+        tick(1000);
+
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentProgrammingSubmission, participationId },
+        ]);
+
+        wsSubmissionProcessingSubject.next(mockSubmissionProcessingDTO);
+        expect(returnedSubmissions).toEqual([
+            { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_QUEUED, submission: currentProgrammingSubmission, participationId },
+            { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: currentProgrammingSubmission, participationId },
+        ]);
+
+        discardPeriodicTasks();
+    }));
 });

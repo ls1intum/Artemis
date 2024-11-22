@@ -102,6 +102,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     private startedProcessingCache: Map<string, BuildTimingInfo> = new Map<string, BuildTimingInfo>();
     private isLocalCIProfile?: boolean = undefined;
+    private profileServiceSubscription: Subscription;
 
     constructor(
         private websocketService: JhiWebsocketService,
@@ -110,7 +111,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         private participationService: ProgrammingExerciseParticipationService,
         private profileService: ProfileService,
     ) {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+        this.profileServiceSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.setLocalCIProfile(!!profileInfo?.activeProfiles.includes(PROFILE_LOCALCI));
         });
     }
@@ -121,6 +122,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         Object.values(this.queueEstimateTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         this.submissionTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
         this.submissionProcessingTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
+        this.profileServiceSubscription.unsubscribe();
     }
 
     get exerciseBuildState() {
