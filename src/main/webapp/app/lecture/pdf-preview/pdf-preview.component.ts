@@ -54,7 +54,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     private readonly attachmentService = inject(AttachmentService);
     private readonly attachmentUnitService = inject(AttachmentUnitService);
     private readonly lectureUnitService = inject(LectureUnitService);
-    private readonly alertService = inject(AlertService);
+    readonly alertService = inject(AlertService);
     private readonly router = inject(Router);
 
     dialogErrorSource = new Subject<string>();
@@ -301,7 +301,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Updates hidden pages after selected pages are deleted.
      * @param pagesToDelete - Array of pages to be deleted (0-indexed).
      */
-    private updateHiddenPages(pagesToDelete: number[]) {
+    updateHiddenPages(pagesToDelete: number[]) {
         const updatedHiddenPages = new Set<number>();
         this.hiddenPages().forEach((hiddenPage) => {
             // Adjust hiddenPage based on the deleted pages

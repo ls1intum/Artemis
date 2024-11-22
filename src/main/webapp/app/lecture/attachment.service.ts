@@ -156,7 +156,7 @@ export class AttachmentService {
      */
     getAttachmentByParentAttachmentId(parentAttachmentId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Attachment>(`${this.resourceUrl}/${parentAttachmentId}/hiddenAttachment`, { observe: 'response' })
+            .get<Attachment>(`${this.resourceUrl}/${parentAttachmentId}/hidden-attachment`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
     }
 }
