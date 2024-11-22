@@ -6,6 +6,7 @@ import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/Plagiarism
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { downloadFile } from 'app/shared/util/download.util';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',
@@ -24,6 +25,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     constructor(
         private plagiarismCasesService: PlagiarismCasesService,
         private route: ActivatedRoute,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit(): void {
@@ -173,19 +175,11 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
             }
             blobParts.push(fields.join(';') + '\n');
         });
-import { JhiAlertService } from 'ng-jhipster';
 
-    constructor(
-        private plagiarismCasesService: PlagiarismCasesService,
-        private route: ActivatedRoute,
-        private jhiAlertService: JhiAlertService,
-    ) {}
-
-    try {
-        downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
-    } catch (error) {
-        console.error('Failed to download plagiarism cases:', error);
-        this.jhiAlertService.error('plagiarismCases.export.error');
-    }
+        try {
+            downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
+        } catch (error) {
+            this.alertService.error('plagiarismCases.export.error');
+        }
     }
 }

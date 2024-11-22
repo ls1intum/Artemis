@@ -131,6 +131,9 @@
                 "confirm": "Fall bestätigen",
                 "discard": "Fall verwerfen"
             }
+        },
+        "export": {
+            "error": "Error exporting CSV."
         }
     }
 }
