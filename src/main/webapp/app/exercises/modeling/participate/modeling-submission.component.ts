@@ -207,17 +207,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             tap((submissions: ModelingSubmission[]) => {
                 this.sortedSubmissionHistory = submissions.sort((a, b) => {
                     // Get the latest result for each submission (sorted by completionDate descending)
-                    const latestResultA = a.results?.sort((resultA, resultB) => {
-                        const dateA = resultA.completionDate ? resultA.completionDate.valueOf() : 0;
-                        const dateB = resultB.completionDate ? resultB.completionDate.valueOf() : 0;
-                        return dateB - dateA; // Descending
-                    })[0];
-
-                    const latestResultB = b.results?.sort((resultA, resultB) => {
-                        const dateA = resultA.completionDate ? resultA.completionDate.valueOf() : 0;
-                        const dateB = resultB.completionDate ? resultB.completionDate.valueOf() : 0;
-                        return dateB - dateA; // Descending
-                    })[0];
+                    const latestResultA = this.sortResultsByCompletionDate(a.results ?? [])[0];
+                    const latestResultB = this.sortResultsByCompletionDate(b.results ?? [])[0];
 
                     // Use the latest result's completionDate for comparison
                     const dateA = latestResultA?.completionDate ? latestResultA.completionDate.valueOf() : 0;
@@ -232,6 +223,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 });
             }),
         );
+    }
+
+    private sortResultsByCompletionDate(results: Result[]): Result[] {
+        return results.sort((a, b) => {
+            const dateA = a.completionDate ? a.completionDate.valueOf() : 0;
+            const dateB = b.completionDate ? b.completionDate.valueOf() : 0;
+            return dateB - dateA; // Descending
+        });
     }
 
     private inputValuesArePresent(): boolean {

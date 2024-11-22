@@ -69,7 +69,6 @@ describe('ModelingSubmissionComponent', () => {
         service = debugElement.injector.get(ModelingSubmissionService);
         alertService = debugElement.injector.get(AlertService);
         comp.modelingEditor = TestBed.createComponent(MockComponent(ModelingEditorComponent)).componentInstance;
-        service = debugElement.injector.get(ModelingSubmissionService);
     }
 
     beforeEach(() => {
