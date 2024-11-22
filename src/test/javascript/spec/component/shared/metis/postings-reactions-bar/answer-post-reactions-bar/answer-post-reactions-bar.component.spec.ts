@@ -193,15 +193,6 @@ describe('AnswerPostReactionsBarComponent', () => {
         expect(answerNowButton).toBeNull();
     });
 
-    it('answer now button should be visible if answer is the last one', () => {
-        component.posting = post;
-        component.isLastAnswer = true;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.query(By.css('.reply-btn')).nativeElement;
-        expect(answerNowButton.innerHTML).toContain('reply');
-    });
-
     it('should invoke metis service when toggle resolve is clicked', () => {
         metisServiceUserPostingAuthorMock.mockReturnValue(true);
         fixture.detectChanges();

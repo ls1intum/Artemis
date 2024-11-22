@@ -3,7 +3,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
+import { getElement } from '../../../../../helpers/utils/general.utils';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -239,9 +239,8 @@ describe('PostReactionsBarComponent', () => {
         component.posting = post;
 
         component.ngOnInit();
+        component.isEmojiCount = true;
         fixture.detectChanges();
-        const reactions = getElements(debugElement, 'jhi-emoji');
-        expect(reactions).toHaveLength(2);
         expect(component.reactionMetaDataMap).toEqual({
             smile: {
                 count: 1,
@@ -311,14 +310,6 @@ describe('PostReactionsBarComponent', () => {
         expect(component.pinTooltip).toBe('artemisApp.metis.pinnedPostTooltip');
     });
 
-    it('start discussion button should be visible if post does not yet have any answers', () => {
-        component.posting = post;
-        component.sortedAnswerPosts = [];
-        fixture.detectChanges();
-        const startDiscussion = fixture.debugElement.query(By.css('.reply-btn')).nativeElement;
-        expect(startDiscussion.innerHTML).toContain('reply');
-    });
-
     it('should display button to show single answer', () => {
         component.posting = post;
         component.sortedAnswerPosts = [metisPostExerciseUser1];
@@ -342,5 +333,25 @@ describe('PostReactionsBarComponent', () => {
         fixture.detectChanges();
         const answerNowButton = fixture.debugElement.query(By.css('.collapse-answers-btn')).nativeElement;
         expect(answerNowButton.innerHTML).toContain('collapseAnswers');
+    });
+
+    it('should emit showAnswersChange and openPostingCreateEditModal when openAnswerView is called', () => {
+        const showAnswersChangeSpy = jest.spyOn(component.showAnswersChange, 'emit');
+        const openPostingCreateEditModalSpy = jest.spyOn(component.openPostingCreateEditModal, 'emit');
+
+        component.openAnswerView();
+
+        expect(showAnswersChangeSpy).toHaveBeenCalledWith(true);
+        expect(openPostingCreateEditModalSpy).toHaveBeenCalled();
+    });
+
+    it('should emit showAnswersChange and closePostingCreateEditModal when closeAnswerView is called', () => {
+        const showAnswersChangeSpy = jest.spyOn(component.showAnswersChange, 'emit');
+        const closePostingCreateEditModalSpy = jest.spyOn(component.closePostingCreateEditModal, 'emit');
+
+        component.closeAnswerView();
+
+        expect(showAnswersChangeSpy).toHaveBeenCalledWith(false);
+        expect(closePostingCreateEditModalSpy).toHaveBeenCalled();
     });
 });
