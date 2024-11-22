@@ -33,6 +33,14 @@ public class MarkdownCustomReferenceRendererService implements MarkdownCustomRen
         startingCharacters.put("channel", "#");
     }
 
+    /**
+     * Takes a string and replaces all occurrences of custom markdown tags (e.g. [user], [channel], etc.) with text.
+     * To make it better readable, it prepends an appropriate character. (e.g. for users an @, for channels a #)
+     *
+     * @param content string to render
+     *
+     * @return the newly rendered string.
+     */
     @Override
     public String render(String content) {
         String tagPattern = String.join("|", supportedTags);
