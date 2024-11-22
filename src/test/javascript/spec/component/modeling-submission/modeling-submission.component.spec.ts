@@ -108,6 +108,12 @@ describe('ModelingSubmissionComponent', () => {
     afterEach(() => {
         jest.restoreAllMocks();
         console.error = originalConsoleError;
+
+        // Ensure all subscriptions are cleaned up
+        if (comp) {
+            comp.ngOnDestroy();
+        }
+        TestBed.resetTestingModule();
     });
 
     it('should initialize without submissionId (Standard Mode)', () => {
@@ -160,7 +166,13 @@ describe('ModelingSubmissionComponent', () => {
         submission.id = 20;
         submission.submitted = true;
         submission.participation = participation;
-        const result = { id: 1, completionDate: dayjs(), assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, score: 10 } as Result;
+        const result = {
+            id: 1,
+            completionDate: dayjs(),
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: true,
+            score: 10,
+        } as Result;
         submission.results = [result];
         submission.latestResult = result;
 
@@ -300,7 +312,11 @@ describe('ModelingSubmissionComponent', () => {
 
         fixture.detectChanges();
 
-        const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"elements": [{"id": 1}]}', submitted: true, participation });
+        const modelSubmission = <ModelingSubmission>(<unknown>{
+            model: '{"elements": [{"id": 1}]}',
+            submitted: true,
+            participation,
+        });
         comp.submission = modelSubmission;
         const createStub = jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
@@ -313,7 +329,11 @@ describe('ModelingSubmissionComponent', () => {
     it('should catch error on submit', () => {
         createComponent();
 
-        const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"elements": [{"id": 1}]}', submitted: true, participation });
+        const modelSubmission = <ModelingSubmission>(<unknown>{
+            model: '{"elements": [{"id": 1}]}',
+            submitted: true,
+            participation,
+        });
         comp.submission = modelSubmission;
         jest.spyOn(service, 'create').mockReturnValue(throwError(() => ({ status: 500 })));
         const alertServiceSpy = jest.spyOn(alertService, 'error');
@@ -322,6 +342,104 @@ describe('ModelingSubmissionComponent', () => {
         comp.submit();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(comp.submission).toBe(modelSubmission);
+    });
+
+    it('should handle failed Athena assessment appropriately', () => {
+        // Set up route with participationId
+        const route = {
+            params: of({ courseId: 5, exerciseId: 22, participationId: 123 }),
+        } as any as ActivatedRoute;
+        createComponent(route); // Pass the route
+
+        submission.model = '{"elements": [{"id": 1}]}';
+        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
+
+        // Create initial manual result
+        const manualResult = new Result();
+        manualResult.score = 50.0;
+        manualResult.assessmentType = AssessmentType.MANUAL;
+        manualResult.submission = submission;
+        manualResult.participation = submission.participation;
+        manualResult.completionDate = dayjs();
+        manualResult.feedbacks = [];
+
+        // Create a failed Athena result
+        const failedAthenaResult = new Result();
+        failedAthenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+        failedAthenaResult.submission = submission;
+        failedAthenaResult.participation = submission.participation;
+        failedAthenaResult.completionDate = undefined;
+        failedAthenaResult.successful = false;
+        failedAthenaResult.feedbacks = [];
+
+        const resultSubject = new BehaviorSubject<Result | undefined>(manualResult);
+        const subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+
+        // Initialize component
+        fixture.detectChanges();
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
+
+        // Clear any previous calls
+        alertServiceSpy.mockClear();
+
+        // Emit failed Athena result
+        resultSubject.next(failedAthenaResult);
+        fixture.detectChanges();
+
+        // Verify error was shown
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackFailed');
+        expect(comp.isGeneratingFeedback).toBeFalse();
+    });
+
+    it('should handle Athena assessment results separately from manual assessments', () => {
+        createComponent();
+
+        submission.model = '{"elements": [{"id": 1}]}';
+        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+        const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
+        const alertServiceSpy = jest.spyOn(alertService, 'info');
+
+        // Create an Athena result
+        const athenaResult = new Result();
+        athenaResult.score = 75.0;
+        athenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+        athenaResult.submission = submission;
+        athenaResult.participation = submission.participation;
+        athenaResult.completionDate = dayjs();
+        athenaResult.successful = true;
+        athenaResult.feedbacks = [];
+
+        // Create manual result
+        const manualResult = new Result();
+        manualResult.score = 50.0;
+        manualResult.assessmentType = AssessmentType.MANUAL;
+        manualResult.submission = submission;
+        manualResult.participation = submission.participation;
+        manualResult.completionDate = dayjs();
+        manualResult.feedbacks = [];
+
+        // Setup initial manual result in subject
+        const resultSubject = new BehaviorSubject<Result | undefined>(manualResult);
+        const subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
+
+        // Initialize component and verify manual result
+        fixture.detectChanges();
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
+        expect(comp.assessmentResult).toEqual(manualResult);
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.newAssessment');
+
+        // Clear previous calls to alertService
+        alertServiceSpy.mockClear();
+
+        // Emit Athena result
+        resultSubject.next(athenaResult);
+        fixture.detectChanges();
+
+        // Verify Athena result handling
+        expect(comp.assessmentResult).toEqual(athenaResult);
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackSuccessful');
     });
 
     it('should set result when new result comes in from websocket', () => {
@@ -369,78 +487,6 @@ describe('ModelingSubmissionComponent', () => {
         fixture.detectChanges();
         expect(comp.submission).toEqual(modelSubmission);
         expect(receiveStub).toHaveBeenCalledOnce();
-    });
-
-    it('should handle Athena assessment results separately from manual assessments', () => {
-        createComponent();
-
-        submission.model = '{"elements": [{"id": 1}]}';
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
-        const alertServiceSpy = jest.spyOn(alertService, 'info');
-
-        // Create an Athena result
-        const athenaResult = new Result();
-        athenaResult.score = 75.0;
-        athenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
-        athenaResult.submission = submission;
-        athenaResult.participation = submission.participation;
-        athenaResult.completionDate = dayjs();
-        athenaResult.successful = true;
-
-        // Setup the websocket subject with initial manual result followed by Athena result
-        const manualResult = new Result();
-        manualResult.score = 50.0;
-        manualResult.assessmentType = AssessmentType.MANUAL;
-        manualResult.submission = submission;
-        manualResult.participation = submission.participation;
-        manualResult.completionDate = dayjs();
-
-        const resultSubject = new BehaviorSubject<Result | undefined>(manualResult);
-        jest.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
-
-        // Initialize component
-        fixture.detectChanges();
-
-        // Verify initial manual result
-        expect(comp.assessmentResult).toEqual(manualResult);
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.newAssessment');
-
-        // Emit Athena result
-        resultSubject.next(athenaResult);
-
-        // Verify Athena result handling
-        expect(comp.assessmentResult).toEqual(athenaResult);
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackSuccessful');
-    });
-
-    it('should handle failed Athena assessment appropriately', () => {
-        createComponent();
-
-        submission.model = '{"elements": [{"id": 1}]}';
-        jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
-
-        // Create a failed Athena result
-        const failedAthenaResult = new Result();
-        failedAthenaResult.assessmentType = AssessmentType.AUTOMATIC_ATHENA;
-        failedAthenaResult.submission = submission;
-        failedAthenaResult.participation = submission.participation;
-        failedAthenaResult.completionDate = undefined;
-        failedAthenaResult.successful = false;
-
-        const resultSubject = new BehaviorSubject<Result | undefined>(undefined);
-        jest.spyOn(participationWebSocketService, 'subscribeForLatestResultOfParticipation').mockReturnValue(resultSubject);
-
-        // Initialize component
-        fixture.detectChanges();
-
-        // Emit failed Athena result
-        resultSubject.next(failedAthenaResult);
-
-        // Verify failed Athena handling
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackFailed');
     });
 
     it('should not process results without completionDate except for failed Athena results', () => {
@@ -559,7 +605,10 @@ describe('ModelingSubmissionComponent', () => {
         createComponent();
 
         const model = <UMLModel>(<unknown>{
-            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
+            elements: [<UMLElement>(<unknown>{
+                    owner: 'ownerId1',
+                    id: 'elementId1',
+                }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
         });
         const currentModelStub = jest.spyOn(comp.modelingEditor, 'getCurrentModel').mockReturnValue(model as UMLModel);
         comp.explanation = 'Explanation Test';
@@ -600,7 +649,10 @@ describe('ModelingSubmissionComponent', () => {
         createComponent();
 
         const currentModel = <UMLModel>(<unknown>{
-            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
+            elements: [<UMLElement>(<unknown>{
+                    owner: 'ownerId1',
+                    id: 'elementId1',
+                }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
             version: 'version',
         });
         const unsavedModel = <UMLModel>(<unknown>{
