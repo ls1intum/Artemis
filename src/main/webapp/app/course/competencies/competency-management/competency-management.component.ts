@@ -155,7 +155,10 @@ export class CompetencyManagementComponent implements OnInit {
      */
     updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
         const importedCourseCompetencies = res.map((dto) => dto.competency!);
-        this.courseCompetencies.update((courseCompetencies) => courseCompetencies.concat(importedCourseCompetencies));
+        const newCourseCompetencies = importedCourseCompetencies.filter(
+            (competency) => !this.courseCompetencies().some((existingCompetency) => existingCompetency.id === competency.id),
+        );
+        this.courseCompetencies.update((courseCompetencies) => courseCompetencies.concat(newCourseCompetencies));
     }
 
     onRemoveCompetency(competencyId: number) {

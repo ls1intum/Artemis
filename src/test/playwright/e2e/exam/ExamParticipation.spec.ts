@@ -45,7 +45,7 @@ test.describe('Exam participation', () => {
         studentFourName = studentFourInfo.name!;
     });
 
-    test.describe('Early Hand-in', () => {
+    test.describe('Early Hand-in', { tag: '@slow' }, () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
@@ -109,7 +109,6 @@ test.describe('Exam participation', () => {
             await examParticipation.startParticipation(studentFour, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
-                // await
                 await examNavigation.openFromOverviewByTitle(exercise.exerciseGroup!.title!);
                 await examNavigation.openOverview();
             }
@@ -120,7 +119,7 @@ test.describe('Exam participation', () => {
         });
     });
 
-    test.describe('Early hand-in with continue and reload page', () => {
+    test.describe('Early hand-in with continue and reload page', { tag: '@slow' }, () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
@@ -224,7 +223,7 @@ test.describe('Exam participation', () => {
         });
     });
 
-    test.describe('Normal Hand-in', () => {
+    test.describe('Normal Hand-in', { tag: '@sequential' }, () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 
@@ -261,7 +260,7 @@ test.describe('Exam participation', () => {
         });
     });
 
-    test.describe('Exam announcements', () => {
+    test.describe('Exam announcements', { tag: '@slow' }, () => {
         let exam: Exam;
         const students = [studentOne, studentTwo];
         let exercise: Exercise;
