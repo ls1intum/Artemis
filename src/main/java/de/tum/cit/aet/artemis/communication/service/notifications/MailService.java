@@ -284,7 +284,8 @@ public class MailService implements InstantNotificationService {
                 else {
                     Parser parser = Parser.builder().build();
                     HtmlRenderer renderer = HtmlRenderer.builder()
-                            .attributeProviderFactory(attributeContext -> new MarkdownRelativeToAbsolutePathAttributeProvider(artemisServerUrl.toString())).build();
+                            .attributeProviderFactory(attributeContext -> new MarkdownRelativeToAbsolutePathAttributeProvider(artemisServerUrl.toString()))
+                            .nodeRendererFactory(new MarkdownImageBlockRendererFactory(artemisServerUrl.toString())).build();
                     String postContent = post.getContent();
                     renderedPostContent = markdownCustomRendererServices.stream().reduce(renderer.render(parser.parse(postContent)), (s, service) -> service.render(s),
                             (s1, s2) -> s2);

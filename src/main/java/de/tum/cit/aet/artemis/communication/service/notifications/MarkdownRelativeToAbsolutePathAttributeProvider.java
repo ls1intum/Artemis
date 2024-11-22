@@ -22,13 +22,7 @@ public class MarkdownRelativeToAbsolutePathAttributeProvider implements Attribut
      */
     @Override
     public void setAttributes(Node node, String tagName, Map<String, String> attributes) {
-        if ("img".equals(tagName)) {
-            String src = attributes.get("src");
-            if (src != null && src.startsWith("/")) {
-                attributes.put("src", baseUrl + src);
-            }
-        }
-        else if ("a".equals(tagName)) {
+        if ("a".equals(tagName)) {
             String href = attributes.get("href");
             if (href != null && href.startsWith("/")) {
                 attributes.put("href", baseUrl + href);
