@@ -560,7 +560,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         processingJobs.put(buildJobQueueItem.id(), buildJobQueueItem);
         var submissionDto = request.get("/api/programming-exercise-participations/" + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 SubmissionDTO.class);
-        processingJobs.remove(buildJobQueueItem.id());
+        processingJobs.delete(buildJobQueueItem.id());
 
         assertThat(submissionDto).isNotNull();
         assertThat(submissionDto.isProcessing()).isTrue();
