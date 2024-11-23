@@ -76,7 +76,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -84,6 +83,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.RequestMatcher;
 import org.springframework.web.client.RestTemplate;
@@ -129,7 +129,7 @@ public class GitlabRequestMockProvider {
 
     private MockRestServiceServer mockServerShortTimeout;
 
-    @SpyBean
+    @MockitoSpyBean
     @InjectMocks
     private GitLabApi gitLabApi;
 
@@ -154,7 +154,7 @@ public class GitlabRequestMockProvider {
     @Mock
     private PipelineApi pipelineApi;
 
-    @SpyBean
+    @MockitoSpyBean
     private GitLabUserManagementService gitLabUserManagementService;
 
     @Autowired

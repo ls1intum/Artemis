@@ -22,12 +22,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -55,20 +55,20 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate and
     // GitlabApi.
-    @SpyBean
+    @MockitoSpyBean
     protected GitLabCIService continuousIntegrationService;
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate and
     // GitlabApi.
-    @SpyBean
+    @MockitoSpyBean
     protected GitLabCITriggerService continuousIntegrationTriggerService;
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate and
     // GitlabApi.
-    @SpyBean
+    @MockitoSpyBean
     protected GitLabService versionControlService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected GitLabApi gitlab;
 
     @Autowired
@@ -77,8 +77,8 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     @Autowired
     protected GitlabRequestMockProvider gitlabRequestMockProvider;
 
-    // NOTE: this has to be a MockBean, because the class cannot be instantiated in the tests
-    @MockBean
+    // NOTE: this has to be a MockitoBean, because the class cannot be instantiated in the tests
+    @MockitoBean
     protected RelyingPartyRegistrationRepository relyingPartyRegistrationRepository;
 
     @AfterEach

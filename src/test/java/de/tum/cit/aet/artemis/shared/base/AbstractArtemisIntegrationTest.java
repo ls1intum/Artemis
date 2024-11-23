@@ -21,9 +21,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -88,86 +88,86 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
-    // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
-    @SpyBean
+    // NOTE: we prefer MockitoSpyBean over MockitoBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
+    @MockitoSpyBean
     protected Lti13Service lti13Service;
 
-    @SpyBean
+    @MockitoSpyBean
     protected GitService gitService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected FileService fileService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ZipFileService zipFileService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected GroupNotificationService groupNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected TutorialGroupNotificationService tutorialGroupNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ConversationNotificationService conversationNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected SingleUserNotificationService singleUserNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected JavaMailSender javaMailSender;
 
-    @SpyBean
+    @MockitoSpyBean
     protected MailService mailService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected GeneralInstantNotificationService generalInstantNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected FirebasePushNotificationService firebasePushNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ApplePushNotificationService applePushNotificationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected WebsocketMessagingService websocketMessagingService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ModelingSubmissionService modelingSubmissionService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected TextSubmissionService textSubmissionService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ProgrammingTriggerService programmingTriggerService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ProgrammingExerciseGradingService programmingExerciseGradingService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ExamAccessService examAccessService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected InstanceMessageSendService instanceMessageSendService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ProgrammingExerciseScheduleService programmingExerciseScheduleService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected UriService uriService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ScheduleService scheduleService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ParticipantScoreScheduleService participantScoreScheduleService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected TextBlockService textBlockService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected CompetencyProgressService competencyProgressService;
 
     @Autowired

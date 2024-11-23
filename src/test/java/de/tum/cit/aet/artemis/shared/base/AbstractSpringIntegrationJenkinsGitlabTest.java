@@ -27,10 +27,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.offbytwo.jenkins.JenkinsServer;
 
@@ -64,21 +64,21 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
 public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends AbstractArtemisIntegrationTest {
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
-    @SpyBean
+    @MockitoSpyBean
     protected JenkinsService continuousIntegrationService;
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Gitlab using the corresponding RestTemplate and
     // GitlabApi.
-    @SpyBean
+    @MockitoSpyBean
     protected GitLabService versionControlService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected JenkinsServer jenkinsServer;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ProgrammingMessagingService programmingMessagingService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ResultWebsocketService resultWebsocketService;
 
     @Autowired
@@ -90,10 +90,10 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     @Autowired
     protected AeolusRequestMockProvider aeolusRequestMockProvider;
 
-    @SpyBean
+    @MockitoSpyBean
     protected ExamLiveEventsService examLiveEventsService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected GroupNotificationScheduleService groupNotificationScheduleService;
 
     @AfterEach
