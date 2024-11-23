@@ -191,7 +191,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.loadingSolutionParticipationResults = false;
                     }),
                     mergeMap(() => this.profileService.getProfileInfo()),
-                    tap(async (profileInfo) => {
+                    tap((profileInfo) => {
                         if (profileInfo) {
                             if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId) {
                                 this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
