@@ -438,7 +438,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.prepareAssessmentData();
 
             if (result.successful) {
-                this.alertService.info('artemisApp.exercise.athenaFeedbackSuccessful');
+                this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
             }
         } else if (result.successful === false) {
             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
@@ -684,6 +684,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Check if the latest submission has an Athena result
      */
     get hasAthenaResultForLatestSubmission(): boolean {
+        console.log('Has Athena Result: ', this.submission);
         const latestResult = getLatestSubmissionResult(this.submission);
         return latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
