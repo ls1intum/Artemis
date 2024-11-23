@@ -226,7 +226,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     }),
                     mergeMap(() => this.programmingExerciseService.getDiffReport(exerciseId)),
                     tap((gitDiffReport) => {
-                        this.processGitDiffReport(gitDiffReport);
+                        this.processGitDiffReport(gitDiffReport, false);
                     }),
                     mergeMap(() =>
                         this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : of([] as BuildLogStatisticsDTO),
@@ -788,12 +788,19 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return link;
     }
 
-    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined): void {
-        if (
+    /**
+     *
+     * @param gitDiffReport
+     * @param updateDetailSections set to false when called from OnInit, as another method will take care to update the
+     *                             {@link exerciseDetailSections} to prevent unnecessary renderings and duplicated requests,
+     *                             see description of {@link getExerciseDetails}
+     */
+    private processGitDiffReport(gitDiffReport: ProgrammingExerciseGitDiffReport | undefined, updateDetailSections: boolean = true): void {
+        const isGitDiffReportUpdated =
             gitDiffReport &&
             (this.programmingExercise.gitDiffReport?.templateRepositoryCommitHash !== gitDiffReport.templateRepositoryCommitHash ||
-                this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash)
-        ) {
+                this.programmingExercise.gitDiffReport?.solutionRepositoryCommitHash !== gitDiffReport.solutionRepositoryCommitHash);
+        if (isGitDiffReportUpdated) {
             this.programmingExercise.gitDiffReport = gitDiffReport;
             gitDiffReport.programmingExercise = this.programmingExercise;
 
@@ -802,13 +809,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
             this.addedLineCount = calculateLineCount(gitDiffReport.entries, 'lineCount');
             this.removedLineCount = calculateLineCount(gitDiffReport.entries, 'previousLineCount');
+
+            if (updateDetailSections) {
+                this.exerciseDetailSections = this.getExerciseDetails();
+            }
         }
     }
 
     loadGitDiffReport() {
         this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
             this.processGitDiffReport(gitDiffReport);
-            this.exerciseDetailSections = this.getExerciseDetails();
         });
     }
 
