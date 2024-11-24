@@ -63,7 +63,6 @@
                 @if (isFileTooBig()) {
                     <div class="alert alert-danger">
                         {{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileTooBig' | artemisTranslate }}
-                        {{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }}
                     </div>
                 }
                 @if (!fileName() && fileInputTouched) {
