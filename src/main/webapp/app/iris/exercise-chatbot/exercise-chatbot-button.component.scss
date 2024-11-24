@@ -56,15 +56,20 @@
 
 .read-more {
     position: absolute;
-    cursor: pointer;
     bottom: 5px;
-    text-align: center;
-    padding: 0 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
     width: 150px;
-    left: calc(50% - 75px);
     font-size: 14px;
     z-index: 100;
     color: var(--link-color);
+    transition: all 0.2s ease;
+
+    &:focus-visible {
+        outline: 2px solid var(--link-color);
+        outline-offset: 2px;
+    }
 }
 
 .hidden {

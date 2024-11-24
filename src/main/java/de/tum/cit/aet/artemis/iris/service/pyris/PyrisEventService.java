@@ -40,16 +40,25 @@ public class PyrisEventService {
      * @see PyrisEvent
      */
     public void trigger(PyrisEvent<? extends AbstractIrisChatSessionService<? extends IrisChatSession>, ?> event) {
-        switch (event) {
-            case CompetencyJolSetEvent competencyJolSetEvent -> {
-                log.info("Received CompetencyJolSetEvent: {}", competencyJolSetEvent);
-                competencyJolSetEvent.handleEvent(irisCourseChatSessionService);
+        log.debug("Starting to process event of type: {}", event.getClass().getSimpleName());
+        try {
+            switch (event) {
+                case CompetencyJolSetEvent competencyJolSetEvent -> {
+                    log.info("Processing CompetencyJolSetEvent: {}", competencyJolSetEvent);
+                    competencyJolSetEvent.handleEvent(irisCourseChatSessionService);
+                    log.debug("Successfully processed CompetencyJolSetEvent");
+                }
+                case NewResultEvent newResultEvent -> {
+                    log.info("Processing NewResultEvent: {}", newResultEvent);
+                    newResultEvent.handleEvent(irisExerciseChatSessionService);
+                    log.debug("Successfully processed NewResultEvent");
+                }
+                default -> throw new UnsupportedPyrisEventException("Unsupported event type: " + event.getClass().getSimpleName());
             }
-            case NewResultEvent newResultEvent -> {
-                log.info("Received NewResultEvent: {}", newResultEvent);
-                newResultEvent.handleEvent(irisExerciseChatSessionService);
-            }
-            default -> throw new UnsupportedOperationException("Unsupported event: " + event);
+        }
+        catch (Exception e) {
+            log.error("Failed to process event: {}", event, e);
+            throw e;
         }
     }
 }

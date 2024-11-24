@@ -13,7 +13,7 @@ import { of } from 'rxjs';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipMockDirective } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
-import { MockTranslateDirective } from '../../../helpers/mocks/directive/MockTranslateDirective.directive';
+import { MockJhiTranslateDirective } from '../../../helpers/mocks/directive/mock-jhi-translate-directive.directive';
 
 describe('IrisSettingsUpdateComponent', () => {
     let component: IrisSettingsUpdateComponent;
@@ -22,7 +22,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMockDirective, MockTranslateDirective],
+            imports: [ArtemisTestModule, NgbTooltipMockDirective, MockJhiTranslateDirective],
             declarations: [
                 IrisCourseSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,

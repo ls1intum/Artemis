@@ -14,6 +14,9 @@ public class NewResultEvent extends PyrisEvent<IrisExerciseChatSessionService, R
 
     @Override
     public void handleEvent(IrisExerciseChatSessionService service) {
+        if (service == null) {
+            throw new IllegalArgumentException("Service cannot be null");
+        }
         var submission = eventObject.getSubmission();
         // We only care about programming submissions
         if (submission instanceof ProgrammingSubmission programmingSubmission) {

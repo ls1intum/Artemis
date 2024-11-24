@@ -34,6 +34,8 @@ import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.PyrisUnsupportedExerciseTypeException;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventProcessingException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -193,10 +195,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
                 return;
             }
-            var exercise = (ProgrammingExercise) participation.getExercise();
-            if (exercise.isExamExercise()) {
-                throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
-            }
+            var exercise = validateExercise(participation.getExercise());
 
             irisSettingsService.isActivatedForElseThrow(IrisEventType.BUILD_FAILED, exercise);
 
@@ -222,10 +221,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
             return;
         }
-        var exercise = (ProgrammingExercise) participation.getExercise();
-        if (exercise.isExamExercise()) {
-            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
-        }
+
+        var exercise = validateExercise(participation.getExercise());
 
         irisSettingsService.isActivatedForElseThrow(IrisEventType.PROGRESS_STALLED, exercise);
 
@@ -247,7 +244,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
                     CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of("progress_stalled")));
                 }
                 else {
-                    throw new ConflictException("Progress stalled event is not supported for team participations", "Iris", "irisTeamParticipation");
+                    throw new PyrisEventProcessingException("Progress stalled event is not supported for team participations");
                 }
             }
         }
@@ -351,5 +348,21 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisExerciseChatSession session) {
         var exercise = session.getExercise();
         builder.withCourse(exercise.getCourseViaExerciseGroupOrCourseMember().getId()).withExercise(exercise.getId());
+    }
+
+    /**
+     * Validates the exercise and throws an exception if it is not a programming exercise or an exam exercise.
+     *
+     * @param exercise The exercise to check
+     * @throws PyrisUnsupportedExerciseTypeException if the exercise is not a programming exercise or an exam exercise
+     */
+    private ProgrammingExercise validateExercise(Exercise exercise) {
+        if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
+            throw new PyrisUnsupportedExerciseTypeException("Iris events are only supported for programming exercises");
+        }
+        if (exercise.isExamExercise()) {
+            throw new PyrisUnsupportedExerciseTypeException("Iris is not supported for exam exercises");
+        }
+        return programmingExercise;
     }
 }

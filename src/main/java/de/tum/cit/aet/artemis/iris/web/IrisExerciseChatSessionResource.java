@@ -78,12 +78,12 @@ public class IrisExerciseChatSessionResource {
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<IrisExerciseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long exerciseId) throws URISyntaxException {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        validateExercise(exercise);
+        ProgrammingExercise programmingExercise = validateExercise(exercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var session = irisExerciseChatSessionService.getCurrentSessionOrCreateIfNotExists((ProgrammingExercise) exercise, user, false);
+        var session = irisExerciseChatSessionService.getCurrentSessionOrCreateIfNotExists(programmingExercise, user, false);
         return ResponseEntity.ok(session);
     }
 
@@ -124,7 +124,7 @@ public class IrisExerciseChatSessionResource {
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, programmingExercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var session = irisExerciseChatSessionService.createSession((ProgrammingExercise) exercise, user, false);
+        var session = irisExerciseChatSessionService.createSession(programmingExercise, user, false);
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);

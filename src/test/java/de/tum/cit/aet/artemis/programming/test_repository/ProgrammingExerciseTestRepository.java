@@ -111,7 +111,4 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
         }
         return programmingExercise;
     }
-
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
-    Optional<ProgrammingExercise> findWithAllParticipationsById(long exerciseId);
 }

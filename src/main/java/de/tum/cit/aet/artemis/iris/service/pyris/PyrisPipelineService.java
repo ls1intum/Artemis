@@ -188,13 +188,23 @@ public class PyrisPipelineService {
     private <T, U> void executeCourseChatPipeline(String variant, IrisCourseChatSession session, T eventObject, Class<U> eventDtoClass, Optional<String> eventVariant) {
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
-        executePipeline("course-chat", variant, eventVariant, pyrisJobService.addCourseChatJob(courseId, session.getId()), executionDto -> {
-            var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
-            return new PyrisCourseChatPipelineExecutionDTO<>(PyrisExtendedCourseDTO.of(fullCourse),
-                    learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId), generateEventPayloadFromObjectType(eventDtoClass, eventObject),
-                    pyrisDTOService.toPyrisMessageDTOList(session.getMessages()), new PyrisUserDTO(session.getUser()), executionDto.settings(), // flatten the execution dto here
-                    executionDto.initialStages());
-        }, stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
+        // @formatter:off
+        executePipeline(
+            "course-chat",
+            variant,
+            eventVariant,
+            pyrisJobService.addCourseChatJob(courseId, session.getId()), executionDto -> {
+                var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
+                return new PyrisCourseChatPipelineExecutionDTO<>(
+                    PyrisExtendedCourseDTO.of(fullCourse),
+                    learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId),
+                    generateEventPayloadFromObjectType(eventDtoClass, eventObject), // get the event payload DTO
+                    pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
+                    new PyrisUserDTO(session.getUser()), executionDto.settings(), // flatten the execution dto here
+                    executionDto.initialStages()
+                );
+            },
+            stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
         // @formatter:on
     }
 
