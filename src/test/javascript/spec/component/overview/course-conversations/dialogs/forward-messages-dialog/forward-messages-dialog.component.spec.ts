@@ -10,6 +10,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { ForwardMessageDialogComponent } from '../../../../../../../../main/webapp/app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
 import { MarkdownEditorMonacoComponent } from '../../../../../../../../main/webapp/app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ProfilePictureComponent } from '../../../../../../../../main/webapp/app/shared/profile-picture/profile-picture.component';
+import { ElementRef } from '@angular/core';
 
 describe('ForwardMessageDialogComponent', () => {
     let component: ForwardMessageDialogComponent;
@@ -138,5 +139,78 @@ describe('ForwardMessageDialogComponent', () => {
     it('should handle missing input element gracefully when focusInput is called', () => {
         document.body.innerHTML = ``;
         expect(() => component.focusInput()).not.toThrow();
+    });
+
+    it('should open dropdown when input is focused and close when clicked outside', () => {
+        const inputElement = fixture.debugElement.query(By.css('input.tag-input')).nativeElement;
+
+        inputElement.dispatchEvent(new Event('focus'));
+        fixture.detectChanges();
+        expect(component.showDropdown).toBeTrue();
+
+        document.body.click();
+        fixture.detectChanges();
+        expect(component.showDropdown).toBeFalse();
+    });
+
+    it('should clear filteredOptions when no matching results are found', () => {
+        const searchInput = fixture.debugElement.query(By.css('input.tag-input')).nativeElement;
+        searchInput.value = 'NonExistentOption';
+        searchInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(component.filteredOptions).toHaveLength(0);
+    });
+
+    it('should detect if content overflows and set isContentLong correctly', () => {
+        component.messageContent = {
+            nativeElement: {
+                scrollHeight: 200,
+                clientHeight: 100,
+            },
+        } as ElementRef;
+
+        component.checkIfContentOverflows();
+        expect(component.isContentLong).toBeTrue();
+    });
+
+    it('should truncate forwarded content if it is too long', () => {
+        component.postToForward = {
+            content: 'Line1\nLine2\nLine3\nLine4\nLine5\nLine6\nLine7',
+        } as Post;
+        component.isContentLong = true;
+        component.maxLines = 5;
+
+        const displayedContent = component.displayedForwardedContent();
+        expect(displayedContent).toContain('Line1\nLine2\nLine3\nLine4\nLine5...');
+    });
+
+    it('should disable Send button if no content and no selections are made', () => {
+        component.selectedChannels = [];
+        component.selectedChats = [];
+        component.newPost.content = '';
+        fixture.detectChanges();
+
+        const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
+        expect(sendButton.disabled).toBeTrue();
+    });
+
+    it('should send both channels and chats when selections are made', () => {
+        const activeModal = TestBed.inject(NgbActiveModal);
+        const closeSpy = jest.spyOn(activeModal, 'close');
+
+        component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
+        component.selectedChats = [{ id: 3, otherUserName: 'User1', otherUserImg: 'user1.png' } as any];
+        component.newPost.content = 'Test content';
+        fixture.detectChanges();
+
+        const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
+        sendButton.click();
+
+        expect(closeSpy).toHaveBeenCalledWith({
+            channels: component.selectedChannels,
+            chats: component.selectedChats,
+            messageContent: 'Test content',
+        });
     });
 });

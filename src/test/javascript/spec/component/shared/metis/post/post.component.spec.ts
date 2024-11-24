@@ -36,6 +36,7 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-cre
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DOCUMENT } from '@angular/common';
+import { By } from '@angular/platform-browser';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -319,5 +320,19 @@ describe('PostComponent', () => {
         component.onClickOutside();
         expect(component.showDropdown).toBeFalse();
         expect(enableBodyScrollSpy).toHaveBeenCalled();
+    });
+
+    it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
+        const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
+        component.readOnlyMode = false;
+        component.showDropdown = true;
+        component.posting = post;
+        fixture.detectChanges();
+
+        const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));
+        expect(forwardButton).not.toBeNull();
+
+        forwardButton.nativeElement.click();
+        expect(forwardMessageSpy).toHaveBeenCalled();
     });
 });

@@ -101,6 +101,10 @@ describe('AnswerPostReactionsBarComponent', () => {
         return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.edit'));
     }
 
+    function getForwardButton(): DebugElement | null {
+        return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.forward'));
+    }
+
     function getDeleteButton(): DebugElement | null {
         return debugElement.query(By.css('.delete'));
     }
@@ -201,5 +205,18 @@ describe('AnswerPostReactionsBarComponent', () => {
         component.toggleResolvesPost();
         expect(component.posting.resolvesPost).toEqual(!previousState);
         expect(metisServiceUpdateAnswerPostMock).toHaveBeenCalledOnce();
+    });
+
+    it('should display forward button and invoke forwardMessage function when clicked', () => {
+        const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
+        component.isEmojiCount = false;
+        fixture.detectChanges();
+        const forwardButton = getForwardButton();
+
+        expect(forwardButton).not.toBeNull();
+
+        forwardButton?.nativeElement.click();
+        fixture.detectChanges();
+        expect(forwardMessageSpy).toHaveBeenCalled();
     });
 });

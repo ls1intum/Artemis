@@ -115,6 +115,10 @@ describe('PostReactionsBarComponent', () => {
         return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.edit'));
     }
 
+    function getForwardButton(): DebugElement | null {
+        return debugElement.query(By.css('button.reaction-button.clickable.px-2.fs-small.forward'));
+    }
+
     function getDeleteButton(): DebugElement | null {
         return debugElement.query(By.css('jhi-confirm-icon'));
     }
@@ -353,5 +357,19 @@ describe('PostReactionsBarComponent', () => {
 
         expect(showAnswersChangeSpy).toHaveBeenCalledWith(false);
         expect(closePostingCreateEditModalSpy).toHaveBeenCalled();
+    });
+
+    it('should display forward button and invoke forwardMessage function when clicked', () => {
+        const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
+        component.readOnlyMode = false;
+        component.isEmojiCount = false;
+        fixture.detectChanges();
+        const forwardButton = getForwardButton();
+
+        expect(forwardButton).not.toBeNull();
+
+        forwardButton?.nativeElement.click();
+        fixture.detectChanges();
+        expect(forwardMessageSpy).toHaveBeenCalled();
     });
 });

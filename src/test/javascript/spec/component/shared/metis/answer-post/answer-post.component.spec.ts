@@ -7,7 +7,7 @@ import { By } from '@angular/platform-browser';
 import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answer-post-header/answer-post-header.component';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
-import { metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
+import { metisResolvingAnswerPostUser1, post } from '../../../../helpers/sample/metis-sample-data';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { DOCUMENT } from '@angular/common';
@@ -15,6 +15,7 @@ import { Reaction } from '../../../../../../../main/webapp/app/entities/metis/re
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -31,6 +32,7 @@ describe('AnswerPostComponent', () => {
             imports: [OverlayModule, MockModule(BrowserAnimationsModule)],
             declarations: [
                 AnswerPostComponent,
+                FaIconComponent,
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(AnswerPostHeaderComponent),
                 MockComponent(PostingContentComponent),
@@ -174,5 +176,18 @@ describe('AnswerPostComponent', () => {
         component.onReactionsUpdated(updatedReactions);
 
         expect(component.posting.reactions).toEqual(updatedReactions);
+    });
+
+    it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
+        const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
+        component.showDropdown = true;
+        component.posting = post;
+        fixture.detectChanges();
+
+        const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));
+        expect(forwardButton).not.toBeNull();
+
+        forwardButton.nativeElement.click();
+        expect(forwardMessageSpy).toHaveBeenCalled();
     });
 });

@@ -73,7 +73,7 @@ export class ForwardedMessageComponent implements OnChanges, AfterViewInit {
         }
     }
 
-    protected onTriggerNavigateToPost() {
+    onTriggerNavigateToPost() {
         if (this.originalPostDetails() === undefined) {
             return;
         }
