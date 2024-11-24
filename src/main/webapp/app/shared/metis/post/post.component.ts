@@ -248,6 +248,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     }
 
     /**
+     * Close create answer modal
+     */
+    closeCreateAnswerPostModal() {
+        this.postFooterComponent.closeCreateAnswerPostModal();
+    }
+
+    /**
      * sorts answerPosts by two criteria
      * 1. criterion: resolvesPost -> true comes first
      * 2. criterion: creationDate -> most recent comes at the end (chronologically from top to bottom)

@@ -42,6 +42,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
 
     @Output() showAnswersChange = new EventEmitter<boolean>();
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
+    @Output() closePostingCreateEditModal = new EventEmitter<void>();
     @Output() openThread = new EventEmitter<void>();
     @Input() previewMode: boolean;
     isAtLeastInstructorInCourse: boolean;
@@ -62,6 +63,16 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
 
     isAnyReactionCountAboveZero(): boolean {
         return Object.values(this.reactionMetaDataMap).some((reaction) => reaction.count >= 1);
+    }
+
+    openAnswerView() {
+        this.showAnswersChange.emit(true);
+        this.openPostingCreateEditModal.emit();
+    }
+
+    closeAnswerView() {
+        this.showAnswersChange.emit(false);
+        this.closePostingCreateEditModal.emit();
     }
 
     /**
