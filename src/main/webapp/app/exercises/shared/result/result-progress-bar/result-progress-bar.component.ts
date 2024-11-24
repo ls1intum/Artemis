@@ -16,6 +16,7 @@ export class ResultProgressBarComponent implements OnDestroy {
     buildStartDate = input<dayjs.Dayjs>();
     isBuilding = input<boolean>();
     isQueued = input<boolean>();
+    showBorder = input<boolean>(false);
 
     isQueueProgressBarAnimated: boolean;
     queueProgressBarOpacity: number;

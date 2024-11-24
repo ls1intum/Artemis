@@ -1,4 +1,4 @@
-<div class="mw-custom text-nowrap rounded-3 p-2 border border-1 bg-module fw-semibold">
+<div class="mw-custom text-nowrap" [ngClass]="{ 'rounded-3 p-2 border border-1 bg-module fw-semibold': showBorder() }">
     <div class="mb-2">
         <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
         @if (isQueued()) {

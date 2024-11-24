@@ -68,6 +68,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     @Input() estimatedCompletionDate?: dayjs.Dayjs;
     @Input() buildStartDate?: dayjs.Dayjs;
     @Input() showProgressBar = false;
+    @Input() showProgressBarBorder = false;
 
     textColorClass: string;
     resultIconClass: IconProp;
