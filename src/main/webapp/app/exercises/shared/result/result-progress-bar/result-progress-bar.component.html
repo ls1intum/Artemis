@@ -1,0 +1,18 @@
+<div class="d-flex justify-content-center align-items-center gap-2 w-100">
+    <div class="progress w-25" role="progressbar" [style.height.px]="3">
+        <div
+            class="progress-bar progress-bar-striped bg-warning"
+            [ngClass]="{ 'no-transition': !isQueueProgressBarAnimated() }"
+            [style.opacity]="queueProgressBarOpacity()"
+            [style.width.%]="queueProgressBarValue()"
+        ></div>
+    </div>
+    <div class="progress w-75" role="progressbar" [style.height.px]="3">
+        <div
+            class="progress-bar progress-bar-striped progress-bar-animated"
+            [ngClass]="{ 'no-transition': !isBuildProgressBarAnimated() }"
+            [style.opacity]="buildProgressBarOpacity()"
+            [style.width.%]="buildProgressBarValue()"
+        ></div>
+    </div>
+</div>

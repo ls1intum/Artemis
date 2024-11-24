@@ -14,19 +14,15 @@
                             <span> {{ estimatedRemaining | artemisDurationFromSeconds }}</span>
                         }
                     </div>
-                    <div class="d-flex justify-content-center align-items-center gap-2 w-100">
-                        <div class="progress w-25" role="progressbar" [style.height.px]="3">
-                            <div
-                                class="progress-bar progress-bar-striped bg-warning progress-bar-animated"
-                                [ngClass]="{ 'no-transition': !isProgressBarAnimated }"
-                                [style.opacity]="progressBarOpacity"
-                                [style.width.%]="progressBarValue"
-                            ></div>
-                        </div>
-                        <div class="progress w-75" role="progressbar" [style.height.px]="3">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated" [style.width.%]="0"></div>
-                        </div>
-                    </div>
+                    <jhi-result-progress-bar
+                        [isBuildProgressBarAnimated]="false"
+                        [buildProgressBarOpacity]="1"
+                        [buildProgressBarValue]="0"
+                        [queueProgressBarOpacity]="progressBarOpacity"
+                        [queueProgressBarValue]="progressBarValue"
+                        [isQueueProgressBarAnimated]="isProgressBarAnimated"
+                    >
+                    </jhi-result-progress-bar>
                 </div>
             } @else {
                 <span class="text-primary">
@@ -48,19 +44,15 @@
                             <span> {{ estimatedRemaining | artemisDurationFromSeconds }}</span>
                         }
                     </div>
-                    <div class="d-flex justify-content-center align-items-center gap-2 w-100">
-                        <div class="progress w-25" role="progressbar" [style.height.px]="3">
-                            <div class="progress-bar progress-bar-striped bg-warning w-100"></div>
-                        </div>
-                        <div class="progress w-75" role="progressbar" [style.height.px]="3">
-                            <div
-                                class="progress-bar progress-bar-striped progress-bar-animated"
-                                [ngClass]="{ 'no-transition': !isProgressBarAnimated }"
-                                [style.opacity]="progressBarOpacity"
-                                [style.width.%]="progressBarValue"
-                            ></div>
-                        </div>
-                    </div>
+                    <jhi-result-progress-bar
+                        [isBuildProgressBarAnimated]="isProgressBarAnimated"
+                        [buildProgressBarOpacity]="progressBarOpacity"
+                        [buildProgressBarValue]="progressBarValue"
+                        [queueProgressBarOpacity]="1"
+                        [queueProgressBarValue]="100"
+                        [isQueueProgressBarAnimated]="true"
+                    >
+                    </jhi-result-progress-bar>
                 </div>
             } @else {
                 <span class="text-primary">
