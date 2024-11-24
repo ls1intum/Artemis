@@ -138,7 +138,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
             .getLatestPendingSubmissionByParticipationId(this.participation.id!, this.exercise.id!, this.personalParticipation)
             .pipe(
                 filter(({ submission }) => this.shouldUpdateSubmissionState(submission)),
-                tap(({ submissionState, buildTimingInfo }) => this.updateSubmissionState(submissionState, buildTimingInfo)),
+                tap(({ submissionState, buildTimingInfo, submission }) => this.updateSubmissionState(submissionState, buildTimingInfo, submission?.submissionDate)),
             )
             .subscribe();
     }
@@ -174,13 +174,14 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      *
      * @param submissionState the submission is currently in.
      * @param buildTimingInfo object container the build start time and the estimated completion time.
+     * @param submissionDate the date when the submission was created.
      */
-    private updateSubmissionState(submissionState: ProgrammingSubmissionState, buildTimingInfo?: BuildTimingInfo) {
+    private updateSubmissionState(submissionState: ProgrammingSubmissionState, buildTimingInfo?: BuildTimingInfo, submissionDate?: dayjs.Dayjs) {
         this.isQueued = submissionState === ProgrammingSubmissionState.IS_QUEUED;
         this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
 
         if (this.submissionService.getIsLocalCIProfile()) {
-            this.updateBuildTimingInfo(submissionState, buildTimingInfo);
+            this.updateBuildTimingInfo(submissionState, buildTimingInfo, submissionDate);
         }
 
         if (submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION) {
@@ -194,15 +195,16 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     /**
      * Updates the build timing information based on the submission state.
      *
-     * @param {ProgrammingSubmissionState} submissionState - The current state of the submission.
-     * @param {BuildTimingInfo} [buildTimingInfo] - Optional object containing the build start time and the estimated completion time.
+     * @param  submissionState - The current state of the submission.
+     * @param  [buildTimingInfo] - Optional object containing the build start time and the estimated completion time.
+     * @param  [submissionDate] - Optional date when the submission was created.
      */
-    private updateBuildTimingInfo(submissionState: ProgrammingSubmissionState, buildTimingInfo?: BuildTimingInfo) {
+    private updateBuildTimingInfo(submissionState: ProgrammingSubmissionState, buildTimingInfo?: BuildTimingInfo, submissionDate?: dayjs.Dayjs) {
         if (submissionState === ProgrammingSubmissionState.IS_QUEUED) {
-            this.buildStartDate = undefined;
             this.submissionService.fetchQueueReleaseDateEstimationByParticipationId(this.participation.id!).subscribe((releaseDate) => {
                 if (releaseDate && !this.isBuilding) {
                     this.estimatedCompletionDate = releaseDate;
+                    this.buildStartDate = submissionDate;
                 }
             });
         } else if (
@@ -212,6 +214,9 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         ) {
             this.estimatedCompletionDate = buildTimingInfo?.estimatedCompletionDate;
             this.buildStartDate = buildTimingInfo?.buildStartDate;
+        } else {
+            this.estimatedCompletionDate = undefined;
+            this.buildStartDate = undefined;
         }
     }
 }

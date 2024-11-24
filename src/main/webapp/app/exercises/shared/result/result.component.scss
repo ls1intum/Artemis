@@ -7,3 +7,12 @@ span {
     text-decoration: underline;
     cursor: pointer;
 }
+
+.mw-custom {
+    max-width: fit-content;
+    min-width: 230px;
+}
+
+.no-transition {
+    transition: opacity 0.5s !important;
+}

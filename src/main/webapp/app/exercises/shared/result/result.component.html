@@ -5,25 +5,62 @@
 <ng-container id="result">
     @switch (templateStatus) {
         @case (ResultTemplateStatus.IS_QUEUED) {
-            <span class="text-primary">
-                <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
-                <span id="test-queued" jhiTranslate="artemisApp.editor.queued"></span>
-                @if (estimatedRemaining && estimatedRemaining > 0) {
-                    <span id="test-estimated-duration-queue"> {{ estimatedRemaining | artemisDurationFromSeconds }}</span>
-                }
-            </span>
-        }
-        @case (ResultTemplateStatus.IS_BUILDING) {
-            @if (showProgressBar && estimatedRemaining) {
-                <div class="d-flex justify-content-center align-items-center">
-                    <div class="progress position-relative" role="progressbar" [style.min-width.px]="200" [style.height.px]="30">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" [style.width.%]="progressBarValue"></div>
-                        <div class="position-absolute fw-bold" style="top: 6px; left: 70px" [style.font-size.px]="14.4">
-                            <span jhiTranslate="artemisApp.editor.eta"></span>
-                            <span>{{ estimatedRemaining | artemisDurationFromSeconds }}</span>
+            @if (showProgressBar) {
+                <div class="mw-custom text-nowrap rounded-3 p-2 border border-1 bg-module fw-semibold">
+                    <div class="mb-2">
+                        <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
+                        <span jhiTranslate="artemisApp.editor.queued"></span>
+                        @if (estimatedRemaining && estimatedRemaining > 0) {
+                            <span> {{ estimatedRemaining | artemisDurationFromSeconds }}</span>
+                        }
+                    </div>
+                    <div class="d-flex justify-content-center align-items-center gap-2 w-100">
+                        <div class="progress w-25" role="progressbar" [style.height.px]="3">
+                            <div
+                                class="progress-bar progress-bar-striped bg-warning progress-bar-animated"
+                                [ngClass]="{ 'no-transition': !isProgressBarAnimated }"
+                                [style.opacity]="progressBarOpacity"
+                                [style.width.%]="progressBarValue"
+                            ></div>
+                        </div>
+                        <div class="progress w-75" role="progressbar" [style.height.px]="3">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" [style.width.%]="0"></div>
                         </div>
                     </div>
-                    <jhi-help-icon class="ms-2" text="artemisApp.editor.etaInfo" />
+                </div>
+            } @else {
+                <span class="text-primary">
+                    <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
+                    <span id="test-queued" jhiTranslate="artemisApp.editor.queued"></span>
+                    @if (estimatedRemaining && estimatedRemaining > 0) {
+                        <span id="test-estimated-duration-queue"> {{ estimatedRemaining | artemisDurationFromSeconds }}</span>
+                    }
+                </span>
+            }
+        }
+        @case (ResultTemplateStatus.IS_BUILDING) {
+            @if (showProgressBar) {
+                <div class="mw-custom text-nowrap rounded-3 p-2 border border-1 bg-module fw-semibold">
+                    <div class="mb-2">
+                        <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
+                        <span jhiTranslate="artemisApp.editor.building"></span>
+                        @if (estimatedRemaining && estimatedRemaining > 0) {
+                            <span> {{ estimatedRemaining | artemisDurationFromSeconds }}</span>
+                        }
+                    </div>
+                    <div class="d-flex justify-content-center align-items-center gap-2 w-100">
+                        <div class="progress w-25" role="progressbar" [style.height.px]="3">
+                            <div class="progress-bar progress-bar-striped bg-warning w-100"></div>
+                        </div>
+                        <div class="progress w-75" role="progressbar" [style.height.px]="3">
+                            <div
+                                class="progress-bar progress-bar-striped progress-bar-animated"
+                                [ngClass]="{ 'no-transition': !isProgressBarAnimated }"
+                                [style.opacity]="progressBarOpacity"
+                                [style.width.%]="progressBarValue"
+                            ></div>
+                        </div>
+                    </div>
                 </div>
             } @else {
                 <span class="text-primary">
