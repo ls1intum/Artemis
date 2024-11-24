@@ -13,7 +13,6 @@ import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
-import { IrisEventType } from '../../../../../../main/webapp/app/entities/iris/settings/iris-sub-settings.model';
 import { MockJhiTranslateDirective } from '../../../helpers/mocks/directive/mock-jhi-translate-directive.directive';
 
 describe('IrisCourseSettingsUpdateComponent Component', () => {
@@ -99,8 +98,6 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         comp.settingsUpdateComponent!.irisSettings = mockEmptySettings();
         comp.settingsUpdateComponent!.fillEmptyIrisSubSettings();
         expect(comp.settingsUpdateComponent!.irisSettings.irisChatSettings).toBeTruthy();
-        // Events are enabled by default
-        expect(comp.settingsUpdateComponent!.irisSettings.irisChatSettings!.enabledProactiveEvents).toEqual([IrisEventType.BUILD_FAILED, IrisEventType.PROGRESS_STALLED]);
         expect(comp.settingsUpdateComponent!.irisSettings.irisLectureIngestionSettings).toBeTruthy();
         expect(comp.settingsUpdateComponent!.irisSettings.irisCompetencyGenerationSettings).toBeTruthy();
     });

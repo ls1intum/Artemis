@@ -57,14 +57,14 @@
                         type="checkbox"
                         id="{{ event }}"
                         [disabled]="!isAdmin && !parentSubSettings"
-                        [ngModel]="subSettings?.enabledProactiveEvents?.includes(event)"
+                        [ngModel]="!subSettings?.disabledProactiveEvents?.includes(event)"
                         (ngModelChange)="onEventToggleChange(event)"
                     />
                     <label class="form-check-label" for="{{ event }}" [jhiTranslate]="eventTranslationKeys[event]"></label>
                     @if (
                         this.parentSubSettings &&
-                        subSettings?.enabledProactiveEvents?.includes(event) &&
-                        (!this.parentSubSettings.enabledProactiveEvents?.includes(event) || !this.parentSubSettings.enabled)
+                        !subSettings?.disabledProactiveEvents?.includes(event) &&
+                        (this.parentSubSettings.disabledProactiveEvents?.includes(event) || !this.parentSubSettings.enabled)
                     ) {
                         <fa-icon
                             class="text-warning"

@@ -145,7 +145,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.FORBIDDEN, IrisSettings.class);
         var loadedSettings = request.get("/api/courses/" + course.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
         assertThat(loadedSettings)
-                .isNotNull().usingRecursiveComparison().ignoringCollectionOrderInFields("irisChatSettings.allowedVariants", "irisChatSettings.enabledProactiveEvents",
+                .isNotNull().usingRecursiveComparison().ignoringCollectionOrderInFields("irisChatSettings.allowedVariants", "irisChatSettings.disabledProactiveEvents",
                         "irisLectureIngestionSettings.allowedVariants", "irisCompetencyGenerationSettings.allowedVariants")
                 .ignoringFields("id").isEqualTo(irisSettingsService.getCombinedIrisSettingsFor(course, true));
     }
@@ -237,14 +237,14 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
         var loadedSettings1 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
-        loadedSettings1.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of("PROGRESS_STALLED")));
+        loadedSettings1.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of("PROGRESS_STALLED")));
 
         var updatedSettings = request.putWithResponseBody("/api/courses/" + course.getId() + "/raw-iris-settings", loadedSettings1, IrisSettings.class, HttpStatus.OK);
         var loadedSettings2 = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         // Proactive events should have been updated
         assertThat(updatedSettings).isNotNull().usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings2);
-        assertThat(updatedSettings.getIrisChatSettings().getEnabledProactiveEvents()).containsExactly("PROGRESS_STALLED");
+        assertThat(updatedSettings.getIrisChatSettings().getDisabledProactiveEvents()).containsExactly("PROGRESS_STALLED");
         assertThat(loadedSettings1).isNotNull().usingRecursiveComparison().ignoringFields("course").isEqualTo(loadedSettings2);
     }
 
@@ -421,7 +421,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         courseSettings.setIrisChatSettings(new IrisChatSubSettings());
         courseSettings.getIrisChatSettings().setEnabled(true);
         courseSettings.getIrisChatSettings().setSelectedVariant(null);
-        courseSettings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.getName())));
+        courseSettings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.getName())));
 
         request.putWithResponseBody("/api/courses/" + course.getId() + "/raw-iris-settings", courseSettings, IrisSettings.class, HttpStatus.OK);
         var loadedCourseSettings = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
@@ -433,12 +433,12 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         exerciseSettings.setIrisChatSettings(new IrisChatSubSettings());
         exerciseSettings.getIrisChatSettings().setEnabled(true);
         exerciseSettings.getIrisChatSettings().setSelectedVariant(null);
-        exerciseSettings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.getName(), IrisEventType.BUILD_FAILED.getName())));
+        exerciseSettings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.getName(), IrisEventType.BUILD_FAILED.getName())));
 
         request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/raw-iris-settings", exerciseSettings, IrisSettings.class, HttpStatus.OK);
         var loadedExerciseSettings = request.get("/api/exercises/" + programmingExercise.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
         // Combined settings should only include the intersection of the enabled course events and enabled exercise events
-        assertThat(loadedExerciseSettings.irisChatSettings().enabledProactiveEvents()).isNotNull()
-                .isEqualTo(loadedCourseSettings.getIrisChatSettings().getEnabledProactiveEvents());
+        assertThat(loadedExerciseSettings.irisChatSettings().disabledProactiveEvents()).isNotNull()
+                .isEqualTo(loadedCourseSettings.getIrisChatSettings().getDisabledProactiveEvents());
     }
 }

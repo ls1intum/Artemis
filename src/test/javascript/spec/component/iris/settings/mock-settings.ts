@@ -12,7 +12,7 @@ export function mockSettings() {
     const mockChatSettings = new IrisChatSubSettings();
     mockChatSettings.id = 1;
     mockChatSettings.enabled = true;
-    mockChatSettings.enabledProactiveEvents = [IrisEventType.BUILD_FAILED, IrisEventType.PROGRESS_STALLED];
+    mockChatSettings.disabledProactiveEvents = [];
     const mockTextExerciseChatSettings = new IrisTextExerciseChatSubSettings();
     mockTextExerciseChatSettings.id = 13;
     mockTextExerciseChatSettings.enabled = true;

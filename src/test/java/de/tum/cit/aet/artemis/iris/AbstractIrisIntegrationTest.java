@@ -19,9 +19,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -77,11 +75,6 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         settings.setEnabled(true);
         settings.setSelectedVariant("default");
         settings.setAllowedVariants(new TreeSet<>(Set.of("default")));
-
-        // Enable proactive events for chat settings
-        if (settings instanceof IrisChatSubSettings chatSettings) {
-            chatSettings.setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.getName(), IrisEventType.BUILD_FAILED.getName())));
-        }
     }
 
     protected void activateIrisFor(Course course) {

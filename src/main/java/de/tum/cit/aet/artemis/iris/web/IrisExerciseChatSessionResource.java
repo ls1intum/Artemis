@@ -97,7 +97,7 @@ public class IrisExerciseChatSessionResource {
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<List<IrisExerciseChatSession>> getAllSessions(@PathVariable Long exerciseId) {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        validateExercise(exercise);
+        ProgrammingExercise programmingExercise = validateExercise(exercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, programmingExercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();

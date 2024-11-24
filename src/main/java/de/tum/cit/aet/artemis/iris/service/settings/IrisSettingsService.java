@@ -649,7 +649,6 @@ public class IrisSettingsService {
         settings.setCourse(course);
         settings.setIrisLectureIngestionSettings(new IrisLectureIngestionSubSettings());
         settings.setIrisChatSettings(new IrisChatSubSettings());
-        settings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.getName(), IrisEventType.PROGRESS_STALLED.getName())));
         settings.setIrisCompetencyGenerationSettings(new IrisCompetencyGenerationSubSettings());
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
 
@@ -667,7 +666,6 @@ public class IrisSettingsService {
         var settings = new IrisExerciseSettings();
         settings.setExercise(exercise);
         settings.setIrisChatSettings(new IrisChatSubSettings());
-        settings.getIrisChatSettings().setEnabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.getName(), IrisEventType.PROGRESS_STALLED.getName())));
         settings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
 
         return settings;
@@ -743,19 +741,19 @@ public class IrisSettingsService {
     private boolean isEventEnabledInSettings(IrisCombinedSettingsDTO settings, IrisEventType type) {
         return switch (type) {
             case PROGRESS_STALLED -> {
-                if (settings.irisChatSettings().enabledProactiveEvents() != null) {
-                    yield settings.irisChatSettings().enabledProactiveEvents().contains(IrisEventType.PROGRESS_STALLED.getName());
+                if (settings.irisChatSettings().disabledProactiveEvents() != null) {
+                    yield !settings.irisChatSettings().disabledProactiveEvents().contains(IrisEventType.PROGRESS_STALLED.getName());
                 }
                 else {
-                    yield false;
+                    yield true;
                 }
             }
             case BUILD_FAILED -> {
-                if (settings.irisChatSettings().enabledProactiveEvents() != null) {
-                    yield settings.irisChatSettings().enabledProactiveEvents().contains(IrisEventType.BUILD_FAILED.getName());
+                if (settings.irisChatSettings().disabledProactiveEvents() != null) {
+                    yield !settings.irisChatSettings().disabledProactiveEvents().contains(IrisEventType.BUILD_FAILED.getName());
                 }
                 else {
-                    yield false;
+                    yield true;
                 }
             }
             default -> throw new IllegalStateException("Unexpected value: " + type); // TODO: Add JOL event, once Course Chat Settings are implemented

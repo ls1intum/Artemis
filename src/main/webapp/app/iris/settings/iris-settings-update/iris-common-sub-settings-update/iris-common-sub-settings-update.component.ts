@@ -186,13 +186,13 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         if (!this.subSettings) {
             return;
         }
-        if (!this.subSettings.enabledProactiveEvents) {
-            this.subSettings.enabledProactiveEvents = [];
+        if (!this.subSettings.disabledProactiveEvents) {
+            this.subSettings.disabledProactiveEvents = [];
         }
-        if (this.subSettings.enabledProactiveEvents?.includes(event)) {
-            this.subSettings.enabledProactiveEvents = this.subSettings.enabledProactiveEvents!.filter((c) => c !== event);
+        if (this.subSettings.disabledProactiveEvents?.includes(event)) {
+            this.subSettings.disabledProactiveEvents = this.subSettings.disabledProactiveEvents!.filter((c) => c !== event);
         } else {
-            this.subSettings.enabledProactiveEvents = [...(this.subSettings.enabledProactiveEvents ?? []), event] as IrisEventType[];
+            this.subSettings.disabledProactiveEvents = [...(this.subSettings.disabledProactiveEvents ?? []), event] as IrisEventType[];
         }
     }
 
