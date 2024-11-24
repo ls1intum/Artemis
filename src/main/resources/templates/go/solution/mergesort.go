@@ -10,27 +10,29 @@ func NewMergeSort() *MergeSort {
 
 // PerformSort is a wrapper method for the real MergeSort algorithm.
 func (m MergeSort) PerformSort(input []time.Time) {
-	mergeSort(input, 0, len(input)-1)
+	mergeSort(input)
 }
 
 // mergeSort recursively applies the MergeSort algorithm.
-func mergeSort(input []time.Time, low, high int) {
-	if high-low < 1 {
+func mergeSort(input []time.Time) {
+	if len(input) < 2 {
 		return
 	}
-	mid := (low + high) / 2
-	mergeSort(input, low, mid)
-	mergeSort(input, mid+1, high)
-	merge(input, low, mid, high)
+
+	middle := len(input) / 2
+	mergeSort(input[:middle])
+	mergeSort(input[middle:])
+	merge(input, middle)
 }
 
 // merge merges two ranges within input defined from low to mid and from mid+1 to high.
-func merge(input []time.Time, low, mid, high int) {
-	temp := make([]time.Time, high-low+1)
-	left, right, k := low, mid+1, 0
+func merge(input []time.Time, mid int) {
+	temp := make([]time.Time, len(input))
 
-	for left <= mid && right <= high {
-		if input[left].Before(input[right]) || input[left].Equal(input[right]) {
+	left, right, k := 0, mid, 0
+
+	for left < mid && right < len(input) {
+		if input[left].Before(input[right]) {
 			temp[k] = input[left]
 			left++
 		} else {
@@ -40,18 +42,16 @@ func merge(input []time.Time, low, mid, high int) {
 		k++
 	}
 
-	for left <= mid {
+	for left < mid {
 		temp[k] = input[left]
 		left++
 		k++
 	}
-	for right <= high {
+	for right < len(input) {
 		temp[k] = input[right]
 		right++
 		k++
 	}
 
-	for i, val := range temp {
-		input[low+i] = val
-	}
+	copy(input, temp)
 }
