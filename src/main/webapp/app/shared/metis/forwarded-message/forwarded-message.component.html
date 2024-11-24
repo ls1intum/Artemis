@@ -1,10 +1,17 @@
 <div class="forwarded-message-container">
     <div class="left-border-line"></div>
     <div class="forwarded-message-content">
-        <span class="forwarded-message-channel fs-x-small">
-            <fa-icon [icon]="faShare" class="item-icon"></fa-icon>
-            Forwarded from {{ sourceName }}</span
-        >
+        <span class="forwarded-message-channel fs-x-small d-flex align-items-center">
+            <fa-icon [icon]="faShare" class="item-icon" style="margin-right: 0.3rem"></fa-icon>
+            {{ 'artemisApp.metis.forward.forwardedFrom' | artemisTranslate }} {{ sourceName }}
+            <button
+                type="button"
+                class="btn btn-link p-0"
+                style="width: fit-content; font-size: 0.7rem; margin-left: 0.2rem"
+                (click)="onTriggerNavigateToPost()"
+                jhiTranslate="artemisApp.metis.forward.viewConversation"
+            ></button>
+        </span>
         <div class="forwarded-message-header">
             <jhi-profile-picture
                 imageSizeInRem="1.5"
@@ -28,8 +35,13 @@
                 </span>
             </span>
         </div>
-        <div class="forwarded-message-body" [ngClass]="{ 'preserve-line-breaks': originalPostDetails()?.content?.includes('\n') }">
-            {{ originalPostDetails()?.content }}
+        <div class="forwarded-message-body" #messageContent [ngClass]="{ expanded: showFullForwardedMessage }">
+            <div class="preserve-line-breaks">{{ displayedForwardedContent() }}</div>
         </div>
+        @if (isContentLong) {
+            <button type="button" class="btn btn-link p-0" style="width: fit-content; font-size: 0.7rem" (click)="toggleShowFullForwardedMessage()">
+                {{ showFullForwardedMessage ? 'artemisApp.metis.forward.showLess' : ('artemisApp.metis.forward.showMore' | artemisTranslate) }}
+            </button>
+        }
     </div>
 </div>

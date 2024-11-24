@@ -13,7 +13,10 @@ import {
     ViewChild,
     ViewChildren,
     ViewEncapsulation,
+    effect,
     inject,
+    input,
+    output,
 } from '@angular/core';
 import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
@@ -36,6 +39,7 @@ import { User } from 'app/core/user/user.model';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Posting } from 'app/entities/metis/posting.model';
 
 interface PostGroup {
     author: User | undefined;
@@ -75,6 +79,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     searchbarCollapsed = false;
     @Input()
     contentHeightDev: boolean = false;
+    readonly focusPostId = input<number | undefined>(undefined);
+    readonly openThreadOnFocus = input<boolean>(false);
 
     getAsChannel = getAsChannelDTO;
 
@@ -87,6 +93,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private readonly search$ = new Subject<string>();
     searchText = '';
     _activeConversation?: ConversationDTO;
+    readonly onNavigateToPost = output<Posting>();
 
     elementsAtScrollPosition: PostingThreadComponent[];
     newPost?: Post;
@@ -103,6 +110,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     isMobile = false;
     isHiddenInputWithCallToAction = false;
     isHiddenInputFull = false;
+    focusOnPostId: number | undefined = undefined;
+    isOpenThreadOnFocus: boolean = false;
 
     private layoutService: LayoutService = inject(LayoutService);
     private renderer = inject(Renderer2);
@@ -111,7 +120,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         public metisService: MetisService, // instance from course-conversations.component
         public metisConversationService: MetisConversationService, // instance from course-conversations.component
         public cdr: ChangeDetectorRef,
-    ) {}
+    ) {
+        effect(() => {
+            this.focusOnPostId = this.focusPostId();
+            this.isOpenThreadOnFocus = this.openThreadOnFocus();
+        });
+    }
 
     ngOnInit(): void {
         this.subscribeToSearch();
@@ -132,7 +146,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
             // This statement avoids a bug that reloads the messages when the conversation is already displayed
-            if (this._activeConversation?.id === conversation.id) {
+            if (conversation && this._activeConversation?.id === conversation.id) {
                 return;
             }
             this._activeConversation = conversation;
@@ -181,8 +195,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private scrollToStoredId() {
-        const savedScrollId = sessionStorage.getItem(this.sessionStorageKey + this._activeConversation?.id) ?? '';
-        requestAnimationFrame(() => this.goToLastSelectedElement(parseInt(savedScrollId, 10)));
+        let savedScrollId;
+        if (this.focusOnPostId) {
+            savedScrollId = this.focusOnPostId + '';
+        } else {
+            savedScrollId = sessionStorage.getItem(this.sessionStorageKey + this._activeConversation?.id) ?? '';
+        }
+        requestAnimationFrame(() => this.goToLastSelectedElement(parseInt(savedScrollId, 10), this.isOpenThreadOnFocus));
     }
 
     private onActiveConversationChange() {
@@ -321,16 +340,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                         forkJoin(sourceRequests).subscribe((responses) => {
                             let fetchedPosts: Post[] = [];
                             let fetchedAnswerPosts: AnswerPost[] = [];
-                            console.log(responses);
 
                             responses.forEach((response) => {
                                 if (Array.isArray(response)) {
                                     if (response.length > 0) {
-                                        console.log('response length > 0');
                                         if ((response[0] as Post).conversation !== undefined) {
                                             fetchedPosts = response as Post[];
-                                            console.log('fetchtee');
-                                            console.log(fetchedPosts);
                                         } else if ((response[0] as AnswerPost).resolvesPost !== undefined) {
                                             fetchedAnswerPosts = response as AnswerPost[];
                                         }
@@ -468,7 +483,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.scrollToBottomOfMessages();
     }
 
-    async goToLastSelectedElement(lastScrollPosition: number) {
+    async goToLastSelectedElement(lastScrollPosition: number, isOpenThread: boolean) {
         if (!lastScrollPosition) {
             this.scrollToBottomOfMessages();
             this.canStartSaving = true;
@@ -483,6 +498,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             // We scroll to the element with a slight buffer to ensure its fully visible (-10)
             this.content.nativeElement.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop - 10);
             this.canStartSaving = true;
+            if (isOpenThread) {
+                this.openThread.emit(element.post);
+            }
+            this.focusOnPostId = undefined;
+            this.isOpenThreadOnFocus = false;
         }
     }
 
@@ -502,5 +522,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (this.elementsAtScrollPosition && this.canStartSaving) {
             this.saveScrollPosition(this.elementsAtScrollPosition[0].post.id!);
         }
+    }
+
+    onTriggerNavigateToPost(post: Posting) {
+        this.onNavigateToPost.emit(post);
     }
 }

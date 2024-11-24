@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -25,6 +25,8 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { Posting } from 'app/entities/metis/posting.model';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -110,6 +112,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isProduction = true;
     isTestServer = false;
     isMobile = false;
+    focusPostId: number | undefined = undefined;
+    openThreadOnFocus = false;
 
     readonly CHANNEL_TYPE_SHOW_ADD_OPTION = CHANNEL_TYPE_SHOW_ADD_OPTION;
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
@@ -140,6 +144,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
     private layoutService: LayoutService = inject(LayoutService);
+    private changeDetector: ChangeDetectorRef = inject(ChangeDetectorRef);
 
     constructor(
         private router: Router,
@@ -254,6 +259,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
 
                 this.closeSidebarOnMobile();
+            }
+            if (queryParams.focusPostId) {
+                this.focusPostId = Number(queryParams.focusPostId);
+            }
+            if (queryParams.openThreadOnFocus) {
+                this.openThreadOnFocus = queryParams.openThreadOnFocus;
             }
             if (queryParams.messageId) {
                 this.postInThread = { id: Number(queryParams.messageId) } as Post;
@@ -379,6 +390,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     onConversationSelected(conversationId: number) {
         this.closeSidebarOnMobile();
+        this.focusPostId = undefined;
+        this.openThreadOnFocus = false;
+        conversationId = +conversationId;
         this.metisConversationService.setActiveConversation(conversationId);
     }
 
@@ -492,5 +506,21 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             event.preventDefault();
             this.searchElement.nativeElement.focus();
         }
+    }
+
+    onTriggerNavigateToPost(post: Posting) {
+        let id = (post as Post)?.conversation?.id;
+        this.focusPostId = post.id;
+        this.openThreadOnFocus = false;
+        if (post.id === undefined) {
+            return;
+        } else if ((post as Post)?.conversation?.id === undefined) {
+            this.openThreadOnFocus = true;
+            id = (post as AnswerPost)?.post?.conversation?.id;
+            this.focusPostId = (post as AnswerPost)?.post?.id;
+        }
+
+        this.metisConversationService.setActiveConversation(id);
+        this.changeDetector.detectChanges();
     }
 }

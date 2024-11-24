@@ -11,6 +11,7 @@
         [showChannelReference]="showChannelReference"
         [hasChannelModerationRights]="hasChannelModerationRights"
         (openThread)="openThread.emit(post)"
+        (onNavigateToPost)="onTriggerNavigateToPost($event)"
     />
 </div>
 @if (!isCommunicationPage) {

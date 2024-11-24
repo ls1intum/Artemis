@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, Input, OnInit, Renderer2, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, Input, OnInit, Renderer2, ViewChild, inject, input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
@@ -42,7 +42,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     isInputFocused: boolean = false;
     newPost: Post = new Post();
     defaultActions: TextEditorAction[];
-    @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
+    editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
     @ViewChild('searchInput') searchInput!: ElementRef;
     @ViewChild('messageContent') messageContent!: ElementRef;
 
@@ -52,11 +52,11 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     showFullForwardedMessage: boolean = false;
     maxLines: number = 5;
     isContentLong: boolean = false;
+    private cdr = inject(ChangeDetectorRef);
 
     constructor(
         public renderer: Renderer2,
         public activeModal: NgbActiveModal,
-        private cdr: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
@@ -109,15 +109,15 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     }
 
     displayedForwardedContent(): string {
-        if (!this.postToForward || !this.postToForward.content) {
+        if (!this.postToForward || !this.postToForward?.content) {
             return '';
         }
 
         if (this.showFullForwardedMessage || !this.isContentLong) {
-            return this.postToForward.content;
+            return this.postToForward?.content!;
         } else {
-            const lines = this.postToForward.content.split('\n');
-            return lines.slice(0, this.maxLines).join('\n') + '...';
+            const lines = this.postToForward?.content?.split('\n');
+            return lines?.slice(0, this.maxLines).join('\n') + '...';
         }
     }
 

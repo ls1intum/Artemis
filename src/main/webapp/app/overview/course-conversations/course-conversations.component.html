@@ -57,6 +57,9 @@
                         (openThread)="postInThread = $event"
                         [course]="course"
                         [searchbarCollapsed]="channelSearchCollapsed"
+                        (onNavigateToPost)="onTriggerNavigateToPost($event)"
+                        [focusPostId]="focusPostId"
+                        [openThreadOnFocus]="openThreadOnFocus"
                     />
                 } @else {
                     <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />

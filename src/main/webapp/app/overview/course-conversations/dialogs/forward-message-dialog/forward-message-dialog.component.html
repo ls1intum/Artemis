@@ -1,10 +1,10 @@
 <div class="modal-header">
-    <h4 class="modal-title">Forward this message</h4>
+    <h4 class="modal-title" jhiTranslate="artemisApp.metis.forward.forwardMessage"></h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
 </div>
 <div class="modal-body">
-    <div class="autocomplete-container mt-1 mb-2">
-        <div class="tag-input-container" (click)="focusInput()">
+    <div class="autocomplete-container mt-1 mb-2 form-group">
+        <div class="tag-input-container form-control" (click)="focusInput()">
             @for (channel of selectedChannels; track channel) {
                 <ng-container>
                     <span class="badge bg-primary me-1">
@@ -25,7 +25,7 @@
                 #searchInput
                 type="text"
                 class="tag-input"
-                placeholder="Search channels or names"
+                placeholder="{{ 'artemisApp.metis.forward.searchBar' | artemisTranslate }}"
                 [(ngModel)]="searchTerm"
                 (input)="filterItems($event)"
                 (focus)="onInputFocus()"
@@ -61,18 +61,20 @@
         }
     </div>
 
-    <h5>Add a message</h5>
+    <h5 jhiTranslate="artemisApp.metis.forward.addMessage"></h5>
     <jhi-markdown-editor-monaco
         class="markdown-editor background-editor-color w-100"
         [markdown]="newPost.content"
         (markdownChange)="updateField($event)"
         [enableResize]="false"
+        [enableFileUpload]="false"
         [showDefaultPreview]="true"
-        [defaultActions]="defaultActions"
         [colorAction]="undefined"
         [headerActions]="undefined"
-        [initialEditorHeight]="editorHeight"
-        [resizableMinHeight]="editorHeight"
+        [metaActions]="[]"
+        [defaultActions]="defaultActions"
+        [initialEditorHeight]="editorHeight()"
+        [resizableMinHeight]="editorHeight()"
         [resizableMaxHeight]="MarkdownEditorHeight.MEDIUM"
     ></jhi-markdown-editor-monaco>
 
@@ -97,9 +99,11 @@
                 <div class="forwarded-message-body" [ngClass]="{ expanded: showFullForwardedMessage }" #messageContent>
                     <div class="preserve-line-breaks">{{ displayedForwardedContent() }}</div>
                 </div>
-                <button *ngIf="isContentLong" type="button" class="btn btn-link p-0" style="width: fit-content" (click)="toggleShowFullForwardedMessage()">
-                    {{ showFullForwardedMessage ? 'Show less' : 'Show more' }}
-                </button>
+                @if (isContentLong) {
+                    <button type="button" class="btn btn-link p-0" style="width: fit-content" (click)="toggleShowFullForwardedMessage()">
+                        {{ showFullForwardedMessage ? 'artemisApp.metis.forward.showLess' : ('artemisApp.metis.forward.showMore' | artemisTranslate) }}
+                    </button>
+                }
             </div>
         </div>
     }

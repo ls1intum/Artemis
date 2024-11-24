@@ -69,7 +69,8 @@
                             ></jhi-posting-content>
                         }
                         @if (originalPostDetails) {
-                            <jhi-forwarded-message [originalPostDetails]="originalPostDetails"></jhi-forwarded-message>
+                            <jhi-forwarded-message [originalPostDetails]="originalPostDetails" (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails)">
+                            </jhi-forwarded-message>
                         }
                         <div class="hover-actions post-content-margin" [ngClass]="{ 'mb-2': previewMode }">
                             @if (!previewMode) {

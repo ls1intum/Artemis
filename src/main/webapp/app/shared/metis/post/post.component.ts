@@ -14,6 +14,7 @@ import {
     ViewChild,
     ViewContainerRef,
     input,
+    output,
 } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
@@ -35,6 +36,7 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT } from '@angular/common';
+import { Posting } from 'app/entities/metis/posting.model';
 
 @Component({
     selector: 'jhi-post',
@@ -80,6 +82,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     mayEditOrDelete: boolean = false;
     canPin: boolean = false;
     originalPostDetails: Post | AnswerPost | undefined = undefined;
+    readonly onNavigateToPost = output<Posting>();
 
     // Icons
     readonly faBullhorn = faBullhorn;
@@ -193,7 +196,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             const forwardedMessage = this.forwardedPosts()[0];
 
             if (forwardedMessage) {
-                console.log('Forwarded Post Details:', forwardedMessage);
                 this.originalPostDetails = forwardedMessage;
                 this.changeDetector.markForCheck();
             }
@@ -202,7 +204,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
             const forwardedMessage = this.forwardedAnswerPosts()[0];
 
             if (forwardedMessage) {
-                console.log('Forwarded Answer Post Details:', forwardedMessage);
                 this.originalPostDetails = forwardedMessage;
                 this.changeDetector.markForCheck();
             }
@@ -301,6 +302,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                 });
             }
         }
+    }
+
+    protected onTriggerNavigateToPost(post: Posting) {
+        this.onNavigateToPost.emit(post);
     }
 
     protected readonly origin = origin;

@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, inject, output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import dayjs from 'dayjs/esm';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Posting } from 'app/entities/metis/posting.model';
 
 @Component({
     selector: 'jhi-posting-thread',
@@ -21,6 +22,11 @@ export class PostingThreadComponent {
     @Input() isConsecutive: boolean | undefined = false;
     @Input() forwardedPosts: Post[] | undefined = [];
     @Input() forwardedAnswerPosts: AnswerPost[] | undefined = [];
+    readonly onNavigateToPost = output<Posting>();
 
     elementRef = inject(ElementRef);
+
+    protected onTriggerNavigateToPost(post: Posting) {
+        this.onNavigateToPost.emit(post);
+    }
 }
