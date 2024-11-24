@@ -76,6 +76,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -83,7 +84,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.mock.http.client.MockClientHttpResponse;
 import org.springframework.stereotype.Component;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.RequestMatcher;
 import org.springframework.web.client.RestTemplate;
@@ -108,6 +108,8 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 @Component
 @Profile("gitlab")
+// Gitlab support will be removed in 8.0.0. Please migrate to LocalVC using e.g. the PR https://github.com/ls1intum/Artemis/pull/8972
+@Deprecated(since = "7.5.0", forRemoval = true)
 public class GitlabRequestMockProvider {
 
     private static final Logger log = LoggerFactory.getLogger(GitlabRequestMockProvider.class);
@@ -129,7 +131,8 @@ public class GitlabRequestMockProvider {
 
     private MockRestServiceServer mockServerShortTimeout;
 
-    @MockitoSpyBean
+    // NOTE: we currently cannot convert this into @MockitoSpyBean because then @InjectMocks doesn't work
+    @SpyBean
     @InjectMocks
     private GitLabApi gitLabApi;
 
@@ -154,7 +157,8 @@ public class GitlabRequestMockProvider {
     @Mock
     private PipelineApi pipelineApi;
 
-    @MockitoSpyBean
+    // NOTE: we currently cannot convert this into @MockitoSpyBean because then @InjectMocks (see above) doesn't work
+    @SpyBean
     private GitLabUserManagementService gitLabUserManagementService;
 
     @Autowired

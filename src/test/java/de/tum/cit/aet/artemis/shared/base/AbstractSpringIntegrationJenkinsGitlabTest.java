@@ -53,7 +53,9 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
+import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 
+// TODO: rewrite this test to use LocalVC instead of GitLab
 @ResourceLock("AbstractSpringIntegrationJenkinsGitlabTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, "gitlab", "jenkins", PROFILE_ATHENA, PROFILE_LTI, PROFILE_AEOLUS, PROFILE_APOLLON })
@@ -74,6 +76,9 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @MockitoSpyBean
     protected JenkinsServer jenkinsServer;
+
+    @MockitoSpyBean
+    protected JenkinsJobPermissionsService jenkinsJobPermissionsService;
 
     @MockitoSpyBean
     protected ProgrammingMessagingService programmingMessagingService;

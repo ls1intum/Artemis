@@ -111,7 +111,7 @@ class PostingServiceUnitTest {
     void testParseUserMentionsWithInvalidName() {
         Course course = new Course();
         String content = "[user]Test User 2(test_user_1)[/user]";
-        User user = this.createUser("Test User 1", "test_user_1");  // Different name than mentioned
+        User user = createUser("Test User 1", "test_user_1");  // Different name than mentioned
 
         setupUserRepository(Set.of("test_user_1"), Set.of(user));
         when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(true);
@@ -123,7 +123,7 @@ class PostingServiceUnitTest {
     void testParseUserMentionsWithUserNotInCourse() {
         Course course = new Course();
         String content = "[user]Test User 1(test_user_1)[/user]";
-        User user = this.createUser("Test User 1", "test_user_1");
+        User user = createUser("Test User 1", "test_user_1");
 
         setupUserRepository(Set.of("test_user_1"), Set.of(user));
         when(authorizationCheckService.isAtLeastStudentInCourse(eq(course), any(User.class))).thenReturn(false);

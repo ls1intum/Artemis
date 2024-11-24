@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabService;
 import de.tum.cit.aet.artemis.programming.service.gitlabci.GitLabCIService;
 import de.tum.cit.aet.artemis.programming.service.gitlabci.GitLabCITriggerService;
 
+// TODO: rewrite this test to use LocalVC instead of GitLab
 @ResourceLock("AbstractSpringIntegrationGitlabCIGitlabSamlTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, "gitlabci", "gitlab", PROFILE_SAML2, PROFILE_SCHEDULING, PROFILE_LTI })
