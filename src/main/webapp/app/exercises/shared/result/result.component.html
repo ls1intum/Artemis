@@ -7,8 +7,8 @@
         @case (ResultTemplateStatus.IS_QUEUED) {
             @if (showProgressBar) {
                 <jhi-result-progress-bar
-                    [estimatedCompletionDate]="estimatedCompletionDate"
-                    [buildStartDate]="buildStartDate"
+                    [estimatedDuration]="estimatedDuration"
+                    [estimatedRemaining]="estimatedRemaining"
                     [isBuilding]="isBuilding"
                     [isQueued]="isQueued"
                     [showBorder]="showProgressBarBorder"
@@ -18,14 +18,17 @@
                 <span class="text-primary">
                     <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
                     <span id="test-queued" jhiTranslate="artemisApp.editor.queued"></span>
+                    @if (estimatedRemaining) {
+                        <span> {{ estimatedRemaining | artemisDurationFromSeconds }} </span>
+                    }
                 </span>
             }
         }
         @case (ResultTemplateStatus.IS_BUILDING) {
             @if (showProgressBar) {
                 <jhi-result-progress-bar
-                    [estimatedCompletionDate]="estimatedCompletionDate"
-                    [buildStartDate]="buildStartDate"
+                    [estimatedDuration]="estimatedDuration"
+                    [estimatedRemaining]="estimatedRemaining"
                     [isBuilding]="isBuilding"
                     [isQueued]="isQueued"
                     [showBorder]="showProgressBarBorder"
@@ -35,6 +38,9 @@
                 <span class="text-primary">
                     <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
                     <span id="test-building" jhiTranslate="artemisApp.editor.building"></span>
+                    @if (estimatedRemaining) {
+                        <span> {{ estimatedRemaining | artemisDurationFromSeconds }} </span>
+                    }
                 </span>
             }
         }

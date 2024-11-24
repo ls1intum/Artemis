@@ -1,13 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ResultProgressBarComponent } from '../../../../../main/webapp/app/exercises/shared/result/result-progress-bar/result-progress-bar.component';
 import { ArtemisTestModule } from '../../test.module';
-import dayjs from 'dayjs/esm';
 
 describe('ResultProgressBarComponent', () => {
     let component: ResultProgressBarComponent;
     let fixture: ComponentFixture<ResultProgressBarComponent>;
     let clearIntervalSpy: jest.SpyInstance;
-    const now = dayjs();
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -19,8 +17,8 @@ describe('ResultProgressBarComponent', () => {
 
         clearIntervalSpy = jest.spyOn(window, 'clearInterval');
 
-        fixture.componentRef.setInput('estimatedCompletionDate', now.add(30, 'seconds'));
-        fixture.componentRef.setInput('buildStartDate', now);
+        fixture.componentRef.setInput('estimatedRemaining', 10);
+        fixture.componentRef.setInput('estimatedDuration', 20);
         fixture.componentRef.setInput('isBuilding', false);
         fixture.componentRef.setInput('isQueued', true);
 
@@ -33,8 +31,6 @@ describe('ResultProgressBarComponent', () => {
     });
 
     it('should clear interval when not queued or building', fakeAsync(() => {
-        expect(component.estimatedDurationInterval).toBeDefined();
-
         fixture.componentRef.setInput('isBuilding', false);
         fixture.componentRef.setInput('isQueued', false);
         fixture.detectChanges();
@@ -44,9 +40,8 @@ describe('ResultProgressBarComponent', () => {
 
     it('should set queue progress bar', fakeAsync(() => {
         jest.useFakeTimers();
-        fixture.componentRef.setInput('estimatedCompletionDate', now.add(40, 'seconds'));
+        fixture.componentRef.setInput('estimatedDuration', 25);
         fixture.detectChanges();
-        expect(component.estimatedDurationInterval).toBeDefined();
 
         expect(component.isBuildProgressBarAnimated).toBeTrue();
         expect(component.buildProgressBarOpacity).toBe(1);
@@ -63,7 +58,6 @@ describe('ResultProgressBarComponent', () => {
         fixture.componentRef.setInput('isBuilding', true);
         fixture.componentRef.setInput('isQueued', false);
         fixture.detectChanges();
-        expect(component.estimatedDurationInterval).toBeDefined();
 
         expect(component.isQueueProgressBarAnimated).toBeTrue();
         expect(component.queueProgressBarOpacity).toBe(1);
@@ -81,13 +75,12 @@ describe('ResultProgressBarComponent', () => {
         jest.useFakeTimers();
         fixture.componentRef.setInput('isBuilding', false);
         fixture.componentRef.setInput('isQueued', true);
-        fixture.componentRef.setInput('estimatedCompletionDate', undefined);
-        fixture.componentRef.setInput('buildStartDate', undefined);
+        fixture.componentRef.setInput('estimatedDuration', undefined);
+        fixture.componentRef.setInput('estimatedRemaining', undefined);
         fixture.detectChanges();
 
         expect(component.isQueueProgressBarAnimated).toBeFalse();
         expect(component.queueProgressBarValue).toBe(100);
-        expect(component.estimatedRemaining).toBe(0);
 
         jest.advanceTimersByTime(1500);
 
@@ -100,13 +93,12 @@ describe('ResultProgressBarComponent', () => {
         jest.useFakeTimers();
         fixture.componentRef.setInput('isBuilding', true);
         fixture.componentRef.setInput('isQueued', false);
-        fixture.componentRef.setInput('estimatedCompletionDate', undefined);
-        fixture.componentRef.setInput('buildStartDate', undefined);
+        fixture.componentRef.setInput('estimatedDuration', undefined);
+        fixture.componentRef.setInput('estimatedRemaining', undefined);
         fixture.detectChanges();
 
         expect(component.isBuildProgressBarAnimated).toBeFalse();
         expect(component.buildProgressBarValue).toBe(100);
-        expect(component.estimatedRemaining).toBe(0);
 
         jest.advanceTimersByTime(1500);
 
@@ -114,7 +106,6 @@ describe('ResultProgressBarComponent', () => {
     }));
 
     it('should clear interval on destroy', fakeAsync(() => {
-        expect(component.estimatedDurationInterval).toBeDefined();
         component.ngOnDestroy();
         expect(clearIntervalSpy).toHaveBeenCalledWith(component.estimatedDurationInterval);
     }));

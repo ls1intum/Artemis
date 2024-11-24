@@ -1,6 +1,5 @@
 import { Component, OnDestroy, effect, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import dayjs from 'dayjs/esm';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
@@ -12,8 +11,8 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
     styleUrl: './result-progress-bar.component.scss',
 })
 export class ResultProgressBarComponent implements OnDestroy {
-    estimatedCompletionDate = input<dayjs.Dayjs>();
-    buildStartDate = input<dayjs.Dayjs>();
+    estimatedRemaining = input<number>(0);
+    estimatedDuration = input<number>(0);
     isBuilding = input<boolean>();
     isQueued = input<boolean>();
     showBorder = input<boolean>(false);
@@ -25,8 +24,6 @@ export class ResultProgressBarComponent implements OnDestroy {
     isBuildProgressBarAnimated: boolean;
     buildProgressBarOpacity: number;
     buildProgressBarValue: number;
-
-    estimatedRemaining: number;
 
     estimatedDurationInterval: ReturnType<typeof setInterval> | undefined;
 
@@ -43,7 +40,7 @@ export class ResultProgressBarComponent implements OnDestroy {
             }
 
             clearInterval(this.estimatedDurationInterval);
-            if (this.estimatedCompletionDate() && this.buildStartDate()) {
+            if (this.estimatedDuration() && this.estimatedRemaining()) {
                 if (this.isBuilding()) {
                     this.setupQueueProgressBarForBuild();
                     this.updateBuildProgressBar();
@@ -56,12 +53,10 @@ export class ResultProgressBarComponent implements OnDestroy {
                     this.setupQueueProgressBarForBuild();
                     this.isBuildProgressBarAnimated = false;
                     this.buildProgressBarValue = 100;
-                    this.estimatedRemaining = 0;
                 } else if (this.isQueued()) {
                     this.setupBuildProgressBarForQueued();
                     this.isQueueProgressBarAnimated = false;
                     this.queueProgressBarValue = 100;
-                    this.estimatedRemaining = 0;
                 }
                 this.estimatedDurationInterval = setInterval(() => {
                     this.alternateOpacity(this.isQueued());
@@ -91,31 +86,20 @@ export class ResultProgressBarComponent implements OnDestroy {
     private updateQueueProgressBar() {
         this.isQueueProgressBarAnimated = true;
         this.queueProgressBarOpacity = 1;
-        this.estimatedDurationInterval = setInterval(() => {
-            this.queueProgressBarValue = this.calculateEstimatedRemaining();
-            if (this.estimatedRemaining <= 0) {
-                this.isQueueProgressBarAnimated = false;
-                this.alternateOpacity(true);
-            }
-        }, 1000); // 1 second
+        if (this.estimatedDuration() === 0) {
+            this.queueProgressBarValue = 100;
+            return;
+        }
+        this.queueProgressBarValue = Math.round((1 - this.estimatedRemaining() / this.estimatedDuration()) * 100);
     }
 
     private updateBuildProgressBar() {
         this.isBuildProgressBarAnimated = true;
         this.buildProgressBarOpacity = 1;
-        this.estimatedDurationInterval = setInterval(() => {
-            this.buildProgressBarValue = this.calculateEstimatedRemaining();
-            if (this.estimatedRemaining <= 0) {
-                this.isBuildProgressBarAnimated = false;
-                this.alternateOpacity(false);
-            }
-        }, 1000); // 1 second
-    }
-
-    private calculateEstimatedRemaining() {
-        this.estimatedRemaining = Math.max(0, dayjs(this.estimatedCompletionDate()).diff(dayjs(), 'seconds'));
-        const estimatedDuration = dayjs(this.estimatedCompletionDate()).diff(dayjs(this.buildStartDate()), 'seconds');
-        return Math.round((1 - this.estimatedRemaining / estimatedDuration) * 100);
+        if (this.estimatedDuration() === 0) {
+            this.buildProgressBarValue = 100;
+        }
+        this.buildProgressBarValue = Math.round((1 - this.estimatedRemaining() / this.estimatedDuration()) * 100);
     }
 
     private alternateOpacity(isQueue?: boolean) {

@@ -399,4 +399,20 @@ describe('ResultComponent', () => {
         expect(comp.templateStatus).toEqual(ResultTemplateStatus.HAS_RESULT);
         expect(comp.resultTooltip).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
     });
+
+    it('should trigger Interval creation on estimatedCompletionDate change', () => {
+        jest.useFakeTimers();
+        comp.buildStartDate = dayjs().subtract(20, 'seconds');
+        comp.estimatedCompletionDate = dayjs().add(20, 'seconds');
+        comp.ngOnChanges({});
+
+        jest.advanceTimersByTime(1200);
+        expect(comp.estimatedDurationInterval).toBeDefined();
+        expect(comp.estimatedRemaining).toBeGreaterThan(0);
+        expect(comp.estimatedRemaining).toBeLessThan(40);
+        expect(comp.estimatedDuration).toBe(40);
+
+        jest.clearAllTimers();
+        jest.useRealTimers();
+    });
 });

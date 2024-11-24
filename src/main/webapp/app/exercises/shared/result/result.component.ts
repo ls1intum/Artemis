@@ -79,6 +79,10 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     resultTooltip?: string;
     latestDueDate: dayjs.Dayjs | undefined;
 
+    estimatedDurationInterval?: ReturnType<typeof setInterval>;
+    estimatedRemaining: number;
+    estimatedDuration: number;
+
     // Icons
     readonly faCircleNotch = faCircleNotch;
     readonly faFile = faFile;
@@ -168,6 +172,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         if (this.resultUpdateSubscription) {
             clearTimeout(this.resultUpdateSubscription);
         }
+        if (this.estimatedDurationInterval) {
+            clearInterval(this.estimatedDurationInterval);
+        }
     }
 
     /**
@@ -192,6 +199,14 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             // ... the missingResultInfo changed
             // we evaluate the result status.
             this.evaluate();
+        }
+
+        clearInterval(this.estimatedDurationInterval);
+        if (this.estimatedCompletionDate && this.buildStartDate) {
+            this.estimatedDurationInterval = setInterval(() => {
+                this.estimatedRemaining = Math.max(0, dayjs(this.estimatedCompletionDate).diff(dayjs(), 'seconds'));
+                this.estimatedDuration = dayjs(this.estimatedCompletionDate).diff(dayjs(this.buildStartDate), 'seconds');
+            });
         }
     }
 
