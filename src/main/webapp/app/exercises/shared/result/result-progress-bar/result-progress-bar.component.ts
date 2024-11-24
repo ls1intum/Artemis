@@ -12,10 +12,10 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
     styleUrl: './result-progress-bar.component.scss',
 })
 export class ResultProgressBarComponent implements OnDestroy {
-    estimatedCompletionDate = input.required<dayjs.Dayjs>();
-    buildStartDate = input.required<dayjs.Dayjs>();
-    isBuilding = input.required<boolean>();
-    isQueued = input.required<boolean>();
+    estimatedCompletionDate = input<dayjs.Dayjs>();
+    buildStartDate = input<dayjs.Dayjs>();
+    isBuilding = input<boolean>();
+    isQueued = input<boolean>();
 
     isQueueProgressBarAnimated: boolean;
     queueProgressBarOpacity: number;
