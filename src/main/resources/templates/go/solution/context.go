@@ -11,7 +11,6 @@ func NewContext() *Context {
 	return new(Context)
 }
 
-// GetDates returns the slice of dates in the context
 func (c *Context) GetDates() []time.Time {
 	return c.dates
 }
@@ -24,7 +23,6 @@ func (c *Context) GetSortAlgorithm() SortStrategy {
 	return c.sortAlgorithm
 }
 
-// SetSortAlgorithm sets the sorting strategy.
 func (c *Context) SetSortAlgorithm(strategy SortStrategy) {
 	c.sortAlgorithm = strategy
 }
