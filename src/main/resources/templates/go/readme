@@ -45,11 +45,13 @@ class Client {
 }
 
 class Policy ##testsColor(artemis/test/structural.TestPolicy) {
+  +NewPolicy() <<constructor>>
   <color:testsColor(artemis/test/behavior.TestUseMergeSortForBigList,artemis/test/behavior.TestUseMergeSortForBigList)>+Configure()</color>
 }
 
 class Context ##testsColor(artemis/test/structural.TestContext) {
   -dates: []time.Time
+  +NewContext() <<constructor>>
   +Sort()
 }
 
@@ -58,10 +60,12 @@ interface SortStrategy {
 }
 
 class BubbleSort ##testsColor(artemis/test/structural.TestBubbleSort) {
+  +NewBubbleSort() <<constructor>>
   <color:testsColor(artemis/test/behavior.TestBubbleSort)>+PerformSort([]time.Time)</color>
 }
 
 class MergeSort ##testsColor(artemis/test/structural.TestMergeSort) {
+  +NewMergeSort() <<constructor>>
   <color:testsColor(artemis/test/behavior.TestMergeSort)>+PerformSort([]time.Time)</color>
 }
 
