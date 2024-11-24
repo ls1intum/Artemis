@@ -1,10 +1,11 @@
 package main
 
 import (
-	"artemis/assignment"
 	"fmt"
 	"math/rand"
 	"time"
+
+	"artemis/assignment"
 )
 
 // Constants define iteration and random date generation bounds.

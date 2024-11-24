@@ -1,9 +1,10 @@
 package test
 
 import (
-	"artemis/assignment"
 	"testing"
 	"time"
+
+	"artemis/assignment"
 )
 
 type SortStrategy interface {
