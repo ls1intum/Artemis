@@ -100,16 +100,15 @@ export class AttachmentUnitFormComponent implements OnChanges {
     }
 
     get tooltipText(): string | null {
+        // Both name and file are invalid
         if (!this.fileInputTouched && this.nameControl?.invalid) {
-            return (
-                this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.nameRequiredValidationError') +
-                ' ' +
-                this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError')
-            );
+            return this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.nameAndFileRequiredValidationError');
         }
+        // Only file is invalid
         if (!this.fileInputTouched) {
             return this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError');
         }
+        // Only name is invalid
         if (this.nameControl?.invalid) {
             return this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.nameRequiredValidationError');
         }
