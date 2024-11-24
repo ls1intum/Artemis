@@ -7,60 +7,26 @@
         @case (ResultTemplateStatus.IS_QUEUED) {
             @if (showProgressBar) {
                 <div class="mw-custom text-nowrap rounded-3 p-2 border border-1 bg-module fw-semibold">
-                    <div class="mb-2">
-                        <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
-                        <span jhiTranslate="artemisApp.editor.queued"></span>
-                        @if (estimatedRemaining && estimatedRemaining > 0) {
-                            <span> {{ estimatedRemaining | artemisDurationFromSeconds }}</span>
-                        }
-                    </div>
-                    <jhi-result-progress-bar
-                        [isBuildProgressBarAnimated]="false"
-                        [buildProgressBarOpacity]="1"
-                        [buildProgressBarValue]="0"
-                        [queueProgressBarOpacity]="progressBarOpacity"
-                        [queueProgressBarValue]="progressBarValue"
-                        [isQueueProgressBarAnimated]="isProgressBarAnimated"
-                    >
+                    <jhi-result-progress-bar [estimatedCompletionDate]="estimatedCompletionDate" [buildStartDate]="buildStartDate" [isBuilding]="isBuilding" [isQueued]="isQueued">
                     </jhi-result-progress-bar>
                 </div>
             } @else {
                 <span class="text-primary">
                     <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
                     <span id="test-queued" jhiTranslate="artemisApp.editor.queued"></span>
-                    @if (estimatedRemaining && estimatedRemaining > 0) {
-                        <span id="test-estimated-duration-queue"> {{ estimatedRemaining | artemisDurationFromSeconds }}</span>
-                    }
                 </span>
             }
         }
         @case (ResultTemplateStatus.IS_BUILDING) {
             @if (showProgressBar) {
                 <div class="mw-custom text-nowrap rounded-3 p-2 border border-1 bg-module fw-semibold">
-                    <div class="mb-2">
-                        <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
-                        <span jhiTranslate="artemisApp.editor.building"></span>
-                        @if (estimatedRemaining && estimatedRemaining > 0) {
-                            <span> {{ estimatedRemaining | artemisDurationFromSeconds }}</span>
-                        }
-                    </div>
-                    <jhi-result-progress-bar
-                        [isBuildProgressBarAnimated]="isProgressBarAnimated"
-                        [buildProgressBarOpacity]="progressBarOpacity"
-                        [buildProgressBarValue]="progressBarValue"
-                        [queueProgressBarOpacity]="1"
-                        [queueProgressBarValue]="100"
-                        [isQueueProgressBarAnimated]="true"
-                    >
+                    <jhi-result-progress-bar [estimatedCompletionDate]="estimatedCompletionDate" [buildStartDate]="buildStartDate" [isBuilding]="isBuilding" [isQueued]="isQueued">
                     </jhi-result-progress-bar>
                 </div>
             } @else {
                 <span class="text-primary">
                     <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
                     <span id="test-building" jhiTranslate="artemisApp.editor.building"></span>
-                    @if (estimatedRemaining && estimatedRemaining > 0) {
-                        <span id="test-estimated-duration-build"> {{ estimatedRemaining | artemisDurationFromSeconds }}</span>
-                    }
                 </span>
             }
         }

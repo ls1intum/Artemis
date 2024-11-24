@@ -399,12 +399,4 @@ describe('ResultComponent', () => {
         expect(comp.templateStatus).toEqual(ResultTemplateStatus.HAS_RESULT);
         expect(comp.resultTooltip).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
     });
-
-    it('should trigger Interval creation on estimatedCompletionDate change', () => {
-        comp.estimatedCompletionDate = dayjs().add(20, 'seconds');
-        comp.ngOnChanges({
-            estimatedCompletionDate: { previousValue: undefined, currentValue: comp.estimatedCompletionDate, firstChange: true, isFirstChange: () => true },
-        });
-        expect(comp.estimatedDurationInterval).toBeDefined();
-    });
 });

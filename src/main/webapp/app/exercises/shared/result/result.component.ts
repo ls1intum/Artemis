@@ -77,11 +77,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     badge: Badge;
     resultTooltip?: string;
     latestDueDate: dayjs.Dayjs | undefined;
-    estimatedRemaining: number;
-    progressBarValue: number;
-    isProgressBarAnimated = true;
-    progressBarOpacity = 1;
-    estimatedDurationInterval: ReturnType<typeof setInterval>;
 
     // Icons
     readonly faCircleNotch = faCircleNotch;
@@ -172,9 +167,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         if (this.resultUpdateSubscription) {
             clearTimeout(this.resultUpdateSubscription);
         }
-        if (this.estimatedDurationInterval) {
-            clearInterval(this.estimatedDurationInterval);
-        }
     }
 
     /**
@@ -198,30 +190,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             // ... the result was building and is not building anymore, or
             // ... the missingResultInfo changed
             // we evaluate the result status.
-            clearInterval(this.estimatedDurationInterval);
             this.evaluate();
-        }
-
-        if (this.estimatedCompletionDate && this.buildStartDate) {
-            clearInterval(this.estimatedDurationInterval);
-            this.isProgressBarAnimated = true;
-            this.progressBarOpacity = 1;
-            this.estimatedDurationInterval = setInterval(() => {
-                this.estimatedRemaining = Math.max(0, dayjs(this.estimatedCompletionDate).diff(dayjs(), 'seconds'));
-                const estimatedDuration = dayjs(this.estimatedCompletionDate).diff(dayjs(this.buildStartDate), 'seconds');
-                this.progressBarValue = Math.round((1 - this.estimatedRemaining / estimatedDuration) * 100);
-                if (this.estimatedRemaining <= 0) {
-                    clearInterval(this.estimatedDurationInterval);
-                }
-            }, 1000); // 1 second
-        } else if (this.showProgressBar && (this.isBuilding || this.isQueued)) {
-            clearInterval(this.estimatedDurationInterval);
-            this.isProgressBarAnimated = false;
-            this.progressBarValue = 100;
-            this.estimatedRemaining = 0;
-            this.estimatedDurationInterval = setInterval(() => {
-                this.alternateOpacity();
-            }, 1000); // 1 second
         }
     }
 
@@ -361,14 +330,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.participationService.downloadArtifact(participationId).subscribe((artifact) => {
                 this.csvDownloadService.downloadArtifact(artifact.fileContent, artifact.fileName);
             });
-        }
-    }
-
-    private alternateOpacity() {
-        if (!this.progressBarOpacity || this.progressBarOpacity < 1) {
-            this.progressBarOpacity = 1;
-        } else {
-            this.progressBarOpacity = 0;
         }
     }
 }
