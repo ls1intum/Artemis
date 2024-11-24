@@ -80,8 +80,8 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     latestDueDate: dayjs.Dayjs | undefined;
 
     estimatedDurationInterval?: ReturnType<typeof setInterval>;
-    estimatedRemaining: number;
-    estimatedDuration: number;
+    estimatedRemaining: number = 0;
+    estimatedDuration: number = 0;
 
     // Icons
     readonly faCircleNotch = faCircleNotch;

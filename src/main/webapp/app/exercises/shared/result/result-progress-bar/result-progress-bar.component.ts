@@ -98,6 +98,7 @@ export class ResultProgressBarComponent implements OnDestroy {
         this.buildProgressBarOpacity = 1;
         if (this.estimatedDuration() === 0) {
             this.buildProgressBarValue = 100;
+            return;
         }
         this.buildProgressBarValue = Math.round((1 - this.estimatedRemaining() / this.estimatedDuration()) * 100);
     }
