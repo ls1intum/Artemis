@@ -41,11 +41,15 @@ import {
 } from '../../helpers/sample/metis-sample-data';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
-import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
+import { ForwardedMessageService } from '../../../../../main/webapp/app/shared/metis/forwarded-message.service';
+import { MockForwardedMessageService } from '../../helpers/mocks/service/mock-forwarded-message.service';
+import { ForwardedMessage } from '../../../../../main/webapp/app/entities/metis/forwarded-message.model';
+import { Posting } from '../../../../../main/webapp/app/entities/metis/posting.model';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -57,6 +61,7 @@ describe('Metis Service', () => {
     let websocketService: JhiWebsocketService;
     let reactionService: ReactionService;
     let postService: PostService;
+    let forwardedMessageService: ForwardedMessageService;
     let answerPostService: AnswerPostService;
     let conversationService: ConversationService;
     let post: Post;
@@ -76,6 +81,7 @@ describe('Metis Service', () => {
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: PostService, useClass: MockPostService },
+                { provide: ForwardedMessageService, useClass: MockForwardedMessageService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -87,6 +93,7 @@ describe('Metis Service', () => {
         websocketService = TestBed.inject(JhiWebsocketService);
         reactionService = TestBed.inject(ReactionService);
         postService = TestBed.inject(PostService);
+        forwardedMessageService = TestBed.inject(ForwardedMessageService);
         answerPostService = TestBed.inject(AnswerPostService);
         conversationService = TestBed.inject(ConversationService);
         metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
@@ -624,4 +631,55 @@ describe('Metis Service', () => {
             expect(metisService.getCurrentConversation()).toBe(metisLectureChannelDTO);
         });
     });
+
+    it('should call ForwardedMessageService.getForwardedMessages with correct parameters', fakeAsync(() => {
+        const forwardedMessageServiceSpy = jest.spyOn(forwardedMessageService, 'getForwardedMessages');
+        const postIds = [1, 2, 3];
+
+        metisService.getForwardedMessagesByPostIds(postIds);
+
+        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds);
+        tick();
+    }));
+
+    it('should call PostService.getSourcePostsByIds with correct parameters', fakeAsync(() => {
+        const postServiceSpy = jest.spyOn(postService, 'getSourcePostsByIds');
+        const postIds = [4, 5, 6];
+
+        metisService.getSourcePostsByIds(postIds);
+
+        expect(postServiceSpy).toHaveBeenCalledWith(metisService['courseId'], postIds);
+        tick();
+    }));
+
+    it('should call AnswerPostService.getSourceAnswerPostsByIds with correct parameters', fakeAsync(() => {
+        const postServiceSpy = jest.spyOn(answerPostService, 'getSourceAnswerPostsByIds');
+        const answerPostIds = [7, 8, 9];
+
+        metisService.getSourceAnswerPostsByIds(answerPostIds);
+
+        expect(postServiceSpy).toHaveBeenCalledWith(metisService['courseId'], answerPostIds);
+        tick();
+    }));
+
+    it('should create forwarded messages and update cached posts', fakeAsync(() => {
+        const originalPosts: Posting[] = [{ id: 1 }, { id: 2 }] as Posting[];
+        metisService.setCourse(course);
+        const targetConversation: Conversation = { id: 1, type: ConversationType.CHANNEL } as Conversation;
+        const isAnswer = false;
+        const newContent = 'Forwarded content';
+
+        const createdPost: Post = { id: 100, content: newContent, conversation: targetConversation } as Post;
+        jest.spyOn(postService, 'create').mockReturnValue(of(new HttpResponse({ body: createdPost })));
+        jest.spyOn(forwardedMessageService, 'createForwardedMessage').mockImplementation((fm) => of(new HttpResponse({ body: { ...fm, id: Math.random() } as ForwardedMessage })));
+
+        let result: ForwardedMessage[] | undefined;
+        metisService.createForwardedMessages(originalPosts, targetConversation, isAnswer, newContent).subscribe((res) => (result = res));
+        tick();
+
+        expect(postService.create).toHaveBeenCalledWith(expect.any(Number), expect.objectContaining({ content: newContent }));
+        expect(forwardedMessageService.createForwardedMessage).toHaveBeenCalledTimes(originalPosts.length);
+        expect(result?.length).toBe(originalPosts.length);
+        expect(result?.every((fm) => fm.destinationPost?.id === createdPost.id)).toBeTrue();
+    }));
 });

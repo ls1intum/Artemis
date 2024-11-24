@@ -671,13 +671,6 @@ export class MetisService implements OnDestroy {
         else return;
     }
 
-    /**
-     * Creates new ForwardedMessages by first creating a new Post.
-     * @param originalPosts The original posts to be forwarded.
-     * @param conversation The target conversation to forward the posts to.
-     * @param newContent Optional new content for the forwarded posts.
-     * @return {Observable<ForwardedMessage[]>} created ForwardedMessages
-     */
     createForwardedMessages(originalPosts: Posting[], targetConversation: Conversation, isAnswer: boolean, newContent?: string): Observable<ForwardedMessage[]> {
         if (!this.courseId) {
             throw new Error('Course ID is not set. Ensure that setCourse() is called before forwarding posts.');
