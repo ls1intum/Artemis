@@ -691,13 +691,9 @@ export class MetisService implements OnDestroy {
         return this.postService.create(this.courseId, newPost).pipe(
             switchMap((createdPost: HttpResponse<Post>) => {
                 const createdPostBody = createdPost.body!;
-                const forwardedMessages: ForwardedMessage[] = originalPosts.map((post) => ({
-                    sourceId: post.id,
-                    sourceType: sourceType,
-                    destinationPost: { id: createdPostBody.id } as Post,
-                    destinationAnswerPost: undefined,
-                    content: newContent || '',
-                }));
+                const forwardedMessages: ForwardedMessage[] = originalPosts.map(
+                    (post) => new ForwardedMessage(undefined, post.id, sourceType, { id: createdPostBody.id } as Post, undefined, newContent || ''),
+                );
 
                 const createForwardedMessageObservables = forwardedMessages.map((fm) =>
                     this.forwardedMessageService.createForwardedMessage(fm).pipe(map((res: HttpResponse<ForwardedMessage>) => res.body!)),

@@ -11,14 +11,25 @@ export class ForwardedMessage implements BaseEntity {
     public id?: number;
     public sourceId?: number;
     public sourceType?: SourceType;
-    public destinationPost?: Post;
-    public destinationAnswerPost?: AnswerPost;
+    public destinationPost: Post | undefined;
+    public destinationAnswerPost: AnswerPost | undefined;
+    public content: string | undefined;
 
-    constructor(id?: number, sourceId?: number, sourceType?: SourceType, destinationPost?: Post, destinationAnswerPost?: AnswerPost) {
+    private validateDestinations(): boolean {
+        const isDestinationPostValid = this.destinationPost !== undefined && this.destinationPost !== null;
+        const isDestinationAnswerPostValid = this.destinationAnswerPost !== undefined && this.destinationAnswerPost !== null;
+        return (isDestinationPostValid && !isDestinationAnswerPostValid) || (!isDestinationPostValid && isDestinationAnswerPostValid);
+    }
+
+    constructor(id?: number, sourceId?: number, sourceType?: SourceType, destinationPost?: Post, destinationAnswerPost?: AnswerPost, content?: string) {
         this.id = id;
         this.sourceId = sourceId;
         this.sourceType = sourceType;
         this.destinationPost = destinationPost;
         this.destinationAnswerPost = destinationAnswerPost;
+        this.content = content;
+        if (!this.validateDestinations()) {
+            throw new Error('A ForwardedMessage must have exactly one destination');
+        }
     }
 }
