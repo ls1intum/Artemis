@@ -210,7 +210,12 @@ describe('AnswerPostComponent', () => {
             expect(component.showDropdown).toBe(showDropdown);
             expect(component.dropdownPosition).toEqual(dropdownPosition);
 
-            jest.restoreAllMocks();
-        });
+afterEach(() => {
+    jest.restoreAllMocks();
+});
+
+testCases.forEach(({ cursor, preventDefaultCalled, showDropdown, dropdownPosition }) => {
+    // ... test implementation ...
+});
     });
 });
