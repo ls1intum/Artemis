@@ -92,9 +92,9 @@
                                                         }
                                                         <button
                                                             [disabled]="attachmentToBeCreated?.id === attachment?.id"
+                                                            type="button"
                                                             (click)="editAttachment(attachment)"
                                                             class="btn btn-primary btn-sm me-1"
-                                                            type="button"
                                                         >
                                                             <fa-icon [icon]="faPencilAlt" />
                                                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
@@ -202,7 +202,7 @@
                                     <fa-icon [icon]="faPaperclip" />&nbsp;
                                     <span jhiTranslate="entity.action.saveAttachment"></span>
                                 </button>
-                                <button (click)="cancel()" class="btn btn-default" type="button">
+                                <button type="button" (click)="cancel()" class="btn btn-default">
                                     <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                                 </button>
                             </div>
@@ -212,7 +212,7 @@
                 @if (!attachmentToBeCreated) {
                     <div class="row">
                         <div class="col-12">
-                            <button (click)="addAttachment()" class="btn btn-primary" id="add-attachment" type="button">
+                            <button type="button" (click)="addAttachment()" class="btn btn-primary" id="add-attachment">
                                 <fa-icon [icon]="faPaperclip" />&nbsp;<span jhiTranslate="entity.action.addAttachment"></span>
                             </button>
                         </div>
