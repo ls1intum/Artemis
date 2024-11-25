@@ -30,8 +30,6 @@ describe('TextblockAssessmentCardComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [
-                TextblockAssessmentCardComponent,
-                TextblockFeedbackEditorComponent,
                 TranslatePipeMock,
                 MockDirective(TranslateDirective),
                 MockDirective(NgModel),

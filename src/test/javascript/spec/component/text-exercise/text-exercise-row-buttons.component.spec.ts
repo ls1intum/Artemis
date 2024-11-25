@@ -18,7 +18,7 @@ describe('TextExercise Row Buttons Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [TextExerciseRowButtonsComponent],
+            declarations: [],
             providers: [
                 { provide: TextExerciseService, useValue: { delete: jest.fn() } },
                 { provide: EventManager, useValue: { broadcast: jest.fn() } },

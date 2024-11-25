@@ -25,7 +25,7 @@ describe('TextblockFeedbackDropdownComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [TextblockFeedbackDropdownComponent, MockComponent(HelpIconComponent)],
+            declarations: [MockComponent(HelpIconComponent)],
         })
             .compileComponents()
             .then(() => {

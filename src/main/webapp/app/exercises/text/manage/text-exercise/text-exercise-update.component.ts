@@ -9,7 +9,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/entities/exercise.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { FormsModule, NgForm, NgModel } from '@angular/forms';
+import { NgForm, NgModel } from '@angular/forms';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
@@ -45,6 +45,7 @@ import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/
 import { ArtemisPresentationScoreModule } from 'app/exercises/shared/presentation-score/presentation-score.module';
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { FormsModule } from 'app/forms/forms.module';
 
 @Component({
     selector: 'jhi-text-exercise-update',

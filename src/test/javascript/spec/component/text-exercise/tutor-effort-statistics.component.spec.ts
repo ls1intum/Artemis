@@ -51,7 +51,7 @@ describe('TutorEffortStatisticsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(BarChartModule)],
-            declarations: [TutorEffortStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(MockHasAnyAuthorityDirective), MockComponent(HelpIconComponent)],
+            declarations: [MockPipe(ArtemisTranslatePipe), MockDirective(MockHasAnyAuthorityDirective), MockComponent(HelpIconComponent)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
