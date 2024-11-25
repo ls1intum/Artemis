@@ -34,6 +34,12 @@ class UserAccountLocalVcsIntegrationTest extends AbstractSpringIntegrationLocalC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getParticipationVcsAccessTokenByUserForTeamExercise() throws Exception {
+        userTestService.getAndCreateParticipationVcsAccessTokenForTeamExercise();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createAndDeleteUserVcsAccessTokenByUser() throws Exception {
         userTestService.createAndDeleteUserVcsAccessToken();
     }
