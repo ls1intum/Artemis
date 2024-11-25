@@ -2,11 +2,14 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-textblock-feedback-dropdown',
     templateUrl: './textblock-feedback-dropdown.component.html',
     styleUrls: ['./textblock-feedback-dropdown.component.scss'],
+    standalone: true,
+    imports: [ArtemisSharedComponentModule],
 })
 export class TextblockFeedbackDropdownComponent {
     @Output() didChange = new EventEmitter();

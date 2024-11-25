@@ -8,6 +8,7 @@ import { TextBlockType } from 'app/entities/text/text-block.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { TextblockFeedbackEditorComponent as TextblockFeedbackEditorComponent_1 } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 
 type OptionalTextBlockRef = TextBlockRef | undefined;
 
@@ -15,6 +16,8 @@ type OptionalTextBlockRef = TextBlockRef | undefined;
     selector: 'jhi-textblock-assessment-card',
     templateUrl: './textblock-assessment-card.component.html',
     styleUrls: ['./textblock-assessment-card.component.scss'],
+    standalone: true,
+    imports: [TextblockFeedbackEditorComponent_1],
 })
 export class TextblockAssessmentCardComponent {
     protected route = inject(ActivatedRoute);

@@ -8,11 +8,17 @@ import { TextBlock } from 'app/entities/text/text-block.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { Course } from 'app/entities/course.model';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-text-result',
     templateUrl: './text-result.component.html',
     styleUrls: ['./text-result.component.scss'],
+    standalone: true,
+    imports: [NgClass, FaIconComponent, NgbTooltip, ArtemisSharedCommonModule],
 })
 export class TextResultComponent {
     private translateService = inject(TranslateService);

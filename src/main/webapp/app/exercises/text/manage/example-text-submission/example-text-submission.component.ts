@@ -23,6 +23,15 @@ import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { Observable, of } from 'rxjs';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
+import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
+import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 type ExampleSubmissionResponseType = EntityResponseType;
 
@@ -30,6 +39,18 @@ type ExampleSubmissionResponseType = EntityResponseType;
     selector: 'jhi-example-text-submission',
     templateUrl: './example-text-submission.component.html',
     styleUrls: ['./example-text-submission.component.scss'],
+    standalone: true,
+    imports: [
+        TranslateDirective,
+        ArtemisSharedComponentModule,
+        FormsModule,
+        FaIconComponent,
+        ArtemisSharedModule,
+        ArtemisAssessmentSharedModule,
+        TextAssessmentAreaComponent,
+        AssessmentInstructionsModule,
+        ArtemisSharedCommonModule,
+    ],
 })
 export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context, FeedbackMarker {
     private route = inject(ActivatedRoute);

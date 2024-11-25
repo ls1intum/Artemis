@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -33,12 +33,50 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ArtemisTeamSubmissionSyncModule } from 'app/exercises/shared/team-submission-sync/team-submission-sync.module';
+import { TextResultComponent } from 'app/exercises/text/participate/text-result/text-result.component';
+import { RatingModule } from 'app/exercises/shared/rating/rating.module';
+import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IrisModule } from 'app/iris/iris.module';
+import { UpperCasePipe } from '@angular/common';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @Component({
     selector: 'jhi-text-editor',
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
     styleUrls: ['./text-editor.component.scss'],
+    standalone: true,
+    imports: [
+        ArtemisHeaderExercisePageWithDetailsModule,
+        ArtemisSharedComponentModule,
+        RouterLink,
+        RequestFeedbackButtonComponent,
+        ArtemisResultModule,
+        ArtemisSharedModule,
+        ArtemisTeamParticipeModule,
+        TranslateDirective,
+        FormsModule,
+        ArtemisTeamSubmissionSyncModule,
+        TextResultComponent,
+        RatingModule,
+        ArtemisComplaintsModule,
+        FaIconComponent,
+        IrisModule,
+        UpperCasePipe,
+        ArtemisSharedCommonModule,
+        ArtemisMarkdownModule,
+    ],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     private route = inject(ActivatedRoute);

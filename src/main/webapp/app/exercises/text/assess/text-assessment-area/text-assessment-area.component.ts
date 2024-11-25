@@ -3,6 +3,9 @@ import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
+import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
+import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-text-assessment-area',
@@ -14,6 +17,8 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
             }
         `,
     ],
+    standalone: true,
+    imports: [TextblockAssessmentCardComponent, ManualTextblockSelectionComponent, TranslateDirective],
 })
 export class TextAssessmentAreaComponent implements OnChanges {
     private stringCountService = inject(StringCountService);
