@@ -33,6 +33,7 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.service';
 import { ForwardedMessage, SourceType } from 'app/entities/metis/forwarded-message.model';
+import { throwError } from 'rxjs';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -673,7 +674,7 @@ export class MetisService implements OnDestroy {
 
     createForwardedMessages(originalPosts: Posting[], targetConversation: Conversation, isAnswer: boolean, newContent?: string): Observable<ForwardedMessage[]> {
         if (!this.courseId) {
-            throw new Error('Course ID is not set. Ensure that setCourse() is called before forwarding posts.');
+            return throwError(() => new Error('Course ID is not set. Ensure that setCourse() is called before forwarding posts.'));
         }
 
         const newPost: Post = {

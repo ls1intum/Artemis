@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, input } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
@@ -14,6 +14,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { Posting } from 'app/entities/metis/posting.model';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
@@ -25,6 +26,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     displayPriority: DisplayPriority;
     canPin = false;
     readonly DisplayPriority = DisplayPriority;
+    originalPostDetails = input<Posting>();
 
     // Icons
     readonly faSmile = faSmile;
@@ -92,7 +94,11 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     }
 
     forwardMessage(): void {
-        this.openForwardMessageView(this.posting, false);
+        if (!this.posting.content || this.posting.content === '') {
+            this.openForwardMessageView(this.originalPostDetails()!, false);
+        } else {
+            this.openForwardMessageView(this.posting, false);
+        }
     }
 
     /**

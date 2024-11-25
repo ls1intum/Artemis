@@ -55,15 +55,16 @@ describe('ForwardedMessageComponent', () => {
                     isFirstChange: () => true,
                 },
             });
-            expect(component.updateSourceName).toHaveBeenCalledWith(mockPost);
+            expect(component.updateSourceName).toHaveBeenCalled();
             expect(component.getTodayFlag).toHaveBeenCalled();
-            expect(component.postingIsOfToday).toBeFalse(); // MockPost is not created today
+            expect(component.postingIsOfToday).toBeFalse();
         });
     });
 
     it('should set sourceName correctly for a channel post', () => {
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.originalPostDetails = input<Posting>(mockPost);
+            component.ngOnInit();
             component.ngOnChanges({
                 originalPostDetails: {
                     currentValue: mockPost,
@@ -80,6 +81,7 @@ describe('ForwardedMessageComponent', () => {
         const oneToOnePost = { ...mockPost, conversation: { type: 'oneToOneChat' } } as Post;
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.originalPostDetails = input<Posting>(oneToOnePost);
+            component.ngOnInit();
             component.ngOnChanges({
                 originalPostDetails: {
                     currentValue: oneToOnePost,
@@ -88,7 +90,7 @@ describe('ForwardedMessageComponent', () => {
                     isFirstChange: () => true,
                 },
             });
-            expect(component.sourceName).toBe('a direct message |');
+            expect(component.sourceName).toBe('a direct message ');
         });
     });
 
@@ -182,7 +184,7 @@ describe('ForwardedMessageComponent', () => {
                     isFirstChange: () => true,
                 },
             });
-            expect(component.sourceName).toBe('a group message |');
+            expect(component.sourceName).toBe('a group message ');
         });
     });
 

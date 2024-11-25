@@ -89,6 +89,7 @@
                                     (isModalOpen)="displayInlineInput = true"
                                     (mayEditOrDeleteOutput)="onMayEditOrDelete($event)"
                                     (canPinOutput)="onCanPin($event)"
+                                    [originalPostDetails]="originalPostDetails"
                                     (isDeleteEvent)="onDeleteEvent(true)"
                                 />
                             }
