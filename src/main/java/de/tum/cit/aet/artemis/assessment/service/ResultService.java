@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -622,7 +621,7 @@ public class ResultService {
                 maxOccurrence, filterErrorCategories, pageable);
 
         // 10. Process and map feedback details, calculating relative count and assigning task names
-        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.concatenatedFeedbackIds(), detail.count(),
+        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.count(),
                 (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
         // 11. Predefined error categories available for filtering on the client side
         final List<String> ERROR_CATEGORIES = List.of("Student Error", "Ares Error", "AST Error");
@@ -653,15 +652,14 @@ public class ResultService {
      * datasets.
      * <br>
      *
-     * @param exerciseId  for which the affected student participation data is requested.
-     * @param feedbackIds used to filter the participation to only those affected by specific feedback entries.
-     * @param data        A {@link PageableSearchDTO} object containing pagination and sorting parameters.
+     * @param exerciseId for which the affected student participation data is requested.
+     * @param detailText used to filter the participation to only those affected by specific feedback entries.
+     * @param data       A {@link PageableSearchDTO} object containing pagination and sorting parameters.
      * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
-    public Page<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackId(long exerciseId, String feedbackIds, PageableSearchDTO<String> data) {
-        List<Long> feedbackIdLongs = Arrays.stream(feedbackIds.split(",")).map(Long::valueOf).toList();
+    public Page<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackId(long exerciseId, String detailText, String testCaseName, PageableSearchDTO<String> data) {
         PageRequest pageRequest = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.AFFECTED_STUDENTS);
-        return studentParticipationRepository.findAffectedStudentsByFeedbackId(exerciseId, feedbackIdLongs, pageRequest);
+        return studentParticipationRepository.findAffectedStudentsByFeedbackId(exerciseId, detailText, testCaseName, pageRequest);
     }
 
     /**
@@ -691,16 +689,5 @@ public class ResultService {
         longFeedbackTextRepository.deleteByFeedbackIds(feedbackIdsWithLongText);
         List<Feedback> feedbacks = new ArrayList<>(feedbackList);
         result.updateAllFeedbackItems(feedbacks, true);
-    }
-
-    /**
-     * Retrieves the number of students affected by a specific feedback detail text for a given exercise.
-     *
-     * @param exerciseId for which the affected student count is requested.
-     * @param detailText used to filter affected students.
-     * @return the total number of distinct students affected by the feedback detail text.
-     */
-    public long getAffectedStudentCountByFeedbackDetailText(long exerciseId, String detailText) {
-        return studentParticipationRepository.countAffectedStudentsByFeedbackDetailText(exerciseId, detailText);
     }
 }

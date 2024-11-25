@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -359,32 +358,18 @@ public class ResultResource {
      * and participation details.
      * <br>
      *
-     * @param exerciseId        for which the participation data is requested.
-     * @param feedbackIdsHeader to filter affected students by specific feedback entries.
-     * @param data              A {@link PageableSearchDTO} object containing pagination and sorting parameters.
+     * @param exerciseId for which the participation data is requested.
+     * @param detailText to filter affected students by specific feedback entries.
+     * @param data       A {@link PageableSearchDTO} object containing pagination and sorting parameters.
      * @return A {@link ResponseEntity} containing a {@link Page} of {@link FeedbackAffectedStudentDTO}, each representing a student affected by the feedback entries.
      */
     @GetMapping("exercises/{exerciseId}/feedback-details-participation")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<Page<FeedbackAffectedStudentDTO>> getAffectedStudentsWithFeedback(@PathVariable long exerciseId, @RequestHeader("feedbackIds") String feedbackIdsHeader,
-            @ModelAttribute PageableSearchDTO<String> data) {
+    public ResponseEntity<Page<FeedbackAffectedStudentDTO>> getAffectedStudentsWithFeedback(@PathVariable long exerciseId, @RequestParam("detailText") String detailText,
+            @RequestParam("testCaseName") String testCaseName, @ModelAttribute PageableSearchDTO<String> data) {
 
-        Page<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackId(exerciseId, feedbackIdsHeader, data);
+        Page<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackId(exerciseId, detailText, testCaseName, data);
 
         return ResponseEntity.ok(participation);
-    }
-
-    /**
-     * GET /exercises/{exerciseId}/feedback-detail/affected-students : Retrieves the count of students affected by a specific feedback detail text.
-     *
-     * @param exerciseId The ID of the exercise for which affected students are counted.
-     * @param detailText The feedback detail text to filter by.
-     * @return A {@link ResponseEntity} containing the count of affected students.
-     */
-    @GetMapping("exercises/{exerciseId}/feedback-detail/affected-students")
-    @EnforceAtLeastEditorInExercise
-    public ResponseEntity<Long> countAffectedStudentsByFeedbackDetailText(@PathVariable long exerciseId, @RequestParam("detailText") String detailText) {
-        long affectedStudentCount = resultService.getAffectedStudentCountByFeedbackDetailText(exerciseId, detailText);
-        return ResponseEntity.ok(affectedStudentCount);
     }
 }

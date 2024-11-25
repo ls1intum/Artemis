@@ -15,7 +15,6 @@ import { AlertService } from 'app/core/util/alert.service';
 })
 export class FeedbackDetailChannelModalComponent {
     protected readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackDetailChannel';
-    affectedStudentsCount = input.required<number>();
     feedbackDetail = input.required<FeedbackDetail>();
     formSubmitted = output<{ channelDto: ChannelDTO; navigate: boolean }>();
 
@@ -53,7 +52,7 @@ export class FeedbackDetailChannelModalComponent {
     async handleModal(): Promise<boolean> {
         try {
             const modalRef = this.modalService.open(ConfirmFeedbackChannelCreationModalComponent, { centered: true });
-            modalRef.componentInstance.affectedStudentsCount = this.affectedStudentsCount;
+            modalRef.componentInstance.affectedStudentsCount = this.feedbackDetail().count;
             return await modalRef.result;
         } catch (error) {
             this.alertService.error(error);

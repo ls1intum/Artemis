@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { PageableResult, PageableSearch, SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
-import { HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpParams } from '@angular/common/http';
 import { FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
@@ -13,7 +13,6 @@ export interface FeedbackAnalysisResponse {
     errorCategories: string[];
 }
 export interface FeedbackDetail {
-    concatenatedFeedbackIds: number[];
     count: number;
     relativeCount: number;
     detailText: string;
@@ -32,6 +31,7 @@ export interface FeedbackAffectedStudentDTO {
 export interface FeedbackChannelRequestDTO {
     channel: ChannelDTO;
     feedbackDetailText: string;
+    testCaseName: string;
 }
 @Injectable()
 export class FeedbackAnalysisService extends BaseApiHttpService {
@@ -54,26 +54,24 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
         return this.get<number>(`exercises/${exerciseId}/feedback-details-max-count`);
     }
 
-    async getParticipationForFeedbackIds(exerciseId: number, feedbackIds: number[], pageable: PageableSearch): Promise<PageableResult<FeedbackAffectedStudentDTO>> {
-        const feedbackIdsHeader = feedbackIds.join(',');
-
+    async getParticipationForFeedbackIds(
+        exerciseId: number,
+        detailText: string,
+        testCaseName: string,
+        pageable: PageableSearch,
+    ): Promise<PageableResult<FeedbackAffectedStudentDTO>> {
         const params = new HttpParams()
             .set('page', pageable.page.toString())
             .set('pageSize', pageable.pageSize.toString())
             .set('sortedColumn', pageable.sortedColumn)
-            .set('sortingOrder', pageable.sortingOrder);
+            .set('sortingOrder', pageable.sortingOrder)
+            .set('detailText', detailText)
+            .set('testCaseName', testCaseName);
 
-        const headers = new HttpHeaders().set('feedbackIds', feedbackIdsHeader);
-
-        return this.get<PageableResult<FeedbackAffectedStudentDTO>>(`exercises/${exerciseId}/feedback-details-participation`, { params, headers });
+        return this.get<PageableResult<FeedbackAffectedStudentDTO>>(`exercises/${exerciseId}/feedback-details-participation`, { params });
     }
 
     createChannel(courseId: number, exerciseId: number, feedbackChannelRequest: FeedbackChannelRequestDTO): Promise<ChannelDTO> {
         return this.post<ChannelDTO>(`courses/${courseId}/${exerciseId}/feedback-channel`, feedbackChannelRequest);
-    }
-
-    getAffectedStudentCount(exerciseId: number, feedbackDetailText: string): Promise<number> {
-        const params = new HttpParams().set('detailText', feedbackDetailText);
-        return this.get<number>(`exercises/${exerciseId}/feedback-detail/affected-students`, { params });
     }
 }

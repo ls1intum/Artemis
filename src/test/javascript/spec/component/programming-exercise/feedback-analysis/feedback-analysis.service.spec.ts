@@ -10,7 +10,6 @@ describe('FeedbackAnalysisService', () => {
 
     const feedbackDetailsMock: FeedbackDetail[] = [
         {
-            concatenatedFeedbackIds: [1, 2],
             detailText: 'Feedback 1',
             testCaseName: 'test1',
             count: 5,
@@ -19,7 +18,6 @@ describe('FeedbackAnalysisService', () => {
             errorCategory: 'StudentError',
         },
         {
-            concatenatedFeedbackIds: [3, 4],
             detailText: 'Feedback 2',
             testCaseName: 'test2',
             count: 3,
@@ -70,8 +68,6 @@ describe('FeedbackAnalysisService', () => {
 
             const result = await responsePromise;
             expect(result).toEqual(feedbackAnalysisResponseMock);
-            expect(result.feedbackDetails.resultsOnPage[0].concatenatedFeedbackIds).toStrictEqual([1, 2]);
-            expect(result.feedbackDetails.resultsOnPage[1].concatenatedFeedbackIds).toStrictEqual([3, 4]);
         });
     });
 
@@ -90,7 +86,7 @@ describe('FeedbackAnalysisService', () => {
 
     describe('getParticipationForFeedbackIds', () => {
         it('should retrieve paginated participation details for specified feedback IDs', async () => {
-            const feedbackIds = [1, 2];
+            const feedbackIds = '1, 2';
             const pageable = {
                 page: 1,
                 pageSize: 10,
@@ -120,7 +116,7 @@ describe('FeedbackAnalysisService', () => {
                 totalItems: 2,
             };
 
-            const responsePromise = service.getParticipationForFeedbackIds(1, feedbackIds, pageable);
+            const responsePromise = service.getParticipationForFeedbackIds(1, feedbackIds, 'Placeholder', pageable);
 
             const req = httpMock.expectOne('api/exercises/1/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING');
             expect(req.request.method).toBe('GET');
@@ -130,23 +126,6 @@ describe('FeedbackAnalysisService', () => {
             expect(result).toEqual(participationResponseMock);
             expect(result.content[0].firstName).toBe('John');
             expect(result.content[1].firstName).toBe('Jane');
-        });
-    });
-
-    describe('getAffectedStudentCount', () => {
-        it('should retrieve the count of affected students for a feedback detail text', async () => {
-            const exerciseId = 1;
-            const feedbackDetailText = 'Test feedback detail';
-            const affectedStudentCountMock = 42;
-
-            const responsePromise = service.getAffectedStudentCount(exerciseId, feedbackDetailText);
-
-            const req = httpMock.expectOne(`api/exercises/${exerciseId}/feedback-detail/affected-students?detailText=${encodeURIComponent(feedbackDetailText)}`);
-            expect(req.request.method).toBe('GET');
-            req.flush(affectedStudentCountMock);
-
-            const result = await responsePromise;
-            expect(result).toBe(affectedStudentCountMock);
         });
     });
 

@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { faFilter, faMessage, faSort, faSortDown, faSortUp, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo, faFilter, faMessage, faSort, faSortDown, faSortUp, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { facDetails } from '../../../../../../content/icons/icons';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
@@ -54,6 +54,7 @@ export class FeedbackAnalysisComponent {
     readonly facDetails = facDetails;
     readonly faUsers = faUsers;
     readonly faMessage = faMessage;
+    readonly faCircleInfo = faCircleInfo;
     readonly SortingOrder = SortingOrder;
     readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 200;
 
@@ -71,6 +72,12 @@ export class FeedbackAnalysisComponent {
     private isFeedbackDetailChannelModalOpen = false;
 
     private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
+    readonly levinstein = signal<boolean>(false); // Signal for toggle state
+
+    toggleLevinstein(): void {
+        this.levinstein.update((current) => !current); // Toggle the signal state
+        this.loadData(); // Optionally reload data based on the toggle state
+    }
 
     constructor() {
         effect(() => {
@@ -208,13 +215,13 @@ export class FeedbackAnalysisComponent {
         }
         this.isFeedbackDetailChannelModalOpen = true;
         const modalRef = this.modalService.open(FeedbackDetailChannelModalComponent, { centered: true, size: 'lg' });
-        modalRef.componentInstance.affectedStudentsCount = await this.feedbackAnalysisService.getAffectedStudentCount(this.exerciseId(), feedbackDetail.detailText);
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
         modalRef.componentInstance.formSubmitted.subscribe(async ({ channelDto, navigate }: { channelDto: ChannelDTO; navigate: boolean }) => {
             try {
                 const feedbackChannelRequest: FeedbackChannelRequestDTO = {
                     channel: channelDto,
                     feedbackDetailText: feedbackDetail.detailText,
+                    testCaseName: feedbackDetail.testCaseName,
                 };
                 const createdChannel = await this.feedbackAnalysisService.createChannel(this.courseId(), this.exerciseId(), feedbackChannelRequest);
                 const name = createdChannel.name;

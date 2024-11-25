@@ -1234,7 +1234,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
                 SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
-                    LISTAGG(CAST(f.id AS string), ',') WITHIN GROUP (ORDER BY f.id),
                     COUNT(f.id),
                     0,
                     f.detailText,
@@ -1251,13 +1250,13 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         ELSE 'Student Error'
                     END
                 )
-                FROM StudentParticipation p
-                LEFT JOIN p.results r ON r.id = (
+                FROM ProgrammingExerciseStudentParticipation p
+                INNER JOIN p.results r ON r.id = (
                     SELECT MAX(pr.id)
                     FROM p.results pr
                     WHERE pr.participation.id = p.id
                 )
-                LEFT JOIN r.feedbacks f
+                INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                     AND p.testRun = FALSE
                     AND f.positive = FALSE
@@ -1291,8 +1290,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
             SELECT COUNT(DISTINCT r.id)
-            FROM StudentParticipation p
-                LEFT JOIN p.results r ON r.id = (
+            FROM ProgrammingExerciseStudentParticipation p
+                INNER JOIN p.results r ON r.id = (
                          SELECT MAX(pr.id)
                          FROM p.results pr
                          WHERE pr.participation.id = p.id
@@ -1318,13 +1317,13 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT MAX(feedbackCounts.feedbackCount)
             FROM (
                 SELECT COUNT(f.id) AS feedbackCount
-                FROM StudentParticipation p
-                LEFT JOIN p.results r ON r.id = (
+                FROM ProgrammingExerciseStudentParticipation p
+                INNER JOIN p.results r ON r.id = (
                     SELECT MAX(pr.id)
                     FROM p.results pr
                     WHERE pr.participation.id = p.id
                 )
-                LEFT JOIN r.feedbacks f
+                INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                   AND p.testRun = FALSE
                   AND f.positive = FALSE
@@ -1337,9 +1336,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * Retrieves a paginated list of students affected by specific feedback entries for a given programming exercise.
      * <br>
      *
-     * @param exerciseId  for which the affected student participation data is requested.
-     * @param feedbackIds used to filter the participation to only those affected by specific feedback entries.
-     * @param pageable    A {@link Pageable} object to control pagination and sorting of the results, specifying page number, page size, and sort order.
+     * @param exerciseId for which the affected student participation data is requested.
+     * @param detailText used to filter the participation to only those affected by specific feedback entries.
+     * @param pageable   A {@link Pageable} object to control pagination and sorting of the results, specifying page number, page size, and sort order.
      * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
     @Query("""
@@ -1352,15 +1351,25 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                                 p.repositoryUri
                             )
                 FROM ProgrammingExerciseStudentParticipation p
-                LEFT JOIN p.submissions s
-                LEFT JOIN s.results r
-                LEFT JOIN r.feedbacks f
+                INNER JOIN p.submissions s  ON s.id = (
+                    SELECT MAX(sub.id)
+                    FROM p.submissions sub
+                    WHERE sub.participation.id = p.id
+                )
+                INNER JOIN s.results r ON r.id = (
+                    SELECT MAX(pr.id)
+                    FROM s.results pr
+                    WHERE pr.participation.id = p.id
+                )
+                INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
-                      AND f.id IN :feedbackIds
+                      AND f.detailText = :detailText
+                      AND f.testCase.testName = :testCaseName
                       AND p.testRun = FALSE
                 ORDER BY p.student.firstName ASC
             """)
-    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackId(@Param("exerciseId") long exerciseId, @Param("feedbackIds") List<Long> feedbackIds, Pageable pageable);
+    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackId(@Param("exerciseId") long exerciseId, @Param("detailText") String detailText,
+            @Param("testCaseName") String testCaseName, Pageable pageable);
 
     /**
      * Retrieves the logins of students affected by a specific feedback detail text in a given exercise.
@@ -1372,7 +1381,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
                 SELECT DISTINCT p.student.login
                 FROM ProgrammingExerciseStudentParticipation p
-                INNER JOIN p.submissions s
+                INNER JOIN p.submissions s  ON s.id = (
+                    SELECT MAX(sub.id)
+                    FROM p.submissions sub
+                    WHERE sub.participation.id = p.id
+                )
                 INNER JOIN s.results r ON r.id = (
                     SELECT MAX(pr.id)
                     FROM s.results pr
@@ -1381,34 +1394,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
                   AND f.detailText = :detailText
+                  AND f.testCase.testName = :testCaseName
                   AND p.testRun = FALSE
             """)
-    List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailText") String detailText);
-
-    /**
-     * Counts the number of distinct students affected by a specific feedback detail text for a given programming exercise.
-     * <p>
-     * This query identifies students whose submissions were impacted by feedback entries matching the provided detail text
-     * within the specified exercise. Only students with non-test run submissions and negative feedback entries are considered.
-     * </p>
-     *
-     * @param exerciseId the ID of the programming exercise for which the count is calculated.
-     * @param detailText the feedback detail text used to filter the affected students.
-     * @return the total number of distinct students affected by the feedback detail text.
-     */
-    @Query("""
-                SELECT COUNT(DISTINCT p.student.id)
-                FROM ProgrammingExerciseStudentParticipation p
-                INNER JOIN p.submissions s
-                INNER JOIN s.results r ON r.id = (
-                    SELECT MAX(pr.id)
-                    FROM s.results pr
-                    WHERE pr.participation.id = p.id
-                )
-                INNER JOIN r.feedbacks f
-                WHERE p.exercise.id = :exerciseId
-                  AND f.detailText = :detailText
-                  AND p.testRun = FALSE
-            """)
-    long countAffectedStudentsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailText") String detailText);
+    List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailText") String detailText, @Param("testCaseName") String testCaseName);
 }
