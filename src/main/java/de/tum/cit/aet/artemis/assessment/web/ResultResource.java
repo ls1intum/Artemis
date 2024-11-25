@@ -332,8 +332,9 @@ public class ResultResource {
      */
     @GetMapping("exercises/{exerciseId}/feedback-details")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @ModelAttribute FeedbackPageableDTO data) {
-        FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, data);
+    public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestParam("levinStein") String levinStein,
+            @ModelAttribute FeedbackPageableDTO data) {
+        FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, data, levinStein);
         return ResponseEntity.ok(response);
     }
 

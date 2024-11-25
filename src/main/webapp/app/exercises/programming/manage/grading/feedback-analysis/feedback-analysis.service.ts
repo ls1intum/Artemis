@@ -35,7 +35,7 @@ export interface FeedbackChannelRequestDTO {
 }
 @Injectable()
 export class FeedbackAnalysisService extends BaseApiHttpService {
-    search(pageable: SearchTermPageableSearch, options: { exerciseId: number; filters: FilterData }): Promise<FeedbackAnalysisResponse> {
+    search(pageable: SearchTermPageableSearch, levinStein: boolean, options: { exerciseId: number; filters: FilterData }): Promise<FeedbackAnalysisResponse> {
         const params = new HttpParams()
             .set('page', pageable.page.toString())
             .set('pageSize', pageable.pageSize.toString())
@@ -45,7 +45,8 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             .set('filterTasks', options.filters.tasks.join(','))
             .set('filterTestCases', options.filters.testCases.join(','))
             .set('filterOccurrence', options.filters.occurrence.join(','))
-            .set('filterErrorCategories', options.filters.errorCategories.join(','));
+            .set('filterErrorCategories', options.filters.errorCategories.join(','))
+            .set('levinStein', levinStein.toString());
 
         return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details`, { params });
     }

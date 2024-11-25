@@ -72,10 +72,10 @@ export class FeedbackAnalysisComponent {
     private isFeedbackDetailChannelModalOpen = false;
 
     private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
-    readonly levinstein = signal<boolean>(false); // Signal for toggle state
+    readonly levinStein = signal<boolean>(false); // Signal for toggle state
 
-    toggleLevinstein(): void {
-        this.levinstein.update((current) => !current); // Toggle the signal state
+    toggleLevinStein(): void {
+        this.levinStein.update((current) => !current); // Toggle the signal state
         this.loadData(); // Optionally reload data based on the toggle state
     }
 
@@ -103,7 +103,7 @@ export class FeedbackAnalysisComponent {
         };
 
         try {
-            const response = await this.feedbackAnalysisService.search(state, {
+            const response = await this.feedbackAnalysisService.search(state, this.levinStein(), {
                 exerciseId: this.exerciseId(),
                 filters: {
                     tasks: this.selectedFiltersCount() !== 0 ? savedTasks : [],

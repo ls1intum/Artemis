@@ -16,6 +16,8 @@ public class FeedbackPageableDTO extends PageableSearchDTO<String> {
 
     private List<String> filterErrorCategories;
 
+    private boolean levinStein;
+
     public List<String> getFilterTasks() {
         return filterTasks;
     }
@@ -54,5 +56,9 @@ public class FeedbackPageableDTO extends PageableSearchDTO<String> {
 
     public void setFilterErrorCategories(List<String> filterErrorCategories) {
         this.filterErrorCategories = filterErrorCategories;
+    }
+
+    public boolean isLevinStein() {
+        return levinStein;
     }
 }
