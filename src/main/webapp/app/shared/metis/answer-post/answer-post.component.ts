@@ -107,6 +107,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
             isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
         } catch (error) {
             console.error('Failed to compute style:', error);
+            isPointerCursor = true;
         }
 
         if (!isPointerCursor) {
