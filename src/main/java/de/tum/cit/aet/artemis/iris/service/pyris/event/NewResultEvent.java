@@ -9,6 +9,9 @@ public class NewResultEvent extends PyrisEvent<IrisExerciseChatSessionService, R
     private final Result eventObject;
 
     public NewResultEvent(Result eventObject) {
+        if (eventObject == null) {
+            throw new IllegalArgumentException("Event object cannot be null");
+        }
         this.eventObject = eventObject;
     }
 

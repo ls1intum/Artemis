@@ -120,9 +120,6 @@ public class IrisSettingsService {
             settings.setEnabled(false);
             settings.setAllowedVariants(new TreeSet<>(Set.of("default")));
             settings.setSelectedVariant("default");
-            if (settings instanceof IrisChatSubSettings chatSettings) {
-                chatSettings.setEnabledForCategories(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.getName(), IrisEventType.PROGRESS_STALLED.getName())));
-            }
         }
         return settings;
     }

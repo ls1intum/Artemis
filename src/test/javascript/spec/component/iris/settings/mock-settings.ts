@@ -24,6 +24,7 @@ export function mockSettings() {
     mockCompetencyGenerationSettings.id = 5;
     mockCompetencyGenerationSettings.enabled = false;
     const irisSettings = new IrisGlobalSettings();
+    irisSettings.id = 1;
     irisSettings.irisChatSettings = mockChatSettings;
     irisSettings.irisTextExerciseChatSettings = mockTextExerciseChatSettings;
     irisSettings.irisCompetencyGenerationSettings = mockCompetencyGenerationSettings;

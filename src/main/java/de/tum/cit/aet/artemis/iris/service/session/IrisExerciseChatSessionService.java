@@ -34,7 +34,6 @@ import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
-import de.tum.cit.aet.artemis.iris.service.PyrisUnsupportedExerciseTypeException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventProcessingException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
@@ -107,9 +106,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     // TODO: This function is only used in tests. Replace with createSession once the tests are refactored.
     public IrisExerciseChatSession createChatSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
-        if (exercise.isExamExercise()) {
-            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
-        }
+        checkIfExamExercise(exercise);
         return irisSessionRepository.save(new IrisExerciseChatSession(exercise, user));
     }
 
@@ -206,7 +203,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
                 CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of("build_failed")));
             }
             else {
-                throw new ConflictException("Build failure event is not supported for team participations", "Iris", "irisTeamParticipation");
+                throw new PyrisEventProcessingException("Build failure event is not supported for team participations");
             }
         }
     }
@@ -330,9 +327,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     }
 
     private IrisExerciseChatSession createSessionInternal(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
-        if (exercise.isExamExercise()) {
-            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
-        }
+        checkIfExamExercise(exercise);
 
         var session = irisExerciseChatSessionRepository.save(new IrisExerciseChatSession(exercise, user));
 
@@ -354,15 +349,25 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * Validates the exercise and throws an exception if it is not a programming exercise or an exam exercise.
      *
      * @param exercise The exercise to check
-     * @throws PyrisUnsupportedExerciseTypeException if the exercise is not a programming exercise or an exam exercise
+     * @throws IrisUnsupportedExerciseTypeException if the exercise is not a programming exercise or an exam exercise
      */
     private ProgrammingExercise validateExercise(Exercise exercise) {
         if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
-            throw new PyrisUnsupportedExerciseTypeException("Iris events are only supported for programming exercises");
+            throw new IrisUnsupportedExerciseTypeException("Iris events are only supported for programming exercises");
         }
-        if (exercise.isExamExercise()) {
-            throw new PyrisUnsupportedExerciseTypeException("Iris is not supported for exam exercises");
-        }
+        checkIfExamExercise(exercise);
+
         return programmingExercise;
+    }
+
+    /**
+     * Checks if the exercise is an exam exercise and throws an exception if it is.
+     *
+     * @param exercise
+     */
+    private void checkIfExamExercise(Exercise exercise) {
+        if (exercise.isExamExercise()) {
+            throw new IrisUnsupportedExerciseTypeException("Iris is not supported for exam exercises");
+        }
     }
 }

@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -40,9 +39,11 @@ import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventProcessingException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
+import de.tum.cit.aet.artemis.iris.service.pyris.UnsupportedPyrisEventException;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisEvent;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
@@ -243,7 +244,7 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testShouldThrowUnsupportedEventException() {
-        assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(() -> pyrisEventService.trigger(new PyrisEvent<IrisExerciseChatSessionService, Object>() {
+        assertThatExceptionOfType(UnsupportedPyrisEventException.class).isThrownBy(() -> pyrisEventService.trigger(new PyrisEvent<IrisExerciseChatSessionService, Object>() {
 
             @Override
             public void handleEvent(IrisExerciseChatSessionService service) {
@@ -342,7 +343,7 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, owner);
         var result = createFailingSubmission(teamParticipation);
 
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> irisExerciseChatSessionService.onBuildFailure(result))
+        assertThatExceptionOfType(PyrisEventProcessingException.class).isThrownBy(() -> irisExerciseChatSessionService.onBuildFailure(result))
                 .withMessageStartingWith("Build failure event is not supported for team participations");
     }
 
@@ -356,7 +357,7 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         createSubmissionWithScore(teamParticipation, 40);
         var result = createSubmissionWithScore(teamParticipation, 40);
 
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> irisExerciseChatSessionService.onNewResult(result))
+        assertThatExceptionOfType(PyrisEventProcessingException.class).isThrownBy(() -> irisExerciseChatSessionService.onNewResult(result))
                 .withMessageStartingWith("Progress stalled event is not supported for team participations");
     }
 

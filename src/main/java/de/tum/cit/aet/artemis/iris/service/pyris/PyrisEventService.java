@@ -35,7 +35,7 @@ public class PyrisEventService {
      * Triggers a Pyris pipeline based on the received {@link PyrisEvent}.
      *
      * @param event The event object received to trigger the matching pipeline
-     * @throws UnsupportedOperationException if the event is not supported
+     * @throws UnsupportedPyrisEventException if the event is not supported
      *
      * @see PyrisEvent
      */
