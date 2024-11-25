@@ -27,8 +27,8 @@ class AbstractMailContentTest extends AbstractSpringIntegrationIndependentTest {
     @Mock
     protected MailSendingService mailSendingService;
 
-    @Mock
-    private TimeService timeService;
+    @Autowired
+    protected TimeService timeService;
 
     @Autowired
     private SpringTemplateEngine templateEngine;
