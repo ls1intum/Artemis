@@ -96,6 +96,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -467,13 +468,26 @@ public class CourseService {
      * @return the course deletion summary
      */
     public CourseDeletionSummaryDTO getDeletionSummary(Course course) {
+        Long courseId = course.getId();
+
         List<Long> programmingExerciseIds = course.getExercises().stream().map(Exercise::getId).toList();
         long numberOfBuilds = buildJobRepository.countBuildJobsByExerciseIds(programmingExerciseIds);
 
-        List<Post> posts = postRepository.findAllByCourseId(course.getId());
+        List<Post> posts = postRepository.findAllByCourseId(courseId);
         long numberOfCommunicationPosts = posts.size();
         long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByPostIdIn(posts.stream().map(Post::getId).toList());
-        return new CourseDeletionSummaryDTO(numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts);
+        long numberLectures = lectureRepository.countByCourse_Id(courseId);
+        long numberExams = examRepository.countByCourse_Id(courseId);
+
+        Map<ExerciseType, Long> countByExerciseType = exerciseService.countByCourseIdGroupByType(courseId);
+        long numberProgrammingExercises = countByExerciseType.get(ExerciseType.PROGRAMMING);
+        long numberTextExercises = countByExerciseType.get(ExerciseType.TEXT);
+        long numberQuizExercises = countByExerciseType.get(ExerciseType.QUIZ);
+        long numberFileUploadExercises = countByExerciseType.get(ExerciseType.FILE_UPLOAD);
+        long numberModelingExercises = countByExerciseType.get(ExerciseType.MODELING);
+
+        return new CourseDeletionSummaryDTO(numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts, numberProgrammingExercises, numberTextExercises,
+                numberFileUploadExercises, numberModelingExercises, numberQuizExercises, numberExams, numberLectures);
     }
 
     /**

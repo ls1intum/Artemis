@@ -63,9 +63,11 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCount;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -828,5 +830,16 @@ public class ExerciseService {
      */
     public void reconnectCompetencyExerciseLinks(Exercise exercise) {
         exercise.getCompetencyLinks().forEach(link -> link.setExercise(exercise));
+    }
+
+    /**
+     * Returns a map from exercise type to count of exercise given a course id.
+     * If a course has no exercises for a specific type, the map contains an entry for that type with value 0.
+     */
+    public Map<ExerciseType, Long> countByCourseIdGroupByType(Long courseId) {
+        Map<ExerciseType, Long> exerciseTypeCountMap = exerciseRepository.countByCourseIdGroupedByType(courseId).stream()
+                .collect(Collectors.toMap(ExerciseTypeCount::getExerciseType, ExerciseTypeCount::getCount));
+
+        return ExerciseType.getExerciseTypes().stream().collect(Collectors.toMap(type -> type, type -> exerciseTypeCountMap.getOrDefault(type, 0L)));
     }
 }

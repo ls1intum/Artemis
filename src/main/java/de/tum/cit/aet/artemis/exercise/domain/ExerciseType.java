@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import java.util.List;
+
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -49,5 +51,9 @@ public enum ExerciseType {
             case "QuizExercise" -> QUIZ;
             default -> throw new IllegalArgumentException(String.format("Received unexecpted exercise class name %s", exerciseClass.getSimpleName()));
         };
+    }
+
+    public static List<ExerciseType> getExerciseTypes() {
+        return List.of(TEXT, PROGRAMMING, MODELING, FILE_UPLOAD, QUIZ);
     }
 }

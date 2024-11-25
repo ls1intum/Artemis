@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCount;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 
 /**
@@ -627,4 +628,21 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 AND e.exerciseGroup IS NOT NULL
             """)
     boolean isExamExercise(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Returns a mapping from exercise type to count for a given course id. Note that there are way fewer courses
+     * than exercise, so loading the course and joining the course is way faster than vice versa.
+     *
+     * @param courseId the courseId to get the exerciseType->count mapping for
+     * @return a list of mappings from exercise type to count
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCount(TYPE(e), COUNT(e))
+            FROM Course c
+                JOIN c.exercises e
+            WHERE c.id = :courseId
+            AND TYPE(e) IN (ModelingExercise, TextExercise, ProgrammingExercise, QuizExercise, FileUploadExercise)
+            GROUP BY TYPE(e)
+            """)
+    List<ExerciseTypeCount> countByCourseIdGroupedByType(long courseId);
 }
