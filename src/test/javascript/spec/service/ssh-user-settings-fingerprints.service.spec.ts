@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { SshUserSettingsFingerprintsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings-fingerprints.service';
+import { SshUserSettingsFingerprintsService } from 'app/shared/user-settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
 
 describe('SshUserSettingsFingerprintsService', () => {
     let sshFingerprintsService: SshUserSettingsFingerprintsService;

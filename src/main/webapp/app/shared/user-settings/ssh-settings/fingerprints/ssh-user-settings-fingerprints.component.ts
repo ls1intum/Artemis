@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { SshUserSettingsFingerprintsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings-fingerprints.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { SshUserSettingsFingerprintsService } from 'app/shared/user-settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
 
 @Component({
     selector: 'jhi-account-information',
