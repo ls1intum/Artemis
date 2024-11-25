@@ -40,7 +40,8 @@
     text-align: center;
     font-weight: bold;
     border-color: var(--quiz-participation-quiz-is-over-border-color);
-    z-index: 31;
+    // Needs to be higher than the z-index of the sticky-top class
+    z-index: 1030;
 }
 
 .draganddropcolor-question {
