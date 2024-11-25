@@ -4,13 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Set;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
 
-public class DataExportSuccessfulMailTest extends AbstractMailContentTest {
+class DataExportSuccessfulMailTest extends AbstractMailContentTest {
 
     @Test
     void testThatVariablesAreInjectedIntoTheTemplate() {
@@ -30,7 +29,6 @@ public class DataExportSuccessfulMailTest extends AbstractMailContentTest {
         assertThat(capturedContent).contains("test_subject_3");
     }
 
-    @NotNull
     private static Set<DataExport> createThreeDataExportsWithThreeDifferentUsers() {
         User dataExportSubjectUser1 = new User();
         User dataExportSubjectUser2 = new User();
