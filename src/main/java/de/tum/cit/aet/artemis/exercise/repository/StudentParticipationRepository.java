@@ -50,6 +50,9 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 @Repository
 public interface StudentParticipationRepository extends ArtemisJpaRepository<StudentParticipation, Long> {
 
+    @EntityGraph(type = LOAD, attributePaths = { "team.students" })
+    Set<StudentParticipation> findWithTeamInformationByExerciseId(long exerciseId);
+
     Set<StudentParticipation> findByExerciseId(long exerciseId);
 
     @Query("""
