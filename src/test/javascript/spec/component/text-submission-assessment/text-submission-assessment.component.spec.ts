@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -46,6 +46,7 @@ import { AthenaService } from 'app/assessment/athena.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena-service';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -171,7 +172,16 @@ describe('TextSubmissionAssessmentComponent', () => {
                 { provide: AthenaService, useClass: MockAthenaService },
                 MockProvider(Router),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(TextSubmissionAssessmentComponent, {
+                remove: {
+                    imports: [TextAssessmentAreaComponent, TranslateDirective, AssessmentInstructionsModule],
+                },
+                add: {
+                    imports: [MockModule(AssessmentInstructionsModule), MockComponent(TextAssessmentAreaComponent), MockDirective(TranslateDirective)],
+                },
+            })
+            .compileComponents();
     });
 
     beforeEach(() => {

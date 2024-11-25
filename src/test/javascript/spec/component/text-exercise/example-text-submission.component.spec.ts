@@ -22,7 +22,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -33,6 +33,12 @@ import { AlertService } from 'app/core/util/alert.service';
 import { DebugElement } from '@angular/core';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -83,7 +89,34 @@ describe('ExampleTextSubmissionComponent', () => {
                 MockProvider(TranslateService),
                 MockProvider(AlertService),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(ExampleTextSubmissionComponent, {
+                remove: {
+                    imports: [
+                        TranslateDirective,
+                        ArtemisSharedComponentModule,
+                        FormsModule,
+                        ArtemisSharedModule,
+                        ArtemisAssessmentSharedModule,
+                        TextAssessmentAreaComponent,
+                        AssessmentInstructionsModule,
+                        ArtemisSharedCommonModule,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockModule(ArtemisSharedComponentModule),
+                        MockModule(FormsModule),
+                        MockModule(ArtemisAssessmentSharedModule),
+                        MockModule(ArtemisSharedModule),
+                        MockModule(AssessmentInstructionsModule),
+                        MockModule(ArtemisSharedCommonModule),
+                        MockComponent(TextAssessmentAreaComponent),
+                        MockDirective(TranslateDirective),
+                    ],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ExampleTextSubmissionComponent);
         comp = fixture.componentInstance;
