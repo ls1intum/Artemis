@@ -21,7 +21,10 @@ public class TestResultXmlParser {
     // https://stackoverflow.com/a/4237934
     private static final String INVALID_XML_CHARS = "[^\t\r\n -\uD7FF\uE000-�\uD800\uDC00-\uDBFF\uDFFF]";
 
-    private static final Pattern XML_ROOT_TAG_IS_TESTSUITES = Pattern.compile("^(<\\?([^?]|\\?[^>])*\\?>|<!--(-?[^-])*-->|<!DOCTYPE[^>]>|\\s)*<testsuites(\\s|/?>)",
+    // The root element can be preceded by processing instructions (<? ... ?>), comments (<!-- ... -->),
+    // a doctype declaration (<!DOCTYPE ... >) and whitespace.
+    // Comments cannot contain the string "--".
+    private static final Pattern XML_ROOT_TAG_IS_TESTSUITES = Pattern.compile("^(<\\?([^?]|\\?[^>])*\\?>|<!--(-?[^-])*-->|<!DOCTYPE[^>]*>|\\s)*<testsuites(\\s|/?>)",
             Pattern.DOTALL);
 
     /**
