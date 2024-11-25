@@ -397,7 +397,7 @@ public class SharedQueueProcessingService {
                     buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
                     null);
 
-            List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
+            List<BuildLogEntry> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
@@ -435,7 +435,7 @@ public class SharedQueueProcessingService {
 
             job = new BuildJobQueueItem(buildJob, completionDate, status);
 
-            List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
+            List<BuildLogEntry> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             BuildResult failedResult = new BuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(), buildJob.buildConfig().testCommitHash(),
