@@ -98,7 +98,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     forwardedAnswerPosts = input<AnswerPost[]>([]);
     dropdownPosition = { x: 0, y: 0 };
     course: Course;
-    @ViewChild(PostReactionsBarComponent) private reactionsBarComponent!: PostReactionsBarComponent;
+    @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
 
     constructor(
         public metisService: MetisService,

@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.SingleUserNotificationRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
@@ -85,14 +84,12 @@ public class ConversationMessagingService extends PostingService {
 
     private final PostSimilarityComparisonStrategy postContentCompareStrategy;
 
-    private final PostRepository postRepository;
-
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
             ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService,
             GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository,
-            PostSimilarityComparisonStrategy postContentCompareStrategy, PostRepository postRepository) {
+            PostSimilarityComparisonStrategy postContentCompareStrategy) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -101,7 +98,6 @@ public class ConversationMessagingService extends PostingService {
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.postContentCompareStrategy = postContentCompareStrategy;
-        this.postRepository = postRepository;
     }
 
     /**

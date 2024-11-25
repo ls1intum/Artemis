@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
-import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
@@ -541,16 +540,5 @@ public class ConversationService {
         else {
             return participation.get();
         }
-    }
-
-    /**
-     * Verilen ID'ye göre postu ve ilişkili yazarını getirir.
-     *
-     * @param postId Post'un ID'si
-     * @return Post
-     * @throws Post bulunamazsa
-     */
-    public Post getPostById(Long postId) {
-        return postRepository.findPostByIdElseThrow(postId);
     }
 }
