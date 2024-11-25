@@ -151,4 +151,13 @@ describe('PostFooterComponent', () => {
         component.openCreateAnswerPostModal();
         expect(createAnswerPostModalOpen).toHaveBeenCalledOnce();
     });
+
+    it('should close create answer post modal', () => {
+        component.posting = metisPostExerciseUser1;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const createAnswerPostModalClose = jest.spyOn(component.createAnswerPostModalComponent, 'close');
+        component.closeCreateAnswerPostModal();
+        expect(createAnswerPostModalClose).toHaveBeenCalledOnce();
+    });
 });
