@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedB
 import static java.time.ZonedDateTime.now;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -840,6 +841,6 @@ public class ExerciseService {
         Map<ExerciseType, Long> exerciseTypeCountMap = exerciseRepository.countByCourseIdGroupedByType(courseId).stream()
                 .collect(Collectors.toMap(ExerciseTypeCount::getExerciseType, ExerciseTypeCount::getCount));
 
-        return ExerciseType.getExerciseTypes().stream().collect(Collectors.toMap(type -> type, type -> exerciseTypeCountMap.getOrDefault(type, 0L)));
+        return Arrays.stream(ExerciseType.values()).collect(Collectors.toMap(type -> type, type -> exerciseTypeCountMap.getOrDefault(type, 0L)));
     }
 }
