@@ -8,13 +8,6 @@
                         <jhi-documentation-button [type]="documentationType" />
                     </div>
                 </div>
-                <div class="flex-grow-1 ms-3">
-                    <div class="guided-mode-button">
-                        <button type="button" id="guided.mode" class="btn btn-primary" (click)="toggleWizardMode()">
-                            <fa-icon [icon]="faHandShakeAngle" />&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToGuidedModeLabel"></span>
-                        </button>
-                    </div>
-                </div>
             </div>
             <jhi-form-status-bar [formStatusSections]="formStatusSections" />
             @if (lecture().course) {
