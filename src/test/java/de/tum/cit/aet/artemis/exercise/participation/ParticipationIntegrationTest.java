@@ -916,7 +916,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         courseRepository.save(course);
         exerciseRepository.save(quizExercise);
 
-        var participation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, TEST_PREFIX + "student1");
+        final var login = TEST_PREFIX + "student1";
+        var participation = participationUtilService.createAndSaveParticipationForExercise(quizExercise, login);
         var result1 = participationUtilService.createSubmissionAndResult(participation, 42, true);
         var notGradedResult = participationUtilService.addResultToParticipation(participation, result1.getSubmission());
         notGradedResult.setRated(false);
@@ -926,11 +927,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         params.add("withLatestResults", "true");
         var participations = request.getList("/api/exercises/" + quizExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
 
-        var receivedParticipationWithResult = participations.stream().filter(p -> ((User) p.getParticipant()).getLogin().equals(TEST_PREFIX + "student1")).findFirst()
-                .orElseThrow();
-        assertThat(receivedParticipationWithResult.getResults()).containsOnly(result1);
-        assertThat(receivedParticipationWithResult.getSubmissions()).isEmpty();
-        assertThat(receivedParticipationWithResult.getSubmissionCount()).isEqualTo(1);
+        var receivedParticipation = participations.stream().filter(p -> p.getParticipantIdentifier().equals(login)).findFirst().orElseThrow();
+        assertThat(receivedParticipation.getResults()).containsOnly(notGradedResult);
+        assertThat(receivedParticipation.getSubmissions()).isEmpty();
+        assertThat(receivedParticipation.getSubmissionCount()).isEqualTo(1);
     }
 
     @Test
