@@ -39,6 +39,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -68,7 +69,6 @@ describe('ExampleTextSubmissionComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
             declarations: [
-                ExampleTextSubmissionComponent,
                 MockComponent(ConfirmAutofocusModalComponent),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(ScoreDisplayComponent),
@@ -96,6 +96,7 @@ describe('ExampleTextSubmissionComponent', () => {
                         TranslateDirective,
                         ArtemisSharedComponentModule,
                         FormsModule,
+                        FaIconComponent,
                         ArtemisSharedModule,
                         ArtemisAssessmentSharedModule,
                         TextAssessmentAreaComponent,
@@ -112,6 +113,7 @@ describe('ExampleTextSubmissionComponent', () => {
                         MockModule(AssessmentInstructionsModule),
                         MockModule(ArtemisSharedCommonModule),
                         MockComponent(TextAssessmentAreaComponent),
+                        MockComponent(FaIconComponent),
                         MockDirective(TranslateDirective),
                     ],
                 },

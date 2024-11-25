@@ -47,6 +47,9 @@ import { MockAthenaService } from '../../helpers/mocks/service/mock-athena-servi
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
+import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -148,7 +151,6 @@ describe('TextSubmissionAssessmentComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
-                TextSubmissionAssessmentComponent,
                 TextAssessmentAreaComponent,
                 MockComponent(TextblockAssessmentCardComponent),
                 MockComponent(TextblockFeedbackEditorComponent),
@@ -175,10 +177,17 @@ describe('TextSubmissionAssessmentComponent', () => {
         })
             .overrideComponent(TextSubmissionAssessmentComponent, {
                 remove: {
-                    imports: [TextAssessmentAreaComponent, TranslateDirective, AssessmentInstructionsModule],
+                    imports: [ArtemisAssessmentSharedModule, ArtemisSharedModule, TextAssessmentAreaComponent, FaIconComponent, TranslateDirective, AssessmentInstructionsModule],
                 },
                 add: {
-                    imports: [MockModule(AssessmentInstructionsModule), MockComponent(TextAssessmentAreaComponent), MockDirective(TranslateDirective)],
+                    imports: [
+                        MockModule(AssessmentInstructionsModule),
+                        MockModule(ArtemisAssessmentSharedModule),
+                        MockModule(ArtemisSharedModule),
+                        MockComponent(TextAssessmentAreaComponent),
+                        MockComponent(FaIconComponent),
+                        MockDirective(TranslateDirective),
+                    ],
                 },
             })
             .compileComponents();
