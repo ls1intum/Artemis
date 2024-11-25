@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 
-public class SAML2SetPasswordMailTest extends AbstractMailContentTest {
+class SAML2SetPasswordMailTest extends AbstractMailContentTest {
 
     @Test
     void testThatVariablesAreInjectedIntoTheTemplate() {

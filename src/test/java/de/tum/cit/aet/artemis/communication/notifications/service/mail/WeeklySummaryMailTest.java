@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
-public class WeeklySummaryMailTest extends AbstractMailContentTest {
+class WeeklySummaryMailTest extends AbstractMailContentTest {
 
     @Test
     void testThatVariablesAreInjectedIntoTheTemplate() {

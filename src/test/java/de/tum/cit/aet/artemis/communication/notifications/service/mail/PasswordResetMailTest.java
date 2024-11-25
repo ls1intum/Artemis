@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 
-public class PasswordResetMailTest extends AbstractMailContentTest {
+class PasswordResetMailTest extends AbstractMailContentTest {
 
     @Test
     void testThatVariablesAreInjectedIntoTheTemplate() {

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
 
-public class DataExportFailedMailTest extends AbstractMailContentTest {
+class DataExportFailedMailTest extends AbstractMailContentTest {
 
     @Test
     void testThatVariablesAreInjectedIntoTheTemplate() {
