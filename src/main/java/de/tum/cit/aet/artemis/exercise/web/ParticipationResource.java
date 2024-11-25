@@ -594,7 +594,7 @@ public class ParticipationResource {
     }
 
     private Set<StudentParticipation> findParticipationWithLatestResults(Exercise exercise) {
-        // TODO: we should reduce the amount of data fetched here and sent to the client, because submissions and results are not used at all
+        // TODO: we should reduce the amount of data fetched here and sent to the client: double check which data is actually required in the exercise scores page
         if (exercise.isTeamMode()) {
             // For team exercises the students need to be eagerly fetched
             return studentParticipationRepository.findByExerciseIdWithLatestAndManualResultsWithTeamInformation(exercise.getId());
