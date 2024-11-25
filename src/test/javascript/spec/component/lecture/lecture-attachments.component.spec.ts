@@ -119,7 +119,7 @@ describe('LectureAttachmentsComponent', () => {
     });
 
     it('should load existing lecture', fakeAsync(() => {
-        comp.lectureId = 42;
+        fixture.componentRef.setInput('lectureId', 42);
         const findWithDetailsStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(
             of(
                 new HttpResponse({
