@@ -142,11 +142,12 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
 
     /**
      * set placeholder for undefined values and sanitize the operators away
-     * @param value
+     * @param value to be sanitized or replaced with -
      * @private
      */
     private sanitizeCSVField(value: any): string {
         if (value === null || value === undefined) {
+            // used as placeholder for null or if the passed value does not exist
             return '-';
         }
         return String(value).replace(/;/g, '";"');
@@ -156,9 +157,9 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
      * export the cases in CSV format
      */
     exportPlagiarismCases(): void {
-        const headers = ['Student Login', 'Matr. Nr.', 'Exercise', 'Verdict', 'Verdict Date', 'Verdict By'].map((header) => this.sanitizeCSVField(header));
+        const headers = ['Student Login', 'Matr. Nr.', 'Exercise', 'Verdict', 'Verdict Date', 'Verdict By'];
         const blobParts: string[] = [headers.join(';') + '\n'];
-        this.plagiarismCases.forEach((plagiarismCase) => {
+        this.plagiarismCases.reduce((acc, plagiarismCase) => {
             const fields = [
                 this.sanitizeCSVField(plagiarismCase.student?.login),
                 this.sanitizeCSVField(plagiarismCase.student?.visibleRegistrationNumber),
@@ -173,8 +174,9 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
             } else {
                 fields.push('No verdict yet', '-', '-');
             }
-            blobParts.push(fields.join(';') + '\n');
-        });
+            acc.push(fields.join(';') + '\n');
+            return acc;
+        }, blobParts);
 
         try {
             downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
