@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -404,7 +405,7 @@ public class ConversationMessagingService extends PostingService {
         return updatedMessage;
     }
 
-    public List<Post> getMessageById(List<Long> sourcePostIds) {
+    public List<Post> getMessageByIds(List<Long> sourcePostIds) {
         return conversationMessageRepository.findByPostIdsWithEagerRelationships(sourcePostIds);
     }
 

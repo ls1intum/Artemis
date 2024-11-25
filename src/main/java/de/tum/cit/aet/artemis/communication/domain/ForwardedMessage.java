@@ -49,10 +49,19 @@ public class ForwardedMessage {
     }
 
     public ForwardedMessage(Long sourceId, SourceType sourceType, Post destinationPost, AnswerPost destinationAnswerPost) {
+        if (sourceId == null) {
+            throw new IllegalArgumentException("sourceId cannot be null");
+        }
+        if (sourceType == null) {
+            throw new IllegalArgumentException("sourceType cannot be null");
+        }
+        if ((destinationPost == null && destinationAnswerPost == null) || (destinationPost != null && destinationAnswerPost != null)) {
+            throw new IllegalArgumentException("Exactly one destination must be non-null");
+        }
         this.sourceId = sourceId;
         this.sourceType = sourceType;
-        setDestinationPost(destinationPost);
-        setDestinationAnswerPost(destinationAnswerPost);
+        this.destinationPost = destinationPost;
+        this.destinationAnswerPost = destinationAnswerPost;
     }
 
     public Long getId() {

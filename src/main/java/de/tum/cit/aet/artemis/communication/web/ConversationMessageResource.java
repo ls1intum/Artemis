@@ -205,7 +205,7 @@ public class ConversationMessageResource {
     @GetMapping("courses/{courseId}/messages/source-posts")
     @EnforceAtLeastStudent
     public ResponseEntity<List<Post>> getSourcePostsByIds(@PathVariable Long courseId, @RequestParam List<Long> postIds) {
-        List<Post> posts = conversationMessagingService.getMessageById(postIds);
+        List<Post> posts = conversationMessagingService.getMessageByIds(postIds);
         return ResponseEntity.ok().body(posts);
     }
 }
