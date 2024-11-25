@@ -17,6 +17,7 @@ import { ArtemisTestModule } from '../../../../test.module';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
 
 describe('TextExamSubmissionComponent', () => {
     let fixture: ComponentFixture<TextExamSubmissionComponent>;
@@ -39,6 +40,7 @@ describe('TextExamSubmissionComponent', () => {
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
                 MockComponent(ResizeableContainerComponent),
+                MockComponent(ExerciseSaveButtonComponent),
                 MockDirective(TranslateDirective),
             ],
             providers: [MockProvider(TextEditorService), MockProvider(ArtemisMarkdownService)],
@@ -139,5 +141,16 @@ describe('TextExamSubmissionComponent', () => {
         component.setSubmissionVersion(submissionVersion);
         expect(component.answer).toBe('submission version');
         expect(component.submissionVersion).toBe(submissionVersion);
+    });
+
+    it('should call triggerSave if save exercise button is clicked', () => {
+        component.exercise = exercise;
+        textSubmission.text = 'Hello World';
+        component.studentSubmission = textSubmission;
+        fixture.detectChanges();
+        const saveExerciseSpy = jest.spyOn(component, 'notifyTriggerSave');
+        const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
+        saveButton.triggerEventHandler('save', null);
+        expect(saveExerciseSpy).toHaveBeenCalledOnce();
     });
 });
