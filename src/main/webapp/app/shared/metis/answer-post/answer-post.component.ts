@@ -6,6 +6,7 @@ import {
     HostListener,
     Inject,
     Input,
+    OnDestroy,
     Output,
     Renderer2,
     ViewChild,
@@ -34,7 +35,7 @@ import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reacti
         ]),
     ],
 })
-export class AnswerPostComponent extends PostingDirective<AnswerPost> {
+export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnDestroy {
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() isLastAnswer: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
@@ -101,15 +102,18 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
 
     onRightClick(event: MouseEvent) {
         const targetElement = event.target as HTMLElement;
-        const isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
+        let isPointerCursor = false;
+        try {
+            isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
+        } catch (error) {
+            console.error('Failed to compute style:', error);
+        }
 
         if (!isPointerCursor) {
             event.preventDefault();
 
-            if (AnswerPostComponent.activeDropdownPost && AnswerPostComponent.activeDropdownPost !== this) {
-                AnswerPostComponent.activeDropdownPost.showDropdown = false;
-                AnswerPostComponent.activeDropdownPost.enableBodyScroll();
-                AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
+            if (AnswerPostComponent.activeDropdownPost !== this) {
+                AnswerPostComponent.cleanupActiveDropdown();
             }
 
             AnswerPostComponent.activeDropdownPost = this;
@@ -131,6 +135,21 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
 
         if (this.dropdownPosition.x + dropdownWidth > screenWidth) {
             this.dropdownPosition.x = screenWidth - dropdownWidth - 10;
+        }
+    }
+
+    private static cleanupActiveDropdown(): void {
+        if (AnswerPostComponent.activeDropdownPost) {
+            AnswerPostComponent.activeDropdownPost.showDropdown = false;
+            AnswerPostComponent.activeDropdownPost.enableBodyScroll();
+            AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
+            AnswerPostComponent.activeDropdownPost = null;
+        }
+    }
+
+    ngOnDestroy(): void {
+        if (AnswerPostComponent.activeDropdownPost === this) {
+            AnswerPostComponent.cleanupActiveDropdown();
         }
     }
 }

@@ -50,6 +50,10 @@ describe('AnswerPostComponent', () => {
             });
     });
 
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should contain an answer post header when isConsecutive is false', () => {
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.isConsecutive = input<boolean>(false);
@@ -209,13 +213,6 @@ describe('AnswerPostComponent', () => {
             expect(preventDefaultSpy).toHaveBeenCalledTimes(preventDefaultCalled ? 1 : 0);
             expect(component.showDropdown).toBe(showDropdown);
             expect(component.dropdownPosition).toEqual(dropdownPosition);
-
-afterEach(() => {
-    jest.restoreAllMocks();
-});
-
-testCases.forEach(({ cursor, preventDefaultCalled, showDropdown, dropdownPosition }) => {
-    // ... test implementation ...
-});
+        });
     });
 });
