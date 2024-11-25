@@ -433,12 +433,12 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         exerciseSettings.setIrisChatSettings(new IrisChatSubSettings());
         exerciseSettings.getIrisChatSettings().setEnabled(true);
         exerciseSettings.getIrisChatSettings().setSelectedVariant(null);
-        exerciseSettings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.getName(), IrisEventType.BUILD_FAILED.getName())));
+        exerciseSettings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.getName())));
 
         request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/raw-iris-settings", exerciseSettings, IrisSettings.class, HttpStatus.OK);
         var loadedExerciseSettings = request.get("/api/exercises/" + programmingExercise.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
-        // Combined settings should only include the intersection of the enabled course events and enabled exercise events
+        // Combined settings should include the union of the disabled course events and disabled exercise events
         assertThat(loadedExerciseSettings.irisChatSettings().disabledProactiveEvents()).isNotNull()
-                .isEqualTo(loadedCourseSettings.getIrisChatSettings().getDisabledProactiveEvents());
+                .isEqualTo(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.getName(), IrisEventType.BUILD_FAILED.getName())));
     }
 }
