@@ -313,4 +313,79 @@ class TestResultXmlParserTest {
         assertThat(successfulTests).extracting(BuildResult.LocalCITestJobDTO::getName).containsExactlyInAnyOrder("Test1", "Test2", "Test3");
         assertThat(failedTests).isEmpty();
     }
+
+    @Test
+    void testXmlProlog() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <!-- comment describing <testsuites> -->
+                <!DOCTYPE testsuites>
+                <testsuites>
+                    <testsuite>
+                        <testcase name="Test"/>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        assertThat(successfulTests).singleElement().extracting(BuildResult.LocalCITestJobDTO::getName).isEqualTo("Test");
+        assertThat(failedTests).isEmpty();
+    }
+
+    @Test
+    void testRootTestsuiteNameIgnored() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuite name="ignored">
+                    <testsuite name="Suite">
+                        <testcase name="Test"/>
+                    </testsuite>
+                </testsuite>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        assertThat(successfulTests).singleElement().extracting(BuildResult.LocalCITestJobDTO::getName).isEqualTo("Suite.Test");
+        assertThat(failedTests).isEmpty();
+    }
+
+    @Test
+    void testSingleTopLevelTestsuiteNameIgnored() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuites>
+                    <testsuite name="ignored">
+                        <testsuite name="Suite">
+                            <testcase name="Test"/>
+                        </testsuite>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        assertThat(successfulTests).singleElement().extracting(BuildResult.LocalCITestJobDTO::getName).isEqualTo("Suite.Test");
+        assertThat(failedTests).isEmpty();
+    }
+
+    @Test
+    void testMixedNestedTestsuiteTestcase() throws IOException {
+        String input = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuites>
+                    <testsuite>
+                        <testcase name="Test"/>
+                        <testsuite name="Suite">
+                            <testcase name="Test"/>
+                        </testsuite>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(input, failedTests, successfulTests);
+
+        assertThat(successfulTests).extracting(BuildResult.LocalCITestJobDTO::getName).containsExactlyInAnyOrder("Test", "Suite.Test");
+        assertThat(failedTests).isEmpty();
+    }
 }
