@@ -278,6 +278,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         attachment = attachmentRepository.findById(attachment.getId()).orElseThrow();
         assertThat(attachmentUnit2.getAttachment()).isEqualTo(attachment);
         assertThat(attachment.getAttachmentUnit()).isEqualTo(attachmentUnit2);
+        assertThat(attachmentUnit1.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(attachmentUnit), eq(Optional.of(attachmentUnit)));
     }
 
@@ -334,6 +335,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
         this.attachmentUnit = this.attachmentUnitRepository.save(this.attachmentUnit);
+        competencyUtilService.linkLectureUnitToCompetency(competency, attachmentUnit);
 
         // 1. check the database call directly
         this.attachmentUnit = this.attachmentUnitRepository.findByIdElseThrow(this.attachmentUnit.getId());
@@ -342,6 +344,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         // 2. check the REST call
         this.attachmentUnit = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + this.attachmentUnit.getId(), HttpStatus.OK, AttachmentUnit.class);
         assertThat(this.attachmentUnit.getAttachment()).isEqualTo(this.attachment);
+        assertThat(this.attachmentUnit.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
     }
 
     @Test
