@@ -835,7 +835,9 @@ public class ExerciseService {
 
     /**
      * Returns a map from exercise type to count of exercise given a course id.
-     * If a course has no exercises for a specific type, the map contains an entry for that type with value 0.
+     *
+     * @param courseId the course id
+     * @return the mapping from exercise type to course type. If a course has no exercises for a specific type, the map contains an entry for that type with value 0.
      */
     public Map<ExerciseType, Long> countByCourseIdGroupByType(Long courseId) {
         Map<ExerciseType, Long> exerciseTypeCountMap = exerciseRepository.countByCourseIdGroupedByType(courseId).stream()
