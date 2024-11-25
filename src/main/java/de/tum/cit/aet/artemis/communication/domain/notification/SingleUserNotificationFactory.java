@@ -49,6 +49,7 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_PLAGIARISM_CASE_STUDENT_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PLAGIARISM_CASE_VERDICT_STUDENT_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_ADDED_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_ASSIGNED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TEXT;
@@ -80,6 +81,7 @@ import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 public class SingleUserNotificationFactory {
@@ -151,6 +153,10 @@ public class SingleUserNotificationFactory {
             notification.setTransientAndStringTarget(createDataExportCreatedTarget(dataExport, path));
         }
         return notification;
+    }
+
+    public static SingleUserNotification createNotification(UserSshPublicKey key, User recipient) {
+        return new SingleUserNotification(recipient, SSH_KEY_ADDED_TITLE, null, false, new String[] {});
     }
 
     @NotificationPlaceholderCreator(values = { DATA_EXPORT_CREATED, DATA_EXPORT_FAILED })

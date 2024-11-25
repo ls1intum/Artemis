@@ -1,0 +1,30 @@
+<th:block th:replace="mail/notification/fragments :: greetingsFullName"/>
+<span th:text="#{email.notification.sshKeyAdded.title}">The following SSH key was added to your account:</span>
+
+<div>
+    <span th:utext="${sshKey.getLabel()}">SSH key label</span>
+    <span th:utext="${sshKey.getKeyHash()}">SSH key hash</span>
+</div>
+
+<span th:text="#{email.notification.sshKeyAdded.ifMistake}">If adding it was by mistake, remove it here:</span>
+
+<th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
+
+<th:block th:replace="mail/notification/fragments :: farewell"/>
+
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="mail/notification/fragments :: head"/>
+<body>
+<th:block th:replace="mail/notification/fragments :: header"/>
+
+<!-- Message Body Start -->
+<div id="message-body">
+    bob
+</div>
+
+<!-- Message Body End -->
+<th:block th:replace="mail/notification/fragments :: footer"/>
+</body>
+</html>

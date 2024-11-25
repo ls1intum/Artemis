@@ -92,7 +92,6 @@ public class SshPublicKeysResource {
         catch (IllegalArgumentException e) {
             throw new BadRequestAlertException("Invalid SSH key format", "SSH key", "invalidKeyFormat", true);
         }
-
         userSshPublicKeyService.createSshKeyForUser(user, keyEntry, sshPublicKey);
         return ResponseEntity.ok().build();
     }
