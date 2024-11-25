@@ -23,6 +23,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -300,14 +301,14 @@ public class BuildLogEntryService {
      * and the build job ID. If the directory structure for the logs does not already exist, it is created.
      * Each log entry is written to the log file in the format of "time\tlog message".
      *
-     * @param buildLogEntries     A list of {@link BuildLogEntry} objects containing the build log information to be saved.
+     * @param buildLogEntries     A list of {@link BuildLogDTO} objects containing the build log information to be saved.
      * @param buildJobId          The unique identifier of the build job whose logs are being saved.
      * @param programmingExercise The programming exercise associated with the build job, used to
      *                                retrieve the course and exercise short names.
      * @throws IllegalStateException If the directory for storing the logs could not be created.
      * @throws RuntimeException      If an I/O error occurs while writing the log file.
      */
-    public void saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String buildJobId, ProgrammingExercise programmingExercise) {
+    public void saveBuildLogsToFile(List<BuildLogDTO> buildLogEntries, String buildJobId, ProgrammingExercise programmingExercise) {
         String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String exerciseShortName = programmingExercise.getShortName();
         Path exerciseLogsPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName);
@@ -323,8 +324,8 @@ public class BuildLogEntryService {
         Path logPath = exerciseLogsPath.resolve(buildJobId + ".log");
 
         StringBuilder logsStringBuilder = new StringBuilder();
-        for (BuildLogEntry buildLogEntry : buildLogEntries) {
-            logsStringBuilder.append(buildLogEntry.getTime()).append("\t").append(buildLogEntry.getLog());
+        for (var buildLogEntry : buildLogEntries) {
+            logsStringBuilder.append(buildLogEntry.time()).append("\t").append(buildLogEntry.log());
         }
 
         try {

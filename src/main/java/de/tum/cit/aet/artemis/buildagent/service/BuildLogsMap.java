@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 
 @Profile(PROFILE_BUILDAGENT)
 @Component
@@ -24,32 +24,49 @@ public class BuildLogsMap {
     @Value("${artemis.continuous-integration.build-logs.max-chars-per-line:1024}")
     private int maxCharsPerLine;
 
-    private final ConcurrentMap<String, List<BuildLogEntry>> buildLogsMap = new ConcurrentHashMap<>();
+    // buildJobId --> List of build logs
+    private final ConcurrentMap<String, List<BuildLogDTO>> buildLogsMap = new ConcurrentHashMap<>();
 
-    public List<BuildLogEntry> getBuildLogs(String buildLogId) {
-        return buildLogsMap.get(buildLogId);
-    }
-
-    public void appendBuildLogEntry(String buildLogId, String message) {
-        appendBuildLogEntry(buildLogId, new BuildLogEntry(ZonedDateTime.now(), message + "\n"));
-    }
-
-    public void appendBuildLogEntry(String buildLogId, BuildLogEntry buildLog) {
-        buildLogsMap.computeIfAbsent(buildLogId, k -> new ArrayList<>()).add(buildLog);
-    }
-
-    public void removeBuildLogs(String buildLogId) {
-        buildLogsMap.remove(buildLogId);
+    /**
+     * Appends a new build log entry to the build logs for the specified build job ID.
+     *
+     * @param buildJobId the ID of the build job to append a log message to
+     * @param message    the message to append to the build log
+     */
+    public void appendBuildLogEntry(String buildJobId, String message) {
+        appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), message + "\n"));
     }
 
     /**
-     * Retrieves and truncates the build logs for the specified build log ID.
+     * Appends a new build log entry to the build logs for the specified build job ID.
+     * Only the first maxCharsPerLine characters of the log message will be appended. Longer characters will be truncated to avoid memory issues.
+     * Only the first maxLogLinesPerBuildJob log entries will be stored. Newer logs will be ignored to avoid memory issues
      *
-     * @param buildLogId the ID of the build log to retrieve and truncate
+     * @param buildJobId the ID of the build job to append a log message to
+     * @param buildLog   the build log entry to append to the build log
+     */
+    public void appendBuildLogEntry(String buildJobId, BuildLogDTO buildLog) {
+        var buildLogs = buildLogsMap.computeIfAbsent(buildJobId, k -> new ArrayList<>());
+        if (buildLogs.size() < maxLogLinesPerBuildJob) {
+            if (buildLog.log() != null && buildLog.log().length() > maxCharsPerLine) {
+                buildLog = new BuildLogDTO(buildLog.time(), buildLog.log().substring(0, maxCharsPerLine) + "\n");
+            }
+            buildLogs.add(buildLog);
+        }
+    }
+
+    public void removeBuildLogs(String buildJobId) {
+        buildLogsMap.remove(buildJobId);
+    }
+
+    /**
+     * Retrieves and truncates the build logs for the specified build job ID. Does not modify the original build logs.
+     *
+     * @param buildJobId the ID of the build job to retrieve and truncate
      * @return a list of truncated build log entries, or null if no logs are found for the specified ID
      */
-    public List<BuildLogEntry> getAndTruncateBuildLogs(String buildLogId) {
-        List<BuildLogEntry> buildLogs = buildLogsMap.get(buildLogId);
+    public List<BuildLogDTO> getAndTruncateBuildLogs(String buildJobId) {
+        List<BuildLogDTO> buildLogs = buildLogsMap.get(buildJobId);
 
         if (buildLogs == null) {
             return null;
@@ -57,19 +74,9 @@ public class BuildLogsMap {
 
         // Truncate the build logs to maxLogLinesPerBuildJob
         if (buildLogs.size() > maxLogLinesPerBuildJob) {
-            List<BuildLogEntry> truncatedBuildLogs = new ArrayList<>(buildLogs.subList(0, maxLogLinesPerBuildJob));
-            truncatedBuildLogs.add(new BuildLogEntry(ZonedDateTime.now(), "Truncated build logs...\n"));
+            List<BuildLogDTO> truncatedBuildLogs = new ArrayList<>(buildLogs.subList(0, maxLogLinesPerBuildJob));
+            truncatedBuildLogs.add(new BuildLogDTO(ZonedDateTime.now(), "Truncated build logs...\n"));
             buildLogs = truncatedBuildLogs;
-        }
-
-        // Truncate each line to maxCharsPerLine
-        for (int i = 0; i < buildLogs.size(); i++) {
-            BuildLogEntry buildLog = buildLogs.get(i);
-            String log = buildLog.getLog();
-            if (log.length() > maxCharsPerLine) {
-                String truncatedLog = log.substring(0, maxCharsPerLine) + "\n";
-                buildLogs.set(i, new BuildLogEntry(buildLog.getTime(), truncatedLog));
-            }
         }
 
         return buildLogs;
