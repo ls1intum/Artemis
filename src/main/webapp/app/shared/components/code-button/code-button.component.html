@@ -95,6 +95,7 @@
             [disabled]="!copyEnabled"
             [class.btn-success]="wasCopied"
             class="btn btn-primary btn-sm me-2"
+            data-testid="copyRepoUrlButton"
             type="button"
             style="min-width: 100px"
             jhiTranslate="{{ wasCopied ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl' }}"

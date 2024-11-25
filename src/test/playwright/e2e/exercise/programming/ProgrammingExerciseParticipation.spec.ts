@@ -7,7 +7,7 @@ import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/progra
 import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
 import { ExerciseCommit, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
 import { test } from '../../../support/fixtures';
-import { Page, expect } from '@playwright/test';
+import { BrowserContext, Page, expect } from '@playwright/test';
 import { gitClient } from '../../../support/pageobjects/exercises/programming/GitClient';
 import * as fs from 'fs/promises';
 import { SimpleGit } from 'simple-git';
@@ -17,7 +17,7 @@ import { ProgrammingExerciseSubmission } from '../../../support/pageobjects/exer
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
 import { UserCredentials, admin, instructor, studentFour, studentOne, studentTwo, tutor } from '../../../support/users';
 import { Team } from 'app/entities/team.model';
-import { ProgrammingExerciseOverviewPage } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
+import { GitCloneMethod, ProgrammingExerciseOverviewPage } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 import { Participation } from 'app/entities/participation/participation.model';
 
 test.describe('Programming exercise participation', { tag: '@sequential' }, () => {
@@ -87,6 +87,34 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             });
         }
     }
+
+    test.describe('Programming exercise participation using secure git', () => {
+        let exercise: ProgrammingExercise;
+
+        test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.JAVA });
+        });
+
+        // test('Makes a submission using ssh git', async ({ page, programmingExerciseOverview }) => {
+        //     await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+        //     await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, studentOne, javaAllSuccessfulSubmission, 'Solution', GitCloneMethod.ssh);
+        // });
+
+        test('Makes a submission using git through HTTPS using token', async ({ programmingExerciseOverview, page }) => {
+            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+            await makeGitExerciseSubmission(
+                page,
+                programmingExerciseOverview,
+                course,
+                exercise,
+                studentOne,
+                javaAllSuccessfulSubmission,
+                'Solution',
+                GitCloneMethod.httpsWithToken,
+            );
+        });
+    });
 
     test.describe('Programming exercise team participation', () => {
         let exercise: ProgrammingExercise;
@@ -221,9 +249,9 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
+    //     await courseManagementAPIRequests.deleteCourse(course, admin);
+    // });
 });
 
 async function makeGitExerciseSubmission(
@@ -234,13 +262,24 @@ async function makeGitExerciseSubmission(
     student: UserCredentials,
     submission: any,
     commitMessage: string,
+    cloneMethod: GitCloneMethod = GitCloneMethod.https,
 ) {
-    let repoUrl = await programmingExerciseOverview.getRepoUrl();
+    await programmingExerciseOverview.openCloneMenu(cloneMethod);
+    if (cloneMethod == GitCloneMethod.ssh) {
+        await setupSSHCredentials(page.context());
+        await page.reload();
+        await programmingExerciseOverview.openCloneMenu(cloneMethod);
+    }
+    let repoUrl = await programmingExerciseOverview.copyCloneUrl();
+    console.log('Cloning repository:', repoUrl);
+    console.log('repo url length:', repoUrl.length);
     if (process.env.CI === 'true') {
         repoUrl = repoUrl.replace('localhost', 'artemis-app');
     }
-    repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
-    repoUrl = repoUrl.replace(`:**********`, ``);
+    if (cloneMethod == GitCloneMethod.https) {
+        repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
+        repoUrl = repoUrl.replace(`:**********`, ``);
+    }
     const urlParts = repoUrl.split('/');
     const repoName = urlParts[urlParts.length - 1];
     const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
@@ -249,6 +288,16 @@ async function makeGitExerciseSubmission(
     await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
     const resultScore = await programmingExerciseOverview.getResultScore();
     await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+}
+
+async function setupSSHCredentials(context: BrowserContext) {
+    const page = await context.newPage();
+    // TODO: Implement SSH key generation
+    const sshKey = '';
+    await page.goto('user-settings/ssh');
+    await page.getByTestId('addNewSshKeyButton').click();
+    await page.getByTestId('sshKeyField').fill(sshKey!);
+    await page.getByTestId('saveSshKeyButton').click();
 }
 
 /**

@@ -33,12 +33,32 @@ export class ProgrammingExerciseOverviewPage {
         await this.courseOverview.openRunningProgrammingExercise(exerciseId);
     }
 
-    async getRepoUrl() {
+    async openCloneMenu(cloneMethod: GitCloneMethod) {
+        const gitCloneMethodSelector = {
+            [GitCloneMethod.https]: '#useHTTPSButton',
+            [GitCloneMethod.httpsWithToken]: '#useHTTPSWithTokenButton',
+            [GitCloneMethod.ssh]: '#useSSHButton',
+        };
+
         const codeButtonLocator = this.getCodeButton();
         await Commands.reloadUntilFound(this.page, codeButtonLocator, 4000, 20000);
         await codeButtonLocator.click();
         await this.page.locator('.popover-body').waitFor({ state: 'visible' });
+        await this.page.locator('.https-or-ssh-button').click();
+        await this.page.locator(gitCloneMethodSelector[cloneMethod]).click();
         return await this.page.locator('.clone-url').innerText();
+    }
+
+    async getCloneUrl() {
+        return await this.page.locator('.clone-url').innerText();
+    }
+
+    async copyCloneUrl() {
+        await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+        await this.page.getByTestId('copyRepoUrlButton').click();
+        return await this.page.evaluate(async () => {
+            return await navigator.clipboard.readText();
+        });
     }
 
     getCodeButton() {
@@ -48,4 +68,10 @@ export class ProgrammingExerciseOverviewPage {
     getExerciseDetails() {
         return this.page.locator('#course-exercise-details');
     }
+}
+
+export enum GitCloneMethod {
+    https,
+    httpsWithToken,
+    ssh,
 }
