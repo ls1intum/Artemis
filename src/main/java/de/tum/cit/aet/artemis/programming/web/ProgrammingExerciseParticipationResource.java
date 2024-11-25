@@ -231,12 +231,12 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercises/{exerciseId}/latest-pending-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<Map<Long, Optional<ProgrammingSubmission>>> getLatestPendingSubmissionsByExerciseId(@PathVariable Long exerciseId) {
-        ProgrammingExercise programmingExercise;
-        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise)) {
             throw new AccessForbiddenException("exercise", exerciseId);
         }
+        // TODO: this REST call is quite slow for > 100 participations. We should consider a more efficient way to get the latest pending submissions.
         Map<Long, Optional<ProgrammingSubmission>> pendingSubmissions = submissionService.getLatestPendingSubmissionsForProgrammingExercise(exerciseId);
         // Remove unnecessary data to make response smaller (exercise, student of participation).
         pendingSubmissions = pendingSubmissions.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
