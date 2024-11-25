@@ -42,6 +42,12 @@ public class BuildLogsMap {
         buildLogsMap.remove(buildLogId);
     }
 
+    /**
+     * Retrieves and truncates the build logs for the specified build log ID.
+     *
+     * @param buildLogId the ID of the build log to retrieve and truncate
+     * @return a list of truncated build log entries, or null if no logs are found for the specified ID
+     */
     public List<BuildLogEntry> getAndTruncateBuildLogs(String buildLogId) {
         List<BuildLogEntry> buildLogs = buildLogsMap.get(buildLogId);
 
