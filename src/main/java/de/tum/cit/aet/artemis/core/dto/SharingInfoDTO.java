@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.dto;
+package de.tum.cit.aet.artemis.core.dto;
 
 import org.springframework.context.annotation.Profile;
 

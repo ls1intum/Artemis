@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.sharing;
+package de.tum.cit.aet.artemis.exercise.service.sharing;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -9,13 +9,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.sharing.SharingMultipartZipFile;
-import de.tum.in.www1.artemis.domain.sharing.SharingSetupInfo;
-import de.tum.in.www1.artemis.exception.SharingException;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportFromFileService;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
+import de.tum.cit.aet.artemis.sharing.ExerciseSharingService;
+import de.tum.cit.aet.artemis.sharing.SharingMultipartZipFile;
+import de.tum.cit.aet.artemis.sharing.SharingSetupInfo;
 
 @Service
 @Profile("sharing")
@@ -25,7 +25,7 @@ public class ProgrammingExerciseImportFromSharingService {
 
     private final ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService;
 
-    private final ExerciseSharingService exerciseSharingService;
+    private final de.tum.cit.aet.artemis.sharing.ExerciseSharingService exerciseSharingService;
 
     private final UserRepository userRepository;
 

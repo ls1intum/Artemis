@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.cit.aet.artemis.exercise.service.sharing;
 
 import java.net.URL;
 import java.util.concurrent.Executors;
@@ -15,6 +15,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 /**
  * Service to support Sharing Platform functionality as a plugin.

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -50,7 +50,7 @@ export class SharingComponent implements OnInit {
         this.route.params.subscribe((params) => {
             this.sharingInfo.basketToken = params['basketToken'];
         });
-        this.route.queryParams.subscribe((qparams) => {
+        this.route.queryParams.subscribe((qparams: Params) => {
             this.sharingInfo.returnURL = qparams['returnURL'];
             this.sharingInfo.apiBaseURL = qparams['apiBaseURL'];
             this.programmingExerciseSharingService.getSharedExercises(this.sharingInfo).subscribe((res: ShoppingBasket) => {

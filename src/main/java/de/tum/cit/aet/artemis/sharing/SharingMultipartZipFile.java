@@ -1,10 +1,12 @@
-package de.tum.in.www1.artemis.domain.sharing;
+package de.tum.cit.aet.artemis.sharing;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
 import jakarta.validation.constraints.NotNull;
+
+import javax.annotation.Nonnull;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
@@ -23,6 +25,7 @@ public class SharingMultipartZipFile implements MultipartFile {
     }
 
     @Override
+    @Nonnull
     public String getName() {
         return this.name;
     }
@@ -58,16 +61,19 @@ public class SharingMultipartZipFile implements MultipartFile {
     }
 
     @Override
+    @Nonnull
     public byte @NotNull [] getBytes() throws IOException {
         return this.inputStream.readAllBytes();
     }
 
     @Override
+    @Nonnull
     public @NotNull InputStream getInputStream() throws IOException {
         return this.inputStream;
     }
 
     @Override
+    @Nonnull
     public void transferTo(@NotNull File dest) throws IOException, IllegalStateException {
         FileUtils.copyInputStreamToFile(this.inputStream, dest);
     }

@@ -1,10 +1,10 @@
-package de.tum.in.www1.artemis.domain.sharing;
+package de.tum.cit.aet.artemis.sharing;
 
 import org.springframework.context.annotation.Profile;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.web.rest.dto.SharingInfoDTO;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @Profile("sharing")
 public class SharingSetupInfo {

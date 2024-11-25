@@ -1,12 +1,4 @@
-package de.tum.in.www1.artemis.service.sharing;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+package de.tum.cit.aet.artemis.sharing;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -19,6 +11,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -30,7 +24,17 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import de.tum.in.www1.artemis.service.ProfileService;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.ResponseProcessingException;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
 import org.apache.http.client.utils.URIBuilder;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.glassfish.jersey.client.ClientConfig;
@@ -41,20 +45,21 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.sharing.SharingMultipartZipFile;
-import de.tum.in.www1.artemis.exception.SharingException;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.SharingPluginService;
-import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
-import de.tum.in.www1.artemis.web.rest.dto.SharingInfoDTO;
-import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.ResponseProcessingException;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+
+import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.exercise.service.sharing.SharingException;
+import de.tum.cit.aet.artemis.exercise.service.sharing.SharingPluginService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 
 @Service
 @Profile("sharing")
@@ -95,23 +100,22 @@ public class ExerciseSharingService {
         ClientConfig restClientConfig = new ClientConfig();
         restClientConfig.register(ShoppingBasket.class);
         try (Client client = ClientBuilder.newClient(restClientConfig)) {
-			WebTarget target = client
-					.target(correctLocalHostInDocker(apiBaseUrl)
-							.concat("/basket/").concat(basketToken));
+            WebTarget target = client.target(correctLocalHostInDocker(apiBaseUrl).concat("/basket/").concat(basketToken));
             String response = target.request().accept(MediaType.APPLICATION_JSON).get(String.class);
 
-                ObjectMapper objectMapper = new ObjectMapper();
-                objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-                objectMapper.registerModule(new JavaTimeModule());
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            objectMapper.registerModule(new JavaTimeModule());
 
-               ShoppingBasket shoppingBasket = objectMapper.readValue(response, ShoppingBasket.class);
-                return Optional.ofNullable(shoppingBasket);
+            ShoppingBasket shoppingBasket = objectMapper.readValue(response, ShoppingBasket.class);
+            return Optional.ofNullable(shoppingBasket);
 
         }
         catch (ResponseProcessingException rpe) {
             log.warn("Unrecognized property when importing exercise from Sharing", rpe);
             return Optional.empty();
-        } catch (JsonProcessingException e) {
+        }
+        catch (JsonProcessingException e) {
             log.error("Cannot parse properties: ", e);
         }
         return Optional.empty();
@@ -121,9 +125,9 @@ public class ExerciseSharingService {
         ClientConfig restClientConfig = new ClientConfig();
         restClientConfig.register(ShoppingBasket.class);
 
-
         try (Client client = ClientBuilder.newClient(restClientConfig)) {
-            WebTarget target = client.target( correctLocalHostInDocker(sharingInfo.getApiBaseURL()) + "/basket/" + sharingInfo.getBasketToken() + "/repository/" + itemPosition).queryParam("format", "artemis");
+            WebTarget target = client.target(correctLocalHostInDocker(sharingInfo.getApiBaseURL()) + "/basket/" + sharingInfo.getBasketToken() + "/repository/" + itemPosition)
+                    .queryParam("format", "artemis");
             InputStream zipInput = target.request().accept(MediaType.APPLICATION_OCTET_STREAM).get(InputStream.class);
 
             if (zipInput == null) {
@@ -132,7 +136,8 @@ public class ExerciseSharingService {
 
             SharingMultipartZipFile zipFileItem = new SharingMultipartZipFile(getBasketFileName(sharingInfo.getBasketToken(), itemPosition), zipInput);
             return Optional.of(zipFileItem);
-        } catch (WebApplicationException wae) {
+        }
+        catch (WebApplicationException wae) {
             throw new SharingException("Could not retrieve basket item");
         }
     }
@@ -155,16 +160,16 @@ public class ExerciseSharingService {
 
     /**
      * this is just a weak implementation for local testing (within a docker).
+     *
      * @param url the url to be corrected
      * @return an url, that points to host.docker.internal if previously directed to localhost.
      */
     private String correctLocalHostInDocker(String url) {
-        if(url.contains("//localhost") && profileService.isProfileActive("docker"))  {
+        if (url.contains("//localhost") && profileService.isProfileActive("docker")) {
             return url.replace("//localhost", "//host.docker.internal");
         }
         return url;
     }
-
 
     /**
      * Retrieves the Problem-Statement file from a Sharing basket
@@ -178,7 +183,8 @@ public class ExerciseSharingService {
         try {
             String problemStatement = this.getEntryFromBasket(pattern, sharingInfo);
             return Objects.requireNonNullElse(problemStatement, "No Problem Statement found!");
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new NotFoundException("Could not retrieve problem statement from imported exercise");
         }
     }
@@ -188,15 +194,16 @@ public class ExerciseSharingService {
      *
      * @param sharingInfo of the basket to extract the problem statement from
      * @return The content of the Exercise-Details file
-
+     *
      */
-    public String getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo)  {
+    public String getExerciseDetailsFromBasket(SharingInfoDTO sharingInfo) {
         Pattern pattern = Pattern.compile("^Exercise-Details", Pattern.CASE_INSENSITIVE);
 
         try {
             String problemStatement = this.getEntryFromBasket(pattern, sharingInfo);
             return Objects.requireNonNullElse(problemStatement, "No Problem Statement found!");
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new NotFoundException("Could not retrieve exercise details from imported exercise");
         }
     }
@@ -216,7 +223,8 @@ public class ExerciseSharingService {
             repositoryStream = this.getCachedBasketItem(sharingInfo).getInputStream();
         }
         catch (IOException | SharingException e) {
-            log.error("Cannot read input Template for " + sharingInfo.getBasketToken(), e);
+            log.error("Cannot read input Template for {}", sharingInfo.getBasketToken(), e);
+            return null;
         }
 
         ZipInputStream zippedRepositoryStream = new ZipInputStream(repositoryStream);
@@ -253,7 +261,7 @@ public class ExerciseSharingService {
             throw new SharingException("No Sharing ApiBaseUrl provided");
         }
         try {
-            Optional<ProgrammingExercise> exercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigById(exerciseId);
+            Optional<ProgrammingExercise> exercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(exerciseId);
 
             if (exercise.isEmpty()) {
                 throw new SharingException("Could not find exercise to export");
@@ -263,22 +271,23 @@ public class ExerciseSharingService {
             Path zipFilePath = programmingExerciseExportService.exportProgrammingExerciseForDownload(exercise.get(), exportErrors);
 
             if (!exportErrors.isEmpty()) {
-                throw new SharingException("Could not generate Zip file to export");
+                String errorMessage = String.join(", ", exportErrors);
+                throw new SharingException("Could not generate Zip file to export: " + errorMessage);
             }
 
             // remove the 'repoDownloadClonePath' part and 'zip' extension
             String token = Path.of(repoDownloadClonePath).relativize(zipFilePath).toString().replace(".zip", "");
             String tokenInB64 = Base64.getEncoder().encodeToString(token.getBytes()).replaceAll("=+$", "");
+            String tokenIntegrity = createHMAC(tokenInB64);
 
-            URIBuilder builder = new URIBuilder();
             URL apiBaseUrl = sharingPluginService.getSharingApiBaseUrlOrNull();
-            String importEndpoint = "/exercise/import";
-            String exerciseCallback = artemisServerUrl + "/api/sharing/export/" + tokenInB64;
-            builder.setScheme(apiBaseUrl.getProtocol()).setHost(apiBaseUrl.getHost()).setPath(apiBaseUrl.getPath().concat(importEndpoint)).setPort(apiBaseUrl.getPort())
-                    .addParameter("exerciseUrl", exerciseCallback);
-            if (sharingPluginService.getSharingApiKeyOrNull() != null) {
-                builder.addParameter("apiKey", sharingPluginService.getSharingApiKeyOrNull());
-            }
+            String sharingImportEndPoint = "/exercise/import";
+            URIBuilder callBackBuilder = new URIBuilder(artemisServerUrl + "/api/sharing/export/" + tokenInB64);
+            callBackBuilder.addParameter("sec", tokenIntegrity);
+            URIBuilder builder = new URIBuilder();
+            builder.setScheme(apiBaseUrl.getProtocol()).setHost(apiBaseUrl.getHost()).setPath(apiBaseUrl.getPath().concat(sharingImportEndPoint)).setPort(apiBaseUrl.getPort())
+                    .addParameter("exerciseUrl", callBackBuilder.build().toString());
+
             return builder.build().toURL();
         }
         catch (URISyntaxException e) {
@@ -289,6 +298,48 @@ public class ExerciseSharingService {
             log.error("Could not generate Zip file for export: " + e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * just to secure token for integrity
+     *
+     * @param base64token the token (already base64 encoded
+     * @return returns HMAC-Hash
+     */
+    private String createHMAC(String base64token) {
+        // Definiere die HMAC-Methode (z. B. HmacSHA256)
+        String algorithm = "HmacSHA256";
+        String psk = sharingPluginService.getSharingApiKeyOrNull();
+
+        // Konvertiere den Pre-shared Key in ein Byte-Array
+        SecretKeySpec secretKeySpec = new SecretKeySpec(psk.getBytes(), algorithm);
+
+        try {
+            // Initialisiere den Mac mit dem Algorithmus und dem Schlüssel
+            Mac mac = Mac.getInstance(algorithm);
+            mac.init(secretKeySpec);
+            // Berechne das HMAC
+            byte[] hmacBytes = mac.doFinal(base64token.getBytes());
+
+            // Konvertiere das Ergebnis in Base64 für einfache Speicherung
+            return Base64.getEncoder().encodeToString(hmacBytes);
+        }
+        catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            return Base64.getEncoder().encodeToString(new byte[] {});
+        }
+
+    }
+
+    /**
+     * checks the integrity of the base64token
+     *
+     * @param base64token the base64token
+     * @param sec         the hmac hash
+     * @return true, iff hash is correct
+     */
+    public boolean validate(String base64token, String sec) {
+        String computedHMAC = createHMAC(base64token);
+        return computedHMAC.equals(sec);
     }
 
     public File getExportedExerciseByToken(String b64Token) {

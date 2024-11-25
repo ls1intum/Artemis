@@ -9,7 +9,7 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
 import { Course } from 'app/entities/course.model';
 

@@ -1,15 +1,12 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.cit.aet.artemis.core.web;
 
-import static de.tum.in.www1.artemis.config.Constants.SHARINGCONFIG_RESOURCE_IS_ENABLED;
-import static de.tum.in.www1.artemis.config.Constants.SHARINGCONFIG_RESOURCE_PATH;
+import static de.tum.cit.aet.artemis.core.config.Constants.SHARINGCONFIG_RESOURCE_IS_ENABLED;
+import static de.tum.cit.aet.artemis.core.config.Constants.SHARINGCONFIG_RESOURCE_PATH;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Optional;
-
-import jakarta.ws.rs.core.Context;
-import jakarta.ws.rs.core.UriInfo;
 
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
@@ -24,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.service.SharingPluginService;
+import de.tum.cit.aet.artemis.exercise.service.sharing.SharingPluginService;
 
 /**
  * REST controller for Supporting Import and Export from/to Sharing Platform.
@@ -39,12 +36,10 @@ public class SharingSupportResource {
 
     private final SharingPluginService sharingPluginService;
 
+    @SuppressWarnings("unused")
     public SharingSupportResource(SharingPluginService sharingPluginService) {
         this.sharingPluginService = sharingPluginService;
     }
-
-    @Context
-    UriInfo uri;
 
     /**
      * Returns Sharing Plugin configuration to be used in context with Artemis.
@@ -58,6 +53,7 @@ public class SharingSupportResource {
      *
      */
     @GetMapping(SHARINGCONFIG_RESOURCE_PATH)
+    @SuppressWarnings("unused")
     public ResponseEntity<SharingPluginConfig> getConfig(@RequestHeader("Authorization") Optional<String> sharingApiKey, @RequestParam String apiBaseUrl,
             @RequestParam String installationName) {
         if (sharingApiKey.isPresent() && sharingPluginService.validate(sharingApiKey.get())) {
