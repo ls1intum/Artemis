@@ -46,7 +46,7 @@ public class BuildLogsMap {
      * @param buildLog   the build log entry to append to the build log
      */
     public void appendBuildLogEntry(String buildJobId, BuildLogDTO buildLog) {
-        var buildLogs = buildLogsMap.computeIfAbsent(buildJobId, k -> new ArrayList<>());
+        List<BuildLogDTO> buildLogs = buildLogsMap.computeIfAbsent(buildJobId, k -> new ArrayList<>());
         if (buildLogs.size() < maxLogLinesPerBuildJob) {
             if (buildLog.log() != null && buildLog.log().length() > maxCharsPerLine) {
                 buildLog = new BuildLogDTO(buildLog.time(), buildLog.log().substring(0, maxCharsPerLine) + "\n");

@@ -414,7 +414,7 @@ public class BuildJobContainerService {
                 @Override
                 public void onNext(Frame item) {
                     String text = new String(item.getPayload());
-                    var buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), text);
+                    BuildLogDTO buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), text);
                     if (buildJobId != null) {
                         buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
                     }

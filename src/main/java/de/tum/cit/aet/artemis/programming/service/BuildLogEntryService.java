@@ -324,7 +324,7 @@ public class BuildLogEntryService {
         Path logPath = exerciseLogsPath.resolve(buildJobId + ".log");
 
         StringBuilder logsStringBuilder = new StringBuilder();
-        for (var buildLogEntry : buildLogEntries) {
+        for (BuildLogDTO buildLogEntry : buildLogEntries) {
             logsStringBuilder.append(buildLogEntry.time()).append("\t").append(buildLogEntry.log());
         }
 
