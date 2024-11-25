@@ -127,18 +127,18 @@ public class QuizResultService {
                 else if (submissions.size() > 1) {
                     log.warn("Found multiple ({}) submissions for participation {} (Participant {}) in quiz {}, taking the one with highest id", submissions.size(),
                             participation.getId(), participation.getParticipant().getName(), quizExercise.getId());
-                    // Load submission with highest id
-                    List<Submission> validSubmissions = submissions.stream()
-                            .filter(submission -> submission.getSubmissionDate() != null && !submission.getSubmissionDate().isAfter(quizDeadline)).toList();
-
-                    if (validSubmissions.isEmpty()) {
-                        log.warn("No valid submissions found before the quiz deadline for participation {} (Participant {}) in quiz {}", participation.getId(),
-                                participation.getParticipant().getName(), quizExercise.getId());
-                        continue;
+                    // Filter submissions to only include those submitted before the quiz deadline if the due date is not null, otherwise select the one with the highest ID
+                    Optional<Submission> validSubmission = submissions.stream()
+                            .filter(submission -> quizExercise.getDueDate() == null
+                                    || (submission.getSubmissionDate() != null && !submission.getSubmissionDate().isAfter(quizExercise.getDueDate())))
+                            .max(Comparator.comparing(Submission::getId));
+                    if (validSubmission.isPresent()) {
+                        quizSubmission = (QuizSubmission) validSubmission.get();
                     }
                     else {
-                        // Select the submission with the highest ID among the valid submissions
-                        quizSubmission = (QuizSubmission) validSubmissions.stream().max(Comparator.comparing(Submission::getId)).orElseThrow();
+                        log.warn("No valid submissions found for participation {} (Participant {}) in quiz {}", participation.getId(), participation.getParticipant().getName(),
+                                quizExercise.getId());
+                        continue;
                     }
                 }
                 else {
