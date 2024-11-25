@@ -2,7 +2,8 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { faFilter, faMessage, faSort, faSortDown, faSortUp, faUpRightAndDownLeftFromCenter, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faMessage, faSort, faSortDown, faSortUp, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { facDetails } from '../../../../../../content/icons/icons';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-modal.component';
@@ -50,7 +51,7 @@ export class FeedbackAnalysisComponent {
     readonly faSortUp = faSortUp;
     readonly faSortDown = faSortDown;
     readonly faFilter = faFilter;
-    readonly faUpRightAndDownLeftFromCenter = faUpRightAndDownLeftFromCenter;
+    readonly facDetails = facDetails;
     readonly faUsers = faUsers;
     readonly faMessage = faMessage;
     readonly SortingOrder = SortingOrder;
@@ -126,7 +127,7 @@ export class FeedbackAnalysisComponent {
     }
 
     openFeedbackModal(feedbackDetail: FeedbackDetail): void {
-        const modalRef = this.modalService.open(FeedbackModalComponent, { centered: true });
+        const modalRef = this.modalService.open(FeedbackModalComponent, { centered: true, size: 'lg' });
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
     }
 

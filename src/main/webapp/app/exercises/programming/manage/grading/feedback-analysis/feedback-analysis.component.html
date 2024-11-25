@@ -60,7 +60,7 @@
                         <td>{{ item.testCaseName }}</td>
                         <td>{{ item.errorCategory }}</td>
                         <td class="text-center">
-                            <fa-icon [icon]="faUpRightAndDownLeftFromCenter" class="ms-2 clickable" (click)="openFeedbackModal(item)"></fa-icon>
+                            <fa-icon [icon]="facDetails" class="ms-2 clickable" (click)="openFeedbackModal(item)"></fa-icon>
                             <fa-icon [icon]="faUsers" class="ms-2 clickable" (click)="openAffectedStudentsModal(item)"></fa-icon>
                             @if (isCommunicationEnabled()) {
                                 <fa-icon [icon]="faMessage" class="ms-2 clickable" (click)="openFeedbackDetailChannelModal(item)"></fa-icon>

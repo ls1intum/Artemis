@@ -12,7 +12,7 @@
         <div class="form-group">
             <label for="name" [jhiTranslate]="TRANSLATION_BASE + '.label'"></label>
             <input type="text" class="form-control" id="name" formControlName="name" [attr.placeholder]="TRANSLATION_BASE + '.placeholder' | artemisTranslate" />
-            @if (form.get('name')?.invalid && (form.get('name')?.dirty || form.get('name')?.touched)) {
+            @if (form.controls['name'].invalid && (form.controls['name'].dirty || form.controls['name'].touched)) {
                 <div class="alert alert-danger mt-2">
                     @if (form.get('name')?.errors?.['required']) {
                         <div [jhiTranslate]="TRANSLATION_BASE + '.requiredValidationErrorName'"></div>
@@ -20,7 +20,7 @@
                     @if (form.get('name')?.errors?.['maxlength']) {
                         <div [jhiTranslate]="TRANSLATION_BASE + '.maxLengthValidationErrorName'" [translateValues]="{ max: '30' }"></div>
                     }
-                    @if (!form.get('name')?.errors?.['required'] && !form.get('name')?.errors?.['maxlength'] && form.get('name')?.errors?.['pattern']) {
+                    @if (form.get('name')?.errors?.['pattern']) {
                         <div [jhiTranslate]="TRANSLATION_BASE + '.regexValidationErrorName'"></div>
                     }
                 </div>
@@ -29,7 +29,7 @@
         <div class="form-group">
             <label for="description" [jhiTranslate]="TRANSLATION_BASE + '.descriptionLabel'"></label>
             <input type="text" class="form-control" id="description" formControlName="description" [attr.placeholder]="TRANSLATION_BASE + '.placeholder' | artemisTranslate" />
-            @if (form.get('description')?.invalid && (form.get('description')?.dirty || form.get('description')?.touched)) {
+            @if (form.controls['description'].invalid && (form.controls['description'].dirty || form.controls['description'].touched)) {
                 <div class="alert alert-danger mt-2">
                     @if (form.get('description')?.errors?.['required']) {
                         <div [jhiTranslate]="TRANSLATION_BASE + '.requiredValidationErrorDescription'"></div>
@@ -79,7 +79,7 @@
                 type="button"
                 class="btn btn-primary me-2"
                 [disabled]="!form.valid"
-                [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateButton'"
+                [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateLabel'"
             ></button>
             <button (click)="submitForm(false)" type="button" class="btn btn-primary" [disabled]="!form.valid" [jhiTranslate]="TRANSLATION_BASE + '.createChannelButton'"></button>
         </div>

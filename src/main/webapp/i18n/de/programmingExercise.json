@@ -392,11 +392,10 @@
                         "announcementChannel": "Ankündigungskanal",
                         "announcementChannelYes": "Ja",
                         "announcementChannelNo": "Nein",
-                        "createAndNavigateLabel": "Erstellen und Navigieren:",
+                        "createAndNavigateLabel": "Erstellen und Navigieren",
                         "createAndNavigateDescription": "Erstellt den Kanal und navigiert automatisch zum Kanal.",
                         "createChannelLabel": "Kanal erstellen:",
                         "createChannelDescription": "Erstellt den Kanal, ohne die Seite zu verlassen.",
-                        "createAndNavigateButton": "Erstellen und Navigieren",
                         "createChannelButton": "Kanal erstellen",
                         "placeholder": "Dieses Feld bitte nicht leer lassen",
                         "descriptionLabel": "Kanalbeschreibung",
@@ -407,9 +406,9 @@
                         "maxLengthValidationErrorDescription": "Kanalbeschreibung kann max {{ max }} Zeichen lang sein!",
                         "confirmationModal": {
                             "header": "Kanal Erstellen bestätigen",
-                            "confirmationMessage": "Sind Sie sicher, dass Sie diesen Kanal erstellen möchten? Dies wird einen Kanal mit <strong>{{count}}</strong> Student(en) erstellen.",
+                            "confirmationMessage": "Bist du sicher, dass du diesen Kanal erstellen möchten? Dies wird einen Kanal mit <strong>{{count}}</strong> Student(en) erstellen.",
                             "cancel": "Abbrechen",
-                            "confirm": "Ja, erstellen"
+                            "confirm": "Erstellen"
                         }
                     }
                 },
