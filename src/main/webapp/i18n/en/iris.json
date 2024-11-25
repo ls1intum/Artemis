@@ -94,6 +94,9 @@
             },
             "chat": {
                 "helpOffer": "How can I help you today?"
+            },
+            "chatBubble": {
+                "seeFull": "See full message"
             }
         }
     }
