@@ -73,6 +73,9 @@ public class ForwardedMessage {
     }
 
     public void setSourceId(Long sourceId) {
+        if (sourceId == null) {
+            throw new IllegalArgumentException("sourceId cannot be null");
+        }
         this.sourceId = sourceId;
     }
 
@@ -81,6 +84,9 @@ public class ForwardedMessage {
     }
 
     public void setSourceType(SourceType sourceType) {
+        if (sourceType == null) {
+            throw new IllegalArgumentException("sourceType cannot be null");
+        }
         this.sourceType = sourceType;
     }
 
@@ -89,6 +95,9 @@ public class ForwardedMessage {
     }
 
     public void setDestinationPost(Post post) {
+        if (post != null && this.destinationAnswerPost != null) {
+            throw new IllegalStateException("Cannot set both destination post and answer post");
+        }
         this.destinationPost = post;
     }
 
@@ -97,6 +106,9 @@ public class ForwardedMessage {
     }
 
     public void setDestinationAnswerPost(AnswerPost answerPost) {
+        if (answerPost != null && this.destinationPost != null) {
+            throw new IllegalStateException("Cannot set both destination post and answer post");
+        }
         this.destinationAnswerPost = answerPost;
     }
 

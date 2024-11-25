@@ -37,6 +37,7 @@ import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-ba
 import { CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT } from '@angular/common';
 import { Posting } from 'app/entities/metis/posting.model';
+import { throwError } from 'rxjs';
 
 @Component({
     selector: 'jhi-post',
@@ -110,7 +111,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         @Inject(DOCUMENT) private document: Document,
     ) {
         super();
-        this.course = this.metisService.getCourse();
+        this.course = this.metisService.getCourse() ?? throwError('Course not found');
     }
 
     get reactionsBar() {

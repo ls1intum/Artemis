@@ -23,8 +23,6 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     deleteTimerInSeconds = 6;
     deleteTimer: NodeJS.Timeout | undefined;
     deleteInterval: NodeJS.Timeout | undefined;
-    postingIsOfToday: boolean;
-    todayFlag?: string;
 
     content?: string;
 
