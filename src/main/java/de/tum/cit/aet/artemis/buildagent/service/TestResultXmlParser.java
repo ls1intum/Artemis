@@ -98,12 +98,28 @@ public class TestResultXmlParser {
         }
     }
 
+    /**
+     * Processes a top-level test suite, extracting test cases and populating the provided lists.
+     *
+     * @param failedTests     A list of failed tests. This list will be populated by the method.
+     * @param successfulTests A list of successful tests. This list will be populated by the method.
+     * @param suite           The top-level test suite to process.
+     */
     private static void processTopLevelTestSuite(List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests, TestSuite suite) {
         processTestSuiteWithNamePrefix(suite, failedTests, successfulTests, "");
     }
 
+    /**
+     * Processes an inner (nested) test suite, applying a name prefix to its test cases.
+     *
+     * @param testSuite       The inner test suite to process.
+     * @param failedTests     A list of failed tests. This list will be populated by the method.
+     * @param successfulTests A list of successful tests. This list will be populated by the method.
+     * @param outerNamePrefix The name prefix for the test suite, derived from its parent suites.
+     */
     private static void processInnerTestSuite(TestSuite testSuite, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests,
             String outerNamePrefix) {
+        // namePrefix recursively accumulates all parent testsuite names seperated with dots
         String namePrefix;
         if (testSuite.name() != null) {
             namePrefix = outerNamePrefix + testSuite.name() + ".";
@@ -115,6 +131,15 @@ public class TestResultXmlParser {
         processTestSuiteWithNamePrefix(testSuite, failedTests, successfulTests, namePrefix);
     }
 
+    /**
+     * Processes a test suite, categorizing its test cases into failed or successful lists,
+     * and recursively handling nested test suites.
+     *
+     * @param testSuite       The test suite to process.
+     * @param failedTests     A list of failed tests. This list will be populated by the method.
+     * @param successfulTests A list of successful tests. This list will be populated by the method.
+     * @param namePrefix      The name prefix for the test cases within the suite.
+     */
     private static void processTestSuiteWithNamePrefix(TestSuite testSuite, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests,
             String namePrefix) {
         for (TestCase testCase : testSuite.testCases()) {
