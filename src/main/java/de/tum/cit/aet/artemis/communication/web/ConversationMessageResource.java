@@ -208,34 +208,4 @@ public class ConversationMessageResource {
         List<Post> posts = conversationMessagingService.getMessageById(postIds);
         return ResponseEntity.ok().body(posts);
     }
-
-    /**
-     * POST /courses/{courseId}/messages/similarity-check : trigger a similarity check for post to be created
-     *
-     * @param courseId id of the course the post should be published in
-     * @param post     post to create
-     * @return ResponseEntity with status 200 (OK)
-     */
-    @PostMapping("courses/{courseId}/messages/similarity-check")
-    @EnforceAtLeastStudent
-    // TODO: unused, remove
-    public ResponseEntity<List<Post>> computeSimilarityScoresWitCoursePosts(@PathVariable Long courseId, @RequestBody Post post) {
-        List<Post> similarPosts = conversationMessagingService.getSimilarPosts(courseId, post);
-        return ResponseEntity.ok().body(similarPosts);
-    }
-
-    /**
-     * GET /courses/{courseId}/posts/tags : Get all tags for posts in a certain course
-     *
-     * @param courseId id of the course the post belongs to
-     * @return the ResponseEntity with status 200 (OK) and with body all tags for posts in that course,
-     *         or 400 (Bad Request) if the checks on user or course validity fail
-     */
-    @GetMapping("courses/{courseId}/messages/tags")
-    // TODO: unused, delete
-    @EnforceAtLeastStudent
-    public ResponseEntity<List<String>> getAllPostTagsForCourse(@PathVariable Long courseId) {
-        List<String> tags = conversationMessagingService.getAllCourseTags(courseId);
-        return new ResponseEntity<>(tags, null, HttpStatus.OK);
-    }
 }
