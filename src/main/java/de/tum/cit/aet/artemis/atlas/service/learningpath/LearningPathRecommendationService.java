@@ -264,18 +264,7 @@ public class LearningPathRecommendationService {
         }
 
         RecommendationState recommendationStateWithAllCompetencies = getRecommendedOrderOfAllCompetencies(learningPath);
-        int indexToSearch;
-        if (currentLearningObject == null || currentLearningObject.repeatedTest()) {
-            Optional<CourseCompetency> firstNonMasteredCompetency = recommendationStateWithAllCompetencies.recommendedOrderOfCompetencies().stream()
-                    .map(recommendationState.competencyIdMap::get)
-                    .filter(competency -> recommendationState.competencyMastery().get(competency.getId()) >= competency.getMasteryThreshold()).findFirst();
-            CourseCompetency competencyToSearch = firstNonMasteredCompetency
-                    .orElse(recommendationState.competencyIdMap().get(recommendationState.recommendedOrderOfCompetencies().getLast()));
-            indexToSearch = recommendationStateWithAllCompetencies.recommendedOrderOfCompetencies().indexOf(competencyToSearch.getId());
-        }
-        else {
-            indexToSearch = recommendationStateWithAllCompetencies.recommendedOrderOfCompetencies().indexOf(currentLearningObject.competencyId());
-        }
+        int indexToSearch = getCompetencyIndexOfCurrentLearningObject(recommendationState, currentLearningObject, recommendationStateWithAllCompetencies);
 
         for (int i = indexToSearch; i >= 0; i--) {
             CourseCompetency competency = recommendationStateWithAllCompetencies.competencyIdMap()
@@ -287,12 +276,14 @@ public class LearningPathRecommendationService {
                 continue;
             }
 
+            // If we have a current learning object and it is not a repeated test, we need to find the previous learning object in the same competency
             if (i == indexToSearch && currentLearningObject != null && !currentLearningObject.repeatedTest()) {
                 LearningPathNavigationObjectDTO previousLearningObject = getPreviousLearningObjectInCompetency(learningPath, currentLearningObject, competency, learningObjects);
                 if (previousLearningObject != null) {
                     return previousLearningObject;
                 }
             }
+            // Otherwise get the last learning object of the competency
             else {
                 LearningObject lastLearningObject = learningObjects.getLast();
                 return LearningPathNavigationObjectDTO.of(lastLearningObject, false, learningObjectService.isCompletedByUser(lastLearningObject, learningPath.getUser()),
@@ -300,6 +291,21 @@ public class LearningPathRecommendationService {
             }
         }
         return null;
+    }
+
+    private int getCompetencyIndexOfCurrentLearningObject(RecommendationState recommendationState, LearningPathNavigationObjectDTO currentLearningObject,
+            RecommendationState recommendationStateWithAllCompetencies) {
+        if (currentLearningObject == null || currentLearningObject.repeatedTest()) {
+            Optional<CourseCompetency> firstNonMasteredCompetency = recommendationStateWithAllCompetencies.recommendedOrderOfCompetencies().stream()
+                    .map(recommendationState.competencyIdMap::get)
+                    .filter(competency -> recommendationState.competencyMastery().get(competency.getId()) >= competency.getMasteryThreshold()).findFirst();
+            CourseCompetency competencyToSearch = firstNonMasteredCompetency
+                    .orElse(recommendationState.competencyIdMap().get(recommendationState.recommendedOrderOfCompetencies().getLast()));
+            return recommendationStateWithAllCompetencies.recommendedOrderOfCompetencies().indexOf(competencyToSearch.getId());
+        }
+        else {
+            return recommendationStateWithAllCompetencies.recommendedOrderOfCompetencies().indexOf(currentLearningObject.competencyId());
+        }
     }
 
     /**

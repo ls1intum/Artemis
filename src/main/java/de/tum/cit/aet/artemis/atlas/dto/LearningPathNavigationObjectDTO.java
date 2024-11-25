@@ -60,13 +60,7 @@ public record LearningPathNavigationObjectDTO(long id, boolean completed, String
      * @return whether the learning object is equal
      */
     public boolean equalsLearningObject(LearningObject learningObject, CourseCompetency competency) {
-        if (learningObject == null) {
-            return false;
-        }
-        if (id != learningObject.getId()) {
-            return false;
-        }
-        if (competencyId != competency.getId()) {
+        if (learningObject == null || id != learningObject.getId() || competencyId != competency.getId()) {
             return false;
         }
 

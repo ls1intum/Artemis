@@ -32,12 +32,17 @@
         <div ngbDropdown class="col-4 dropdown" (openChange)="setIsDropdownOpen($event)" #navOverview="ngbDropdown">
             <div type="button" class="row justify-content-center align-items-center h-100" id="navigation-overview" ngbDropdownToggle>
                 @if (currentLearningObject()) {
-                    <span class="col-md-auto fw-bold">
-                        {{
-                            (currentLearningObject()?.repeatedTest ? ('artemisApp.learningPath.navigation.repeatedTest' | artemisTranslate) + ' ' : '') +
-                                currentLearningObject()?.name
-                        }}
-                    </span>
+                    @if (currentLearningObject()?.repeatedTest) {
+                        <span
+                            class="col-md-auto fw-bold"
+                            jhiTranslate="artemisApp.learningPath.navigation.repeatedTest"
+                            [translateValues]="{ name: currentLearningObject()?.name }"
+                        ></span>
+                    } @else {
+                        <span class="col-md-auto fw-bold">
+                            {{ currentLearningObject()?.name }}
+                        </span>
+                    }
                 } @else {
                     <span class="col-md-auto fw-bold" jhiTranslate="artemisApp.learningPath.navigation.recapLabel"></span>
                 }

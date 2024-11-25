@@ -13,7 +13,7 @@
                     "unreleasedLearningObjectLabel": "Unreleased learning unit"
                 },
                 "recapLabel": "Recap learning units",
-                "repeatedTest": "Recap:"
+                "repeatedTest": "Recap: {{name}}"
             },
             "competencyGraphModal": {
                 "title": "Learning path competency relations"
