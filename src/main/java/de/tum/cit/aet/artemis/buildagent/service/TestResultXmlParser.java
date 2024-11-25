@@ -32,8 +32,43 @@ public class TestResultXmlParser {
      * The name of nested testsuite elements are prepended with dots to the testcase name.
      * A singular top-level testsuite is not included in the name.
      * If multiple top-level testsuite elements are present, their names will be included.
-     * Top-level testsuite elements refer to direct children of the root &lt;testsuites&gt; element or
-     * the root &lt;testsuite&gt; element itself.
+     * Top-level testsuite elements refer to direct children of the root {@code <testsuites>} element or
+     * the root {@code <testsuite>} element itself.
+     * <p>
+     * Examples of different XML structures:
+     *
+     * <pre>{@code
+     * <testsuites>
+     *   <testsuite name="ignored">
+     *     <testsuite name="included">
+     *       <testcase name="Test"/>
+     *     </testsuite>
+     *   </testsuite>
+     * <testsuites>
+     * }</pre>
+     *
+     * <pre>{@code
+     * <testsuite name="ignored">
+     *   <testsuite name="included">
+     *     <testcase name="Test"/>
+     *   </testsuite>
+     * </testsuite>
+     * }</pre>
+     *
+     * <pre>{@code
+     * <testsuites>
+     *   <testsuite name="included A">
+     *     <testsuite name="included">
+     *       <testcase name="Test"/>
+     *     </testsuite>
+     *   </testsuite>
+     *   <testsuite name="included B">
+     *     <testsuite name="included">
+     *       <testcase name="Test"/>
+     *     </testsuite>
+     *   </testsuite>
+     * <testsuites>
+     * }</pre>
      *
      * @param testResultFileString The content of the test result file as a String.
      * @param failedTests          A list of failed tests. This list will be populated by the method.
