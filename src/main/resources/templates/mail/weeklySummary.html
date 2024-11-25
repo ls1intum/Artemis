@@ -13,21 +13,21 @@
     <div class="notification-content">
         <span th:text="#{email.weekly.summary.text}">This is your Artemis summary of the last seven days.</span>
         <hr/>
-        <th:block th:if="${weeklySummaryNewExercises.isEmpty()}">
+        <th:block th:unless="${weeklySummaryContent.hasNewExercises}">
             <p class="bold-text" th:text="#{email.weekly.summary.no.new.exercises.information}">There are no new exercises that are still open:</p>
         </th:block>
-        <th:block th:unless="${weeklySummaryNewExercises.isEmpty()}">
+        <th:block th:if="${weeklySummaryContent.hasNewExercises}">
             <p class="bold-text" th:text="#{email.weekly.summary.new.exercises.information}">All newly released exercises that are still open:</p>
             <ul>
-                <tr th:each="exercise: ${weeklySummaryNewExercises}">
+                <tr th:each="exerciseSummary: ${weeklySummaryContent.exerciseSummaries}">
                     <li>
-                        <p class="bold-text" th:text="${exercise.getTitle()}"/>
+                        <p class="bold-text" th:text="${exerciseSummary.title}"/>
                         <ul>
                             <!-- TODO Replace with toReadableString when other PR is merged -->
-                            <li th:text="${exercise.getExerciseType()}"/>
-                            <th:block th:if="${exercise.getDifficulty()}">
+                            <li th:text="${exerciseSummary.type}"/>
+                            <th:block th:if="${exerciseSummary.difficulty}">
                                 <li>
-                                    <th:block th:switch="${exercise.getDifficulty().toString()}">
+                                    <th:block th:switch="${exerciseSummary.difficulty}">
                                         <th:block th:case="'EASY'">
                                             <span th:utext="#{email.notification.title.exercise.information.difficulty(#{email.notification.aux.difficulty.easy})} "/>
                                         </th:block>
@@ -40,15 +40,15 @@
                                     </th:block>
                                 </li>
                             </th:block>
-                            <th:block th:if="${exercise.getReleaseDate()}">
-                                <li th:text="#{email.notification.aux.information.release.date(${timeService.convertToHumanReadableDate(exercise.getReleaseDate())})}">Release Date</li>
+                            <th:block th:if="${exerciseSummary.releaseDate}">
+                                <li th:text="#{email.notification.aux.information.release.date(${exerciseSummary.releaseDate})}">Release Date</li>
                             </th:block>
-                            <th:block th:if="${exercise.getDueDate()}">
-                                <li th:text="#{email.notification.aux.information.due.date(${timeService.convertToHumanReadableDate(exercise.getDueDate())})}">Due Date</li>
+                            <th:block th:if="${exerciseSummary.dueDate}">
+                                <li th:text="#{email.notification.aux.information.due.date(${exerciseSummary.dueDate})}">Due Date</li>
                             </th:block>
-                            <li th:text="#{email.notification.title.exercise.information.max(${exercise.getMaxPoints()})}">Max Points</li>
-                            <th:block th:if="${exercise.getBonusPoints()}">
-                                <li th:text="#{email.notification.title.exercise.information.bonus(${exercise.getBonusPoints()})}">Bonus Points</li>
+                            <li th:text="#{email.notification.title.exercise.information.max(${exerciseSummary.maxPoints})}">Max Points</li>
+                            <th:block th:if="${exerciseSummary.bonusPoints}">
+                                <li th:text="#{email.notification.title.exercise.information.bonus(${exerciseSummary.bonusPoints})}">Bonus Points</li>
                             </th:block>
                         </ul>
                     </li>

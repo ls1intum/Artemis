@@ -24,6 +24,17 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.IMailRecipientUserDTO;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.activation_mail.ActivationMailRecipientDTO;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.data_export_failed_mail.DataExportFailedContentDTO;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.data_export_failed_mail.DataExportFailedMailAdminRecipientDTO;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.data_export_successful_mail.DataExportSuccessfulContentsDTO;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.data_export_successful_mail.DataExportSuccessfulMailAdminRecipientDTO;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.notifications.NotificationMailRecipientDTO;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.password_reset_mail.PasswordResetRecipientDTO;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.saml2_set_password_mail.SAML2SetPasswordMailRecipientDTO;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.weekly_summary_mail.WeeklySummaryMailContentDTO;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.weekly_summary_mail.WeeklySummaryMailRecipientDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -47,11 +58,9 @@ public class MailService implements InstantNotificationService {
 
     private static final String BASE_URL = "baseUrl";
 
-    private static final String DATA_EXPORT = "dataExport";
+    private static final String DATA_EXPORT_CONTENTS = "dataExportContents";
 
-    private static final String DATA_EXPORTS = "dataExports";
-
-    private static final String REASON = "reason";
+    private static final String DATA_EXPORT_FAILED_CONTENT = "dataExportFailedContent";
 
     @Value("${server.url}")
     private URL artemisServerUrl;
@@ -86,8 +95,7 @@ public class MailService implements InstantNotificationService {
     private static final String TIME_SERVICE = "timeService";
 
     // weekly summary related variables
-
-    private static final String WEEKLY_SUMMARY_NEW_EXERCISES = "weeklySummaryNewExercises";
+    private static final String WEEKLY_SUMMARY_CONTENT = "weeklySummaryContent";
 
     public MailService(MessageSource messageSource, SpringTemplateEngine templateEngine, TimeService timeService, MailSendingService mailSendingService) {
         this.messageSource = messageSource;
@@ -99,82 +107,89 @@ public class MailService implements InstantNotificationService {
     /**
      * Sends a predefined mail based on a template
      *
-     * @param user         The receiver of the mail
+     * @param recipient    The receiver of the mail
      * @param templateName The name of the template
      * @param titleKey     The key mapping the title for the subject of the mail
      */
-    public void sendEmailFromTemplate(User user, String templateName, String titleKey) {
-        Locale locale = Locale.forLanguageTag(user.getLangKey());
-        Context context = createBaseContext(user, locale);
-        prepareTemplateAndSendEmail(user, templateName, titleKey, context);
+    private void sendEmailFromTemplate(IMailRecipientUserDTO recipient, String templateName, String titleKey) {
+        Locale locale = Locale.forLanguageTag(recipient.langKey());
+        Context context = createBaseContext(recipient, locale);
+        prepareTemplateAndSendEmail(recipient, templateName, titleKey, context);
     }
 
     /**
      * Sends an email to a user (the internal admin user) about a failed data export creation.
      *
-     * @param admin        the admin user
-     * @param templateName the name of the email template
-     * @param titleKey     the subject of the email
-     * @param dataExport   the data export that failed
-     * @param reason       the exception that caused the data export to fail
+     * @param recipientAdmin        the admin user
+     * @param templateName          the name of the email template
+     * @param titleKey              the subject of the email
+     * @param exportFailCaseContent the relevant information of the failed data export
      */
-    public void sendDataExportFailedEmailForAdmin(User admin, String templateName, String titleKey, DataExport dataExport, Exception reason) {
-        Locale locale = Locale.forLanguageTag(admin.getLangKey());
-        Context context = createBaseContext(admin, locale);
-        context.setVariable(DATA_EXPORT, dataExport);
-        context.setVariable(REASON, reason);
-        prepareTemplateAndSendEmailWithArgumentInSubject(admin, templateName, titleKey, dataExport.getUser().getLogin(), context);
+    private void sendDataExportFailedEmailForAdmin(IMailRecipientUserDTO recipientAdmin, String templateName, String titleKey, DataExportFailedContentDTO exportFailCaseContent) {
+        Locale locale = Locale.forLanguageTag(recipientAdmin.langKey());
+        Context context = createBaseContext(recipientAdmin, locale);
+        context.setVariable(DATA_EXPORT_FAILED_CONTENT, exportFailCaseContent);
+        prepareTemplateAndSendEmailWithArgumentInSubject(recipientAdmin, templateName, titleKey, exportFailCaseContent.exportUsername(), context);
     }
 
-    public void sendSuccessfulDataExportsEmailToAdmin(User admin, String templateName, String titleKey, Set<DataExport> dataExports) {
-        Locale locale = Locale.forLanguageTag(admin.getLangKey());
-        Context context = createBaseContext(admin, locale);
-        context.setVariable(DATA_EXPORTS, dataExports);
-        prepareTemplateAndSendEmail(admin, templateName, titleKey, context);
+    private void sendSuccessfulDataExportsEmailToAdmin(IMailRecipientUserDTO recipientAdmin, String templateName, String titleKey,
+            DataExportSuccessfulContentsDTO dataExportContents) {
+        Locale locale = Locale.forLanguageTag(recipientAdmin.langKey());
+        Context context = createBaseContext(recipientAdmin, locale);
+        context.setVariable(DATA_EXPORT_CONTENTS, dataExportContents);
+        prepareTemplateAndSendEmail(recipientAdmin, templateName, titleKey, context);
     }
 
-    private void prepareTemplateAndSendEmail(User admin, String templateName, String titleKey, Context context) {
+    private void prepareTemplateAndSendEmail(IMailRecipientUserDTO recipient, String templateName, String titleKey, Context context) {
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, null, context.getLocale());
-        mailSendingService.sendEmail(admin, subject, content, false, true);
+        mailSendingService.sendEmail(recipient, subject, content, false, true);
     }
 
-    private void prepareTemplateAndSendEmailWithArgumentInSubject(User admin, String templateName, String titleKey, String argument, Context context) {
+    private void prepareTemplateAndSendEmailWithArgumentInSubject(IMailRecipientUserDTO recipient, String templateName, String titleKey, String argument, Context context) {
         String content = templateEngine.process(templateName, context);
         String subject = messageSource.getMessage(titleKey, new Object[] { argument }, context.getLocale());
-        mailSendingService.sendEmail(admin, subject, content, false, true);
+        mailSendingService.sendEmail(recipient, subject, content, false, true);
     }
 
-    private Context createBaseContext(User admin, Locale locale) {
+    /**
+     * Creates a base context for the email
+     *
+     * @param recipient DTO representing the user in a given use-case
+     * @param locale    language preference of the user
+     */
+    private Context createBaseContext(IMailRecipientUserDTO recipient, Locale locale) {
         Context context = new Context(locale);
-        context.setVariable(USER, admin);
+        context.setVariable(USER, recipient);
         context.setVariable(BASE_URL, artemisServerUrl);
         return context;
     }
 
     public void sendActivationEmail(User user) {
         log.debug("Sending activation email to '{}'", user.getEmail());
-        sendEmailFromTemplate(user, "mail/activationEmail", "email.activation.title");
+        sendEmailFromTemplate(ActivationMailRecipientDTO.of(user), "mail/activationEmail", "email.activation.title");
     }
 
     public void sendPasswordResetMail(User user) {
         log.debug("Sending password reset email to '{}'", user.getEmail());
-        sendEmailFromTemplate(user, "mail/passwordResetEmail", "email.reset.title");
+        sendEmailFromTemplate(PasswordResetRecipientDTO.of(user), "mail/passwordResetEmail", "email.reset.title");
     }
 
     public void sendSAML2SetPasswordMail(User user) {
         log.debug("Sending SAML2 set password email to '{}'", user.getEmail());
-        sendEmailFromTemplate(user, "mail/samlSetPasswordEmail", "email.saml.title");
+        sendEmailFromTemplate(SAML2SetPasswordMailRecipientDTO.of(user), "mail/samlSetPasswordEmail", "email.saml.title");
     }
 
     public void sendDataExportFailedEmailToAdmin(User admin, DataExport dataExport, Exception reason) {
         log.debug("Sending data export failed email to admin email address '{}'", admin.getEmail());
-        sendDataExportFailedEmailForAdmin(admin, "mail/dataExportFailedAdminEmail", "email.dataExportFailedAdmin.title", dataExport, reason);
+        sendDataExportFailedEmailForAdmin(DataExportFailedMailAdminRecipientDTO.of(admin), "mail/dataExportFailedAdminEmail", "email.dataExportFailedAdmin.title",
+                DataExportFailedContentDTO.of(reason, dataExport));
     }
 
     public void sendSuccessfulDataExportsEmailToAdmin(User admin, Set<DataExport> dataExports) {
         log.debug("Sending successful creation of data exports email to admin email address '{}'", admin.getEmail());
-        sendSuccessfulDataExportsEmailToAdmin(admin, "mail/successfulDataExportsAdminEmail", "email.successfulDataExportCreationsAdmin.title", dataExports);
+        sendSuccessfulDataExportsEmailToAdmin(DataExportSuccessfulMailAdminRecipientDTO.of(admin), "mail/successfulDataExportsAdminEmail",
+                "email.successfulDataExportCreationsAdmin.title", DataExportSuccessfulContentsDTO.of(dataExports));
     }
 
     // notification related
@@ -224,6 +239,7 @@ public class MailService implements InstantNotificationService {
      * @param user                who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
+
     @Override
     public void sendNotification(Notification notification, User user, Object notificationSubject) {
         NotificationType notificationType = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
@@ -282,7 +298,7 @@ public class MailService implements InstantNotificationService {
         context.setVariable(BASE_URL, artemisServerUrl);
 
         String content = createContentForNotificationEmailByType(notificationType, context);
-        mailSendingService.sendEmail(user, subject, content, false, true);
+        mailSendingService.sendEmail(NotificationMailRecipientDTO.of(user), subject, content, false, true);
     }
 
     /**
@@ -402,15 +418,12 @@ public class MailService implements InstantNotificationService {
         Locale locale = Locale.forLanguageTag(user.getLangKey());
 
         Context context = new Context(locale);
-        context.setVariable(USER, user);
-        context.setVariable(WEEKLY_SUMMARY_NEW_EXERCISES, exercises);
-
-        context.setVariable(TIME_SERVICE, this.timeService);
-        String subject = "Weekly Summary";
-
         context.setVariable(BASE_URL, artemisServerUrl);
+        context.setVariable(USER, WeeklySummaryMailRecipientDTO.of(user));
+        context.setVariable(WEEKLY_SUMMARY_CONTENT, WeeklySummaryMailContentDTO.of(exercises, timeService));
 
+        String subject = "Weekly Summary";
         String content = templateEngine.process("mail/weeklySummary", context);
-        mailSendingService.sendEmail(user, subject, content, false, true);
+        mailSendingService.sendEmail(WeeklySummaryMailRecipientDTO.of(user), subject, content, false, true);
     }
 }

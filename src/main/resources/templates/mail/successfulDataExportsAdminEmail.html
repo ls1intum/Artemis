@@ -10,12 +10,9 @@
 <!-- Message Body Start -->
 <div id="message-body">
     <p th:text="#{email.successfulDataExportCreationsAdmin.text}">Successful data exports</p>
-    <div th:each="dataExport: ${dataExports}">
-
-    <p th:text="#{email.successfulDataExportCreationsAdmin.userLogin(${dataExport.getUser().login})}" ></p>
+    <div th:each="dataExportContent: ${dataExportContents.contents}">
+        <p th:text="#{email.successfulDataExportCreationsAdmin.userLogin(${dataExportContent.userLogin})}" ></p>
     </div>
-
-
 </div>
 </body>
 </html>

@@ -16,7 +16,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.IMailRecipientUserDTO;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -47,14 +47,14 @@ public class MailSendingService {
      * @param isHtml      Whether the mail should support HTML tags
      */
     @Async
-    public void sendEmail(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
+    public void sendEmail(IMailRecipientUserDTO recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
         log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
 
         // Prepare message using a Spring helper
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         try {
             MimeMessageHelper message = new MimeMessageHelper(mimeMessage, isMultipart, StandardCharsets.UTF_8.name());
-            message.setTo(recipient.getEmail());
+            message.setTo(recipient.email());
             message.setFrom(jHipsterProperties.getMail().getFrom());
             message.setSubject(subject);
             message.setText(content, isHtml);
