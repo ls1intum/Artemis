@@ -19,11 +19,20 @@
             @if (isAttachmentUnit()) {
                 <button
                     [id]="'hide-show-button-' + page"
+                    style="'opacity' : activeButtonIndex === page '1' : '0'"
                     [class]="'hide-show-btn btn ' + (hiddenPages()!.has(page) ? 'btn-success' : 'btn-secondary')"
                     (click)="toggleVisibility(page, $event)"
+                    [ngbPopover]="popContent"
+                    [autoClose]="'outside'"
+                    placement="right auto"
+                    container="body"
                 >
                     <fa-icon [icon]="hiddenPages()!.has(page) ? faEye : faEyeSlash"></fa-icon>
                 </button>
+
+                <ng-template #popContent>
+                    <jhi-pdf-preview-date-box-component [lecture]="lecture()" />
+                </ng-template>
             }
         </div>
     }

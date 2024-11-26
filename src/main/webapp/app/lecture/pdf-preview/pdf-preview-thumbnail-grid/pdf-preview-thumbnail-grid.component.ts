@@ -7,18 +7,21 @@ import { AlertService } from 'app/core/util/alert.service';
 import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/pdf-preview/pdf-preview-enlarged-canvas/pdf-preview-enlarged-canvas.component';
 import { clone } from 'lodash-es';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { PdfPreviewDateBoxComponent } from 'app/lecture/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
+import { Lecture } from 'app/entities/lecture.model';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
     standalone: true,
-    imports: [ArtemisSharedModule, PdfPreviewEnlargedCanvasComponent],
+    imports: [ArtemisSharedModule, PdfPreviewEnlargedCanvasComponent, PdfPreviewDateBoxComponent],
 })
 export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
     // Inputs
+    lecture = input<Lecture>();
     currentPdfUrl = input<string>();
     appendFile = input<boolean>();
     hiddenPages = input<Set<number>>();
@@ -31,6 +34,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     selectedPages = signal<Set<number>>(new Set());
     originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
     newHiddenPages = signal(new Set<number>(this.hiddenPages()!));
+    activeButtonIndex = signal<number | null>(null);
 
     // Outputs
     isPdfLoading = output<boolean>();
@@ -128,12 +132,14 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param event The event object triggered by the click action.
      */
     toggleVisibility(pageIndex: number, event: Event): void {
-        if (this.hiddenPages()!.has(pageIndex)) {
+        /**if (this.hiddenPages()!.has(pageIndex)) {
             this.hiddenPages()!.delete(pageIndex);
         } else {
             this.hiddenPages()!.add(pageIndex);
         }
         this.newHiddenPagesOutput.emit(this.hiddenPages()!);
+        **/
+        this.activeButtonIndex.set(pageIndex);
         event.stopPropagation();
     }
 

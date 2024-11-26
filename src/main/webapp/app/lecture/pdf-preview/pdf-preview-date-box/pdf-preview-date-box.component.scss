@@ -1,0 +1,30 @@
+.date-box {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+
+    .checkbox-container {
+        margin-bottom: 10px;
+    }
+
+    .button-container {
+        display: flex;
+        gap: 10px;
+
+        button {
+            min-width: 100px;
+        }
+    }
+
+    .calendar-container {
+        margin-top: 15px;
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .exercise-container {
+        margin-top: 15px;
+        color: #333;
+    }
+}
