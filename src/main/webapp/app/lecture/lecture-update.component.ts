@@ -192,12 +192,14 @@ export class LectureUpdateComponent implements OnInit {
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
                 state: { file: this.file, fileName: this.fileName },
             });
+        } else if (this.isEditMode()) {
+            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
         } else {
-            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'edit']);
+            // after create we stay on the edit page, as not attachments and lecture units are available (we need the lecture id to save them)
+            this.isEditMode.set(true);
+            this.lecture.set(lecture);
+            window.history.replaceState({}, '', `course-management/${lecture.course!.id}/lectures/${lecture.id}/edit`);
         }
-        // else {
-        //     this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
-        // }
     }
 
     /**
