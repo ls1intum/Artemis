@@ -1,4 +1,4 @@
-package assignment
+package ${packageName}
 
 type BubbleSort struct{}
 
