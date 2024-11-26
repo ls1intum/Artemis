@@ -1,10 +1,14 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.repository.base.AbstractSimpleRepository;
 
+@Profile(PROFILE_CORE)
 @Service
 public class CompetencySimpleRepository extends AbstractSimpleRepository {
 

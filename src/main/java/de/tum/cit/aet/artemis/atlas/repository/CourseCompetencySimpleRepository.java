@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
@@ -10,6 +13,7 @@ import de.tum.cit.aet.artemis.core.repository.base.AbstractSimpleRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
+@Profile(PROFILE_CORE)
 @Service
 public class CourseCompetencySimpleRepository extends AbstractSimpleRepository {
 
