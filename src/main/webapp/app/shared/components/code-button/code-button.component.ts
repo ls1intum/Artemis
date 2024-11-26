@@ -358,7 +358,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         }
     }
 
-    initTheia(profileInfo: ProfileInfo) {
+    private initTheia(profileInfo: ProfileInfo) {
         if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise) {
             // Theia requires the Build Config of the programming exercise to be set
             this.programmingExerciseService.getBuildConfig(this.exercise.id!).subscribe((buildConfig) => {
