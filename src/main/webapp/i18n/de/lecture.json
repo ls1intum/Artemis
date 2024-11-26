@@ -109,7 +109,12 @@
                 "pageDeleteError": "Fehler beim Löschen der Seiten: {{error}}",
                 "fileSizeError": "Die Datei ist zu groß. Die maximale Dateigröße beträgt 20MB.",
                 "deletePagesQuestion": "Möchtest du die ausgewählten Seiten wirklich löschen?",
-                "deleteAllPagesQuestion": "Möchtest du wirklich alle Seiten löschen? Dies führt zur Löschung des Anhangs."
+                "deleteAllPagesQuestion": "Möchtest du wirklich alle Seiten löschen? Dies führt zur Löschung des Anhangs.",
+                "hiddenAttachmentCreateSuccess": "Anhang mit versteckten Seiten erfolgreich erstellt.",
+                "hiddenAttachmentCreateError": "Fehler beim Erstellen des Anhangs mit versteckten Seiten: {{error}}",
+                "hiddenAttachmentUpdateSuccess": "Anhang mit versteckten Seiten erfolgreich aktualisiert.",
+                "hiddenAttachmentUpdateError": "Fehler beim Aktualisieren des Anhangs mit versteckten Seiten: {{error}}",
+                "hiddenAttachmentRetrievalError": "Fehler beim Abrufen des Anhangs mit versteckten Seiten: {{error}}"
             }
         }
     }

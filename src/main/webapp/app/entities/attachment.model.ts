@@ -20,6 +20,7 @@ export class Attachment implements BaseEntity {
     lecture?: Lecture;
     exercise?: Exercise;
     attachmentUnit?: AttachmentUnit;
+    parentAttachment?: Attachment;
 
     constructor() {}
 }

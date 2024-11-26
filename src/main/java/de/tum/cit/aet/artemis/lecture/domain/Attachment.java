@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.domain;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,8 +16,11 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -60,6 +64,16 @@ public class Attachment extends DomainObject implements Serializable {
     @OneToOne
     @JoinColumn(name = "attachment_unit_id")
     private AttachmentUnit attachmentUnit;
+
+    @OneToOne
+    @JoinColumn(name = "parent_attachment_id")
+    @JsonBackReference
+    private Attachment parentAttachment;
+
+    @OneToOne(mappedBy = "parentAttachment", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonManagedReference
+    @JsonIgnore
+    private Attachment hiddenAttachment;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
@@ -133,6 +147,22 @@ public class Attachment extends DomainObject implements Serializable {
 
     public void setAttachmentUnit(AttachmentUnit attachmentUnit) {
         this.attachmentUnit = attachmentUnit;
+    }
+
+    public Attachment getParentAttachment() {
+        return parentAttachment;
+    }
+
+    public void setParentAttachment(Attachment parentAttachment) {
+        this.parentAttachment = parentAttachment;
+    }
+
+    public Attachment getHiddenAttachment() {
+        return hiddenAttachment;
+    }
+
+    public void setHiddenAttachment(Attachment hiddenAttachment) {
+        this.hiddenAttachment = hiddenAttachment;
     }
 
     public Boolean isVisibleToStudents() {

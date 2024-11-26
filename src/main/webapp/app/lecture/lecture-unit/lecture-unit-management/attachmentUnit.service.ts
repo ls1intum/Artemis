@@ -31,11 +31,12 @@ export class AttachmentUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    update(lectureId: number, attachmentUnitId: number, formData: FormData, notificationText?: string): Observable<EntityResponseType> {
+    update(lectureId: number, attachmentUnitId: number, formData: FormData, notificationText?: string, hiddenPages?: string): Observable<EntityResponseType> {
         return this.httpClient
             .put<AttachmentUnit>(
                 `${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}?keepFilename=true` +
-                    (notificationText ? `&notificationText=${notificationText}` : ''),
+                    (notificationText ? `&notificationText=${notificationText}` : '') +
+                    (hiddenPages ? `&hiddenPages=${hiddenPages}` : ''),
                 formData,
                 { observe: 'response' },
             )
@@ -70,5 +71,16 @@ export class AttachmentUnitService {
      */
     getAttachmentFile(courseId: number, attachmentUnitId: number): Observable<Blob> {
         return this.httpClient.get(`${this.resourceURL}/files/courses/${courseId}/attachment-units/${attachmentUnitId}`, { responseType: 'blob' });
+    }
+
+    /**
+     * Retrieve the hidden slide numbers associated with a given attachment unit ID.
+     *
+     * @param lectureId The ID of the lecture that the Attachment Unit belongs to.
+     * @param attachmentUnitId The ID of the attachment unit.
+     * @returns An Observable that emits a list of integers representing hidden slide numbers.
+     */
+    getHiddenSlides(lectureId: number, attachmentUnitId: number): Observable<number[]> {
+        return this.httpClient.get<number[]>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}/hidden-slides`);
     }
 }
