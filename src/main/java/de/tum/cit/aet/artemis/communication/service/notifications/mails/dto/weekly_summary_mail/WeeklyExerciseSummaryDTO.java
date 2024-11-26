@@ -16,6 +16,14 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  */
 public record WeeklyExerciseSummaryDTO(String title, String type, String difficulty, String releaseDate, String dueDate, double maxPoints, double bonusPoints) {
 
+    /**
+     * Creates a new `WeeklyExerciseSummaryDTO` instance from the given `Exercise` instance.
+     * The release and due dates are converted to human-readable format using the given `TimeService`.
+     *
+     * @param exercise    the exercise to be summarized
+     * @param timeService the service to convert dates to human-readable format
+     * @return a new `WeeklyExerciseSummaryDTO` instance
+     */
     public static WeeklyExerciseSummaryDTO of(Exercise exercise, TimeService timeService) {
         String releaseDate = null, dueDate = null;
         if (exercise.getReleaseDate() != null) {
