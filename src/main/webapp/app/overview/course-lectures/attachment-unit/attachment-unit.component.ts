@@ -57,7 +57,6 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
             let link = '';
             this.attachmentService.getAttachmentByParentAttachmentId(this.lectureUnit().attachment!.id!).subscribe({
                 next: (res) => {
-                    console.log(res);
                     if (res.body) {
                         const hiddenAttachment = res.body;
                         link = this.fileService.replaceAttachmentPrefixAndUnderscores(hiddenAttachment!.link!);
