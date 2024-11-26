@@ -2,11 +2,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
-import { CleanupCount, CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
+import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { convertDateFromServer } from 'app/utils/date.utils';
-import { Observable, Observer, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -17,8 +16,8 @@ import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 })
 export class CleanupOperationModalComponent implements OnInit {
     @Input() operation: CleanupOperation;
-    beforeExecutionCounts: CleanupCount;
-    afterExecutionCounts: CleanupCount | undefined = undefined;
+    counts: CleanupCount;
+    operationExecuted = false; // Tracks whether the operation has been executed.
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -26,89 +25,94 @@ export class CleanupOperationModalComponent implements OnInit {
     public activeModal: NgbActiveModal = inject(NgbActiveModal);
     private dataCleanupService: DataCleanupService = inject(DataCleanupService);
 
-    // Icons
     faTimes = faTimes;
     faCheckCircle = faCheckCircle;
 
+    /**
+     * Fetch keys from the CleanupCount object for iteration.
+     */
     cleanupKeys(counts: CleanupCount): (keyof CleanupCount)[] {
         return Object.keys(counts) as (keyof CleanupCount)[];
     }
 
+    /**
+     * Close the modal.
+     */
     close(): void {
         this.activeModal.close();
     }
 
+    /**
+     * Initialize component: fetch initial counts for the operation.
+     */
     ngOnInit(): void {
-        this.fetchOperationCounts(this.operation).subscribe({
-            next: (response: HttpResponse<CleanupCount>) => {
-                this.beforeExecutionCounts = response.body!;
-            },
-            error: () => this.dialogErrorSource.next('An unexpected error occurred.'),
-        });
+        this.updateCounts();
     }
 
+    /**
+     * Execute the cleanup operation and update counts afterward.
+     */
     executeCleanupOperation(): void {
-        const subscriptionHandler = this.handleResponse(this.operation);
+        const operationHandler = {
+            next: () => {
+                this.operationExecuted = true; // Mark operation as executed.
+                this.updateCounts();
+            },
+            error: (error: any) => {
+                this.dialogErrorSource.next(error instanceof HttpErrorResponse ? error.message : 'An unexpected error occurred.');
+            },
+        };
 
         switch (this.operation.name) {
             case 'deleteOrphans':
-                this.dataCleanupService.deleteOrphans().subscribe(subscriptionHandler);
+                this.dataCleanupService.deleteOrphans().subscribe(operationHandler);
                 break;
             case 'deletePlagiarismComparisons':
-                this.dataCleanupService.deletePlagiarismComparisons(this.operation.deleteFrom, this.operation.deleteTo).subscribe(subscriptionHandler);
+                this.dataCleanupService.deletePlagiarismComparisons(this.operation.deleteFrom, this.operation.deleteTo).subscribe(operationHandler);
                 break;
             case 'deleteNonRatedResults':
-                this.dataCleanupService.deleteNonRatedResults(this.operation.deleteFrom, this.operation.deleteTo).subscribe(subscriptionHandler);
+                this.dataCleanupService.deleteNonRatedResults(this.operation.deleteFrom, this.operation.deleteTo).subscribe(operationHandler);
                 break;
             case 'deleteOldRatedResults':
-                this.dataCleanupService.deleteOldRatedResults(this.operation.deleteFrom, this.operation.deleteTo).subscribe(subscriptionHandler);
+                this.dataCleanupService.deleteOldRatedResults(this.operation.deleteFrom, this.operation.deleteTo).subscribe(operationHandler);
                 break;
         }
     }
 
-    private fetchOperationCounts(operation: CleanupOperation): Observable<HttpResponse<CleanupCount>> {
-        switch (operation.name) {
+    /**
+     * Fetch counts for the operation.
+     */
+    private fetchCounts(): Observable<HttpResponse<CleanupCount>> {
+        switch (this.operation.name) {
             case 'deleteOrphans':
                 return this.dataCleanupService.countOrphans();
             case 'deletePlagiarismComparisons':
-                return this.dataCleanupService.countPlagiarismComparisons(operation.deleteFrom, operation.deleteTo);
+                return this.dataCleanupService.countPlagiarismComparisons(this.operation.deleteFrom, this.operation.deleteTo);
             case 'deleteNonRatedResults':
-                return this.dataCleanupService.countNonRatedResults(operation.deleteFrom, operation.deleteTo);
+                return this.dataCleanupService.countNonRatedResults(this.operation.deleteFrom, this.operation.deleteTo);
             case 'deleteOldRatedResults':
-                return this.dataCleanupService.countOldRatedResults(operation.deleteFrom, operation.deleteTo);
+                return this.dataCleanupService.countOldRatedResults(this.operation.deleteFrom, this.operation.deleteTo);
             default:
-                throw new Error(`Unsupported operation name: ${operation.name}`);
+                throw new Error(`Unsupported operation: ${this.operation.name}`);
         }
     }
 
-    private handleResponse(operation: CleanupOperation): Observer<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        return {
-            next: (response: HttpResponse<CleanupServiceExecutionRecordDTO>) => {
-                this.dialogErrorSource.next('');
-                const executionDateFromServer = convertDateFromServer(response.body!.executionDate);
-                operation.lastExecuted = executionDateFromServer;
-                this.fetchOperationCounts(operation).subscribe({
-                    next: (countResponse: HttpResponse<CleanupCount>) => {
-                        if (this.afterExecutionCounts) {
-                            this.beforeExecutionCounts = this.afterExecutionCounts;
-                        }
-                        this.afterExecutionCounts = countResponse.body!;
-                    },
-                    error: () => {
-                        this.dialogErrorSource.next('An error occurred while fetching post-execution counts.');
-                    },
-                });
+    /**
+     * Fetch updated counts after operation execution.
+     */
+    private updateCounts(): void {
+        this.fetchCounts().subscribe({
+            next: (response: HttpResponse<CleanupCount>) => {
+                this.counts = response.body!;
             },
-            error: (error: any) => {
-                if (error instanceof HttpErrorResponse) {
-                    this.dialogErrorSource.next(error.message);
-                } else {
-                    this.dialogErrorSource.next('An unexpected error occurred.');
-                }
-            },
-            complete: () => {},
-        };
+            error: () => this.dialogErrorSource.next('An error occurred while fetching updated counts.'),
+        });
     }
 
-    protected readonly Object = Object;
+    /**
+     * Getter to check if there are any entries to delete.
+     */
+    get hasEntriesToDelete(): boolean {
+        return Object.values(this.counts).some((count) => count > 0);
+    }
 }

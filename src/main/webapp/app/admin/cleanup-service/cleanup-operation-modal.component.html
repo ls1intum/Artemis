@@ -3,34 +3,46 @@
     <button type="button" class="btn-close" (click)="close()" aria-label="Close"></button>
 </div>
 <div class="modal-body">
-    <p
-        [jhiTranslate]="'cleanupService.execute.question'"
-        [translateValues]="{
-            operationName: 'cleanupService.operation.' + operation.name | artemisTranslate,
-            deleteFrom: operation.deleteFrom | artemisDate,
-            deleteTo: operation.deleteTo | artemisDate,
-        }"
-    ></p>
+    @if (operation.name === 'deleteOrphans') {
+        <p
+            [jhiTranslate]="'cleanupService.execute.questionWithoutDates'"
+            [translateValues]="{
+                operationName: 'cleanupService.operation.' + operation.name | artemisTranslate,
+            }"
+        ></p>
+    } @else {
+        <p
+            [jhiTranslate]="'cleanupService.execute.question'"
+            [translateValues]="{
+                operationName: 'cleanupService.operation.' + operation.name | artemisTranslate,
+                deleteFrom: operation.deleteFrom | artemisDate,
+                deleteTo: operation.deleteTo | artemisDate,
+            }"
+        ></p>
+    }
     <div>
         <p jhiTranslate="cleanupService.modal.affectedEntities"></p>
         <ul>
-            @for (key of cleanupKeys(beforeExecutionCounts); track key) {
+            @for (key of cleanupKeys(counts); track key) {
                 <li>
                     <span [jhiTranslate]="'cleanupService.entities.' + key"></span>
-                    : {{ beforeExecutionCounts[key] }}
-                    @if (afterExecutionCounts) {
-                        @if (beforeExecutionCounts[key] > afterExecutionCounts[key]) {
-                            <fa-icon [icon]="faTimes" class="text-danger" />
+                    : {{ counts[key] }}
+                    @if (operationExecuted) {
+                        @if (counts[key] > 0) {
+                            <fa-icon [icon]="faTimes" class="text-danger"></fa-icon>
                         } @else {
-                            <fa-icon [icon]="faCheckCircle" class="text-success" />
+                            <fa-icon [icon]="faCheckCircle" class="text-success"></fa-icon>
                         }
                     }
                 </li>
             }
         </ul>
+        @if (!hasEntriesToDelete) {
+            <p class="text-muted" jhiTranslate="cleanupService.modal.noEntries"></p>
+        }
     </div>
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-secondary" (click)="close()" jhiTranslate="cleanupService.button.close"></button>
-    <button type="button" class="btn btn-danger" (click)="executeCleanupOperation()" jhiTranslate="cleanupService.button.execute"></button>
+    <button type="button" class="btn btn-danger" [disabled]="!hasEntriesToDelete" (click)="executeCleanupOperation()" jhiTranslate="cleanupService.button.execute"></button>
 </div>
