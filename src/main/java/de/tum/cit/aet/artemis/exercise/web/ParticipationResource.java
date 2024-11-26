@@ -633,7 +633,12 @@ public class ParticipationResource {
             });
         }
         else {
-            participations = studentParticipationRepository.findByExerciseId(exerciseId);
+            if (exercise.isTeamMode()) {
+                participations = studentParticipationRepository.findWithTeamInformationByExerciseId(exerciseId);
+            }
+            else {
+                participations = studentParticipationRepository.findByExerciseId(exerciseId);
+            }
 
             Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByExerciseIdAsMap(exerciseId);
             participations.forEach(participation -> participation.setSubmissionCount(submissionCountMap.get(participation.getId())));
