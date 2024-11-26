@@ -1,10 +1,9 @@
-import { Component, OnInit, Signal, ViewChild, computed, effect, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, OnInit, Signal, ViewChild, computed, effect, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from './lecture.service';
-import { CourseManagementService } from '../course/manage/course-management.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -14,7 +13,7 @@ import { faBan, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/fre
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
-import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
@@ -34,10 +33,17 @@ export class LectureUpdateComponent implements OnInit {
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
+    private readonly alertService = inject(AlertService);
+    private readonly lectureService = inject(LectureService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly router = inject(Router);
+
     @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdateWizardPeriodComponent;
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
     periodSectionDatepickers = viewChildren(FormDateTimePickerComponent);
     unitSection = viewChild(LectureUpdateWizardUnitsComponent);
+    formStatusBar = viewChild(FormStatusBarComponent);
 
     isPeriodSectionValid: Signal<boolean> = computed(() => {
         for (const periodSectionDatepicker of this.periodSectionDatepickers()) {
@@ -64,44 +70,49 @@ export class LectureUpdateComponent implements OnInit {
     fileName: string;
     fileInputTouched = false;
 
-    constructor(
-        protected alertService: AlertService,
-        protected lectureService: LectureService,
-        protected courseService: CourseManagementService,
-        protected activatedRoute: ActivatedRoute,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private router: Router,
-    ) {
-        effect(() => {
-            // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-            const updatedFormStatusSections: FormSectionStatus[] = [];
+    isNewlyCreatedExercise = false;
 
-            if (this.isEditMode()) {
-                updatedFormStatusSections.push(
+    constructor() {
+        effect(
+            function updateFormStatusBarAfterLectureCreation() {
+                const updatedFormStatusSections: FormSectionStatus[] = [];
+
+                if (this.isEditMode()) {
+                    updatedFormStatusSections.push(
+                        {
+                            title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
+                            valid: true, // TODO retrieve the valid status
+                        },
+                        {
+                            title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
+                            valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
+                        },
+                    );
+                }
+
+                updatedFormStatusSections.unshift(
                     {
-                        title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
-                        valid: true, // TODO retrieve the valid status
+                        title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
+                        valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
                     },
                     {
-                        title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
-                        valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
+                        title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
+                        valid: Boolean(this.isPeriodSectionValid()),
                     },
                 );
-            }
 
-            updatedFormStatusSections.unshift(
-                {
-                    title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
-                    valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
-                },
-                {
-                    title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
-                    valid: Boolean(this.isPeriodSectionValid()),
-                },
-            );
+                this.formStatusSections = updatedFormStatusSections;
+            }.bind(this),
+        );
 
-            this.formStatusSections = updatedFormStatusSections;
-        });
+        effect(
+            function scrollToLastSectionAfterLectureCreation() {
+                if (this.unitSection() && this.isNewlyCreatedExercise) {
+                    this.isNewlyCreatedExercise = false;
+                    this.formStatusBar()?.scrollToHeadline('artemisApp.lecture.wizardMode.steps.periodStepTitle');
+                }
+            }.bind(this),
+        );
     }
 
     ngOnInit() {
@@ -196,6 +207,7 @@ export class LectureUpdateComponent implements OnInit {
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
         } else {
             // after create we stay on the edit page, as not attachments and lecture units are available (we need the lecture id to save them)
+            this.isNewlyCreatedExercise = true;
             this.isEditMode.set(true);
             this.lecture.set(lecture);
             window.history.replaceState({}, '', `course-management/${lecture.course!.id}/lectures/${lecture.id}/edit`);
