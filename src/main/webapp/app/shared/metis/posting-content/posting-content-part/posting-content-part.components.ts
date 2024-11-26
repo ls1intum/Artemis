@@ -59,7 +59,7 @@ export class PostingContentPartComponent implements OnChanges, OnInit {
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes['postingContentPart'] && !changes['postingContentPart'].firstChange) {
+        if (changes.postingContentPart && !changes.postingContentPart.firstChange) {
             this.processContent();
         }
     }
