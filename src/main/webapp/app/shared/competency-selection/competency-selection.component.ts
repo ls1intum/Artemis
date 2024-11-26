@@ -65,7 +65,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     ngOnInit(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         if (!this.competencyLinks && courseId) {
-            setTimeout(() => this.loadCompetencies(courseId), 0);
+            setTimeout(() => this.loadCompetencies(courseId));
         }
     }
 
