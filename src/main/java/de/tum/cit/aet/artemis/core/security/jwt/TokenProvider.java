@@ -111,14 +111,13 @@ public class TokenProvider {
     public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
-        long now = (new Date()).getTime();
-        Date validity = new Date(now + duration);
+        var validity = System.currentTimeMillis() + duration;
         var jwtBuilder = Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities);
         if (tool != null) {
             jwtBuilder.claim("tools", tool);
         }
 
-        return jwtBuilder.signWith(key, Jwts.SIG.HS512).expiration(validity).compact();
+        return jwtBuilder.signWith(key, Jwts.SIG.HS512).expiration(new Date(validity)).compact();
     }
 
     /**
@@ -189,9 +188,9 @@ public class TokenProvider {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
     }
 
-    public String getClaim(String token, String claimName) {
+    public <T> T getClaim(String token, String claimName, Class<T> claimType) {
         Claims claims = parseClaims(token);
-        return claims.get(claimName, String.class);
+        return claims.get(claimName, claimType);
     }
 
     public Date getExpirationDate(String authToken) {

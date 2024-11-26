@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.core.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.time.Duration;
-import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 
@@ -37,12 +35,10 @@ import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
-import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
-import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
 
 /**
@@ -57,15 +53,12 @@ public class PublicUserJwtResource {
 
     private final JWTCookieService jwtCookieService;
 
-    private final TokenProvider tokenProvider;
-
     private final AuthenticationManager authenticationManager;
 
     private final Optional<SAML2Service> saml2Service;
 
-    public PublicUserJwtResource(JWTCookieService jwtCookieService, TokenProvider tokenProvider, AuthenticationManager authenticationManager, Optional<SAML2Service> saml2Service) {
+    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, Optional<SAML2Service> saml2Service) {
         this.jwtCookieService = jwtCookieService;
-        this.tokenProvider = tokenProvider;
         this.authenticationManager = authenticationManager;
         this.saml2Service = saml2Service;
     }
@@ -80,6 +73,7 @@ public class PublicUserJwtResource {
      */
     @PostMapping("authenticate")
     @EnforceNothing
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent,
             @RequestParam(name = "tool", required = false) ToolTokenType tool, HttpServletResponse response) {
 
@@ -104,38 +98,6 @@ public class PublicUserJwtResource {
             log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-    }
-
-    /**
-     * Sends a tool token back as cookie or bearer token
-     *
-     * @param tool     the tool for which the token is requested
-     * @param asCookie if true the token is sent back as a cookie
-     * @param request  HTTP request
-     * @param response HTTP response
-     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) and depending on the asCookie flag a bearer token in the body
-     */
-    @PostMapping("tool-token")
-    @EnforceAtLeastStudent
-    public ResponseEntity<String> convertCookieToToolToken(@RequestParam(name = "tool", required = true) ToolTokenType tool,
-            @RequestParam(name = "as-cookie", defaultValue = "false") boolean asCookie, HttpServletRequest request, HttpServletResponse response) {
-        // remaining time in milliseconds
-        var jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);
-        if (jwtToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        // get validity of the token
-        long tokenRemainingTime = tokenProvider.getExpirationDate(jwtToken).getTime() - new Date().getTime();
-
-        // 1 day validity
-        long maxDuration = Duration.ofDays(1).toMillis();
-        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(Math.min(tokenRemainingTime, maxDuration), tool);
-
-        if (asCookie) {
-            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-        }
-        return ResponseEntity.ok(responseCookie.getValue());
     }
 
     /**
@@ -186,6 +148,7 @@ public class PublicUserJwtResource {
      */
     @PostMapping("logout")
     @EnforceNothing
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) throws ServletException {
         request.logout();
         // Logout needs to build the same cookie (secure, httpOnly and sameSite='Lax') or browsers will ignore the header and not unset the cookie

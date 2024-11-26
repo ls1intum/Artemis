@@ -17,7 +17,6 @@ import jakarta.ws.rs.BadRequestException;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,6 +38,8 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AccountService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
@@ -57,9 +58,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 public class AccountResource {
 
     public static final String ENTITY_NAME = "user";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private static final Logger log = LoggerFactory.getLogger(AccountResource.class);
 
@@ -225,6 +223,7 @@ public class AccountResource {
      */
     @GetMapping("account/participation-vcs-access-token")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<String> getVcsAccessToken(@RequestParam("participationId") Long participationId) {
         User user = userRepository.getUser();
 
@@ -233,7 +232,7 @@ public class AccountResource {
     }
 
     /**
-     * PUT account/participation-vcs-access-token : get the vcsToken for of a user for a participation
+     * PUT account/participation-vcs-access-token : add a vcsToken for of a user for a participation
      *
      * @param participationId the participation for which the access token should be fetched
      *
@@ -241,6 +240,7 @@ public class AccountResource {
      */
     @PutMapping("account/participation-vcs-access-token")
     @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<String> createVcsAccessToken(@RequestParam("participationId") Long participationId) {
         User user = userRepository.getUser();
 
