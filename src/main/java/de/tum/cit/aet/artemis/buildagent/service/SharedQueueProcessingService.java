@@ -49,11 +49,11 @@ import com.hazelcast.topic.ITopic;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
 /**
@@ -397,7 +397,7 @@ public class SharedQueueProcessingService {
                     buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
                     null);
 
-            List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
+            List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
@@ -435,7 +435,7 @@ public class SharedQueueProcessingService {
 
             job = new BuildJobQueueItem(buildJob, completionDate, status);
 
-            List<BuildLogEntry> buildLogs = buildLogsMap.getBuildLogs(buildJob.id());
+            List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             BuildResult failedResult = new BuildResult(buildJob.buildConfig().branch(), buildJob.buildConfig().assignmentCommitHash(), buildJob.buildConfig().testCommitHash(),
