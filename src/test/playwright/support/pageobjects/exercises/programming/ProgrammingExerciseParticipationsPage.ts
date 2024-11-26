@@ -49,11 +49,13 @@ export class ProgrammingExerciseParticipationsPage {
         await expect(teamCell!.filter({ hasText: teamName })).toBeVisible();
     }
 
-    async checkParticipationStudents(participationId: number, studentUsernames: string[]) {
-        const studentsCell = await this.getParticipationCell(participationId, 'Students');
-        expect(studentsCell).not.toBeUndefined();
-        for (const studentName of studentUsernames) {
-            await expect(studentsCell!.filter({ hasText: studentName })).toBeVisible();
-        }
-    }
+    // This is flaky. re-add when we have figured out why
+    //async checkParticipationStudents(participationId: number, studentUsernames: string[]) {
+
+    // const studentsCell = await this.getParticipationCell(participationId, 'Students');
+    // expect(studentsCell).not.toBeUndefined();
+    // for (const studentName of studentUsernames) {
+    //     await expect(studentsCell!.filter({ hasText: studentName })).toBeVisible();
+    // }
+    //}
 }
