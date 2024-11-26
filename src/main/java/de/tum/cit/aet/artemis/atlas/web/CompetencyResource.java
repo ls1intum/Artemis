@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencySimpleRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
@@ -64,6 +65,8 @@ public class CompetencyResource {
 
     private final CompetencyRepository competencyRepository;
 
+    private final CompetencySimpleRepository competencySimpleRepository;
+
     private final CompetencyService competencyService;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
@@ -71,12 +74,13 @@ public class CompetencyResource {
     private final CourseCompetencyService courseCompetencyService;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            CompetencyRepository competencyRepository, CompetencyService competencyService, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencyService courseCompetencyService) {
+            CompetencyRepository competencyRepository, CompetencySimpleRepository competencySimpleRepository, CompetencyService competencyService,
+            CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.competencyRepository = competencyRepository;
+        this.competencySimpleRepository = competencySimpleRepository;
         this.competencyService = competencyService;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.courseCompetencyService = courseCompetencyService;
@@ -293,7 +297,7 @@ public class CompetencyResource {
         checkCompetencyAttributesForUpdate(competency);
 
         var course = courseRepository.findByIdElseThrow(courseId);
-        var existingCompetency = competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
+        var existingCompetency = competencySimpleRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
         checkCourseForCompetency(course, existingCompetency);
 
         var persistedCompetency = competencyService.updateCourseCompetency(existingCompetency, competency);
