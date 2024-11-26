@@ -109,35 +109,38 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildJobQueueItem> getQueuedJobs() {
-        return queue.stream().toList();
+        // NOTE: we should not use streams with IQueue directly, because it can be unstable, when many items are added at the same time
+        return new ArrayList<>(queue);
     }
 
     public List<BuildJobQueueItem> getProcessingJobs() {
-        return processingJobs.values().stream().toList();
+        // NOTE: we should not use streams with IMap, because it can be unstable
+        return new ArrayList<>(processingJobs.values());
     }
 
     public List<BuildJobQueueItem> getQueuedJobsForCourse(long courseId) {
-        return queue.stream().filter(job -> job.courseId() == courseId).toList();
+        return getQueuedJobs().stream().filter(job -> job.courseId() == courseId).toList();
     }
 
     public List<BuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
-        return processingJobs.values().stream().filter(job -> job.courseId() == courseId).toList();
+        return getProcessingJobs().stream().filter(job -> job.courseId() == courseId).toList();
     }
 
     public List<BuildJobQueueItem> getQueuedJobsForParticipation(long participationId) {
-        return queue.stream().filter(job -> job.participationId() == participationId).toList();
+        return getQueuedJobs().stream().filter(job -> job.participationId() == participationId).toList();
     }
 
     public List<BuildJobQueueItem> getProcessingJobsForParticipation(long participationId) {
-        return processingJobs.values().stream().filter(job -> job.participationId() == participationId).toList();
+        return getProcessingJobs().stream().filter(job -> job.participationId() == participationId).toList();
     }
 
     public List<BuildAgentInformation> getBuildAgentInformation() {
-        return buildAgentInformation.values().stream().toList();
+        // NOTE: we should not use streams with IMap, because it can be unstable
+        return new ArrayList<>(buildAgentInformation.values());
     }
 
     public List<BuildAgentInformation> getBuildAgentInformationWithoutRecentBuildJobs() {
-        return buildAgentInformation.values().stream().map(agent -> new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(),
+        return getBuildAgentInformation().stream().map(agent -> new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(),
                 agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(), agent.status(), null, null)).toList();
     }
 
@@ -156,9 +159,10 @@ public class SharedQueueManagementService {
      */
     public void cancelBuildJob(String buildJobId) {
         // Remove build job if it is queued
-        if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
+        var queuedJobs = getQueuedJobs();
+        if (queuedJobs.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
             List<BuildJobQueueItem> toRemove = new ArrayList<>();
-            for (BuildJobQueueItem job : queue) {
+            for (BuildJobQueueItem job : queuedJobs) {
                 if (Objects.equals(job.id(), buildJobId)) {
                     toRemove.add(job);
                 }
@@ -197,7 +201,8 @@ public class SharedQueueManagementService {
      * Cancel all running build jobs.
      */
     public void cancelAllRunningBuildJobs() {
-        for (BuildJobQueueItem buildJob : processingJobs.values()) {
+        var runningJobs = getProcessingJobs();
+        for (BuildJobQueueItem buildJob : runningJobs) {
             cancelBuildJob(buildJob.id());
         }
     }
@@ -208,7 +213,7 @@ public class SharedQueueManagementService {
      * @param agentName name of the agent
      */
     public void cancelAllRunningBuildJobsForAgent(String agentName) {
-        processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgent().name(), agentName)).forEach(job -> cancelBuildJob(job.id()));
+        getProcessingJobs().stream().filter(job -> Objects.equals(job.buildAgent().name(), agentName)).forEach(job -> cancelBuildJob(job.id()));
     }
 
     /**
@@ -218,7 +223,8 @@ public class SharedQueueManagementService {
      */
     public void cancelAllQueuedBuildJobsForCourse(long courseId) {
         List<BuildJobQueueItem> toRemove = new ArrayList<>();
-        for (BuildJobQueueItem job : queue) {
+        var queuedJobs = getQueuedJobs();
+        for (BuildJobQueueItem job : queuedJobs) {
             if (job.courseId() == courseId) {
                 toRemove.add(job);
             }
@@ -232,7 +238,8 @@ public class SharedQueueManagementService {
      * @param courseId id of the course
      */
     public void cancelAllRunningBuildJobsForCourse(long courseId) {
-        for (BuildJobQueueItem buildJob : processingJobs.values()) {
+        var runningJobs = getProcessingJobs();
+        for (BuildJobQueueItem buildJob : runningJobs) {
             if (buildJob.courseId() == courseId) {
                 cancelBuildJob(buildJob.id());
             }
@@ -245,15 +252,17 @@ public class SharedQueueManagementService {
      * @param participationId id of the participation
      */
     public void cancelAllJobsForParticipation(long participationId) {
+        var queuedJobs = getQueuedJobs();
         List<BuildJobQueueItem> toRemove = new ArrayList<>();
-        for (BuildJobQueueItem queuedJob : queue) {
+        for (BuildJobQueueItem queuedJob : queuedJobs) {
             if (queuedJob.participationId() == participationId) {
                 toRemove.add(queuedJob);
             }
         }
         queue.removeAll(toRemove);
 
-        for (BuildJobQueueItem runningJob : processingJobs.values()) {
+        var runningJobs = getProcessingJobs();
+        for (BuildJobQueueItem runningJob : runningJobs) {
             if (runningJob.participationId() == participationId) {
                 cancelBuildJob(runningJob.id());
             }
