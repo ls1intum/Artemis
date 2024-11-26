@@ -261,13 +261,14 @@ async function makeGitExerciseSubmission(
 ) {
     await programmingExerciseOverview.openCloneMenu(cloneMethod);
     let repoUrl = await programmingExerciseOverview.copyCloneUrl();
-    if (process.env.CI === 'true') {
+    if (process.env.CI === 'true' && cloneMethod == GitCloneMethod.https) {
         repoUrl = repoUrl.replace('localhost', 'artemis-app');
     }
     if (cloneMethod == GitCloneMethod.https) {
         repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
         repoUrl = repoUrl.replace(`:**********`, ``);
     }
+    console.log(`Cloning repository from ${repoUrl}`);
     const urlParts = repoUrl.split('/');
     const repoName = urlParts[urlParts.length - 1];
     const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
