@@ -52,7 +52,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;
     static activeDropdownPost: AnswerPostComponent | null = null;
-    mayEditOrDelete: boolean = false;
+    mayEdit: boolean = false;
+    mayDelete: boolean = false;
     @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
 
     constructor(
@@ -95,8 +96,12 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
         }
     }
 
-    onMayEditOrDelete(value: boolean) {
-        this.mayEditOrDelete = value;
+    onMayDelete(value: boolean) {
+        this.mayDelete = value;
+    }
+
+    onMayEdit(value: boolean) {
+        this.mayEdit = value;
     }
 
     onRightClick(event: MouseEvent) {

@@ -73,11 +73,12 @@
                     }
                 </button>
             }
-            @if (mayEditOrDelete) {
+            @if (mayEdit) {
                 <button class="reaction-button clickable px-2 fs-small edit" (click)="editPosting()" [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate">
                     <fa-icon [icon]="faPencilAlt" cdkOverlayOrigin></fa-icon>
                 </button>
-
+            }
+            @if (mayDelete) {
                 <button class="reaction-button clickable px-2 fs-small delete">
                     <jhi-confirm-icon
                         iconSize="sm"
