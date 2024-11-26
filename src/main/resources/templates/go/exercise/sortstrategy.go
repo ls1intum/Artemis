@@ -1,3 +1,3 @@
-package assignment
+package ${packageName}
 
 type SortStrategy interface{}
