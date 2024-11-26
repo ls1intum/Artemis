@@ -684,7 +684,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Check if the latest submission has an Athena result
      */
     get hasAthenaResultForLatestSubmission(): boolean {
-        console.log('Has Athena Result: ', this.submission);
         const latestResult = getLatestSubmissionResult(this.submission);
         return latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
