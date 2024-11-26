@@ -107,8 +107,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseId(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "submissions.results" })
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndResultsByExerciseId(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseId(long exerciseId);

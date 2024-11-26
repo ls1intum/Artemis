@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestwiseCo
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// TODO: this should be a record in the future
 public class BuildResult extends AbstractBuildResultNotificationDTO implements Serializable {
 
     private final String assignmentRepoBranchName;
@@ -41,7 +42,7 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
 
     private final List<LocalCIJobDTO> jobs;
 
-    private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+    private List<BuildLogDTO> buildLogEntries = new ArrayList<>();
 
     private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
 
@@ -123,7 +124,8 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
 
     @Override
     public List<BuildLogEntry> extractBuildLogs() {
-        return buildLogEntries;
+        // convert the buildLogEntry DTOs to BuildLogEntry objects
+        return buildLogEntries.stream().map(log -> new BuildLogEntry(log.time(), log.log())).toList();
     }
 
     /**
@@ -131,7 +133,7 @@ public class BuildResult extends AbstractBuildResultNotificationDTO implements S
      *
      * @param buildLogEntries the buildLogEntries to be set
      */
-    public void setBuildLogEntries(List<BuildLogEntry> buildLogEntries) {
+    public void setBuildLogEntries(List<BuildLogDTO> buildLogEntries) {
         this.buildLogEntries = buildLogEntries;
         hasLogs = true;
     }
