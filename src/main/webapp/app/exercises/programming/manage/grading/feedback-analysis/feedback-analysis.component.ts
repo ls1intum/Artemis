@@ -217,8 +217,8 @@ export class FeedbackAnalysisComponent {
                     feedbackDetailText: feedbackDetail.detailText,
                 };
                 const createdChannel = await this.feedbackAnalysisService.createChannel(this.courseId(), this.exerciseId(), feedbackChannelRequest);
-                const name = createdChannel.name;
-                this.alertService.success(this.TRANSLATION_BASE + '.channelSuccess', { name });
+                const channelName = createdChannel.name;
+                this.alertService.success(this.TRANSLATION_BASE + '.channelSuccess', { channelName });
                 if (navigate) {
                     const urlTree = this.router.createUrlTree(['courses', this.courseId(), 'communication'], {
                         queryParams: { conversationId: createdChannel.id },
