@@ -5,6 +5,9 @@ import java.util.stream.Collectors;
 
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 
+/**
+ * DTO for the contents of a data export successful mail notification.
+ */
 public record DataExportSuccessfulContentsDTO(Set<DataExportSuccessfulContentDTO> contents) {
 
     public static DataExportSuccessfulContentsDTO of(Set<DataExport> exportSet) {

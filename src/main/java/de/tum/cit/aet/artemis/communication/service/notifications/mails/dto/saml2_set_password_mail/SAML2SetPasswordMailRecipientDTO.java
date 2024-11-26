@@ -3,6 +3,9 @@ package de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.sam
 import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.IMailRecipientUserDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 
+/**
+ * DTO for the recipient of the SAML2SetPasswordMail
+ */
 public record SAML2SetPasswordMailRecipientDTO(String langKey, String email, String login, String resetKey) implements IMailRecipientUserDTO {
 
     public static SAML2SetPasswordMailRecipientDTO of(User user) {

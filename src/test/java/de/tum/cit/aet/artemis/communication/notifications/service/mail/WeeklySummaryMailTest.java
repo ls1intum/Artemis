@@ -15,6 +15,9 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class WeeklySummaryMailTest extends AbstractMailContentTest {
 
+    /**
+     * Test that the variables injected in the template are used in the generated HTML content.
+     */
     @Test
     void testThatVariablesAreInjectedIntoTheTemplate() {
         // Arrange:
