@@ -620,6 +620,7 @@ public class ResultService {
         // 9. Query the database to retrieve paginated and filtered feedback
         final Page<FeedbackDetailDTO> feedbackDetailPage;
         List<FeedbackDetailDTO> processedDetails;
+        int totalPages = 0;
         if (levinStein.equals("false")) {
             feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
                     StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
@@ -628,120 +629,52 @@ public class ResultService {
             // 10. Process and map feedback details, calculating relative count and assigning task names
             processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount,
                     detail.detailText(), detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
+            totalPages = feedbackDetailPage.getTotalPages();
         }
         else {
             feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
                     StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
-                    maxOccurrence, filterErrorCategories, pageable);
-
-            List<FeedbackDetailDTO> allFeedbackDetails = studentParticipationRepository
-                    .findFilteredFeedbackByExerciseId(exerciseId, StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(),
-                            data.getFilterTasks(), minOccurrence, maxOccurrence, filterErrorCategories, Pageable.unpaged())
-                    .getContent();
-
-            // Apply Levenshtein-based grouping and aggregation
-            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingLevenshtein(allFeedbackDetails, 3);
+                    maxOccurrence, filterErrorCategories, Pageable.unpaged());
 
             // Apply manual pagination
             int page = data.getPage();
             int pageSize = data.getPageSize();
-            processedDetails = aggregatedFeedbackDetails.stream().skip((long) (page - 1) * pageSize).limit(pageSize).toList();
+            Comparator<FeedbackDetailDTO> comparator = getComparatorForFeedbackDetails(data);
+            List<FeedbackDetailDTO> processedDetailsPreSort = new ArrayList<>(feedbackDetailPage.getContent());
+            processedDetailsPreSort.sort(comparator);
+            int start = Math.max(0, (page - 1) * pageSize);
+            int end = Math.min(start + pageSize, processedDetailsPreSort.size());
+            processedDetails = processedDetailsPreSort.subList(start, end);
 
-            sortAggregatedList(processedDetails, data);
+            totalPages = (int) Math.ceil((double) processedDetailsPreSort.size() / pageSize);
+
+            // Convert to a modifiable list
         }
 
         // 11. Predefined error categories available for filtering on the client side
         final List<String> ERROR_CATEGORIES = List.of("Student Error", "Ares Error", "AST Error");
 
         // 12. Return response containing processed feedback details, task names, active test case names, and error categories
-        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), taskNames,
-                activeTestCaseNames, ERROR_CATEGORIES);
+        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, totalPages), feedbackDetailPage.getTotalElements(), taskNames, activeTestCaseNames,
+                ERROR_CATEGORIES);
     }
 
-    private List<FeedbackDetailDTO> aggregateUsingLevenshtein(List<FeedbackDetailDTO> allFeedbackDetails, int threshold) {
-        Map<String, FeedbackDetailDTO> aggregatedMap = new HashMap<>();
-
-        for (FeedbackDetailDTO detail : allFeedbackDetails) {
-            boolean merged = false;
-
-            for (Map.Entry<String, FeedbackDetailDTO> entry : aggregatedMap.entrySet()) {
-                FeedbackDetailDTO existing = entry.getValue();
-                String existingKey = entry.getKey();
-
-                // Check if feedback is from the same test case and within the Levenshtein distance threshold
-                if (existing.testCaseName().equals(detail.testCaseName()) && calculateLevenshteinDistance(existingKey, detail.detailText()) <= threshold) {
-
-                    // Merge the counts and retain the key of the existing feedback
-                    aggregatedMap.put(existingKey, new FeedbackDetailDTO(existing.count() + detail.count(), 0, // Relative count will be recalculated later
-                            existingKey, // Keep the existing key
-                            existing.testCaseName(), existing.taskName(), existing.errorCategory()));
-                    merged = true;
-                    break;
-                }
-            }
-
-            if (!merged) {
-                // Add new feedback entry if no match was found
-                aggregatedMap.put(detail.detailText(), detail);
-            }
-        }
-
-        return aggregatedMap.values().stream().toList();
+    private Comparator<FeedbackDetailDTO> getComparatorForFeedbackDetails(FeedbackPageableDTO search) {
+        Map<String, Comparator<FeedbackDetailDTO>> comparators = Map.of("count", Comparator.comparingLong(FeedbackDetailDTO::count), "detailText",
+                Comparator.comparing(FeedbackDetailDTO::detailText, String.CASE_INSENSITIVE_ORDER), "testCaseName",
+                Comparator.comparing(FeedbackDetailDTO::testCaseName, String.CASE_INSENSITIVE_ORDER), "taskName", Comparator.comparing(FeedbackDetailDTO::taskName),
+                "relativeCount", Comparator.comparingDouble(FeedbackDetailDTO::relativeCount));
+        Comparator<FeedbackDetailDTO> comparator = comparators.getOrDefault(search.getSortedColumn(), (a, b) -> 0);
+        return search.getSortingOrder() == SortingOrder.ASCENDING ? comparator : comparator.reversed();
     }
 
-    private int calculateLevenshteinDistance(String s1, String s2) {
-        int[][] dp = new int[s1.length() + 1][s2.length() + 1];
+    private List<FeedbackDetailDTO> paginateFeedbackDetails(List<FeedbackDetailDTO> feedbackDetails, int page, int pageSize) {
+        int start = Math.max(0, (page - 1) * pageSize);
+        int end = Math.min(start + pageSize, feedbackDetails.size());
+        List<FeedbackDetailDTO> paginatedFeedbackDetails = feedbackDetails.subList(start, end);
 
-        for (int i = 0; i <= s1.length(); i++) {
-            for (int j = 0; j <= s2.length(); j++) {
-                if (i == 0) {
-                    dp[i][j] = j;
-                }
-                else if (j == 0) {
-                    dp[i][j] = i;
-                }
-                else {
-                    dp[i][j] = Math.min(dp[i - 1][j - 1] + (s1.charAt(i - 1) == s2.charAt(j - 1) ? 0 : 1), Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1));
-                }
-            }
-        }
-
-        return dp[s1.length()][s2.length()];
-    }
-
-    private void sortAggregatedList(List<FeedbackDetailDTO> list, PageableSearchDTO<String> pageableSearch) {
-        String sortedColumn = pageableSearch.getSortedColumn();
-        SortingOrder sortingOrder = pageableSearch.getSortingOrder();
-
-        Comparator<FeedbackDetailDTO> comparator;
-
-        // Map sortedColumn to the corresponding field
-        switch (sortedColumn) {
-            case "count":
-                comparator = Comparator.comparing(FeedbackDetailDTO::count);
-                break;
-            case "detailText":
-                comparator = Comparator.comparing(FeedbackDetailDTO::detailText);
-                break;
-            case "testCaseName":
-                comparator = Comparator.comparing(FeedbackDetailDTO::testCaseName);
-                break;
-            case "taskName":
-                comparator = Comparator.comparing(FeedbackDetailDTO::taskName);
-                break;
-            case "errorCategory":
-                comparator = Comparator.comparing(FeedbackDetailDTO::errorCategory);
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid sorted column: " + sortedColumn);
-        }
-
-        // Apply sorting order
-        if (sortingOrder == SortingOrder.DESCENDING) {
-            comparator = comparator.reversed();
-        }
-
-        list.sort(comparator);
+        int totalPages = (int) Math.ceil((double) feedbackDetails.size() / pageSize);
+        return paginatedFeedbackDetails;
     }
 
     /**
