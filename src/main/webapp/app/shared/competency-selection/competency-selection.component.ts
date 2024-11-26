@@ -65,33 +65,37 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     ngOnInit(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         if (!this.competencyLinks && courseId) {
-            const course = this.courseStorageService.getCourse(courseId);
-            // an empty array is used as fallback, if a course is cached, where no competencies have been queried
-            if (course?.competencies?.length || course?.prerequisites?.length) {
-                this.setCompetencyLinks([...(course.competencies ?? []), ...(course.prerequisites ?? [])]);
-            } else {
-                this.isLoading = true;
-                this.courseCompetencyService
-                    .getAllForCourse(courseId)
-                    .pipe(
-                        finalize(() => {
-                            this.isLoading = false;
+            setTimeout(() => this.loadCompetencies(courseId), 0);
+        }
+    }
 
-                            // trigger change detection manually
-                            // necessary because quiz exercises use ChangeDetectionStrategy.OnPush
-                            this.changeDetector.detectChanges();
-                        }),
-                    )
-                    .subscribe({
-                        next: (response) => {
-                            this.setCompetencyLinks(response.body!);
-                            this.writeValue(this.selectedCompetencyLinks);
-                        },
-                        error: () => {
-                            this.disabled = true;
-                        },
-                    });
-            }
+    loadCompetencies(courseId: number) {
+        const course = this.courseStorageService.getCourse(courseId);
+        // an empty array is used as fallback, if a course is cached, where no competencies have been queried
+        if (course?.competencies?.length || course?.prerequisites?.length) {
+            this.setCompetencyLinks([...(course.competencies ?? []), ...(course.prerequisites ?? [])]);
+        } else {
+            this.isLoading = true;
+            this.courseCompetencyService
+                .getAllForCourse(courseId)
+                .pipe(
+                    finalize(() => {
+                        this.isLoading = false;
+
+                        // trigger change detection manually
+                        // necessary because quiz exercises use ChangeDetectionStrategy.OnPush
+                        this.changeDetector.detectChanges();
+                    }),
+                )
+                .subscribe({
+                    next: (response) => {
+                        this.setCompetencyLinks(response.body!);
+                        this.writeValue(this.selectedCompetencyLinks);
+                    },
+                    error: () => {
+                        this.disabled = true;
+                    },
+                });
         }
     }
 
