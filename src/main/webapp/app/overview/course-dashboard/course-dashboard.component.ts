@@ -9,14 +9,20 @@ import { AlertService } from 'app/core/util/alert.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseDashboardService } from 'app/overview/course-dashboard/course-dashboard.service';
 import { CompetencyInformation, ExerciseMetrics, StudentMetrics } from 'app/entities/student-metrics.model';
-import { ExerciseLateness } from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
-import { ExercisePerformance } from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
+import {
+    ExerciseLateness
+} from 'app/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
+import {
+    ExercisePerformance
+} from 'app/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { round } from 'app/shared/util/utils';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { CompetencyAccordionToggleEvent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
+import {
+    CompetencyAccordionToggleEvent
+} from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
@@ -70,7 +76,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 if (profileInfo?.activeProfiles.includes(PROFILE_IRIS)) {
                     this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                        this.irisEnabled = !!settings?.irisChatSettings?.enabled;
+                        this.irisEnabled = !!settings?.irisCourseChatSettings?.enabled;
                     });
                 }
             });

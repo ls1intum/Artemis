@@ -5,11 +5,15 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
+import {
+    IrisCommonSubSettingsUpdateComponent
+} from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { mockEmptySettings, mockSettings } from './mock-settings';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
 import { NgModel } from '@angular/forms';
-import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
+import {
+    IrisCourseSettingsUpdateComponent
+} from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
@@ -87,11 +91,14 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(setSettingsSpy).toHaveBeenCalledWith(1, irisSettings);
         expect(comp.settingsUpdateComponent!.irisSettings).toEqual(irisSettingsSaved);
     });
+
     it('Fills the settings if they are empty', () => {
         fixture.detectChanges();
         comp.settingsUpdateComponent!.irisSettings = mockEmptySettings();
         comp.settingsUpdateComponent!.fillEmptyIrisSubSettings();
         expect(comp.settingsUpdateComponent!.irisSettings.irisChatSettings).toBeTruthy();
+        expect(comp.settingsUpdateComponent!.irisSettings.irisTextExerciseChatSettings).toBeTruthy();
+        expect(comp.settingsUpdateComponent!.irisSettings.irisCourseChatSettings).toBeTruthy();
         expect(comp.settingsUpdateComponent!.irisSettings.irisLectureIngestionSettings).toBeTruthy();
         expect(comp.settingsUpdateComponent!.irisSettings.irisCompetencyGenerationSettings).toBeTruthy();
     });

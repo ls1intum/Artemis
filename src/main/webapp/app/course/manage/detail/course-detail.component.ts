@@ -3,14 +3,23 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { PROFILE_ATHENA, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { Subscription, firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course-management.service';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faChartBar, faClipboard, faEye, faFlag, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import {
+    faChartBar,
+    faClipboard,
+    faEye,
+    faFlag,
+    faListAlt,
+    faTable,
+    faTimes,
+    faWrench
+} from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
@@ -94,6 +103,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.irisEnabled = profileInfo?.activeProfiles.includes(PROFILE_IRIS);
         if (this.irisEnabled) {
             const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
+            // TODO: Outdated, as we now have a bunch more sub settings
             this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
         }
         this.route.data.subscribe(({ course }) => {
