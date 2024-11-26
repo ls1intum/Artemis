@@ -137,18 +137,18 @@ test.describe('Exam assessment', () => {
             await examParticipation.checkResultScore('70%');
         });
 
-        test('Complaints about text exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
-            await handleComplaint(course, exam, true, ExerciseType.TEXT, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
-        });
-
         test('Instructor makes a second round of assessment', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
             await login(instructor);
-            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment, true, false);
+            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment, true, true);
             await examAssessment.fillFeedback(9, 'Great job');
             const response = await examAssessment.submitTextAssessment();
             expect(response.status()).toBe(200);
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('90%');
+        });
+
+        test('Complaints about text exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
+            await handleComplaint(course, exam, true, ExerciseType.TEXT, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment, false);
         });
     });
 
@@ -403,6 +403,7 @@ async function handleComplaint(
     examAssessment: ExamAssessmentPage,
     courseAssessment: CourseAssessmentDashboardPage,
     exerciseAssessment: ExerciseAssessmentDashboardPage,
+    isFirstTimeAssessing: boolean = true,
 ) {
     const complaintText = 'Lorem ipsum dolor sit amet';
     const complaintResponseText = ' consetetur sadipscing elitr';
@@ -416,8 +417,9 @@ async function handleComplaint(
     await Commands.login(page, instructor, `/course-management/${course.id}/exams`);
     await examManagement.openAssessmentDashboard(course.id!, exam.id!);
     await courseAssessment.clickExerciseDashboardButton();
-    await exerciseAssessment.clickHaveReadInstructionsButton();
-
+    if (isFirstTimeAssessing) {
+        await exerciseAssessment.clickHaveReadInstructionsButton();
+    }
     await exerciseAssessment.clickEvaluateComplaint();
     await exerciseAssessment.checkComplaintText(complaintText);
     page.on('dialog', (dialog) => dialog.accept());
