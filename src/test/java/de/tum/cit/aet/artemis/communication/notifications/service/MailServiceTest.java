@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotificatio
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
+import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.activation_mail.ActivationMailRecipientDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.TimeService;
@@ -124,7 +125,7 @@ class MailServiceTest {
      */
     @Test
     void testSendEmail() {
-        mailSendingService.sendEmail(student1, subject, content, false, true);
+        mailSendingService.sendEmail(ActivationMailRecipientDTO.of(student1), subject, content, false, true);
         verify(javaMailSender).send(any(MimeMessage.class));
     }
 
@@ -134,7 +135,7 @@ class MailServiceTest {
     @Test
     void testNoMailSendExceptionThrown() {
         doThrow(new MailSendException("Some error occurred during mail send")).when(javaMailSender).send(any(MimeMessage.class));
-        assertThatNoException().isThrownBy(() -> mailSendingService.sendEmail(student1, subject, content, false, true));
+        assertThatNoException().isThrownBy(() -> mailSendingService.sendEmail(ActivationMailRecipientDTO.of(student1), subject, content, false, true));
     }
 
     /**
