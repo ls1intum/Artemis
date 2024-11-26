@@ -69,10 +69,11 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
         this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting.post!);
         this.isAnswerOfAnnouncement = getAsChannelDTO(this.posting.post?.conversation)?.isAnnouncementChannel ?? false;
         const isCourseWideChannel = getAsChannelDTO(this.posting.post?.conversation)?.isCourseWide ?? false;
-        const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
+        const isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+        const canDeleteAndEditAnnouncement = this.isAnswerOfAnnouncement ? this.metisService.metisUserIsAtLeastInstructorInCourse() : true;
         const mayEditOrDeleteOtherUsersAnswer =
-            (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
-        this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
+            (isCourseWideChannel && isAtLeastTutorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
+        this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer) && canDeleteAndEditAnnouncement;
         this.mayEditOrDeleteOutput.emit(this.mayEditOrDelete);
     }
 
