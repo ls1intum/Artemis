@@ -34,24 +34,6 @@
     transition: transform 0.3s;
 }
 
-.pdf-canvas-container:hover {
-    transform: scale(1.02);
-
-    button {
-        opacity: 1;
-    }
-    .pdf-overlay {
-        opacity: 1;
-    }
-    .hidden-icon {
-        transition: transform 0.3s;
-        opacity: 0;
-    }
-    .hidden-overlay {
-        opacity: 0 !important;
-    }
-}
-
 .pdf-overlay {
     position: absolute;
     width: 100%;
@@ -66,6 +48,27 @@
     transition: opacity 0.3s ease;
     opacity: 0;
     cursor: pointer;
+}
+
+.pdf-canvas-container:hover {
+    transform: scale(1.02);
+
+    button {
+        opacity: 1;
+    }
+
+    .pdf-overlay {
+        opacity: 1;
+    }
+
+    .hidden-icon {
+        transition: transform 0.3s;
+        opacity: 0;
+    }
+
+    .hidden-overlay {
+        opacity: 0 !important;
+    }
 }
 
 input[type='checkbox'] {
