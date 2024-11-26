@@ -295,7 +295,7 @@ public class SharedQueueProcessingService {
         if (buildJob != null) {
             String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
 
-            var estimatedDuration = Math.max(0, buildJob.jobTimingInfo().estimatedDuration());
+            long estimatedDuration = Math.max(0, buildJob.jobTimingInfo().estimatedDuration());
             ZonedDateTime estimatedCompletionDate = ZonedDateTime.now().plusSeconds(estimatedDuration);
             BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO(buildAgentShortName, hazelcastMemberAddress, buildAgentDisplayName),
                     estimatedCompletionDate);

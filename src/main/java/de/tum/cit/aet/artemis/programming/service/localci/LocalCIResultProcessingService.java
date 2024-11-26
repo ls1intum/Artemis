@@ -58,6 +58,10 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 @Service
 public class LocalCIResultProcessingService {
 
+    private static final int BUILD_STATISTICS_UPDATE_THRESHOLD = 10;
+
+    private static final int BUILD_JOB_DURATION_UPDATE_LIMIT = 100;
+
     private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
 
     private final HazelcastInstance hazelcastInstance;
@@ -287,12 +291,17 @@ public class LocalCIResultProcessingService {
         try {
             ProgrammingExerciseBuildStatistics buildStatistics = programmingExerciseBuildStatisticsRepository.findByExerciseId(exercise.getId()).orElse(null);
             long successfulBuildJobCountByExerciseId = buildJobRepository.fetchSuccessfulBuildJobCountByExerciseId(exercise.getId());
-            boolean shouldUpdate = successfulBuildJobCountByExerciseId > 0
-                    && (buildStatistics == null || successfulBuildJobCountByExerciseId - buildStatistics.getBuildCountWhenUpdated() >= 10);
+
+            boolean hasSuccessfulBuildJobs = successfulBuildJobCountByExerciseId > 0;
+            boolean exceedsUpdateThreshold = buildStatistics == null
+                    || successfulBuildJobCountByExerciseId - buildStatistics.getBuildCountWhenUpdated() >= BUILD_STATISTICS_UPDATE_THRESHOLD;
+
+            boolean shouldUpdate = hasSuccessfulBuildJobs && exceedsUpdateThreshold;
             if (!shouldUpdate) {
                 return;
             }
-            OptionalDouble averageBuildDuration = buildJobRepository.fetchSuccessfulBuildJobsByExerciseIdWithLimit(exercise.getId(), 100).stream()
+
+            OptionalDouble averageBuildDuration = buildJobRepository.fetchSuccessfulBuildJobsByExerciseIdWithLimit(exercise.getId(), BUILD_JOB_DURATION_UPDATE_LIMIT).stream()
                     .mapToLong(buildJob -> Duration.between(buildJob.getBuildStartDate(), buildJob.getBuildCompletionDate()).toSeconds()).average();
             if (averageBuildDuration.isPresent()) {
                 if (buildStatistics == null) {

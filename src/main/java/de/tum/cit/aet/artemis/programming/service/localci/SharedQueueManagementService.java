@@ -301,10 +301,7 @@ public class SharedQueueManagementService {
     }
 
     /**
-     * Estimates the queue release date for a build job based on the participation ID.
-     * This method calculates the estimated queue duration for a buildjob with the given participation ID.
-     * It takes into account the current queue state, the capacity of build agents,
-     * and the remaining duration of currently processing jobs.
+     * Estimates how long the job will be queued for on the participation ID.
      *
      * @param participationId the ID of the participation for which the queue release date is estimated
      * @return the estimated queue release date as a {@link ZonedDateTime}

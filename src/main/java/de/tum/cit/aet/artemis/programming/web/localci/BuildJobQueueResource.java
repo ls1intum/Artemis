@@ -205,9 +205,9 @@ public class BuildJobQueueResource {
         if (participationId <= 0) {
             ResponseEntity.badRequest().build();
         }
-        var estimatedQueueDuration = localCIBuildJobQueueService.getBuildJobEstimatedQueueDuration(participationId);
+        ZonedDateTime estimatedJobQueueReleaseTime = localCIBuildJobQueueService.getBuildJobEstimatedQueueDuration(participationId);
         log.debug("Queue duration estimation took {} ms", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.ok(estimatedQueueDuration);
+        return ResponseEntity.ok(estimatedJobQueueReleaseTime);
     }
 
 }

@@ -206,7 +206,7 @@ public class ProgrammingMessagingService {
 
         // send an update to tutors, editors and instructors about submissions for template and solution participations
         if (!(participation instanceof StudentParticipation)) {
-            var topicDestination = getSubmissionProcessingTopicForTAAndAbove(exerciseId);
+            String topicDestination = getSubmissionProcessingTopicForTAAndAbove(exerciseId);
             websocketMessagingService.sendMessage(topicDestination, submission);
         }
     }
