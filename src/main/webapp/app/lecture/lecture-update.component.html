@@ -65,6 +65,14 @@
                         </div>
                     </div>
                 </div>
+                <div class="flex-grow-1 d-flex justify-content-end">
+                    <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
+                        <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                    </button>
+                    <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnitMode" class="btn btn-primary ms-2">
+                        <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+                    </button>
+                </div>
                 @if (isEditMode()) {
                     <div>
                         <h2 id="artemisApp.lecture.wizardMode.steps.attachmentsStepTitle"><span jhiTranslate="artemisApp.lecture.wizardMode.steps.attachmentsStepTitle"></span></h2>
@@ -122,14 +130,6 @@
                 </div>
             }
             <div class="d-flex">
-                <div class="flex-grow-1">
-                    <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-                        <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-                    </button>
-                    <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnitMode" class="btn btn-primary">
-                        <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
-                    </button>
-                </div>
                 @if (processUnitMode) {
                     <div class="flex-grow-1 ms-3">
                         <div class="process-units-button">
