@@ -1,0 +1,18 @@
+<div class="date-box">
+    <div class="checkbox-container">
+        <input type="checkbox" id="date-box-checkbox" />
+        <label for="date-box-checkbox">Hide forever</label>
+    </div>
+    <div class="button-container">
+        <button class="btn btn-primary" (click)="selectCalendar()">Select Date</button>
+        <button class="btn btn-primary" (click)="selectExercise()">Select Exercise</button>
+    </div>
+    @if (calendarSelected()) {
+        <div class="calendar-container">
+            <input type="date" class="form-control" />
+        </div>
+    }
+    @if (exerciseSelected()) {
+        <div class="exercise-container">Exercises</div>
+    }
+</div>
