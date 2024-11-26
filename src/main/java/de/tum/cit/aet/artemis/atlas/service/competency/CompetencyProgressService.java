@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalcula
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyLectureUnitMasteryCalculationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleRepository;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -62,6 +63,8 @@ public class CompetencyProgressService {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
+    private final CourseCompetencySimpleRepository courseCompetencySimpleRepository;
+
     private static final int MIN_EXERCISES_RECENCY_CONFIDENCE = 3;
 
     private static final int MAX_SUBMISSIONS_FOR_QUICK_SOLVE_HEURISTIC = 3;
@@ -75,13 +78,14 @@ public class CompetencyProgressService {
     private static final double CONFIDENCE_REASON_DEADZONE = 0.05;
 
     public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, LearningPathService learningPathService,
-            ParticipantScoreService participantScoreService, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            CourseCompetencyRepository courseCompetencyRepository) {
+            ParticipantScoreService participantScoreService, LectureUnitCompletionRepository lectureUnitCompletionRepository, CourseCompetencyRepository courseCompetencyRepository,
+            CourseCompetencySimpleRepository courseCompetencySimpleRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.learningPathService = learningPathService;
         this.participantScoreService = participantScoreService;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
+        this.courseCompetencySimpleRepository = courseCompetencySimpleRepository;
     }
 
     /**
@@ -104,7 +108,7 @@ public class CompetencyProgressService {
     @Async
     public void updateProgressByLearningObjectAsync(LearningObject learningObject) {
         SecurityUtils.setAuthorizationObject(); // Required for async
-        Set<Long> competencyIds = courseCompetencyRepository.findAllIdsByLearningObject(learningObject);
+        Set<Long> competencyIds = courseCompetencySimpleRepository.findAllIdsByLearningObject(learningObject);
 
         for (long competencyId : competencyIds) {
             Set<User> users = competencyProgressRepository.findAllByCompetencyId(competencyId).stream().map(CompetencyProgress::getUser).collect(Collectors.toSet());
@@ -183,7 +187,7 @@ public class CompetencyProgressService {
      * @param users          The users for which to update the progress
      */
     public void updateProgressByLearningObjectSync(LearningObject learningObject, Set<User> users) {
-        Set<Long> competencyIds = courseCompetencyRepository.findAllIdsByLearningObject(learningObject);
+        Set<Long> competencyIds = courseCompetencySimpleRepository.findAllIdsByLearningObject(learningObject);
 
         for (long competencyId : competencyIds) {
             log.debug("Updating competency progress synchronously for {} users.", users.size());

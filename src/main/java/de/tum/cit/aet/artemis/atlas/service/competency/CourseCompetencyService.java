@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.LearningObjectImportService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
@@ -64,6 +65,8 @@ public class CourseCompetencyService {
 
     protected final CourseCompetencyRepository courseCompetencyRepository;
 
+    private final CourseCompetencySimpleRepository courseCompetencySimpleRepository;
+
     protected final CompetencyRelationRepository competencyRelationRepository;
 
     protected final CompetencyProgressService competencyProgressService;
@@ -85,12 +88,13 @@ public class CourseCompetencyService {
     private final CourseRepository courseRepository;
 
     public CourseCompetencyService(CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
-            CompetencyRelationRepository competencyRelationRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
-            LectureUnitService lectureUnitService, LearningPathService learningPathService, AuthorizationCheckService authCheckService,
-            StandardizedCompetencyRepository standardizedCompetencyRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            LearningObjectImportService learningObjectImportService, CourseRepository courseRepository) {
+            CourseCompetencySimpleRepository courseCompetencySimpleRepository, CompetencyRelationRepository competencyRelationRepository,
+            CompetencyProgressService competencyProgressService, ExerciseService exerciseService, LectureUnitService lectureUnitService, LearningPathService learningPathService,
+            AuthorizationCheckService authCheckService, StandardizedCompetencyRepository standardizedCompetencyRepository,
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, LearningObjectImportService learningObjectImportService, CourseRepository courseRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
+        this.courseCompetencySimpleRepository = courseCompetencySimpleRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.competencyProgressService = competencyProgressService;
         this.exerciseService = exerciseService;
@@ -113,7 +117,7 @@ public class CourseCompetencyService {
      * @return The found competency
      */
     public CourseCompetency findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(Long competencyId, Long userId) {
-        CourseCompetency competency = courseCompetencyRepository.findByIdWithLectureUnitsAndExercisesElseThrow(competencyId);
+        CourseCompetency competency = courseCompetencySimpleRepository.findByIdWithLectureUnitsAndExercisesElseThrow(competencyId);
         return findProgressAndLectureUnitCompletionsForUser(competency, userId);
     }
 

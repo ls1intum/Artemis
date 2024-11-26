@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleRepository;
 import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.PrerequisiteService;
@@ -72,17 +73,20 @@ public class PrerequisiteResource {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
+    private final CourseCompetencySimpleRepository courseCompetencySimpleRepository;
+
     private final CourseCompetencyService courseCompetencyService;
 
     public PrerequisiteResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             PrerequisiteRepository prerequisiteRepository, PrerequisiteService prerequisiteService, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencyService courseCompetencyService) {
+            CourseCompetencySimpleRepository courseCompetencySimpleRepository, CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.prerequisiteRepository = prerequisiteRepository;
         this.prerequisiteService = prerequisiteService;
         this.courseCompetencyRepository = courseCompetencyRepository;
+        this.courseCompetencySimpleRepository = courseCompetencySimpleRepository;
         this.courseCompetencyService = courseCompetencyService;
     }
 
@@ -185,7 +189,7 @@ public class PrerequisiteResource {
         long prerequisiteId = importOptions.competencyIds().iterator().next();
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
-        var prerequisiteToImport = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(prerequisiteId);
+        var prerequisiteToImport = courseCompetencySimpleRepository.findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(prerequisiteId);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, prerequisiteToImport.getCourse(), null);
         if (prerequisiteToImport.getCourse().getId().equals(courseId)) {
@@ -318,7 +322,7 @@ public class PrerequisiteResource {
         log.info("REST request to delete a Prerequisite : {}", prerequisiteId);
 
         var course = courseRepository.findByIdElseThrow(courseId);
-        var prerequisite = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(prerequisiteId);
+        var prerequisite = courseCompetencySimpleRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(prerequisiteId);
         checkCourseForPrerequisite(course, prerequisite);
 
         courseCompetencyService.deleteCourseCompetency(prerequisite, course);

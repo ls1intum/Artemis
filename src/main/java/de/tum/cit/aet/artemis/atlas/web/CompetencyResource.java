@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencySimpleRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -71,11 +72,14 @@ public class CompetencyResource {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
+    private final CourseCompetencySimpleRepository courseCompetencySimpleRepository;
+
     private final CourseCompetencyService courseCompetencyService;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencySimpleRepository competencySimpleRepository, CompetencyService competencyService,
-            CourseCompetencyRepository courseCompetencyRepository, CourseCompetencyService courseCompetencyService) {
+            CourseCompetencyRepository courseCompetencyRepository, CourseCompetencySimpleRepository courseCompetencySimpleRepository,
+            CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
@@ -83,6 +87,7 @@ public class CompetencyResource {
         this.competencySimpleRepository = competencySimpleRepository;
         this.competencyService = competencyService;
         this.courseCompetencyRepository = courseCompetencyRepository;
+        this.courseCompetencySimpleRepository = courseCompetencySimpleRepository;
         this.courseCompetencyService = courseCompetencyService;
     }
 
@@ -185,7 +190,7 @@ public class CompetencyResource {
         long competencyId = importOptions.competencyIds().iterator().next();
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
-        var competencyToImport = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(competencyId);
+        var competencyToImport = courseCompetencySimpleRepository.findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(competencyId);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), null);
         if (competencyToImport.getCourse().getId().equals(courseId)) {
@@ -318,7 +323,7 @@ public class CompetencyResource {
         log.info("REST request to delete a Competency : {}", competencyId);
 
         var course = courseRepository.findByIdElseThrow(courseId);
-        var competency = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
+        var competency = courseCompetencySimpleRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
         checkCourseForCompetency(course, competency);
 
         courseCompetencyService.deleteCourseCompetency(competency, course);

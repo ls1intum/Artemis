@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.BaseExercise;
@@ -57,7 +57,7 @@ public class LearningPathRecommendationService {
 
     private final CompetencyProgressRepository competencyProgressRepository;
 
-    private final CourseCompetencyRepository courseCompetencyRepository;
+    private final CourseCompetencySimpleRepository courseCompetencySimpleRepository;
 
     /**
      * Base utility that is used to calculate a competencies' utility with respect to the earliest due date of the competency.
@@ -99,12 +99,13 @@ public class LearningPathRecommendationService {
             { 0.50, 0.40, 0.10 }, { 0.39, 0.45, 0.16 }, { 0.28, 0.48, 0.24 }, { 0.20, 0.47, 0.33 }, { 0.13, 0.43, 0.44 }, { 0.08, 0.37, 0.55 }, { 0.04, 0.29, 0.67 }, };
 
     protected LearningPathRecommendationService(CompetencyRelationRepository competencyRelationRepository, LearningObjectService learningObjectService,
-            ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository) {
+            ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository,
+            CourseCompetencySimpleRepository courseCompetencySimpleRepository) {
         this.competencyRelationRepository = competencyRelationRepository;
         this.learningObjectService = learningObjectService;
         this.participantScoreService = participantScoreService;
         this.competencyProgressRepository = competencyProgressRepository;
-        this.courseCompetencyRepository = courseCompetencyRepository;
+        this.courseCompetencySimpleRepository = courseCompetencySimpleRepository;
     }
 
     /**
@@ -695,7 +696,7 @@ public class LearningPathRecommendationService {
      * @return the recommended order of learning objects
      */
     public List<LearningObject> getOrderOfLearningObjectsForCompetency(long competencyId, User user) {
-        CourseCompetency competency = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
+        CourseCompetency competency = courseCompetencySimpleRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
         return getOrderOfLearningObjectsForCompetency(competency, user);
     }
 

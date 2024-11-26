@@ -14,7 +14,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyLectureUnitMasteryCalculationDTO;
@@ -79,10 +78,6 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             WHERE c.id = :id
             """)
     Optional<CourseCompetency> findByIdWithExercisesAndLectureUnitsAndLectures(@Param("id") long id);
-
-    default CourseCompetency findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(long id) {
-        return getValueElseThrow(findByIdWithExercisesAndLectureUnitsAndLectures(id), id);
-    }
 
     @Query("""
             SELECT c
@@ -258,40 +253,6 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             WHERE c.id = :competencyId
             """)
     Optional<CourseCompetency> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);
-
-    default CourseCompetency findByIdWithLectureUnitsElseThrow(long competencyId) {
-        return getValueElseThrow(findByIdWithLectureUnits(competencyId), competencyId);
-    }
-
-    default CourseCompetency findByIdWithExercisesAndLectureUnitsElseThrow(long competencyId) {
-        return getValueElseThrow(findByIdWithExercisesAndLectureUnits(competencyId), competencyId);
-    }
-
-    default CourseCompetency findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(long competencyId) {
-        return getValueElseThrow(findByIdWithExercisesAndLectureUnitsBidirectional(competencyId), competencyId);
-    }
-
-    /**
-     * Finds the set of ids of course competencies that are linked to a given learning object
-     *
-     * @param learningObject the learning object to find the course competencies for
-     * @return the set of ids of course competencies linked to the learning object
-     */
-    default Set<Long> findAllIdsByLearningObject(LearningObject learningObject) {
-        return switch (learningObject) {
-            case LectureUnit lectureUnit -> findAllIdsByLectureUnit(lectureUnit);
-            case Exercise exercise -> findAllIdsByExercise(exercise);
-            default -> throw new IllegalArgumentException("Unknown LearningObject type: " + learningObject.getClass());
-        };
-    }
-
-    default CourseCompetency findByIdWithExercisesElseThrow(long competencyId) {
-        return getValueElseThrow(findByIdWithExercises(competencyId), competencyId);
-    }
-
-    default CourseCompetency findByIdWithLectureUnitsAndExercisesElseThrow(long competencyId) {
-        return getValueElseThrow(findByIdWithLectureUnitsAndExercises(competencyId), competencyId);
-    }
 
     List<CourseCompetency> findByCourseIdOrderById(long courseId);
 
