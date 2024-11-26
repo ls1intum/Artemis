@@ -17,7 +17,7 @@ import { ProgrammingExerciseSubmission } from '../../../support/pageobjects/exer
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
 import { UserCredentials, admin, instructor, studentFour, studentOne, studentTwo, tutor } from '../../../support/users';
 import { Team } from 'app/entities/team.model';
-import { ProgrammingExerciseOverviewPage } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
+import { GitCloneMethod, ProgrammingExerciseOverviewPage } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 import { Participation } from 'app/entities/participation/participation.model';
 
 test.describe('Programming exercise participation', { tag: '@sequential' }, () => {
@@ -80,13 +80,36 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
                     });
                 });
 
-                test('Makes a submission using git', async ({ page, programmingExerciseOverview }) => {
+                test('Makes a git submission through HTTPS', async ({ page, programmingExerciseOverview }) => {
                     await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                     await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, studentOne, submission, commitMessage);
                 });
             });
         }
     }
+
+    test.describe('Programming exercise participation using secure git', () => {
+        let exercise: ProgrammingExercise;
+
+        test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.JAVA });
+        });
+
+        test('Makes a git submission through HTTPS using token', async ({ programmingExerciseOverview, page }) => {
+            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+            await makeGitExerciseSubmission(
+                page,
+                programmingExerciseOverview,
+                course,
+                exercise,
+                studentOne,
+                javaAllSuccessfulSubmission,
+                'Solution',
+                GitCloneMethod.httpsWithToken,
+            );
+        });
+    });
 
     test.describe('Programming exercise team participation', () => {
         let exercise: ProgrammingExercise;
@@ -234,13 +257,17 @@ async function makeGitExerciseSubmission(
     student: UserCredentials,
     submission: any,
     commitMessage: string,
+    cloneMethod: GitCloneMethod = GitCloneMethod.https,
 ) {
-    let repoUrl = await programmingExerciseOverview.getRepoUrl();
+    await programmingExerciseOverview.openCloneMenu(cloneMethod);
+    let repoUrl = await programmingExerciseOverview.copyCloneUrl();
     if (process.env.CI === 'true') {
         repoUrl = repoUrl.replace('localhost', 'artemis-app');
     }
-    repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
-    repoUrl = repoUrl.replace(`:**********`, ``);
+    if (cloneMethod == GitCloneMethod.https) {
+        repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
+        repoUrl = repoUrl.replace(`:**********`, ``);
+    }
     const urlParts = repoUrl.split('/');
     const repoName = urlParts[urlParts.length - 1];
     const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
