@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, output } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -22,8 +22,10 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
-    @Output() mayEditOrDeleteOutput = new EventEmitter<boolean>();
-    mayEditOrDelete: boolean;
+    mayDeleteOutput = output<boolean>();
+    mayDelete: boolean;
+    mayEditOutput = output<boolean>();
+    mayEdit: boolean;
     readonly faPencilAlt = faPencilAlt;
     @Input() isEmojiCount: boolean = false;
     @Output() postingUpdated = new EventEmitter<void>();
@@ -34,12 +36,14 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
 
     ngOnInit() {
         super.ngOnInit();
-        this.setMayEditOrDelete();
+        this.setMayEdit();
+        this.setMayDelete();
     }
 
     ngOnChanges() {
         super.ngOnChanges();
-        this.setMayEditOrDelete();
+        this.setMayEdit();
+        this.setMayDelete();
     }
 
     isAnyReactionCountAboveZero(): boolean {
@@ -64,17 +68,21 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
         return reaction;
     }
 
-    setMayEditOrDelete(): void {
+    setMayDelete(): void {
         // determines if the current user is the author of the original post, that the answer belongs to
         this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting.post!);
         this.isAnswerOfAnnouncement = getAsChannelDTO(this.posting.post?.conversation)?.isAnnouncementChannel ?? false;
         const isCourseWideChannel = getAsChannelDTO(this.posting.post?.conversation)?.isCourseWide ?? false;
-        const isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-        const canDeleteAndEditAnnouncement = this.isAnswerOfAnnouncement ? this.metisService.metisUserIsAtLeastInstructorInCourse() : true;
+        const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
         const mayEditOrDeleteOtherUsersAnswer =
-            (isCourseWideChannel && isAtLeastTutorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
-        this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer) && canDeleteAndEditAnnouncement;
-        this.mayEditOrDeleteOutput.emit(this.mayEditOrDelete);
+            (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
+        this.mayDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
+        this.mayDeleteOutput.emit(this.mayDelete);
+    }
+
+    setMayEdit() {
+        this.mayEdit = this.isAuthorOfPosting;
+        this.mayEditOutput.emit(this.mayEdit);
     }
 
     editPosting() {

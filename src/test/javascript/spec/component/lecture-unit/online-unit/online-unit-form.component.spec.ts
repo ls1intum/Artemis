@@ -3,7 +3,7 @@ import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/lecture
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
@@ -11,6 +11,9 @@ import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-managem
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { ArtemisTestModule } from '../../../test.module';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('OnlineUnitFormComponent', () => {
     let onlineUnitFormComponentFixture: ComponentFixture<OnlineUnitFormComponent>;
@@ -18,11 +21,11 @@ describe('OnlineUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule],
+            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 OnlineUnitFormComponent,
+                FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FormDateTimePickerComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencySelectionComponent),
             ],
