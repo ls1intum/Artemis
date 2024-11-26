@@ -92,7 +92,7 @@ func TestUseBubbleSortForSmallList(t *testing.T) {
 	chosenSortStrategy := configurePolicyAndContext(bigList)
 	_, ok := chosenSortStrategy.(*${packageName}.BubbleSort)
 	if !ok {
-		t.Fatal("The sort algorithm of Context was not MergeSort for a list with more than 10 dates.")
+		t.Fatal("The sort algorithm of Context was not BubbleSort for a list with less than 10 dates.")
 	}
 }
 
