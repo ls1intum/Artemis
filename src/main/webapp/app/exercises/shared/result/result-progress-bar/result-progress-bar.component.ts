@@ -27,42 +27,55 @@ export class ResultProgressBarComponent implements OnDestroy {
 
     estimatedDurationInterval: ReturnType<typeof setInterval> | undefined;
 
-    faCircleNotch = faCircleNotch;
+    protected readonly faCircleNotch = faCircleNotch;
 
     constructor() {
         effect(() => {
-            if (!this.isBuilding() && !this.isQueued()) {
-                if (this.estimatedDurationInterval) {
-                    clearInterval(this.estimatedDurationInterval);
-                    this.estimatedDurationInterval = undefined;
-                }
+            const isBuildingOrQueued = this.cleanUpIfNotBuildingOrQueued();
+            if (!isBuildingOrQueued) {
                 return;
             }
 
             clearInterval(this.estimatedDurationInterval);
-            if (this.estimatedDuration() && this.estimatedRemaining()) {
-                if (this.isBuilding()) {
-                    this.setupQueueProgressBarForBuild();
-                    this.updateBuildProgressBar();
-                } else if (this.isQueued()) {
-                    this.setupBuildProgressBarForQueued();
-                    this.updateQueueProgressBar();
-                }
-            } else {
-                if (this.isBuilding()) {
-                    this.setupQueueProgressBarForBuild();
-                    this.isBuildProgressBarAnimated = false;
-                    this.buildProgressBarValue = 100;
-                } else if (this.isQueued()) {
-                    this.setupBuildProgressBarForQueued();
-                    this.isQueueProgressBarAnimated = false;
-                    this.queueProgressBarValue = 100;
-                }
-                this.estimatedDurationInterval = setInterval(() => {
-                    this.alternateOpacity(this.isQueued());
-                }, 1000); // 1 second
-            }
+            this.updateProgressBarState();
         });
+    }
+
+    private updateProgressBarState() {
+        if (this.estimatedDuration() && this.estimatedRemaining()) {
+            if (this.isBuilding()) {
+                this.setupQueueProgressBarForBuild();
+                this.updateBuildProgressBar();
+            } else if (this.isQueued()) {
+                this.setupBuildProgressBarForQueued();
+                this.updateQueueProgressBar();
+            }
+        } else {
+            if (this.isBuilding()) {
+                this.setupQueueProgressBarForBuild();
+                this.isBuildProgressBarAnimated = false;
+                this.buildProgressBarValue = 100;
+            } else if (this.isQueued()) {
+                this.setupBuildProgressBarForQueued();
+                this.isQueueProgressBarAnimated = false;
+                this.queueProgressBarValue = 100;
+            }
+            this.estimatedDurationInterval = setInterval(() => {
+                this.alternateOpacity(this.isQueued());
+            }, 1000); // 1 second
+        }
+    }
+
+    private cleanUpIfNotBuildingOrQueued() {
+        const isBuildingOrQueued = true;
+        if (!this.isBuilding() && !this.isQueued()) {
+            if (this.estimatedDurationInterval) {
+                clearInterval(this.estimatedDurationInterval);
+                this.estimatedDurationInterval = undefined;
+            }
+            this.isQueueProgressBarAnimated = false;
+        }
+        return isBuildingOrQueued;
     }
 
     ngOnDestroy() {

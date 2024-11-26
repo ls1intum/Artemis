@@ -229,9 +229,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     private resetQueueEstimateTimer(participationId: number) {
-        if (this.queueEstimateTimerSubscriptions[participationId]) {
-            this.queueEstimateTimerSubscriptions[participationId].unsubscribe();
-        }
+        this.queueEstimateTimerSubscriptions[participationId]?.unsubscribe();
     }
 
     /**
@@ -270,22 +268,9 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             let buildTimingInfo: BuildTimingInfo | undefined = undefined;
 
                             if (this.isLocalCIProfile) {
-                                if (!programmingSubmission.isProcessing && !this.didSubmissionStartProcessing(programmingSubmission.commitHash!)) {
-                                    const queueRemainingTime = this.getExpectedRemainingTimeForQueue(programmingSubmission);
-                                    if (queueRemainingTime > 0) {
-                                        this.emitQueuedSubmission(
-                                            submissionParticipationId,
-                                            this.participationIdToExerciseId.get(submissionParticipationId)!,
-                                            programmingSubmission,
-                                        );
-                                        this.startQueueEstimateTimer(
-                                            submissionParticipationId,
-                                            this.participationIdToExerciseId.get(submissionParticipationId)!,
-                                            programmingSubmission,
-                                            queueRemainingTime,
-                                        );
-                                        return;
-                                    }
+                                const isSubmissionQueued = this.handleQueuedProgrammingSubmissions(programmingSubmission, submissionParticipationId);
+                                if (isSubmissionQueued) {
+                                    return;
                                 }
 
                                 buildTimingInfo = this.startedProcessingCache.get(programmingSubmission.commitHash!);
@@ -293,7 +278,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             }
 
                             this.emitBuildingSubmission(submissionParticipationId, this.participationIdToExerciseId.get(submissionParticipationId)!, submission, buildTimingInfo);
-                            // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
                             this.startResultWaitingTimer(submissionParticipationId);
                         }),
                     )
@@ -301,6 +285,24 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }
             this.submissionTopicsSubscribed.set(participationId, newSubmissionTopic);
         }
+    }
+
+    private handleQueuedProgrammingSubmissions(programmingSubmission: ProgrammingSubmission, submissionParticipationId: number) {
+        let isSubmissionQueued = false;
+        if (!programmingSubmission.isProcessing && !this.didSubmissionStartProcessing(programmingSubmission.commitHash!)) {
+            const queueRemainingTime = this.getExpectedRemainingTimeForQueue(programmingSubmission);
+            if (queueRemainingTime > 0) {
+                this.emitQueuedSubmission(submissionParticipationId, this.participationIdToExerciseId.get(submissionParticipationId)!, programmingSubmission);
+                this.startQueueEstimateTimer(
+                    submissionParticipationId,
+                    this.participationIdToExerciseId.get(submissionParticipationId)!,
+                    programmingSubmission,
+                    queueRemainingTime,
+                );
+                isSubmissionQueued = true;
+            }
+        }
+        return isSubmissionQueued;
     }
 
     private setupWebsocketSubscriptionForSubmissionProcessing(participationId: number, exerciseId: number, personal: boolean): void {
@@ -313,7 +315,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }
 
             // Only subscribe if not subscription to same topic exists (e.g. from different participation)
-            if (!Array.from(this.submissionProcessingTopicsSubscribed.values()).includes(newSubmissionTopic)) {
+            const subscriptionOnSameTopicExists = Array.from(this.submissionProcessingTopicsSubscribed.values()).includes(newSubmissionTopic);
+            if (!subscriptionOnSameTopicExists) {
                 this.websocketService.subscribe(newSubmissionTopic);
                 this.websocketService
                     .receive(newSubmissionTopic)
@@ -346,7 +349,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             this.removeSubmissionFromProcessingCache(programmingSubmission.commitHash!);
                             this.resetQueueEstimateTimer(submissionParticipationId);
                             this.emitBuildingSubmission(submissionParticipationId, exerciseId, programmingSubmission, buildTimingInfo);
-                            // Now we start a timer, if there is no result when the timer runs out, it will notify the subscribers that no result was received and show an error.
+
                             this.startResultWaitingTimer(submissionParticipationId);
                         }),
                     )
@@ -889,7 +892,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
             const openSubscriptionsForTopic = [...this.submissionProcessingTopicsSubscribed.values()].filter((topic: string) => topic === submissionProcessingTopic).length;
             // Only unsubscribe if no other participations are using this topic
-            if (openSubscriptionsForTopic === 0) {
+            const isParcitipationUsingTopic = openSubscriptionsForTopic !== 0;
+            if (!isParcitipationUsingTopic) {
                 this.websocketService.unsubscribe(submissionProcessingTopic);
             }
         }
