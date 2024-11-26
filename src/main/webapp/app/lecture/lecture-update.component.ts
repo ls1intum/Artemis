@@ -10,7 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
@@ -31,7 +31,6 @@ export class LectureUpdateComponent implements OnInit {
     protected readonly faSave = faSave;
     protected readonly faPuzzleProcess = faPuzzlePiece;
     protected readonly faBan = faBan;
-    protected readonly faHandShakeAngle = faHandshakeAngle;
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
@@ -75,7 +74,22 @@ export class LectureUpdateComponent implements OnInit {
     ) {
         effect(() => {
             // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-            const updatedFormStatusSections: FormSectionStatus[] = [
+            const updatedFormStatusSections: FormSectionStatus[] = [];
+
+            if (this.isEditMode()) {
+                updatedFormStatusSections.push(
+                    {
+                        title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
+                        valid: true, // TODO retrieve the valid status
+                    },
+                    {
+                        title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
+                        valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
+                    },
+                );
+            }
+
+            updatedFormStatusSections.unshift(
                 {
                     title: 'artemisApp.lecture.wizardMode.steps.titleStepTitle',
                     valid: Boolean(this.titleSection().titleChannelNameComponent().isFormValidSignal()),
@@ -84,15 +98,7 @@ export class LectureUpdateComponent implements OnInit {
                     title: 'artemisApp.lecture.wizardMode.steps.periodStepTitle',
                     valid: Boolean(this.isPeriodSectionValid()),
                 },
-                {
-                    title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
-                    valid: true, // TODO retrieve the valid status
-                },
-                {
-                    title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
-                    valid: Boolean(this.unitSection()?.isUnitConfigurationValid()),
-                },
-            ];
+            );
 
             this.formStatusSections = updatedFormStatusSections;
         });
@@ -187,8 +193,11 @@ export class LectureUpdateComponent implements OnInit {
                 state: { file: this.file, fileName: this.fileName },
             });
         } else {
-            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
+            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'edit']);
         }
+        // else {
+        //     this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
+        // }
     }
 
     /**

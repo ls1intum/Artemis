@@ -27,7 +27,6 @@ import { ActivatedRoute } from '@angular/router';
     templateUrl: './lecture-wizard-units.component.html',
 })
 export class LectureUpdateWizardUnitsComponent implements OnInit {
-    @Input() currentStep: number;
     @Input() lecture: Lecture;
 
     @ViewChild(LectureUnitManagementComponent, { static: false }) unitManagementComponent: LectureUnitManagementComponent;

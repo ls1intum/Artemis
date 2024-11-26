@@ -65,22 +65,26 @@
                         </div>
                     </div>
                 </div>
+                @if (isEditMode()) {
+                    <div>
+                        <h2 id="artemisApp.lecture.wizardMode.steps.attachmentsStepTitle"><span jhiTranslate="artemisApp.lecture.wizardMode.steps.attachmentsStepTitle"></span></h2>
+                        <p id="artemisApp.lecture.wizardMode.steps.attachmentsStepMessage">
+                            <span jhiTranslate="artemisApp.lecture.wizardMode.steps.attachmentsStepMessage"></span>
+                        </p>
+                        <jhi-lecture-attachments [lectureId]="lecture().id" [showHeader]="false" [redirectToLecturePage]="false" />
+                    </div>
+                }
+            </div>
+            @if (isEditMode()) {
                 <div>
-                    <h2 id="artemisApp.lecture.wizardMode.steps.attachmentsStepTitle"><span jhiTranslate="artemisApp.lecture.wizardMode.steps.attachmentsStepTitle"></span></h2>
-                    <p id="artemisApp.lecture.wizardMode.steps.attachmentsStepMessage">
-                        <span jhiTranslate="artemisApp.lecture.wizardMode.steps.attachmentsStepMessage"></span>
-                    </p>
-                    <jhi-lecture-attachments [lectureId]="lecture().id" [showHeader]="false" [redirectToLecturePage]="false" />
+                    <jhi-lecture-update-wizard-units [lecture]="lecture()" />
+                    <div class="py-2">
+                        <input class="form-check-input" type="checkbox" name="processUnit" (change)="onSelectProcessUnit()" [disabled]="editForm.form.invalid || isSaving" />
+                        <span class="px-1" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.processAutomatically"></span>
+                        <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.lectureFileToolTip' | artemisTranslate" />
+                    </div>
                 </div>
-            </div>
-            <div>
-                <jhi-lecture-update-wizard-units [lecture]="lecture()" [currentStep]="3" />
-                <div class="py-2">
-                    <input class="form-check-input" type="checkbox" name="processUnit" (change)="onSelectProcessUnit()" [disabled]="editForm.form.invalid || isSaving" />
-                    <span class="px-1" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.processAutomatically"></span>
-                    <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.lectureFileToolTip' | artemisTranslate" />
-                </div>
-            </div>
+            }
             @if (processUnitMode) {
                 <div class="alert alert-warning mt-3">
                     <ul class="informative-text">

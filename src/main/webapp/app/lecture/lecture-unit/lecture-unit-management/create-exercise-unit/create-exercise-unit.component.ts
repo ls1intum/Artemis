@@ -26,7 +26,6 @@ export class CreateExerciseUnitComponent implements OnInit {
     hasCancelButton = input<boolean>();
     hasCreateExerciseButton = input<boolean>();
     shouldNavigateOnSubmit = input<boolean>(true);
-    currentWizardStep = input<number>();
 
     onCancel = output<void>();
     onExerciseUnitCreated = output<void>();
@@ -126,7 +125,7 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     createNewExercise() {
         this.router.navigate(['/course-management', this.courseId, 'exercises'], {
-            queryParams: { shouldHaveBackButtonToWizard: 'true', lectureId: this.lectureId, step: this.currentWizardStep() },
+            queryParams: { shouldHaveBackButtonToWizard: 'true', lectureId: this.lectureId },
             queryParamsHandling: '',
         });
     }
