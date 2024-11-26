@@ -95,7 +95,8 @@
                                     (openPostingCreateEditModal)="openCreateAnswerPostModal()"
                                     (openThread)="openThread.emit()"
                                     (isModalOpen)="displayInlineInput = true"
-                                    (mayEditOrDeleteOutput)="onMayEditOrDelete($event)"
+                                    (mayEditOutput)="onMayEdit($event)"
+                                    (mayDeleteOutput)="onMayDelete($event)"
                                     (canPinOutput)="onCanPin($event)"
                                     (isDeleteEvent)="onDeleteEvent(true)"
                                     (onBookmarkClicked)="toggleSavePost()"
@@ -166,11 +167,13 @@
             <span [jhiTranslate]="checkIfPinned() === DisplayPriority.PINNED ? 'artemisApp.metis.post.unpinMessage' : 'artemisApp.metis.post.pinMessage'"></span>
         </button>
     }
-    @if (mayEditOrDelete) {
+    @if (mayEdit) {
         <button class="dropdown-item d-flex editIcon" (click)="editPosting()">
             <fa-icon [icon]="faPencilAlt" class="item-icon"></fa-icon>
             <span jhiTranslate="artemisApp.metis.post.editMessage"></span>
         </button>
+    }
+    @if (mayDelete) {
         <button class="dropdown-item d-flex deleteIcon" (click)="deletePost()">
             <fa-icon [icon]="faTrash" class="item-icon"></fa-icon>
             <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>

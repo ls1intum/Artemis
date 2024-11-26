@@ -138,21 +138,4 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
             WHERE p.id = :postId AND answer.author = cp.user
             """)
     Set<User> findUsersWhoRepliedInMessage(@Param("postId") Long postId);
-
-    /**
-     * Finds tags of course-wide messages
-     *
-     * @param courseId the course
-     * @return list of tags
-     */
-    // TODO: unused, delete
-    @Query("""
-            SELECT DISTINCT tag
-            FROM Post post
-                LEFT JOIN post.tags tag
-                LEFT JOIN Channel channel ON channel.id = post.conversation.id
-            WHERE channel.course.id = :courseId
-                AND channel.isCourseWide = TRUE
-            """)
-    List<String> findPostTagsForCourse(@Param("courseId") Long courseId);
 }

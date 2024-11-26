@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.communication.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -23,8 +21,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import com.google.common.collect.Lists;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
@@ -50,7 +46,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.ConversationNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
-import de.tum.cit.aet.artemis.communication.service.similarity.PostSimilarityComparisonStrategy;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -67,8 +62,6 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 @Service
 public class ConversationMessagingService extends PostingService {
 
-    private static final int TOP_K_SIMILARITY_RESULTS = 5;
-
     private static final Logger log = LoggerFactory.getLogger(ConversationMessagingService.class);
 
     private final ConversationService conversationService;
@@ -82,8 +75,6 @@ public class ConversationMessagingService extends PostingService {
     private final GroupNotificationService groupNotificationService;
 
     private final SingleUserNotificationRepository singleUserNotificationRepository;
-
-    private final PostSimilarityComparisonStrategy postContentCompareStrategy;
 
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
@@ -99,7 +90,6 @@ public class ConversationMessagingService extends PostingService {
         this.channelAuthorizationService = channelAuthorizationService;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationRepository = singleUserNotificationRepository;
-        this.postContentCompareStrategy = postContentCompareStrategy;
     }
 
     /**
@@ -436,41 +426,6 @@ public class ConversationMessagingService extends PostingService {
         else {
             throw new AccessForbiddenException("You are not allowed to edit or delete this message");
         }
-    }
-
-    /**
-     * Calculates k similar posts based on the underlying content comparison strategy
-     *
-     * @param courseId id of the course in which similar posts are searched for
-     * @param post     post that is to be created and check for similar posts beforehand
-     * @return list of similar posts
-     */
-    // TODO: unused, remove
-    public List<Post> getSimilarPosts(Long courseId, Post post) {
-        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, null, null, false, false, false, null, null);
-        List<Post> coursePosts = this.getCourseWideMessages(Pageable.unpaged(), postContextFilter, userRepository.getUser(), courseId).stream()
-                .sorted(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost))).toList();
-
-        // sort course posts by calculated similarity scores
-        setAuthorRoleOfPostings(coursePosts, courseId);
-        return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).toList();
-    }
-
-    /**
-     * Checks course and user validity,
-     * retrieves all tags for posts in a certain course
-     *
-     * @param courseId id of the course the tags belongs to
-     * @return tags of all posts that belong to the course
-     */
-    // TODO: unused, delete
-    public List<String> getAllCourseTags(Long courseId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        final Course course = courseRepository.findByIdElseThrow(courseId);
-
-        // checks
-        preCheckUserAndCourseForCommunicationOrMessaging(user, course);
-        return conversationMessageRepository.findPostTagsForCourse(courseId);
     }
 
     @Override
