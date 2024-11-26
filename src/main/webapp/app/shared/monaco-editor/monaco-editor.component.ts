@@ -8,7 +8,7 @@ import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-li
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
-import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { Disposable, EditorPosition, EditorRange, EditorViewState, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
 import { getOS } from 'app/shared/util/os-detector.util';
@@ -174,6 +174,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     setPosition(position: EditorPosition) {
         this._editor.setPosition(position);
+    }
+
+    saveViewState(): EditorViewState | undefined {
+        return this._editor.saveViewState() ?? undefined;
+    }
+
+    restoreViewState(viewState: EditorViewState | undefined): void {
+        if (viewState) {
+            return this._editor.restoreViewState(viewState);
+        } else {
+            return undefined;
+        }
     }
 
     setSelection(range: EditorRange): void {
