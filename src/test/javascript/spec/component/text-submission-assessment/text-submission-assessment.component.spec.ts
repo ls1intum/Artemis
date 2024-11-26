@@ -27,6 +27,8 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { ComplaintService } from 'app/complaints/complaint.service';
+import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -147,7 +149,6 @@ describe('TextSubmissionAssessmentComponent', () => {
                 studentParticipation: participation,
             }),
         } as unknown as ActivatedRoute;
-        jest.spyOn(component, 'getComplaint').mockImplementation(() => {});
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
@@ -172,6 +173,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AthenaService, useClass: MockAthenaService },
+                { provide: ComplaintService, useClass: MockComplaintService },
                 MockProvider(Router),
             ],
         })
