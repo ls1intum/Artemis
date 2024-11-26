@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
@@ -88,9 +89,12 @@ public class QuizResultService {
      * Evaluate the given quiz exercise by performing the following actions for each participation:
      * 1. Get the submission for each participation (there should be only one as in exam mode, the submission gets created upfront and will be updated)
      * - If no submission is found, print a warning and continue as we cannot evaluate that submission
-     * - If more than one submission is found, select one of them
+     * - Filter out submissions that are not submitted before the quiz deadline (practice mode)
+     * - If more than one submission is found, select one with the highest ID
      * 2. mark submission and participation as evaluated
      * 3. Create a new result for the selected submission and calculate scores
+     * - If a rated result already exists, skip the evaluation
+     * - If no rated result exists, create a new one and evaluate the submission
      * 4. Save the updated submission & participation and the newly created result
      * <p>
      * After processing all participations, the created results will be returned for further processing
@@ -104,6 +108,7 @@ public class QuizResultService {
         Set<Result> createdResults = new HashSet<>();
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(studentParticipations);
+        ZonedDateTime quizDeadline = quizExercise.getDueDate();
 
         for (var participation : studentParticipations) {
             if (participation.isTestRun()) {
@@ -122,8 +127,19 @@ public class QuizResultService {
                 else if (submissions.size() > 1) {
                     log.warn("Found multiple ({}) submissions for participation {} (Participant {}) in quiz {}, taking the one with highest id", submissions.size(),
                             participation.getId(), participation.getParticipant().getName(), quizExercise.getId());
-                    // Load submission with highest id
-                    quizSubmission = (QuizSubmission) submissions.stream().max(Comparator.comparing(Submission::getId)).get();
+                    // Filter submissions to only include those submitted before the quiz deadline if the due date is not null, otherwise select the one with the highest ID
+                    Optional<Submission> validSubmission = submissions.stream()
+                            .filter(submission -> quizExercise.getDueDate() == null
+                                    || (submission.getSubmissionDate() != null && !submission.getSubmissionDate().isAfter(quizExercise.getDueDate())))
+                            .max(Comparator.comparing(Submission::getId));
+                    if (validSubmission.isPresent()) {
+                        quizSubmission = (QuizSubmission) validSubmission.get();
+                    }
+                    else {
+                        log.warn("No valid submissions found for participation {} (Participant {}) in quiz {}", participation.getId(), participation.getParticipant().getName(),
+                                quizExercise.getId());
+                        continue;
+                    }
                 }
                 else {
                     quizSubmission = (QuizSubmission) submissions.iterator().next();
@@ -131,48 +147,41 @@ public class QuizResultService {
 
                 participation.setInitializationState(InitializationState.FINISHED);
 
-                boolean resultExisting = false;
-                // create new result if none is existing
-                Result result;
-                if (participation.getResults().isEmpty()) {
-                    result = new Result().participation(participation);
+                Optional<Result> existingRatedResult = participation.getResults().stream().filter(result -> Boolean.TRUE.equals(result.isRated())).findFirst();
+
+                if (existingRatedResult.isPresent()) {
+                    // A rated result already exists; no need to create a new one
+                    log.debug("A rated result already exists for participation {} (Participant {}), skipping evaluation.", participation.getId(),
+                            participation.getParticipant().getName());
                 }
                 else {
-                    resultExisting = true;
-                    result = participation.getResults().iterator().next();
-                }
-                // Only create Results once after the first evaluation
-                if (!resultExisting) {
-                    // delete result from quizSubmission, to be able to set a new one
-                    if (quizSubmission.getLatestResult() != null) {
-                        resultService.deleteResult(quizSubmission.getLatestResult(), true);
-                    }
-                    result.setRated(true);
-                    result.setAssessmentType(AssessmentType.AUTOMATIC);
-                    result.setCompletionDate(ZonedDateTime.now());
+                    // No rated result exists; create a new one
+                    Result result = new Result().participation(participation).rated(true).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
 
-                    // set submission to calculate scores
+                    // Associate submission with result
                     result.setSubmission(quizSubmission);
-                    // calculate scores and update result and submission accordingly
+
+                    // Calculate and update scores
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     result.evaluateQuizSubmission(quizExercise);
-                    // remove submission to follow save order for ordered collections
+
+                    // Detach submission to maintain proper save order
                     result.setSubmission(null);
 
-                    // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
+                    // Save entities individually
                     submissionRepository.save(quizSubmission);
                     result = resultRepository.save(result);
 
-                    // add result to participation
+                    // Update participation with new result
                     participation.addResult(result);
                     studentParticipationRepository.save(participation);
 
-                    // add result to submission
+                    // Re-associate result with submission and save
                     result.setSubmission(quizSubmission);
                     quizSubmission.addResult(result);
                     submissionRepository.save(quizSubmission);
 
-                    // Add result so that it can be returned (and processed later)
+                    // Add result to the set of created results
                     createdResults.add(result);
                 }
             }

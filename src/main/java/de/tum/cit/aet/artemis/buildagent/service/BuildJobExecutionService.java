@@ -345,7 +345,7 @@ public class BuildJobExecutionService {
         try {
             buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
                     buildJob.id());
-            buildResult.setBuildLogEntries(buildLogsMap.getBuildLogs(buildJob.id()));
+            buildResult.setBuildLogEntries(buildLogsMap.getAndTruncateBuildLogs(buildJob.id()));
         }
         catch (IOException | IllegalStateException e) {
             msg = "Error while parsing test results";
