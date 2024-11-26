@@ -29,7 +29,7 @@ export default defineConfig({
         trace: 'on-first-retry',
         ignoreHTTPSErrors: true,
         video: {
-            mode: 'on',
+            mode: 'retain-on-failure',
             size: { width: 1280, height: 720 },
         },
     },
