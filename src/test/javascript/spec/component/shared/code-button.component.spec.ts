@@ -536,7 +536,7 @@ describe('CodeButtonComponent', () => {
         // Expand the programmingExercise by given properties
         component.exercise = { ...exercise, ...programmingExercise } as ProgrammingExercise;
 
-        fixture.detectChanges();
+        component.ngOnChanges();
 
         expect(component.theiaEnabled).toBe(expectedVisibility);
     });

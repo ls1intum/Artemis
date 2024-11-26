@@ -17,7 +17,6 @@ import { faCode, faDesktop, faExternalLink } from '@fortawesome/free-solid-svg-i
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-code-button',
@@ -131,7 +130,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 this.useHttpsUrlWithToken();
             }
 
-            this.initTheia(profileInfo);
+            this.initTheia();
             this.loadParticipationVcsAccessTokens();
         });
 
@@ -156,6 +155,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
         this.loadParticipationVcsAccessTokens();
+        this.initTheia();
     }
 
     public useSshUrl() {
@@ -278,6 +278,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      *
      * @param url the url to which the credentials should be added
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
+     * @param alwaysToken if true, the token is always added, even if it is not required
      */
     private addCredentialsToHttpUrl(url: string, insertPlaceholder = false, alwaysToken = false): string {
         const includeToken = this.accessTokensEnabled && this.user.vcsAccessToken && (this.useToken || alwaysToken);
@@ -357,21 +358,23 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         }
     }
 
-    initTheia(profileInfo: ProfileInfo) {
-        if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise) {
-            // Theia requires the Build Config of the programming exercise to be set
-            this.programmingExerciseService.getBuildConfig(this.exercise.id!).subscribe((buildConfig) => {
-                if (this.exercise) {
-                    this.exercise.buildConfig = buildConfig;
-                    // Set variables now, sanitize later on
-                    this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
-                    // Verify that all conditions are met
-                    if (this.theiaPortalURL !== '' && this.exercise.allowOnlineIde && this.exercise.buildConfig?.theiaImage) {
-                        this.theiaEnabled = true;
+    initTheia() {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise) {
+                // Theia requires the Build Config of the programming exercise to be set
+                this.programmingExerciseService.getBuildConfig(this.exercise.id!).subscribe((buildConfig) => {
+                    if (this.exercise) {
+                        this.exercise.buildConfig = buildConfig;
+                        // Set variables now, sanitize later on
+                        this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
+                        // Verify that all conditions are met
+                        if (this.theiaPortalURL !== '' && this.exercise.allowOnlineIde && this.exercise.buildConfig?.theiaImage) {
+                            this.theiaEnabled = true;
+                        }
                     }
-                }
-            });
-        }
+                });
+            }
+        });
     }
 
     async startOnlineIDE() {
