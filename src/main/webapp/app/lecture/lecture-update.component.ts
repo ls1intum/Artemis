@@ -18,6 +18,7 @@ import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lect
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -42,6 +43,7 @@ export class LectureUpdateComponent implements OnInit {
     @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdateWizardPeriodComponent;
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
     periodSectionDatepickers = viewChildren(FormDateTimePickerComponent);
+    attachmentsSection = viewChild(LectureAttachmentsComponent);
     unitSection = viewChild(LectureUpdateWizardUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
 
@@ -81,7 +83,7 @@ export class LectureUpdateComponent implements OnInit {
                     updatedFormStatusSections.push(
                         {
                             title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
-                            valid: true, // TODO retrieve the valid status
+                            valid: true, // TODO use actual value here
                         },
                         {
                             title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',

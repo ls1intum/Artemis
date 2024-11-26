@@ -93,6 +93,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         return attachmentLink.endsWith('.pdf') ?? false;
     }
 
+    // TODO make this a computed signal
     get isSubmitPossible(): boolean {
         return !!(this.attachmentToBeCreated?.name && (this.attachmentFile || this.attachmentToBeCreated?.link));
     }
