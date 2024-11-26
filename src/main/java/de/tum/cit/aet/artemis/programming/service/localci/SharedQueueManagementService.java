@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -109,36 +110,44 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildJobQueueItem> getQueuedJobs() {
-        return queue.stream().toList();
+        // NOTE: we should not use streams with IQueue, because it can be unstable, when many items are added at the same time
+        return new ArrayList<>(queue);
     }
 
     public List<BuildJobQueueItem> getProcessingJobs() {
-        return processingJobs.values().stream().toList();
+        Collection<BuildJobQueueItem> values = processingJobs.values();
+        return new ArrayList<>(values);
     }
 
     public List<BuildJobQueueItem> getQueuedJobsForCourse(long courseId) {
-        return queue.stream().filter(job -> job.courseId() == courseId).toList();
+        List<BuildJobQueueItem> queuedJobs = new ArrayList<>(queue);
+        return queuedJobs.stream().filter(job -> job.courseId() == courseId).toList();
     }
 
     public List<BuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
-        return processingJobs.values().stream().filter(job -> job.courseId() == courseId).toList();
+        Collection<BuildJobQueueItem> values = processingJobs.values();
+        return values.stream().filter(job -> job.courseId() == courseId).toList();
     }
 
     public List<BuildJobQueueItem> getQueuedJobsForParticipation(long participationId) {
-        return queue.stream().filter(job -> job.participationId() == participationId).toList();
+        List<BuildJobQueueItem> queuedJobs = new ArrayList<>(queue);
+        return queuedJobs.stream().filter(job -> job.participationId() == participationId).toList();
     }
 
     public List<BuildJobQueueItem> getProcessingJobsForParticipation(long participationId) {
-        return processingJobs.values().stream().filter(job -> job.participationId() == participationId).toList();
+        Collection<BuildJobQueueItem> values = processingJobs.values();
+        return values.stream().filter(job -> job.participationId() == participationId).toList();
     }
 
     public List<BuildAgentInformation> getBuildAgentInformation() {
-        return buildAgentInformation.values().stream().toList();
+        Collection<BuildAgentInformation> values = buildAgentInformation.values();
+        return values.stream().toList();
     }
 
     public List<BuildAgentInformation> getBuildAgentInformationWithoutRecentBuildJobs() {
-        return buildAgentInformation.values().stream().map(agent -> new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(),
-                agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(), agent.status(), null, null)).toList();
+        Collection<BuildAgentInformation> values = buildAgentInformation.values();
+        return values.stream().map(agent -> new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(), agent.numberOfCurrentBuildJobs(),
+                agent.runningBuildJobs(), agent.status(), null, agent.publicSshKey())).toList();
     }
 
     public void pauseBuildAgent(String agent) {
@@ -156,9 +165,10 @@ public class SharedQueueManagementService {
      */
     public void cancelBuildJob(String buildJobId) {
         // Remove build job if it is queued
-        if (queue.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
+        List<BuildJobQueueItem> queuedJobs = new ArrayList<>(queue);
+        if (queuedJobs.stream().anyMatch(job -> Objects.equals(job.id(), buildJobId))) {
             List<BuildJobQueueItem> toRemove = new ArrayList<>();
-            for (BuildJobQueueItem job : queue) {
+            for (BuildJobQueueItem job : queuedJobs) {
                 if (Objects.equals(job.id(), buildJobId)) {
                     toRemove.add(job);
                 }
@@ -197,7 +207,8 @@ public class SharedQueueManagementService {
      * Cancel all running build jobs.
      */
     public void cancelAllRunningBuildJobs() {
-        for (BuildJobQueueItem buildJob : processingJobs.values()) {
+        Collection<BuildJobQueueItem> values = processingJobs.values();
+        for (BuildJobQueueItem buildJob : values) {
             cancelBuildJob(buildJob.id());
         }
     }
@@ -208,7 +219,8 @@ public class SharedQueueManagementService {
      * @param agentName name of the agent
      */
     public void cancelAllRunningBuildJobsForAgent(String agentName) {
-        processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgent().name(), agentName)).forEach(job -> cancelBuildJob(job.id()));
+        Collection<BuildJobQueueItem> values = processingJobs.values();
+        values.stream().filter(job -> Objects.equals(job.buildAgent().name(), agentName)).forEach(job -> cancelBuildJob(job.id()));
     }
 
     /**
@@ -218,7 +230,8 @@ public class SharedQueueManagementService {
      */
     public void cancelAllQueuedBuildJobsForCourse(long courseId) {
         List<BuildJobQueueItem> toRemove = new ArrayList<>();
-        for (BuildJobQueueItem job : queue) {
+        List<BuildJobQueueItem> queuedJobs = new ArrayList<>(queue);
+        for (BuildJobQueueItem job : queuedJobs) {
             if (job.courseId() == courseId) {
                 toRemove.add(job);
             }
@@ -232,7 +245,8 @@ public class SharedQueueManagementService {
      * @param courseId id of the course
      */
     public void cancelAllRunningBuildJobsForCourse(long courseId) {
-        for (BuildJobQueueItem buildJob : processingJobs.values()) {
+        Collection<BuildJobQueueItem> values = processingJobs.values();
+        for (BuildJobQueueItem buildJob : values) {
             if (buildJob.courseId() == courseId) {
                 cancelBuildJob(buildJob.id());
             }
@@ -246,14 +260,16 @@ public class SharedQueueManagementService {
      */
     public void cancelAllJobsForParticipation(long participationId) {
         List<BuildJobQueueItem> toRemove = new ArrayList<>();
-        for (BuildJobQueueItem queuedJob : queue) {
+        List<BuildJobQueueItem> queuedJobs = new ArrayList<>(queue);
+        for (BuildJobQueueItem queuedJob : queuedJobs) {
             if (queuedJob.participationId() == participationId) {
                 toRemove.add(queuedJob);
             }
         }
         queue.removeAll(toRemove);
 
-        for (BuildJobQueueItem runningJob : processingJobs.values()) {
+        Collection<BuildJobQueueItem> values = this.processingJobs.values();
+        for (BuildJobQueueItem runningJob : values) {
             if (runningJob.participationId() == participationId) {
                 cancelBuildJob(runningJob.id());
             }
