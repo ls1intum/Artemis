@@ -20,12 +20,12 @@ plugins {
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
-    id "org.owasp.dependencycheck" version "11.0.0"
+    id "org.owasp.dependencycheck" version "11.1.0"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.6.5"
+version = "7.7.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -55,11 +55,15 @@ idea {
 }
 
 spotless {
+
     // allows to execute the code formatting commands ./gradlew spotlessApply and ./gradlew spotlessCheck
     java {
         target {
             fileTree(rootDir) {
-                include "**/*.java"
+                include (
+                    "src/main/java/**/*.java",
+                    "src/test/java/**/*.java",
+                )
                 exclude(
                         "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
                         "**/node_modules/**",
@@ -71,7 +75,6 @@ spotless {
                         "**/src/main/resources/templates/**",
                         "/docker/**",
                         "checked-out-repos/**",
-                        "**/src/main/java/org/eclipse/**",
                         "supporting_scripts/**"
                 )
             }
@@ -177,7 +180,7 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.892
+                minimum = 0.895
             }
             limit {
                 counter = "CLASS"
@@ -249,6 +252,7 @@ dependencies {
 
     implementation "de.jplag:c:${jplag_version}"
     implementation "de.jplag:cpp:${jplag_version}"
+    implementation "de.jplag:csharp:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
     implementation "de.jplag:javascript:${jplag_version}"
     implementation "de.jplag:kotlin:${jplag_version}"
@@ -313,7 +317,7 @@ dependencies {
     implementation "ch.qos.logback:logback-classic:${logback_version}"
     implementation "ch.qos.logback:logback-core:${logback_version}"
     // required by eureka client
-    implementation "com.thoughtworks.xstream:xstream:1.4.20"
+    implementation "com.thoughtworks.xstream:xstream:1.4.21"
     // required by JPlag
     implementation "xerces:xercesImpl:2.12.2"
     // required by JPlag
@@ -321,7 +325,7 @@ dependencies {
     // required by JPlag
     implementation "xalan:serializer:2.7.3"
     // required by Saml2
-    implementation "org.apache.santuario:xmlsec:4.0.2"
+    implementation "org.apache.santuario:xmlsec:4.0.3"
 
     implementation "org.jsoup:jsoup:1.18.1"
     implementation "commons-codec:commons-codec:1.17.1"   // needed for spring security saml2
@@ -341,13 +345,12 @@ dependencies {
     // use newest version of commons-compress to avoid security issues through outdated dependencies
     implementation "org.apache.commons:commons-compress:1.27.1"
 
-
     // import JHipster dependencies BOM
     implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.13.6"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.14.1"
     implementation "net.logstash.logback:logstash-logback-encoder:8.0"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
@@ -373,7 +376,7 @@ dependencies {
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
 
-    implementation "com.zaxxer:HikariCP:6.0.0"
+    implementation "com.zaxxer:HikariCP:6.2.1"
 
     implementation "org.apache.commons:commons-text:1.12.0"
     implementation "org.apache.commons:commons-math3:3.6.1"
@@ -399,7 +402,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:3.2.7"
+    implementation "org.springframework.ldap:spring-ldap-core:3.2.8"
     implementation "org.springframework.data:spring-data-ldap:3.3.5"
 
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.3") {
@@ -410,8 +413,13 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.3"
     implementation "org.springframework.cloud:spring-cloud-commons:4.1.4"
 
-    implementation "io.netty:netty-all:4.1.114.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.1.23"
+    implementation "io.projectreactor.netty:reactor-netty:1.2.0"
+    implementation("io.netty:netty-common") {
+        version {
+            strictly netty_version
+        }
+    }
+
     implementation "org.springframework:spring-messaging:6.1.14"
     implementation "org.springframework.retry:spring-retry:2.0.10"
 
@@ -420,8 +428,9 @@ dependencies {
     implementation "org.springframework.security:spring-security-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-oauth2-resource-server:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:9.41.2"
+    implementation "com.nimbusds:nimbus-jose-jwt:9.47"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -439,15 +448,15 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.78.1"
-    implementation "org.bouncycastle:bcprov-jdk18on:1.78.1"
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.79"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.79"
 
     implementation "com.mysql:mysql-connector-j:9.1.0"
     implementation "org.postgresql:postgresql:42.7.4"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
-    implementation "com.ibm.icu:icu4j-charset:75.1"
+    implementation "com.ibm.icu:icu4j-charset:76.1"
     implementation "com.github.seancfoley:ipaddress:5.5.1"
     implementation "org.apache.maven:maven-model:3.9.9"
     implementation "org.apache.pdfbox:pdfbox:3.0.3"
@@ -468,7 +477,7 @@ dependencies {
     implementation "com.google.code.gson:gson:2.11.0"
 
 
-    implementation "com.google.errorprone:error_prone_annotations:2.34.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.36.0"
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") {
@@ -532,16 +541,24 @@ dependencies {
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.177"
+    testImplementation "io.github.classgraph:classgraph:4.8.179"
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.10.2"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.1"
+    testImplementation "org.gradle:gradle-tooling-api:8.11.1"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.2"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
         exclude group: "org.testcontainers", module: "mariadb"
         exclude group: "org.testcontainers", module: "mssqlserver"
     }
+    testImplementation "org.testcontainers:testcontainers:${testcontainer_version}"
+    testImplementation "org.testcontainers:mysql:${testcontainer_version}"
+    testImplementation "org.testcontainers:postgresql:${testcontainer_version}"
+    testImplementation "org.testcontainers:testcontainers:${testcontainer_version}"
+    testImplementation "org.testcontainers:junit-jupiter:${testcontainer_version}"
+    testImplementation "org.testcontainers:jdbc:${testcontainer_version}"
+    testImplementation "org.testcontainers:database-commons:${testcontainer_version}"
+
     testImplementation "com.tngtech.archunit:archunit:1.3.0"
     testImplementation("org.skyscreamer:jsonassert:1.5.3") {
         exclude module: "android-json"
@@ -593,7 +610,7 @@ tasks.withType(Test).configureEach {
 
     afterTest { descriptor, result ->
         if (result.resultType == TestResult.ResultType.FAILURE) {
-            String failedTest = "${descriptor.className}::${descriptor.name}"
+            var failedTest = "${descriptor.className}::${descriptor.name}"
             logger.debug("Adding " + failedTest + " to failedTests...")
             failedTests << [failedTest]
         }
@@ -617,7 +634,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.10.2"
+    gradleVersion = "8.11"
 }
 
 tasks.register("stage") {

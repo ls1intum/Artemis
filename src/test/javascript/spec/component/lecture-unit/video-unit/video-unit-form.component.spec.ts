@@ -3,10 +3,14 @@ import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/lecture-u
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { ArtemisTestModule } from '../../../test.module';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+
 describe('VideoUnitFormComponent', () => {
     const validYouTubeUrl = 'https://www.youtube.com/watch?v=8iU8LPEa4o0';
     const validYouTubeUrlInEmbeddableFormat = 'https://www.youtube.com/embed/8iU8LPEa4o0';
@@ -15,11 +19,11 @@ describe('VideoUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule],
+            imports: [ArtemisTestModule, ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 VideoUnitFormComponent,
+                FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FormDateTimePickerComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(CompetencySelectionComponent),
             ],
@@ -161,7 +165,7 @@ describe('VideoUnitFormComponent', () => {
     });
 
     it('should correctly set form values in edit mode', () => {
-        videoUnitFormComponent.isEditMode = true;
+        videoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
         const formData: VideoUnitFormData = {
             name: 'test',
             description: 'lorem ipsum',
@@ -170,12 +174,18 @@ describe('VideoUnitFormComponent', () => {
         };
         videoUnitFormComponentFixture.detectChanges();
 
-        videoUnitFormComponent.formData = formData;
-        videoUnitFormComponent.ngOnChanges();
+        videoUnitFormComponentFixture.componentRef.setInput('formData', formData);
+        videoUnitFormComponentFixture.detectChanges();
 
         expect(videoUnitFormComponent.nameControl?.value).toEqual(formData.name);
         expect(videoUnitFormComponent.releaseDateControl?.value).toEqual(formData.releaseDate);
         expect(videoUnitFormComponent.descriptionControl?.value).toEqual(formData.description);
         expect(videoUnitFormComponent.sourceControl?.value).toEqual(formData.source);
+    });
+
+    it('should emit onCancel event when cancelForm is called', () => {
+        const onCancelSpy = jest.spyOn(videoUnitFormComponent.onCancel, 'emit');
+        videoUnitFormComponent.cancelForm();
+        expect(onCancelSpy).toHaveBeenCalled();
     });
 });
