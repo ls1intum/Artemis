@@ -139,7 +139,7 @@ public class SharedQueueManagementService {
 
     public List<BuildAgentInformation> getBuildAgentInformationWithoutRecentBuildJobs() {
         return getBuildAgentInformation().stream().map(agent -> new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(),
-                agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(), agent.status(), null, agent.publicSshKey())).toList();
+                agent.numberOfCurrentBuildJobs(), agent.runningBuildJobs(), agent.status(), null, null)).toList();
     }
 
     public void pauseBuildAgent(String agent) {
