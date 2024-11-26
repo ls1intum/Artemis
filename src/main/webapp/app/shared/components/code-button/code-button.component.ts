@@ -17,6 +17,7 @@ import { faCode, faDesktop, faExternalLink } from '@fortawesome/free-solid-svg-i
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-code-button',
@@ -130,7 +131,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 this.useHttpsUrlWithToken();
             }
 
-            this.initTheia();
+            this.initTheia(profileInfo);
             this.loadParticipationVcsAccessTokens();
         });
 
@@ -155,7 +156,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
         this.loadParticipationVcsAccessTokens();
-        this.initTheia();
     }
 
     public useSshUrl() {
@@ -358,23 +358,21 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         }
     }
 
-    initTheia() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise) {
-                // Theia requires the Build Config of the programming exercise to be set
-                this.programmingExerciseService.getBuildConfig(this.exercise.id!).subscribe((buildConfig) => {
-                    if (this.exercise) {
-                        this.exercise.buildConfig = buildConfig;
-                        // Set variables now, sanitize later on
-                        this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
-                        // Verify that all conditions are met
-                        if (this.theiaPortalURL !== '' && this.exercise.allowOnlineIde && this.exercise.buildConfig?.theiaImage) {
-                            this.theiaEnabled = true;
-                        }
+    initTheia(profileInfo: ProfileInfo) {
+        if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise) {
+            // Theia requires the Build Config of the programming exercise to be set
+            this.programmingExerciseService.getBuildConfig(this.exercise.id!).subscribe((buildConfig) => {
+                if (this.exercise) {
+                    this.exercise.buildConfig = buildConfig;
+                    // Set variables now, sanitize later on
+                    this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
+                    // Verify that all conditions are met
+                    if (this.theiaPortalURL !== '' && this.exercise.allowOnlineIde && this.exercise.buildConfig?.theiaImage) {
+                        this.theiaEnabled = true;
                     }
-                });
-            }
-        });
+                }
+            });
+        }
     }
 
     async startOnlineIDE() {
