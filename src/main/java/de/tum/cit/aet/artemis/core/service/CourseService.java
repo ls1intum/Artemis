@@ -359,7 +359,9 @@ public class CourseService {
         course.setNumberOfPrerequisites(prerequisiteRepository.countByCourse(course));
         // NOTE: in this call we only want to know if tutorial groups exist in the course, we will load them when the user navigates into them
         course.setNumberOfTutorialGroups(tutorialGroupRepository.countByCourse(course));
-        course.setFaqs(faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED));
+        if (course.isFaqEnabled()) {
+            course.setFaqs(faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED));
+        }
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
