@@ -34,7 +34,7 @@ Create and implement a `Policy` class following the below class diagram with a s
     1. [task][Select MergeSort](artemis/test/behavior.TestUseMergeSortForBigList)
     Select `MergeSort` when the slice has more than 10 dates.
 
-    2. [task][Select BubbleSort](artemis/test/behavior.TestUseMergeSortForBigList)
+    2. [task][Select BubbleSort](artemis/test/behavior.TestUseBubbleSortForSmallList)
     Select `BubbleSort` when the slice has less or equal 10 dates.
 
 4. Complete the `Client` class which demonstrates switching between two strategies at runtime.
