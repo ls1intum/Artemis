@@ -9,6 +9,9 @@ import de.tum.cit.aet.artemis.core.domain.User;
 
 class DataExportFailedMailTest extends AbstractMailContentTest {
 
+    /**
+     * Test that the variables injected in the template are used in the generated HTML content.
+     */
     @Test
     void testThatVariablesAreInjectedIntoTheTemplate() {
         // Arrange:

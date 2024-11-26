@@ -239,7 +239,6 @@ public class MailService implements InstantNotificationService {
      * @param user                who should be contacted
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
-
     @Override
     public void sendNotification(Notification notification, User user, Object notificationSubject) {
         NotificationType notificationType = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());

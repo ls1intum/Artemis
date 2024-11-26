@@ -3,6 +3,9 @@ package de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.act
 import de.tum.cit.aet.artemis.communication.service.notifications.mails.dto.IMailRecipientUserDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 
+/**
+ * DTO for the recipient of the activation mail
+ */
 public record ActivationMailRecipientDTO(String langKey, String email, String login, String activationKey) implements IMailRecipientUserDTO {
 
     public static ActivationMailRecipientDTO of(User user) {
