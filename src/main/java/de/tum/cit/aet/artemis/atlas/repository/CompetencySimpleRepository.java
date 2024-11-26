@@ -3,10 +3,10 @@ package de.tum.cit.aet.artemis.atlas.repository;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.core.repository.base.AbstractSimpleRepositoryService;
+import de.tum.cit.aet.artemis.core.repository.base.AbstractSimpleRepository;
 
 @Service
-public class CompetencySimpleRepository extends AbstractSimpleRepositoryService {
+public class CompetencySimpleRepository extends AbstractSimpleRepository {
 
     private final static String ENTITY_NAME = "Competency";
 
