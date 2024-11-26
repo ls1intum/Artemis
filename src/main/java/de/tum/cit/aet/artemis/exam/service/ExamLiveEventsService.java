@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamAttendanceCheckEvent;
@@ -55,14 +54,11 @@ public class ExamLiveEventsService {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final UserRepository userRepository;
-
-    public ExamLiveEventsService(WebsocketMessagingService websocketMessagingService, ExamLiveEventRepository examLiveEventRepository, StudentExamRepository studentExamRepository,
-            UserRepository userRepository) {
+    public ExamLiveEventsService(WebsocketMessagingService websocketMessagingService, ExamLiveEventRepository examLiveEventRepository,
+            StudentExamRepository studentExamRepository) {
         this.websocketMessagingService = websocketMessagingService;
         this.examLiveEventRepository = examLiveEventRepository;
         this.studentExamRepository = studentExamRepository;
-        this.userRepository = userRepository;
     }
 
     /**
