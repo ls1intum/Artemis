@@ -147,7 +147,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 studentParticipation: participation,
             }),
         } as unknown as ActivatedRoute;
-
+        jest.spyOn(YourComponent.prototype, 'getComplaint').mockImplementation(() => {});
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
