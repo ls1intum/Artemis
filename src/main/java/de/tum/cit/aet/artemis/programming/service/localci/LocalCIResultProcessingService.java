@@ -30,6 +30,7 @@ import com.hazelcast.map.IMap;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -42,7 +43,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatist
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
@@ -147,7 +147,7 @@ public class LocalCIResultProcessingService {
 
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
-        List<BuildLogEntry> buildLogs = resultQueueItem.buildLogs();
+        List<BuildLogDTO> buildLogs = resultQueueItem.buildLogs();
         Throwable ex = resultQueueItem.exception();
 
         BuildJob savedBuildJob;
