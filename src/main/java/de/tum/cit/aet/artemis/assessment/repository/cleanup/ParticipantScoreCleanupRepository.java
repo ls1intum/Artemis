@@ -60,6 +60,11 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
     /**
      * Counts {@link ParticipantScore} entries where the associated {@link Result} is not the latest rated result
      * for a {@link Participation}, within courses conducted between the specified date range.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     * @return the number of entities that would be deleted upon execution of the cleanup operation
+     *
      */
     @Query("""
             SELECT COUNT(ps)
@@ -119,6 +124,10 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
     /**
      * Counts {@link ParticipantScore} entries where the associated last rated {@link Result} is not the latest rated result
      * for a {@link Participation}, within courses conducted between the specified date range.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     * @return the number of entities that would be deleted upon execution of the cleanup operation
      */
     @Query("""
             SELECT COUNT(ps)
@@ -177,6 +186,10 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
     /**
      * Counts {@link ParticipantScore} entries where the associated {@link Result} is not the latest result and is non-rated,
      * and the course's start and end dates are between the specified date range.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     * @return the number of entities that would be deleted upon execution of the cleanup operation
      */
     @Query("""
             SELECT COUNT(ps)
@@ -237,6 +250,10 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
     /**
      * Counts {@link ParticipantScore} entries where the associated {@link Result} is not latest and is non-rated, even though
      * it is marked as the last rated result.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     * @return the number of entities that would be deleted upon execution of the cleanup operation
      */
     @Query("""
             SELECT COUNT(ps)
