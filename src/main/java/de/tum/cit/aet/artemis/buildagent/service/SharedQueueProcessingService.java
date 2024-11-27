@@ -360,7 +360,8 @@ public class SharedQueueProcessingService {
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
-        return processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgent().memberAddress(), memberAddress)).toList();
+        List<BuildJobQueueItem> processingJobsList = new ArrayList<>(processingJobs.values());
+        return processingJobsList.stream().filter(job -> Objects.equals(job.buildAgent().memberAddress(), memberAddress)).toList();
     }
 
     private void removeOfflineNodes() {
