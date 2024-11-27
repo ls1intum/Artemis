@@ -83,7 +83,7 @@ export class LectureUpdateComponent implements OnInit {
                     updatedFormStatusSections.push(
                         {
                             title: 'artemisApp.lecture.wizardMode.steps.attachmentsStepTitle',
-                            valid: true, // TODO use actual value here
+                            valid: Boolean(this.attachmentsSection()?.isSubmitPossible()),
                         },
                         {
                             title: 'artemisApp.lecture.wizardMode.steps.unitsStepTitle',
