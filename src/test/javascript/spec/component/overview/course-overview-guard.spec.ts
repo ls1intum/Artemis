@@ -76,7 +76,7 @@ describe('CourseOverviewGuard', () => {
     describe('handleReturn', () => {
         it('should return true if type is lectures and course has lectures', () => {
             let resultValue = true;
-            const result = guard.handleReturn(mockCourse, 'lectures');
+            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.LECTURES);
             result.subscribe((value) => {
                 resultValue = value;
             });
@@ -85,7 +85,7 @@ describe('CourseOverviewGuard', () => {
         });
 
         it('should return true if type is exams and course has visible exams', () => {
-            const result = guard.handleReturn(mockCourse, 'exams');
+            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.EXAMS);
             let resultValue = true;
             result.subscribe((value) => {
                 resultValue = value;
@@ -95,7 +95,7 @@ describe('CourseOverviewGuard', () => {
 
         it('should return true if type is competencies and course has competencies', () => {
             mockCourse.numberOfCompetencies = 1;
-            const result = guard.handleReturn(mockCourse, 'competencies');
+            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.COMPETENCIES);
             let resultValue = true;
             result.subscribe((value) => {
                 resultValue = value;
@@ -105,7 +105,7 @@ describe('CourseOverviewGuard', () => {
 
         it('should return true if type is competencies and course has prerequisits', () => {
             mockCourse.numberOfPrerequisites = 1;
-            const result = guard.handleReturn(mockCourse, 'competencies');
+            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.COMPETENCIES);
             let resultValue = true;
             result.subscribe((value) => {
                 resultValue = value;
@@ -115,7 +115,7 @@ describe('CourseOverviewGuard', () => {
 
         it('should return true if type is tutorial-groups and course has tutorial groups', () => {
             mockCourse.numberOfTutorialGroups = 1;
-            const result = guard.handleReturn(mockCourse, 'tutorial-groups');
+            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.TUTORIAL_GROUPS);
             let resultValue = true;
             result.subscribe((value) => {
                 resultValue = value;
@@ -125,7 +125,7 @@ describe('CourseOverviewGuard', () => {
 
         it('should return true if type is dashboard and course has studentCourseAnalyticsDashboardEnabled', () => {
             mockCourse.studentCourseAnalyticsDashboardEnabled = true;
-            const result = guard.handleReturn(mockCourse, 'dashboard');
+            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.DASHBOARD);
             let resultValue = true;
             result.subscribe((value) => {
                 resultValue = value;
@@ -134,7 +134,7 @@ describe('CourseOverviewGuard', () => {
         });
 
         it('should return true if type is faq and course has faqEnabled', () => {
-            const result = guard.handleReturn(mockCourse, 'faq');
+            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.FAQ);
             let resultValue = true;
             result.subscribe((value) => {
                 resultValue = value;
@@ -144,7 +144,7 @@ describe('CourseOverviewGuard', () => {
 
         it('should return true if type is learning-path and course has learningPathsEnabled', () => {
             mockCourse.learningPathsEnabled = true;
-            const result = guard.handleReturn(mockCourse, 'learning-path');
+            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.LEARNING_PATH);
             let resultValue = true;
             result.subscribe((value) => {
                 resultValue = value;
