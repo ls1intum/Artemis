@@ -6,11 +6,12 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { CourseOverviewRoutePath } from 'app/overview/courses-routing.module';
 
 @Injectable({
     providedIn: 'root',
 })
-export class CourseOverviewGuardService implements CanActivate {
+export class CourseOverviewGuard implements CanActivate {
     private courseStorageService = inject(CourseStorageService);
     private courseManagementService = inject(CourseManagementService);
     private router = inject(Router);
@@ -49,22 +50,28 @@ export class CourseOverviewGuardService implements CanActivate {
     handleReturn = (course?: Course, type?: string): Observable<boolean> => {
         let hasAccess: boolean;
         switch (type) {
-            case 'exams':
+            case CourseOverviewRoutePath.EXERCISES:
+                hasAccess = true; //default route, should always be accessible
+                break;
+            case CourseOverviewRoutePath.LECTURES:
+                hasAccess = !!course?.lectures;
+                break;
+            case CourseOverviewRoutePath.EXAMS:
                 hasAccess = this.hasVisibleExams(course);
                 break;
-            case 'competencies':
+            case CourseOverviewRoutePath.COMPETENCIES:
                 hasAccess = !!(course?.numberOfCompetencies || course?.numberOfPrerequisites);
                 break;
-            case 'tutorial-groups':
+            case CourseOverviewRoutePath.TUTORIAL_GROUPS:
                 hasAccess = !!course?.numberOfTutorialGroups;
                 break;
-            case 'dashboard':
+            case CourseOverviewRoutePath.DASHBOARD:
                 hasAccess = course?.studentCourseAnalyticsDashboardEnabled ?? false;
                 break;
-            case 'faq':
+            case CourseOverviewRoutePath.FAQ:
                 hasAccess = course?.faqEnabled ?? false;
                 break;
-            case 'learning-path':
+            case CourseOverviewRoutePath.LEARNING_PATH:
                 hasAccess = course?.learningPathsEnabled ?? false;
                 break;
             default:
