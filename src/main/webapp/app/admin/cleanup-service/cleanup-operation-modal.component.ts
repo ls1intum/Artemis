@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
@@ -15,8 +15,7 @@ import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
     imports: [TranslateDirective, ArtemisSharedModule],
 })
 export class CleanupOperationModalComponent implements OnInit {
-    @Input()
-    operation: CleanupOperation;
+    operation = input.required<CleanupOperation>();
     counts: CleanupCount;
     operationExecuted = false;
 
@@ -64,18 +63,18 @@ export class CleanupOperationModalComponent implements OnInit {
             },
         };
 
-        switch (this.operation.name) {
+        switch (this.operation().name) {
             case 'deleteOrphans':
                 this.dataCleanupService.deleteOrphans().subscribe(operationHandler);
                 break;
             case 'deletePlagiarismComparisons':
-                this.dataCleanupService.deletePlagiarismComparisons(this.operation.deleteFrom, this.operation.deleteTo).subscribe(operationHandler);
+                this.dataCleanupService.deletePlagiarismComparisons(this.operation().deleteFrom, this.operation().deleteTo).subscribe(operationHandler);
                 break;
             case 'deleteNonRatedResults':
-                this.dataCleanupService.deleteNonRatedResults(this.operation.deleteFrom, this.operation.deleteTo).subscribe(operationHandler);
+                this.dataCleanupService.deleteNonRatedResults(this.operation().deleteFrom, this.operation().deleteTo).subscribe(operationHandler);
                 break;
             case 'deleteOldRatedResults':
-                this.dataCleanupService.deleteOldRatedResults(this.operation.deleteFrom, this.operation.deleteTo).subscribe(operationHandler);
+                this.dataCleanupService.deleteOldRatedResults(this.operation().deleteFrom, this.operation().deleteTo).subscribe(operationHandler);
                 break;
         }
     }
@@ -84,17 +83,17 @@ export class CleanupOperationModalComponent implements OnInit {
      * Fetch counts for the operation.
      */
     private fetchCounts(): Observable<HttpResponse<CleanupCount>> {
-        switch (this.operation.name) {
+        switch (this.operation().name) {
             case 'deleteOrphans':
                 return this.dataCleanupService.countOrphans();
             case 'deletePlagiarismComparisons':
-                return this.dataCleanupService.countPlagiarismComparisons(this.operation.deleteFrom, this.operation.deleteTo);
+                return this.dataCleanupService.countPlagiarismComparisons(this.operation().deleteFrom, this.operation().deleteTo);
             case 'deleteNonRatedResults':
-                return this.dataCleanupService.countNonRatedResults(this.operation.deleteFrom, this.operation.deleteTo);
+                return this.dataCleanupService.countNonRatedResults(this.operation().deleteFrom, this.operation().deleteTo);
             case 'deleteOldRatedResults':
-                return this.dataCleanupService.countOldRatedResults(this.operation.deleteFrom, this.operation.deleteTo);
+                return this.dataCleanupService.countOldRatedResults(this.operation().deleteFrom, this.operation().deleteTo);
             default:
-                throw new Error(`Unsupported operation: ${this.operation.name}`);
+                throw new Error(`Unsupported operation: ${this.operation().name}`);
         }
     }
 

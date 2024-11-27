@@ -83,6 +83,6 @@ export class CleanupServiceComponent implements OnInit {
      */
     openCleanupOperationModal(operation: CleanupOperation): void {
         const modalRef = this.modalService.open(CleanupOperationModalComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.operation = operation;
+        modalRef.componentInstance.operation = signal<CleanupOperation>(operation);
     }
 }

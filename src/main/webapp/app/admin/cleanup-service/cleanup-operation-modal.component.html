@@ -1,22 +1,22 @@
 <div class="modal-header">
-    <h4 class="modal-title" [jhiTranslate]="'cleanupService.operation.' + operation.name"></h4>
+    <h4 class="modal-title" [jhiTranslate]="'cleanupService.operation.' + operation().name"></h4>
     <button type="button" class="btn-close" (click)="close()" aria-label="Close"></button>
 </div>
 <div class="modal-body">
-    @if (operation.name === 'deleteOrphans') {
+    @if (operation().name === 'deleteOrphans') {
         <p
             [jhiTranslate]="'cleanupService.execute.questionWithoutDates'"
             [translateValues]="{
-                operationName: 'cleanupService.operation.' + operation.name | artemisTranslate,
+                operationName: 'cleanupService.operation.' + operation().name | artemisTranslate,
             }"
         ></p>
     } @else {
         <p
             [jhiTranslate]="'cleanupService.execute.question'"
             [translateValues]="{
-                operationName: 'cleanupService.operation.' + operation.name | artemisTranslate,
-                deleteFrom: operation.deleteFrom | artemisDate,
-                deleteTo: operation.deleteTo | artemisDate,
+                operationName: 'cleanupService.operation.' + operation().name | artemisTranslate,
+                deleteFrom: operation().deleteFrom | artemisDate,
+                deleteTo: operation().deleteTo | artemisDate,
             }"
         ></p>
     }
@@ -38,7 +38,7 @@
             }
         </ul>
         @if (!hasEntriesToDelete) {
-            <p class="text-muted" jhiTranslate="cleanupService.modal.noEntries"></p>
+            <p class="text-muted" jhiTranslate="cleanupService.modal.noEntriesToDelete"></p>
         }
     </div>
 </div>
