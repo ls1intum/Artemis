@@ -13,6 +13,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
 import { Subject } from 'rxjs';
 import { TextSubmissionViewerComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
+import { By } from '@angular/platform-browser';
 
 describe('SplitPaneHeaderComponent', () => {
     let comp1: SplitPaneHeaderComponent;
@@ -43,6 +44,8 @@ describe('SplitPaneHeaderComponent', () => {
             .compileComponents()
             .then(() => {
                 const fileSelectedSubject = new Subject<TextPlagiarismFileElement>();
+                const showFilesSubject = new Subject<boolean>();
+                const dropdownHoverSubject = new Subject<TextPlagiarismFileElement>();
                 fixture1 = TestBed.createComponent(SplitPaneHeaderComponent);
                 comp1 = fixture1.componentInstance;
                 fixture2 = TestBed.createComponent(SplitPaneHeaderComponent);
@@ -52,11 +55,15 @@ describe('SplitPaneHeaderComponent', () => {
                 comp1.studentLogin = 'ts10abc';
                 comp1.selectFile = new EventEmitter<string>();
                 comp1.fileSelectedSubject = fileSelectedSubject;
+                comp1.showFilesSubject = showFilesSubject;
+                comp1.dropdownHoverSubject = dropdownHoverSubject;
 
                 comp2.files = [];
                 comp2.studentLogin = 'ts20abc';
                 comp2.selectFile = new EventEmitter<string>();
                 comp2.fileSelectedSubject = fileSelectedSubject;
+                comp2.showFilesSubject = showFilesSubject;
+                comp2.dropdownHoverSubject = dropdownHoverSubject;
             });
     });
     it('resets the active file index on change', () => {
@@ -152,6 +159,10 @@ describe('SplitPaneHeaderComponent', () => {
         const selectedFile = { idx: idx, file: files[idx] };
         const lockFilesEnabled = true;
 
+        comp1.files = files;
+        comp2.files = files;
+        comp1.showFiles = true;
+        comp2.showFiles = true;
         comp1.isLockFilesEnabled = lockFilesEnabled;
         comp2.isLockFilesEnabled = lockFilesEnabled;
 
@@ -168,7 +179,7 @@ describe('SplitPaneHeaderComponent', () => {
         expect(handleFileSelectWithoutPropagationSpy).toHaveBeenCalledWith(selectedFile.file, selectedFile.idx);
     });
 
-    it('should not sync file selection when lockFilesEnabled true', () => {
+    it('should not sync file selection when lockFilesEnabled false', () => {
         const idx = 0;
         const selectedFile = { idx: idx, file: files[idx] };
         const lockFilesEnabled = false;
@@ -184,5 +195,71 @@ describe('SplitPaneHeaderComponent', () => {
         fixture2.detectChanges();
 
         expect(handleFileSelectWithoutPropagationSpy).not.toHaveBeenCalled();
+    });
+
+    it('should trigger dropdown hover subject on mouseenter on the first file element', () => {
+        comp1.files = files;
+        comp1.showFiles = true;
+
+        fixture1.detectChanges();
+
+        const fileList = fixture1.debugElement.query(By.css('.split-pane-header-files'));
+        expect(fileList).toBeTruthy();
+
+        const fileItems = fileList.queryAll(By.css('.split-pane-header-file'));
+        expect(fileItems.length).toBeGreaterThan(0);
+
+        const firstFileItem = fileItems[0];
+        const triggerMouseEnterSpy = jest.spyOn(comp1 as any, 'triggerMouseEnter');
+
+        firstFileItem.triggerEventHandler('mouseenter', null);
+        expect(triggerMouseEnterSpy).toHaveBeenCalledWith(comp1.files[0], 0);
+    });
+
+    it('should create dropdownHoverSubject on ngOnInit', () => {
+        // Arrange
+        const mockFile = files[0];
+        const mockIdx = 0;
+
+        comp1.files = files;
+        comp1.isLockFilesEnabled = true;
+        jest.spyOn(comp1 as any, 'handleDropdownHover');
+
+        comp1.ngOnInit();
+
+        comp1.dropdownHoverSubject.next({ file: mockFile, idx: mockIdx });
+
+        expect(comp1['handleDropdownHover']).toHaveBeenCalledWith(mockFile, mockIdx);
+        expect(comp1.hoveredFileIdx).toBe(mockIdx);
+    });
+
+    it('should update showFiles when hasFiles returns true', () => {
+        comp1.hasFiles = jest.fn().mockReturnValue(true);
+        const initialShowFiles = comp1.showFiles;
+
+        comp1.toggleShowFilesWithoutPropagation(true);
+
+        expect(comp1.showFiles).toBeTrue(initialShowFiles);
+    });
+
+    it('should not update showFiles when hasFiles returns false', () => {
+        comp1.hasFiles = jest.fn().mockReturnValue(false);
+        const initialShowFiles = comp1.showFiles;
+
+        comp1.toggleShowFilesWithoutPropagation(true);
+
+        expect(comp1.showFiles).toBe(initialShowFiles);
+    });
+
+    it('should set hoveredFileIdx to -1 if file does not match and getIndexOf returns -1', () => {
+        const mockFile = { file: 'testFile', hasMatch: true };
+        const mockIdx = files.length;
+
+        comp1.files = files;
+        jest.spyOn(comp1 as any, 'getIndexOf').mockReturnValue(-1);
+
+        (comp1 as any).handleDropdownHover(mockFile, mockIdx);
+
+        expect(comp1.hoveredFileIdx).toBe(-1);
     });
 });

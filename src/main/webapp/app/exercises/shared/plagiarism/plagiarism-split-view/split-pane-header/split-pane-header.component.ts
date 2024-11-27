@@ -58,7 +58,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
         let index;
         if (this.files[idx]?.file === file.file) {
             this.handleFileSelectWithoutPropagation(file, idx);
-        } else if ((index = this.getIndexOf(file)) > 0) {
+        } else if ((index = this.getIndexOf(file)) >= 0) {
             this.handleFileSelectWithoutPropagation(file, index);
         } else {
             this.showFiles = false;
@@ -93,7 +93,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
         let index;
         if (this.files[idx]?.file === file.file) {
             this.hoveredFileIdx = idx;
-        } else if ((index = this.getIndexOf(file)) > 0) {
+        } else if ((index = this.getIndexOf(file)) >= 0) {
             this.hoveredFileIdx = index;
         } else this.hoveredFileIdx = -1;
     }

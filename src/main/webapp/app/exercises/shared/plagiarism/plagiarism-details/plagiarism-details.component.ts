@@ -18,9 +18,4 @@ export class PlagiarismDetailsComponent {
      * Subject to be passed into PlagiarismSplitViewComponent to control the split view.
      */
     splitControlSubject: Subject<string> = new Subject<string>();
-
-    /**
-     * Boolean to determine whether file locking is enabled.
-     */
-    isLockFilesEnabled: boolean = false;
 }
