@@ -108,13 +108,19 @@ public class SharedQueueManagementService {
         }
     }
 
+    /**
+     * @return a copy of the queued build jobs as ArrayList
+     */
     public List<BuildJobQueueItem> getQueuedJobs() {
-        // NOTE: we should not use streams with IQueue directly, because it can be unstable, when many items are added at the same time
+        // NOTE: we should not use streams with IQueue directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return new ArrayList<>(queue);
     }
 
+    /**
+     * @return a copy of the processing jobs as ArrayList
+     */
     public List<BuildJobQueueItem> getProcessingJobs() {
-        // NOTE: we should not use streams with IMap, because it can be unstable
+        // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return new ArrayList<>(processingJobs.values());
     }
 
@@ -135,7 +141,7 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildAgentInformation> getBuildAgentInformation() {
-        // NOTE: we should not use streams with IMap, because it can be unstable
+        // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return new ArrayList<>(buildAgentInformation.values());
     }
 
