@@ -1,4 +1,5 @@
-import { HttpClientModule, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -43,9 +44,11 @@ describe('ExerciseGroupUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientModule, FormsModule, NgbAlertsMocksModule],
+            imports: [FormsModule, NgbAlertsMocksModule],
             declarations: [ExerciseGroupUpdateComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
