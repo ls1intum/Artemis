@@ -1,4 +1,4 @@
-import { Component, OnInit, input } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -9,17 +9,27 @@ import { ActivatedRoute } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/utils/navigation.utils';
 import { Course } from 'app/entities/course.model';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 type NameToValueMap = { [name: string]: any };
 
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
     templateUrl: './exam-scores-average-scores-graph.component.html',
+    standalone: true,
+    imports: [TranslateDirective, BarChartModule, ArtemisSharedCommonModule],
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private activatedRoute = inject(ActivatedRoute);
+    private service = inject(StatisticsService);
+    private translateService = inject(TranslateService);
+    private localeConversionService = inject(LocaleConversionService);
+
     averageScores = input.required<AggregatedExerciseGroupResult>();
     course = input.required<Course>();
 
@@ -38,14 +48,6 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     } as Color;
     xScaleMax = 100;
     lookup: NameToValueMap = {};
-
-    constructor(
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private activatedRoute: ActivatedRoute,
-        private service: StatisticsService,
-        private translateService: TranslateService,
-        private localeConversionService: LocaleConversionService,
-    ) {}
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
