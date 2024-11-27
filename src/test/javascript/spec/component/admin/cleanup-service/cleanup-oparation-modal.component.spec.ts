@@ -60,13 +60,14 @@ describe('CleanupOperationModalComponent', () => {
         const mockCounts: CleanupCount = { totalCount: 10 };
         jest.spyOn(cleanupService, 'countOrphans').mockReturnValue(of(new HttpResponse({ body: mockCounts })));
 
-        comp.operation = {
+        const operation = {
             name: 'deleteOrphans',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
             datesValid: signal(true),
         };
+        fixture.componentRef.setInput('operation', operation);
         fixture.detectChanges();
 
         expect(cleanupService.countOrphans).toHaveBeenCalledOnce();
@@ -82,13 +83,14 @@ describe('CleanupOperationModalComponent', () => {
         jest.spyOn(cleanupService, 'deleteOrphans').mockReturnValue(of(mockResponse));
         jest.spyOn(cleanupService, 'countOrphans').mockReturnValue(of(new HttpResponse({ body: mockCounts })));
 
-        comp.operation = {
+        const operation = {
             name: 'deleteOrphans',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
             datesValid: signal(true),
         };
+        fixture.componentRef.setInput('operation', operation);
 
         comp.executeCleanupOperation();
 
@@ -113,13 +115,14 @@ describe('CleanupOperationModalComponent', () => {
             errorMessage = error;
         });
 
-        comp.operation = {
+        const operation = {
             name: 'deleteOrphans',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
             datesValid: signal(true),
         };
+        fixture.componentRef.setInput('operation', operation);
 
         comp.executeCleanupOperation();
 
