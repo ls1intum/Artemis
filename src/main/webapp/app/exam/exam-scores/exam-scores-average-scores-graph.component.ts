@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit, input } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -20,8 +20,8 @@ type NameToValueMap = { [name: string]: any };
     templateUrl: './exam-scores-average-scores-graph.component.html',
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
-    @Input() averageScores: AggregatedExerciseGroupResult;
-    @Input() course: Course;
+    averageScores = input.required<AggregatedExerciseGroupResult>();
+    course = input.required<Course>();
 
     courseId: number;
     examId: number;
@@ -56,12 +56,12 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     private initializeChart(): void {
-        this.lookup[this.averageScores.title] = { absoluteValue: this.averageScores.averagePoints! };
-        const exerciseGroupAverage = this.averageScores.averagePercentage ? this.averageScores.averagePercentage : 0;
-        this.ngxData.push({ name: this.averageScores.title, value: exerciseGroupAverage });
+        this.lookup[this.averageScores().title] = { absoluteValue: this.averageScores().averagePoints! };
+        const exerciseGroupAverage = this.averageScores().averagePercentage ?? 0;
+        this.ngxData.push({ name: this.averageScores().title, value: exerciseGroupAverage });
         this.ngxColor.domain.push(this.determineColor(true, exerciseGroupAverage));
         this.xScaleMax = this.xScaleMax > exerciseGroupAverage ? this.xScaleMax : exerciseGroupAverage;
-        this.averageScores.exerciseResults.forEach((exercise) => {
+        this.averageScores().exerciseResults.forEach((exercise) => {
             const exerciseAverage = exercise.averagePercentage ?? 0;
             this.xScaleMax = this.xScaleMax > exerciseAverage ? this.xScaleMax : exerciseAverage;
             this.ngxData.push({ name: exercise.exerciseId + ' ' + exercise.title, value: exerciseAverage });
@@ -77,14 +77,14 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     roundAndPerformLocalConversion(points: number | undefined) {
-        return this.localeConversionService.toLocaleString(roundValueSpecifiedByCourseSettings(points, this.course), this.course!.accuracyOfScores!);
+        return this.localeConversionService.toLocaleString(roundValueSpecifiedByCourseSettings(points, this.course()), this.course()!.accuracyOfScores!);
     }
 
     /**
      * We navigate to the exercise scores page when the user clicks on a data point
      */
     navigateToExercise(exerciseId: number, exerciseType: ExerciseType) {
-        navigateToExamExercise(this.navigationUtilService, this.courseId, this.examId, this.averageScores.exerciseGroupId, exerciseType, exerciseId, 'scores');
+        navigateToExamExercise(this.navigationUtilService, this.courseId, this.examId, this.averageScores().exerciseGroupId, exerciseType, exerciseId, 'scores');
     }
 
     /**
