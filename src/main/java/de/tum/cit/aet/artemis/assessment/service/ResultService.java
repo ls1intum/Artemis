@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -65,6 +66,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
+import de.tum.cit.aet.artemis.modeling.service.compass.strategy.NameSimilarity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -636,19 +638,24 @@ public class ResultService {
                     StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
                     maxOccurrence, filterErrorCategories, Pageable.unpaged());
 
+            // Fetch all feedback details
+            List<FeedbackDetailDTO> allFeedbackDetails = feedbackDetailPage.getContent();
+
+            // Apply Levenshtein-based grouping and aggregation
+            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingLevenshtein(allFeedbackDetails, 0.9);
+
             // Apply manual pagination
             int page = data.getPage();
             int pageSize = data.getPageSize();
             Comparator<FeedbackDetailDTO> comparator = getComparatorForFeedbackDetails(data);
-            List<FeedbackDetailDTO> processedDetailsPreSort = new ArrayList<>(feedbackDetailPage.getContent());
+            List<FeedbackDetailDTO> processedDetailsPreSort = new ArrayList<>(aggregatedFeedbackDetails);
             processedDetailsPreSort.sort(comparator);
             int start = Math.max(0, (page - 1) * pageSize);
             int end = Math.min(start + pageSize, processedDetailsPreSort.size());
             processedDetails = processedDetailsPreSort.subList(start, end);
-
+            processedDetails = processedDetails.stream().map(detail -> new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailText(),
+                    detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
             totalPages = (int) Math.ceil((double) processedDetailsPreSort.size() / pageSize);
-
-            // Convert to a modifiable list
         }
 
         // 11. Predefined error categories available for filtering on the client side
@@ -668,13 +675,49 @@ public class ResultService {
         return search.getSortingOrder() == SortingOrder.ASCENDING ? comparator : comparator.reversed();
     }
 
-    private List<FeedbackDetailDTO> paginateFeedbackDetails(List<FeedbackDetailDTO> feedbackDetails, int page, int pageSize) {
-        int start = Math.max(0, (page - 1) * pageSize);
-        int end = Math.min(start + pageSize, feedbackDetails.size());
-        List<FeedbackDetailDTO> paginatedFeedbackDetails = feedbackDetails.subList(start, end);
+    private List<FeedbackDetailDTO> aggregateUsingLevenshtein(List<FeedbackDetailDTO> feedbackDetails, double similarityThreshold) {
+        List<FeedbackDetailDTO> aggregatedList = new ArrayList<>();
+        Set<Integer> processedIndices = new HashSet<>();
 
-        int totalPages = (int) Math.ceil((double) feedbackDetails.size() / pageSize);
-        return paginatedFeedbackDetails;
+        for (int i = 0; i < feedbackDetails.size(); i++) {
+            if (processedIndices.contains(i)) {
+                continue; // Skip already aggregated feedback
+            }
+
+            FeedbackDetailDTO base = feedbackDetails.get(i);
+            List<String> aggregatedTexts = new ArrayList<>();
+            aggregatedTexts.add(base.detailText());
+            long totalCount = base.count();
+
+            for (int j = i + 1; j < feedbackDetails.size(); j++) {
+                if (processedIndices.contains(j)) {
+                    continue;
+                }
+
+                FeedbackDetailDTO compare = feedbackDetails.get(j);
+
+                // Ensure feedbacks have the same testCaseName and taskName
+                if (base.testCaseName().equals(compare.testCaseName()) && base.taskName().equals(compare.taskName())) {
+                    double similarity = NameSimilarity.levenshteinSimilarity(base.detailText(), compare.detailText());
+
+                    if (similarity > similarityThreshold) {
+                        // Merge the feedbacks
+                        aggregatedTexts.add(compare.detailText());
+                        totalCount += compare.count();
+                        processedIndices.add(j);
+                    }
+                }
+            }
+
+            // Add aggregated feedback entry
+            aggregatedList.add(new FeedbackDetailDTO(totalCount, 0, // Relative count will be calculated later
+                    String.join(", ", aggregatedTexts), // Join all similar feedback texts
+                    base.testCaseName(), base.taskName(), base.errorCategory()));
+
+            processedIndices.add(i);
+        }
+
+        return aggregatedList;
     }
 
     /**
