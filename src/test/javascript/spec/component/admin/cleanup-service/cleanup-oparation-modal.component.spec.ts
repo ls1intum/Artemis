@@ -4,7 +4,7 @@ import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
-import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
+import { DataCleanupService, PlagiarismComparisonCleanupCountDTO } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { signal } from '@angular/core';
@@ -19,14 +19,8 @@ describe('CleanupOperationModalComponent', () => {
     let activeModal: NgbActiveModal;
 
     const mockCleanupService = {
-        deleteOrphans: jest.fn(),
         deletePlagiarismComparisons: jest.fn(),
-        deleteNonRatedResults: jest.fn(),
-        deleteOldRatedResults: jest.fn(),
-        countOrphans: jest.fn(),
         countPlagiarismComparisons: jest.fn(),
-        countNonRatedResults: jest.fn(),
-        countOldRatedResults: jest.fn(),
     };
 
     const mockActiveModal = {
@@ -57,11 +51,17 @@ describe('CleanupOperationModalComponent', () => {
     });
 
     it('should initialize and fetch counts on init', () => {
-        const mockCounts: CleanupCount = { totalCount: 10 };
-        jest.spyOn(cleanupService, 'countOrphans').mockReturnValue(of(new HttpResponse({ body: mockCounts })));
+        const mockCounts: PlagiarismComparisonCleanupCountDTO = {
+            totalCount: 10,
+            plagiarismComparison: 5,
+            plagiarismElements: 3,
+            plagiarismSubmissions: 1,
+            plagiarismMatches: 1,
+        };
+        jest.spyOn(cleanupService, 'countPlagiarismComparisons').mockReturnValue(of(new HttpResponse({ body: mockCounts })));
 
         const operation = {
-            name: 'deleteOrphans',
+            name: 'deletePlagiarismComparisons',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
@@ -70,21 +70,27 @@ describe('CleanupOperationModalComponent', () => {
         fixture.componentRef.setInput('operation', operation);
         fixture.detectChanges();
 
-        expect(cleanupService.countOrphans).toHaveBeenCalledOnce();
+        expect(cleanupService.countPlagiarismComparisons).toHaveBeenCalledOnce();
         expect(comp.counts).toEqual(mockCounts);
     });
 
     it('should execute cleanup operation successfully', () => {
         const mockResponse: HttpResponse<any> = new HttpResponse({
-            body: { executionDate: dayjs(), jobType: 'deleteOrphans' },
+            body: { executionDate: dayjs(), jobType: 'deletePlagiarismComparisons' },
         });
 
-        const mockCounts: CleanupCount = { totalCount: 5 };
-        jest.spyOn(cleanupService, 'deleteOrphans').mockReturnValue(of(mockResponse));
-        jest.spyOn(cleanupService, 'countOrphans').mockReturnValue(of(new HttpResponse({ body: mockCounts })));
+        const mockCounts: PlagiarismComparisonCleanupCountDTO = {
+            totalCount: 5,
+            plagiarismComparison: 2,
+            plagiarismElements: 1,
+            plagiarismSubmissions: 1,
+            plagiarismMatches: 1,
+        };
+        jest.spyOn(cleanupService, 'deletePlagiarismComparisons').mockReturnValue(of(mockResponse));
+        jest.spyOn(cleanupService, 'countPlagiarismComparisons').mockReturnValue(of(new HttpResponse({ body: mockCounts })));
 
         const operation = {
-            name: 'deleteOrphans',
+            name: 'deletePlagiarismComparisons',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
@@ -94,8 +100,8 @@ describe('CleanupOperationModalComponent', () => {
 
         comp.executeCleanupOperation();
 
-        expect(cleanupService.deleteOrphans).toHaveBeenCalledOnce();
-        expect(cleanupService.countOrphans).toHaveBeenCalledOnce();
+        expect(cleanupService.deletePlagiarismComparisons).toHaveBeenCalledOnce();
+        expect(cleanupService.countPlagiarismComparisons).toHaveBeenCalledOnce();
         expect(comp.operationExecuted).toBeTrue();
         expect(comp.counts).toEqual(mockCounts);
     });
@@ -105,10 +111,10 @@ describe('CleanupOperationModalComponent', () => {
             status: 500,
             statusText: 'Internal Server Error',
             error: 'Some error message',
-            url: 'https://artemis.ase.in.tum.de/api/admin/orphans', // Adding a mock URL
+            url: 'https://artemis.ase.in.tum.de/api/admin/plagiarism-comparisons', // Mock URL
         });
 
-        jest.spyOn(cleanupService, 'deleteOrphans').mockReturnValue(throwError(() => errorResponse));
+        jest.spyOn(cleanupService, 'deletePlagiarismComparisons').mockReturnValue(throwError(() => errorResponse));
 
         let errorMessage: string | undefined;
         comp.dialogError.subscribe((error) => {
@@ -116,7 +122,7 @@ describe('CleanupOperationModalComponent', () => {
         });
 
         const operation = {
-            name: 'deleteOrphans',
+            name: 'deletePlagiarismComparisons',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
@@ -126,8 +132,8 @@ describe('CleanupOperationModalComponent', () => {
 
         comp.executeCleanupOperation();
 
-        expect(cleanupService.deleteOrphans).toHaveBeenCalledOnce();
-        expect(errorMessage).toBe('Http failure response for https://artemis.ase.in.tum.de/api/admin/orphans: 500 Internal Server Error');
+        expect(cleanupService.deletePlagiarismComparisons).toHaveBeenCalledOnce();
+        expect(errorMessage).toBe('Http failure response for https://artemis.ase.in.tum.de/api/admin/plagiarism-comparisons: 500 Internal Server Error');
     });
 
     it('should close the modal', () => {
@@ -137,11 +143,13 @@ describe('CleanupOperationModalComponent', () => {
     });
 
     it('should compute hasEntriesToDelete correctly', () => {
-        comp.counts = { totalCount: 0 };
+        let mockCounts: PlagiarismComparisonCleanupCountDTO = { totalCount: 0, plagiarismComparison: 0, plagiarismElements: 0, plagiarismSubmissions: 0, plagiarismMatches: 0 };
+        comp.counts = mockCounts;
 
         expect(comp.hasEntriesToDelete).toBeFalse();
 
-        comp.counts = { totalCount: 5 };
+        mockCounts = { totalCount: 5, plagiarismComparison: 2, plagiarismElements: 1, plagiarismSubmissions: 1, plagiarismMatches: 1 };
+        comp.counts = mockCounts;
 
         expect(comp.hasEntriesToDelete).toBeTrue();
     });
