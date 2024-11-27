@@ -30,7 +30,7 @@
         },
         "modal": {
             "affectedEntities": "Diese Operation wird die folgenden Entitäten löschen:",
-            "noEntriesToDelete": "Keine Einträge zum Löschen vorhanden."
+            "noEntriesToDelete": "Keine Einträge zum Löschen vorhanden"
         },
         "notRunYet": "Diese Operation wurde noch nicht ausgeführt",
         "error": {

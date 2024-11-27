@@ -30,7 +30,7 @@
         },
         "modal": {
             "affectedEntities": "This operation will delete the following entities:",
-            "noEntriesToDelete": "No entries to delete."
+            "noEntriesToDelete": "No entries to delete"
         },
         "notRunYet": "This operation has not been run yet",
         "error": {
