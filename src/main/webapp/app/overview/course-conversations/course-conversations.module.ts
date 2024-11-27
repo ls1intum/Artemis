@@ -31,6 +31,8 @@ import { CourseConversationsCodeOfConductComponent } from 'app/overview/course-c
 import { CourseWideSearchComponent } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { SavedPostsComponent } from 'app/overview/course-conversations/saved-posts/saved-posts.component';
+import { PostingSummaryComponent } from 'app/overview/course-conversations/posting-summary/posting-summary.component';
 import { ForwardMessageDialogComponent } from 'app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -83,6 +85,8 @@ const routes: Routes = [
         OneToOneChatCreateDialogComponent,
         GroupChatCreateDialogComponent,
         CourseWideSearchComponent,
+        SavedPostsComponent,
+        PostingSummaryComponent,
         ForwardMessageDialogComponent,
     ],
     providers: [MetisService],

@@ -132,15 +132,34 @@ describe('AnswerPostReactionsBarComponent', () => {
         expect(getDeleteButton()).not.toBeNull();
     });
 
-    it('should display edit and delete options to instructor if posting is in course-wide channel from a student', () => {
+    it('should display the delete option to instructor if posting is in course-wide channel from a student', () => {
         metisServiceUserIsAtLeastInstructorMock.mockReturnValue(true);
         metisServiceUserPostingAuthorMock.mockReturnValue(false);
         component.posting = { ...metisResolvingAnswerPostUser1, post: { ...metisPostInChannel } };
         component.posting.authorRole = UserRole.USER;
         component.ngOnInit();
         fixture.detectChanges();
-        expect(getEditButton()).not.toBeNull();
         expect(getDeleteButton()).not.toBeNull();
+    });
+
+    it('should not display the edit option to user (even instructor) if s/he is not the author of posting', () => {
+        metisServiceUserIsAtLeastInstructorMock.mockReturnValue(true);
+        metisServiceUserPostingAuthorMock.mockReturnValue(false);
+
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(getEditButton()).toBeNull();
+    });
+
+    it('should display the edit option to user if s/he is the author of posting', () => {
+        metisServiceUserIsAtLeastInstructorMock.mockReturnValue(false);
+        metisServiceUserPostingAuthorMock.mockReturnValue(true);
+
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(getEditButton()).not.toBeNull();
     });
 
     it('should not display edit and delete options to tutor if posting is in course-wide channel from a student', () => {

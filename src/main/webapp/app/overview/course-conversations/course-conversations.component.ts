@@ -10,7 +10,21 @@ import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { PageType, SortDirection } from 'app/shared/metis/metis.util';
-import { faBan, faComment, faComments, faFile, faFilter, faGraduationCap, faHeart, faList, faMessage, faPlus, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBan,
+    faBookmark,
+    faComment,
+    faComments,
+    faFile,
+    faFilter,
+    faGraduationCap,
+    faHeart,
+    faList,
+    faMessage,
+    faPlus,
+    faSearch,
+    faTimes,
+} from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 import { AccordionGroups, ChannelAccordionShowAdd, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
@@ -25,8 +39,8 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
-import { Posting } from 'app/entities/metis/posting.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -35,6 +49,7 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     lectureChannels: { entityData: [] },
     examChannels: { entityData: [] },
     hiddenChannels: { entityData: [] },
+    savedPosts: { entityData: [] },
 };
 
 const CHANNEL_TYPE_SHOW_ADD_OPTION: ChannelAccordionShowAdd = {
@@ -46,6 +61,7 @@ const CHANNEL_TYPE_SHOW_ADD_OPTION: ChannelAccordionShowAdd = {
     favoriteChannels: false,
     lectureChannels: true,
     hiddenChannels: false,
+    savedPosts: false,
 };
 
 const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
@@ -57,6 +73,7 @@ const CHANNEL_TYPE_ICON: ChannelTypeIcons = {
     favoriteChannels: faHeart,
     lectureChannels: faFile,
     hiddenChannels: faBan,
+    savedPosts: faBookmark,
 };
 
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
@@ -68,6 +85,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     favoriteChannels: false,
     lectureChannels: true,
     hiddenChannels: true,
+    savedPosts: true,
 };
 
 const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
@@ -79,6 +97,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     favoriteChannels: true,
     lectureChannels: false,
     hiddenChannels: false,
+    savedPosts: true,
 };
 
 @Component({
@@ -114,6 +133,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isMobile = false;
     focusPostId: number | undefined = undefined;
     openThreadOnFocus = false;
+    selectedSavedPostStatus: null | SavedPostStatus = null;
 
     readonly CHANNEL_TYPE_SHOW_ADD_OPTION = CHANNEL_TYPE_SHOW_ADD_OPTION;
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
@@ -256,9 +276,17 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     subscribeToQueryParameter() {
         this.activatedRoute.queryParams.pipe(take(1), takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
             if (queryParams.conversationId) {
-                this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
-
-                this.closeSidebarOnMobile();
+                if (
+                    isNaN(Number(queryParams.conversationId)) &&
+                    Object.values(SavedPostStatusMap)
+                        .map((s) => s.toString())
+                        .includes(queryParams.conversationId)
+                ) {
+                    this.selectedSavedPostStatus = Posting.mapToStatus(queryParams.conversationId as SavedPostStatusMap);
+                } else {
+                    this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
+                    this.closeSidebarOnMobile();
+                }
             }
             if (queryParams.focusPostId) {
                 this.focusPostId = Number(queryParams.focusPostId);
@@ -276,11 +304,22 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         });
     }
 
+    onNavigateToPost(post: Posting) {
+        if (post.referencePostId === undefined || post.conversation?.id === undefined) {
+            return;
+        }
+
+        this.focusPostId = post.referencePostId;
+        this.openThreadOnFocus = (post.postingType as PostingType) === PostingType.ANSWER;
+        this.metisConversationService.setActiveConversation(post.conversation!.id!);
+        this.changeDetector.detectChanges();
+    }
+
     updateQueryParameters() {
         this.router.navigate([], {
             relativeTo: this.activatedRoute,
             queryParams: {
-                conversationId: this.activeConversation?.id,
+                conversationId: this.activeConversation?.id ?? (this.selectedSavedPostStatus !== null ? Posting.statusToMap(this.selectedSavedPostStatus) : undefined),
             },
             replaceUrl: true,
         });
@@ -359,6 +398,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.courseSidebarService.openSidebar();
             }
         }
+        this.selectedSavedPostStatus = null;
         this.metisConversationService.setActiveConversation(undefined);
         this.activeConversation = undefined;
         this.updateQueryParameters();
@@ -388,12 +428,29 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         };
     }
 
-    onConversationSelected(conversationId: number) {
+    onConversationSelected(conversationId: number | string) {
         this.closeSidebarOnMobile();
         this.focusPostId = undefined;
         this.openThreadOnFocus = false;
-        conversationId = +conversationId;
-        this.metisConversationService.setActiveConversation(conversationId);
+        if (typeof conversationId === 'string') {
+            if (
+                Object.values(SavedPostStatusMap)
+                    .map((s) => s.toString())
+                    .includes(conversationId)
+            ) {
+                this.selectedSavedPostStatus = Posting.mapToStatus(conversationId as SavedPostStatusMap);
+                this.postInThread = undefined;
+                this.metisConversationService.setActiveConversation(undefined);
+                this.activeConversation = undefined;
+                this.updateQueryParameters();
+                this.metisService.resetCachedPosts();
+                this.changeDetector.detectChanges();
+            }
+        } else {
+            conversationId = +conversationId;
+            this.selectedSavedPostStatus = null;
+            this.metisConversationService.setActiveConversation(conversationId);
+        }
     }
 
     toggleSidebar() {

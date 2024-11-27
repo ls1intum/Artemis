@@ -21,7 +21,7 @@ import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBullhorn, faComments, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faBullhorn, faCheckSquare, faComments, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
@@ -80,7 +80,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     contextInformation: ContextInformation;
     readonly PageType = PageType;
     readonly DisplayPriority = DisplayPriority;
-    mayEditOrDelete: boolean = false;
+    mayEdit: boolean = false;
+    mayDelete: boolean = false;
     canPin: boolean = false;
     originalPostDetails: Post | AnswerPost | undefined = undefined;
     readonly onNavigateToPost = output<Posting>();
@@ -92,6 +93,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     readonly faThumbtack = faThumbtack;
+    readonly faCheckSquare = faCheckSquare;
+    readonly faBookmark = faBookmark;
     readonly faShare = faShare;
 
     isConsecutive = input<boolean>(false);
@@ -122,8 +125,12 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         return this.posting.displayPriority === DisplayPriority.PINNED;
     }
 
-    onMayEditOrDelete(value: boolean) {
-        this.mayEditOrDelete = value;
+    onMayEdit(value: boolean) {
+        this.mayEdit = value;
+    }
+
+    onMayDelete(value: boolean) {
+        this.mayDelete = value;
     }
 
     onCanPin(value: boolean) {
@@ -189,6 +196,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.sortAnswerPosts();
+        this.assignPostingToPost();
         this.fetchForwardedMessages();
     }
 
@@ -220,6 +228,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
         this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
         this.sortAnswerPosts();
+        this.assignPostingToPost();
     }
 
     /**
@@ -309,6 +318,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                     },
                 });
             }
+        }
+    }
+
+    private assignPostingToPost() {
+        // This is needed because otherwise instanceof returns 'object'.
+        if (this.posting && !(this.posting instanceof Post)) {
+            this.posting = Object.assign(new Post(), this.posting);
         }
     }
 

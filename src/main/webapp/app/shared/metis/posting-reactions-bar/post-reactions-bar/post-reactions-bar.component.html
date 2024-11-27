@@ -99,7 +99,7 @@
             </ng-container>
         }
 
-        @if (!isEmojiCount && mayEditOrDelete) {
+        @if (!isEmojiCount && mayEdit) {
             <button
                 class="reaction-button clickable px-2 fs-small edit"
                 [disabled]="readOnlyMode"
@@ -110,7 +110,7 @@
             </button>
         }
         <jhi-post-create-edit-modal #createEditModal [posting]="posting" [isCommunicationPage]="isCommunicationPage" (isModalOpen)="isModalOpen.emit()" />
-        @if (!isEmojiCount && mayEditOrDelete) {
+        @if (!isEmojiCount && mayDelete) {
             <button class="reaction-button clickable fs-small">
                 <jhi-confirm-icon
                     iconSize="sm"
@@ -129,6 +129,15 @@
                 (click)="canPin && togglePin()"
             >
                 <jhi-emoji class="fs-x-small" [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'" />
+            </button>
+        }
+        @if (!isEmojiCount) {
+            <button
+                class="reaction-button clickable px-2 fs-small bookmark"
+                (click)="bookmarkPosting()"
+                [ngbTooltip]="(posting.isSaved ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost') | artemisTranslate"
+            >
+                <fa-icon [icon]="posting.isSaved ? faBookmark : farBookmark" cdkOverlayOrigin></fa-icon>
             </button>
         }
         @if (!isEmojiCount) {

@@ -4,6 +4,8 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PLACEHOLDER_USER_REACTED } from 'app/shared/pipes/reacting-users-on-posting.pipe';
+import { faBookmark } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { map } from 'rxjs/internal/operators/map';
@@ -71,6 +73,11 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     isAuthorOfPosting: boolean;
     @Output() isModalOpen = new EventEmitter<void>();
     isDeleteEvent = output<boolean>();
+    readonly onBookmarkClicked = output<void>();
+
+    // Icons
+    readonly farBookmark = farBookmark;
+    readonly faBookmark = faBookmark;
 
     /*
      * icons (as svg paths) to be used as category preview image in emoji mart selector
@@ -280,5 +287,9 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
             };
             return { ...metaDataMap, [reaction.emojiId!]: reactionMetaData };
         }, {});
+    }
+
+    protected bookmarkPosting() {
+        this.onBookmarkClicked.emit();
     }
 }
