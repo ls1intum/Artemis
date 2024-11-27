@@ -78,6 +78,10 @@ public class SharedQueueProcessingService {
 
     private final AtomicInteger numberOfPauseDueToDesync = new AtomicInteger(0);
 
+    // Counts how many times a build job was rejected by the thread pool. If this reaches 3, the build agent is paused and resumed to resync its threads.
+    // This counter is decremented if @localProcessingJobs is in sync with the running threads in the local thread pool. view checkSync()
+    private final AtomicInteger retryCount = new AtomicInteger(0);
+
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
 
     private final TaskScheduler taskScheduler;
@@ -302,7 +306,14 @@ public class SharedQueueProcessingService {
                 localProcessingJobs.decrementAndGet();
             }
 
-            updateLocalBuildAgentInformation();
+            // Pause and resume the build agent to check for desync
+            if (this.retryCount.incrementAndGet() > 3) {
+                log.error("Buildjob Rejected 3 times. Pausing and resuming the build agent to check for desync. Build agent: {}, address: {}", buildAgentShortName,
+                        hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+                pauseBuildAgent();
+                resumeBuildAgent();
+                this.retryCount.set(0);
+            }
         }
         finally {
             instanceLock.unlock();
@@ -588,8 +599,9 @@ public class SharedQueueProcessingService {
             log.error(
                     "Processing jobs in distributed map are not in sync with local map. Pausing build agent: {}, Member address: {}, Processing jobs in distributed map: {}, Processing jobs in local map: {}",
                     agentName, memberAddress, processingJobsIdInDistributedMap, processingJobsIdInLocalMap);
-            pauseBuildAgent();
             numberOfPauseDueToDesync.incrementAndGet();
+            pauseBuildAgent();
+            resumeBuildAgent();
             return;
         }
 
@@ -600,6 +612,7 @@ public class SharedQueueProcessingService {
                     agentName, memberAddress, localProcessingJobs.get(), processingJobsIdInLocalMap);
             numberOfPauseDueToDesync.incrementAndGet();
             pauseBuildAgent();
+            resumeBuildAgent();
             return;
         }
 
@@ -610,11 +623,16 @@ public class SharedQueueProcessingService {
                     agentName, memberAddress, localProcessingJobs.get(), localCIBuildExecutorService.getActiveCount());
             numberOfPauseDueToDesync.incrementAndGet();
             pauseBuildAgent();
+            resumeBuildAgent();
             return;
         }
-
         log.debug("Build agent is in sync: {}, Member address: {}, Local processing jobs count: {}, Running threads in local thread pool: {}", agentName, memberAddress,
                 localProcessingJobs.get(), localCIBuildExecutorService.getActiveCount());
+
+        // Decrease the retry count if the build agent is in sync
+        if (retryCount.get() > 0) {
+            retryCount.decrementAndGet();
+        }
     }
 
     /**
