@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
@@ -15,7 +15,7 @@ import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
     imports: [TranslateDirective, ArtemisSharedModule],
 })
 export class CleanupOperationModalComponent implements OnInit {
-    @Input() operation: CleanupOperation;
+    operation = input<CleanupOperation>;
     counts: CleanupCount;
     operationExecuted = false; // Tracks whether the operation has been executed.
 
@@ -55,7 +55,7 @@ export class CleanupOperationModalComponent implements OnInit {
     executeCleanupOperation(): void {
         const operationHandler = {
             next: () => {
-                this.operationExecuted = true; // Mark operation as executed.
+                this.operationExecuted = true;
                 this.updateCounts();
             },
             error: (error: any) => {
