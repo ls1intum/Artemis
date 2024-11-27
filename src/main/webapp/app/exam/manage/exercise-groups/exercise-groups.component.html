@@ -297,38 +297,38 @@
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)) {
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayShortName]="true" />
+                                                <jhi-programming-exercise-group-cell [programmingExercise]="exercise" [displayShortName]="true" />
                                             }
                                         </td>
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayRepositoryUri]="true" />
+                                                <jhi-programming-exercise-group-cell [programmingExercise]="exercise" [displayRepositoryUri]="true" />
                                             }
                                         </td>
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayTemplateUrls]="true" />
+                                                <jhi-programming-exercise-group-cell [programmingExercise]="exercise" [displayTemplateUrls]="true" />
                                             }
                                         </td>
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayEditorModus]="true" />
+                                                <jhi-programming-exercise-group-cell [programmingExercise]="exercise" [displayEditorModus]="true" />
                                             }
                                         </td>
                                     }
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.QUIZ)) {
                                         <td class="align-middle">
-                                            <jhi-quiz-exercise-group-cell [exercise]="exercise" />
+                                            <jhi-quiz-exercise-group-cell [quizExercise]="exercise" />
                                         </td>
                                     }
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING)) {
                                         <td class="align-middle">
-                                            <jhi-modeling-exercise-group-cell [exercise]="exercise" />
+                                            <jhi-modeling-exercise-group-cell [modelingExercise]="exercise" />
                                         </td>
                                     }
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.FILE_UPLOAD)) {
                                         <td class="align-middle">
-                                            <jhi-file-upload-exercise-group-cell [exercise]="exercise" />
+                                            <jhi-file-upload-exercise-group-cell [fileUploadExercise]="exercise" />
                                         </td>
                                     }
                                     @if (
