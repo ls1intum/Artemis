@@ -68,18 +68,53 @@ public class LocalCIQueueWebsocketService {
     }
 
     private void sendQueuedJobsOverWebsocket(long courseId) {
-        localCIWebsocketMessagingService.sendQueuedBuildJobs(sharedQueueManagementService.getQueuedJobs());
-        localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, sharedQueueManagementService.getQueuedJobsForCourse(courseId));
+        var queuedJobs = sharedQueueManagementService.getQueuedJobs();
+        removeUnnecessaryInformation(queuedJobs);
+        var queuedJobsForCourse = queuedJobs.stream().filter(job -> job.courseId() == courseId).toList();
+        localCIWebsocketMessagingService.sendQueuedBuildJobs(queuedJobs);
+        localCIWebsocketMessagingService.sendQueuedBuildJobsForCourse(courseId, queuedJobsForCourse);
+    }
+
+    /**
+     * Removes unnecessary information (e.g. repository info, build config, result) from the queued jobs before sending them over the websocket.
+     *
+     * @param queuedJobs the queued jobs
+     */
+    private static void removeUnnecessaryInformation(List<BuildJobQueueItem> queuedJobs) {
+        for (int i = 0; i < queuedJobs.size(); i++) {
+            var job = queuedJobs.get(i);
+            queuedJobs.set(i, new BuildJobQueueItem(job.id(), job.name(), job.buildAgent(), job.participationId(), job.courseId(), job.exerciseId(), job.retryCount(),
+                    job.priority(), job.status(), null, job.jobTimingInfo(), null, null));
+
+        }
+    }
+
+    /**
+     * Removes unnecessary information (e.g. recent build jobs, public ssh key, result) from the running jobs before sending them over the websocket.
+     *
+     * @param buildAgentSummary the build agent summary
+     */
+    private static void removeUnnecessaryInformationFromBuildAgentInformation(List<BuildAgentInformation> buildAgentSummary) {
+        for (int i = 0; i < buildAgentSummary.size(); i++) {
+            var agent = buildAgentSummary.get(i);
+            var runningJobs = agent.runningBuildJobs();
+            removeUnnecessaryInformation(runningJobs);
+            buildAgentSummary.set(i, new BuildAgentInformation(agent.buildAgent(), agent.maxNumberOfConcurrentBuildJobs(), agent.numberOfCurrentBuildJobs(), runningJobs,
+                    agent.status(), null, null));
+        }
     }
 
     private void sendProcessingJobsOverWebsocket(long courseId) {
-        localCIWebsocketMessagingService.sendRunningBuildJobs(sharedQueueManagementService.getProcessingJobs());
-        localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, sharedQueueManagementService.getProcessingJobsForCourse(courseId));
+        var processingJobs = sharedQueueManagementService.getProcessingJobs();
+        removeUnnecessaryInformation(processingJobs);
+        var processingJobsForCourse = processingJobs.stream().filter(job -> job.courseId() == courseId).toList();
+        localCIWebsocketMessagingService.sendRunningBuildJobs(processingJobs);
+        localCIWebsocketMessagingService.sendRunningBuildJobsForCourse(courseId, processingJobsForCourse);
     }
 
     private void sendBuildAgentSummaryOverWebsocket() {
-        // remove the recentBuildJobs from the build agent information before sending it over the websocket
         List<BuildAgentInformation> buildAgentSummary = sharedQueueManagementService.getBuildAgentInformationWithoutRecentBuildJobs();
+        removeUnnecessaryInformationFromBuildAgentInformation(buildAgentSummary);
         localCIWebsocketMessagingService.sendBuildAgentSummary(buildAgentSummary);
     }
 
