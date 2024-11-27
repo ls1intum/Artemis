@@ -1,4 +1,4 @@
-module artemis/test
+module artemis/testing/test
 
 go 1.23.2
 

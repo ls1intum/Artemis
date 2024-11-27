@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"artemis/${packageName}"
+	assignment "artemis/${packageName}"
 )
 
 type SortStrategy interface {
@@ -15,8 +15,8 @@ type SortStrategy interface {
 type Context interface {
 	GetDates() []time.Time
 	SetDates(dates []time.Time)
-	GetSortAlgorithm() ${packageName}.SortStrategy
-	SetSortAlgorithm(strategy ${packageName}.SortStrategy)
+	GetSortAlgorithm() assignment.SortStrategy
+	SetSortAlgorithm(strategy assignment.SortStrategy)
 }
 
 type Policy interface {
@@ -28,7 +28,7 @@ func TestBubbleSort(t *testing.T) {
 
 	dates, datesWithCorrectOrder := createTestDates()
 
-	var bubbleSortAny interface{} = ${packageName}.NewBubbleSort()
+	var bubbleSortAny interface{} = assignment.NewBubbleSort()
 	bubbleSort := bubbleSortAny.(SortStrategy)
 	bubbleSort.PerformSort(dates)
 
@@ -42,7 +42,7 @@ func TestMergeSort(t *testing.T) {
 
 	dates, datesWithCorrectOrder := createTestDates()
 
-	var mergeSortAny interface{} = ${packageName}.NewMergeSort()
+	var mergeSortAny interface{} = assignment.NewMergeSort()
 	mergeSort := mergeSortAny.(SortStrategy)
 	mergeSort.PerformSort(dates)
 
@@ -76,7 +76,7 @@ func TestUseMergeSortForBigList(t *testing.T) {
 		bigList = append(bigList, time.Unix(0, 0))
 	}
 	chosenSortStrategy := configurePolicyAndContext(bigList)
-	_, ok := chosenSortStrategy.(*${packageName}.MergeSort)
+	_, ok := chosenSortStrategy.(*assignment.MergeSort)
 	if !ok {
 		t.Fatal("The sort algorithm of Context was not MergeSort for a list with more than 10 dates.")
 	}
@@ -90,19 +90,19 @@ func TestUseBubbleSortForSmallList(t *testing.T) {
 		bigList = append(bigList, time.Unix(0, 0))
 	}
 	chosenSortStrategy := configurePolicyAndContext(bigList)
-	_, ok := chosenSortStrategy.(*${packageName}.BubbleSort)
+	_, ok := chosenSortStrategy.(*assignment.BubbleSort)
 	if !ok {
 		t.Fatal("The sort algorithm of Context was not BubbleSort for a list with less than 10 dates.")
 	}
 }
 
 func configurePolicyAndContext(dates []time.Time) interface{} {
-	contextOriginal := ${packageName}.NewContext()
+	contextOriginal := assignment.NewContext()
 	var contextAny interface{} = contextOriginal
 	context := contextAny.(Context)
 	context.SetDates(dates)
 
-	var policyAny interface{} = ${packageName}.NewPolicy(contextOriginal)
+	var policyAny interface{} = assignment.NewPolicy(contextOriginal)
 	policy := policyAny.(Policy)
 	policy.Configure()
 

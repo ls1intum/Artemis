@@ -8,10 +8,10 @@ First, we need to implement two sorting algorithms, in this case `MergeSort` and
 
 **You have the following tasks:**
 
-1. [task][Implement Bubble Sort](artemis/test/structural.TestBubbleSort,artemis/test/behavior.TestBubbleSort)
+1. [task][Implement Bubble Sort](artemis/testing/test/structural.TestBubbleSort,artemis/testing/test/behavior.TestBubbleSort)
 Implement the method `PerformSort([]time.Time)` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
 
-2. [task][Implement Merge Sort](artemis/test/structural.TestMergeSort,artemis/test/behavior.TestMergeSort)
+2. [task][Implement Merge Sort](artemis/testing/test/structural.TestMergeSort,artemis/testing/test/behavior.TestMergeSort)
 Implement the method `PerformSort([]time.Time)` in the class `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
 
 ### Part 2: Strategy Pattern
@@ -25,16 +25,16 @@ Implement exported getters and setters for the UML attributes and associations.
 1. SortStrategy Interface
 Create a `SortStrategy` interface and adjust the sorting algorithms so that they implement this interface.
 
-2. [task][Context Class](artemis/test/structural.TestContext)
+2. [task][Context Class](artemis/testing/test/structural.TestContext)
 Create and implement a `Context` class following the below class diagram
 
-3. [task][Context Policy](artemis/test/structural.TestPolicy)
+3. [task][Context Policy](artemis/testing/test/structural.TestPolicy)
 Create and implement a `Policy` class following the below class diagram with a simple configuration mechanism:
 
-    1. [task][Select MergeSort](artemis/test/behavior.TestUseMergeSortForBigList)
+    1. [task][Select MergeSort](artemis/testing/test/behavior.TestUseMergeSortForBigList)
     Select `MergeSort` when the slice has more than 10 dates.
 
-    2. [task][Select BubbleSort](artemis/test/behavior.TestUseBubbleSortForSmallList)
+    2. [task][Select BubbleSort](artemis/testing/test/behavior.TestUseBubbleSortForSmallList)
     Select `BubbleSort` when the slice has less or equal 10 dates.
 
 4. Complete the `Client` class which demonstrates switching between two strategies at runtime.
@@ -44,12 +44,12 @@ Create and implement a `Policy` class following the below class diagram with a s
 class Client {
 }
 
-class Policy ##testsColor(artemis/test/structural.TestPolicy) {
+class Policy ##testsColor(artemis/testing/test/structural.TestPolicy) {
   +NewPolicy() <<constructor>>
-  <color:testsColor(artemis/test/behavior.TestUseMergeSortForBigList,artemis/test/behavior.TestUseMergeSortForBigList)>+Configure()</color>
+  <color:testsColor(artemis/testing/test/behavior.TestUseMergeSortForBigList,artemis/testing/test/behavior.TestUseMergeSortForBigList)>+Configure()</color>
 }
 
-class Context ##testsColor(artemis/test/structural.TestContext) {
+class Context ##testsColor(artemis/testing/test/structural.TestContext) {
   -dates: []time.Time
   +NewContext() <<constructor>>
   +Sort()
@@ -59,20 +59,20 @@ interface SortStrategy {
   +PerformSort([]time.Time)
 }
 
-class BubbleSort ##testsColor(artemis/test/structural.TestBubbleSort) {
+class BubbleSort ##testsColor(artemis/testing/test/structural.TestBubbleSort) {
   +NewBubbleSort() <<constructor>>
-  <color:testsColor(artemis/test/behavior.TestBubbleSort)>+PerformSort([]time.Time)</color>
+  <color:testsColor(artemis/testing/test/behavior.TestBubbleSort)>+PerformSort([]time.Time)</color>
 }
 
-class MergeSort ##testsColor(artemis/test/structural.TestMergeSort) {
+class MergeSort ##testsColor(artemis/testing/test/structural.TestMergeSort) {
   +NewMergeSort() <<constructor>>
-  <color:testsColor(artemis/test/behavior.TestMergeSort)>+PerformSort([]time.Time)</color>
+  <color:testsColor(artemis/testing/test/behavior.TestMergeSort)>+PerformSort([]time.Time)</color>
 }
 
 MergeSort -up-|> SortStrategy
 BubbleSort -up-|> SortStrategy
-Policy -right-> Context #testsColor(artemis/test/structural.TestPolicy): context
-Context -right-> SortStrategy #testsColor(artemis/test/structural.TestContext): sortAlgorithm
+Policy -right-> Context #testsColor(artemis/testing/test/structural.TestPolicy): context
+Context -right-> SortStrategy #testsColor(artemis/testing/test/structural.TestContext): sortAlgorithm
 Client .down.> Policy
 Client .down.> Context
 
