@@ -8,6 +8,7 @@
             "memberAddress": "Agentenadresse",
             "maxNumberOfConcurrentBuildJobs": "Maximale Anzahl an parallelen Build Jobs",
             "numberOfCurrentBuildJobs": "Anzahl aktueller Build Jobs",
+            "numberOfDesyncWarning": "Anzahl Desync-Warnungen",
             "runningBuildJobs": "Laufende Build Jobs",
             "status": "Status",
             "recentBuildJobs": "Letzte Build Jobs",

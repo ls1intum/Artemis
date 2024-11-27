@@ -76,7 +76,7 @@ public class SharedQueueProcessingService {
 
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
-    private final AtomicInteger numberOfPauseDueToDesync = new AtomicInteger(0);
+    private final AtomicInteger numberOfDesyncWarning = new AtomicInteger(0);
 
     // Counts how many times a build job was rejected by the thread pool. If this reaches 3, the build agent is paused and resumed to resync its threads.
     // This counter is decremented if @localProcessingJobs is in sync with the running threads in the local thread pool. view checkSync()
@@ -391,7 +391,7 @@ public class SharedQueueProcessingService {
         BuildAgentDTO agentInfo = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
 
         return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs, publicSshKey,
-                numberOfPauseDueToDesync.get());
+                numberOfDesyncWarning.get());
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
@@ -599,9 +599,7 @@ public class SharedQueueProcessingService {
             log.error(
                     "Processing jobs in distributed map are not in sync with local map. Pausing build agent: {}, Member address: {}, Processing jobs in distributed map: {}, Processing jobs in local map: {}",
                     agentName, memberAddress, processingJobsIdInDistributedMap, processingJobsIdInLocalMap);
-            numberOfPauseDueToDesync.incrementAndGet();
-            pauseBuildAgent();
-            resumeBuildAgent();
+            numberOfDesyncWarning.incrementAndGet();
             return;
         }
 
@@ -610,9 +608,7 @@ public class SharedQueueProcessingService {
             log.error(
                     "Local processing jobs count is not in sync with processing jobs in local map. Pausing build agent: {}, Member address: {}, Local processing jobs count: {}, Processing jobs in local map: {}",
                     agentName, memberAddress, localProcessingJobs.get(), processingJobsIdInLocalMap);
-            numberOfPauseDueToDesync.incrementAndGet();
-            pauseBuildAgent();
-            resumeBuildAgent();
+            numberOfDesyncWarning.incrementAndGet();
             return;
         }
 
@@ -621,9 +617,7 @@ public class SharedQueueProcessingService {
             log.error(
                     "Local processing jobs count is not in sync with running threads in local thread pool. Pausing build agent: {}, Member address: {}, Local processing jobs count: {}, Running threads in local thread pool: {}",
                     agentName, memberAddress, localProcessingJobs.get(), localCIBuildExecutorService.getActiveCount());
-            numberOfPauseDueToDesync.incrementAndGet();
-            pauseBuildAgent();
-            resumeBuildAgent();
+            numberOfDesyncWarning.incrementAndGet();
             return;
         }
         log.debug("Build agent is in sync: {}, Member address: {}, Local processing jobs count: {}, Running threads in local thread pool: {}", agentName, memberAddress,

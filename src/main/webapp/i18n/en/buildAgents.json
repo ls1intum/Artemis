@@ -8,6 +8,7 @@
             "memberAddress": "Member Address",
             "maxNumberOfConcurrentBuildJobs": "Max # of concurrent build jobs",
             "numberOfCurrentBuildJobs": "# of current build jobs",
+            "numberOfDesyncWarning": "# of Desync warnings",
             "runningBuildJobs": "Running Build Jobs",
             "status": "Status",
             "recentBuildJobs": "Recent Build Jobs",

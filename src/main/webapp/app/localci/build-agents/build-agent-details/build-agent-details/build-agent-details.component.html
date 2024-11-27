@@ -59,11 +59,11 @@
                                 }
                             </ng-template>
                         </ngx-datatable-column>
-                        <ngx-datatable-column prop="numberOfPauseDueToDesync" [minWidth]="100">
+                        <ngx-datatable-column prop="numberOfDesyncWarning" [minWidth]="100">
                             <ng-template ngx-datatable-header-template>
-                                <span class="datatable-header-cell-wrapper" (click)="controls.onSort('numberOfPauseDueToDesync')">
-                                    <span class="datatable-header-cell-label bold sortable"># Of Pause due to Desync</span>
-                                    <fa-icon [icon]="controls.iconForSortPropField('numberOfPauseDueToDesync')" />
+                                <span class="datatable-header-cell-wrapper" (click)="controls.onSort('numberOfDesyncWarning')">
+                                    <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildAgents.numberOfDesyncWarning"></span>
+                                    <fa-icon [icon]="controls.iconForSortPropField('numberOfDesyncWarning')" />
                                 </span>
                             </ng-template>
                             <ng-template ngx-datatable-cell-template let-value="value">
