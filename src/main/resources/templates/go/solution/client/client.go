@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"artemis/${packageName}"
+	implementation "artemis/${packageName}"
 )
 
 // Constants define iteration and random date generation bounds.
@@ -18,8 +18,8 @@ const (
 // main demonstrates the sorting process.
 func main() {
 	// Init Context and Policy
-	context := ${packageName}.NewContext()
-	policy := ${packageName}.NewPolicy(context)
+	context := implementation.NewContext()
+	policy := implementation.NewPolicy(context)
 
 	// Run multiple times to simulate different sorting strategies
 	for i := 0; i < Iterations; i++ {

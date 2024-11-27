@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"artemis/${packageName}"
+	assignment "artemis/${packageName}"
 )
 
 type SortStrategy interface {
@@ -14,8 +14,8 @@ type SortStrategy interface {
 type Context interface {
 	GetDates() []time.Time
 	SetDates(dates []time.Time)
-	GetSortAlgorithm() ${packageName}.SortStrategy
-	SetSortAlgorithm(strategy ${packageName}.SortStrategy)
+	GetSortAlgorithm() assignment.SortStrategy
+	SetSortAlgorithm(strategy assignment.SortStrategy)
 }
 
 type Policy interface {
@@ -25,7 +25,7 @@ type Policy interface {
 func TestBubbleSort(t *testing.T) {
 	defer handlePanic(t)
 
-	var bubbleSort interface{} = new(${packageName}.BubbleSort)
+	var bubbleSort interface{} = new(assignment.BubbleSort)
 
 	_ = bubbleSort.(SortStrategy)
 }
@@ -33,7 +33,7 @@ func TestBubbleSort(t *testing.T) {
 func TestMergeSort(t *testing.T) {
 	defer handlePanic(t)
 
-	var mergeSort interface{} = new(${packageName}.MergeSort)
+	var mergeSort interface{} = new(assignment.MergeSort)
 
 	_ = mergeSort.(SortStrategy)
 }
@@ -41,7 +41,7 @@ func TestMergeSort(t *testing.T) {
 func TestContext(t *testing.T) {
 	defer handlePanic(t)
 
-	var context interface{} = new(${packageName}.Context)
+	var context interface{} = new(assignment.Context)
 
 	_ = context.(Context)
 }
@@ -49,7 +49,7 @@ func TestContext(t *testing.T) {
 func TestPolicy(t *testing.T) {
 	defer handlePanic(t)
 
-	var policy interface{} = new(${packageName}.Policy)
+	var policy interface{} = new(assignment.Policy)
 
 	_ = policy.(Policy)
 }
