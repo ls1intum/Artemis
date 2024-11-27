@@ -6,6 +6,8 @@ import {
     HostListener,
     Inject,
     Input,
+    OnChanges,
+    OnInit,
     Output,
     Renderer2,
     ViewChild,
@@ -18,7 +20,7 @@ import dayjs from 'dayjs/esm';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faPencilAlt, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT } from '@angular/common';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 
@@ -34,7 +36,7 @@ import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reacti
         ]),
     ],
 })
-export class AnswerPostComponent extends PostingDirective<AnswerPost> {
+export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnChanges {
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() isLastAnswer: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
@@ -45,12 +47,15 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @Input()
     isReadOnlyMode = false;
     // ng-container to render answerPostCreateEditModalComponent
+
+    // Icons
+    faBookmark = faBookmark;
+
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     isConsecutive = input<boolean>(false);
     readonly faPencilAlt = faPencilAlt;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
-    readonly faThumbtack = faThumbtack;
     static activeDropdownPost: AnswerPostComponent | null = null;
     mayEdit: boolean = false;
     mayDelete: boolean = false;
@@ -62,6 +67,15 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
         @Inject(DOCUMENT) private document: Document,
     ) {
         super();
+    }
+
+    ngOnInit() {
+        super.ngOnInit();
+        this.assignPostingToAnswerPost();
+    }
+
+    ngOnChanges(): void {
+        this.assignPostingToAnswerPost();
     }
 
     get reactionsBar() {
@@ -131,6 +145,13 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> {
 
         if (this.dropdownPosition.x + dropdownWidth > screenWidth) {
             this.dropdownPosition.x = screenWidth - dropdownWidth - 10;
+        }
+    }
+
+    private assignPostingToAnswerPost() {
+        // This is needed because otherwise instanceof returns 'object'.
+        if (this.posting && !(this.posting instanceof AnswerPost)) {
+            this.posting = Object.assign(new AnswerPost(), this.posting);
         }
     }
 }
