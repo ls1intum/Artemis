@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { Exercise, getExerciseUrlSegment } from 'app/entities/exercise.model';
 import { Router } from '@angular/router';
 
@@ -7,22 +7,23 @@ import { Router } from '@angular/router';
     templateUrl: './plagiarism-cases-overview.component.html',
 })
 export class PlagiarismCasesOverviewComponent {
-    @Input() exercises: Exercise[];
-    @Input() plagiarismCasesPerExercise: Map<Exercise, number>;
-    @Input() plagiarismResultsPerExercise: Map<Exercise, number> = new Map<Exercise, number>();
-    @Input() anyPlagiarismCases = false;
-    @Input() courseId: number;
-    @Input() examId: number;
-    constructor(private router: Router) {}
+    private router = inject(Router);
+
+    exercises = input.required<Exercise[]>();
+    plagiarismCasesPerExercise = input<Map<Exercise, number>>();
+    plagiarismResultsPerExercise = input.required<Map<Exercise, number>>();
+    anyPlagiarismCases = input(false);
+    courseId = input.required<number>();
+    examId = input.required<number>();
 
     goToPlagiarismDetection(exercise: Exercise) {
         const exerciseGroupId = exercise.exerciseGroup?.id;
         const exerciseType = exercise.type;
         this.router.navigate([
             '/course-management',
-            this.courseId,
+            this.courseId(),
             'exams',
-            this.examId,
+            this.examId(),
             'exercise-groups',
             exerciseGroupId,
             getExerciseUrlSegment(exerciseType),
@@ -31,6 +32,6 @@ export class PlagiarismCasesOverviewComponent {
         ]);
     }
     goToPlagiarismCases() {
-        this.router.navigate(['/course-management', this.courseId, 'exams', this.examId, 'plagiarism-cases']);
+        this.router.navigate(['/course-management', this.courseId(), 'exams', this.examId(), 'plagiarism-cases']);
     }
 }

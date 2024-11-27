@@ -10,12 +10,12 @@
         </tr>
     </thead>
     <tbody>
-        @for (exercise of exercises; track exercise; let i = $index) {
+        @for (exercise of exercises(); track exercise; let i = $index) {
             <tr>
                 <th scope="row">{{ i + 1 }}</th>
                 <td>{{ exercise.title }}</td>
-                <td>{{ plagiarismResultsPerExercise.get(exercise) }}</td>
-                <td>{{ plagiarismCasesPerExercise.get(exercise) }}</td>
+                <td>{{ plagiarismResultsPerExercise().get(exercise) }}</td>
+                <td>{{ plagiarismCasesPerExercise().get(exercise) }}</td>
                 <td>
                     <button
                         id="view-plagiarism-results-btn-{{ i }}"
@@ -28,7 +28,7 @@
         }
     </tbody>
 </table>
-@if (anyPlagiarismCases) {
+@if (anyPlagiarismCases()) {
     <button
         class="btn btn-primary"
         id="view-plagiarism-cases-btn"
