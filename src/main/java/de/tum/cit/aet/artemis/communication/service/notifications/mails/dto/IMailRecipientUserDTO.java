@@ -5,10 +5,6 @@ package de.tum.cit.aet.artemis.communication.service.notifications.mails.dto;
  */
 public interface IMailRecipientUserDTO {
 
-    String langKey = "";
-
-    String email = "";
-
     String langKey();
 
     String email();

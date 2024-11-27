@@ -438,16 +438,16 @@ public class MailService implements InstantNotificationService {
      */
     public void sendWeeklySummaryEmail(User user, Set<Exercise> exercises) {
         log.debug("Sending weekly summary email to '{}'", user.getEmail());
-
+        WeeklySummaryMailRecipientDTO summaryMailRecipient = WeeklySummaryMailRecipientDTO.of(user);
         Locale locale = Locale.forLanguageTag(user.getLangKey());
 
         Context context = new Context(locale);
         context.setVariable(BASE_URL, artemisServerUrl);
-        context.setVariable(USER, WeeklySummaryMailRecipientDTO.of(user));
+        context.setVariable(USER, summaryMailRecipient);
         context.setVariable(WEEKLY_SUMMARY_CONTENT, WeeklySummaryMailContentDTO.of(exercises, timeService));
 
         String subject = "Weekly Summary";
         String content = templateEngine.process("mail/weeklySummary", context);
-        mailSendingService.sendEmail(WeeklySummaryMailRecipientDTO.of(user), subject, content, false, true);
+        mailSendingService.sendEmail(summaryMailRecipient, subject, content, false, true);
     }
 }

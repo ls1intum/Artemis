@@ -25,7 +25,8 @@ public record WeeklyExerciseSummaryDTO(String title, String type, String difficu
      * @return a new `WeeklyExerciseSummaryDTO` instance
      */
     public static WeeklyExerciseSummaryDTO of(Exercise exercise, TimeService timeService) {
-        String releaseDate = null, dueDate = null;
+        String releaseDate = null;
+        String dueDate = null;
         if (exercise.getReleaseDate() != null) {
             releaseDate = timeService.convertToHumanReadableDate(exercise.getReleaseDate());
         }
