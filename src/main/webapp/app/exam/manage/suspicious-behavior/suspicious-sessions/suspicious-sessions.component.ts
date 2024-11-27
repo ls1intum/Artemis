@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnInit, input } from '@angular/core';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 
@@ -10,7 +10,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
     styleUrls: ['./suspicious-sessions.component.scss'],
 })
 export class SuspiciousSessionsComponent implements OnInit {
-    @Input() suspiciousSessions: SuspiciousExamSessions;
+    suspiciousSessions = input.required<SuspiciousExamSessions>();
     suspiciousFingerprint = false;
     suspiciousIpAddress = false;
     ngOnInit(): void {
@@ -31,6 +31,6 @@ export class SuspiciousSessionsComponent implements OnInit {
     }
 
     private isSuspiciousFor(reason: SuspiciousSessionReason) {
-        return this.suspiciousSessions.examSessions.some((session) => session.suspiciousReasons.includes(reason));
+        return this.suspiciousSessions().examSessions.some((session) => session.suspiciousReasons.includes(reason));
     }
 }

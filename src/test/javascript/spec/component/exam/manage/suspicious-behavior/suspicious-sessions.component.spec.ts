@@ -43,7 +43,7 @@ describe('SuspiciousSessionsComponent', () => {
         });
         fixture = TestBed.createComponent(SuspiciousSessionsComponent);
         component = fixture.componentInstance;
-        component.suspiciousSessions = suspiciousSessions1;
+        fixture.componentRef.setInput('suspiciousSessions', suspiciousSessions1);
     });
 
     it('should contain correct link to student exam in table cell', () => {
@@ -51,16 +51,16 @@ describe('SuspiciousSessionsComponent', () => {
     });
 
     it('should correctly determine suspicious reasons', () => {
-        component.suspiciousSessions = suspiciousSessions1;
+        fixture.componentRef.setInput('suspiciousSessions', suspiciousSessions1);
         component.ngOnInit();
         expect(component.suspiciousFingerprint).toBeTrue();
         expect(component.suspiciousIpAddress).toBeTrue();
 
-        component.suspiciousSessions = suspiciousSessions2;
+        fixture.componentRef.setInput('suspiciousSessions', suspiciousSessions2);
         component.ngOnInit();
         expect(component.suspiciousFingerprint).toBeFalse();
         expect(component.suspiciousIpAddress).toBeFalse();
-        component.suspiciousSessions = suspiciousSessions3;
+        fixture.componentRef.setInput('suspiciousSessions', suspiciousSessions3);
         component.ngOnInit();
         expect(component.suspiciousFingerprint).toBeFalse();
         expect(component.suspiciousIpAddress).toBeTrue();
