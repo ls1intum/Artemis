@@ -23,11 +23,11 @@ import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
         AlertOverlayComponent,
         SortByDirective,
         SortDirective,
-        ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         ArtemisDurationFromSecondsPipe,
         DurationPipe,
         CloseCircleComponent,
+        ArtemisTranslatePipe,
     ],
     exports: [
         ArtemisSharedLibsModule,
