@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
@@ -15,9 +15,10 @@ import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
     imports: [TranslateDirective, ArtemisSharedModule],
 })
 export class CleanupOperationModalComponent implements OnInit {
-    operation = input<CleanupOperation>;
+    @Input()
+    operation: CleanupOperation;
     counts: CleanupCount;
-    operationExecuted = false; // Tracks whether the operation has been executed.
+    operationExecuted = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
