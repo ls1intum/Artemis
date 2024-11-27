@@ -281,6 +281,7 @@ public class SharedQueueProcessingService {
                 }
                 else {
                     // NOTE: we increase the retry count here, because the build job was not processed successfully
+                    // TODO: we should try to run this job on a different build agent to avoid getting the same error again
                     buildJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO("", "", ""), buildJob.retryCount() + 1);
                     log.info("Adding build job {} back to the queue with retry count {}", buildJob, buildJob.retryCount());
                     queue.add(buildJob);
