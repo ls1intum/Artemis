@@ -10,7 +10,7 @@ export class PlagiarismCasesOverviewComponent {
     private router = inject(Router);
 
     exercises = input.required<Exercise[]>();
-    plagiarismCasesPerExercise = input<Map<Exercise, number>>();
+    plagiarismCasesPerExercise = input.required<Map<Exercise, number>>();
     plagiarismResultsPerExercise = input.required<Map<Exercise, number>>();
     anyPlagiarismCases = input(false);
     courseId = input.required<number>();
