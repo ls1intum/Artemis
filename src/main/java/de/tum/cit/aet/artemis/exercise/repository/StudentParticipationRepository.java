@@ -50,6 +50,9 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 @Repository
 public interface StudentParticipationRepository extends ArtemisJpaRepository<StudentParticipation, Long> {
 
+    @EntityGraph(type = LOAD, attributePaths = { "team.students" })
+    Set<StudentParticipation> findWithTeamInformationByExerciseId(long exerciseId);
+
     Set<StudentParticipation> findByExerciseId(long exerciseId);
 
     @Query("""
@@ -1368,7 +1371,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                       AND p.testRun = FALSE
                 ORDER BY p.student.firstName ASC
             """)
-    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackId(@Param("exerciseId") long exerciseId, @Param("detailText") String detailText,
+    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackText(@Param("exerciseId") long exerciseId, @Param("detailText") String detailText,
             @Param("testCaseName") String testCaseName, Pageable pageable);
 
     /**
