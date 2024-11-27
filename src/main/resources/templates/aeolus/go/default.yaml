@@ -3,6 +3,10 @@ metadata:
   name: "Go"
   id: Go
 actions:
+  - name: build
+    script: |
+      cd "${testWorkingDirectory}"
+      go test -c -o /dev/null ./...
   - name: test
     script: |
       cd "${testWorkingDirectory}"
