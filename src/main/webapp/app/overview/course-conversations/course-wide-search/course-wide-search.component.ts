@@ -1,19 +1,4 @@
-import {
-    AfterViewInit,
-    ChangeDetectorRef,
-    Component,
-    ElementRef,
-    EventEmitter,
-    Input,
-    OnDestroy,
-    OnInit,
-    Output,
-    QueryList,
-    ViewChild,
-    ViewChildren,
-    ViewEncapsulation,
-    inject,
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewEncapsulation, inject, input, output, viewChild } from '@angular/core';
 import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -33,16 +18,12 @@ import { CourseSidebarService } from 'app/overview/course-sidebar.service';
     encapsulation: ViewEncapsulation.None,
 })
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
-    @Input()
-    courseWideSearchConfig: CourseWideSearchConfig;
+    readonly courseWideSearchConfig = input<CourseWideSearchConfig>();
 
-    @ViewChildren('postingThread')
-    messages: QueryList<any>;
+    readonly messages = viewChild<QueryList<any>>('postingThread');
+    readonly content = viewChild<ElementRef>('container');
 
-    @ViewChild('container')
-    content: ElementRef;
-
-    @Output() openThread = new EventEmitter<Post>();
+    readonly openThread = output<Post>();
 
     course: Course;
     currentPostContextFilter?: PostContextFilter;
@@ -72,14 +53,11 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     getAsChannel = getAsChannelDTO;
 
-    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
-
-    constructor(
-        public metisService: MetisService, // instance from course-conversations.component
-        public metisConversationService: MetisConversationService, // instance from course-conversations.component
-        private formBuilder: FormBuilder,
-        public cdr: ChangeDetectorRef,
-    ) {}
+    private courseSidebarService = inject(CourseSidebarService);
+    private metisService = inject(MetisService);
+    private metisConversationService = inject(MetisConversationService);
+    private formBuilder = inject(FormBuilder);
+    private cdr = inject(ChangeDetectorRef);
 
     ngOnInit() {
         this.subscribeToMetis();
@@ -89,7 +67,8 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     ngAfterViewInit() {
-        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
+        if (!this.messages()) return;
+        this.messages()!.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
     }
 
     ngOnDestroy() {
@@ -112,20 +91,24 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     setPosts(posts: Post[]): void {
-        if (this.content) {
-            this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
+        if (this.content()) {
+            this.previousScrollDistanceFromTop = this.content()!.nativeElement.scrollHeight - this.content()!.nativeElement.scrollTop;
         }
         this.posts = posts.slice().reverse();
     }
 
     handleScrollOnNewMessage = () => {
-        if ((this.posts.length > 0 && this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
+        if (
+            (this.posts.length > 0 && this.content() && this.content()!.nativeElement.scrollTop === 0 && this.page === 1) ||
+            this.previousScrollDistanceFromTop === this.messagesContainerHeight
+        ) {
             this.scrollToBottomOfMessages();
         }
     };
 
     scrollToBottomOfMessages() {
-        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+        if (!this.content()) return;
+        this.content()!.nativeElement.scrollTop = this.content()!.nativeElement.scrollHeight;
     }
 
     fetchNextPage() {
@@ -134,7 +117,8 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             this.page += 1;
             this.commandMetisToFetchPosts();
         }
-        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollTop + 50;
+        if (!this.content()) return;
+        this.content()!.nativeElement.scrollTop = this.content()!.nativeElement.scrollTop + 50;
     }
 
     public commandMetisToFetchPosts(forceUpdate = false) {
@@ -146,14 +130,18 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     private refreshMetisConversationPostContextFilter(): void {
+        const searchConfig = this.courseWideSearchConfig();
+
+        if (!searchConfig) return;
+
         this.currentPostContextFilter = {
             courseId: this.course?.id,
-            searchText: this.courseWideSearchConfig.searchTerm ? this.courseWideSearchConfig.searchTerm.trim() : undefined,
+            searchText: searchConfig.searchTerm ? searchConfig.searchTerm.trim() : undefined,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
-            filterToUnresolved: this.courseWideSearchConfig.filterToUnresolved,
-            filterToOwn: this.courseWideSearchConfig.filterToOwn,
-            filterToAnsweredOrReacted: this.courseWideSearchConfig.filterToAnsweredOrReacted,
-            sortingOrder: this.courseWideSearchConfig.sortingOrder,
+            filterToUnresolved: searchConfig.filterToUnresolved,
+            filterToOwn: searchConfig.filterToOwn,
+            filterToAnsweredOrReacted: searchConfig.filterToAnsweredOrReacted,
+            sortingOrder: searchConfig.sortingOrder,
             pagingEnabled: true,
             page: this.page - 1,
             pageSize: 50,
@@ -197,10 +185,12 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     onSelectContext(): void {
-        this.courseWideSearchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
-        this.courseWideSearchConfig.filterToOwn = this.formGroup.get('filterToOwn')?.value;
-        this.courseWideSearchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
-        this.courseWideSearchConfig.sortingOrder = this.sortingOrder;
+        const searchConfig = this.courseWideSearchConfig();
+        if (!searchConfig) return;
+        searchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
+        searchConfig.filterToOwn = this.formGroup.get('filterToOwn')?.value;
+        searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
+        searchConfig.sortingOrder = this.sortingOrder;
         this.onSearch();
     }
 }

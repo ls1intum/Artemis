@@ -57,10 +57,9 @@ const routes: Routes = [
         InfiniteScrollModule,
         CourseUsersSelectorModule,
         ProfilePictureComponent,
+        CourseConversationsCodeOfConductComponent,
     ],
     declarations: [
-        CourseConversationsComponent,
-        CourseConversationsCodeOfConductComponent,
         ConversationThreadSidebarComponent,
         ConversationMessagesComponent,
         ChannelsOverviewDialogComponent,
@@ -83,6 +82,7 @@ const routes: Routes = [
         CourseWideSearchComponent,
         SavedPostsComponent,
         PostingSummaryComponent,
+        CourseConversationsComponent,
     ],
 })
 export class CourseConversationsModule {}

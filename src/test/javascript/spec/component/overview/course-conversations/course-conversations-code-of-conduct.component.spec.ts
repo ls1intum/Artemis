@@ -9,7 +9,6 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
 import { MockConversationService } from '../../../helpers/mocks/service/mock-conversation.service';
 
 describe('Course Conversations Code Of Conduct Component', () => {
-    let component: CourseConversationsCodeOfConductComponent;
     let fixture: ComponentFixture<CourseConversationsCodeOfConductComponent>;
 
     beforeEach(() => {
@@ -21,9 +20,8 @@ describe('Course Conversations Code Of Conduct Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseConversationsCodeOfConductComponent);
-                component = fixture.componentInstance;
 
-                component.course = { id: 1 };
+                fixture.componentRef.setInput('course', { id: 1 });
             });
     });
 

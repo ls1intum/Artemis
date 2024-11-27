@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -143,20 +143,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isCodeOfConductAccepted?: boolean;
     isCodeOfConductPresented = false;
 
-    @ViewChild(CourseWideSearchComponent)
-    courseWideSearch: CourseWideSearchComponent;
-    @ViewChild('courseWideSearchInput')
-    searchElement: ElementRef;
+    readonly courseWideSearch = viewChild<CourseWideSearchComponent>(CourseWideSearchComponent);
+    readonly searchElement = viewChild<ElementRef>('courseWideSearchInput');
 
     courseWideSearchConfig: CourseWideSearchConfig;
     courseWideSearchTerm = '';
     readonly ButtonType = ButtonType;
 
     // Icons
-    faPlus = faPlus;
-    faTimes = faTimes;
-    faFilter = faFilter;
-    faSearch = faSearch;
+    readonly faPlus = faPlus;
+    readonly faTimes = faTimes;
+    readonly faFilter = faFilter;
+    readonly faSearch = faSearch;
 
     createChannelFn?: (channel: ChannelDTO) => Observable<never>;
     channelActions$ = new EventEmitter<ChannelAction>();
@@ -164,16 +162,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
     private layoutService: LayoutService = inject(LayoutService);
     private changeDetector: ChangeDetectorRef = inject(ChangeDetectorRef);
-
-    constructor(
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-        private metisConversationService: MetisConversationService,
-        private metisService: MetisService,
-        private courseOverviewService: CourseOverviewService,
-        private modalService: NgbModal,
-        private profileService: ProfileService,
-    ) {}
+    private router = inject(Router);
+    private activatedRoute = inject(ActivatedRoute);
+    private metisConversationService = inject(MetisConversationService);
+    private metisService = inject(MetisService);
+    private courseOverviewService = inject(CourseOverviewService);
+    private modalService = inject(NgbModal);
+    private profileService = inject(ProfileService);
 
     getAsChannel = getAsChannelDTO;
 
@@ -402,7 +397,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.activeConversation = undefined;
         this.updateQueryParameters();
         this.courseWideSearchConfig.searchTerm = this.courseWideSearchTerm;
-        this.courseWideSearch?.onSearch();
+        this.courseWideSearch()?.onSearch();
     }
 
     prepareSidebarData() {
@@ -558,9 +553,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     @HostListener('document:keydown', ['$event'])
     handleSearchShortcut(event: KeyboardEvent) {
-        if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+        if ((event.metaKey || event.ctrlKey) && event.key === 'k' && this.searchElement()) {
             event.preventDefault();
-            this.searchElement.nativeElement.focus();
+            this.searchElement()!.nativeElement.focus();
         }
     }
 }
