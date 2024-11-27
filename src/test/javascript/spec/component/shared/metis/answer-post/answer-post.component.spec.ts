@@ -15,6 +15,8 @@ import { Reaction } from '../../../../../../../main/webapp/app/entities/metis/re
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
+import { Posting, PostingType } from 'app/entities/metis/posting.model';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -214,5 +216,25 @@ describe('AnswerPostComponent', () => {
             expect(component.showDropdown).toBe(showDropdown);
             expect(component.dropdownPosition).toEqual(dropdownPosition);
         });
+    });
+
+    it('should cast the post to answer post on change', () => {
+        const mockPost: Posting = {
+            id: 1,
+            author: {
+                id: 1,
+                name: 'Test Author',
+                internal: false,
+            },
+            content: 'Test Content',
+            postingType: PostingType.ANSWER,
+        };
+        // @ts-ignore method is private
+        const spy = jest.spyOn(component, 'assignPostingToAnswerPost');
+        component.posting = mockPost;
+        fixture.detectChanges();
+
+        expect(component.posting).toBeInstanceOf(AnswerPost);
+        expect(spy).toHaveBeenCalled();
     });
 });

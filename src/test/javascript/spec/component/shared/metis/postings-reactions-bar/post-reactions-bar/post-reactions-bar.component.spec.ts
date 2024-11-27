@@ -149,7 +149,7 @@ describe('PostReactionsBarComponent', () => {
         expect(getEditButton()).not.toBeNull();
     });
 
-    it('should display edit and delete options to user with channel moderation rights when not the author', () => {
+    it('should display the delete option to user with channel moderation rights when not the author', () => {
         component.readOnlyMode = false;
         component.previewMode = false;
         component.isEmojiCount = false;
@@ -166,8 +166,47 @@ describe('PostReactionsBarComponent', () => {
         component.ngOnInit();
         fixture.detectChanges();
 
-        expect(getEditButton()).not.toBeNull();
         expect(getDeleteButton()).not.toBeNull();
+    });
+
+    it('should not display the edit option to user (even instructor) if s/he is not the author of posting', () => {
+        component.readOnlyMode = false;
+        component.previewMode = false;
+        component.isEmojiCount = false;
+
+        const channelConversation = {
+            type: ConversationType.CHANNEL,
+            hasChannelModerationRights: true,
+        } as ChannelDTO;
+
+        jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(false);
+        jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(true);
+        jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
+
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(getEditButton()).toBeNull();
+    });
+
+    it('should display the edit option to user if s/he is the author of posting', () => {
+        component.readOnlyMode = false;
+        component.previewMode = false;
+        component.isEmojiCount = false;
+
+        const channelConversation = {
+            type: ConversationType.CHANNEL,
+            hasChannelModerationRights: true,
+        } as ChannelDTO;
+
+        jest.spyOn(metisService, 'metisUserIsAuthorOfPosting').mockReturnValue(true);
+        jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse').mockReturnValue(false);
+        jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
+
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        expect(getEditButton()).not.toBeNull();
     });
 
     it('should not display edit and delete options when user is not the author and lacks permissions', () => {
@@ -198,6 +237,7 @@ describe('PostReactionsBarComponent', () => {
 
     it('should not display edit and delete options to tutor if posting is announcement', () => {
         metisServiceUserIsAtLeastInstructorStub.mockReturnValue(false);
+        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
         component.posting = metisAnnouncement;
         component.ngOnInit();
         fixture.detectChanges();
@@ -205,8 +245,9 @@ describe('PostReactionsBarComponent', () => {
         expect(getDeleteButton()).toBeNull();
     });
 
-    it('should display edit and delete options to instructor if posting is announcement', () => {
+    it('should display edit and delete options to instructor if his posting is announcement', () => {
         metisServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
+        metisServiceUserIsAuthorOfPostingStub.mockReturnValue(true);
         component.posting = metisAnnouncement;
         component.ngOnInit();
         fixture.detectChanges();
@@ -214,14 +255,13 @@ describe('PostReactionsBarComponent', () => {
         expect(getDeleteButton()).not.toBeNull();
     });
 
-    it('should display edit and delete options to instructor if posting is in course-wide channel from a student', () => {
+    it('should display the delete option to instructor if posting is in course-wide channel from a student', () => {
         metisServiceUserIsAtLeastInstructorStub.mockReturnValue(true);
         metisServiceUserIsAuthorOfPostingStub.mockReturnValue(false);
         component.posting = { ...metisPostInChannel };
         component.posting.authorRole = UserRole.USER;
         component.ngOnInit();
         fixture.detectChanges();
-        expect(getEditButton()).not.toBeNull();
         expect(getDeleteButton()).not.toBeNull();
     });
 

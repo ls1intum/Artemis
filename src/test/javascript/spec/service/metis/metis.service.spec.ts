@@ -46,6 +46,8 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
+import { SavedPostService } from 'app/shared/metis/saved-post.service';
+import { SavedPostStatus } from 'app/entities/metis/posting.model';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -63,6 +65,8 @@ describe('Metis Service', () => {
     let answerPost: AnswerPost;
     let reaction: Reaction;
     let course: Course;
+    let savedPostService: SavedPostService;
+    let setIsSavedAndStatusOfPostSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -89,9 +93,12 @@ describe('Metis Service', () => {
         postService = TestBed.inject(PostService);
         answerPostService = TestBed.inject(AnswerPostService);
         conversationService = TestBed.inject(ConversationService);
+        savedPostService = TestBed.inject(SavedPostService);
         metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
         metisServiceCreateWebsocketSubscriptionSpy = jest.spyOn(metisService, 'createWebsocketSubscription');
         metisServiceUserStub = jest.spyOn(metisService, 'getUser');
+        // @ts-ignore method is private
+        setIsSavedAndStatusOfPostSpy = jest.spyOn(metisService, 'setIsSavedAndStatusOfPost');
 
         post = metisPostExerciseUser1;
         post.displayPriority = DisplayPriority.PINNED;
@@ -622,6 +629,50 @@ describe('Metis Service', () => {
         it('should return current conversation', () => {
             metisService.getFilteredPosts({ conversationId: metisLectureChannelDTO.id } as PostContextFilter, false, metisLectureChannelDTO);
             expect(metisService.getCurrentConversation()).toBe(metisLectureChannelDTO);
+        });
+    });
+
+    describe('Save post methods', () => {
+        it('should save a post and update cached posts', () => {
+            const savedPostServiceSpy = jest.spyOn(savedPostService, 'savePost');
+
+            metisService.createPost(post).subscribe();
+            metisService.savePost(post);
+
+            expect(setIsSavedAndStatusOfPostSpy).toHaveBeenCalledWith(post, true, post.savedPostStatus);
+            expect(savedPostServiceSpy).toHaveBeenCalledWith(post);
+        });
+
+        it('should remove a saved post and update cached posts', () => {
+            const savedPostServiceSpy = jest.spyOn(savedPostService, 'removeSavedPost');
+
+            metisService.createPost(post).subscribe();
+            metisService.removeSavedPost(post);
+
+            expect(setIsSavedAndStatusOfPostSpy).toHaveBeenCalledWith(post, false, post.savedPostStatus);
+            expect(savedPostServiceSpy).toHaveBeenCalledWith(post);
+        });
+
+        it('should change the saved post status and update cached posts', () => {
+            const status = SavedPostStatus.ARCHIVED;
+            const savedPostServiceSpy = jest.spyOn(savedPostService, 'changeSavedPostStatus');
+
+            metisService.createPost(post).subscribe();
+            metisService.changeSavedPostStatus(post, status);
+
+            expect(setIsSavedAndStatusOfPostSpy).toHaveBeenCalledWith(post, post.isSaved, status);
+            expect(savedPostServiceSpy).toHaveBeenCalled();
+        });
+
+        it('should reset cached posts and update total number of posts', () => {
+            const spyPostsNext = jest.spyOn(metisService['posts$'], 'next');
+            const spyNumberOfPostsNext = jest.spyOn(metisService['totalNumberOfPosts$'], 'next');
+            metisService.resetCachedPosts();
+
+            expect(metisService['cachedPosts']).toEqual([]);
+            expect(spyPostsNext).toHaveBeenCalledWith([]);
+            expect(metisService['cachedTotalNumberOfPosts']).toBe(0);
+            expect(spyNumberOfPostsNext).toHaveBeenCalledWith(0);
         });
     });
 });
