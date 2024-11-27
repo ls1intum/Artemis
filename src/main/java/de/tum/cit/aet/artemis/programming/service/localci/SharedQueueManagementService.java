@@ -154,8 +154,16 @@ public class SharedQueueManagementService {
         pauseBuildAgentTopic.publish(agent);
     }
 
+    public void pauseAllBuildAgents() {
+        getBuildAgentInformation().forEach(agent -> pauseBuildAgent(agent.buildAgent().name()));
+    }
+
     public void resumeBuildAgent(String agent) {
         resumeBuildAgentTopic.publish(agent);
+    }
+
+    public void resumeAllBuildAgents() {
+        getBuildAgentInformation().forEach(agent -> resumeBuildAgent(agent.buildAgent().name()));
     }
 
     /**
