@@ -40,6 +40,7 @@ artemis:
         build-logs:
             max-lines-per-job: 10000
             max-chars-per-line: 1024
+        check-sync-frequency-in-seconds: 10
     git:
         name: Artemis
         email: artemis@xcit.tum.de

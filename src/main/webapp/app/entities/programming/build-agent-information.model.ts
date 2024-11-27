@@ -16,4 +16,5 @@ export class BuildAgentInformation implements BaseEntity {
     public runningBuildJobs?: BuildJob[];
     public status?: BuildAgentStatus;
     public recentBuildJobs?: BuildJob[];
+    public numberOfPauseDueToDesync?: number;
 }

@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -75,6 +76,8 @@ public class SharedQueueProcessingService {
 
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
+    private final AtomicInteger numberOfPauseDueToDesync = new AtomicInteger(0);
+
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
 
     private final TaskScheduler taskScheduler;
@@ -105,7 +108,12 @@ public class SharedQueueProcessingService {
     /**
      * Scheduled future for checking availability and processing next build job.
      */
-    private ScheduledFuture<?> scheduledFuture;
+    private ScheduledFuture<?> checkAvailabilityScheduledFuture;
+
+    /**
+     * Scheduled future for checking sync.
+     */
+    private ScheduledFuture<?> checkSyncScheduledFuture;
 
     /**
      * Flag to indicate whether the build agent is paused.
@@ -120,6 +128,9 @@ public class SharedQueueProcessingService {
 
     @Value("${artemis.continuous-integration.pause-grace-period-seconds:60}")
     private int pauseGracePeriodSeconds;
+
+    @Value("${artemis.continuous-integration.check-sync-frequency-in-seconds:10}")
+    private int checkSyncFrequencyInSeconds;
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
@@ -169,7 +180,13 @@ public class SharedQueueProcessingService {
          * This is a backup mechanism in case the build queue is not empty, no new build jobs are entering the queue and the
          * node otherwise stopped checking for build jobs in the queue.
          */
-        scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+        checkAvailabilityScheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+
+        /*
+         * Check every 60 seconds whether the build agent is in sync with the distributed map.
+         * If not, pause the build agent.
+         */
+        checkSyncScheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkSync, Duration.ofSeconds(checkSyncFrequencyInSeconds));
 
         ITopic<String> pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
         pauseBuildAgentTopic.addMessageListener(message -> {
@@ -205,8 +222,14 @@ public class SharedQueueProcessingService {
     }
 
     private void cancelCheckAvailabilityAndProcessNextBuildScheduledFuture() {
-        if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
-            scheduledFuture.cancel(false);
+        if (checkAvailabilityScheduledFuture != null && !checkAvailabilityScheduledFuture.isCancelled()) {
+            checkAvailabilityScheduledFuture.cancel(false);
+        }
+    }
+
+    private void cancelCheckSyncScheduledFuture() {
+        if (checkSyncScheduledFuture != null && !checkSyncScheduledFuture.isCancelled()) {
+            checkSyncScheduledFuture.cancel(false);
         }
     }
 
@@ -356,7 +379,8 @@ public class SharedQueueProcessingService {
 
         BuildAgentDTO agentInfo = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
 
-        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs, publicSshKey);
+        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs, publicSshKey,
+                numberOfPauseDueToDesync.get());
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
@@ -471,6 +495,7 @@ public class SharedQueueProcessingService {
 
             isPaused.set(true);
             removeListenerAndCancelScheduledFuture();
+            cancelCheckSyncScheduledFuture();
             updateLocalBuildAgentInformation();
 
             log.info("Gracefully cancelling running build jobs");
@@ -534,7 +559,9 @@ public class SharedQueueProcessingService {
             // We remove the listener and scheduledTask first to avoid having multiple listeners and scheduled tasks running
             removeListenerAndCancelScheduledFuture();
             listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
-            scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+            checkAvailabilityScheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+            cancelCheckSyncScheduledFuture();
+            checkSyncScheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkSync, Duration.ofSeconds(checkSyncFrequencyInSeconds));
             checkAvailabilityAndProcessNextBuild();
             updateLocalBuildAgentInformation();
         }
@@ -543,10 +570,57 @@ public class SharedQueueProcessingService {
         }
     }
 
+    private void checkSync() {
+        if (noDataMemberInClusterAvailable(hazelcastInstance)) {
+            log.debug("There are only lite member in the cluster. Not syncing build agent information.");
+            return;
+        }
+        String agentName = buildAgentShortName;
+        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        List<String> processingJobsIdInDistributedMap = new ArrayList<>(getProcessingJobsOfNode(memberAddress).stream().map(BuildJobQueueItem::id).toList());
+        List<String> processingJobsIdInLocalMap = new ArrayList<>(buildJobManagementService.getRunningBuildJobIds());
+
+        // Check that the processing jobs in the distributed map are the same as the processing jobs in the local map
+        Collections.sort(processingJobsIdInDistributedMap);
+        Collections.sort(processingJobsIdInLocalMap);
+
+        if (!processingJobsIdInDistributedMap.equals(processingJobsIdInLocalMap)) {
+            log.error(
+                    "Processing jobs in distributed map are not in sync with local map. Pausing build agent: {}, Member address: {}, Processing jobs in distributed map: {}, Processing jobs in local map: {}",
+                    agentName, memberAddress, processingJobsIdInDistributedMap, processingJobsIdInLocalMap);
+            pauseBuildAgent();
+            numberOfPauseDueToDesync.incrementAndGet();
+            return;
+        }
+
+        // Check that localProcessingJobs is the same as the number of processing jobs in the local map
+        if (localProcessingJobs.get() != processingJobsIdInLocalMap.size()) {
+            log.error(
+                    "Local processing jobs count is not in sync with processing jobs in local map. Pausing build agent: {}, Member address: {}, Local processing jobs count: {}, Processing jobs in local map: {}",
+                    agentName, memberAddress, localProcessingJobs.get(), processingJobsIdInLocalMap);
+            numberOfPauseDueToDesync.incrementAndGet();
+            pauseBuildAgent();
+            return;
+        }
+
+        // Check that the localProcessingJobs is the same as running threads in the local thread pool
+        if (localProcessingJobs.get() != localCIBuildExecutorService.getActiveCount()) {
+            log.error(
+                    "Local processing jobs count is not in sync with running threads in local thread pool. Pausing build agent: {}, Member address: {}, Local processing jobs count: {}, Running threads in local thread pool: {}",
+                    agentName, memberAddress, localProcessingJobs.get(), localCIBuildExecutorService.getActiveCount());
+            numberOfPauseDueToDesync.incrementAndGet();
+            pauseBuildAgent();
+            return;
+        }
+
+        log.debug("Build agent is in sync: {}, Member address: {}, Local processing jobs count: {}, Running threads in local thread pool: {}", agentName, memberAddress,
+                localProcessingJobs.get(), localCIBuildExecutorService.getActiveCount());
+    }
+
     /**
      * Checks whether the node has at least one thread available for a new build job.
      */
-    private boolean nodeIsAvailable() {
+    private synchronized boolean nodeIsAvailable() {
         log.debug("Currently processing jobs on this node: {}, active threads in Pool: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
                 localCIBuildExecutorService.getActiveCount(), localCIBuildExecutorService.getMaximumPoolSize());
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
