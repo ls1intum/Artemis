@@ -109,11 +109,12 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildJobQueueItem> getQueuedJobs() {
-        // NOTE: we should not use streams with IQueue, because it can be unstable, when many items are added at the same time
+        // NOTE: we should not use streams with IQueue directly, because it can be unstable, when many items are added at the same time
         return new ArrayList<>(queue);
     }
 
     public List<BuildJobQueueItem> getProcessingJobs() {
+        // NOTE: we should not use streams with IMap, because it can be unstable
         return new ArrayList<>(processingJobs.values());
     }
 
@@ -134,6 +135,7 @@ public class SharedQueueManagementService {
     }
 
     public List<BuildAgentInformation> getBuildAgentInformation() {
+        // NOTE: we should not use streams with IMap, because it can be unstable
         return new ArrayList<>(buildAgentInformation.values());
     }
 
@@ -199,8 +201,8 @@ public class SharedQueueManagementService {
      * Cancel all running build jobs.
      */
     public void cancelAllRunningBuildJobs() {
-        List<BuildJobQueueItem> values = getProcessingJobs();
-        for (BuildJobQueueItem buildJob : values) {
+        List<BuildJobQueueItem> runningJobs = getProcessingJobs();
+        for (BuildJobQueueItem buildJob : runningJobs) {
             cancelBuildJob(buildJob.id());
         }
     }
@@ -236,8 +238,8 @@ public class SharedQueueManagementService {
      * @param courseId id of the course
      */
     public void cancelAllRunningBuildJobsForCourse(long courseId) {
-        List<BuildJobQueueItem> values = getProcessingJobs();
-        for (BuildJobQueueItem buildJob : values) {
+        List<BuildJobQueueItem> runningJobs = getProcessingJobs();
+        for (BuildJobQueueItem buildJob : runningJobs) {
             if (buildJob.courseId() == courseId) {
                 cancelBuildJob(buildJob.id());
             }
@@ -259,8 +261,8 @@ public class SharedQueueManagementService {
         }
         queue.removeAll(toRemove);
 
-        List<BuildJobQueueItem> values = getProcessingJobs();
-        for (BuildJobQueueItem runningJob : values) {
+        List<BuildJobQueueItem> runningJobs = getProcessingJobs();
+        for (BuildJobQueueItem runningJob : runningJobs) {
             if (runningJob.participationId() == participationId) {
                 cancelBuildJob(runningJob.id());
             }

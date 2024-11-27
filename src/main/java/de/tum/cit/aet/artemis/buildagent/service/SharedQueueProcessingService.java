@@ -360,6 +360,7 @@ public class SharedQueueProcessingService {
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
+        // NOTE: we should not use streams with IMap, because it can be unstable
         List<BuildJobQueueItem> processingJobsList = new ArrayList<>(processingJobs.values());
         return processingJobsList.stream().filter(job -> Objects.equals(job.buildAgent().memberAddress(), memberAddress)).toList();
     }
