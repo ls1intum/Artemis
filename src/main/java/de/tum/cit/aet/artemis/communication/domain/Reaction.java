@@ -33,7 +33,7 @@ public class Reaction extends DomainObject {
 
     @ManyToOne
     // Avoid to leak too much information, only the name + image (for display) and the id (for comparison) is needed)
-    @JsonIncludeProperties({ "id", "name", "image_url" })
+    @JsonIncludeProperties({ "id", "name", "imageUrl" })
     private User user;
 
     @CreatedDate
