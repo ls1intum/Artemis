@@ -1,7 +1,7 @@
-import { Component, OnInit, Signal, ViewChild, computed, effect, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, OnDestroy, OnInit, Signal, ViewChild, computed, effect, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
@@ -27,7 +27,7 @@ import dayjs from 'dayjs';
     templateUrl: './lecture-update.component.html',
     styleUrls: ['./lecture-update.component.scss'],
 })
-export class LectureUpdateComponent implements OnInit {
+export class LectureUpdateComponent implements OnInit, OnDestroy {
     protected readonly documentationType: DocumentationType = 'Lecture';
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSave = faSave;
@@ -79,33 +79,31 @@ export class LectureUpdateComponent implements OnInit {
 
     isChangeMadeToTitleOrPeriodSection = false;
 
-    protected updateIsChangesMadeToTitleOrPeriodSection() {
-        this.isChangeMadeToTitleOrPeriodSection =
-            this.lecture().title !== this.lectureOnInit.title ||
-            this.lecture().channelName !== this.lectureOnInit.channelName ||
-            this.lecture().description !== this.lectureOnInit.description ||
-            !dayjs(this.lecture().visibleDate).isSame(dayjs(this.lectureOnInit.visibleDate)) ||
-            !dayjs(this.lecture().startDate).isSame(dayjs(this.lectureOnInit.startDate)) ||
-            !dayjs(this.lecture().endDate).isSame(dayjs(this.lectureOnInit.endDate));
-    }
+    private subscriptions = new Subscription();
 
     constructor() {
         effect(() => {
-            this.titleSection()
-                .titleChannelNameComponent()
-                .titleChange.subscribe(() => {
-                    this.updateIsChangesMadeToTitleOrPeriodSection();
-                });
-            this.titleSection()
-                .titleChannelNameComponent()
-                .channelNameChange.subscribe(() => {
-                    this.updateIsChangesMadeToTitleOrPeriodSection();
-                });
-            this.periodSectionDatepickers().forEach((datepicker) => {
-                datepicker.valueChange.subscribe(() => {
-                    this.updateIsChangesMadeToTitleOrPeriodSection();
-                });
-            });
+            this.subscriptions.add(
+                this.titleSection()
+                    .titleChannelNameComponent()
+                    .titleChange.subscribe(() => {
+                        this.updateIsChangesMadeToTitleOrPeriodSection();
+                    }),
+            );
+            this.subscriptions.add(
+                this.titleSection()
+                    .titleChannelNameComponent()
+                    .channelNameChange.subscribe(() => {
+                        this.updateIsChangesMadeToTitleOrPeriodSection();
+                    }),
+            );
+            this.subscriptions.add(
+                this.periodSectionDatepickers().forEach((datepicker) => {
+                    datepicker.valueChange.subscribe(() => {
+                        this.updateIsChangesMadeToTitleOrPeriodSection();
+                    });
+                }),
+            );
         });
 
         effect(
@@ -167,6 +165,20 @@ export class LectureUpdateComponent implements OnInit {
         // TODO investigate where wizard mode is opened by url
         this.isEditMode.set(!this.router.url.endsWith('/new'));
         this.lectureOnInit = cloneDeep(this.lecture());
+    }
+
+    ngOnDestroy() {
+        this.subscriptions.unsubscribe();
+    }
+
+    protected updateIsChangesMadeToTitleOrPeriodSection() {
+        this.isChangeMadeToTitleOrPeriodSection =
+            this.lecture().title !== this.lectureOnInit.title ||
+            this.lecture().channelName !== this.lectureOnInit.channelName ||
+            this.lecture().description !== this.lectureOnInit.description ||
+            !dayjs(this.lecture().visibleDate).isSame(dayjs(this.lectureOnInit.visibleDate)) ||
+            !dayjs(this.lecture().startDate).isSame(dayjs(this.lectureOnInit.startDate)) ||
+            !dayjs(this.lecture().endDate).isSame(dayjs(this.lectureOnInit.endDate));
     }
 
     /**
