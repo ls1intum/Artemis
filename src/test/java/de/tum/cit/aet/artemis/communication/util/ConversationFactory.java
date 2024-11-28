@@ -7,7 +7,11 @@ import java.util.Set;
 
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.Posting;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
+import de.tum.cit.aet.artemis.communication.domain.SavedPost;
+import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -109,5 +113,18 @@ public class ConversationFactory {
         channel.setIsCourseWide(isCourseWide);
         channel.setDescription("Test channel");
         return channel;
+    }
+
+    /**
+     * Generates a SavedPost for a given user, posting, posting type and saved post status.
+     *
+     * @param user            User that bookmarked post
+     * @param posting         Posting to bookmark
+     * @param postingType     Type of posting
+     * @param savedPostStatus status of posting
+     * @return The generated SavedPost
+     */
+    public static SavedPost generateSavedPost(User user, Posting posting, PostingType postingType, SavedPostStatus savedPostStatus) {
+        return new SavedPost(user, posting.getId(), postingType, savedPostStatus, ZonedDateTime.now());
     }
 }
