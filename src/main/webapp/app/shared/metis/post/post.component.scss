@@ -34,8 +34,6 @@
 
 .message-container {
     position: relative;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
 
     &.force-hover {
         background: var(--metis-selection-option-hover-background);
@@ -47,8 +45,22 @@
     }
 }
 
-.message-content {
-    padding-left: 0.3rem;
+.post-is-saved-message,
+.message-container,
+.post-reactions-bar,
+.post {
+    background-color: transparent;
+
+    transition: background-color 0.2s ease-in-out;
+
+    &.is-saved {
+        background-color: rgba($primary, 0.1);
+    }
+}
+
+.message-content,
+.post-is-saved-message-content {
+    padding-left: 0.25rem;
 }
 
 .message-content:hover {
