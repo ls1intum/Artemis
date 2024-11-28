@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { getCourseFromExercise, getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
@@ -17,12 +17,52 @@ import { abbreviateString } from 'app/utils/text.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisPlagiarismCasesSharedModule } from '../../shared/plagiarism-cases-shared.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {
+    NgbDropdown,
+    NgbDropdownItem,
+    NgbDropdownMenu,
+    NgbDropdownToggle,
+    NgbNav,
+    NgbNavContent,
+    NgbNavItem,
+    NgbNavItemRole,
+    NgbNavLink,
+    NgbNavLinkBase,
+    NgbNavOutlet,
+} from '@ng-bootstrap/ng-bootstrap';
+import { MetisModule } from 'app/shared/metis/metis.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
     templateUrl: './plagiarism-case-instructor-detail-view.component.html',
     styleUrls: ['./plagiarism-case-instructor-detail-view.component.scss'],
     providers: [MetisService],
+    standalone: true,
+    imports: [
+        TranslateDirective,
+        ArtemisPlagiarismCasesSharedModule,
+        FaIconComponent,
+        RouterLink,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        NgbDropdownItem,
+        MetisModule,
+        NgbNav,
+        NgbNavItem,
+        NgbNavItemRole,
+        NgbNavLink,
+        NgbNavLinkBase,
+        NgbNavContent,
+        ArtemisSharedComponentModule,
+        FormsModule,
+        NgbNavOutlet,
+    ],
 })
 export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {
     courseId: number;
