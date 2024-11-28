@@ -9,5 +9,5 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 })
 export class QuizExerciseGroupCellComponent {
     exerciseType = ExerciseType;
-    quizExercise = input.required<QuizExercise>();
+    exercise = input.required<QuizExercise>();
 }

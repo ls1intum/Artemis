@@ -318,7 +318,7 @@
                                     }
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.QUIZ)) {
                                         <td class="align-middle">
-                                            <jhi-quiz-exercise-group-cell [quizExercise]="exercise" />
+                                            <jhi-quiz-exercise-group-cell [exercise]="exercise" />
                                         </td>
                                     }
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING)) {
