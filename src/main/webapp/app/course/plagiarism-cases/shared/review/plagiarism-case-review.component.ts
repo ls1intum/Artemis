@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Subject } from 'rxjs';
 
@@ -7,8 +7,8 @@ import { Subject } from 'rxjs';
     templateUrl: './plagiarism-case-review.component.html',
 })
 export class PlagiarismCaseReviewComponent {
-    @Input() plagiarismCase: PlagiarismCase;
-    @Input() forStudent = true;
+    plagiarismCase = input<PlagiarismCase>();
+    forStudent = input(true);
 
     /**
      * Subject to be passed into PlagiarismSplitViewComponent to control the split view.
