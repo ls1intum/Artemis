@@ -561,7 +561,8 @@ public class SharedQueueProcessingService {
     private boolean nodeIsAvailable() {
         log.debug("Currently processing jobs on this node: {}, active threads in Pool: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
                 localCIBuildExecutorService.getActiveCount(), localCIBuildExecutorService.getMaximumPoolSize());
-        return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
+        return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize()
+                && localCIBuildExecutorService.getActiveCount() < localCIBuildExecutorService.getMaximumPoolSize() && localCIBuildExecutorService.getQueue().isEmpty();
     }
 
     public class QueuedBuildJobItemListener implements ItemListener<BuildJobQueueItem> {
