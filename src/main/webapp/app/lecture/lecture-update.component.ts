@@ -168,6 +168,10 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        if (this.isChangeMadeToTitleOrPeriodSection) {
+            // TODO add a proper modal and find out where the changes are
+            alert('Unsaved changes in Title and/or period section, are you sure you want to leave without saving?');
+        }
         this.subscriptions.unsubscribe();
     }
 
