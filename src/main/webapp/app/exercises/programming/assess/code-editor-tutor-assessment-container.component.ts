@@ -33,7 +33,7 @@ import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/uti
 import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercises/shared/result/result.utils';
-import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { PROFILE_LOCALVC } from 'app/app.constants';
@@ -111,6 +111,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     // Icons
     faTimesCircle = faTimesCircle;
+    faExternalLink = faExternalLink;
 
     /**
      * Get all feedback suggestions without a reference. They will be shown in cards below the build output.

@@ -98,6 +98,29 @@
         </ng-template>
         <ng-template #editorToolbar>
             <ng-container *jhiExtensionPoint="overrideExportGoToRepository">
+                <a
+                    [style.flex]="1"
+                    class="btn btn-secondary btn-sm me-2 open-repository-button"
+                    [routerLink]="[
+                        '/course-management',
+                        courseId,
+                        'exams',
+                        examId,
+                        'exercise-groups',
+                        exerciseGroupId,
+                        'programming-exercises',
+                        exerciseId,
+                        'participations',
+                        participation.id,
+                        'repository',
+                    ]"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <fa-icon [icon]="faExternalLink" />
+                    Open Repo
+                </a>
+
                 <jhi-programming-assessment-repo-export
                     [programmingExercises]="[exercise]"
                     [singleParticipantMode]="true"
