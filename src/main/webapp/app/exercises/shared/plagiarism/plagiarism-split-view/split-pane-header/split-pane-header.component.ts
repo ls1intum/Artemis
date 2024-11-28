@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, input } from '@angular/core';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { Subject, Subscription } from 'rxjs';
 import { TextPlagiarismFileElement } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismFileElement';
@@ -19,10 +19,10 @@ export type FileWithHasMatch = {
 export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     @Input() files: FileWithHasMatch[];
     @Input() studentLogin: string;
-    @Input() fileSelectedSubject!: Subject<TextPlagiarismFileElement>;
-    @Input() isLockFilesEnabled!: boolean;
-    @Input() showFilesSubject!: Subject<boolean>;
-    @Input() dropdownHoverSubject!: Subject<TextPlagiarismFileElement>;
+    fileSelectedSubject = input<Subject<TextPlagiarismFileElement>>();
+    isLockFilesEnabled = input<boolean>();
+    showFilesSubject = input<Subject<boolean>>();
+    dropdownHoverSubject = input<Subject<TextPlagiarismFileElement>>();
 
     @Output() selectFile = new EventEmitter<string>();
 
@@ -47,8 +47,8 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
      * @private helper method
      */
     private subscribeToFileSelection(): void {
-        this.fileSelectSubscription = this.fileSelectedSubject.subscribe((val) => {
-            if (this.isLockFilesEnabled) {
+        this.fileSelectSubscription = this.fileSelectedSubject()!.subscribe((val) => {
+            if (this.isLockFilesEnabled()) {
                 this.handleLockedFileSelection(val.file, val.idx);
             }
         });
@@ -70,8 +70,8 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
      * @private helper method
      */
     private subscribeToShowFiles(): void {
-        this.showFilesSubscription = this.showFilesSubject.subscribe((showFiles) => {
-            if (this.isLockFilesEnabled || (!this.isLockFilesEnabled && !showFiles)) {
+        this.showFilesSubscription = this.showFilesSubject()!.subscribe((showFiles) => {
+            if (this.isLockFilesEnabled()! || (!this.isLockFilesEnabled()! && !showFiles)) {
                 this.toggleShowFilesWithoutPropagation(showFiles);
             }
         });
@@ -82,8 +82,8 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
      * @private helper method
      */
     private subscribeToDropdownHover(): void {
-        this.dropdownHoverSubject.subscribe((val) => {
-            if (this.isLockFilesEnabled) {
+        this.dropdownHoverSubject()!.subscribe((val) => {
+            if (this.isLockFilesEnabled()) {
                 this.handleDropdownHover(val.file, val.idx);
             }
         });
@@ -134,7 +134,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
      * @param idx index of the file from the dropdown
      */
     handleFileSelect(file: FileWithHasMatch, idx: number): void {
-        this.fileSelectedSubject.next({ idx: idx, file: file });
+        this.fileSelectedSubject()!.next({ idx: idx, file: file });
         this.activeFileIndex = idx;
         this.showFiles = false;
         this.selectFile.emit(file.file);
@@ -153,13 +153,13 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     hasFiles(): boolean {
-        return this.files && this.files.length > 0;
+        return (this.files && this.files.length > 0) ?? false;
     }
 
     toggleShowFiles(): void {
         if (this.hasFiles()) {
             this.showFiles = !this.showFiles;
-            this.showFilesSubject.next(this.showFiles);
+            this.showFilesSubject()!.next(this.showFiles);
         }
     }
 
@@ -174,7 +174,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     triggerMouseEnter(file: FileWithHasMatch, idx: number) {
-        this.dropdownHoverSubject.next({ idx: idx, file: file });
+        this.dropdownHoverSubject()!.next({ idx: idx, file: file });
     }
 
     /**
