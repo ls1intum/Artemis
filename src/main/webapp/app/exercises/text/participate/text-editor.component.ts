@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -58,14 +58,13 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     readonly ChatServiceMode = ChatServiceMode;
     protected readonly isAthenaAIResult = isAthenaAIResult;
 
-    @Input() participationId?: number;
-    @Input() displayHeader: boolean = true;
-    @Input() expandProblemStatement?: boolean = true;
-
-    @Input() inputExercise?: TextExercise;
-    @Input() inputSubmission?: TextSubmission;
-    @Input() inputParticipation?: StudentParticipation;
-    @Input() isExamSummary = false;
+    participationId = input<number>();
+    displayHeader = input<boolean>(true);
+    expandProblemStatement = input<boolean>(true);
+    inputExercise = input<TextExercise>();
+    inputSubmission = input<TextSubmission>();
+    inputParticipation = input<StudentParticipation>();
+    isExamSummary = input<boolean>(false);
 
     textExercise: TextExercise;
     participation: StudentParticipation;
@@ -109,7 +108,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
         } else {
-            const participationId = this.participationId !== undefined ? this.participationId : Number(this.route.snapshot.paramMap.get('participationId'));
+            const participationId = this.participationId() !== undefined ? this.participationId() : Number(this.route.snapshot.paramMap.get('participationId()'));
             this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
 
             if (Number.isNaN(participationId)) {
@@ -163,7 +162,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     private inputValuesArePresent(): boolean {
-        return !!(this.inputExercise || this.inputSubmission || this.inputParticipation);
+        return !!(this.inputExercise() || this.inputSubmission() || this.inputParticipation());
     }
 
     /**
@@ -174,14 +173,14 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @private
      */
     private setupComponentWithInputValues() {
-        if (this.inputExercise) {
-            this.textExercise = this.inputExercise;
+        if (this.inputExercise()) {
+            this.textExercise = this.inputExercise();
         }
-        if (this.inputSubmission) {
-            this.submission = this.inputSubmission;
+        if (this.inputSubmission()) {
+            this.submission = this.inputSubmission();
         }
-        if (this.inputParticipation) {
-            this.participation = this.inputParticipation;
+        if (this.inputParticipation()) {
+            this.participation = this.inputParticipation();
         }
 
         if (this.submission?.text) {
