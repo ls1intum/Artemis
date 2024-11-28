@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyJolService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyRelationService;
@@ -92,7 +92,7 @@ public class CourseCompetencyResource {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
-    private final CourseCompetencySimpleRepository courseCompetencySimpleRepository;
+    private final CourseCompetencySimpleService courseCompetencySimpleRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -100,7 +100,7 @@ public class CourseCompetencyResource {
             CourseRepository courseRepository, CompetencyProgressService competencyProgressService, CompetencyProgressRepository competencyProgressRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyRelationService competencyRelationService,
             Optional<IrisCompetencyGenerationService> irisCompetencyGenerationService, CompetencyJolService competencyJolService,
-            CourseCompetencySimpleRepository courseCompetencySimpleRepository, AuthorizationCheckService authorizationCheckService) {
+            CourseCompetencySimpleService courseCompetencySimpleRepository, AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.courseCompetencyService = courseCompetencyService;
         this.courseCompetencyRepository = courseCompetencyRepository;

@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.BaseExercise;
@@ -57,7 +57,7 @@ public class LearningPathRecommendationService {
 
     private final CompetencyProgressRepository competencyProgressRepository;
 
-    private final CourseCompetencySimpleRepository courseCompetencySimpleRepository;
+    private final CourseCompetencySimpleService courseCompetencySimpleRepository;
 
     /**
      * Base utility that is used to calculate a competencies' utility with respect to the earliest due date of the competency.
@@ -100,7 +100,7 @@ public class LearningPathRecommendationService {
 
     protected LearningPathRecommendationService(CompetencyRelationRepository competencyRelationRepository, LearningObjectService learningObjectService,
             ParticipantScoreService participantScoreService, CompetencyProgressRepository competencyProgressRepository,
-            CourseCompetencySimpleRepository courseCompetencySimpleRepository) {
+            CourseCompetencySimpleService courseCompetencySimpleRepository) {
         this.competencyRelationRepository = competencyRelationRepository;
         this.learningObjectService = learningObjectService;
         this.participantScoreService = participantScoreService;

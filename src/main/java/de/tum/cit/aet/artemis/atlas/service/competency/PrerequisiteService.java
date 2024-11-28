@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkReposito
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleService;
 import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.LearningObjectImportService;
@@ -39,7 +39,7 @@ public class PrerequisiteService extends CourseCompetencyService {
     private final PrerequisiteRepository prerequisiteRepository;
 
     public PrerequisiteService(PrerequisiteRepository prerequisiteRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
-            CourseCompetencySimpleRepository courseCompetencySimpleRepository, LearningPathService learningPathService, CompetencyProgressService competencyProgressService,
+            CourseCompetencySimpleService courseCompetencySimpleRepository, LearningPathService learningPathService, CompetencyProgressService competencyProgressService,
             LectureUnitService lectureUnitService, CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService,
             LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository) {

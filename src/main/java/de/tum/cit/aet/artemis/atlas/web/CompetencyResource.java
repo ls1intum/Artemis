@@ -29,9 +29,9 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencySimpleRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencySimpleService;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -66,19 +66,19 @@ public class CompetencyResource {
 
     private final CompetencyRepository competencyRepository;
 
-    private final CompetencySimpleRepository competencySimpleRepository;
+    private final CompetencySimpleService competencySimpleRepository;
 
     private final CompetencyService competencyService;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
-    private final CourseCompetencySimpleRepository courseCompetencySimpleRepository;
+    private final CourseCompetencySimpleService courseCompetencySimpleRepository;
 
     private final CourseCompetencyService courseCompetencyService;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            CompetencyRepository competencyRepository, CompetencySimpleRepository competencySimpleRepository, CompetencyService competencyService,
-            CourseCompetencyRepository courseCompetencyRepository, CourseCompetencySimpleRepository courseCompetencySimpleRepository,
+            CompetencyRepository competencyRepository, CompetencySimpleService competencySimpleRepository, CompetencyService competencyService,
+            CourseCompetencyRepository courseCompetencyRepository, CourseCompetencySimpleService courseCompetencySimpleRepository,
             CourseCompetencyService courseCompetencyService) {
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;

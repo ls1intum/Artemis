@@ -6,17 +6,17 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.core.repository.base.AbstractSimpleRepository;
+import de.tum.cit.aet.artemis.core.repository.base.AbstractSimpleService;
 
 @Profile(PROFILE_CORE)
 @Service
-public class CompetencySimpleRepository extends AbstractSimpleRepository {
+public class CompetencySimpleService extends AbstractSimpleService<Competency> {
 
     private final static String ENTITY_NAME = "Competency";
 
     private final CompetencyRepository competencyRepository;
 
-    public CompetencySimpleRepository(CompetencyRepository competencyRepository) {
+    public CompetencySimpleService(CompetencyRepository competencyRepository) {
         this.competencyRepository = competencyRepository;
     }
 

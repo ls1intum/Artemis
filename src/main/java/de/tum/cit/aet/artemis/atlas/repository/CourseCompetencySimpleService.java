@@ -9,19 +9,19 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.core.repository.base.AbstractSimpleRepository;
+import de.tum.cit.aet.artemis.core.repository.base.AbstractSimpleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 @Profile(PROFILE_CORE)
 @Service
-public class CourseCompetencySimpleRepository extends AbstractSimpleRepository {
+public class CourseCompetencySimpleService extends AbstractSimpleService<CourseCompetency> {
 
     private static final String ENTITY_NAME = "CourseCompetency";
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
-    public CourseCompetencySimpleRepository(CourseCompetencyRepository courseCompetencyRepository) {
+    public CourseCompetencySimpleService(CourseCompetencyRepository courseCompetencyRepository) {
         this.courseCompetencyRepository = courseCompetencyRepository;
     }
 

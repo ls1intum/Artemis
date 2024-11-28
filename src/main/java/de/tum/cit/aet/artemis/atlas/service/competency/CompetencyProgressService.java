@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalcula
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyLectureUnitMasteryCalculationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -63,7 +63,7 @@ public class CompetencyProgressService {
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
-    private final CourseCompetencySimpleRepository courseCompetencySimpleRepository;
+    private final CourseCompetencySimpleService courseCompetencySimpleRepository;
 
     private static final int MIN_EXERCISES_RECENCY_CONFIDENCE = 3;
 
@@ -79,7 +79,7 @@ public class CompetencyProgressService {
 
     public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, LearningPathService learningPathService,
             ParticipantScoreService participantScoreService, LectureUnitCompletionRepository lectureUnitCompletionRepository, CourseCompetencyRepository courseCompetencyRepository,
-            CourseCompetencySimpleRepository courseCompetencySimpleRepository) {
+            CourseCompetencySimpleService courseCompetencySimpleRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.learningPathService = learningPathService;
         this.participantScoreService = participantScoreService;
