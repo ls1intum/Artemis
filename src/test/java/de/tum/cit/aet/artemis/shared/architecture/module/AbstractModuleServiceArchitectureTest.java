@@ -30,14 +30,14 @@ public abstract class AbstractModuleServiceArchitectureTest extends AbstractArch
 
     @Test
     void shouldBeNamedService() {
-        ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(Service.class).should().haveSimpleNameEndingWith("Service").orShould()
-                .haveSimpleNameEndingWith("SimpleRepository").because("services should have a name ending with 'Service'.");
+        ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(Service.class).should().haveSimpleNameEndingWith("Service")
+                .because("services should have a name ending with 'Service'.");
         rule.check(productionClasses);
     }
 
     @Test
     void shouldBeInServicePackage() {
-        ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(Service.class).should().resideInAPackage("..service..").orShould().resideInAPackage("..repository..")
+        ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(Service.class).should().resideInAPackage("..service..").orShould().resideInAPackage("..repository.simple..")
                 .because("services should be in the package 'service'.");
         final var exceptions = new Class[] { MigrationService.class, SecurityMetersService.class, DomainUserDetailsService.class, OAuth2JWKSService.class, JWTCookieService.class,
                 GitDiffReportParserService.class, ResultWebsocketService.class, LocalCIWebsocketMessagingService.class };
@@ -62,8 +62,7 @@ public abstract class AbstractModuleServiceArchitectureTest extends AbstractArch
         classesOfThisModuleThat().haveSimpleNameEndingWith("Service").should().notBeAnnotatedWith(RestController.class).check(allClasses);
         classesOfThisModuleThat().haveSimpleNameEndingWith("Service").should().notHaveModifier(FINAL).check(allClasses);
 
-        classesOfThisModuleThat().areAnnotatedWith(Service.class).should().haveSimpleNameEndingWith("Service").orShould().haveSimpleNameEndingWith("SimpleRepository")
-                .check(allClasses);
+        classesOfThisModuleThat().areAnnotatedWith(Service.class).should().haveSimpleNameEndingWith("Service").check(allClasses);
         classesOfThisModuleThat().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(Component.class).check(allClasses);
         classesOfThisModuleThat().areAnnotatedWith(Service.class).should().notBeAnnotatedWith(RestController.class).check(allClasses);
         classesOfThisModuleThat().areAnnotatedWith(Service.class).should().notHaveModifier(FINAL).check(allClasses);
