@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -33,7 +31,7 @@ public class CompetencyProgressApi extends AbstractAtlasApi {
         this.competencyRepository = competencyRepository;
     }
 
-    public void updateProgressByLearningObjectForParticipantAsync(LearningObject learningObject, @NotNull Participant participant) {
+    public void updateProgressByLearningObjectForParticipantAsync(LearningObject learningObject, Participant participant) {
         competencyProgressService.updateProgressByLearningObjectForParticipantAsync(learningObject, participant);
     }
 
