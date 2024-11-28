@@ -181,7 +181,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
         try {
             downloadFile(new Blob(blobParts, { type: 'text/csv' }), 'plagiarism-cases.csv');
         } catch (error) {
-            this.alertService.error('plagiarismCases.export.error');
+            this.alertService.error('artemisApp.plagiarism.plagiarismCases.export.error');
         }
     }
 }
