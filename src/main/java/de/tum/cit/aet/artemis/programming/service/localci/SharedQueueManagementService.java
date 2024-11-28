@@ -116,12 +116,20 @@ public class SharedQueueManagementService {
         return new ArrayList<>(queue);
     }
 
+    public int getQueuedJobsSize() {
+        return queue.size();
+    }
+
     /**
      * @return a copy of the processing jobs as ArrayList
      */
     public List<BuildJobQueueItem> getProcessingJobs() {
         // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return new ArrayList<>(processingJobs.values());
+    }
+
+    public int getProcessingJobsSize() {
+        return processingJobs.size();
     }
 
     public List<BuildJobQueueItem> getQueuedJobsForCourse(long courseId) {
@@ -143,6 +151,10 @@ public class SharedQueueManagementService {
     public List<BuildAgentInformation> getBuildAgentInformation() {
         // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return new ArrayList<>(buildAgentInformation.values());
+    }
+
+    public int getBuildAgentInformationSize() {
+        return buildAgentInformation.size();
     }
 
     public List<BuildAgentInformation> getBuildAgentInformationWithoutRecentBuildJobs() {
@@ -303,5 +315,4 @@ public class SharedQueueManagementService {
 
         return new PageImpl<>(orderedBuildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.getTotalElements());
     }
-
 }
