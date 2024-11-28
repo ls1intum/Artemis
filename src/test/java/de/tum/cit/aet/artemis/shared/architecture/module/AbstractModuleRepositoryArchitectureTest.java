@@ -29,6 +29,7 @@ import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.domain.JavaType;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
@@ -301,5 +302,23 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
         StringBuilder sb = new StringBuilder(string);
         sb.replace(lastIndex, lastIndex + substring.length(), replacement);
         return sb.toString();
+    }
+
+    /**
+     * Enforce that no default methods are declared in the JPARepository interfaces.
+     * Instead, one should use/create a SimpleService in the 'simple'-subpackage.
+     */
+    @Test
+    void enforceNoDefaultMethodsInRepository() {
+        methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(Repository.class).should(new ArchCondition<>("not have default methods") {
+
+            @Override
+            public void check(JavaMethod javaMethod, ConditionEvents events) {
+                if (!javaMethod.getModifiers().contains(JavaModifier.ABSTRACT)) {
+                    String message = String.format("Method %s has a default modifier", javaMethod.getFullName());
+                    events.add(SimpleConditionEvent.violated(javaMethod, message));
+                }
+            }
+        }).because("Default methods should be declared in SimpleServices, not in JPA Repository").allowEmptyShould(true).check(productionClasses);
     }
 }
