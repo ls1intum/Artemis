@@ -53,9 +53,9 @@ export class LectureAttachmentsComponent implements OnDestroy {
 
     lecture = signal<Lecture>(new Lecture());
     attachments: Attachment[] = [];
-    attachmentToBeUpdatedOrCreated?: Attachment;
+    attachmentToBeUpdatedOrCreated = signal<Attachment | undefined>(undefined);
     attachmentBackup?: Attachment;
-    attachmentFile?: File;
+    attachmentFile = signal<File | undefined>(undefined);
     isDownloadingAttachmentLink?: string;
     notificationText?: string;
     erroredFile?: File;
@@ -69,13 +69,17 @@ export class LectureAttachmentsComponent implements OnDestroy {
 
     form: FormGroup = this.formBuilder.group({
         attachmentName: [undefined as string | undefined, [Validators.required]],
-        attachmentFileName: [undefined as string | undefined, [Validators.required]],
+        attachmentFileName: [undefined as string | undefined],
         releaseDate: [undefined as dayjs.Dayjs | undefined],
         notificationText: [undefined as string | undefined],
     });
 
+    isFileSelectionValid = computed(() => {
+        return this.attachmentFile() || this.attachmentToBeUpdatedOrCreated()?.link;
+    });
+
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
-    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.datePickerComponent()?.isValid());
+    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.isFileSelectionValid() && this.datePickerComponent()?.isValid());
 
     constructor() {
         effect(
@@ -122,7 +126,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         newAttachment.attachmentType = AttachmentType.FILE;
         newAttachment.version = 0;
         newAttachment.uploadDate = dayjs();
-        this.attachmentToBeUpdatedOrCreated = newAttachment;
+        this.attachmentToBeUpdatedOrCreated.set(newAttachment);
     }
 
     /**
@@ -131,17 +135,17 @@ export class LectureAttachmentsComponent implements OnDestroy {
     saveAttachment(): void {
         console.log('form value', this.form.value);
 
-        if (!this.attachmentToBeUpdatedOrCreated) {
+        if (!this.attachmentToBeUpdatedOrCreated()) {
             return;
         }
 
-        const updatedOrCreatedAttachment: Attachment = { ...this.attachmentToBeUpdatedOrCreated };
+        const updatedOrCreatedAttachment: Attachment = { ...this.attachmentToBeUpdatedOrCreated() };
         updatedOrCreatedAttachment.version!++;
         updatedOrCreatedAttachment.uploadDate = dayjs();
         updatedOrCreatedAttachment.name = this.form.value.attachmentName;
         updatedOrCreatedAttachment.releaseDate = this.form.value.releaseDate;
 
-        if (!this.attachmentFile && !updatedOrCreatedAttachment.id) {
+        if (!this.attachmentFile() && !updatedOrCreatedAttachment.id) {
             return;
         }
 
@@ -150,7 +154,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
-            this.attachmentService.update(updatedOrCreatedAttachment.id, updatedOrCreatedAttachment, this.attachmentFile, requestOptions).subscribe({
+            this.attachmentService.update(updatedOrCreatedAttachment.id, updatedOrCreatedAttachment, this.attachmentFile(), requestOptions).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
                     this.resetAttachmentFormVariables();
                     this.notificationText = undefined;
@@ -161,14 +165,14 @@ export class LectureAttachmentsComponent implements OnDestroy {
                 error: (error: HttpErrorResponse) => this.handleFailedUpload(error),
             });
         } else {
-            this.attachmentService.create(updatedOrCreatedAttachment, this.attachmentFile!).subscribe({
+            this.attachmentService.create(updatedOrCreatedAttachment, this.attachmentFile()!).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
                     this.attachments.push(attachmentRes.body!);
                     this.lectureService.findWithDetails(this.lecture().id!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
                         this.lecture.set(lectureResponse.body!);
                     });
-                    this.attachmentFile = undefined;
-                    this.attachmentToBeUpdatedOrCreated = undefined;
+                    this.attachmentFile.set(undefined);
+                    this.attachmentToBeUpdatedOrCreated.set(undefined);
                     this.attachmentBackup = undefined;
                     this.loadAttachments();
                     this.clearFormValues();
@@ -188,17 +192,17 @@ export class LectureAttachmentsComponent implements OnDestroy {
     }
 
     private resetAttachmentFormVariables() {
-        this.attachmentFile = undefined;
-        this.attachmentToBeUpdatedOrCreated = undefined;
+        this.attachmentFile.set(undefined);
+        this.attachmentToBeUpdatedOrCreated.set(undefined);
         this.attachmentBackup = undefined;
         this.clearFormValues();
     }
 
     private handleFailedUpload(error: HttpErrorResponse): void {
         this.errorMessage = error.message;
-        this.erroredFile = this.attachmentFile;
+        this.erroredFile = this.attachmentFile();
         this.fileInput.nativeElement.value = '';
-        this.attachmentFile = undefined;
+        this.attachmentFile.set(undefined);
         this.resetAttachment();
     }
 
@@ -214,7 +218,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
             notificationText: this.notificationText,
         });
 
-        this.attachmentToBeUpdatedOrCreated = attachment;
+        this.attachmentToBeUpdatedOrCreated.set(attachment);
         this.attachmentBackup = Object.assign({}, attachment, {});
     }
 
@@ -236,7 +240,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         if (this.attachmentBackup) {
             this.resetAttachment();
         }
-        this.attachmentToBeUpdatedOrCreated = undefined;
+        this.attachmentToBeUpdatedOrCreated.set(undefined);
         this.erroredFile = undefined;
         this.clearFormValues();
     }
@@ -274,12 +278,13 @@ export class LectureAttachmentsComponent implements OnDestroy {
         if (!input.files?.length) {
             return;
         }
-        const attachmentFile = input.files[0];
-        this.attachmentFile = attachmentFile;
-        this.attachmentToBeUpdatedOrCreated!.link = attachmentFile.name;
-        if (!this.attachmentToBeUpdatedOrCreated!.name) {
-            const derivedFileName = this.determineAttachmentNameBasedOnFileName(attachmentFile.name);
-            this.attachmentToBeUpdatedOrCreated!.name = derivedFileName;
+
+        const file = input.files[0];
+        this.attachmentFile.set(file);
+        this.attachmentToBeUpdatedOrCreated()!.link = file.name;
+        if (!this.attachmentToBeUpdatedOrCreated()!.name) {
+            const derivedFileName = this.determineAttachmentNameBasedOnFileName(file.name);
+            this.attachmentToBeUpdatedOrCreated()!.name = derivedFileName;
             this.form.patchValue({ attachmentName: derivedFileName });
         }
     }

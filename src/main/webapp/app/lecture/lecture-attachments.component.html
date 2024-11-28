@@ -52,7 +52,7 @@
                                     </thead>
                                     <tbody>
                                         @for (attachment of attachments; track trackId($index, attachment)) {
-                                            <tr [ngClass]="{ 'edit-overlay-container': attachmentToBeUpdatedOrCreated?.id === attachment?.id }">
+                                            <tr [ngClass]="{ 'edit-overlay-container': attachmentToBeUpdatedOrCreated()?.id === attachment?.id }">
                                                 <td>
                                                     {{ attachment.id }}
                                                 </td>
@@ -90,7 +90,7 @@
                                                             </button>
                                                         }
                                                         <button
-                                                            [disabled]="attachmentToBeUpdatedOrCreated?.id === attachment?.id"
+                                                            [disabled]="attachmentToBeUpdatedOrCreated()?.id === attachment?.id"
                                                             type="button"
                                                             (click)="editAttachment(attachment)"
                                                             class="btn btn-primary btn-sm me-1"
@@ -101,7 +101,7 @@
                                                         @if (lecture().isAtLeastInstructor) {
                                                             <button
                                                                 type="button"
-                                                                [disabled]="attachmentToBeUpdatedOrCreated?.id === attachment?.id"
+                                                                [disabled]="attachmentToBeUpdatedOrCreated()?.id === attachment?.id"
                                                                 jhiDeleteButton
                                                                 [entityTitle]="attachment?.name || ''"
                                                                 deleteQuestion="artemisApp.attachment.deleteQuestion"
@@ -113,7 +113,7 @@
                                                         }
                                                     </div>
                                                 </td>
-                                                @if (attachmentToBeUpdatedOrCreated?.id === attachment?.id) {
+                                                @if (attachmentToBeUpdatedOrCreated()?.id === attachment?.id) {
                                                     <div class="edit-overlay" jhiTranslate="artemisApp.lecture.attachments.isBeingEdited"></div>
                                                 }
                                             </tr>
@@ -124,11 +124,11 @@
                         }
                     </div>
                 </div>
-                @if (attachmentToBeUpdatedOrCreated) {
+                @if (attachmentToBeUpdatedOrCreated()) {
                     <form [formGroup]="form">
                         <div class="row">
                             <div class="col-12">
-                                @if (!attachmentToBeUpdatedOrCreated!.id) {
+                                @if (!attachmentToBeUpdatedOrCreated()!.id) {
                                     <h4 jhiTranslate="artemisApp.lecture.attachments.newAttachment"></h4>
                                 } @else {
                                     <h4 jhiTranslate="artemisApp.lecture.attachments.editAttachment"></h4>
@@ -143,7 +143,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label
-                                        for="lectureAttachmentInput{{ attachmentToBeUpdatedOrCreated!.name }}"
+                                        for="lectureAttachmentInput{{ attachmentToBeUpdatedOrCreated()!.name }}"
                                         class="form-control-label"
                                         jhiTranslate="artemisApp.lecture.attachments.file"
                                         >File</label
@@ -157,13 +157,14 @@
                                         <div class="custom-file overflow-ellipsis">
                                             <input
                                                 #fileInput
-                                                id="lectureAttachmentInput{{ attachmentToBeUpdatedOrCreated!.name }}"
+                                                id="lectureAttachmentInput{{ attachmentToBeUpdatedOrCreated()!.name }}"
                                                 type="file"
                                                 class="custom-file-input"
-                                                [class.file-input-margin]="!attachmentToBeUpdatedOrCreated!.name"
                                                 [accept]="acceptedFileExtensionsFileBrowser"
                                                 [placeholder]="'artemisApp.lecture.attachments.chooseFile' | artemisTranslate"
                                                 (change)="setLectureAttachment($event)"
+                                                [class.ng-invalid]="!isFileSelectionValid()"
+                                                [class.file-input-margin]="!isFileSelectionValid()"
                                                 aria-describedby="fileHelp"
                                                 formControlName="attachmentFileName"
                                             />
@@ -178,7 +179,7 @@
                                 <div class="form-group">
                                     <jhi-date-time-picker labelName="{{ 'artemisApp.lecture.attachments.releaseDate' | artemisTranslate }}" formControlName="releaseDate" />
                                 </div>
-                                @if (attachmentToBeUpdatedOrCreated!.id) {
+                                @if (attachmentToBeUpdatedOrCreated()!.id) {
                                     <div class="form-group">
                                         <label for="attachmentName" jhiTranslate="artemisApp.lecture.attachments.notificationText"></label>
                                         <input
