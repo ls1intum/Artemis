@@ -1,4 +1,4 @@
-import { DebugElement } from '@angular/core';
+import { DebugElement, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
@@ -110,9 +110,9 @@ describe('TextEditorComponent', () => {
     });
 
     it('should use inputValues if present instead of loading new details', fakeAsync(() => {
-        comp.inputExercise = signal<TextExercise | undefined>(textExercise);
-        comp.inputParticipation = signal<StudentParticipation | undefined>(participation);
-        comp.inputSubmission = signal<TextSubmission | undefined>({ id: 1, text: 'test' });
+        comp.inputExercise = input<TextExercise>(textExercise);
+        comp.inputParticipation = input<StudentParticipation>(participation);
+        comp.inputSubmission = input<TextSubmission>({ id: 1, text: 'test' });
         // @ts-ignore updateParticipation is private
         const updateParticipationSpy = jest.spyOn(comp, 'updateParticipation');
         // @ts-ignore setupComponentWithInputValuesSpy is private
