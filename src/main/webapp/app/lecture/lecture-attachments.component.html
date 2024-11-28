@@ -44,7 +44,6 @@
                                             <th><span jhiTranslate="global.field.id"></span></th>
                                             <th><span jhiTranslate="artemisApp.lecture.attachments.name"></span></th>
                                             <th><span jhiTranslate="artemisApp.lecture.attachments.type"></span></th>
-                                            <th><span jhiTranslate="artemisApp.lecture.attachments.link"></span></th>
                                             <th><span jhiTranslate="artemisApp.lecture.attachments.releaseDate"></span></th>
                                             <th><span jhiTranslate="artemisApp.lecture.attachments.uploadDate"></span></th>
                                             <th><span jhiTranslate="artemisApp.lecture.attachments.version"></span></th>
@@ -57,21 +56,21 @@
                                                 <td>
                                                     {{ attachment.id }}
                                                 </td>
-                                                <td>{{ attachment.name }}</td>
-                                                <td>{{ attachment.attachmentType }}</td>
                                                 <td>
                                                     @if (!isDownloadingAttachmentLink) {
                                                         <a class="text-primary" (click)="downloadAttachment(attachment.link || '')">
                                                             {{ attachment.name }}
                                                         </a>
-                                                    }
-                                                    @if (isDownloadingAttachmentLink === attachment.link) {
+                                                    } @else if (isDownloadingAttachmentLink === attachment.link) {
                                                         <a class="text-primary">
                                                             <fa-icon [icon]="faSpinner" animation="spin" />
                                                             {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
                                                         </a>
+                                                    } @else {
+                                                        {{ attachment.name }}
                                                     }
                                                 </td>
+                                                <td>{{ attachment.attachmentType }}</td>
                                                 <td>{{ attachment.releaseDate | artemisDate }}</td>
                                                 <td>{{ attachment.uploadDate | artemisDate }}</td>
                                                 <td>
