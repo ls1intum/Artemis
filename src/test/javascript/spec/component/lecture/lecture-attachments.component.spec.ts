@@ -156,9 +156,10 @@ describe('LectureAttachmentsComponent', () => {
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).not.toBeNull();
         expect(comp.attachmentToBeUpdatedOrCreated()).not.toBeNull();
-        comp.attachmentToBeUpdatedOrCreated()!.name = 'Test File Name';
-        comp.form.value.name = 'Test File Name';
-        comp.form.value.releaseDate = dayjs();
+        comp.form.patchValue({
+            attachmentName: 'Test File Name',
+            releaseDate: dayjs(),
+        });
         fixture.detectChanges();
         expect(uploadAttachmentButton.nativeElement.disabled).toBeFalse();
         uploadAttachmentButton.nativeElement.click();
@@ -181,7 +182,10 @@ describe('LectureAttachmentsComponent', () => {
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).not.toBeNull();
         expect(comp.attachmentToBeUpdatedOrCreated()).not.toBeNull();
-        comp.attachmentToBeUpdatedOrCreated()!.name = 'Test File Name';
+        comp.form.patchValue({
+            attachmentName: 'Test File Name',
+            releaseDate: dayjs(),
+        });
         fixture.detectChanges();
         expect(uploadAttachmentButton.nativeElement.disabled).toBeFalse();
         uploadAttachmentButton.nativeElement.click();
