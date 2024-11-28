@@ -551,6 +551,7 @@ public class SharedQueueProcessingService {
             log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
             isPaused.set(false);
             processResults.set(true);
+            buildAgentConfiguration.resumeBuildAgentServices();
             // We remove the listener and scheduledTask first to avoid having multiple listeners and scheduled tasks running
             removeListenerAndCancelScheduledFuture();
             listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
@@ -560,9 +561,8 @@ public class SharedQueueProcessingService {
         finally {
             pauseResumeLock.unlock();
         }
-        buildAgentConfiguration.resumeBuildAgentServices();
-        checkAvailabilityAndProcessNextBuild();
 
+        checkAvailabilityAndProcessNextBuild();
     }
 
     /**
