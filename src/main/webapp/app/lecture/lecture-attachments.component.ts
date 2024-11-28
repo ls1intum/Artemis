@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
@@ -10,6 +10,16 @@ import { AttachmentService } from 'app/lecture/attachment.service';
 import { faEye, faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { LectureService } from 'app/lecture/lecture.service';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+
+export interface LectureAttachmentFormData {
+    attachmentName?: string;
+    attachmentFileName?: string;
+    releaseDate?: dayjs.Dayjs;
+    notificationText?: string;
+}
 
 @Component({
     selector: 'jhi-lecture-attachments',
@@ -32,8 +42,11 @@ export class LectureAttachmentsComponent implements OnDestroy {
     private readonly attachmentService = inject(AttachmentService);
     private readonly lectureService = inject(LectureService);
     private readonly fileService = inject(FileService);
+    private readonly formBuilder = inject(FormBuilder);
 
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
+    datePickerComponent = viewChild(FormDateTimePickerComponent);
+
     lectureId = input<number>();
     showHeader = input<boolean>(true);
 
@@ -53,9 +66,19 @@ export class LectureAttachmentsComponent implements OnDestroy {
 
     private routeDataSubscription?: Subscription;
 
+    form: FormGroup = this.formBuilder.group({
+        attachmentName: [undefined as string | undefined, [Validators.required]],
+        attachmentFileName: [undefined as string | undefined],
+        releaseDate: [undefined as dayjs.Dayjs | undefined],
+        notificationText: [undefined as string | undefined],
+    });
+
     isFileSelectionValid = computed(() => {
         return this.attachmentFile() || this.attachmentToBeUpdatedOrCreated()?.link;
     });
+
+    private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
+    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.isFileSelectionValid() && this.datePickerComponent()?.isValid());
 
     constructor() {
         effect(
