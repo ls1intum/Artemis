@@ -115,19 +115,7 @@
                     } @else {
                         <a
                             class="ms-2 me-5"
-                            [routerLink]="[
-                                '/course-management',
-                                courseId,
-                                'exams',
-                                examId,
-                                'exercise-groups',
-                                exerciseGroupId,
-                                'programming-exercises',
-                                exerciseId,
-                                'participations',
-                                participation.id,
-                                'repository',
-                            ]"
+                            [routerLink]="localRepositoryLink"
                             target="_blank"
                             rel="noopener noreferrer"
                             jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"

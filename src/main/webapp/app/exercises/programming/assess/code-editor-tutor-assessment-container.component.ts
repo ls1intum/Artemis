@@ -29,7 +29,7 @@ import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/utils/navigation.utils';
 import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercises/shared/result/result.utils';
@@ -84,6 +84,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     exerciseId: number;
     exerciseGroupId: number;
     exerciseDashboardLink: string[];
+    localRepositoryLink: string[];
     loadingInitialSubmission = true;
     highlightDifferences = false;
 
@@ -197,6 +198,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         const observable = this.repositoryFileService.getFilesWithContent();
                         // Set back to student participation
                         this.domainService.setDomain([DomainType.PARTICIPATION, this.participation]);
+                        this.localRepositoryLink = getLocalRepositoryLink(
+                            this.courseId,
+                            this.exerciseId,
+                            this.participation.id!,
+                            this.exerciseGroupId,
+                            this.examId,
+                            this.isTestRun,
+                        );
                         return observable;
                     }),
                     tap((templateFilesObj) => {
