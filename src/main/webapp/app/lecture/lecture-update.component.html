@@ -10,20 +10,20 @@
                 </div>
             </div>
             <jhi-form-status-bar [formStatusSections]="formStatusSections" />
-            @if (lecture().course) {
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course"></label>
-                    @if (lecture().course?.title) {
-                        <div class="d-flex">
-                            <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="lecture().course!.title!" />
-                        </div>
-                    }
-                </div>
-            }
             <div>
                 <div>
                     <h2 id="artemisApp.lecture.wizardMode.steps.titleStepTitle"><span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepTitle"></span></h2>
                     <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepMessage"></span></p>
+                    @if (lecture().course) {
+                        <div class="form-group">
+                            <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course"></label>
+                            @if (lecture().course?.title) {
+                                <div class="d-flex">
+                                    <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="lecture().course!.title!" />
+                                </div>
+                            }
+                        </div>
+                    }
                     <jhi-lecture-title-channel-name [lecture]="lecture()" />
                     @if (lecture()) {
                         <div class="form-group" id="field_description">
