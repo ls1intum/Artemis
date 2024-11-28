@@ -132,4 +132,61 @@ describe('FeedbackAnalysisService', () => {
             expect(result.content[1].firstName).toBe('Jane');
         });
     });
+
+    describe('getAffectedStudentCount', () => {
+        it('should retrieve the count of affected students for a feedback detail text', async () => {
+            const exerciseId = 1;
+            const feedbackDetailText = 'Test feedback detail';
+            const affectedStudentCountMock = 42;
+
+            const responsePromise = service.getAffectedStudentCount(exerciseId, feedbackDetailText);
+
+            const req = httpMock.expectOne(`api/exercises/${exerciseId}/feedback-detail/affected-students?detailText=${encodeURIComponent(feedbackDetailText)}`);
+            expect(req.request.method).toBe('GET');
+            req.flush(affectedStudentCountMock);
+
+            const result = await responsePromise;
+            expect(result).toBe(affectedStudentCountMock);
+        });
+    });
+
+    describe('createChannel', () => {
+        it('should send a POST request to create a feedback-specific channel and return the created channel DTO', async () => {
+            const courseId = 1;
+            const exerciseId = 2;
+
+            const channelDtoMock = {
+                name: 'feedback-channel',
+                description: 'Discussion channel for feedback',
+                isPublic: true,
+                isAnnouncementChannel: false,
+            };
+
+            const feedbackChannelRequestMock = {
+                channel: channelDtoMock,
+                feedbackDetailText: 'Sample feedback detail text',
+            };
+
+            const createdChannelMock = {
+                id: 1001,
+                name: 'feedback-channel',
+                description: 'Discussion channel for feedback',
+                isPublic: true,
+                isAnnouncementChannel: false,
+            };
+
+            const responsePromise = service.createChannel(courseId, exerciseId, feedbackChannelRequestMock);
+
+            const req = httpMock.expectOne(`api/courses/${courseId}/${exerciseId}/feedback-channel`);
+            expect(req.request.method).toBe('POST');
+            expect(req.request.body).toEqual(feedbackChannelRequestMock);
+
+            req.flush(createdChannelMock);
+
+            const result = await responsePromise;
+            expect(result).toEqual(createdChannelMock);
+            expect(result.name).toBe('feedback-channel');
+            expect(result.description).toBe('Discussion channel for feedback');
+        });
+    });
 });
