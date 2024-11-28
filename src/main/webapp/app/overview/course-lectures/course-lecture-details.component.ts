@@ -128,10 +128,10 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
         return attachment.link.split('.').pop()!;
     }
 
-    downloadAttachment(downloadUrl?: string): void {
-        if (!this.isDownloadingLink && downloadUrl) {
+    downloadAttachment(downloadUrl?: string, donwloadName?: string): void {
+        if (!this.isDownloadingLink && downloadUrl && donwloadName) {
             this.isDownloadingLink = downloadUrl;
-            this.fileService.downloadFile(this.fileService.replaceLectureAttachmentPrefixAndUnderscores(downloadUrl));
+            this.fileService.downloadFileByAttachmentName(downloadUrl, donwloadName);
             this.isDownloadingLink = undefined;
         }
     }

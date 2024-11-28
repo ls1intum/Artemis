@@ -200,10 +200,10 @@ export class LectureAttachmentsComponent implements OnDestroy {
         return item.id;
     }
 
-    downloadAttachment(downloadUrl: string): void {
+    downloadAttachment(downloadName: string, downloadUrl: string): void {
         if (!this.isDownloadingAttachmentLink) {
             this.isDownloadingAttachmentLink = downloadUrl;
-            this.fileService.downloadFile(this.fileService.replaceLectureAttachmentPrefixAndUnderscores(downloadUrl));
+            this.fileService.downloadFileByAttachmentName(downloadUrl, downloadName);
             this.isDownloadingAttachmentLink = undefined;
         }
     }

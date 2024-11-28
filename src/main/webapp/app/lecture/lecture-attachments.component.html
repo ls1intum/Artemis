@@ -61,7 +61,7 @@
                                                 <td>{{ attachment.attachmentType }}</td>
                                                 <td>
                                                     @if (!isDownloadingAttachmentLink) {
-                                                        <a class="text-primary" (click)="downloadAttachment(attachment.link || '')">
+                                                        <a class="text-primary" (click)="downloadAttachment(attachment.name || '', attachment.link || '')">
                                                             {{ attachment.name }}
                                                         </a>
                                                     }
