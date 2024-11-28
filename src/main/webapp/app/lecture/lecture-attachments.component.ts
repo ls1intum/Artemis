@@ -152,9 +152,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
             }
             this.attachmentService.update(this.attachmentToBeUpdatedOrCreated()!.id!, this.attachmentToBeUpdatedOrCreated()!, this.attachmentFile(), requestOptions).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
-                    this.attachmentFile.set(undefined);
-                    this.attachmentToBeUpdatedOrCreated.set(undefined);
-                    this.attachmentBackup = undefined;
+                    this.resetAttachmentFormVariables();
                     this.notificationText = undefined;
                     this.attachments = this.attachments.map((el) => {
                         return el.id === attachmentRes.body!.id ? attachmentRes.body! : el;
@@ -169,14 +167,28 @@ export class LectureAttachmentsComponent implements OnDestroy {
                     this.lectureService.findWithDetails(this.lecture().id!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
                         this.lecture.set(lectureResponse.body!);
                     });
-                    this.attachmentFile.set(undefined);
-                    this.attachmentToBeUpdatedOrCreated.set(undefined);
-                    this.attachmentBackup = undefined;
                     this.loadAttachments();
+                    this.resetAttachmentFormVariables();
                 },
                 error: (error: HttpErrorResponse) => this.handleFailedUpload(error),
             });
         }
+    }
+
+    private clearFormValues(): void {
+        this.form.reset({
+            attachmentName: undefined,
+            attachmentFileName: undefined,
+            releaseDate: undefined,
+            notificationText: undefined,
+        });
+    }
+
+    private resetAttachmentFormVariables() {
+        this.attachmentFile.set(undefined);
+        this.attachmentToBeUpdatedOrCreated.set(undefined);
+        this.attachmentBackup = undefined;
+        this.clearFormValues();
     }
 
     private handleFailedUpload(error: HttpErrorResponse): void {
