@@ -176,7 +176,7 @@ describe('SplitPaneHeaderComponent', () => {
         fixture1.detectChanges();
         fixture2.detectChanges();
 
-        expect(handleFileSelectWithoutPropagationSpy).toHaveBeenCalledWith(selectedFile.file, selectedFile.idx);
+        expect(handleFileSelectWithoutPropagationSpy).toHaveBeenCalledExactlyOnceWith(selectedFile.file, selectedFile.idx);
     });
 
     it('should not sync file selection when lockFilesEnabled false', () => {
