@@ -38,7 +38,7 @@
                     [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
                     [collapseState]="DEFAULT_COLLAPSE_STATE"
                     [inCommunication]="true"
-                    [reEmitNonDistinctSidebarEvents]="isMobile"
+                    [reEmitNonDistinctSidebarEvents]="true"
                 />
             </div>
             @if (course && !activeConversation && isCodeOfConductPresented) {
@@ -57,9 +57,15 @@
                         (openThread)="postInThread = $event"
                         [course]="course"
                         [searchbarCollapsed]="channelSearchCollapsed"
+                        [focusPostId]="focusPostId"
+                        [openThreadOnFocus]="openThreadOnFocus"
                     />
                 } @else {
-                    <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
+                    @if (selectedSavedPostStatus === null) {
+                        <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
+                    } @else {
+                        <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus" [courseId]="course.id" (onNavigateToPost)="onNavigateToPost($event)"></jhi-saved-posts>
+                    }
                 }
             </div>
             <div class="scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'is-answer-thread-open': !!postInThread }">
