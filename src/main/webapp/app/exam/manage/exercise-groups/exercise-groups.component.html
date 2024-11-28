@@ -297,22 +297,22 @@
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)) {
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [programmingExercise]="exercise" [displayShortName]="true" />
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayShortName]="true" />
                                             }
                                         </td>
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [programmingExercise]="exercise" [displayRepositoryUri]="true" />
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayRepositoryUri]="true" />
                                             }
                                         </td>
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [programmingExercise]="exercise" [displayTemplateUrls]="true" />
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayTemplateUrls]="true" />
                                             }
                                         </td>
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [programmingExercise]="exercise" [displayEditorModus]="true" />
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayEditorModus]="true" />
                                             }
                                         </td>
                                     }

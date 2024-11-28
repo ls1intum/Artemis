@@ -29,7 +29,7 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
     displayRepositoryUri = input(false);
     displayTemplateUrls = input(false);
     displayEditorModus = input(false);
-    programmingExercise = input.required<ProgrammingExercise>();
+    exercise = input.required<ProgrammingExercise>();
 
     faDownload = faDownload;
 
@@ -38,14 +38,14 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.onlineIdeEnabled = profileInfo.activeProfiles.includes(PROFILE_THEIA);
 
-            const projectKey = this.programmingExercise()?.projectKey;
+            const projectKey = this.exercise()?.projectKey;
             if (projectKey) {
-                const solutionParticipation = this.programmingExercise()?.solutionParticipation;
+                const solutionParticipation = this.exercise()?.solutionParticipation;
                 if (solutionParticipation?.buildPlanId) {
                     solutionParticipation.buildPlanUrl = createBuildPlanUrl(profileInfo.buildPlanURLTemplate, projectKey, solutionParticipation.buildPlanId);
                 }
 
-                const templateParticipation = this.programmingExercise()?.templateParticipation;
+                const templateParticipation = this.exercise()?.templateParticipation;
                 if (templateParticipation?.buildPlanId) {
                     templateParticipation.buildPlanUrl = createBuildPlanUrl(profileInfo.buildPlanURLTemplate, projectKey, templateParticipation.buildPlanId);
                 }
@@ -61,7 +61,7 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
      * @param repositoryType
      */
     downloadRepository(repositoryType: ProgrammingExerciseInstructorRepositoryType): void {
-        const programmingExerciseId = this.programmingExercise()?.id;
+        const programmingExerciseId = this.exercise()?.id;
         if (programmingExerciseId) {
             // Repository type cannot be 'AUXILIARY' as auxiliary repositories are currently not supported for the local VCS.
             this.programmingExerciseService.exportInstructorRepository(programmingExerciseId, repositoryType, undefined).subscribe((response: HttpResponse<Blob>) => {
