@@ -29,7 +29,7 @@ public class MigrationEntry20240614_140000 extends MigrationEntry {
         List<Course> activeCourses = courseRepository.findAllActiveWithoutTestCourses(ZonedDateTime.now());
 
         log.info("Updating competency progress for {} active courses", activeCourses.size());
-        competencyProgressApi.updateProgressForCourses(activeCourses);
+        competencyProgressApi.updateProgressForCoursesAsync(activeCourses);
     }
 
     @Override

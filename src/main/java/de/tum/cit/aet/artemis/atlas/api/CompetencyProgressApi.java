@@ -66,7 +66,7 @@ public class CompetencyProgressApi extends AbstractAtlasApi {
      *
      * @param activeCourses the active courses
      */
-    public void updateProgressForCourses(List<Course> activeCourses) {
+    public void updateProgressForCoursesAsync(List<Course> activeCourses) {
         activeCourses.forEach(course -> {
             List<Competency> competencies = competencyRepository.findByCourseIdOrderById(course.getId());
             // Asynchronously update the progress for each competency
