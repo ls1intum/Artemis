@@ -119,10 +119,6 @@ export class LectureAttachmentsComponent implements OnDestroy {
         return attachmentLink.endsWith('.pdf') ?? false;
     }
 
-    get isSubmitPossible(): boolean {
-        return !!(this.attachmentToBeUpdatedOrCreated()?.name && (this.attachmentFile() || this.attachmentToBeUpdatedOrCreated()?.link));
-    }
-
     addAttachment(): void {
         const newAttachment = new Attachment();
         newAttachment.lecture = this.lecture();
