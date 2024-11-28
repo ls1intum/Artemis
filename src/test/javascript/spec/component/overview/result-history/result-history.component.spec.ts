@@ -1,4 +1,4 @@
-import { input } from '@angular/core"';
+import { input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
 import { MockPipe } from 'ng-mocks';
