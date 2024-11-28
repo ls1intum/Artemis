@@ -216,8 +216,6 @@ export class LectureAttachmentsComponent implements OnDestroy {
         });
 
         this.attachmentToBeUpdatedOrCreated.set(attachment);
-
-        this.attachmentToBeUpdatedOrCreated.set(attachment);
         this.attachmentBackup = Object.assign({}, attachment, {});
     }
 
