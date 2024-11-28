@@ -53,9 +53,9 @@ export class LectureAttachmentsComponent implements OnDestroy {
 
     lecture = signal<Lecture>(new Lecture());
     attachments: Attachment[] = [];
-    attachmentToBeUpdatedOrCreated = signal<Attachment | undefined>(undefined);
+    attachmentToBeUpdatedOrCreated?: Attachment;
     attachmentBackup?: Attachment;
-    attachmentFile = signal<File | undefined>(undefined);
+    attachmentFile?: File;
     isDownloadingAttachmentLink?: string;
     notificationText?: string;
     erroredFile?: File;
@@ -116,18 +116,13 @@ export class LectureAttachmentsComponent implements OnDestroy {
         return attachmentLink.endsWith('.pdf') ?? false;
     }
 
-    isSubmitPossible = computed(() => {
-        console.log('is submit possible was updated');
-        return !!(this.attachmentToBeUpdatedOrCreated()?.name && (this.attachmentFile() || this.attachmentToBeUpdatedOrCreated()?.link));
-    });
-
     addAttachment(): void {
         const newAttachment = new Attachment();
         newAttachment.lecture = this.lecture();
         newAttachment.attachmentType = AttachmentType.FILE;
         newAttachment.version = 0;
         newAttachment.uploadDate = dayjs();
-        this.attachmentToBeUpdatedOrCreated.set(newAttachment);
+        this.attachmentToBeUpdatedOrCreated = newAttachment;
     }
 
     /**
@@ -136,17 +131,17 @@ export class LectureAttachmentsComponent implements OnDestroy {
     saveAttachment(): void {
         console.log('form value', this.form.value);
 
-        if (!this.attachmentToBeUpdatedOrCreated()) {
+        if (!this.attachmentToBeUpdatedOrCreated) {
             return;
         }
 
-        const updatedOrCreatedAttachment: Attachment = { ...this.attachmentToBeUpdatedOrCreated() };
+        const updatedOrCreatedAttachment: Attachment = { ...this.attachmentToBeUpdatedOrCreated };
         updatedOrCreatedAttachment.version!++;
         updatedOrCreatedAttachment.uploadDate = dayjs();
         updatedOrCreatedAttachment.name = this.form.value.attachmentName;
         updatedOrCreatedAttachment.releaseDate = this.form.value.releaseDate;
 
-        if (!this.attachmentFile() && !updatedOrCreatedAttachment.id) {
+        if (!this.attachmentFile && !updatedOrCreatedAttachment.id) {
             return;
         }
 
@@ -155,7 +150,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
-            this.attachmentService.update(updatedOrCreatedAttachment.id, updatedOrCreatedAttachment, this.attachmentFile(), requestOptions).subscribe({
+            this.attachmentService.update(updatedOrCreatedAttachment.id, updatedOrCreatedAttachment, this.attachmentFile, requestOptions).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
                     this.resetAttachmentFormVariables();
                     this.notificationText = undefined;
@@ -166,14 +161,14 @@ export class LectureAttachmentsComponent implements OnDestroy {
                 error: (error: HttpErrorResponse) => this.handleFailedUpload(error),
             });
         } else {
-            this.attachmentService.create(updatedOrCreatedAttachment, this.attachmentFile()!).subscribe({
+            this.attachmentService.create(updatedOrCreatedAttachment, this.attachmentFile!).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
                     this.attachments.push(attachmentRes.body!);
                     this.lectureService.findWithDetails(this.lecture().id!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
                         this.lecture.set(lectureResponse.body!);
                     });
-                    this.attachmentFile.set(undefined);
-                    this.attachmentToBeUpdatedOrCreated.set(undefined);
+                    this.attachmentFile = undefined;
+                    this.attachmentToBeUpdatedOrCreated = undefined;
                     this.attachmentBackup = undefined;
                     this.loadAttachments();
                     this.clearFormValues();
@@ -193,17 +188,17 @@ export class LectureAttachmentsComponent implements OnDestroy {
     }
 
     private resetAttachmentFormVariables() {
-        this.attachmentFile.set(undefined);
-        this.attachmentToBeUpdatedOrCreated.set(undefined);
+        this.attachmentFile = undefined;
+        this.attachmentToBeUpdatedOrCreated = undefined;
         this.attachmentBackup = undefined;
         this.clearFormValues();
     }
 
     private handleFailedUpload(error: HttpErrorResponse): void {
         this.errorMessage = error.message;
-        this.erroredFile = this.attachmentFile();
+        this.erroredFile = this.attachmentFile;
         this.fileInput.nativeElement.value = '';
-        this.attachmentFile.set(undefined);
+        this.attachmentFile = undefined;
         this.resetAttachment();
     }
 
@@ -219,7 +214,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
             notificationText: this.notificationText,
         });
 
-        this.attachmentToBeUpdatedOrCreated.set(attachment);
+        this.attachmentToBeUpdatedOrCreated = attachment;
         this.attachmentBackup = Object.assign({}, attachment, {});
     }
 
@@ -241,7 +236,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         if (this.attachmentBackup) {
             this.resetAttachment();
         }
-        this.attachmentToBeUpdatedOrCreated.set(undefined);
+        this.attachmentToBeUpdatedOrCreated = undefined;
         this.erroredFile = undefined;
     }
 
@@ -279,24 +274,13 @@ export class LectureAttachmentsComponent implements OnDestroy {
             return;
         }
         const attachmentFile = input.files[0];
-        this.attachmentFile.set(attachmentFile);
+        this.attachmentFile = attachmentFile;
+        this.attachmentToBeUpdatedOrCreated!.link = attachmentFile.name;
 
-        if (!this.attachmentToBeUpdatedOrCreated()) {
-            return;
+        const shouldAutomaticallySetName = !this.attachmentToBeUpdatedOrCreated!.name;
+        if (shouldAutomaticallySetName) {
+            this.attachmentToBeUpdatedOrCreated!.name = this.attachmentFile.name.replace(/\.[^/.]+$/, '');
         }
-        this.attachmentToBeUpdatedOrCreated.update((attachment) => {
-            if (attachment) {
-                attachment.link = attachmentFile.name;
-
-                const shouldAutomaticallySetAttachmentName = !attachment.name;
-                if (shouldAutomaticallySetAttachmentName) {
-                    attachment.name = this.determineAttachmentNameBasedOnFileName(attachmentFile.name);
-                }
-            }
-            return attachment;
-        });
-
-        this.attachmentToBeUpdatedOrCreated.set(this.attachmentToBeUpdatedOrCreated());
     }
 
     private determineAttachmentNameBasedOnFileName(fileName: string): string {
