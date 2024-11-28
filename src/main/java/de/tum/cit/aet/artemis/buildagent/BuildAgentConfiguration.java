@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.buildagent;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -43,6 +44,8 @@ public class BuildAgentConfiguration {
 
     private ThreadPoolExecutor buildExecutor;
 
+    private DockerClient dockerClient;
+
     private static final Logger log = LoggerFactory.getLogger(BuildAgentConfiguration.class);
 
     @Value("${artemis.continuous-integration.docker-connection-uri}")
@@ -61,10 +64,15 @@ public class BuildAgentConfiguration {
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady() {
         buildExecutor = createBuildExecutor();
+        dockerClient = createDockerClient();
     }
 
     public ThreadPoolExecutor getBuildExecutor() {
         return buildExecutor;
+    }
+
+    public DockerClient getDockerClient() {
+        return dockerClient;
     }
 
     /**
@@ -157,9 +165,7 @@ public class BuildAgentConfiguration {
      *
      * @return The DockerClient.
      */
-    @Bean
-    // TODO: implement the same logic as in the buildExecutor
-    public DockerClient dockerClient() {
+    public DockerClient createDockerClient() {
         log.debug("Create bean dockerClient");
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig()).build();
@@ -208,11 +214,24 @@ public class BuildAgentConfiguration {
         buildExecutor = null;
     }
 
-    public void pause() {
-        shutdownBuildExecutor();
+    private void closeDockerClient() {
+        if (dockerClient != null) {
+            try {
+                dockerClient.close();
+            }
+            catch (IOException e) {
+                log.error("Error closing Docker client", e);
+            }
+        }
     }
 
-    public void resume() {
+    public void pauseBuildAgentServices() {
+        shutdownBuildExecutor();
+        closeDockerClient();
+    }
+
+    public void resumeBuildAgentServices() {
         this.buildExecutor = createBuildExecutor();
+        this.dockerClient = createDockerClient();
     }
 }

@@ -513,11 +513,11 @@ public class SharedQueueProcessingService {
                     }
                 }
             }
-
-            buildAgentConfiguration.pause();
-
             // Cleanup docker containers
             buildAgentDockerService.cleanUpContainers();
+
+            // Close the build executor and docker client
+            buildAgentConfiguration.pauseBuildAgentServices();
         }
         finally {
             pauseResumeLock.unlock();
@@ -555,14 +555,14 @@ public class SharedQueueProcessingService {
             removeListenerAndCancelScheduledFuture();
             listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
             scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
-            checkAvailabilityAndProcessNextBuild();
             updateLocalBuildAgentInformation();
         }
         finally {
             pauseResumeLock.unlock();
         }
+        buildAgentConfiguration.resumeBuildAgentServices();
+        checkAvailabilityAndProcessNextBuild();
 
-        buildAgentConfiguration.resume();
     }
 
     /**
