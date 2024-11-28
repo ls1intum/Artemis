@@ -20,6 +20,7 @@ import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lectu
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import cloneDeep from 'lodash-es/cloneDeep';
+import dayjs from 'dayjs';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -78,12 +79,14 @@ export class LectureUpdateComponent implements OnInit {
 
     isChangeMadeToTitleOrPeriodSection = false;
 
-    updateIsChangesMadeToTitleOrPeriodSection() {
-        console.log('triggered update isChangeMadeToTitleOrPeriodSection');
+    protected updateIsChangesMadeToTitleOrPeriodSection() {
         this.isChangeMadeToTitleOrPeriodSection =
             this.lecture().title !== this.lectureOnInit.title ||
             this.lecture().channelName !== this.lectureOnInit.channelName ||
-            this.lecture().description !== this.lectureOnInit.description;
+            this.lecture().description !== this.lectureOnInit.description ||
+            !dayjs(this.lecture().visibleDate).isSame(dayjs(this.lectureOnInit.visibleDate)) ||
+            !dayjs(this.lecture().startDate).isSame(dayjs(this.lectureOnInit.startDate)) ||
+            !dayjs(this.lecture().endDate).isSame(dayjs(this.lectureOnInit.endDate));
     }
 
     constructor() {
@@ -98,6 +101,11 @@ export class LectureUpdateComponent implements OnInit {
                 .channelNameChange.subscribe(() => {
                     this.updateIsChangesMadeToTitleOrPeriodSection();
                 });
+            this.periodSectionDatepickers().forEach((datepicker) => {
+                datepicker.valueChange.subscribe(() => {
+                    this.updateIsChangesMadeToTitleOrPeriodSection();
+                });
+            });
         });
 
         effect(
