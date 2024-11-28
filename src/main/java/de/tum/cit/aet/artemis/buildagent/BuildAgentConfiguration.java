@@ -188,6 +188,13 @@ public class BuildAgentConfiguration {
     }
 
     public void reinitialize() {
+        shutdownBuildExecutor();
+        log.info("Executor shutdown");
+        this.buildExecutor = createBuildExecutor();
+        log.info("Executor reinitialized");
+    }
+
+    private void shutdownBuildExecutor() {
         // Shut down the current executor gracefully
         if (buildExecutor != null && !buildExecutor.isShutdown()) {
             buildExecutor.shutdown();
@@ -198,9 +205,14 @@ public class BuildAgentConfiguration {
                 log.warn("Executor termination interrupted", e);
             }
         }
+        buildExecutor = null;
+    }
 
-        // Create a new executor
+    public void pause() {
+        shutdownBuildExecutor();
+    }
+
+    public void resume() {
         this.buildExecutor = createBuildExecutor();
-        log.info("Executor reinitialized.");
     }
 }

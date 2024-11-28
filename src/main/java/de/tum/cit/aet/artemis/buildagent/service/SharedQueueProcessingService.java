@@ -514,7 +514,7 @@ public class SharedQueueProcessingService {
                 }
             }
 
-            buildAgentConfiguration.reinitialize();
+            buildAgentConfiguration.pause();
 
             // Cleanup docker containers
             buildAgentDockerService.cleanUpContainers();
@@ -561,6 +561,8 @@ public class SharedQueueProcessingService {
         finally {
             pauseResumeLock.unlock();
         }
+
+        buildAgentConfiguration.resume();
     }
 
     /**
