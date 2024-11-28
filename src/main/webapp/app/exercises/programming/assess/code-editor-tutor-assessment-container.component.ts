@@ -198,14 +198,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         const observable = this.repositoryFileService.getFilesWithContent();
                         // Set back to student participation
                         this.domainService.setDomain([DomainType.PARTICIPATION, this.participation]);
-                        this.localRepositoryLink = getLocalRepositoryLink(
-                            this.courseId,
-                            this.exerciseId,
-                            this.participation.id!,
-                            this.exerciseGroupId,
-                            this.examId,
-                            this.isTestRun,
-                        );
+                        this.localRepositoryLink = getLocalRepositoryLink(this.courseId, this.exerciseId, this.participation.id!, this.exerciseGroupId, this.examId);
                         return observable;
                     }),
                     tap((templateFilesObj) => {
