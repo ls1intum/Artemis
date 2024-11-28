@@ -55,8 +55,6 @@ describe('SplitPaneHeaderComponent', () => {
                 comp1.studentLogin = 'ts10abc';
                 comp1.selectFile = new EventEmitter<string>();
                 fixture1.componentRef.setInput('fileSelectedSubject', fileSelectedSubject);
-
-                fixture1.componentRef.setInput('fileSelectedSubject', fileSelectedSubject);
                 fixture1.componentRef.setInput('showFilesSubject', showFilesSubject);
                 fixture1.componentRef.setInput('dropdownHoverSubject', dropdownHoverSubject);
 
