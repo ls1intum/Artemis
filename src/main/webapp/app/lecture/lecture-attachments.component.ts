@@ -39,7 +39,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
 
     lecture = signal<Lecture>(new Lecture());
     attachments: Attachment[] = [];
-    attachmentToBeCreated?: Attachment;
+    attachmentToBeUpdatedOrCreated = signal<Attachment | undefined>(undefined);
     attachmentBackup?: Attachment;
     attachmentFile?: File;
     isDownloadingAttachmentLink?: string;
@@ -93,7 +93,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
     }
 
     get isSubmitPossible(): boolean {
-        return !!(this.attachmentToBeCreated?.name && (this.attachmentFile || this.attachmentToBeCreated?.link));
+        return !!(this.attachmentToBeUpdatedOrCreated()?.name && (this.attachmentFile || this.attachmentToBeUpdatedOrCreated()?.link));
     }
 
     addAttachment(): void {
@@ -102,32 +102,32 @@ export class LectureAttachmentsComponent implements OnDestroy {
         newAttachment.attachmentType = AttachmentType.FILE;
         newAttachment.version = 0;
         newAttachment.uploadDate = dayjs();
-        this.attachmentToBeCreated = newAttachment;
+        this.attachmentToBeUpdatedOrCreated.set(newAttachment);
     }
 
     /**
      * If there is an attachment to save, it will be created or updated depending on its current state. The file will be automatically provided with the request.
      */
     saveAttachment(): void {
-        if (!this.attachmentToBeCreated) {
+        if (!this.attachmentToBeUpdatedOrCreated()) {
             return;
         }
-        this.attachmentToBeCreated.version!++;
-        this.attachmentToBeCreated.uploadDate = dayjs();
+        this.attachmentToBeUpdatedOrCreated()!.version!++;
+        this.attachmentToBeUpdatedOrCreated()!.uploadDate = dayjs();
 
-        if (!this.attachmentFile && !this.attachmentToBeCreated.id) {
+        if (!this.attachmentFile && !this.attachmentToBeUpdatedOrCreated()!.id) {
             return;
         }
 
-        if (this.attachmentToBeCreated.id) {
+        if (this.attachmentToBeUpdatedOrCreated()!.id) {
             const requestOptions = {} as any;
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
-            this.attachmentService.update(this.attachmentToBeCreated.id, this.attachmentToBeCreated, this.attachmentFile, requestOptions).subscribe({
+            this.attachmentService.update(this.attachmentToBeUpdatedOrCreated()!.id!, this.attachmentToBeUpdatedOrCreated()!, this.attachmentFile, requestOptions).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
                     this.attachmentFile = undefined;
-                    this.attachmentToBeCreated = undefined;
+                    this.attachmentToBeUpdatedOrCreated.set(undefined);
                     this.attachmentBackup = undefined;
                     this.notificationText = undefined;
                     this.attachments = this.attachments.map((el) => {
@@ -137,14 +137,14 @@ export class LectureAttachmentsComponent implements OnDestroy {
                 error: (error: HttpErrorResponse) => this.handleFailedUpload(error),
             });
         } else {
-            this.attachmentService.create(this.attachmentToBeCreated!, this.attachmentFile!).subscribe({
+            this.attachmentService.create(this.attachmentToBeUpdatedOrCreated()!, this.attachmentFile!).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
                     this.attachments.push(attachmentRes.body!);
                     this.lectureService.findWithDetails(this.lecture().id!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
                         this.lecture.set(lectureResponse.body!);
                     });
                     this.attachmentFile = undefined;
-                    this.attachmentToBeCreated = undefined;
+                    this.attachmentToBeUpdatedOrCreated.set(undefined);
                     this.attachmentBackup = undefined;
                     this.loadAttachments();
                 },
@@ -162,7 +162,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
     }
 
     editAttachment(attachment: Attachment): void {
-        this.attachmentToBeCreated = attachment;
+        this.attachmentToBeUpdatedOrCreated.set(attachment);
         this.attachmentBackup = Object.assign({}, attachment, {});
     }
 
@@ -180,7 +180,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         if (this.attachmentBackup) {
             this.resetAttachment();
         }
-        this.attachmentToBeCreated = undefined;
+        this.attachmentToBeUpdatedOrCreated.set(undefined);
         this.erroredFile = undefined;
     }
 
@@ -219,10 +219,10 @@ export class LectureAttachmentsComponent implements OnDestroy {
         }
         const attachmentFile = input.files[0];
         this.attachmentFile = attachmentFile;
-        this.attachmentToBeCreated!.link = attachmentFile.name;
+        this.attachmentToBeUpdatedOrCreated()!.link = attachmentFile.name;
         // automatically set the name in case it is not yet specified
-        if (this.attachmentToBeCreated!.name == undefined || this.attachmentToBeCreated!.name == '') {
-            this.attachmentToBeCreated!.name = this.attachmentFile.name.replace(/\.[^/.]+$/, '');
+        if (this.attachmentToBeUpdatedOrCreated()!.name == undefined || this.attachmentToBeUpdatedOrCreated()!.name == '') {
+            this.attachmentToBeUpdatedOrCreated()!.name = this.attachmentFile.name.replace(/\.[^/.]+$/, '');
         }
     }
 }
