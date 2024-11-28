@@ -303,7 +303,8 @@ public class MetricsBean {
 
     private static int extractMaxConcurrentBuilds(Optional<SharedQueueManagementService> sharedQueueManagementService) {
         return sharedQueueManagementService.map(queueManagementService -> queueManagementService.getBuildAgentInformation().stream()
-                .map(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).reduce(0, Integer::sum)).orElse(0);
+                .filter(agent -> agent.status() != BuildAgentInformation.BuildAgentStatus.PAUSED).map(BuildAgentInformation::maxNumberOfConcurrentBuildJobs)
+                .reduce(0, Integer::sum)).orElse(0);
     }
 
     private void registerWebsocketMetrics() {
