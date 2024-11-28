@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.buildagent;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -14,9 +13,11 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.HostConfig;
@@ -40,6 +41,8 @@ public class BuildAgentConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
+    private ThreadPoolExecutor buildExecutor;
+
     private static final Logger log = LoggerFactory.getLogger(BuildAgentConfiguration.class);
 
     @Value("${artemis.continuous-integration.docker-connection-uri}")
@@ -53,6 +56,15 @@ public class BuildAgentConfiguration {
 
     public BuildAgentConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        buildExecutor = createBuildExecutor();
+    }
+
+    public ThreadPoolExecutor getBuildExecutor() {
+        return buildExecutor;
     }
 
     /**
@@ -114,12 +126,11 @@ public class BuildAgentConfiguration {
     }
 
     /**
-     * Creates an executor service that manages the queue of build jobs.
+     * Creates an thread pool executor that manages the queue of build jobs.
      *
-     * @return The executor service bean.
+     * @return The executor service.
      */
-    @Bean
-    public ExecutorService localCIBuildExecutorService() {
+    private ThreadPoolExecutor createBuildExecutor() {
         int threadPoolSize;
 
         if (specifyConcurrentBuilds) {

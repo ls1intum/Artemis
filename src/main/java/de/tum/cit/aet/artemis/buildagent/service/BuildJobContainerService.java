@@ -204,43 +204,44 @@ public class BuildJobContainerService {
      * @param containerId The ID of the container to stop or kill.
      */
     public void stopUnresponsiveContainer(String containerId) {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        try {
-            // Attempt to stop the container. It should stop the container and auto-remove it.
-            // {@link DockerClient#stopContainerCmd(String)} first sends a SIGTERM command to the container to gracefully stop it,
-            // and if it does not stop within the timeout, it sends a SIGKILL command to kill the container.
-            log.info("Stopping container with id {}", containerId);
-
-            // Submit Docker stop command to executor service
-            Future<Void> future = executor.submit(() -> {
-                dockerClient.stopContainerCmd(containerId).withTimeout(5).exec();
-                return null;  // Return type to match Future<Void>
-            });
-
-            // Await the future with a timeout
-            future.get(10, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
-        }
-        catch (NotFoundException | NotModifiedException e) {
-            log.debug("Container with id {} is already stopped: {}", containerId, e.getMessage());
-        }
-        catch (Exception e) {
-            log.warn("Failed to stop container with id {}. Attempting to kill container: {}", containerId, e.getMessage());
-
-            // Attempt to kill the container if stop fails
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
             try {
-                Future<Void> killFuture = executor.submit(() -> {
-                    dockerClient.killContainerCmd(containerId).exec();
-                    return null;
+                // Attempt to stop the container. It should stop the container and auto-remove it.
+                // {@link DockerClient#stopContainerCmd(String)} first sends a SIGTERM command to the container to gracefully stop it,
+                // and if it does not stop within the timeout, it sends a SIGKILL command to kill the container.
+                log.info("Stopping container with id {}", containerId);
+
+                // Submit Docker stop command to executor service
+                Future<Void> future = executor.submit(() -> {
+                    dockerClient.stopContainerCmd(containerId).withTimeout(5).exec();
+                    return null;  // Return type to match Future<Void>
                 });
 
-                killFuture.get(5, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
+                // Await the future with a timeout
+                future.get(10, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
             }
-            catch (Exception killException) {
-                log.warn("Failed to kill container with id {}: {}", containerId, killException.getMessage());
+            catch (NotFoundException | NotModifiedException e) {
+                log.debug("Container with id {} is already stopped: {}", containerId, e.getMessage());
             }
-        }
-        finally {
-            executor.shutdown();
+            catch (Exception e) {
+                log.warn("Failed to stop container with id {}. Attempting to kill container: {}", containerId, e.getMessage());
+
+                // Attempt to kill the container if stop fails
+                try {
+                    Future<Void> killFuture = executor.submit(() -> {
+                        dockerClient.killContainerCmd(containerId).exec();
+                        return null;
+                    });
+
+                    killFuture.get(5, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
+                }
+                catch (Exception killException) {
+                    log.warn("Failed to kill container with id {}: {}", containerId, killException.getMessage());
+                }
+            }
+            finally {
+                executor.shutdown();
+            }
         }
     }
 
