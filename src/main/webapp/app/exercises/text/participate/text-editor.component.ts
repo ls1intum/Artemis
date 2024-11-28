@@ -108,7 +108,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
         } else {
-            const participationId = this.participationId() !== undefined ? this.participationId() : Number(this.route.snapshot.paramMap.get('participationId()'));
+            const participationId = this.participationId() !== undefined ? this.participationId() : Number(this.route.snapshot.paramMap.get('participationId'));
             this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
 
             if (Number.isNaN(participationId)) {
@@ -120,7 +120,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.updateParticipation(this.participation, this.submissionId);
             });
 
-            this.textService.get(participationId).subscribe({
+            this.textService.get(participationId!).subscribe({
                 next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId),
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -173,14 +173,14 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @private
      */
     private setupComponentWithInputValues() {
-        if (this.inputExercise()) {
-            this.textExercise = this.inputExercise();
+        if (this.inputExercise() !== undefined) {
+            this.textExercise = this.inputExercise()!;
         }
-        if (this.inputSubmission()) {
-            this.submission = this.inputSubmission();
+        if (this.inputSubmission() !== undefined) {
+            this.submission = this.inputSubmission()!;
         }
-        if (this.inputParticipation()) {
-            this.participation = this.inputParticipation();
+        if (this.inputParticipation() !== undefined) {
+            this.participation = this.inputParticipation()!;
         }
 
         if (this.submission?.text) {
