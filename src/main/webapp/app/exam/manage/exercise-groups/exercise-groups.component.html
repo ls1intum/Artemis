@@ -323,7 +323,7 @@
                                     }
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING)) {
                                         <td class="align-middle">
-                                            <jhi-modeling-exercise-group-cell [modelingExercise]="exercise" />
+                                            <jhi-modeling-exercise-group-cell [exercise]="exercise" />
                                         </td>
                                     }
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.FILE_UPLOAD)) {

@@ -9,5 +9,5 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 })
 export class ModelingExerciseGroupCellComponent {
     exerciseType = ExerciseType;
-    modelingExercise = input.required<ModelingExercise>();
+    exercise = input.required<ModelingExercise>();
 }
