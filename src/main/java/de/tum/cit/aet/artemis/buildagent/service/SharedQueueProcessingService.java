@@ -363,7 +363,9 @@ public class SharedQueueProcessingService {
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
-        return processingJobs.values().stream().filter(job -> Objects.equals(job.buildAgent().memberAddress(), memberAddress)).toList();
+        // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        List<BuildJobQueueItem> processingJobsList = new ArrayList<>(processingJobs.values());
+        return processingJobsList.stream().filter(job -> Objects.equals(job.buildAgent().memberAddress(), memberAddress)).toList();
     }
 
     private void removeOfflineNodes() {
