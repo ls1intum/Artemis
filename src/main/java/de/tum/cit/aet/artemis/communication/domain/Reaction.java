@@ -32,8 +32,8 @@ import de.tum.cit.aet.artemis.core.domain.User;
 public class Reaction extends DomainObject {
 
     @ManyToOne
-    // Avoid to leak too much information, only the name (for display) and the id (for comparison) is needed)
-    @JsonIncludeProperties({ "id", "name" })
+    // Avoid to leak too much information, only the name + image (for display) and the id (for comparison) is needed)
+    @JsonIncludeProperties({ "id", "name", "image_url" })
     private User user;
 
     @CreatedDate
