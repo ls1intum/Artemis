@@ -9,5 +9,5 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 })
 export class FileUploadExerciseGroupCellComponent {
     exerciseType = ExerciseType;
-    fileUploadExercise = input.required<FileUploadExercise>();
+    exercise = input.required<FileUploadExercise>();
 }

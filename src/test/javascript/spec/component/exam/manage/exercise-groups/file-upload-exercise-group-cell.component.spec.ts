@@ -26,7 +26,7 @@ describe('File Upload Exercise Group Cell Component', () => {
             type: ExerciseType.FILE_UPLOAD,
             filePattern: '*.pdf',
         } as any as FileUploadExercise;
-        fixture.componentRef.setInput('fileUploadExercise', exercise);
+        fixture.componentRef.setInput('exercise', exercise);
 
         fixture.detectChanges();
         expect(fixture.nativeElement.textContent).toContain(exercise.filePattern);
@@ -38,7 +38,7 @@ describe('File Upload Exercise Group Cell Component', () => {
             type: ExerciseType.TEXT,
             filePattern: '*.pdf',
         } as any as FileUploadExercise;
-        fixture.componentRef.setInput('fileUploadExercise', exercise);
+        fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
         expect(fixture.nativeElement.textContent).toBe('');
     });

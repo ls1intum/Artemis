@@ -328,7 +328,7 @@
                                     }
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.FILE_UPLOAD)) {
                                         <td class="align-middle">
-                                            <jhi-file-upload-exercise-group-cell [fileUploadExercise]="exercise" />
+                                            <jhi-file-upload-exercise-group-cell [exercise]="exercise" />
                                         </td>
                                     }
                                     @if (
