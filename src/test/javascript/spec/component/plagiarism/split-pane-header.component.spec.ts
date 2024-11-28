@@ -240,7 +240,7 @@ describe('SplitPaneHeaderComponent', () => {
 
         comp1.toggleShowFilesWithoutPropagation(true);
 
-        expect(comp1.showFiles).toBeTrue(initialShowFiles);
+        expect(comp1.showFiles).not.toBe(initialShowFiles);
     });
 
     it('should not update showFiles when hasFiles returns false', () => {
