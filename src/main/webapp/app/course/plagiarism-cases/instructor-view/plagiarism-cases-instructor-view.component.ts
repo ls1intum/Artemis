@@ -150,6 +150,7 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
             // used as placeholder for null or if the passed value does not exist
             return '-';
         }
+        // sanitize the operators away in case they appear in the values
         return String(value).replace(/;/g, '";"');
     }
 
