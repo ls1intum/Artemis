@@ -275,6 +275,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         this.attachmentFile.set(file);
         this.attachmentToBeUpdatedOrCreated()!.link = file.name;
 
+        this.attachmentToBeUpdatedOrCreated()!.name = this.form.value.attachmentName ?? undefined;
         if (!this.attachmentToBeUpdatedOrCreated()!.name) {
             const derivedFileName = this.determineAttachmentNameBasedOnFileName(file.name);
             this.attachmentToBeUpdatedOrCreated()!.name = derivedFileName;
