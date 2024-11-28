@@ -88,6 +88,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     highlightDifferences = false;
 
     localVCEnabled = false;
+    isAtLeastEditor = false;
 
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
@@ -188,6 +189,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                         const programmingExercise = response.body!;
                         this.templateParticipation = programmingExercise.templateParticipation!;
                         this.exercise.gradingCriteria = programmingExercise.gradingCriteria;
+                        this.isAtLeastEditor = !!this.exercise.isAtLeastEditor;
                     }),
                     switchMap(() => {
                         // Get all files with content from template repository
