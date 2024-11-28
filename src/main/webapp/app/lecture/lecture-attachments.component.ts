@@ -207,9 +207,9 @@ export class LectureAttachmentsComponent implements OnDestroy {
             this.fileInput.nativeElement.value = '';
         }
 
+        // attachmentFileName can only be set to an empty string due to security reasons in current angular version (18)
         this.setFormValues({
             attachmentName: attachment?.name,
-            attachmentFileName: attachment?.link,
             releaseDate: dayjs(attachment?.releaseDate),
             notificationText: this.notificationText,
         });
@@ -238,6 +238,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         }
         this.attachmentToBeUpdatedOrCreated = undefined;
         this.erroredFile = undefined;
+        this.clearFormValues();
     }
 
     resetAttachment(): void {
@@ -276,10 +277,10 @@ export class LectureAttachmentsComponent implements OnDestroy {
         const attachmentFile = input.files[0];
         this.attachmentFile = attachmentFile;
         this.attachmentToBeUpdatedOrCreated!.link = attachmentFile.name;
-
-        const shouldAutomaticallySetName = !this.attachmentToBeUpdatedOrCreated!.name;
-        if (shouldAutomaticallySetName) {
-            this.attachmentToBeUpdatedOrCreated!.name = this.attachmentFile.name.replace(/\.[^/.]+$/, '');
+        if (!this.attachmentToBeUpdatedOrCreated!.name) {
+            const derivedFileName = this.determineAttachmentNameBasedOnFileName(attachmentFile.name);
+            this.attachmentToBeUpdatedOrCreated!.name = derivedFileName;
+            this.form.patchValue({ attachmentName: derivedFileName });
         }
     }
 
