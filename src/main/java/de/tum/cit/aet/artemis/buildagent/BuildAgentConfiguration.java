@@ -155,10 +155,10 @@ public class BuildAgentConfiguration {
     /**
      * Creates a Docker client that is used to communicate with the Docker daemon.
      *
-     * @return The DockerClient bean.
+     * @return The DockerClient.
      */
     @Bean
-    // TODO: reconsider if a bean is necessary here, this could also be created after application startup with @EventListener(ApplicationReadyEvent.class) to speed up the startup
+    // TODO: implement the same logic as in the buildExecutor
     public DockerClient dockerClient() {
         log.debug("Create bean dockerClient");
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();
@@ -185,5 +185,22 @@ public class BuildAgentConfiguration {
         else {
             return Long.parseLong(memoryString);
         }
+    }
+
+    public void reinitialize() {
+        // Shut down the current executor gracefully
+        if (buildExecutor != null && !buildExecutor.isShutdown()) {
+            buildExecutor.shutdown();
+            try {
+                buildExecutor.awaitTermination(5, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException e) {
+                log.warn("Executor termination interrupted", e);
+            }
+        }
+
+        // Create a new executor
+        this.buildExecutor = createBuildExecutor();
+        log.info("Executor reinitialized.");
     }
 }
