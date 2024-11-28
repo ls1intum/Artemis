@@ -78,9 +78,12 @@ export class LectureUpdateComponent implements OnInit {
 
     isChangeMadeToTitleOrPeriodSection = false;
 
-    handleTitleChange() {
+    updateIsChangesMadeToTitleOrPeriodSection() {
         console.log('triggered update isChangeMadeToTitleOrPeriodSection');
-        this.isChangeMadeToTitleOrPeriodSection = this.lecture().title !== this.lectureOnInit.title || this.lecture().channelName !== this.lectureOnInit.channelName;
+        this.isChangeMadeToTitleOrPeriodSection =
+            this.lecture().title !== this.lectureOnInit.title ||
+            this.lecture().channelName !== this.lectureOnInit.channelName ||
+            this.lecture().description !== this.lectureOnInit.description;
     }
 
     constructor() {
@@ -88,12 +91,12 @@ export class LectureUpdateComponent implements OnInit {
             this.titleSection()
                 .titleChannelNameComponent()
                 .titleChange.subscribe(() => {
-                    this.handleTitleChange();
+                    this.updateIsChangesMadeToTitleOrPeriodSection();
                 });
             this.titleSection()
                 .titleChannelNameComponent()
                 .channelNameChange.subscribe(() => {
-                    this.handleTitleChange();
+                    this.updateIsChangesMadeToTitleOrPeriodSection();
                 });
         });
 
