@@ -9,7 +9,7 @@ func NewMergeSort() *MergeSort {
 }
 
 // PerformSort is a wrapper method for the real MergeSort algorithm.
-func (m MergeSort) PerformSort(input []time.Time) {
+func (m *MergeSort) PerformSort(input []time.Time) {
 	mergeSort(input)
 }
 
