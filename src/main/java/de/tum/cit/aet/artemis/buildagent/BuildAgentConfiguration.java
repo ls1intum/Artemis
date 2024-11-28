@@ -222,6 +222,7 @@ public class BuildAgentConfiguration {
             catch (IOException e) {
                 log.error("Error closing Docker client", e);
             }
+            dockerClient = null;
         }
     }
 
