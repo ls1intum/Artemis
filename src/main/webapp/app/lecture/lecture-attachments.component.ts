@@ -199,7 +199,24 @@ export class LectureAttachmentsComponent implements OnDestroy {
         this.resetAttachment();
     }
 
+    private setFormValues(formValues: LectureAttachmentFormData): void {
+        this.form.patchValue(formValues);
+    }
+
     editAttachment(attachment: Attachment): void {
+        if (this.fileInput) {
+            this.fileInput.nativeElement.value = '';
+        }
+
+        // attachmentFileName can only be set to an empty string due to security reasons in current angular version (18)
+        this.setFormValues({
+            attachmentName: attachment?.name,
+            releaseDate: dayjs(attachment?.releaseDate),
+            notificationText: this.notificationText,
+        });
+
+        this.attachmentToBeUpdatedOrCreated.set(attachment);
+
         this.attachmentToBeUpdatedOrCreated.set(attachment);
         this.attachmentBackup = Object.assign({}, attachment, {});
     }
@@ -220,6 +237,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         }
         this.attachmentToBeUpdatedOrCreated.set(undefined);
         this.erroredFile = undefined;
+        this.resetAttachmentFormVariables();
     }
 
     resetAttachment(): void {
@@ -255,12 +273,19 @@ export class LectureAttachmentsComponent implements OnDestroy {
         if (!input.files?.length) {
             return;
         }
-        const attachmentFile = input.files[0];
-        this.attachmentFile.set(attachmentFile);
-        this.attachmentToBeUpdatedOrCreated()!.link = attachmentFile.name;
-        // automatically set the name in case it is not yet specified
-        if (this.attachmentToBeUpdatedOrCreated()!.name == undefined || this.attachmentToBeUpdatedOrCreated()!.name == '') {
-            this.attachmentToBeUpdatedOrCreated()!.name = this.attachmentFile()!.name.replace(/\.[^/.]+$/, '');
+        const file = input.files[0];
+        this.attachmentFile.set(file);
+        this.attachmentToBeUpdatedOrCreated()!.link = file.name;
+
+        if (!this.attachmentToBeUpdatedOrCreated()!.name) {
+            const derivedFileName = this.determineAttachmentNameBasedOnFileName(file.name);
+            this.attachmentToBeUpdatedOrCreated()!.name = derivedFileName;
+            this.form.patchValue({ attachmentName: derivedFileName });
         }
+    }
+
+    private determineAttachmentNameBasedOnFileName(fileName: string): string {
+        const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
+        return fileName.replace(FILE_EXTENSION_REGEX, '');
     }
 }
