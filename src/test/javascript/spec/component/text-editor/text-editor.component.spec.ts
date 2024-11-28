@@ -110,9 +110,9 @@ describe('TextEditorComponent', () => {
     });
 
     it('should use inputValues if present instead of loading new details', fakeAsync(() => {
-        comp.inputExercise = textExercise;
-        comp.inputParticipation = participation;
-        comp.inputSubmission = { id: 1, text: 'test' };
+        comp.inputExercise = signal<TextExercise | undefined>(textExercise);
+        comp.inputParticipation = signal<StudentParticipation | undefined>(participation);
+        comp.inputSubmission = signal<TextSubmission | undefined>({ id: 1, text: 'test' });
         // @ts-ignore updateParticipation is private
         const updateParticipationSpy = jest.spyOn(comp, 'updateParticipation');
         // @ts-ignore setupComponentWithInputValuesSpy is private
