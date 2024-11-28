@@ -9,18 +9,19 @@ import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.com
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { FileService } from 'app/shared/http/file.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { MockFileService } from '../../helpers/mocks/service/mock-file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { NgModel } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of, take, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { LectureService } from 'app/lecture/lecture.service';
 import { RouterModule } from '@angular/router';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
@@ -85,12 +86,19 @@ describe('LectureAttachmentsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip), RouterModule],
+            imports: [
+                ArtemisTestModule,
+                MockDirective(NgbTooltip),
+                RouterModule,
+                ReactiveFormsModule,
+                FormsModule,
+                MockModule(OwlDateTimeModule),
+                MockModule(OwlNativeDateTimeModule),
+            ],
             declarations: [
                 LectureAttachmentsComponent,
-                MockComponent(FormDateTimePickerComponent),
+                FormDateTimePickerComponent,
                 MockDirective(DeleteButtonDirective),
-                MockDirective(NgModel),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisDatePipe),
@@ -148,7 +156,10 @@ describe('LectureAttachmentsComponent', () => {
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).not.toBeNull();
         expect(comp.attachmentToBeUpdatedOrCreated()).not.toBeNull();
-        comp.attachmentToBeUpdatedOrCreated()!.name = 'Test File Name';
+        comp.form.patchValue({
+            attachmentName: 'Test File Name',
+            releaseDate: dayjs(),
+        });
         fixture.detectChanges();
         expect(uploadAttachmentButton.nativeElement.disabled).toBeFalse();
         uploadAttachmentButton.nativeElement.click();
@@ -171,7 +182,10 @@ describe('LectureAttachmentsComponent', () => {
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).not.toBeNull();
         expect(comp.attachmentToBeUpdatedOrCreated()).not.toBeNull();
-        comp.attachmentToBeUpdatedOrCreated()!.name = 'Test File Name';
+        comp.form.patchValue({
+            attachmentName: 'Test File Name',
+            releaseDate: dayjs(),
+        });
         fixture.detectChanges();
         expect(uploadAttachmentButton.nativeElement.disabled).toBeFalse();
         uploadAttachmentButton.nativeElement.click();
