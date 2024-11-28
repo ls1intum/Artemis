@@ -50,7 +50,8 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     @Query(value = """
             SELECT new de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionIdAndSubmissionDateDTO(ps.id, ps.submissionDate)
             FROM ProgrammingSubmission ps
-            WHERE ps.participation.id = :participationId ORDER BY ps.submissionDate DESC
+            WHERE ps.participation.id = :participationId
+            ORDER BY ps.submissionDate DESC
             """)
     List<ProgrammingSubmissionIdAndSubmissionDateDTO> findFirstIdByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") long participationId, Pageable pageable);
 
@@ -72,8 +73,8 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
         if (result.isEmpty()) {
             return Optional.empty();
         }
-        long id = result.getFirst().programmingSubmissionId();
-        return findProgrammingSubmissionWithResultsById(id);
+        long submissionId = result.getFirst().programmingSubmissionId();
+        return findProgrammingSubmissionWithResultsById(submissionId);
     }
 
     @Query("""
@@ -104,8 +105,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
      * @return ProgrammingSubmission list (can be empty!)
      */
     default List<ProgrammingSubmission> findGradedByParticipationIdWithResultsOrderBySubmissionDateDesc(long participationId, Pageable pageable) {
-        List<Long> ids = findSubmissionIdsAndDatesByParticipationId(participationId, pageable).stream().map(ProgrammingSubmissionIdAndSubmissionDateDTO::programmingSubmissionId)
-                .toList();
+        var ids = findSubmissionIdsAndDatesByParticipationId(participationId, pageable).stream().map(ProgrammingSubmissionIdAndSubmissionDateDTO::programmingSubmissionId).toList();
 
         if (ids.isEmpty()) {
             return Collections.emptyList();

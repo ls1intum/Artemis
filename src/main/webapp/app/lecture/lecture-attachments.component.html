@@ -1,29 +1,29 @@
 <div class="row justify-content-center">
     <div class="col-12">
-        @if (lecture) {
+        @if (lecture()) {
             <div>
-                @if (showHeader) {
+                @if (showHeader()) {
                     <div>
-                        <h2><span jhiTranslate="artemisApp.lecture.attachments.title"></span>: {{ lecture.title }} - {{ lecture.course?.shortName }}</h2>
+                        <h2><span jhiTranslate="artemisApp.lecture.attachments.title"></span>: {{ lecture().title }} - {{ lecture().course?.shortName }}</h2>
                         <hr />
                         <div class="row">
                             <div class="col-6">
                                 <dt><span jhiTranslate="artemisApp.lecture.startDate"></span></dt>
                                 <dd>
-                                    <span>{{ lecture.startDate | artemisDate }}</span>
+                                    <span>{{ lecture().startDate | artemisDate }}</span>
                                 </dd>
                             </div>
                             <div class="col-6">
                                 <dt><span jhiTranslate="artemisApp.lecture.endDate"></span></dt>
                                 <dd>
-                                    <span>{{ lecture.endDate | artemisDate }}</span>
+                                    <span>{{ lecture().endDate | artemisDate }}</span>
                                 </dd>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-12">
                                 <dt><span jhiTranslate="artemisApp.lecture.description"></span></dt>
-                                <dd class="markdown-preview editor-outline-background" [innerHTML]="lecture.description | htmlForMarkdown"></dd>
+                                <dd class="markdown-preview editor-outline-background" [innerHTML]="lecture().description | htmlForMarkdown"></dd>
                             </div>
                         </div>
                         <hr class="mt-2 mb-2" />
@@ -83,7 +83,7 @@
                                                             <button
                                                                 type="button"
                                                                 class="btn btn-primary btn-sm me-1"
-                                                                [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'attachments', attachment.id]"
+                                                                [routerLink]="['/course-management', lecture().course?.id, 'lectures', lecture().id, 'attachments', attachment.id]"
                                                                 [ngbTooltip]="'entity.action.view' | artemisTranslate"
                                                             >
                                                                 <fa-icon [icon]="faEye" />
@@ -92,15 +92,16 @@
                                                         }
                                                         <button
                                                             [disabled]="attachmentToBeCreated?.id === attachment?.id"
-                                                            type="submit"
+                                                            type="button"
                                                             (click)="editAttachment(attachment)"
                                                             class="btn btn-primary btn-sm me-1"
                                                         >
                                                             <fa-icon [icon]="faPencilAlt" />
                                                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                                         </button>
-                                                        @if (lecture.isAtLeastInstructor) {
+                                                        @if (lecture().isAtLeastInstructor) {
                                                             <button
+                                                                type="button"
                                                                 [disabled]="attachmentToBeCreated?.id === attachment?.id"
                                                                 jhiDeleteButton
                                                                 [entityTitle]="attachment?.name || ''"
@@ -130,8 +131,7 @@
                             <div class="col-12">
                                 @if (!attachmentToBeCreated.id) {
                                     <h4 jhiTranslate="artemisApp.lecture.attachments.newAttachment"></h4>
-                                }
-                                @if (attachmentToBeCreated.id) {
+                                } @else {
                                     <h4 jhiTranslate="artemisApp.lecture.attachments.editAttachment"></h4>
                                 }
                             </div>
@@ -198,11 +198,11 @@
                         </div>
                         <div class="row">
                             <div class="col-12">
-                                <button id="upload-attachment" type="submit" [disabled]="!isSubmitPossible" (click)="saveAttachment()" class="btn btn-primary me-2">
+                                <button id="upload-attachment" type="button" [disabled]="!isSubmitPossible" (click)="saveAttachment()" class="btn btn-primary me-2">
                                     <fa-icon [icon]="faPaperclip" />&nbsp;
                                     <span jhiTranslate="entity.action.saveAttachment"></span>
                                 </button>
-                                <button type="submit" (click)="cancel()" class="btn btn-default">
+                                <button type="button" (click)="cancel()" class="btn btn-default">
                                     <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                                 </button>
                             </div>
@@ -212,7 +212,7 @@
                 @if (!attachmentToBeCreated) {
                     <div class="row">
                         <div class="col-12">
-                            <button type="submit" (click)="addAttachment()" class="btn btn-primary" id="add-attachment">
+                            <button type="button" (click)="addAttachment()" class="btn btn-primary" id="add-attachment">
                                 <fa-icon [icon]="faPaperclip" />&nbsp;<span jhiTranslate="entity.action.addAttachment"></span>
                             </button>
                         </div>
