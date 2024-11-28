@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, ViewChild, effect, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
@@ -52,6 +52,10 @@ export class LectureAttachmentsComponent implements OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     private routeDataSubscription?: Subscription;
+
+    isFileSelectionValid = computed(() => {
+        return this.attachmentFile() || this.attachmentToBeUpdatedOrCreated()?.link;
+    });
 
     constructor() {
         effect(
