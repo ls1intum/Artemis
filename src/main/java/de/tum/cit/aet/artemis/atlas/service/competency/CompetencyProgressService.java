@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalcula
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyLectureUnitMasteryCalculationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleService;
+import de.tum.cit.aet.artemis.atlas.repository.simple.CourseCompetencySimpleService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;

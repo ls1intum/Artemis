@@ -17,9 +17,9 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkReposito
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencySimpleService;
 import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.simple.CourseCompetencySimpleService;
 import de.tum.cit.aet.artemis.atlas.service.LearningObjectImportService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;

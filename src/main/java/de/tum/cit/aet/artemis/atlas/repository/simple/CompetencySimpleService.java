@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas.repository;
+package de.tum.cit.aet.artemis.atlas.repository.simple;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.repository.base.AbstractSimpleService;
 
 @Profile(PROFILE_CORE)
