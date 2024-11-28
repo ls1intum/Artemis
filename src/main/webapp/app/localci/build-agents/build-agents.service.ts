@@ -33,9 +33,20 @@ export class BuildAgentsService {
      */
     pauseBuildAgent(agentName: string): Observable<void> {
         const encodedAgentName = encodeURIComponent(agentName);
-        return this.http.put<void>(`${this.adminResourceUrl}/agent/${encodedAgentName}/pause`, null).pipe(
+        return this.http.put<void>(`${this.adminResourceUrl}/agents/${encodedAgentName}/pause`, null).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to pause build agent ${agentName}\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
+     * Pause All Build Agents
+     */
+    pauseAllBuildAgents(): Observable<void> {
+        return this.http.put<void>(`${this.adminResourceUrl}/agents/pause-all`, null).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to pause build agents\n${err.message}`));
             }),
         );
     }
@@ -45,9 +56,20 @@ export class BuildAgentsService {
      */
     resumeBuildAgent(agentName: string): Observable<void> {
         const encodedAgentName = encodeURIComponent(agentName);
-        return this.http.put<void>(`${this.adminResourceUrl}/agent/${encodedAgentName}/resume`, null).pipe(
+        return this.http.put<void>(`${this.adminResourceUrl}/agents/${encodedAgentName}/resume`, null).pipe(
             catchError((err) => {
                 return throwError(() => new Error(`Failed to resume build agent ${agentName}\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
+     * Resume all Build Agents
+     */
+    resumeAllBuildAgents(): Observable<void> {
+        return this.http.put<void>(`${this.adminResourceUrl}/agents/resume-all`, null).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to resume build agents\n${err.message}`));
             }),
         );
     }
