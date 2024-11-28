@@ -69,7 +69,12 @@
                     <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                         <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                     </button>
-                    <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnitMode" class="btn btn-primary ms-2">
+                    <button
+                        type="submit"
+                        id="save-entity"
+                        [disabled]="editForm.form.invalid || isSaving || processUnitMode || !isChangeMadeToTitleOrPeriodSection"
+                        class="btn btn-primary ms-2"
+                    >
                         <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                     </button>
                 </div>

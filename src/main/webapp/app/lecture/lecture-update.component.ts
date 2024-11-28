@@ -19,6 +19,7 @@ import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-chan
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
+import cloneDeep from 'lodash-es/cloneDeep';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -59,6 +60,7 @@ export class LectureUpdateComponent implements OnInit {
     isEditMode = signal<boolean>(false);
     pressedSave: boolean = false;
     lecture = signal<Lecture>(new Lecture());
+    lectureOnInit: Lecture;
     isSaving: boolean;
     isProcessing: boolean;
     processUnitMode: boolean;
@@ -74,7 +76,27 @@ export class LectureUpdateComponent implements OnInit {
 
     isNewlyCreatedExercise = false;
 
+    isChangeMadeToTitleOrPeriodSection = false;
+
+    handleTitleChange() {
+        console.log('triggered update isChangeMadeToTitleOrPeriodSection');
+        this.isChangeMadeToTitleOrPeriodSection = this.lecture().title !== this.lectureOnInit.title || this.lecture().channelName !== this.lectureOnInit.channelName;
+    }
+
     constructor() {
+        effect(() => {
+            this.titleSection()
+                .titleChannelNameComponent()
+                .titleChange.subscribe(() => {
+                    this.handleTitleChange();
+                });
+            this.titleSection()
+                .titleChannelNameComponent()
+                .channelNameChange.subscribe(() => {
+                    this.handleTitleChange();
+                });
+        });
+
         effect(
             function updateFormStatusBarAfterLectureCreation() {
                 const updatedFormStatusSections: FormSectionStatus[] = [];
@@ -133,6 +155,7 @@ export class LectureUpdateComponent implements OnInit {
 
         // TODO investigate where wizard mode is opened by url
         this.isEditMode.set(!this.router.url.endsWith('/new'));
+        this.lectureOnInit = cloneDeep(this.lecture());
     }
 
     /**
