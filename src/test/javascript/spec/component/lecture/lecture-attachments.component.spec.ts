@@ -251,12 +251,14 @@ describe('LectureAttachmentsComponent', () => {
                 comp.attachmentFile.set(file);
             }
             comp.attachmentToBeUpdatedOrCreated.set(attachment);
-            comp.notificationText = notification;
             comp.attachmentBackup = backup;
             comp.attachments = [attachment];
 
             // Do change
-            attachment.name = 'New Name';
+            comp.form.patchValue({
+                attachmentName: 'New Name',
+                notificationText: notification,
+            });
 
             const attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(throwError(() => new Error(errorMessage)));
             comp.saveAttachment();

@@ -139,6 +139,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         this.attachmentToBeUpdatedOrCreated()!.uploadDate = dayjs();
         this.attachmentToBeUpdatedOrCreated()!.name = this.form.value.attachmentName ?? undefined;
         this.attachmentToBeUpdatedOrCreated()!.releaseDate = this.form.value.releaseDate ?? undefined;
+        this.notificationText = this.form.value.notificationText ?? undefined;
 
         if (!this.attachmentFile() && !this.attachmentToBeUpdatedOrCreated()!.id) {
             return;
