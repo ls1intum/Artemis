@@ -118,7 +118,7 @@ public class LearningPathService {
      */
     public void enableLearningPathsForCourse(@NotNull Course course) {
         course.setLearningPathsEnabled(true);
-        var students = userRepository.getStudentsWithLearnerProfile(course);
+        Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
         courseLearnerProfileService.createCourseLearnerProfiles(course, students);
         generateLearningPaths(course, students);
         courseRepository.save(course);
@@ -131,7 +131,7 @@ public class LearningPathService {
      * @param course course the learning paths are created for
      */
     public void generateLearningPaths(@NotNull Course course) {
-        var students = userRepository.getStudentsWithLearnerProfile(course);
+        Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
         courseLearnerProfileService.createCourseLearnerProfiles(course, students);
         generateLearningPaths(course, students);
     }

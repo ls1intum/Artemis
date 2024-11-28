@@ -778,10 +778,10 @@ public class LearningPathRecommendationService {
         Predicate<Exercise> exercisePredicate = exercise -> remainingExercisePoints.getAndAdd(-exercise.getMaxPoints()) >= 0;
         if (aimForGradeOrBonus == HIGH.getValue()) {
             exercisePredicate = exercisePredicate
-                    .and(exercise -> exercise.getIncludedInOverallScore() == INCLUDED_COMPLETELY || exercise.getIncludedInOverallScore() == INCLUDED_AS_BONUS);
+                    .or(exercise -> exercise.getIncludedInOverallScore() == INCLUDED_COMPLETELY || exercise.getIncludedInOverallScore() == INCLUDED_AS_BONUS);
         }
         else if (aimForGradeOrBonus == MEDIUM_HIGH.getValue()) {
-            exercisePredicate = exercisePredicate.and(exercise -> exercise.getIncludedInOverallScore() == INCLUDED_COMPLETELY);
+            exercisePredicate = exercisePredicate.or(exercise -> exercise.getIncludedInOverallScore() == INCLUDED_COMPLETELY);
         }
 
         return exercisePredicate;
