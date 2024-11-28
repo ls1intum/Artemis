@@ -133,8 +133,6 @@ export class LectureAttachmentsComponent implements OnDestroy {
      * If there is an attachment to save, it will be created or updated depending on its current state. The file will be automatically provided with the request.
      */
     saveAttachment(): void {
-        console.log('form value', this.form.value);
-
         if (!this.attachmentToBeUpdatedOrCreated()) {
             return;
         }
@@ -142,8 +140,8 @@ export class LectureAttachmentsComponent implements OnDestroy {
         const updatedOrCreatedAttachment: Attachment = { ...this.attachmentToBeUpdatedOrCreated() };
         updatedOrCreatedAttachment.version!++;
         updatedOrCreatedAttachment.uploadDate = dayjs();
-        updatedOrCreatedAttachment.name = this.form.value.attachmentName;
-        updatedOrCreatedAttachment.releaseDate = this.form.value.releaseDate;
+        updatedOrCreatedAttachment.name = this.form.value.attachmentName ?? undefined;
+        updatedOrCreatedAttachment.releaseDate = this.form.value.releaseDate ?? undefined;
 
         if (!this.attachmentFile() && !updatedOrCreatedAttachment.id) {
             return;

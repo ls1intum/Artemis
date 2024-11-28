@@ -9,18 +9,19 @@ import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.com
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { FileService } from 'app/shared/http/file.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { MockFileService } from '../../helpers/mocks/service/mock-file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { NgModel } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of, take, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { LectureService } from 'app/lecture/lecture.service';
 import { RouterModule } from '@angular/router';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
@@ -85,12 +86,19 @@ describe('LectureAttachmentsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip), RouterModule],
+            imports: [
+                ArtemisTestModule,
+                MockDirective(NgbTooltip),
+                RouterModule,
+                ReactiveFormsModule,
+                FormsModule,
+                MockModule(OwlDateTimeModule),
+                MockModule(OwlNativeDateTimeModule),
+            ],
             declarations: [
                 LectureAttachmentsComponent,
-                MockComponent(FormDateTimePickerComponent),
+                FormDateTimePickerComponent,
                 MockDirective(DeleteButtonDirective),
-                MockDirective(NgModel),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisDatePipe),
@@ -140,15 +148,17 @@ describe('LectureAttachmentsComponent', () => {
         fixture.detectChanges();
         jest.spyOn(attachmentService, 'create').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
         const addAttachmentButton = fixture.debugElement.query(By.css('#add-attachment'));
-        expect(comp.attachmentToBeUpdatedOrCreated).toBeUndefined();
+        expect(comp.attachmentToBeUpdatedOrCreated()).toBeUndefined();
         expect(addAttachmentButton).not.toBeNull();
         addAttachmentButton.nativeElement.click();
         fixture.detectChanges();
-        comp.attachmentFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        comp.attachmentFile.set(new File([''], 'Test-File.pdf', { type: 'application/pdf' }));
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).not.toBeNull();
-        expect(comp.attachmentToBeUpdatedOrCreated).not.toBeNull();
-        comp.attachmentToBeUpdatedOrCreated!.name = 'Test File Name';
+        expect(comp.attachmentToBeUpdatedOrCreated()).not.toBeNull();
+        comp.attachmentToBeUpdatedOrCreated()!.name = 'Test File Name';
+        comp.form.value.name = 'Test File Name';
+        comp.form.value.releaseDate = dayjs();
         fixture.detectChanges();
         expect(uploadAttachmentButton.nativeElement.disabled).toBeFalse();
         uploadAttachmentButton.nativeElement.click();
@@ -162,16 +172,16 @@ describe('LectureAttachmentsComponent', () => {
         attachmentServiceCreateStub.mockReturnValue(throwError(() => new Error('File too large')));
         fixture.detectChanges();
         const addAttachmentButton = fixture.debugElement.query(By.css('#add-attachment'));
-        expect(comp.attachmentToBeUpdatedOrCreated).toBeUndefined();
+        expect(comp.attachmentToBeUpdatedOrCreated()).toBeUndefined();
         expect(addAttachmentButton).not.toBeNull();
         addAttachmentButton.nativeElement.click();
         fixture.detectChanges();
         const fakeBlob = { name: 'Test-File.pdf', size: 100000000000000000 };
-        comp.attachmentFile = fakeBlob as File;
+        comp.attachmentFile.set(fakeBlob as File);
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).not.toBeNull();
-        expect(comp.attachmentToBeUpdatedOrCreated).not.toBeNull();
-        comp.attachmentToBeUpdatedOrCreated!.name = 'Test File Name';
+        expect(comp.attachmentToBeUpdatedOrCreated()).not.toBeNull();
+        comp.attachmentToBeUpdatedOrCreated()!.name = 'Test File Name';
         fixture.detectChanges();
         expect(uploadAttachmentButton.nativeElement.disabled).toBeFalse();
         uploadAttachmentButton.nativeElement.click();
@@ -185,12 +195,12 @@ describe('LectureAttachmentsComponent', () => {
 
     it('should exit saveAttachment', fakeAsync(() => {
         fixture.detectChanges();
-        comp.attachmentToBeUpdatedOrCreated = undefined;
+        comp.attachmentToBeUpdatedOrCreated.set(undefined);
         comp.saveAttachment();
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
         expect(attachmentServiceCreateStub).not.toHaveBeenCalled();
         expect(attachmentServiceUpdateStub).not.toHaveBeenCalled();
-        expect(comp.attachmentToBeUpdatedOrCreated).toBeUndefined();
+        expect(comp.attachmentToBeUpdatedOrCreated()).toBeUndefined();
     }));
 
     it('should reset on error for create', fakeAsync(() => {
@@ -199,18 +209,19 @@ describe('LectureAttachmentsComponent', () => {
         const attachment = {
             lecture: comp.lecture,
             attachmentType: AttachmentType.FILE,
-            version: 1,
+            version: 0,
             uploadDate: dayjs(),
         } as Attachment;
         const file = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
         comp.fileInput = { nativeElement: { value: 'Test-File.pdf' } };
-        comp.attachmentToBeUpdatedOrCreated = attachment;
-        comp.attachmentFile = file;
+        comp.attachmentToBeUpdatedOrCreated.set(attachment);
+        comp.attachmentFile.set(file);
         const attachmentServiceCreateStub = jest.spyOn(attachmentService, 'create').mockReturnValue(throwError(() => new Error(errorMessage)));
         comp.saveAttachment();
+        attachment.version = 1;
         expect(attachmentServiceCreateStub).toHaveBeenCalledExactlyOnceWith(attachment, file);
-        expect(comp.attachmentToBeUpdatedOrCreated).toEqual(attachment);
-        expect(comp.attachmentFile).toBeUndefined();
+        expect(comp.attachmentToBeUpdatedOrCreated()).toEqual(attachment);
+        expect(comp.attachmentFile()).toBeUndefined();
         expect(comp.erroredFile).toEqual(file);
         expect(comp.errorMessage).toBe(errorMessage);
         expect(comp.fileInput.nativeElement.value).toBe('');
@@ -234,25 +245,26 @@ describe('LectureAttachmentsComponent', () => {
             const file = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
             if (withFile) {
                 comp.fileInput.nativeElement.value = 'Test-File.pdf';
-                comp.attachmentFile = file;
+                comp.attachmentFile.set(file);
             }
-            comp.attachmentToBeUpdatedOrCreated = attachment;
+            comp.attachmentToBeUpdatedOrCreated.set(attachment);
             comp.notificationText = notification;
             comp.attachmentBackup = backup;
             comp.attachments = [attachment];
 
             // Do change
             attachment.name = 'New Name';
+            comp.form.value.attachmentName = 'New Name';
 
             const attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(throwError(() => new Error(errorMessage)));
             comp.saveAttachment();
             expect(attachmentServiceUpdateStub).toHaveBeenCalledExactlyOnceWith(1, attachment, withFile ? file : undefined, { notificationText: notification });
-            expect(comp.attachmentToBeUpdatedOrCreated).toEqual(attachment);
+            expect(comp.attachmentToBeUpdatedOrCreated()).toEqual(attachment);
             expect(comp.errorMessage).toBe(errorMessage);
             expect(comp.fileInput.nativeElement.value).toBe('');
             expect(comp.attachments).toEqual([backup]);
             expect(comp.attachmentBackup).toBeUndefined();
-            expect(comp.attachmentFile).toBeUndefined();
+            expect(comp.attachmentFile()).toBeUndefined();
 
             if (withFile) {
                 expect(comp.erroredFile).toEqual(file);
@@ -264,13 +276,13 @@ describe('LectureAttachmentsComponent', () => {
 
     it('should update Attachment', fakeAsync(() => {
         fixture.detectChanges();
-        comp.attachmentToBeUpdatedOrCreated = {
+        comp.attachmentToBeUpdatedOrCreated.set({
             id: 1,
             lecture: comp.lecture,
             attachmentType: AttachmentType.FILE,
             version: 1,
             uploadDate: dayjs(),
-        } as Attachment;
+        } as Attachment);
         comp.notificationText = 'wow how did i get here';
         const attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(
             of(
@@ -294,10 +306,10 @@ describe('LectureAttachmentsComponent', () => {
 
     it('should edit attachment', fakeAsync(() => {
         fixture.detectChanges();
-        comp.attachmentToBeUpdatedOrCreated = undefined;
-        expect(comp.attachmentToBeUpdatedOrCreated).toBeUndefined();
+        comp.attachmentToBeUpdatedOrCreated.set(undefined);
+        expect(comp.attachmentToBeUpdatedOrCreated()).toBeUndefined();
         comp.editAttachment(newAttachment);
-        expect(comp.attachmentToBeUpdatedOrCreated).toBe(newAttachment);
+        expect(comp.attachmentToBeUpdatedOrCreated()).toBe(newAttachment);
         expect(comp.attachmentBackup).toEqual(newAttachment);
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
@@ -374,10 +386,10 @@ describe('LectureAttachmentsComponent', () => {
                 files: [myBlob1, myBlob2],
             } as unknown as EventTarget,
         } as Event;
-        comp.attachmentToBeUpdatedOrCreated = newAttachment;
+        comp.attachmentToBeUpdatedOrCreated.set(newAttachment);
         comp.setLectureAttachment(object);
-        expect(comp.attachmentFile).toBe(myBlob1);
-        expect(comp.attachmentToBeUpdatedOrCreated.link).toBe(myBlob1.name);
+        expect(comp.attachmentFile()).toBe(myBlob1);
+        expect(comp.attachmentToBeUpdatedOrCreated()?.link).toBe(myBlob1.name);
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
 
