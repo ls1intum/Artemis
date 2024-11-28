@@ -125,7 +125,7 @@
                     </div>
                 </div>
                 @if (attachmentToBeUpdatedOrCreated()) {
-                    <div>
+                    <form [formGroup]="form">
                         <div class="row">
                             <div class="col-12">
                                 @if (!attachmentToBeUpdatedOrCreated().id) {
@@ -203,7 +203,7 @@
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 }
                 @if (!attachmentToBeUpdatedOrCreated()) {
                     <div class="row">
