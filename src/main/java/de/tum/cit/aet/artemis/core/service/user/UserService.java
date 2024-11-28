@@ -40,6 +40,8 @@ import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
+import de.tum.cit.aet.artemis.communication.domain.SavedPost;
+import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.GuidedTourSetting;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -116,11 +118,13 @@ public class UserService {
 
     private final LearnerProfileService learnerProfileService;
 
+    private final SavedPostRepository savedPostRepository;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventRepository scienceEventRepository,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, LearnerProfileService learnerProfileService) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, LearnerProfileService learnerProfileService, SavedPostRepository savedPostRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -136,6 +140,7 @@ public class UserService {
         this.scienceEventRepository = scienceEventRepository;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.learnerProfileService = learnerProfileService;
+        this.savedPostRepository = savedPostRepository;
     }
 
     /**
@@ -498,6 +503,12 @@ public class UserService {
         user.setImageUrl(null);
         user.setActivated(false);
         user.setGroups(Collections.emptySet());
+
+        List<SavedPost> savedPostsOfUser = savedPostRepository.findSavedPostsByUserId(user.getId());
+
+        if (!savedPostsOfUser.isEmpty()) {
+            savedPostRepository.deleteAll(savedPostsOfUser);
+        }
 
         userRepository.save(user);
         clearUserCaches(user);
