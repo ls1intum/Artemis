@@ -9,6 +9,7 @@ import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockPipe } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { signal } from '@angular/core';
 
 describe('Plagiarism Case Verdict Component', () => {
     let comp: PlagiarismCaseVerdictComponent;
@@ -32,7 +33,8 @@ describe('Plagiarism Case Verdict Component', () => {
         [PlagiarismVerdict.POINT_DEDUCTION, 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction'],
         [PlagiarismVerdict.NO_PLAGIARISM, 'artemisApp.plagiarism.plagiarismCases.verdict.noPlagiarism'],
     ])('should return correct translation string', (verdict: PlagiarismVerdict | undefined, message: string) => {
-        comp.plagiarismCase = { verdict } as PlagiarismCase;
+        const mockPlagiarismCaseSignal = signal<PlagiarismCase | undefined>({ verdict });
+        comp.plagiarismCase = mockPlagiarismCaseSignal;
         fixture.detectChanges();
 
         expect(comp.verdictTranslationString).toBe(message);
@@ -45,7 +47,8 @@ describe('Plagiarism Case Verdict Component', () => {
         [PlagiarismVerdict.POINT_DEDUCTION, 'bg-danger'],
         [PlagiarismVerdict.NO_PLAGIARISM, 'bg-success'],
     ])('should return correct verdict badge class', (verdict: PlagiarismVerdict | undefined, className: string) => {
-        comp.plagiarismCase = { verdict } as PlagiarismCase;
+        const mockPlagiarismCaseSignal = signal<PlagiarismCase | undefined>({ verdict });
+        comp.plagiarismCase = mockPlagiarismCaseSignal;
         fixture.detectChanges();
 
         const element = fixture.debugElement.query(By.css('.badge'));

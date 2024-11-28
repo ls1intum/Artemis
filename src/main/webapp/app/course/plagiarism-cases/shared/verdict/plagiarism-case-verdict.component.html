@@ -1,6 +1,6 @@
-@if (plagiarismCase) {
+@if (plagiarismCase()) {
     <ng-container class="my-1">
-        @if (!plagiarismCase.verdict) {
+        @if (!plagiarismCase().verdict) {
             <div class="badge bg-secondary py-2">
                 <h6 class="mb-0">
                     {{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}
@@ -10,7 +10,7 @@
         } @else {
             <div
                 class="badge py-2"
-                [class]="plagiarismCase.verdict === plagiarismVerdict.NO_PLAGIARISM ? 'bg-success' : 'bg-danger'"
+                [class]="plagiarismCase().verdict === plagiarismVerdict.NO_PLAGIARISM ? 'bg-success' : 'bg-danger'"
                 ngbTooltip="{{
                     'artemisApp.plagiarism.plagiarismCases.verdict.description'
                         | artemisTranslate: { date: plagiarismCase.verdictDate | artemisDate, user: plagiarismCase.verdictBy?.name }
@@ -22,7 +22,7 @@
         <ng-template #verdict>
             <div
                 class="badge py-2"
-                [class]="plagiarismCase.verdict === plagiarismVerdict.NO_PLAGIARISM ? 'bg-success' : 'bg-danger'"
+                [class]="plagiarismCase().verdict === plagiarismVerdict.NO_PLAGIARISM ? 'bg-success' : 'bg-danger'"
                 ngbTooltip="{{
                     'artemisApp.plagiarism.plagiarismCases.verdict.description'
                         | artemisTranslate: { date: plagiarismCase.verdictDate | artemisDate, user: plagiarismCase.verdictBy?.name }

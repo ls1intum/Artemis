@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 
@@ -7,13 +7,13 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
     templateUrl: './plagiarism-case-verdict.component.html',
 })
 export class PlagiarismCaseVerdictComponent {
-    @Input() plagiarismCase: PlagiarismCase;
-    @Input() hideDetails = false;
+    plagiarismCase = input.required<PlagiarismCase>();
+    hideDetails = input(false);
 
     readonly plagiarismVerdict = PlagiarismVerdict;
 
     get verdictTranslationString(): string {
-        switch (this.plagiarismCase.verdict) {
+        switch (this.plagiarismCase().verdict) {
             case PlagiarismVerdict.PLAGIARISM: {
                 return 'artemisApp.plagiarism.plagiarismCases.verdict.plagiarism';
             }
