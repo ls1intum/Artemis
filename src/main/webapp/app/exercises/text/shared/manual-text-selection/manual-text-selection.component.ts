@@ -24,8 +24,8 @@ export class ManualTextSelectionComponent {
     protected route = inject(ActivatedRoute);
     textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
-    textBlockRefGroup = input.required<TextBlockRefGroup>();
-    submission = input.required<TextSubmission>();
+    textBlockRefGroup = input<TextBlockRefGroup>();
+    submission = input<TextSubmission>();
     didSelectWord = output<wordSelection[]>();
     words = input<TextBlockRefGroup>();
     public submissionWords: string[] | undefined;
