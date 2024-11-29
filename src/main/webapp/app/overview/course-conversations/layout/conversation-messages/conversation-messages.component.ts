@@ -320,9 +320,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
                     map.forEach((messages) => {
                         messages.forEach((message) => {
-                            if (message.sourceType?.valueOf() === 'POST' && message.sourceId) {
+                            if (message.sourceType?.toString() === 'POST' && message.sourceId) {
                                 sourcePostIds.push(message.sourceId);
-                            } else if (message.sourceType?.valueOf() === 'ANSWER_POST' && message.sourceId) {
+                            } else if (message.sourceType?.toString() === 'ANSWER' && message.sourceId) {
                                 sourceAnswerIds.push(message.sourceId);
                             }
                         });
@@ -356,10 +356,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                             this.posts = this.posts.map((post) => {
                                 const forwardedMessages = map.get(post.id!) || [];
                                 post.forwardedPosts = fetchedPosts.filter((fetchedPost) =>
-                                    forwardedMessages.some((message) => message.sourceId === fetchedPost.id && message.sourceType?.valueOf() === 'POST'),
+                                    forwardedMessages.some((message) => message.sourceId === fetchedPost.id && message.sourceType?.toString() === 'POST'),
                                 );
                                 post.forwardedAnswerPosts = fetchedAnswerPosts.filter((fetchedAnswerPost) =>
-                                    forwardedMessages.some((message) => message.sourceId === fetchedAnswerPost.id && message.sourceType?.valueOf() === 'ANSWER_POST'),
+                                    forwardedMessages.some((message) => message.sourceId === fetchedAnswerPost.id && message.sourceType?.toString() === 'ANSWER'),
                                 );
                                 return post;
                             });

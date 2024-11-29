@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!-- Create forwarded_messages table -->
-    <changeSet id="20241124171640" author="aykan">
+    <changeSet id="20241129212530" author="aykan">
         <createTable tableName="forwarded_message">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -12,7 +12,7 @@
             <column name="source_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="source_type" type="varchar(50)">
+            <column name="source_type" type="tinyint">
                 <constraints nullable="false"/>
             </column>
             <column name="destination_post_id" type="bigint">

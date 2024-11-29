@@ -5,7 +5,7 @@ import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
-import { Posting, SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -34,7 +34,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import { SavedPostService } from 'app/shared/metis/saved-post.service';
 import { cloneDeep } from 'lodash-es';
 import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.service';
-import { ForwardedMessage, SourceType } from 'app/entities/metis/forwarded-message.model';
+import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
 import { throwError } from 'rxjs';
 
 @Injectable()
@@ -734,9 +734,9 @@ export class MetisService implements OnDestroy {
             hasForwardedMessages: true,
         };
 
-        let sourceType = SourceType.POST;
+        let sourceType = PostingType.POST;
         if (isAnswer) {
-            sourceType = SourceType.ANSWER_POST;
+            sourceType = PostingType.ANSWER;
         }
 
         return this.postService.create(this.courseId, newPost).pipe(

@@ -6,6 +6,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.net.URI;
 import java.util.Set;
 
+import jakarta.transaction.Transactional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ForwardedMessage;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.domain.SourceType;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ForwardedMessageTestRepository;
@@ -70,13 +72,13 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
         testForwardedMessage = new ForwardedMessage();
         testForwardedMessage.setDestinationPost(testPost);
         testForwardedMessage.setSourceId(testPost.getId());
-        testForwardedMessage.setSourceType(SourceType.POST);
+        testForwardedMessage.setSourceType(PostingType.POST);
         testForwardedMessage = forwardedMessageRepository.save(testForwardedMessage);
 
         forwardedMessageForAnswer = new ForwardedMessage();
         forwardedMessageForAnswer.setDestinationAnswerPost(testAnswerPost);
         forwardedMessageForAnswer.setSourceId(testPost.getId());
-        forwardedMessageForAnswer.setSourceType(SourceType.POST);
+        forwardedMessageForAnswer.setSourceType(PostingType.POST);
         forwardedMessageRepository.save(forwardedMessageForAnswer);
     }
 
@@ -89,7 +91,7 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
         ForwardedMessage newForwardedMessage = new ForwardedMessage();
         newForwardedMessage.setDestinationPost(testPost);
         newForwardedMessage.setSourceId(testPost.getId());
-        newForwardedMessage.setSourceType(SourceType.POST);
+        newForwardedMessage.setSourceType(PostingType.POST);
 
         URI uri = new URI("/api/forwarded-messages");
 
@@ -161,7 +163,7 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
         ForwardedMessage newForwardedMessage = new ForwardedMessage();
         newForwardedMessage.setDestinationAnswerPost(testAnswerPost);
         newForwardedMessage.setSourceId(testPost.getId());
-        newForwardedMessage.setSourceType(SourceType.POST);
+        newForwardedMessage.setSourceType(PostingType.POST);
 
         URI uri = new URI("/api/forwarded-messages");
 
@@ -175,13 +177,14 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
      * Test retrieving forwarded messages with multiple destination post IDs.
      */
     @Test
+    @Transactional
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnForwardedMessagesForMultipleDestinationPostIds() throws Exception {
         ForwardedMessage forwardedMessage2 = new ForwardedMessage();
         forwardedMessage2.setDestinationPost(testPost);
         forwardedMessage2.setSourceId(testPost.getId());
-        forwardedMessage2.setSourceType(SourceType.POST);
-        forwardedMessageRepository.save(forwardedMessage2);
+        forwardedMessage2.setSourceType(PostingType.POST);
+        forwardedMessage2 = forwardedMessageRepository.save(forwardedMessage2);
 
         request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages/posts").param("dest_post_ids", String.valueOf(testPost.getId())))
                 .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$['" + testPost.getId() + "']", hasSize(2)))

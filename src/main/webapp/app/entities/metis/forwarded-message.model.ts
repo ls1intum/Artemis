@@ -1,16 +1,12 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-
-export enum SourceType {
-    POST = 'post',
-    ANSWER_POST = 'answer_post',
-}
+import { PostingType } from 'app/entities/metis/posting.model';
 
 export class ForwardedMessage implements BaseEntity {
     public id?: number;
     public sourceId?: number;
-    public sourceType?: SourceType;
+    public sourceType?: PostingType;
     public destinationPost: Post | undefined;
     public destinationAnswerPost: AnswerPost | undefined;
     public content: string | undefined;
@@ -21,7 +17,7 @@ export class ForwardedMessage implements BaseEntity {
         return (isDestinationPostValid && !isDestinationAnswerPostValid) || (!isDestinationPostValid && isDestinationAnswerPostValid);
     }
 
-    constructor(id?: number, sourceId?: number, sourceType?: SourceType, destinationPost?: Post, destinationAnswerPost?: AnswerPost, content?: string) {
+    constructor(id?: number, sourceId?: number, sourceType?: PostingType, destinationPost?: Post, destinationAnswerPost?: AnswerPost, content?: string) {
         this.id = id;
         this.sourceId = sourceId;
         this.sourceType = sourceType;

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.communication.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -31,9 +30,9 @@ public class ForwardedMessage {
     private Long sourceId;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(name = "source_type", nullable = false, length = 20)
-    private SourceType sourceType;
+    @Enumerated
+    @Column(name = "source_type", nullable = false)
+    private PostingType sourceType;
 
     @ManyToOne
     @JoinColumn(name = "destination_post_id")
@@ -48,7 +47,7 @@ public class ForwardedMessage {
     public ForwardedMessage() {
     }
 
-    public ForwardedMessage(Long sourceId, SourceType sourceType, Post destinationPost, AnswerPost destinationAnswerPost) {
+    public ForwardedMessage(Long sourceId, PostingType sourceType, Post destinationPost, AnswerPost destinationAnswerPost) {
         if (sourceId == null) {
             throw new IllegalArgumentException("sourceId cannot be null");
         }
@@ -79,11 +78,11 @@ public class ForwardedMessage {
         this.sourceId = sourceId;
     }
 
-    public SourceType getSourceType() {
+    public PostingType getSourceType() {
         return sourceType;
     }
 
-    public void setSourceType(SourceType sourceType) {
+    public void setSourceType(PostingType sourceType) {
         if (sourceType == null) {
             throw new IllegalArgumentException("sourceType cannot be null");
         }

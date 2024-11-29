@@ -7,13 +7,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ForwardedMessage;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.domain.SourceType;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 
 /**
  * Data Transfer Object for ForwardedMessage.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ForwardedMessageDTO(Long id, Long sourceId, SourceType sourceType, Long destinationPostId, Long destinationAnswerPostId) {
+public record ForwardedMessageDTO(Long id, Long sourceId, PostingType sourceType, Long destinationPostId, Long destinationAnswerPostId) {
 
     /**
      * Constructs a ForwardedMessageDTO from a ForwardedMessage entity.
