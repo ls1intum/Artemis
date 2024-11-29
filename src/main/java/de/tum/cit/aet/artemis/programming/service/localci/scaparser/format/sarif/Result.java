@@ -89,7 +89,7 @@ public record Result(String ruleId, Integer ruleIndex, ReportingDescriptorRefere
 
         private final String value;
 
-        private final static Map<String, Kind> CONSTANTS = new HashMap<>();
+        private static final Map<String, Kind> CONSTANTS = new HashMap<>();
 
         static {
             for (Kind c : values()) {
@@ -111,6 +111,12 @@ public record Result(String ruleId, Integer ruleIndex, ReportingDescriptorRefere
             return this.value;
         }
 
+        /**
+         * Returns the enum constant of this type with the specified name.
+         *
+         * @param value the name of the enum constant to be returned.
+         * @return the enum constant with the specified name
+         */
         @JsonCreator
         public static Kind fromValue(String value) {
             Kind constant = CONSTANTS.get(value);
@@ -133,7 +139,7 @@ public record Result(String ruleId, Integer ruleIndex, ReportingDescriptorRefere
 
         private final String value;
 
-        private final static Map<String, Level> CONSTANTS = new HashMap<>();
+        private static final Map<String, Level> CONSTANTS = new HashMap<>();
 
         static {
             for (Level c : values()) {
@@ -155,6 +161,12 @@ public record Result(String ruleId, Integer ruleIndex, ReportingDescriptorRefere
             return this.value;
         }
 
+        /**
+         * Returns the enum constant of this type with the specified name.
+         *
+         * @param value the name of the enum constant to be returned.
+         * @return the enum constant with the specified name
+         */
         @JsonCreator
         public static Level fromValue(String value) {
             Level constant = CONSTANTS.get(value);
