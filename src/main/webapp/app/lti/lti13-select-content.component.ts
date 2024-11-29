@@ -8,6 +8,8 @@ import { DomSanitizer } from '@angular/platform-browser';
  * and automatically submits a form with the relevant data.
  * According to LTI documentation auto submit form must be used.
  */
+
+// push branch
 @Component({
     selector: 'jhi-select-exercise',
     templateUrl: './lti13-select-content.component.html',
