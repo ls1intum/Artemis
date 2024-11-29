@@ -2,15 +2,36 @@ import { AfterContentChecked, ChangeDetectorRef, Component, ElementRef, EventEmi
 import { Observable, Subscription, map, startWith } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
-import { FormControl } from '@angular/forms';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
+import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { MatFormField } from '@angular/material/form-field';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MatOption } from '@angular/material/core';
+import { AsyncPipe } from '@angular/common';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-post-tag-selector',
     templateUrl: './post-tag-selector.component.html',
     styleUrls: ['./post-tag-selector.component.scss'],
+    standalone: true,
+    imports: [
+        MatFormField,
+        MatChipGrid,
+        MatChipRow,
+        MatChipRemove,
+        FaIconComponent,
+        FormsModule,
+        MatAutocompleteTrigger,
+        MatChipInput,
+        ReactiveFormsModule,
+        MatAutocomplete,
+        MatOption,
+        AsyncPipe,
+        ArtemisSharedCommonModule,
+    ],
 })
 export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
     @Input() postTags?: string[];

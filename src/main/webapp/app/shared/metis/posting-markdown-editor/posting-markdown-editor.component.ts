@@ -42,6 +42,9 @@ import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
+import { ArtemisMarkdownEditorModule } from '../../markdown-editor/markdown-editor.module';
+import { PostingContentComponent } from '../posting-content/posting-content.components';
+import { NgStyle } from '@angular/common';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -55,6 +58,8 @@ import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/stri
     ],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    imports: [ArtemisMarkdownEditorModule, PostingContentComponent, NgStyle],
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
     @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditor: MarkdownEditorMonacoComponent;

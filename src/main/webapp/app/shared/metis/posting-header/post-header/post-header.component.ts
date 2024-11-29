@@ -5,11 +5,19 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { ProfilePictureComponent } from '../../../profile-picture/profile-picture.component';
+import { NgClass } from '@angular/common';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from '../../../language/translate.directive';
+import { ArtemisSharedCommonModule } from '../../../shared-common.module';
 
 @Component({
     selector: 'jhi-post-header',
     templateUrl: './post-header.component.html',
     styleUrls: ['../../metis.component.scss'],
+    standalone: true,
+    imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisSharedCommonModule],
 })
 export class PostHeaderComponent extends PostingHeaderDirective<Post> implements OnInit, OnDestroy, OnChanges {
     @Input()

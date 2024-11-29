@@ -21,8 +21,15 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { faBookmark, faPencilAlt, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgClass, NgIf, NgStyle } from '@angular/common';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
+import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answer-post-header/answer-post-header.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
 
 @Component({
     selector: 'jhi-answer-post',
@@ -34,6 +41,21 @@ import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reacti
             transition(':enter', [style({ opacity: 0 }), animate('300ms ease-in', style({ opacity: 1 }))]),
             transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
         ]),
+    ],
+    standalone: true,
+    imports: [
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        AnswerPostHeaderComponent,
+        PostingContentComponent,
+        AnswerPostReactionsBarComponent,
+        AnswerPostCreateEditModalComponent,
+        NgIf,
+        NgStyle,
+        CdkOverlayOrigin,
+        CdkConnectedOverlay,
+        EmojiPickerComponent,
     ],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnChanges {

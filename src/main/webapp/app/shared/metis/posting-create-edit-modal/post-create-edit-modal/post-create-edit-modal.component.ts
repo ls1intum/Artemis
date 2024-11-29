@@ -1,9 +1,19 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import {
+    NgbAccordionBody,
+    NgbAccordionButton,
+    NgbAccordionCollapse,
+    NgbAccordionDirective,
+    NgbAccordionHeader,
+    NgbAccordionItem,
+    NgbAccordionToggle,
+    NgbCollapse,
+    NgbModal,
+} from '@ng-bootstrap/ng-bootstrap';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -12,6 +22,7 @@ import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -19,10 +30,35 @@ export interface ContextSelectorOption {
     conversation?: Conversation;
 }
 
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+
 @Component({
     selector: 'jhi-post-create-edit-modal',
     templateUrl: './post-create-edit-modal.component.html',
     styleUrls: ['../../metis.component.scss'],
+    standalone: true,
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        ArtemisSharedComponentModule,
+        PostTagSelectorComponent,
+        NgbAccordionDirective,
+        NgbAccordionItem,
+        NgbAccordionHeader,
+        NgbAccordionToggle,
+        NgbAccordionButton,
+        NgbCollapse,
+        NgbAccordionCollapse,
+        NgbAccordionBody,
+        PostingMarkdownEditorComponent,
+        PostingButtonComponent,
+        ArtemisSharedCommonModule,
+    ],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
     @Input() isCommunicationPage: boolean;

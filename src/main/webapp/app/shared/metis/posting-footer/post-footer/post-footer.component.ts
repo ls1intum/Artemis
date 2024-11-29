@@ -20,6 +20,8 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-cre
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
+import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 interface PostGroup {
     author: User | undefined;
@@ -30,6 +32,8 @@ interface PostGroup {
     selector: 'jhi-post-footer',
     templateUrl: './post-footer.component.html',
     styleUrls: ['./post-footer.component.scss'],
+    standalone: true,
+    imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisSharedCommonModule],
 })
 export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
     @Input() lastReadDate?: dayjs.Dayjs;

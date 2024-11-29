@@ -4,11 +4,16 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Posting } from 'app/entities/metis/posting.model';
 import { urlRegex } from 'app/shared/link-preview/services/linkify.service';
+import { ArtemisConfirmIconModule } from '../../../confirm-icon/confirm-icon.module';
+import { NgClass } from '@angular/common';
+import { ArtemisSharedCommonModule } from '../../../shared-common.module';
 
 @Component({
     selector: 'jhi-link-preview',
     templateUrl: './link-preview.component.html',
     styleUrls: ['./link-preview.component.scss'],
+    standalone: true,
+    imports: [ArtemisConfirmIconModule, NgClass, ArtemisSharedCommonModule],
 })
 export class LinkPreviewComponent implements OnInit {
     @Input() linkPreview: LinkPreview;

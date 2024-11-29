@@ -64,8 +64,6 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         MatDialogModule,
         LinkPreviewModule,
         ProfilePictureComponent,
-    ],
-    declarations: [
         PostingThreadComponent,
         PostHeaderComponent,
         AnswerPostHeaderComponent,

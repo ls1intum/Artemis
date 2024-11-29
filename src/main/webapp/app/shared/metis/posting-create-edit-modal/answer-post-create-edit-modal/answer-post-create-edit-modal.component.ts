@@ -3,15 +3,20 @@ import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { Posting } from 'app/entities/metis/posting.model';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',
     templateUrl: './answer-post-create-edit-modal.component.html',
     styleUrls: ['answer-post-create-edit-modal.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisSharedCommonModule],
 })
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
     @Input() createEditAnswerPostContainerRef: ViewContainerRef;
