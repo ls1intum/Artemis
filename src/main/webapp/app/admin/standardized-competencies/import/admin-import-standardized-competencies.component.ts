@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -84,12 +84,12 @@ export class AdminImportStandardizedCompetenciesComponent {
 }
 \`\`\``;
 
-    public constructor(
-        private alertService: AlertService,
-        private adminStandardizedCompetencyService: AdminStandardizedCompetencyService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-    ) {}
+    private alertService = inject(AlertService);
+    private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+
+    public constructor() {}
 
     /**
      * Verifies the file (only .json, smaller than 20 MB) and then tries to read the importData from it
