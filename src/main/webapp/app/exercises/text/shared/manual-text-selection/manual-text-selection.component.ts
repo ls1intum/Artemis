@@ -40,7 +40,7 @@ export class ManualTextSelectionComponent {
         effect(() => {
             const textBlockRefGroup = this.words();
             if (textBlockRefGroup && this.submission()) {
-                this.submissionWords(textBlockRefGroup.getText(this.submission()).replace(LINEBREAK, '\n ').split(SPACE));
+                this.submissionWords = textBlockRefGroup.getText(this.submission()).replace(LINEBREAK, '\n ').split(SPACE);
             }
         });
     }
