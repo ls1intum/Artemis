@@ -24,7 +24,7 @@ export class ManualTextSelectionComponent {
     protected route = inject(ActivatedRoute);
     textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
-    textBlockRefGroup = input<TextBlockRefGroup>();
+    textBlockRefGroup = input.required<TextBlockRefGroup>();
     submission = input<TextSubmission>();
     didSelectWord = output<wordSelection[]>();
     words = input<TextBlockRefGroup>();
@@ -39,8 +39,11 @@ export class ManualTextSelectionComponent {
 
         effect(() => {
             const textBlockRefGroup = this.words();
-            if (textBlockRefGroup && this.submission()) {
-                this.submissionWords = textBlockRefGroup.getText(this.submission()).replace(LINEBREAK, '\n ').split(SPACE);
+            if (textBlockRefGroup) {
+                const submission = this.submission();
+                if (submission) {
+                    this.submissionWords = textBlockRefGroup.getText(submission).replace(LINEBREAK, '\n ').split(SPACE);
+                }
             }
         });
     }
