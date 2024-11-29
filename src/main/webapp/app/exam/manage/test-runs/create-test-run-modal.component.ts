@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -14,14 +14,12 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
     styles: ['.table tr.active td { background-color:#3e8acc; color: white; }'],
 })
 export class CreateTestRunModalComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+    private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
+
     exam: Exam;
     workingTimeForm: FormGroup;
     testRunConfiguration: { [id: number]: Exercise } = {};
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
-    ) {}
 
     ngOnInit(): void {
         this.initWorkingTimeForm();
