@@ -72,12 +72,14 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         // 1 DB call to get the batch of a live quiz. No Batches of other quizzes are retrieved
 
         var course = courses.getFirst();
+        // potentially, we might get a course that has faqs disabled, in which case we would have 12 calls instead of 13
+        int numberOfCounts = course.isFaqEnabled() ? 13 : 12;
         assertThatDb(() -> {
             log.info("Start course for dashboard call for one course");
             var userCourse = request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for one course");
             return userCourse;
-        }).hasBeenCalledTimes(12); // TODO: reduce this number back to 11
+        }).hasBeenCalledTimes(numberOfCounts);
         // 1 DB call to get the user from the DB
         // 1 DB call to get the course with lectures
         // 1 DB call to load all exercises with categories
@@ -88,6 +90,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         // 1 DB call to get all plagiarism cases
         // 1 DB call to get the grading scale
         // 1 DB call to get the batch of a live quiz. No Batches of other quizzes are retrieved
+        // 1 DB call to get the faqs, if they are enabled
     }
 
     @Test
