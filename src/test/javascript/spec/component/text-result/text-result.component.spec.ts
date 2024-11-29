@@ -100,6 +100,7 @@ describe('TextResultComponent', () => {
 
         runInInjectionContext(TestBed, () => {
             component.result = input<Result>(result);
+            fixture.detectChanges();
         });
 
         expect(component.textResults).toHaveLength(4);
