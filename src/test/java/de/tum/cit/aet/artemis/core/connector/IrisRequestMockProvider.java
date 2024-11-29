@@ -138,6 +138,15 @@ public class IrisRequestMockProvider {
         });
     }
 
+    public void mockDeletionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/delete")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            var mockRequest = (MockClientHttpRequest) request;
+            var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisWebhookLectureIngestionExecutionDTO.class);
+            responseConsumer.accept(dto);
+            return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+        });
+    }
+
     public void mockBuildFailedRunResponse(Consumer<PyrisExerciseChatPipelineExecutionDTO> responseConsumer) {
         mockServer.expect(ExpectedCount.max(2), requestTo(pipelinesApiURL + "/tutor-chat/default/run?event=build_failed")).andExpect(method(HttpMethod.POST))
                 .andRespond(request -> {
@@ -180,6 +189,15 @@ public class IrisRequestMockProvider {
         // @formatter:off
         mockServer
             .expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/fullIngestion"))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(withStatus(HttpStatus.valueOf(httpStatus)));
+        // @formatter:on
+    }
+
+    public void mockDeletionWebhookRunError(int httpStatus) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/lectures/delete"))
             .andExpect(method(HttpMethod.POST))
             .andRespond(withStatus(HttpStatus.valueOf(httpStatus)));
         // @formatter:on

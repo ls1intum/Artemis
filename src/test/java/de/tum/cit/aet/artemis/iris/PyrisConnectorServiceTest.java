@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -17,6 +18,8 @@ import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 
 class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
@@ -48,7 +51,17 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     @MethodSource("irisExceptions")
     void testExceptionIngestionV2(int httpStatus, Class<?> exceptionClass) {
         irisRequestMockProvider.mockIngestionWebhookRunError(httpStatus);
-        assertThatThrownBy(() -> pyrisConnectorService.executeLectureWebhook("fullIngestion", null)).isInstanceOf(exceptionClass);
+        PyrisLectureUnitWebhookDTO pyrisLectureUnitWebhookDTO = new PyrisLectureUnitWebhookDTO("example.pdf", 123L, "Lecture Unit Name", 456L, "Lecture Name", 789L, "Course Name",
+                "Course Description");
+        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(pyrisLectureUnitWebhookDTO, null, List.of());
+        assertThatThrownBy(() -> pyrisConnectorService.executeLectureAddtionWebhook("fullIngestion", executionDTO)).isInstanceOf(exceptionClass);
+    }
+
+    @ParameterizedTest
+    @MethodSource("irisExceptions")
+    void testExceptionLectureDeletionV2(int httpStatus, Class<?> exceptionClass) {
+        irisRequestMockProvider.mockDeletionWebhookRunError(httpStatus);
+        assertThatThrownBy(() -> pyrisConnectorService.executeLectureDeletionWebhook(null)).isInstanceOf(exceptionClass);
     }
 
     @ParameterizedTest
