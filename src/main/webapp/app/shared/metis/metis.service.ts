@@ -10,6 +10,7 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
+import { catchError } from 'rxjs/operators';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import {
     ContextInformation,
@@ -769,7 +770,13 @@ export class MetisService implements OnDestroy {
                             this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                         }
                     }),
+                    catchError((error) => {
+                        return throwError(() => error);
+                    }),
                 );
+            }),
+            catchError((error) => {
+                return throwError(() => error);
             }),
         );
     }

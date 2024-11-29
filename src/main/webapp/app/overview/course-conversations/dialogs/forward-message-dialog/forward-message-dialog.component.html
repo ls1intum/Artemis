@@ -29,7 +29,7 @@
                 [(ngModel)]="searchTerm"
                 (input)="filterItems($event)"
                 (focus)="onInputFocus()"
-                (blur)="onInputBlur($event)"
+                (blur)="onInputBlur()"
             />
         </div>
         @if (showDropdown && filteredOptions.length > 0) {

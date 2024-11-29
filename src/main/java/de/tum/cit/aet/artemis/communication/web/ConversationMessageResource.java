@@ -204,6 +204,14 @@ public class ConversationMessageResource {
         return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
     }
 
+    /**
+     * GET /courses/{courseId}/messages/source-posts : Retrieve posts by their IDs
+     *
+     * @param courseId id of the course the posts belong to
+     * @param postIds  list of IDs of the posts to retrieve
+     * @return ResponseEntity with status 200 (OK) containing the list of posts in the response body,
+     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
     @GetMapping("courses/{courseId}/messages/source-posts")
     @EnforceAtLeastStudent
     public ResponseEntity<List<Post>> getSourcePostsByIds(@PathVariable Long courseId, @RequestParam List<Long> postIds) {

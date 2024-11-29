@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { ForwardedMessage, SourceType } from 'app/entities/metis/forwarded-message.model';
+import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
 import { ForwardedMessageService } from '../../../../../main/webapp/app/shared/metis/forwarded-message.service';
+import { PostingType } from '../../../../../main/webapp/app/entities/metis/posting.model';
 
 describe('ForwardedMessageService', () => {
     let service: ForwardedMessageService;
@@ -9,7 +10,7 @@ describe('ForwardedMessageService', () => {
 
     const apiUrl = 'api/forwarded-messages';
 
-    const sampleForwardedMessage = new ForwardedMessage(1, 2, SourceType.POST, { id: 3 } as any, undefined, '');
+    const sampleForwardedMessage = new ForwardedMessage(1, 2, PostingType.POST, { id: 3 } as any, undefined, '');
 
     beforeEach(() => {
         TestBed.configureTestingModule({

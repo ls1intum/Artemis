@@ -14,7 +14,6 @@ export class ForwardedMessageService {
 
     /**
      * Creates a new ForwardedMessage.
-     * @param courseId The ID of the course.
      * @param forwardedMessage The ForwardedMessage to create.
      * @returns The created ForwardedMessage.
      */

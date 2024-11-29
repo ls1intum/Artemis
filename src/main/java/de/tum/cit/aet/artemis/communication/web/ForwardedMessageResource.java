@@ -65,6 +65,13 @@ public class ForwardedMessageResource {
         return ResponseEntity.created(new URI("/api/forwarded-messages/" + savedMessage.getId())).body(dto);
     }
 
+    /**
+     * GET /forwarded-messages/posts : Retrieve forwarded messages grouped by their destination post IDs.
+     *
+     * @param dest_post_ids a set of destination post IDs for which the forwarded messages should be retrieved
+     * @return the ResponseEntity with status 200 (OK) and with body containing a map where the key is the destination post ID
+     *         and the value is a set of forwarded message DTOs grouped by the destination post IDs
+     */
     @GetMapping("/forwarded-messages/posts")
     public ResponseEntity<Map<Long, Set<ForwardedMessageDTO>>> getForwardedMessagesByDestPostIds(@RequestParam Set<Long> dest_post_ids) {
         Set<ForwardedMessage> forwardedMessages = forwardedMessageRepository.findAllByDestinationPostIds(dest_post_ids);
@@ -75,6 +82,13 @@ public class ForwardedMessageResource {
         return ResponseEntity.ok(groupedDtos);
     }
 
+    /**
+     * GET /forwarded-messages/answers : Retrieve forwarded messages grouped by their destination answer post IDs.
+     *
+     * @param dest_answer_post_ids a set of destination answer post IDs for which the forwarded messages should be retrieved
+     * @return the ResponseEntity with status 200 (OK) and with body containing a map where the key is the destination answer post ID
+     *         and the value is a set of forwarded message DTOs grouped by the destination answer post IDs
+     */
     @GetMapping("/forwarded-messages/answers")
     public ResponseEntity<Map<Long, Set<ForwardedMessageDTO>>> getForwardedMessagesByDestAnswerPostIds(@RequestParam Set<Long> dest_answer_post_ids) {
         Set<ForwardedMessage> forwardedMessages = forwardedMessageRepository.findAllByDestinationAnswerPostIds(dest_answer_post_ids);

@@ -96,6 +96,10 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         this.postCreateEditModal?.modalRef?.close();
     }
 
+    /**
+     * Forwards the current post to another conversation.
+     * Uses openForwardMessageView from PostingsReactionsBarDirective to show the forward dialog.
+     */
     forwardMessage(): void {
         if (!this.posting.content || this.posting.content === '') {
             this.openForwardMessageView(this.originalPostDetails()!, false);

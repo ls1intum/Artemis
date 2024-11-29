@@ -8,7 +8,7 @@ import { faBookmark } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
-import { map } from 'rxjs/internal/operators/map';
+import { map } from 'rxjs/operators';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ForwardMessageDialogComponent } from 'app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
 import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';

@@ -14,7 +14,7 @@ import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-ed
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 interface OneToOneChatWithName extends OneToOneChatDTO {
-    otherUserName: string;
+    otherUserName: string | undefined;
     otherUserImg: string | undefined;
 }
 
@@ -63,11 +63,11 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         this.filteredChannels = this.channels;
         this.defaultActions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new QuoteAction(), new CodeAction(), new CodeBlockAction(), new UrlAction()];
         this.filteredChats = this.chats.map((chat) => {
-            const otherUser = chat.members?.find((user) => !user.isRequestingUser);
+            const otherUser = chat.members ? chat.members.find((user) => !user.isRequestingUser) : undefined;
             return {
                 ...chat,
-                otherUserName: otherUser?.name || '',
-                otherUserImg: otherUser?.imageUrl,
+                otherUserName: otherUser ? otherUser.name : '',
+                otherUserImg: otherUser ? otherUser.imageUrl : undefined,
             };
         });
 
@@ -127,10 +127,6 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
 
     updateField(content: string): void {
         this.newPost.content = content;
-    }
-
-    get shouldShowPlaceholder(): boolean {
-        return this.selectedChannels.length === 0 && this.selectedChats.length === 0;
     }
 
     filterItems(event: Event): void {
@@ -204,15 +200,9 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         this.showDropdown = true;
     }
 
-    onInputBlur(event: FocusEvent): void {
-        const relatedTarget = event.relatedTarget as HTMLElement;
-        if (relatedTarget && this.searchInput?.nativeElement.contains(relatedTarget)) {
-            return;
-        }
-        setTimeout(() => {
-            this.isInputFocused = false;
-            this.showDropdown = false;
-        }, 200);
+    onInputBlur(): void {
+        this.isInputFocused = false;
+        this.showDropdown = false;
     }
 
     focusInput(): void {
@@ -223,7 +213,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
 
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
-        if (!this.searchInput?.nativeElement.contains(event.target)) {
+        if (this.searchInput && !this.searchInput.nativeElement.contains(event.target)) {
             this.showDropdown = false;
         }
     }
