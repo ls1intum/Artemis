@@ -7,12 +7,17 @@ import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
     templateUrl: './message-reply-inline-input.component.html',
     styleUrls: ['./message-reply-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [PostingButtonComponent, ArtemisSharedModule, PostingMarkdownEditorComponent],
 })
 export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges {
     warningDismissed = false;

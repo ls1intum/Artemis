@@ -85,8 +85,10 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
         AnswerPostHeaderComponent,
         PostingButtonComponent,
         HtmlForPostingMarkdownPipe,
+        PostingThreadComponent,
+        EnlargeSlideImageComponent,
+        MessageReplyInlineInputComponent,
     ],
-    declarations: [PostingThreadComponent, EnlargeSlideImageComponent, MessageReplyInlineInputComponent],
     exports: [
         PostingThreadComponent,
         PostHeaderComponent,
