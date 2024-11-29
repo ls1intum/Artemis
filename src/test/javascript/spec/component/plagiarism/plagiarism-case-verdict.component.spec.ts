@@ -6,8 +6,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { By } from '@angular/platform-browser';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockPipe } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { signal } from '@angular/core';
 
@@ -17,8 +15,7 @@ describe('Plagiarism Case Verdict Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, NgbModule],
-            declarations: [PlagiarismCaseVerdictComponent, MockPipe(ArtemisDatePipe)],
+            imports: [ArtemisTestModule, TranslateTestingModule, NgbModule, PlagiarismCaseVerdictComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
