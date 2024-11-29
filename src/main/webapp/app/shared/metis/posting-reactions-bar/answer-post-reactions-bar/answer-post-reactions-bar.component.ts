@@ -3,7 +3,6 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { faCheck, faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
@@ -38,10 +37,6 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
     readonly faPencilAlt = faPencilAlt;
     @Input() isEmojiCount: boolean = false;
     @Output() postingUpdated = new EventEmitter<void>();
-
-    constructor(metisService: MetisService) {
-        super(metisService);
-    }
 
     ngOnInit() {
         super.ngOnInit();

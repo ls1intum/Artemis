@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject, input, output, signal } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
@@ -48,7 +48,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
 
-    constructor(private metisService: MetisService) {}
+    private metisService = inject(MetisService);
 
     /**
      * on initialization: calculate posting parts to be displayed

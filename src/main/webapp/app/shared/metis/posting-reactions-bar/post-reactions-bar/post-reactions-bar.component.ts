@@ -1,9 +1,8 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject, output } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { faTrashAlt } from '@fortawesome/free-regular-svg-icons';
 import { faArrowRight, faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -63,12 +62,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     @Input() hoverBar: boolean = true;
     @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
 
-    constructor(
-        metisService: MetisService,
-        private accountService: AccountService,
-    ) {
-        super(metisService);
-    }
+    private accountService = inject(AccountService);
 
     isAnyReactionCountAboveZero(): boolean {
         return Object.values(this.reactionMetaDataMap).some((reaction) => reaction.count >= 1);

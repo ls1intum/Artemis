@@ -1,4 +1,4 @@
-import { Directive, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/entities/metis/posting.model';
@@ -24,11 +24,9 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
     formGroup: FormGroup;
     readonly EditType = PostingEditType;
 
-    protected constructor(
-        protected metisService: MetisService,
-        protected modalService: NgbModal,
-        protected formBuilder: FormBuilder,
-    ) {}
+    protected metisService = inject(MetisService);
+    protected modalService = inject(NgbModal);
+    protected formBuilder = inject(FormBuilder);
 
     get editType(): PostingEditType {
         return this.posting.id ? PostingEditType.UPDATE : PostingEditType.CREATE;

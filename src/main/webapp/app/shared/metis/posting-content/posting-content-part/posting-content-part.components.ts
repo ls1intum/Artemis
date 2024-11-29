@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
 
@@ -53,11 +53,9 @@ export class PostingContentPartComponent implements OnInit {
     processedContentBeforeReference: string;
     processedContentAfterReference: string;
 
-    constructor(
-        private fileService: FileService,
-        private dialog: MatDialog,
-        private accountService: AccountService,
-    ) {}
+    private fileService = inject(FileService);
+    private dialog = inject(MatDialog);
+    private accountService = inject(AccountService);
 
     ngOnInit() {
         this.processContent();

@@ -4,7 +4,6 @@ import {
     Component,
     EventEmitter,
     HostListener,
-    Inject,
     Input,
     OnChanges,
     OnInit,
@@ -12,6 +11,7 @@ import {
     Renderer2,
     ViewChild,
     ViewContainerRef,
+    inject,
     input,
 } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -77,13 +77,9 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     mayDelete: boolean = false;
     @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
 
-    constructor(
-        public changeDetector: ChangeDetectorRef,
-        public renderer: Renderer2,
-        @Inject(DOCUMENT) private document: Document,
-    ) {
-        super();
-    }
+    public changeDetector = inject(ChangeDetectorRef);
+    private renderer = inject(Renderer2);
+    private document = inject(DOCUMENT);
 
     ngOnInit() {
         super.ngOnInit();

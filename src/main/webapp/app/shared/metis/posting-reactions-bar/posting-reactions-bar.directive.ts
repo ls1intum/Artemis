@@ -1,4 +1,4 @@
-import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, inject, output } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -66,6 +66,8 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     readonly farBookmark = farBookmark;
     readonly faBookmark = faBookmark;
 
+    protected metisService = inject(MetisService);
+
     /*
      * icons (as svg paths) to be used as category preview image in emoji mart selector
      */
@@ -103,8 +105,6 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      * and a flag that indicates if the current user has used this reaction
      */
     reactionMetaDataMap: ReactionMetaDataMap = {};
-
-    protected constructor(protected metisService: MetisService) {}
 
     /**
      * on initialization: updates the current posting and its reactions,

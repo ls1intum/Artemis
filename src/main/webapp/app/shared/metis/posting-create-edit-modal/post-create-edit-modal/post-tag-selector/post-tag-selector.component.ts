@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { Observable, Subscription, map, startWith } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
@@ -36,10 +36,8 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, A
     // Icons
     faTimes = faTimes;
 
-    constructor(
-        private metisService: MetisService,
-        private changeDetector: ChangeDetectorRef,
-    ) {}
+    private metisService = inject(MetisService);
+    private changeDetector = inject(ChangeDetectorRef);
 
     /**
      * on initialization: subscribes to existing post tags used in this course (will be shown in dropdown of tag selector),

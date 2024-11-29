@@ -1,9 +1,7 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { Validators } from '@angular/forms';
 import { Post } from 'app/entities/metis/post.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -22,14 +20,7 @@ import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdow
 export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit {
     warningDismissed = false;
 
-    constructor(
-        protected metisService: MetisService,
-        protected modalService: NgbModal,
-        protected formBuilder: FormBuilder,
-        protected localStorageService: LocalStorageService,
-    ) {
-        super(metisService, modalService, formBuilder);
-    }
+    protected localStorageService = inject(LocalStorageService);
 
     ngOnInit(): void {
         super.ngOnInit();

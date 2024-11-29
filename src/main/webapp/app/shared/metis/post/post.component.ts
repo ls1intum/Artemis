@@ -1,11 +1,9 @@
 import {
     AfterContentChecked,
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     EventEmitter,
     HostListener,
-    Inject,
     Input,
     OnChanges,
     OnInit,
@@ -13,12 +11,11 @@ import {
     Renderer2,
     ViewChild,
     ViewContainerRef,
+    inject,
     input,
 } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBookmark, faBullhorn, faCheckSquare, faComments, faPencilAlt, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -112,17 +109,11 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     dropdownPosition = { x: 0, y: 0 };
     @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
 
-    constructor(
-        public metisService: MetisService,
-        public changeDetector: ChangeDetectorRef,
-        private oneToOneChatService: OneToOneChatService,
-        private metisConversationService: MetisConversationService,
-        private router: Router,
-        public renderer: Renderer2,
-        @Inject(DOCUMENT) private document: Document,
-    ) {
-        super();
-    }
+    private oneToOneChatService = inject(OneToOneChatService);
+    private metisConversationService = inject(MetisConversationService);
+    private router = inject(Router);
+    public renderer = inject(Renderer2);
+    private document = inject(DOCUMENT);
 
     get reactionsBar() {
         return this.reactionsBarComponent;

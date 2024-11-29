@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { LinkPreview } from 'app/shared/link-preview/services/link-preview.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -27,7 +27,7 @@ export class LinkPreviewComponent implements OnInit {
 
     faTimes = faTimes;
 
-    constructor(private metisService: MetisService) {}
+    private metisService = inject(MetisService);
 
     ngOnInit() {
         this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting!);

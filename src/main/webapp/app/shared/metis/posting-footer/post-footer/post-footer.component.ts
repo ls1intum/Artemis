@@ -11,6 +11,7 @@ import {
     SimpleChanges,
     ViewChild,
     ViewContainerRef,
+    inject,
 } from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
@@ -58,12 +59,8 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     courseId!: number;
     groupedAnswerPosts: PostGroup[] = [];
 
-    constructor(
-        private metisService: MetisService,
-        protected changeDetector: ChangeDetectorRef,
-    ) {
-        super();
-    }
+    private metisService = inject(MetisService);
+    private changeDetector = inject(ChangeDetectorRef);
 
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;

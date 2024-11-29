@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 export interface DialogData {
@@ -10,5 +10,5 @@ export interface DialogData {
     standalone: true,
 })
 export class EnlargeSlideImageComponent {
-    constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}
+    public data = inject(MAT_DIALOG_DATA);
 }
