@@ -65,7 +65,7 @@ describe('CourseOverviewGuard', () => {
             const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.EXERCISES } } as unknown as ActivatedRouteSnapshot;
             let resultValue = false;
             jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(undefined);
-            jest.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
+            jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(responseFakeCourse));
             guard.canActivate(route).subscribe((result) => {
                 resultValue = result;
             });
@@ -85,6 +85,16 @@ describe('CourseOverviewGuard', () => {
         });
 
         it('should return true if type is exams and course has visible exams', () => {
+            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.EXAMS);
+            let resultValue = true;
+            result.subscribe((value) => {
+                resultValue = value;
+            });
+            expect(resultValue).toBeTrue();
+        });
+
+        it('should return false if type is exams and course has no visible exams', () => {
+            mockCourse.exams = [];
             const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.EXAMS);
             let resultValue = true;
             result.subscribe((value) => {

@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
 import { Observable, of, switchMap } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { CourseOverviewRoutePath } from 'app/overview/courses-routing.module';
@@ -29,13 +29,11 @@ export class CourseOverviewGuard implements CanActivate {
         const courseIdNumber = parseInt(courseIdString, 10);
 
         const path = route.routeConfig?.path;
-
-        const course = this.courseStorageService.getCourse(courseIdNumber);
-        if (course) {
-            return this.handleReturn(course, path);
+        if (!path) {
+            return of(false);
         }
-
-        return this.courseManagementService.find(courseIdNumber).pipe(
+        //we need to load the course from the server to check if the user has access to the requested route. The course in the cache might not be sufficient (e.g. misses exams or lectures)
+        return this.courseManagementService.findOneForDashboard(courseIdNumber).pipe(
             switchMap((res) => {
                 if (res.body) {
                     // Store course in cache
@@ -50,8 +48,9 @@ export class CourseOverviewGuard implements CanActivate {
     handleReturn = (course?: Course, type?: string): Observable<boolean> => {
         let hasAccess: boolean;
         switch (type) {
+            // Should always be accessible
             case CourseOverviewRoutePath.EXERCISES:
-                hasAccess = true; //default route, should always be accessible
+                hasAccess = true;
                 break;
             case CourseOverviewRoutePath.LECTURES:
                 hasAccess = !!course?.lectures;
@@ -74,10 +73,14 @@ export class CourseOverviewGuard implements CanActivate {
             case CourseOverviewRoutePath.LEARNING_PATH:
                 hasAccess = course?.learningPathsEnabled ?? false;
                 break;
+            case CourseOverviewRoutePath.COMMUNICATION:
+                hasAccess = isCommunicationEnabled(course);
+                break;
             default:
                 hasAccess = false;
         }
         if (!hasAccess) {
+            // Default route, redirect to exercises if the user does not have access to the requested route
             this.router.navigate([`/courses/${course?.id}/exercises`]);
         }
         return of(hasAccess);

@@ -151,7 +151,7 @@ const routes: Routes = [
                     hasSidebar: true,
                     showRefreshButton: true,
                 },
-                canActivate: [UserRouteAccessService],
+                canActivate: [UserRouteAccessService, CourseOverviewGuard],
                 children: [
                     {
                         path: ':lectureId',
