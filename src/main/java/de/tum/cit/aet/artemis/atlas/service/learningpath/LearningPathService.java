@@ -431,7 +431,7 @@ public class LearningPathService {
         Set<Long> exerciseIds = learningPath.getCompetencies().stream().flatMap(competency -> competency.getExerciseLinks().stream())
                 .map(exerciseLink -> exerciseLink.getExercise().getId()).collect(Collectors.toSet());
         Map<Long, StudentParticipation> studentParticipations = studentParticipationRepository.findDistinctAllByExerciseIdInAndStudentId(exerciseIds, userId).stream()
-                .collect(Collectors.toMap(participation -> participation.getExercise().getId(), sp -> sp));
+                .collect(Collectors.toMap(participation -> participation.getExercise().getId(), sp -> sp, (sp1, sp2) -> sp1.isPracticeMode() ? sp1 : sp2));
         learningPath.getCompetencies().forEach(competency -> {
             if (competencyProgresses.containsKey(competency.getId())) {
                 competency.setUserProgress(Set.of(competencyProgresses.get(competency.getId())));

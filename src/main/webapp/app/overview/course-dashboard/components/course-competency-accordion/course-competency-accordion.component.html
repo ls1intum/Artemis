@@ -1,0 +1,72 @@
+@if (isLoading()) {
+    <div class="row justify-content-center align-items-center h-100">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only" jhiTranslate="loading"></span>
+        </div>
+    </div>
+} @else {
+    <div ngbAccordion class="course-competency-accordion">
+        @for (courseCompetency of courseCompetencies(); let last = $last; track courseCompetency.id) {
+            <div ngbAccordionItem [ngbAccordionItem]="'course-competency-item-' + courseCompetency.id" [class.mb-3]="!last" [destroyOnHide]="false">
+                <h2 ngbAccordionHeader>
+                    <button ngbAccordionButton class="px-3">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div class="d-flex justify-content-center align-items-center">
+                                <fa-icon [icon]="getIcon(courseCompetency.taxonomy)" size="lg" />
+                                @if (courseCompetency.optional) {
+                                    <span
+                                        class="ms-2 badge text-bg-secondary"
+                                        jhiTranslate="artemisApp.studentDashboard.coursePerformanceSection.courseCompetencies.optional"
+                                    ></span>
+                                }
+                                <strong class="ms-2">{{ courseCompetency.title }}</strong>
+                                <h5 class="m-0 ms-2">
+                                    <span
+                                        [ngbTooltip]="courseCompetency.masteryProgress === 1 ? 'You mastered this course competency.' : undefined"
+                                        class="badge text-white"
+                                        [ngClass]="{
+                                            'text-bg-success':
+                                                courseCompetency.masteryProgress === 1 ||
+                                                (courseCompetency.numberOfCompletedLearningObjects == courseCompetency.numberOfLearningObjects &&
+                                                    courseCompetency.numberOfLearningObjects !== 0),
+                                            'text-bg-secondary': true,
+                                            'text-bg-warning':
+                                                courseCompetency.masteryProgress !== 1 &&
+                                                courseCompetency.numberOfCompletedLearningObjects !== courseCompetency.numberOfLearningObjects,
+                                        }"
+                                        >{{ courseCompetency.numberOfCompletedLearningObjects }} / {{ courseCompetency.numberOfLearningObjects }}</span
+                                    >
+                                </h5>
+                            </div>
+                            @if (courseCompetency.softDueDate) {
+                                <div class="me-2">
+                                    <small jhiTranslate="artemisApp.studentDashboard.coursePerformanceSection.courseCompetencies.recommendedIn"></small>
+                                    <span class="badge text-bg-secondary">
+                                        {{ courseCompetency.softDueDate! | artemisTimeAgo }}
+                                    </span>
+                                </div>
+                            }
+                        </div>
+                    </button>
+                </h2>
+                <div ngbAccordionCollapse>
+                    <div ngbAccordionBody class="p-0">
+                        <ng-template>
+                            <jhi-course-competency-body
+                                [courseCompetencies]="courseCompetencies()"
+                                [courseCompetencyId]="courseCompetency.id"
+                                [learningPathId]="learningPathId()!"
+                                [courseId]="courseId()"
+                                [courseCompetency]="courseCompetency"
+                            />
+                        </ng-template>
+                    </div>
+                </div>
+            </div>
+        } @empty {
+            <div class="row justify-content-center p-2">
+                <em class="text-secondary text-center" jhiTranslate="artemisApp.studentDashboard.coursePerformanceSection.courseCompetencies.noCourseCompetencies"></em>
+            </div>
+        }
+    </div>
+}

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO.LearningObjectType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -87,6 +88,20 @@ public class LearningObjectService {
         else {
             return participantScoreService.getStudentAndTeamParticipations(user, Set.of(exercise)).anyMatch(score -> score.getLastScore() >= MIN_SCORE_GREEN);
         }
+    }
+
+    /**
+     * Count the completions of the given competency by the given user.
+     *
+     * @param competency the competency for which to count the completions
+     * @param user       the user for which to count the completions
+     * @return the number of completions of the given competency by the given user
+     */
+    public int countCompletionsByUser(CourseCompetency competency, User user) {
+        int lectureUnitCompletions = (int) competency.getLectureUnitLinks().stream().filter(lectureUnitLink -> lectureUnitLink.getLectureUnit().isCompletedFor(user)).count();
+        int exerciseCompletions = (int) competency.getExerciseLinks().stream().filter(exerciseLink -> isCompletedByUser(exerciseLink.getExercise(), user)).count();
+
+        return lectureUnitCompletions + exerciseCompletions;
     }
 
     /**

@@ -98,6 +98,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
@@ -1473,5 +1474,22 @@ public class CourseResource {
         }));
 
         return ResponseEntity.ok(new CourseExistingExerciseDetailsDTO(alreadyTakenExerciseNames, alreadyTakenShortNames));
+    }
+
+    @PostMapping("courses/{courseId}/general-information")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> updateGeneralInformation(@PathVariable long courseId, @RequestBody(required = false) String generalInformation) {
+        log.debug("REST request to set general course in course : {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        course.setGeneralInformation(generalInformation);
+        courseRepository.save(course);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("courses/{courseId}/general-information")
+    @EnforceAtLeastStudent
+    public ResponseEntity<String> getGeneralInformation(@PathVariable long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        return ResponseEntity.ok(course.getGeneralInformation());
     }
 }

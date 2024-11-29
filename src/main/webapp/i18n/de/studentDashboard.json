@@ -1,0 +1,29 @@
+{
+    "artemisApp": {
+        "studentDashboard": {
+            "generalInformationSection": {
+                "title": "Allgemein",
+                "cancelButton": "Abbrechen",
+                "saveButton": "Speichern",
+                "editButton": "Bearbeiten",
+                "refreshButton": "Aktualisieren",
+                "emptyInformation": "Es wurden keine allgemeinen Kursinformationen festgelegt!"
+            },
+            "coursePerformanceSection": {
+                "title": "Deine Leistung",
+                "overallPerformanceLabel": "Gesamtleistung:",
+                "courseCompetencies": {
+                    "title": "Kurskompetenzen",
+                    "learningPathButton": "Lernpfad fortsetzen",
+                    "actionLabel": "Wähle eine Übung im Graphen aus, um die entsprechende Kurskompetenz zu öffnen",
+                    "body": {
+                        "noLearningObjects": "Diese Kurskompetenz enthält keine Lernobjekte!"
+                    },
+                    "optional": "Optional",
+                    "recommendedIn": "Empfohlen in:",
+                    "noCourseCompetencies": "In diesem Kurs gibt es keine Kurskompetenzen!"
+                }
+            }
+        }
+    }
+}

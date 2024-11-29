@@ -14,6 +14,7 @@ import { HttpParams } from '@angular/common/http';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 import { LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
+import dayjs from 'dayjs/esm';
 
 @Injectable({
     providedIn: 'root',
@@ -61,7 +62,10 @@ export class LearningPathApiService extends BaseApiHttpService {
     }
 
     async getLearningPathCompetencies(learningPathId: number): Promise<LearningPathCompetencyDTO[]> {
-        return await this.get<LearningPathCompetencyDTO[]>(`learning-path/${learningPathId}/competencies`);
+        return (await this.get<LearningPathCompetencyDTO[]>(`learning-path/${learningPathId}/competencies`)).map((cc) => ({
+            ...cc,
+            softDueDate: cc.softDueDate ? dayjs(cc.softDueDate) : undefined,
+        }));
     }
 
     async getLearningPathCompetencyLearningObjects(learningPathId: number, competencyId: number): Promise<LearningPathNavigationObjectDTO[]> {
