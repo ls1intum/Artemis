@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { captureException } from '@sentry/angular';
@@ -18,7 +19,7 @@ type LtiLaunchResponse = {
     selector: 'jhi-lti-exercise-launch',
     templateUrl: './lti13-exercise-launch.component.html',
     standalone: true,
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, CommonModule],
 })
 export class Lti13ExerciseLaunchComponent implements OnInit {
     isLaunching: boolean;
