@@ -221,7 +221,7 @@ repositories {
 ext["jackson.version"] = fasterxml_version
 ext["junit-jupiter.version"] = junit_version
 
-ext { qDoxVersionReusable = "com.thoughtworks.qdox:qdox:2.1.0" }
+ext { qDoxVersionReusable = "com.thoughtworks.qdox:qdox:2.2.0" }
 ext { springBootStarterWeb = "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}" }
 
 dependencies {
@@ -244,7 +244,7 @@ dependencies {
         exclude module: "jaxb-api"
     }
 
-    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.6"
+    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.7"
 
     implementation "de.jplag:jplag:${jplag_version}"
 
@@ -266,7 +266,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-queryparser:${lucene_version}"
     implementation "org.apache.lucene:lucene-core:${lucene_version}"
     implementation "org.apache.lucene:lucene-analyzers-common:${lucene_version}"
-    implementation "com.google.protobuf:protobuf-java:4.28.3"
+    implementation "com.google.protobuf:protobuf-java:4.29.0"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -325,7 +325,7 @@ dependencies {
     // required by Saml2
     implementation "org.apache.santuario:xmlsec:4.0.3"
 
-    implementation "org.jsoup:jsoup:1.18.1"
+    implementation "org.jsoup:jsoup:1.18.2"
     implementation "commons-codec:commons-codec:1.17.1"   // needed for spring security saml2
 
     // TODO: decide if we want to use OpenAPI and Swagger v3
@@ -541,7 +541,7 @@ dependencies {
     testImplementation "org.gradle:gradle-tooling-api:8.11.1"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.2"
     testImplementation "com.opencsv:opencsv:5.9"
-    testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
+    testImplementation("io.zonky.test:embedded-database-spring-test:2.6.0") {
         exclude group: "org.testcontainers", module: "mariadb"
         exclude group: "org.testcontainers", module: "mssqlserver"
     }
