@@ -553,13 +553,14 @@ public class SharedQueueProcessingService {
             isPaused.set(false);
             processResults.set(true);
             buildAgentConfiguration.resumeBuildAgentServices();
+
+            // Cleanup docker containers
+            buildAgentDockerService.cleanUpContainers();
+
             // We remove the listener and scheduledTask first to avoid having multiple listeners and scheduled tasks running
             removeListenerAndCancelScheduledFuture();
             listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
             scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
-
-            // Cleanup docker containers
-            buildAgentDockerService.cleanUpContainers();
 
             updateLocalBuildAgentInformation();
         }
