@@ -1,13 +1,14 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import type { PluginSimple } from 'markdown-it';
 
 @Pipe({
     name: 'htmlForMarkdown',
+    standalone: true,
 })
 export class HtmlForMarkdownPipe implements PipeTransform {
-    constructor(private markdownService: ArtemisMarkdownService) {}
+    private readonly markdownService = inject(ArtemisMarkdownService);
 
     /**
      * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
