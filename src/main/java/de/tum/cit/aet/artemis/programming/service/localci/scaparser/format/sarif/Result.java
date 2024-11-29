@@ -112,10 +112,12 @@ public record Result(String ruleId, Integer ruleIndex, ReportingDescriptorRefere
         }
 
         /**
-         * Returns the enum constant of this type with the specified name.
+         * Creates a {@link Kind} instance from a given string value.
+         * <p>
          *
-         * @param value the name of the enum constant to be returned.
-         * @return the enum constant with the specified name
+         * @param value the string representation of the {@link Kind}
+         * @return the matching {@link Kind} instance
+         * @throws IllegalArgumentException if the provided value does not correspond to any defined {@link Kind}
          */
         @JsonCreator
         public static Kind fromValue(String value) {
@@ -127,7 +129,6 @@ public record Result(String ruleId, Integer ruleIndex, ReportingDescriptorRefere
                 return constant;
             }
         }
-
     }
 
     /**
@@ -162,10 +163,11 @@ public record Result(String ruleId, Integer ruleIndex, ReportingDescriptorRefere
         }
 
         /**
-         * Returns the enum constant of this type with the specified name.
+         * Creates a {@link Level} instance from a given string value.
          *
-         * @param value the name of the enum constant to be returned.
-         * @return the enum constant with the specified name
+         * @param value the string representation of the {@link Level}
+         * @return the matching {@link Level} instance
+         * @throws IllegalArgumentException if the provided value does not correspond to any defined {@link Level}
          */
         @JsonCreator
         public static Level fromValue(String value) {
