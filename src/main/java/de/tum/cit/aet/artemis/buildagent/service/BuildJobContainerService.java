@@ -222,10 +222,10 @@ public class BuildJobContainerService {
                 future.get(10, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
             }
             catch (NotFoundException | NotModifiedException e) {
-                log.debug("Container with id {} is already stopped: {}", containerId, e.getMessage());
+                log.warn("Container with id {} is already stopped.", containerId, e);
             }
             catch (Exception e) {
-                log.warn("Failed to stop container with id {}. Attempting to kill container: {}", containerId, e.getMessage());
+                log.error("Failed to stop container with id {}. Attempting to kill container.", containerId, e);
 
                 // Attempt to kill the container if stop fails
                 try {
@@ -237,7 +237,7 @@ public class BuildJobContainerService {
                     killFuture.get(5, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
                 }
                 catch (Exception killException) {
-                    log.warn("Failed to kill container with id {}: {}", containerId, killException.getMessage());
+                    log.error("Failed to kill container with id {}.", containerId, killException);
                 }
             }
             finally {
