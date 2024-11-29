@@ -310,9 +310,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -322,9 +319,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.repository.commitHistory.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -334,9 +328,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.repository.commitHistory.commitDetails.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -647,9 +638,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -659,9 +647,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -671,9 +656,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -683,9 +665,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -695,9 +674,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -707,9 +683,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -719,9 +692,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -731,9 +701,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -743,9 +710,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
