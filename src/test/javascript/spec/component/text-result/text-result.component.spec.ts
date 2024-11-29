@@ -230,7 +230,8 @@ describe('TextResultComponent', () => {
         result.feedbacks = feedback;
 
         runInInjectionContext(TestBed, () => {
-            component.result(result);
+            component.result = input<Result>(result);
+            component.detectChanges();
         });
 
         expect(component.textResults).toHaveLength(2);

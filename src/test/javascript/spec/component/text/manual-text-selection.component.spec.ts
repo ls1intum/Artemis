@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { input } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
@@ -50,15 +51,15 @@ describe('ManualTextSelectionComponent', () => {
     });
 
     it('should set words correctly', () => {
-        component.submission = submission;
-        component.words = new TextBlockRefGroup(textBlockRefs);
+        component.submission = input<TextSubmission>(submission);
+        component.words = input<TextBlockRefGroup>(new TextBlockRefGroup(textBlockRefs));
 
         expect(component.submissionWords).toEqual(['First', 'last', 'text.']);
     });
 
     it('should calculate word indices correctly', () => {
-        component.submission = submission;
-        component.words = new TextBlockRefGroup(textBlockRefs);
+        component.submission = input<TextSubmission>(submission);
+        component.words = input<TextBlockRefGroup>(new TextBlockRefGroup(textBlockRefs));
         component.calculateIndex(1);
 
         expect(component.currentWordIndex).toBe(6);
