@@ -30,7 +30,7 @@ export class TextResultComponent {
 
     private readonly SHA1_REGEX = /^[a-f0-9]{40}$/i;
 
-    result = input<Result | undefined>();
+    result = input<Result | undefined>(undefined);
     constructor() {
         effect(() => {
             const result = this.result();

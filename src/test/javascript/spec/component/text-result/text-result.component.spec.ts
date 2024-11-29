@@ -98,7 +98,7 @@ describe('TextResultComponent', () => {
         result.submission = submission;
         result.feedbacks = feedbacks;
 
-        runInInjectionContext(TestBed, () => {
+        runInInjectionContext(() => {
             component.result(result);
         });
 
@@ -229,7 +229,7 @@ describe('TextResultComponent', () => {
         result.submission = submission;
         result.feedbacks = feedback;
 
-        runInInjectionContext(TestBed, () => {
+        runInInjectionContext(() => {
             component.result(result);
         });
 

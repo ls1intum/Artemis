@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, effect, inject, input, output } from '@angular/core';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text/text-block.model';
@@ -24,14 +24,21 @@ export class ManualTextSelectionComponent {
     protected route = inject(ActivatedRoute);
     textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
-    @Input() public textBlockRefGroup: TextBlockRefGroup;
-    @Input() submission: TextSubmission;
-    @Output() public didSelectWord = new EventEmitter<wordSelection[]>();
-    @Input() set words(textBlockRefGroup: TextBlockRefGroup) {
-        // Since some words are only separated through linebreaks, the linebreaks are replaced by a linebreak with an additional space, in order to split the words by spaces.
-        this.submissionWords = textBlockRefGroup.getText(this.submission).replace(LINEBREAK, '\n ').split(SPACE);
-    }
+    textBlockRefGroup = input<TextBlockRefGroup>();
+    submission = input<TextSubmission>();
+    didSelectWord = output<wordSelection[]>();
+    words = input<TextBlockRefGroup>();
     public submissionWords: string[] | undefined;
+
+    constructor() {
+        effect(() => {
+            const textBlockRefGroup = this.words();
+            if (textBlockRefGroup && this.submission()) {
+                this.submissionWords(textBlockRefGroup.getText(this.submission()).replace(LINEBREAK, '\n ').split(SPACE));
+            }
+        });
+    }
+
     public currentWordIndex: number;
     public selectedWords = new Array<wordSelection>();
     public ready = false;
@@ -41,7 +48,7 @@ export class ManualTextSelectionComponent {
     }
 
     calculateIndex(index: number): void {
-        let result = this.textBlockRefGroup.startIndex!;
+        let result = this.textBlockRefGroup().startIndex!;
         for (let i = 0; i < index; i++) {
             const space = 1;
             result += this.submissionWords![i].length + space;
@@ -71,7 +78,7 @@ export class ManualTextSelectionComponent {
         }
 
         if (this.ready) {
-            this.didSelectWord.emit(this.selectedWords);
+            this.didSelectWord(this.selectedWords);
             this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL);
         }
     }

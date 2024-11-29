@@ -44,7 +44,7 @@ describe('ManualTextSelectionComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ManualTextSelectionComponent);
                 component = fixture.componentInstance;
-                component.textBlockRefGroup = new TextBlockRefGroup(textBlockRefs);
+                component.textBlockRefGroup(new TextBlockRefGroup(textBlockRefs));
                 fixture.detectChanges();
             });
     });
