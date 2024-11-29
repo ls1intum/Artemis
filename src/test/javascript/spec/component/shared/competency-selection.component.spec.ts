@@ -59,6 +59,7 @@ describe('CompetencySelection', () => {
         const optional = { id: 2, optional: true } as Competency;
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [nonOptional, optional] });
         const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse');
+        component.loadCompetencies(1);
 
         fixture.detectChanges();
 
@@ -76,6 +77,7 @@ describe('CompetencySelection', () => {
         const optional = { id: 2, optional: true } as Competency;
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
         const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [nonOptional, optional] })));
+        component.loadCompetencies(1);
 
         fixture.detectChanges();
 
@@ -90,6 +92,7 @@ describe('CompetencySelection', () => {
     it('should set disabled when error during loading', () => {
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
         const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(throwError({ status: 500 }));
+        component.loadCompetencies(1);
 
         fixture.detectChanges();
 
@@ -102,6 +105,7 @@ describe('CompetencySelection', () => {
     it('should be hidden when no competencies', () => {
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [] });
         const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
+        component.loadCompetencies(1);
 
         fixture.detectChanges();
 
@@ -115,6 +119,7 @@ describe('CompetencySelection', () => {
 
     it('should select competencies when value is written', () => {
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [{ id: 1, title: 'test' } as Competency] });
+        component.loadCompetencies(1);
 
         fixture.detectChanges();
 
@@ -154,6 +159,7 @@ describe('CompetencySelection', () => {
         const competency2 = { id: 2, optional: true } as Competency;
         const competency3 = { id: 3, optional: false } as Competency;
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2, competency3] });
+        component.loadCompetencies(1);
 
         fixture.detectChanges();
         expect(component.selectedCompetencyLinks).toBeUndefined();
