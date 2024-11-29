@@ -398,7 +398,8 @@ describe('ModelingSubmissionComponent', () => {
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
         const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
-        const alertServiceSpy = jest.spyOn(alertService, 'info');
+        const alertServiceInfoSpy = jest.spyOn(alertService, 'info');
+        const alterServiceSuccessSpy = jest.spyOn(alertService, 'success');
 
         // Create an Athena result
         const athenaResult = new Result();
@@ -427,10 +428,7 @@ describe('ModelingSubmissionComponent', () => {
         fixture.detectChanges();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(comp.assessmentResult).toEqual(manualResult);
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.newAssessment');
-
-        // Clear previous calls to alertService
-        alertServiceSpy.mockClear();
+        expect(alertServiceInfoSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.newAssessment');
 
         // Emit Athena result
         resultSubject.next(athenaResult);
@@ -438,7 +436,7 @@ describe('ModelingSubmissionComponent', () => {
 
         // Verify Athena result handling
         expect(comp.assessmentResult).toEqual(athenaResult);
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackSuccessful');
+        expect(alterServiceSuccessSpy).toHaveBeenCalledWith('artemisApp.exercise.athenaFeedbackSuccessful');
     });
 
     it('should set result when new result comes in from websocket', () => {
