@@ -1,4 +1,4 @@
-import { input } from '@angular/core';
+import { input, runInInjectionContext } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
 import { MockPipe } from 'ng-mocks';
@@ -27,11 +27,13 @@ describe('ResultHistoryComponent', () => {
     });
 
     it('should initialize with same rated results', () => {
-        component.results = input<Result[]>([
-            { rated: true, id: 1 },
-            { rated: true, id: 2 },
-            { rated: true, id: 3 },
-        ]);
+        runInInjectionContext(TestBed, () => {
+            component.results = input<Result[]>([
+                { rated: true, id: 1 },
+                { rated: true, id: 2 },
+                { rated: true, id: 3 },
+            ]);
+        });
         component.ngOnChanges();
         expect(component.displayedResults).toEqual([
             { rated: true, id: 1 },
@@ -41,14 +43,16 @@ describe('ResultHistoryComponent', () => {
         expect(component.showPreviousDivider).toBeFalse();
         expect(component.movedLastRatedResult).toBeFalsy();
 
-        component.results = input<Result[]>([
-            { rated: false, id: 1 },
-            { rated: false, id: 2 },
-            { rated: false, id: 3 },
-            { rated: false, id: 4 },
-            { rated: false, id: 5 },
-            { rated: false, id: 6 },
-        ]);
+        runInInjectionContext(TestBed, () => {
+            component.results = input<Result[]>([
+                { rated: false, id: 1 },
+                { rated: false, id: 2 },
+                { rated: false, id: 3 },
+                { rated: false, id: 4 },
+                { rated: false, id: 5 },
+                { rated: false, id: 6 },
+            ]);
+        });
         component.ngOnChanges();
         expect(component.displayedResults).toEqual([
             { rated: false, id: 2 },
@@ -62,11 +66,13 @@ describe('ResultHistoryComponent', () => {
     });
 
     it('should initialize with mixed rated results', () => {
-        component.results = input<Result[]>([
-            { rated: true, id: 1 },
-            { rated: false, id: 2 },
-            { rated: false, id: 3 },
-        ]);
+        runInInjectionContext(TestBed, () => {
+            component.results = input<Result[]>([
+                { rated: true, id: 1 },
+                { rated: false, id: 2 },
+                { rated: false, id: 3 },
+            ]);
+        });
         component.ngOnChanges();
         expect(component.displayedResults).toEqual([
             { rated: true, id: 1 },
