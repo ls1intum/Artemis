@@ -36,6 +36,8 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-cre
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DOCUMENT } from '@angular/common';
+import { Posting, PostingType } from 'app/entities/metis/posting.model';
+import { Post } from 'app/entities/metis/post.model';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -167,6 +169,15 @@ describe('PostComponent', () => {
         fixture.detectChanges();
         const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'openCreateAnswerPostModal');
         component.openCreateAnswerPostModal();
+        expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
+    });
+
+    it('should close create answer post modal', () => {
+        component.posting = metisPostExerciseUser1;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'closeCreateAnswerPostModal');
+        component.closeCreateAnswerPostModal();
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
 
@@ -310,5 +321,25 @@ describe('PostComponent', () => {
         component.onClickOutside();
         expect(component.showDropdown).toBeFalse();
         expect(enableBodyScrollSpy).toHaveBeenCalled();
+    });
+
+    it('should cast the post to Post on change', () => {
+        const mockPost: Posting = {
+            id: 1,
+            author: {
+                id: 1,
+                name: 'Test Author',
+                internal: false,
+            },
+            content: 'Test Content',
+            postingType: PostingType.POST,
+        };
+        // @ts-ignore method is private
+        const spy = jest.spyOn(component, 'assignPostingToPost');
+        component.posting = mockPost;
+        fixture.detectChanges();
+
+        expect(component.posting).toBeInstanceOf(Post);
+        expect(spy).toHaveBeenCalled();
     });
 });

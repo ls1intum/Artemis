@@ -1,12 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { BuildAgentInformation } from 'app/entities/programming/build-agent-information.model';
+import { BuildAgentInformation, BuildAgentStatus } from 'app/entities/programming/build-agent-information.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPause, faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { Router } from '@angular/router';
 import { BuildAgent } from 'app/entities/programming/build-agent.model';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-build-agents',
@@ -23,13 +25,17 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     routerLink: string;
 
     //icons
-    faTimes = faTimes;
+    protected readonly faTimes = faTimes;
+    protected readonly faPause = faPause;
+    protected readonly faPlay = faPlay;
 
     constructor(
         private websocketService: JhiWebsocketService,
         private buildAgentsService: BuildAgentsService,
         private buildQueueService: BuildQueueService,
         private router: Router,
+        private modalService: NgbModal,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -59,7 +65,9 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
     private updateBuildAgents(buildAgents: BuildAgentInformation[]) {
         this.buildAgents = buildAgents;
-        this.buildCapacity = this.buildAgents.reduce((sum, agent) => sum + (agent.maxNumberOfConcurrentBuildJobs || 0), 0);
+        this.buildCapacity = this.buildAgents
+            .filter((agent) => agent.status !== BuildAgentStatus.PAUSED)
+            .reduce((sum, agent) => sum + (agent.maxNumberOfConcurrentBuildJobs || 0), 0);
         this.currentBuilds = this.buildAgents.reduce((sum, agent) => sum + (agent.numberOfCurrentBuildJobs || 0), 0);
     }
 
@@ -85,5 +93,48 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
         if (buildAgentToCancel?.buildAgent?.name) {
             this.buildQueueService.cancelAllRunningBuildJobsForAgent(buildAgentToCancel.buildAgent?.name).subscribe();
         }
+    }
+
+    displayPauseBuildAgentModal(modal: any) {
+        this.modalService.open(modal);
+    }
+
+    pauseAllBuildAgents(modal?: any) {
+        this.buildAgentsService.pauseAllBuildAgents().subscribe({
+            next: () => {
+                this.load();
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.buildAgents.alerts.buildAgentsPaused',
+                });
+            },
+            error: () => {
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: 'artemisApp.buildAgents.alerts.buildAgentPauseFailed',
+                });
+            },
+        });
+        if (modal) {
+            modal.close();
+        }
+    }
+
+    resumeAllBuildAgents() {
+        this.buildAgentsService.resumeAllBuildAgents().subscribe({
+            next: () => {
+                this.load();
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: 'artemisApp.buildAgents.alerts.buildAgentsResumed',
+                });
+            },
+            error: () => {
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: 'artemisApp.buildAgents.alerts.buildAgentResumeFailed',
+                });
+            },
+        });
     }
 }
