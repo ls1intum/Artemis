@@ -167,6 +167,7 @@ export const metisPostExerciseUser1 = {
     title: 'title',
     content: 'metisPostExerciseUser1',
     creationDate: undefined,
+    isSaved: false,
 } as Post;
 
 export const metisPostExerciseUser2 = {

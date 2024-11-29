@@ -60,6 +60,8 @@ export class MockMetisService {
 
     deleteReaction(reaction: Reaction): void {}
 
+    resetCachedPosts(): void {}
+
     metisUserIsAtLeastTutorInCourse(): boolean {
         return true;
     }

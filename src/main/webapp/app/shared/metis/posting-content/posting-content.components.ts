@@ -25,11 +25,12 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
     isDeleted = input<boolean>(false);
+    isSubscribeToMetis = input<boolean>(true);
     deleteTimerInSeconds = input<number>(0);
     onUndoDeleteEvent = output<void>();
 
     showContent = false;
-    currentlyLoadedPosts: Post[];
+    currentlyLoadedPosts: Post[] = [];
     postingContentParts = signal<PostingContentPart[]>([]);
 
     private postsSubscription: Subscription;
@@ -47,14 +48,21 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
      * on initialization: calculate posting parts to be displayed
      */
     ngOnInit(): void {
-        this.computeContentPartsOfPosts();
+        if (!this.isSubscribeToMetis()) {
+            const patternMatches: PatternMatch[] = this.getPatternMatches();
+            this.computePostingContentParts(patternMatches);
+        } else {
+            this.computeContentPartsOfPosts();
+        }
     }
 
     /**
      * on changes: update posting parts to be displayed
      */
     ngOnChanges(): void {
-        this.computeContentPartsOfPosts();
+        if (!this.isSubscribeToMetis()) {
+            this.computeContentPartsOfPosts();
+        }
     }
 
     /**

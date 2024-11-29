@@ -17,6 +17,7 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/utils/date.utils';
 import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-exercise-headers-information',
@@ -41,15 +42,19 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     dueDate?: dayjs.Dayjs;
     programmingExercise?: ProgrammingExercise;
     individualComplaintDueDate?: dayjs.Dayjs;
+    now: dayjs.Dayjs;
     achievedPoints: number = 0;
     numberOfSubmissions: number;
     informationBoxItems: InformationBox[] = [];
 
-    constructor(private sortService: SortService) {}
+    constructor(
+        private sortService: SortService,
+        private serverDateService: ArtemisServerDateService,
+    ) {}
 
     ngOnInit() {
         this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
-
+        this.now = this.serverDateService.now();
         if (this.course?.maxComplaintTimeDays) {
             this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
                 this.exercise,
@@ -107,14 +112,12 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     addDueDateItems() {
-        const now = dayjs();
-
         const dueDateItem = this.getDueDateItem();
         if (dueDateItem) {
             this.informationBoxItems.push(dueDateItem);
         }
         // If the due date is in the past and the assessment due date is in the future, show the assessment due date
-        if (this.dueDate?.isBefore(now) && this.exercise.assessmentDueDate?.isAfter(now)) {
+        if (this.dueDate?.isBefore(this.now) && this.exercise.assessmentDueDate?.isAfter(this.now)) {
             const assessmentDueItem: InformationBox = {
                 title: 'artemisApp.courseOverview.exerciseDetails.assessmentDue',
                 content: {
@@ -123,11 +126,12 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
                 },
                 isContentComponent: true,
                 tooltip: 'artemisApp.courseOverview.exerciseDetails.assessmentDueTooltip',
+                tooltipParams: { date: this.exercise.assessmentDueDate.format('lll') },
             };
             this.informationBoxItems.push(assessmentDueItem);
         }
         // // If the assessment due date is in the past and the complaint due date is in the future, show the complaint due date
-        if (this.exercise.assessmentDueDate?.isBefore(now) && this.individualComplaintDueDate?.isAfter(now)) {
+        if (this.exercise.assessmentDueDate?.isBefore(this.now) && this.individualComplaintDueDate?.isAfter(this.now)) {
             const complaintDueItem: InformationBox = {
                 title: 'artemisApp.courseOverview.exerciseDetails.complaintDue',
                 content: {
@@ -136,6 +140,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
                 },
                 isContentComponent: true,
                 tooltip: 'artemisApp.courseOverview.exerciseDetails.complaintDueTooltip',
+                tooltipParams: { date: this.individualComplaintDueDate.format('lll') },
             };
             this.informationBoxItems.push(complaintDueItem);
         }
@@ -143,11 +148,11 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
 
     getDueDateItem(): InformationBox | undefined {
         if (this.dueDate) {
-            const isDueDateInThePast = this.dueDate.isBefore(dayjs());
+            const isDueDateInThePast = this.dueDate.isBefore(this.now);
             // If the due date is less than a day away, the color change to red
-            const dueDateStatusBadge = this.dueDate.isBetween(dayjs().add(1, 'day'), dayjs()) ? 'danger' : 'body-color';
+            const dueDateStatusBadge = this.dueDate.isBetween(this.now.add(1, 'day'), this.now) ? 'danger' : 'body-color';
             // If the due date is less than a week away, text is displayed relatively e.g. 'in 2 days'
-            const shouldDisplayDueDateRelative = isDateLessThanAWeekInTheFuture(this.dueDate);
+            const shouldDisplayDueDateRelative = isDateLessThanAWeekInTheFuture(this.dueDate, this.now);
 
             if (isDueDateInThePast) {
                 return {
@@ -175,9 +180,9 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     addStartDateItem() {
-        if (this.exercise.startDate && dayjs().isBefore(this.exercise.startDate)) {
+        if (this.exercise.startDate && this.now.isBefore(this.exercise.startDate)) {
             // If the start date is less than a week away, text is displayed relatively e.g. 'in 2 days'
-            const shouldDisplayStartDateRelative = isDateLessThanAWeekInTheFuture(this.exercise.startDate);
+            const shouldDisplayStartDateRelative = isDateLessThanAWeekInTheFuture(this.exercise.startDate, this.now);
             const startDateItem: InformationBox = {
                 title: 'artemisApp.courseOverview.exerciseDetails.startDate',
                 content: {
@@ -218,7 +223,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     addCategoryItems() {
-        const notReleased = this.exercise.releaseDate && dayjs(this.exercise.releaseDate).isAfter(dayjs());
+        const notReleased = this.exercise.releaseDate?.isAfter(this.now);
 
         if (notReleased || this.exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY || this.exercise.categories?.length) {
             const categoryItem: InformationBox = {
