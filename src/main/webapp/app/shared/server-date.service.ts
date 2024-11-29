@@ -36,7 +36,7 @@ export class ArtemisServerDateService implements ServerDateService {
         const now = dayjs(new Date());
         if (this.recentClientDates.length > 4) {
             // only if some recent client dates (i.e. recent syncs) are older than 60s
-            shouldSync = this.recentClientDates.some((recentClientDate) => now.diff(recentClientDate, 's') > 60);
+            shouldSync = this.recentClientDates.some((recentClientDate) => Math.abs(now.diff(recentClientDate, 's')) > 60);
         } else {
             // definitely sync if we do not have 5 elements yet
             shouldSync = true;
