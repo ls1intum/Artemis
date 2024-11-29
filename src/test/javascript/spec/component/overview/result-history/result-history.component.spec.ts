@@ -82,14 +82,16 @@ describe('ResultHistoryComponent', () => {
         expect(component.showPreviousDivider).toBeFalse();
         expect(component.movedLastRatedResult).toBeFalsy();
 
-        component.results = input<Result[]>([
-            { rated: true, id: 1 },
-            { rated: false, id: 2 },
-            { rated: false, id: 3 },
-            { rated: false, id: 4 },
-            { rated: false, id: 5 },
-            { rated: false, id: 6 },
-        ]);
+        runInInjectionContext(TestBed, () => {
+            component.results = input<Result[]>([
+                { rated: true, id: 1 },
+                { rated: false, id: 2 },
+                { rated: false, id: 3 },
+                { rated: false, id: 4 },
+                { rated: false, id: 5 },
+                { rated: false, id: 6 },
+            ]);
+        });
         component.ngOnChanges();
         expect(component.displayedResults).toEqual([
             { rated: true, id: 1 },
