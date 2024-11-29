@@ -205,6 +205,11 @@ public class BuildAgentConfiguration {
         log.info("Executor shutdown");
         this.buildExecutor = createBuildExecutor();
         log.info("Executor reinitialized");
+
+        closeDockerClient();
+        log.info("Docker client closed");
+        this.dockerClient = createDockerClient();
+        log.info("Docker client reinitialized");
     }
 
     private void shutdownBuildExecutor() {
