@@ -12,6 +12,9 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * just a utility class to hold the zip file from sharing
+ */
 @Profile("sharing")
 public class SharingMultipartZipFile implements MultipartFile {
 

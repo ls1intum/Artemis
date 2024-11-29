@@ -41,19 +41,34 @@ import de.tum.cit.aet.artemis.sharing.SharingSetupInfo;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
- * REST controller for managing Exercise.
+ * REST controller for managing the sharing of programming exercises.
  */
 @RestController
 @RequestMapping("/api")
 @Profile("sharing")
 public class ExerciseSharingResource {
 
+    /**
+     * a logger
+     */
     private final Logger log = LoggerFactory.getLogger(ExerciseSharingResource.class);
 
+    /**
+     * the exercise sharing service
+     */
     private final ExerciseSharingService exerciseSharingService;
 
+    /**
+     * the programming-exercise import from Sharing Service
+     */
     private final ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService;
 
+    /**
+     * constuctor for spring
+     *
+     * @param exerciseSharingService
+     * @param programmingExerciseImportFromSharingService
+     */
     public ExerciseSharingResource(ExerciseSharingService exerciseSharingService, ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService) {
         this.exerciseSharingService = exerciseSharingService;
 
@@ -61,9 +76,9 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET /sharing-import/basket
+     * GET .../sharing-import/basket
      *
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the Shopping Basket, or with status 404 (Not Found)
      */
     @GetMapping("/sharing/import/basket")
     public ResponseEntity<ShoppingBasket> loadShoppingBasket(@RequestParam String basketToken, @RequestParam String apiBaseUrl) {
@@ -71,6 +86,11 @@ public class ExerciseSharingResource {
         return ResponseUtil.wrapOrNotFound(sharingInfoDTO);
     }
 
+    /**
+     * GET .../sharing/setup-import
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body the programming exercise, or with status 404 (Not Found)
+     */
     @PostMapping("/sharing/setup-import")
     public ResponseEntity<ProgrammingExercise> setUpFromSharingImport(@RequestBody SharingSetupInfo sharingSetupInfo)
             throws GitAPIException, SharingException, IOException, URISyntaxException {
@@ -79,10 +99,10 @@ public class ExerciseSharingResource {
     }
 
     /**
-     * GET /sharing/import/basket/exercise/{exercisePosition}/problemStatement : get problem statement.
+     * GET .../sharing/import/basket/problemStatement : get problem statement of the exercise defined in sharingInfo.
      *
-     * @param sharingInfo the basket
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     * @param sharingInfo the sharing info (with exercise position in basket)
+     * @return the ResponseEntity with status 200 (OK) and with body the problem statement, or with status 404 (Not Found)
      */
     @PostMapping("/sharing/import/basket/problemStatement")
     public ResponseEntity<String> getProblemStatement(@RequestBody SharingInfoDTO sharingInfo) throws IOException {
@@ -90,6 +110,13 @@ public class ExerciseSharingResource {
         return ResponseEntity.ok().body(problemStatement);
     }
 
+    /**
+     * GET .../sharing/import/basket/exerciseDetails : get exercise details of the exercise defined in sharingInfo.
+     * TODO: why seems result identical to getProblemStatement?
+     *
+     * @param sharingInfo the sharing info (with exercise position in basket)
+     * @return the ResponseEntity with status 200 (OK) and with body the problem statement, or with status 404 (Not Found)
+     */
     @PostMapping("/sharing/import/basket/exerciseDetails")
     public ResponseEntity<String> getExerciseDetails(@RequestBody SharingInfoDTO sharingInfo) throws IOException {
         String exerciseDetails = this.exerciseSharingService.getExerciseDetailsFromBasket(sharingInfo);

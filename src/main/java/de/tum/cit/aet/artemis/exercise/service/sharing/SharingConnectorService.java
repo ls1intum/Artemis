@@ -23,12 +23,11 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
  *
  * @see <a href="https://sharing-codeability.uibk.ac.at/sharing/codeability-sharing-platform/-/wikis/technical/Plugin-Interface">Plugin Tutorial</a>
  */
-@SuppressWarnings("unused")
 @Service
 @Profile("sharing")
-public class SharingPluginService {
+public class SharingConnectorService {
 
-    private final Logger log = LoggerFactory.getLogger(SharingPluginService.class);
+    private final Logger log = LoggerFactory.getLogger(SharingConnectorService.class);
 
     /**
      * Base url for callbacks
@@ -40,21 +39,37 @@ public class SharingPluginService {
      */
     private String installationName = null;
 
+    /**
+     * the shared secret api key
+     */
     @Value("${artemis.sharing.api-key:#{null}}")
     private String sharingApiKey;
 
+    /**
+     * the url of the sharing platform.
+     * Only needed for initial trigger an configuration exchange during startup.
+     */
     @Value("${artemis.sharing.server-url:#{null}}")
     private String sharingUrl;
 
+    /**
+     * installation name for Sharing Platform
+     */
     public String getInstallationName() {
         return installationName;
     }
 
+    /**
+     * profile service
+     */
     private final ProfileService profileService;
 
+    /**
+     * rest template for connector request
+     */
     private final RestTemplate restTemplate;
 
-    public SharingPluginService(ProfileService profileService, RestTemplate restTemplate) {
+    public SharingConnectorService(ProfileService profileService, RestTemplate restTemplate) {
         this.profileService = profileService;
         this.restTemplate = restTemplate;
     }
@@ -117,7 +132,7 @@ public class SharingPluginService {
     }
 
     /**
-     * Method used to validate the given authorization apiKey from Sharing
+     * Method used to validate the given authorizaion apiKey from Sharing
      *
      * @param apiKey the Key to validate
      * @return true if valid, false otherwise
@@ -132,6 +147,10 @@ public class SharingPluginService {
         return sharingApiKey.equals(apiKey);
     }
 
+    /**
+     * At (spring) application startup, we request a reinitialization of the sharing platform .
+     * It starts a background thread in order not to block application startup.
+     */
     @EventListener(ApplicationReadyEvent.class)
     public void triggerSharingReinitAfterApplicationStart() {
         // we have to trigger sharing plattform reinitialization asynchronously,
@@ -139,6 +158,9 @@ public class SharingPluginService {
         Executors.newFixedThreadPool(1).execute(this::triggerReinit);
     }
 
+    /**
+     * request a reinitialization of the sharing platform
+     */
     public void triggerReinit() {
         if (sharingUrl != null) {
             log.info("Requesting reinitialization from Sharing Platform");

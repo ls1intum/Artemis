@@ -16,6 +16,7 @@ import { Course } from 'app/entities/course.model';
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
 
+/** the programming exercise sharing service */
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseSharingService {
     baseSharingConfigUrl = 'api/sharing/config';
@@ -25,6 +26,9 @@ export class ProgrammingExerciseSharingService {
 
     constructor(private http: HttpClient) {}
 
+    /**
+     * loads the Shopping Basket via the Servire
+     */
     getSharedExercises(sharingInfo: SharingInfo): Observable<ShoppingBasket> {
         return this.http
             .get<ShoppingBasket>(this.resourceUrl + '/basket', {
@@ -34,6 +38,9 @@ export class ProgrammingExerciseSharingService {
             .pipe(map((response: HttpResponse<ShoppingBasket>) => response.body!));
     }
 
+    /**
+     * loads the problem statment via the server
+     */
     loadProblemStatementForExercises(sharingInfo: SharingInfo): Observable<string> {
         const headers = new HttpHeaders();
         return this.http.post<string>(this.resourceUrlBasket + 'problemStatement', sharingInfo, { headers, responseType: 'text' as 'json' });

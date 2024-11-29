@@ -21,10 +21,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.exercise.service.sharing.SharingPluginService;
+import de.tum.cit.aet.artemis.exercise.service.sharing.SharingConnectorService;
 
 /**
- * REST controller for Supporting Import and Export from/to Sharing Platform.
+ * REST controller for the exchange of configuration data between artemis and the sharing platform.
  */
 @Validated
 @RestController
@@ -32,19 +32,32 @@ import de.tum.cit.aet.artemis.exercise.service.sharing.SharingPluginService;
 @Profile("sharing")
 public class SharingSupportResource {
 
+    /**
+     * the logger
+     */
     private final Logger log = LoggerFactory.getLogger(SharingSupportResource.class);
 
-    private final SharingPluginService sharingPluginService;
+    /**
+     * the sharing plugin service
+     */
+    private final SharingConnectorService sharingPluginService;
 
+    /**
+     * constructor
+     *
+     * @param sharingPluginService
+     */
     @SuppressWarnings("unused")
-    public SharingSupportResource(SharingPluginService sharingPluginService) {
+    public SharingSupportResource(SharingConnectorService sharingPluginService) {
         this.sharingPluginService = sharingPluginService;
     }
 
     /**
      * Returns Sharing Plugin configuration to be used in context with Artemis.
+     * This configuration is requested by the sharing platform on a regular basis.
+     * It is secured by the common secret api key token transferred by Authorization header.
      *
-     * @param sharingApiKey    the common secret api key token
+     * @param sharingApiKey    the common secret api key token (transfered by Authorization header).
      * @param apiBaseUrl       the base url of the sharing application api (for callbacks)
      * @param installationName a descriptive name of the sharing application
      *
@@ -53,7 +66,6 @@ public class SharingSupportResource {
      *
      */
     @GetMapping(SHARINGCONFIG_RESOURCE_PATH)
-    @SuppressWarnings("unused")
     public ResponseEntity<SharingPluginConfig> getConfig(@RequestHeader("Authorization") Optional<String> sharingApiKey, @RequestParam String apiBaseUrl,
             @RequestParam String installationName) {
         if (sharingApiKey.isPresent() && sharingPluginService.validate(sharingApiKey.get())) {

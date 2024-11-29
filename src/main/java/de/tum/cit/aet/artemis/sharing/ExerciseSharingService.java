@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
@@ -42,8 +43,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -55,47 +56,79 @@ import com.google.common.cache.LoadingCache;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.exercise.service.sharing.SharingConnectorService;
 import de.tum.cit.aet.artemis.exercise.service.sharing.SharingException;
-import de.tum.cit.aet.artemis.exercise.service.sharing.SharingPluginService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 
+/**
+ * service for sharing exercises via the sharing platform.
+ */
 @Service
 @Profile("sharing")
 public class ExerciseSharingService {
 
+    /**
+     * the logger
+     */
     private final Logger log = LoggerFactory.getLogger(ExerciseSharingService.class);
 
+    /**
+     * the repo download path
+     */
     @Value("${artemis.repo-download-clone-path}")
     private String repoDownloadClonePath;
 
+    /**
+     * the artemis server url
+     */
     @Value("${server.url}")
     protected String artemisServerUrl;
 
+    /**
+     * the profile service
+     */
     protected ProfileService profileService;
 
+    /**
+     * the programming Exercise Export Service
+     */
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
-    private final SharingPluginService sharingPluginService;
+    /**
+     * the sharing connector service
+     */
+    private final SharingConnectorService sharingConnectorService;
 
+    /**
+     * the programming exercise repository
+     */
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public ExerciseSharingService(ProgrammingExerciseExportService programmingExerciseExportService, SharingPluginService sharingPluginService,
+    /**
+     * constructor for spring
+     *
+     * @param programmingExerciseExportService
+     * @param sharingPluginService
+     * @param programmingExerciseRepository
+     * @param profileService
+     */
+    public ExerciseSharingService(ProgrammingExerciseExportService programmingExerciseExportService, SharingConnectorService sharingPluginService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProfileService profileService) {
         this.programmingExerciseExportService = programmingExerciseExportService;
-        this.sharingPluginService = sharingPluginService;
+        this.sharingConnectorService = sharingPluginService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.profileService = profileService;
     }
 
-    LoadingCache<Pair<String, Integer>, File> repositoryCache = CacheBuilder.newBuilder().maximumSize(10000).expireAfterWrite(1, TimeUnit.HOURS).build(new CacheLoader<>() {
-
-        public File load(Pair<String, Integer> key) {
-            return null;
-        }
-    });
-
+    /**
+     * loads the basket info from the sharing platform
+     *
+     * @param basketToken the basket token
+     * @param apiBaseUrl  the url
+     * @return
+     */
     public Optional<ShoppingBasket> getBasketInfo(String basketToken, String apiBaseUrl) {
         ClientConfig restClientConfig = new ClientConfig();
         restClientConfig.register(ShoppingBasket.class);
@@ -121,6 +154,14 @@ public class ExerciseSharingService {
         return Optional.empty();
     }
 
+    /**
+     * return an exercise from the basket (as zip file)
+     *
+     * @param sharingInfo  the sharing info
+     * @param itemPosition the item position
+     * @return an zip stream
+     * @throws SharingException if exercise cannot be loaded
+     */
     public Optional<SharingMultipartZipFile> getBasketItem(SharingInfoDTO sharingInfo, int itemPosition) throws SharingException {
         ClientConfig restClientConfig = new ClientConfig();
         restClientConfig.register(ShoppingBasket.class);
@@ -142,10 +183,42 @@ public class ExerciseSharingService {
         }
     }
 
+    /**
+     * simple loading cache for file with 1 hour timeout.
+     */
+    private LoadingCache<SharingInfoDTO, File> repositoryCache = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(1, TimeUnit.HOURS)
+            .removalListener(notification -> ((File) notification.getValue()).delete()).build(new CacheLoader<>() {
+
+                public File load(SharingInfoDTO sharingInfo) {
+                    try {
+                        Optional<SharingMultipartZipFile> basketItemO = getBasketItem(sharingInfo, sharingInfo.getExercisePosition());
+                        File f = basketItemO.map(basketItem -> {
+                            try {
+                                File fTemp = File.createTempFile("SharingBasket", ".zip");
+
+                                StreamUtils.copy(basketItem.getInputStream(), new FileOutputStream(fTemp));
+                                return fTemp;
+                            }
+                            catch (IOException e) {
+                                log.warn("Cannot load sharing Info", e);
+                                return null;
+
+                            }
+                        }).orElse(null);
+                        return null;
+
+                    }
+                    catch (SharingException e) {
+                        log.warn("Cannot load sharing Info", e);
+                        return null;
+                    }
+
+                }
+            });
+
     public SharingMultipartZipFile getCachedBasketItem(SharingInfoDTO sharingInfo) throws IOException, SharingException {
         int itemPosition = sharingInfo.getExercisePosition();
-        File f;
-        f = repositoryCache.getIfPresent(Pair.of(sharingInfo.getBasketToken(), itemPosition));
+        File f = repositoryCache.getIfPresent(sharingInfo);
         if (f != null) {
             try {
                 return new SharingMultipartZipFile(getBasketFileName(sharingInfo.getBasketToken(), itemPosition), new FileInputStream(f));
@@ -154,12 +227,13 @@ public class ExerciseSharingService {
                 log.warn("Cannot find cached file for {}:{} at {}", sharingInfo.getBasketToken(), itemPosition, f.getAbsoluteFile(), e);
             }
         }
+        // second try (first try in cache);
         Optional<SharingMultipartZipFile> basketItem = getBasketItem(sharingInfo, itemPosition);
         return basketItem.orElse(null);
     }
 
     /**
-     * this is just a weak implementation for local testing (within a docker).
+     * this is just a weak implementation for local testing (within a docker). It replaces an localhost wit host.docker.internal.
      *
      * @param url the url to be corrected
      * @return an url, that points to host.docker.internal if previously directed to localhost.
@@ -190,6 +264,7 @@ public class ExerciseSharingService {
     }
 
     /**
+     * TODO: check usage
      * Retrieves the Exercise-Details file from a Sharing basket
      *
      * @param sharingInfo of the basket to extract the problem statement from
@@ -215,7 +290,7 @@ public class ExerciseSharingService {
      * @param matchingPattern RegEx matching the entry to return.
      * @param sharingInfo     of the basket to retrieve the entry from
      * @return The content of the entry, or null if not found.
-     * @throws IOException if a readingf error occurs
+     * @throws IOException if a reading error occurs
      */
     public String getEntryFromBasket(Pattern matchingPattern, SharingInfoDTO sharingInfo) throws IOException {
         InputStream repositoryStream = null;
@@ -257,7 +332,7 @@ public class ExerciseSharingService {
      * @return URL to sharing with a callback URL to the generated zip file
      */
     public URL exportExerciseToSharing(Long exerciseId) throws SharingException {
-        if (!sharingPluginService.isSharingApiBaseUrlPresent()) {
+        if (!sharingConnectorService.isSharingApiBaseUrlPresent()) {
             throw new SharingException("No Sharing ApiBaseUrl provided");
         }
         try {
@@ -280,7 +355,7 @@ public class ExerciseSharingService {
             String tokenInB64 = Base64.getEncoder().encodeToString(token.getBytes()).replaceAll("=+$", "");
             String tokenIntegrity = createHMAC(tokenInB64);
 
-            URL apiBaseUrl = sharingPluginService.getSharingApiBaseUrlOrNull();
+            URL apiBaseUrl = sharingConnectorService.getSharingApiBaseUrlOrNull();
             String sharingImportEndPoint = "/exercise/import";
             URIBuilder callBackBuilder = new URIBuilder(artemisServerUrl + "/api/sharing/export/" + tokenInB64);
             callBackBuilder.addParameter("sec", tokenIntegrity);
@@ -309,7 +384,7 @@ public class ExerciseSharingService {
     private String createHMAC(String base64token) {
         // Definiere die HMAC-Methode (z. B. HmacSHA256)
         String algorithm = "HmacSHA256";
-        String psk = sharingPluginService.getSharingApiKeyOrNull();
+        String psk = sharingConnectorService.getSharingApiKeyOrNull();
 
         // Konvertiere den Pre-shared Key in ein Byte-Array
         SecretKeySpec secretKeySpec = new SecretKeySpec(psk.getBytes(), algorithm);
@@ -342,6 +417,12 @@ public class ExerciseSharingService {
         return computedHMAC.equals(sec);
     }
 
+    /**
+     * loads the stored file from file system (via the b64 token).
+     *
+     * @param b64Token
+     * @return
+     */
     public File getExportedExerciseByToken(String b64Token) {
         String decodedToken = new String(Base64.getDecoder().decode(b64Token));
         Path parent = Paths.get(repoDownloadClonePath, decodedToken + ".zip");

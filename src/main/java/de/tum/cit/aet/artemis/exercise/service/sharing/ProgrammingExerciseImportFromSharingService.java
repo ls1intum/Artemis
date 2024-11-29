@@ -17,18 +17,40 @@ import de.tum.cit.aet.artemis.sharing.ExerciseSharingService;
 import de.tum.cit.aet.artemis.sharing.SharingMultipartZipFile;
 import de.tum.cit.aet.artemis.sharing.SharingSetupInfo;
 
+/**
+ * Service for importing programming exercises from the sharing service.
+ */
 @Service
 @Profile("sharing")
 public class ProgrammingExerciseImportFromSharingService {
 
+    /**
+     * the logger
+     */
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportFromSharingService.class);
 
+    /**
+     * the import from file service (because this service strongly relies in the file import format.
+     */
     private final ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService;
 
-    private final de.tum.cit.aet.artemis.sharing.ExerciseSharingService exerciseSharingService;
+    /**
+     * the general exercise sharing service.
+     */
+    private final ExerciseSharingService exerciseSharingService;
 
+    /**
+     * the user repository
+     */
     private final UserRepository userRepository;
 
+    /**
+     * constructor for spring initialization
+     *
+     * @param programmingExerciseImportFromFileService import from file services
+     * @param exerciseSharingService                   exercise sharing service
+     * @param userRepository                           user repository
+     */
     public ProgrammingExerciseImportFromSharingService(ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService,
             ExerciseSharingService exerciseSharingService, UserRepository userRepository) {
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;

@@ -46,6 +46,9 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
+/**
+ * services to read exercises from a (zip-file)
+ */
 @Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseImportFromFileService {
@@ -92,6 +95,7 @@ public class ProgrammingExerciseImportFromFileService {
      * @param zipFile                     the zip file that contains the exercise
      * @param course                      the course to which the exercise should be added
      * @param user                        the user initiating the import
+     * @param isImportFromSharing         flag whether file import (false) of sharing import
      * @return the imported programming exercise
      **/
     public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, MultipartFile zipFile, Course course, User user,
@@ -342,6 +346,10 @@ public class ProgrammingExerciseImportFromFileService {
         return result.getFirst();
     }
 
+    /**
+     * just a dumb helper class to construct a simple json string.
+     * I'm happy to have a much simpler solution.
+     */
     private static class JsonStringImpl implements JsonString {
 
         final String s;
