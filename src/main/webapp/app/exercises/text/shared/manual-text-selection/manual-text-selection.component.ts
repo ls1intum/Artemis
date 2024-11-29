@@ -24,20 +24,11 @@ export class ManualTextSelectionComponent {
     protected route = inject(ActivatedRoute);
     textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
-    textBlockRefGroup = input<TextBlockRefGroup>();
-    submission = input<TextSubmission>();
+    textBlockRefGroup = input.required<TextBlockRefGroup>();
+    submission = input.required<TextSubmission>();
     didSelectWord = output<wordSelection[]>();
     words = input<TextBlockRefGroup>();
     public submissionWords: string[] | undefined;
-
-    constructor() {
-        effect(() => {
-            const textBlockRefGroup = this.words();
-            if (textBlockRefGroup && this.submission()) {
-                this.submissionWords(textBlockRefGroup.getText(this.submission()).replace(LINEBREAK, '\n ').split(SPACE));
-            }
-        });
-    }
 
     public currentWordIndex: number;
     public selectedWords = new Array<wordSelection>();
@@ -45,6 +36,13 @@ export class ManualTextSelectionComponent {
 
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
+
+        effect(() => {
+            const textBlockRefGroup = this.words();
+            if (textBlockRefGroup && this.submission()) {
+                this.submissionWords(textBlockRefGroup.getText(this.submission()).replace(LINEBREAK, '\n ').split(SPACE));
+            }
+        });
     }
 
     calculateIndex(index: number): void {
@@ -78,7 +76,7 @@ export class ManualTextSelectionComponent {
         }
 
         if (this.ready) {
-            this.didSelectWord(this.selectedWords);
+            this.didSelectWord.emit(this.selectedWords);
             this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL);
         }
     }

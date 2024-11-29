@@ -118,7 +118,7 @@ export class TextSelectDirective implements OnInit, OnDestroy {
             // trigger change detection and update the views.
             this.zone.runGuarded(() => {
                 this.hasSelection = false;
-                this.jhiTextSelect({
+                this.jhiTextSelect.emit({
                     text: '',
                     viewportRectangle: null,
                     hostRectangle: null,
@@ -147,7 +147,7 @@ export class TextSelectDirective implements OnInit, OnDestroy {
             // trigger change detection and update the views.
             this.zone.runGuarded(() => {
                 this.hasSelection = true;
-                this.jhiTextSelect({
+                this.jhiTextSelect.emit({
                     text: selection.toString(),
                     viewportRectangle: {
                         left: viewportRectangle.left,
