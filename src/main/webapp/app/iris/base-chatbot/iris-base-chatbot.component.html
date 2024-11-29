@@ -69,7 +69,7 @@
             }
             @for (message of messages; track message.id; let i = $index) {
                 <div @messageAnimation [@.disabled]="!shouldAnimate" [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'">
-                    @for (content of message.content; track content) {
+                    @for (content of message.content; track content.id) {
                         <div>
                             @if (message.sender === IrisSender.USER) {
                                 <div class="d-flex justify-content-end align-items-center">

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, input, signal, untracked } from '@angular/core';
 import { faArrowsRotate, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CommonModule } from '@angular/common';
@@ -33,34 +33,34 @@ export class ChatStatusBarComponent {
         effect(
             () => {
                 const stages = this.stages();
-                if (!stages) return;
-
-                stages.forEach((stage) => {
+                stages?.forEach((stage) => {
                     stage.lowerCaseState = stage.state?.toLowerCase();
                 });
 
-                const firstUnfinished = stages.find((stage) => !this.isStageFinished(stage));
-                if (firstUnfinished) {
-                    clearTimeout(this.openTimeout);
-                    clearTimeout(this.styleTimeout);
-                    this.open.set(true);
-                    if (firstUnfinished.name !== this.activeStage()?.name) {
-                        this.style.set(undefined);
-                        this.styleTimeout = setTimeout(() => this.style.set('transform: scaleX(0.9)'), 500);
+                untracked(() => {
+                    const firstUnfinished = stages?.find((stage) => !this.isStageFinished(stage));
+                    if (firstUnfinished) {
+                        clearTimeout(this.openTimeout);
+                        clearTimeout(this.styleTimeout);
+                        this.open.set(true);
+                        if (firstUnfinished.name !== this.activeStage()?.name) {
+                            this.style.set(undefined);
+                            this.styleTimeout = setTimeout(() => this.style.set('transform: scaleX(0.9)'), 500);
+                        }
+                        this.activeStage.set(firstUnfinished);
+                        this.displayedText.set(firstUnfinished.name);
+                        this.displayedSubText.set(firstUnfinished.message || undefined);
+                    } else {
+                        this.activeStage.set(undefined);
+                        if (this.open()) {
+                            this.openTimeout = setTimeout(() => {
+                                this.open.set(false);
+                                this.displayedText.set(undefined);
+                                this.displayedSubText.set(undefined);
+                            }, 5000);
+                        }
                     }
-                    this.activeStage.set(firstUnfinished);
-                    this.displayedText.set(firstUnfinished.name);
-                    this.displayedSubText.set(firstUnfinished.message || undefined);
-                } else {
-                    this.activeStage.set(undefined);
-                    if (this.open()) {
-                        this.openTimeout = setTimeout(() => {
-                            this.open.set(false);
-                            this.displayedText.set(undefined);
-                            this.displayedSubText.set(undefined);
-                        }, 5000);
-                    }
-                }
+                });
             },
             { allowSignalWrites: true },
         );
