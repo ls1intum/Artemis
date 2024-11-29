@@ -78,6 +78,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final double SUCCESS_THRESHOLD = 100.0; // TODO: Retrieve configuration from Iris settings
 
+    private final int INTERVAL_SIZE = 3; // TODO: Retrieve configuration from Iris settings
+
     public IrisExerciseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
             IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
@@ -120,14 +122,10 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     @Override
     public void checkHasAccessTo(User user, IrisExerciseChatSession session) {
-        checkHasTheMinimalRequiredRoleForExerciseElseThrow(user, session.getExercise());
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, session.getExercise(), user);
         if (!Objects.equals(session.getUser(), user)) {
             throw new AccessForbiddenException("Iris Session", session.getId());
         }
-    }
-
-    private void checkHasTheMinimalRequiredRoleForExerciseElseThrow(User user, Exercise exercise) {
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
     }
 
     /**
@@ -214,7 +212,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param result The result of the submission
      */
     public void onNewResult(Result result) {
-        var participation = result.getParticipation();
+        var participation = result.getSubmission().getParticipation();
         if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
             return;
         }
@@ -232,7 +230,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             var listOfScores = recentSubmissions.stream().map(Submission::getLatestResult).filter(Objects::nonNull).map(Result::getScore).toList();
 
             // Check if the student needs intervention based on their recent score trajectory
-            var needsIntervention = needsIntervention(listOfScores, 3);
+            var needsIntervention = needsIntervention(listOfScores, INTERVAL_SIZE);
             if (needsIntervention) {
                 log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
                 var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
@@ -319,13 +317,29 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         return sessionOptional.orElseGet(() -> createSessionInternal(exercise, user, sendInitialMessageIfCreated));
     }
 
+    /**
+     * Creates a new Iris session for the given exercise and user.
+     *
+     * @param exercise           The exercise the session belongs to
+     * @param user               The user the session belongs to
+     * @param sendInitialMessage Whether to send an initial message from Iris
+     * @return The created session
+     */
     public IrisExerciseChatSession createSession(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
         user.hasAcceptedIrisElseThrow();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
-        checkHasTheMinimalRequiredRoleForExerciseElseThrow(user, exercise);
         return createSessionInternal(exercise, user, sendInitialMessage);
     }
 
+    /**
+     * Creates a new Iris session for the given exercise and user.
+     *
+     * @param exercise           The exercise the session belongs to
+     * @param user               The user the session belongs to
+     * @param sendInitialMessage Whether to send an initial message from Iris
+     * @return The created session
+     */
     private IrisExerciseChatSession createSessionInternal(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
         checkIfExamExercise(exercise);
 
@@ -363,7 +377,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     /**
      * Checks if the exercise is an exam exercise and throws an exception if it is.
      *
-     * @param exercise
+     * @param exercise The exercise to check
      */
     private void checkIfExamExercise(Exercise exercise) {
         if (exercise.isExamExercise()) {
