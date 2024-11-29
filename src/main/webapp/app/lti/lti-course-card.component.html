@@ -1,6 +1,6 @@
 <div class="card" style="min-height: 80px !important">
     <div
-        id="course-{{ course.id }}-header"
+        id="course-{{ course().id }}-header"
         class="card-header text-white"
         [routerLink]="['/lti/exercises', this.course.id]"
         [ngStyle]="{ '--background-color-for-hover': courseColor }"
@@ -9,13 +9,13 @@
         <div class="container">
             <div class="row d-flex">
                 <div class="col-2 header-col image-col">
-                    @if (course.courseIcon) {
-                        <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon" />
+                    @if (course().courseIcon) {
+                        <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course().courseIcon" />
                     }
                 </div>
                 <div class="col-7 header-col title-col px-3">
                     <h5 class="card-title text-center">
-                        {{ course.title + ' (' + course.shortName + ')' }}
+                        {{ course().title + ' (' + course().shortName + ')' }}
                     </h5>
                 </div>
                 <div class="col-2 header-col course-info-col"></div>

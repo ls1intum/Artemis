@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, OnChanges, input } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
@@ -15,11 +15,11 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 })
 export class LtiCourseCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    @Input() course: Course;
+    course = input<Course>();
     CachingStrategy = CachingStrategy;
     courseColor: string;
 
     ngOnChanges() {
-        this.courseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;
+        this.courseColor = this.course().color || this.ARTEMIS_DEFAULT_COLOR;
     }
 }
