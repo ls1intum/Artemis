@@ -42,6 +42,7 @@ import { UserImportModule } from 'app/shared/user-import/user-import.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { BuildAgentDetailsComponent } from 'app/localci/build-agents/build-agent-details/build-agent-details/build-agent-details.component';
 import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/knowledge-area-edit.component';
+import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
 import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
 import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
@@ -74,6 +75,7 @@ const ENTITY_STATES = [...adminState];
         StandardizedCompetencyDetailComponent,
         DeleteUsersButtonComponent,
         ProfilePictureComponent,
+        AdminImportStandardizedCompetenciesComponent,
     ],
     declarations: [
         AuditsComponent,
