@@ -10,10 +10,18 @@ import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { SessionStorageService } from 'ngx-webstorage';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { ArtemisSharedComponentModule } from '../shared/components/shared-component.module';
+import { ArtemisSharedCommonModule } from '../shared/shared-common.module';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-deep-linking',
     templateUrl: './lti13-deep-linking.component.html',
+    standalone: true,
+    imports: [ArtemisSharedModule, TranslateDirective, ArtemisSharedComponentModule, ArtemisSharedCommonModule, FaIconComponent, FormsModule],
 })
 export class Lti13DeepLinkingComponent implements OnInit {
     courseId: number;

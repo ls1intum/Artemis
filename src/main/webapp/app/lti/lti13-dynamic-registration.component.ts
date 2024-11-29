@@ -1,10 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { TranslateDirective } from '../shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-dynamic-registration',
     templateUrl: './lti13-dynamic-registration.component.html',
+    standalone: true,
+    imports: [TranslateDirective],
 })
 export class Lti13DynamicRegistrationComponent implements OnInit {
     courseId: number;

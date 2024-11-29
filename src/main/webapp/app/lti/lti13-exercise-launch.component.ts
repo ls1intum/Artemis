@@ -6,6 +6,7 @@ import { captureException } from '@sentry/angular';
 import { SessionStorageService } from 'ngx-webstorage';
 import { LtiService } from 'app/shared/service/lti.service';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { TranslateDirective } from '../shared/language/translate.directive';
 
 type LtiLaunchResponse = {
     targetLinkUri: string;
@@ -16,6 +17,8 @@ type LtiLaunchResponse = {
 @Component({
     selector: 'jhi-lti-exercise-launch',
     templateUrl: './lti13-exercise-launch.component.html',
+    standalone: true,
+    imports: [TranslateDirective],
 })
 export class Lti13ExerciseLaunchComponent implements OnInit {
     isLaunching: boolean;

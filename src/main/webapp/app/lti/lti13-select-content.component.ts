@@ -1,6 +1,9 @@
 import { Component, ElementRef, NgZone, OnInit, SecurityContext, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { ArtemisSharedPipesModule } from '../shared/pipes/shared-pipes.module';
 
 /**
  * Component responsible for sending deep linking content.
@@ -12,6 +15,8 @@ import { DomSanitizer } from '@angular/platform-browser';
 @Component({
     selector: 'jhi-select-exercise',
     templateUrl: './lti13-select-content.component.html',
+    standalone: true,
+    imports: [TranslateDirective, FormsModule, ArtemisSharedPipesModule],
 })
 export class Lti13SelectContentComponent implements OnInit {
     private route = inject(ActivatedRoute);
