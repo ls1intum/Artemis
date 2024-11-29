@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { input, runInInjectionContext } from '@angular/core';
+import { runInInjectionContext } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -99,7 +99,7 @@ describe('TextResultComponent', () => {
         result.feedbacks = feedbacks;
 
         runInInjectionContext(TestBed, () => {
-            component.result = input<Result>(result);
+            component.result(result);
         });
 
         expect(component.textResults).toHaveLength(4);
@@ -230,7 +230,7 @@ describe('TextResultComponent', () => {
         result.feedbacks = feedback;
 
         runInInjectionContext(TestBed, () => {
-            component.result = input<Result>(result);
+            component.result(result);
         });
 
         expect(component.textResults).toHaveLength(2);
