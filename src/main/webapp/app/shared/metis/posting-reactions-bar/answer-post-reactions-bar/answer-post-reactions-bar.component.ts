@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject, output } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -55,9 +55,7 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
     @Input() isEmojiCount: boolean = false;
     @Output() postingUpdated = new EventEmitter<void>();
 
-    constructor(metisService: MetisService) {
-        super(metisService);
-    }
+    protected metisService = inject(MetisService);
 
     ngOnInit() {
         super.ngOnInit();

@@ -5,7 +5,6 @@ import {
     Component,
     EventEmitter,
     HostListener,
-    Inject,
     Input,
     OnChanges,
     OnInit,
@@ -13,6 +12,7 @@ import {
     Renderer2,
     ViewChild,
     ViewContainerRef,
+    inject,
     input,
 } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
@@ -76,6 +76,14 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
+    metisService = inject(MetisService);
+    changeDetector = inject(ChangeDetectorRef);
+    private oneToOneChatService = inject(OneToOneChatService);
+    private metisConversationService = inject(MetisConversationService);
+    private router = inject(Router);
+    renderer = inject(Renderer2);
+    private document = inject<Document>(DOCUMENT);
+
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() readOnlyMode: boolean;
     @Input() previewMode: boolean;
@@ -121,18 +129,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     isConsecutive = input<boolean>(false);
     dropdownPosition = { x: 0, y: 0 };
     @ViewChild(PostReactionsBarComponent) protected reactionsBarComponent!: PostReactionsBarComponent;
-
-    constructor(
-        public metisService: MetisService,
-        public changeDetector: ChangeDetectorRef,
-        private oneToOneChatService: OneToOneChatService,
-        private metisConversationService: MetisConversationService,
-        private router: Router,
-        public renderer: Renderer2,
-        @Inject(DOCUMENT) private document: Document,
-    ) {
-        super();
-    }
 
     get reactionsBar() {
         return this.reactionsBarComponent;

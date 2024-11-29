@@ -62,6 +62,14 @@ import { NgStyle } from '@angular/common';
     imports: [ArtemisMarkdownEditorModule, PostingContentComponent, NgStyle],
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
+    private cdref = inject(ChangeDetectorRef);
+    private metisService = inject(MetisService);
+    private courseManagementService = inject(CourseManagementService);
+    private lectureService = inject(LectureService);
+    private channelService = inject(ChannelService);
+    viewContainerRef = inject(ViewContainerRef);
+    private positionBuilder = inject(OverlayPositionBuilder);
+
     @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditor: MarkdownEditorMonacoComponent;
 
     @Input() maxContentLength: number;
@@ -82,16 +90,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
     private overlay = inject(Overlay);
-
-    constructor(
-        private cdref: ChangeDetectorRef,
-        private metisService: MetisService,
-        private courseManagementService: CourseManagementService,
-        private lectureService: LectureService,
-        private channelService: ChannelService,
-        public viewContainerRef: ViewContainerRef,
-        private positionBuilder: OverlayPositionBuilder,
-    ) {}
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings

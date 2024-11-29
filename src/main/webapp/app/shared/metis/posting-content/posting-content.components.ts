@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject, input, output, signal } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
@@ -23,6 +23,8 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     imports: [ArtemisSharedModule, FaIconComponent, NgStyle, PostingContentPartComponent, LinkPreviewContainerComponent],
 })
 export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
+    private metisService = inject(MetisService);
+
     @Input() content?: string;
     @Input() previewMode?: boolean;
     @Input() author?: User;
@@ -48,8 +50,6 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     // Icons
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
-
-    constructor(private metisService: MetisService) {}
 
     /**
      * on initialization: calculate posting parts to be displayed

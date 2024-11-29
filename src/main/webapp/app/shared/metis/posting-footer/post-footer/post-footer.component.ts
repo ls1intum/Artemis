@@ -11,6 +11,7 @@ import {
     SimpleChanges,
     ViewChild,
     ViewContainerRef,
+    inject,
 } from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
@@ -36,6 +37,9 @@ interface PostGroup {
     imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisSharedCommonModule],
 })
 export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
+    private metisService = inject(MetisService);
+    protected changeDetector = inject(ChangeDetectorRef);
+
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() readOnlyMode = false;
     @Input() previewMode = false;
@@ -57,13 +61,6 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     isAtLeastTutorInCourse = false;
     courseId!: number;
     groupedAnswerPosts: PostGroup[] = [];
-
-    constructor(
-        private metisService: MetisService,
-        protected changeDetector: ChangeDetectorRef,
-    ) {
-        super();
-    }
 
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;

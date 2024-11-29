@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
 import {
     NgbAccordionBody,
@@ -61,6 +61,11 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     ],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
+    protected metisService = inject(MetisService);
+    protected modalService = inject(NgbModal);
+    protected formBuilder = inject(FormBuilder);
+    private router = inject(Router);
+
     @Input() isCommunicationPage: boolean;
 
     exercises?: Exercise[];
@@ -80,15 +85,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     // Icons
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
-
-    constructor(
-        protected metisService: MetisService,
-        protected modalService: NgbModal,
-        protected formBuilder: FormBuilder,
-        private router: Router,
-    ) {
-        super(metisService, modalService, formBuilder);
-    }
 
     /**
      * on initialization: reset all input field of the modal, determine the post context;

@@ -4,7 +4,6 @@ import {
     Component,
     EventEmitter,
     HostListener,
-    Inject,
     Input,
     OnChanges,
     OnInit,
@@ -12,6 +11,7 @@ import {
     Renderer2,
     ViewChild,
     ViewContainerRef,
+    inject,
     input,
 } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -59,6 +59,10 @@ import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.compon
     ],
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnChanges {
+    changeDetector = inject(ChangeDetectorRef);
+    renderer = inject(Renderer2);
+    private document = inject<Document>(DOCUMENT);
+
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() isLastAnswer: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
@@ -82,14 +86,6 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     mayEdit: boolean = false;
     mayDelete: boolean = false;
     @ViewChild(AnswerPostReactionsBarComponent) private reactionsBarComponent!: AnswerPostReactionsBarComponent;
-
-    constructor(
-        public changeDetector: ChangeDetectorRef,
-        public renderer: Renderer2,
-        @Inject(DOCUMENT) private document: Document,
-    ) {
-        super();
-    }
 
     ngOnInit() {
         super.ngOnInit();

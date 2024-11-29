@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -21,16 +21,12 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TranslateDirective, PostingButtonComponent, ArtemisSharedCommonModule],
 })
 export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit {
-    warningDismissed = false;
+    protected metisService = inject(MetisService);
+    protected modalService = inject(NgbModal);
+    protected formBuilder = inject(FormBuilder);
+    protected localStorageService = inject(LocalStorageService);
 
-    constructor(
-        protected metisService: MetisService,
-        protected modalService: NgbModal,
-        protected formBuilder: FormBuilder,
-        protected localStorageService: LocalStorageService,
-    ) {
-        super(metisService, modalService, formBuilder);
-    }
+    warningDismissed = false;
 
     ngOnInit(): void {
         super.ngOnInit();

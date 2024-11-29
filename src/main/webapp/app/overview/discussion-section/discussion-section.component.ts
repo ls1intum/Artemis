@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, QueryList, ViewChild, ViewChildren, effect, input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, QueryList, ViewChild, ViewChildren, effect, inject, input } from '@angular/core';
 import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -59,14 +59,14 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     faArrowLeft = faArrowLeft;
     faLongArrowRight = faLongArrowRight;
 
-    constructor(
-        protected metisService: MetisService,
-        private channelService: ChannelService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private formBuilder: FormBuilder,
-    ) {
-        super(metisService);
+    protected metisService = inject(MetisService);
+    private channelService = inject(ChannelService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private formBuilder = inject(FormBuilder);
+
+    constructor() {
+        super();
         effect(() => this.loadData(this.exercise(), this.lecture()));
     }
 

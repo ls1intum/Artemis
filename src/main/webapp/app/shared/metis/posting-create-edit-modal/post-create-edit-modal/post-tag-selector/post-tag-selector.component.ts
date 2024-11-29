@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { Observable, Subscription, map, startWith } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
@@ -34,6 +34,9 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     ],
 })
 export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
+    private metisService = inject(MetisService);
+    private changeDetector = inject(ChangeDetectorRef);
+
     @Input() postTags?: string[];
 
     @Output() postTagsChange = new EventEmitter<string[]>();
@@ -50,11 +53,6 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, A
 
     // Icons
     faTimes = faTimes;
-
-    constructor(
-        private metisService: MetisService,
-        private changeDetector: ChangeDetectorRef,
-    ) {}
 
     /**
      * on initialization: subscribes to existing post tags used in this course (will be shown in dropdown of tag selector),

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject, output } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
@@ -50,6 +50,8 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     ],
 })
 export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges, OnDestroy {
+    private accountService = inject(AccountService);
+
     pinTooltip: string;
     displayPriority: DisplayPriority;
     canPin = false;
@@ -84,12 +86,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     @Input() hoverBar: boolean = true;
     @ViewChild('createEditModal') createEditModal!: PostCreateEditModalComponent;
 
-    constructor(
-        metisService: MetisService,
-        private accountService: AccountService,
-    ) {
-        super(metisService);
-    }
+    protected metisService = inject(MetisService);
 
     isAnyReactionCountAboveZero(): boolean {
         return Object.values(this.reactionMetaDataMap).some((reaction) => reaction.count >= 1);
