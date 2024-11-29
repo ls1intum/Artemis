@@ -8,7 +8,7 @@ import { Faq } from 'app/entities/faq.model';
 
 @Injectable({ providedIn: 'root' })
 export class FaqResolve implements Resolve<Faq> {
-    protected faqService = inject(FaqService);
+    private faqService = inject(FaqService);
 
     resolve(route: ActivatedRouteSnapshot): Observable<Faq> {
         const faqId = route.params['faqId'];
