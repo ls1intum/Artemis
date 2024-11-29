@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Result } from 'app/entities/result.model';
@@ -30,18 +30,20 @@ export class TextResultComponent {
 
     private readonly SHA1_REGEX = /^[a-f0-9]{40}$/i;
 
-    @Input()
-    public set result(result: Result) {
-        if (!result || !result.submission || !(result.submission as TextSubmission)) {
-            return;
-        }
+    result = input<Result | undefined>();
+    constructor() {
+        effect(() => {
+            const result = this.result();
+            if (!result || !result.submission || !(result.submission as TextSubmission)) {
+                return;
+            }
 
-        this.submission = result.submission as TextSubmission;
-        this.submissionText = this.submission.text || '';
-        this.convertTextToResultBlocks(result.feedbacks);
+            this.submission = result.submission as TextSubmission;
+            this.submissionText = this.submission.text || '';
+            this.convertTextToResultBlocks(result.feedbacks);
+        });
     }
-    @Input()
-    course?: Course;
+    course = input<Course>();
 
     private convertTextToResultBlocks(feedbacks: Feedback[] = []): void {
         checkSubsequentFeedbackInAssessment(feedbacks);
@@ -118,7 +120,7 @@ export class TextResultComponent {
     public creditsTranslationForTextResultBlock(textResultBlock: TextResultBlock): string {
         const singular = Math.abs(textResultBlock.feedback!.credits || 0) === 1;
         return this.translateService.instant(`artemisApp.assessment.detail.points.${singular ? 'one' : 'many'}`, {
-            points: this.localeConversionService.toLocaleString(textResultBlock.feedback?.credits || 0, this.course?.accuracyOfScores),
+            points: this.localeConversionService.toLocaleString(textResultBlock.feedback?.credits || 0, this.course()?.accuracyOfScores),
         });
     }
 }
