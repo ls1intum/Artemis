@@ -8,12 +8,18 @@ import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { isCommunicationEnabled } from 'app/entities/course.model';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { LinkPreviewContainerComponent } from 'app/shared/link-preview/components/link-preview-container/link-preview-container.component';
+import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 
 @Component({
     selector: 'jhi-posting-content',
     templateUrl: './posting-content.component.html',
     styleUrls: ['./posting-content.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    imports: [ArtemisSharedComponentModule, ArtemisSharedModule, LinkPreviewContainerComponent, PostingContentPartComponent],
 })
 export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() content?: string;

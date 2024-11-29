@@ -33,8 +33,13 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-cre
 import { animate, style, transition, trigger } from '@angular/animations';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
-import { CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { CdkOverlayOrigin, OverlayModule } from '@angular/cdk/overlay';
 import { DOCUMENT } from '@angular/common';
+import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
+import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
 
 @Component({
     selector: 'jhi-post',
@@ -46,6 +51,18 @@ import { DOCUMENT } from '@angular/common';
             transition(':enter', [style({ opacity: 0 }), animate('300ms ease-in', style({ opacity: 1 }))]),
             transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
         ]),
+    ],
+    standalone: true,
+    imports: [
+        EmojiPickerComponent,
+        OverlayModule,
+        ArtemisSharedModule,
+        MessageInlineInputComponent,
+        PostFooterComponent,
+        PostReactionsBarComponent,
+        AnswerPostCreateEditModalComponent,
+        PostingContentComponent,
+        PostHeaderComponent,
     ],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {

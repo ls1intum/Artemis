@@ -1,4 +1,5 @@
 import { Component, HostBinding, Input } from '@angular/core';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
@@ -6,6 +7,8 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
     /* eslint-disable-next-line  @angular-eslint/component-selector */
     selector: 'button[jhi-posting-button]',
     templateUrl: './posting-button.component.html',
+    standalone: true,
+    imports: [FontAwesomeModule],
 })
 export class PostingButtonComponent {
     @Input() buttonIcon: IconProp;

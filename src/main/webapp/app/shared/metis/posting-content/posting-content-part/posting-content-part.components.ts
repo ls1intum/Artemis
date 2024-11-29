@@ -20,11 +20,16 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AccountService } from 'app/core/auth/account.service';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
+import { RouterModule } from '@angular/router';
 
 @Component({
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['./../../metis.component.scss'],
+    standalone: true,
+    imports: [FontAwesomeModule, HtmlForPostingMarkdownPipe, RouterModule],
 })
 export class PostingContentPartComponent implements OnInit {
     @Input() postingContentPart: PostingContentPart;

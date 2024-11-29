@@ -7,12 +7,17 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
 import { LocalStorageService } from 'ngx-webstorage';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 
 @Component({
     selector: 'jhi-message-inline-input',
     templateUrl: './message-inline-input.component.html',
     styleUrls: ['./message-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [ArtemisSharedModule, PostingButtonComponent, PostingMarkdownEditorComponent],
 })
 export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit {
     warningDismissed = false;

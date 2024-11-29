@@ -14,11 +14,19 @@ import { AccountService } from 'app/core/auth/account.service';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
+import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
+import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
+import { OverlayModule } from '@angular/cdk/overlay';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
     templateUrl: './post-reactions-bar.component.html',
     styleUrls: ['../posting-reactions-bar.component.scss'],
+    standalone: true,
+    imports: [ReactingUsersOnPostingPipe, EmojiComponent, ArtemisSharedModule, ArtemisConfirmIconModule, EmojiPickerComponent, OverlayModule, PostCreateEditModalComponent],
 })
 export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges, OnDestroy {
     pinTooltip: string;

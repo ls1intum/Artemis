@@ -5,11 +5,19 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { faCheck, faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
+import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
+import { OverlayModule } from '@angular/cdk/overlay';
 
 @Component({
     selector: 'jhi-answer-post-reactions-bar',
     templateUrl: './answer-post-reactions-bar.component.html',
     styleUrls: ['../posting-reactions-bar.component.scss'],
+    standalone: true,
+    imports: [ReactingUsersOnPostingPipe, EmojiComponent, ArtemisSharedModule, ArtemisConfirmIconModule, EmojiPickerComponent, OverlayModule],
 })
 export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirective<AnswerPost> implements OnInit, OnChanges {
     @Input()

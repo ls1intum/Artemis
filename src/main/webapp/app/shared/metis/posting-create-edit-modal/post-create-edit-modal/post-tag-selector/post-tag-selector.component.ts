@@ -3,14 +3,20 @@ import { Observable, Subscription, map, startWith } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormControl } from '@angular/forms';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDialogModule } from '@angular/material/dialog';
 
 @Component({
     selector: 'jhi-post-tag-selector',
     templateUrl: './post-tag-selector.component.html',
     styleUrls: ['./post-tag-selector.component.scss'],
+    standalone: true,
+    imports: [MatChipsModule, MatAutocompleteModule, MatSelectModule, MatFormFieldModule, MatDialogModule, ArtemisSharedModule],
 })
 export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
     @Input() postTags?: string[];

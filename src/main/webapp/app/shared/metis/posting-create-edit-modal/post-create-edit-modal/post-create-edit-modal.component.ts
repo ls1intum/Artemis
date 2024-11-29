@@ -12,6 +12,13 @@ import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { PostComponent } from 'app/shared/metis/post/post.component';
+import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -23,6 +30,16 @@ export interface ContextSelectorOption {
     selector: 'jhi-post-create-edit-modal',
     templateUrl: './post-create-edit-modal.component.html',
     styleUrls: ['../../metis.component.scss'],
+    standalone: true,
+    imports: [
+        PostingMarkdownEditorComponent,
+        ArtemisSharedModule,
+        PostingContentComponent,
+        PostingButtonComponent,
+        ArtemisSharedComponentModule,
+        PostTagSelectorComponent,
+        PostComponent,
+    ],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
     @Input() isCommunicationPage: boolean;

@@ -2,10 +2,15 @@ import { Component, EventEmitter, Input, Output, computed, inject } from '@angul
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { PickerModule } from '@ctrl/ngx-emoji-mart';
 
 @Component({
     selector: 'jhi-emoji-picker',
     templateUrl: './emoji-picker.component.html',
+    standalone: true,
+    imports: [EmojiModule, ArtemisSharedModule, PickerModule],
 })
 export class EmojiPickerComponent {
     private themeService = inject(ThemeService);

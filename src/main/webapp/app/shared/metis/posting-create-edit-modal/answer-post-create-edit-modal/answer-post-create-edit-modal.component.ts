@@ -6,12 +6,17 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { Posting } from 'app/entities/metis/posting.model';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',
     templateUrl: './answer-post-create-edit-modal.component.html',
     styleUrls: ['answer-post-create-edit-modal.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    imports: [ArtemisSharedModule, PostingMarkdownEditorComponent, PostingButtonComponent],
 })
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
     @Input() createEditAnswerPostContainerRef: ViewContainerRef;
