@@ -215,7 +215,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     /**
-     * Manages the view state of the monaco editor. The mechanism is as follows:
+     * Manages the model and view state of the monaco editor. The mechanism is as follows:
      * When the user is currently viewing a file and switches to a different one (denoted by {@link fileName}), the view
      * state of the current file is stored in its session. When switching back to that file, the view state is restored.
      * When the current file is also the first file that the user selects, we can't set the view state before 'switching'

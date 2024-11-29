@@ -154,7 +154,7 @@ describe('CodeEditorMonacoComponent', () => {
         const changeModelStub = jest.spyOn(comp.editor(), 'changeModel').mockImplementation();
         const presentFileName = 'present-file';
         const presentFileSession = {
-            [presentFileName]: { code: 'code\ncode', cursor: { lineNumber: 1, column: 2 }, loadingError: false },
+            [presentFileName]: { code: 'code\ncode', cursor: { lineNumber: 1, column: 2 }, viewState: undefined, loadingError: false },
         };
         fixture.detectChanges();
         comp.fileSession.set(presentFileSession);
@@ -165,7 +165,7 @@ describe('CodeEditorMonacoComponent', () => {
         expect(loadFileFromRepositoryStub).toHaveBeenCalledExactlyOnceWith(fileToLoad.fileName);
         expect(comp.fileSession()).toEqual({
             ...presentFileSession,
-            [fileToLoad.fileName]: { code: fileToLoad.fileContent, cursor: { column: 0, lineNumber: 0 }, loadingError: false },
+            [fileToLoad.fileName]: { code: fileToLoad.fileContent, cursor: { column: 0, lineNumber: 0 }, viewState: comp.editor().saveViewState(), loadingError: false },
         });
         expect(setPositionStub).toHaveBeenCalledTimes(2);
         expect(changeModelStub).toHaveBeenCalledTimes(2);
@@ -174,7 +174,7 @@ describe('CodeEditorMonacoComponent', () => {
     it('should load a selected file after a loading error', async () => {
         const fileToLoad = { fileName: 'file-to-load', fileContent: 'some code' };
         // File session after loading fails
-        const fileSession = { [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 } } };
+        const fileSession = { [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 }, viewState: undefined } };
         const loadedFileSubject = new BehaviorSubject(fileToLoad);
         loadFileFromRepositoryStub.mockReturnValue(loadedFileSubject);
         comp.fileSession.set(fileSession);
@@ -182,7 +182,9 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.detectChanges();
         await new Promise(process.nextTick);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
-        expect(comp.fileSession()).toEqual({ [fileToLoad.fileName]: { code: fileToLoad.fileContent, loadingError: false, cursor: { lineNumber: 0, column: 0 } } });
+        expect(comp.fileSession()).toEqual({
+            [fileToLoad.fileName]: { code: fileToLoad.fileContent, loadingError: false, cursor: { lineNumber: 0, column: 0 }, viewState: comp.editor().saveViewState() },
+        });
     });
 
     it('should not load binaries into the editor', async () => {
@@ -214,7 +216,9 @@ describe('CodeEditorMonacoComponent', () => {
         await new Promise(process.nextTick);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
         expect(errorCallbackStub).toHaveBeenCalledExactlyOnceWith(errorCode);
-        expect(comp.fileSession()).toEqual({ [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 } } });
+        expect(comp.fileSession()).toEqual({
+            [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 }, viewState: comp.editor().saveViewState() },
+        });
     });
 
     it('should discard local changes when the editor is refreshed', async () => {
@@ -224,13 +228,13 @@ describe('CodeEditorMonacoComponent', () => {
         loadFileFromRepositoryStub.mockReturnValue(reloadedFileSubject);
         fixture.componentRef.setInput('selectedFile', fileToReload.fileName);
         comp.fileSession.set({
-            [fileToReload.fileName]: { code: 'some local undiscarded changes', cursor: { lineNumber: 0, column: 0 }, loadingError: false },
+            [fileToReload.fileName]: { code: 'some local undiscarded changes', cursor: { lineNumber: 0, column: 0 }, viewState: undefined, loadingError: false },
         });
         fixture.componentRef.setInput('editorState', EditorState.CLEAN);
         // Simulate a refresh of the editor.
         await comp.ngOnChanges({ editorState: new SimpleChange(EditorState.REFRESHING, EditorState.CLEAN, false) });
         expect(comp.fileSession()).toEqual({
-            [fileToReload.fileName]: { code: fileToReload.fileContent, cursor: { lineNumber: 0, column: 0 }, loadingError: false },
+            [fileToReload.fileName]: { code: fileToReload.fileContent, cursor: { lineNumber: 0, column: 0 }, loadingError: false, viewState: comp.editor().saveViewState() },
         });
         expect(editorResetStub).toHaveBeenCalledOnce();
     });
