@@ -39,7 +39,7 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
      * @param submissionId the id of the modeling submission that should be loaded from the database
      * @return the modeling submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "results.assessmentNote", "participation", "participation.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks", "results.assessor", "results.assessmentNote", "participation.results" })
     Optional<ModelingSubmission> findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(Long submissionId);
 
     @Query("""

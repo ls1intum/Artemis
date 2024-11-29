@@ -37,7 +37,7 @@ const editedExamData = {
 
 const dateFormat = 'MMM D, YYYY HH:mm';
 
-test.describe('Exam creation/deletion', () => {
+test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
     let course: Course;
     let examId: number;
 

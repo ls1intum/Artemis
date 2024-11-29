@@ -11,7 +11,7 @@
         <div class="ms-3" id="exercise-result-score">
             @if (resultsPublished && exerciseInfo?.achievedPoints !== undefined) {
                 <div class="d-flex">
-                    [{{ exerciseInfo?.achievedPoints }} / {{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
+                    [{{ exerciseInfo?.achievedPoints }} / {{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}]
                     <div style="margin-left: 1em">
                         @if (exerciseInfo?.resultIconClass) {
                             <fa-icon [ngClass]="exerciseInfo?.colorClass" [icon]="exerciseInfo?.resultIconClass!" size="lg" />
@@ -22,7 +22,7 @@
                     </div>
                 </div>
             } @else {
-                [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
+                [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}]
             }
         </div>
     </div>

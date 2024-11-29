@@ -46,7 +46,11 @@ import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
@@ -92,6 +96,9 @@ public class UserTestService {
     private UserUtilService userUtilService;
 
     @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
     private CourseUtilService courseUtilService;
 
     @Autowired
@@ -127,6 +134,9 @@ public class UserTestService {
 
     @Autowired
     private SubmissionTestRepository submissionRepository;
+
+    @Autowired
+    private ExerciseTestRepository exerciseTestRepository;
 
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
@@ -913,6 +923,36 @@ public class UserTestService {
         submissionRepository.delete(submission);
         participationVCSAccessTokenRepository.deleteAll();
         participationRepository.deleteById(submission.getParticipation().getId());
+    }
+
+    // Test
+    public void getAndCreateParticipationVcsAccessTokenForTeamExercise() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var course = courseUtilService.addEmptyCourse();
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        exercise.setMode(ExerciseMode.TEAM);
+        exerciseTestRepository.save(exercise);
+        courseRepository.save(course);
+        User tutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        Team team = teamUtilService.createTeam(Set.of(user), tutor1, exercise, "team1");
+
+        var submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmissionToTeamExercise(exercise, submission, team);
+
+        // request existing token
+        request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.NOT_FOUND, String.class);
+
+        var token = request.putWithResponseBody("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, String.class,
+                HttpStatus.OK);
+        assertThat(token).isNotNull();
+
+        var token2 = request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
+        assertThat(token2).isEqualTo(token);
+
+        submissionRepository.delete(submission);
+        participationVCSAccessTokenRepository.deleteAll();
+        participationRepository.deleteById(submission.getParticipation().getId());
+        teamUtilService.deleteTeam(team);
     }
 
     // Test

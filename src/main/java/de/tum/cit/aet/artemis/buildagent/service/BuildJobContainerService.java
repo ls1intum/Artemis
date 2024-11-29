@@ -43,9 +43,9 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 
 /**
@@ -221,10 +221,10 @@ public class BuildJobContainerService {
             future.get(10, TimeUnit.SECONDS);  // Wait for the stop command to complete with a timeout
         }
         catch (NotFoundException | NotModifiedException e) {
-            log.debug("Container with id {} is already stopped: {}", containerId, e.getMessage());
+            log.warn("Container with id {} is already stopped.", containerId, e);
         }
         catch (Exception e) {
-            log.warn("Failed to stop container with id {}. Attempting to kill container: {}", containerId, e.getMessage());
+            log.error("Failed to stop container with id {}. Attempting to kill container.", containerId, e);
 
             // Attempt to kill the container if stop fails
             try {
@@ -236,7 +236,7 @@ public class BuildJobContainerService {
                 killFuture.get(5, TimeUnit.SECONDS);  // Wait for the kill command to complete with a timeout
             }
             catch (Exception killException) {
-                log.warn("Failed to kill container with id {}: {}", containerId, killException.getMessage());
+                log.error("Failed to kill container with id {}.", containerId, killException);
             }
         }
         finally {
@@ -414,7 +414,7 @@ public class BuildJobContainerService {
                 @Override
                 public void onNext(Frame item) {
                     String text = new String(item.getPayload());
-                    BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), text);
+                    BuildLogDTO buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), text);
                     if (buildJobId != null) {
                         buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
                     }

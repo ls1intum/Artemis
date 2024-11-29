@@ -32,6 +32,7 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -54,7 +55,7 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
                     AND c.startDate > :deleteFrom
                 )
             """)
-    void deleteParticipantScoresForNonLatestLastResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteParticipantScoresForNonLatestLastResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
      * Deletes {@link ParticipantScore} entries where the associated last rated {@link Result} is not the latest rated result
@@ -64,6 +65,7 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -86,7 +88,7 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
                     AND c.startDate > :deleteFrom
                 )
             """)
-    void deleteParticipantScoresForNonLatestLastRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteParticipantScoresForNonLatestLastRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
      * Deletes {@link ParticipantScore} entries where the associated {@link Result} is not the latest result and is non-rated,
@@ -96,6 +98,7 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -117,7 +120,7 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
                     AND c.endDate < :deleteTo
                     AND c.startDate > :deleteFrom                                                                       )
             """)
-    void deleteParticipantScoresForLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteParticipantScoresForLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
      * Deletes {@link ParticipantScore} entries where the associated {@link Result} is not latest and is non-rated, even though
@@ -128,6 +131,7 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
+     * @return the number of deleted entities
      */
     @Modifying
     @Transactional // ok because of delete
@@ -150,5 +154,5 @@ public interface ParticipantScoreCleanupRepository extends ArtemisJpaRepository<
                     AND c.startDate > :deleteFrom
                 )
             """)
-    void deleteParticipantScoresForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    int deleteParticipantScoresForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }
