@@ -337,6 +337,9 @@ public class SharedQueueProcessingService {
                 log.error("Error while updating build agent information for agent {} with address {}", info.buildAgent().name(), info.buildAgent().memberAddress(), e);
             }
         }
+        catch (Exception e) {
+            log.error("Error while updating build agent information for agent with address {}", memberAddress, e);
+        }
         finally {
             buildAgentInformation.unlock(memberAddress);
         }
@@ -346,7 +349,8 @@ public class SharedQueueProcessingService {
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
-        int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize();
+        int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
+                : buildAgentConfiguration.getThreadPoolSize();
         boolean hasJobs = numberOfCurrentBuildJobs > 0;
         BuildAgentInformation.BuildAgentStatus status = isPaused.get() ? BuildAgentInformation.BuildAgentStatus.PAUSED
                 : hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
@@ -513,9 +517,6 @@ public class SharedQueueProcessingService {
                     }
                 }
             }
-            // Cleanup docker containers
-            buildAgentDockerService.cleanUpContainers();
-
             // Close the build executor and docker client
             buildAgentConfiguration.pauseBuildAgentServices();
         }
@@ -556,6 +557,10 @@ public class SharedQueueProcessingService {
             removeListenerAndCancelScheduledFuture();
             listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
             scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+
+            // Cleanup docker containers
+            buildAgentDockerService.cleanUpContainers();
+
             updateLocalBuildAgentInformation();
         }
         finally {

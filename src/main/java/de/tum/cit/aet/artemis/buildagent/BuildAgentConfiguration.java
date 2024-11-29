@@ -44,6 +44,8 @@ public class BuildAgentConfiguration {
 
     private ThreadPoolExecutor buildExecutor;
 
+    private int threadPoolSize = 0;
+
     private DockerClient dockerClient;
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentConfiguration.class);
@@ -69,6 +71,10 @@ public class BuildAgentConfiguration {
 
     public ThreadPoolExecutor getBuildExecutor() {
         return buildExecutor;
+    }
+
+    public int getThreadPoolSize() {
+        return threadPoolSize;
     }
 
     public DockerClient getDockerClient() {
@@ -148,6 +154,7 @@ public class BuildAgentConfiguration {
             int availableProcessors = Runtime.getRuntime().availableProcessors();
             threadPoolSize = Math.max(1, (availableProcessors - 2) / 2);
         }
+        this.threadPoolSize = threadPoolSize;
 
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
                 .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).build();
