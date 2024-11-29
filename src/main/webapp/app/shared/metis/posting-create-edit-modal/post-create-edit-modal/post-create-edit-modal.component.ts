@@ -16,6 +16,7 @@ import { PostingContentComponent } from 'app/shared/metis/posting-content/postin
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
+import { Post } from 'app/entities/metis/post.model';
 
 const TITLE_MAX_LENGTH = 200;
 

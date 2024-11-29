@@ -37,6 +37,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
+import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap/modal/modal-ref';
 
 @Component({
     selector: 'jhi-post',
