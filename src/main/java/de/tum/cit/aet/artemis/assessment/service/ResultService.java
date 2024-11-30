@@ -573,6 +573,7 @@ public class ResultService {
      * Pagination and sorting:
      * - Sorting is applied based on the specified column and order (ascending or descending).
      * - The result is paginated according to the provided page number and page size.
+     * Additionally one can group by the Levenshtein distance of the feedback detail text.
      *
      * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
      * @param data       The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters
@@ -584,7 +585,7 @@ public class ResultService {
      *         - A list of active test case names used in the feedback.
      *         - A list of predefined error categories ("Student Error," "Ares Error," "AST Error") available for filtering.
      */
-    public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, FeedbackPageableDTO data, String levinStein) {
+    public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, FeedbackPageableDTO data, String levenshtein) {
 
         // 1. Fetch programming exercise with associated test cases
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesByIdElseThrow(exerciseId);
@@ -619,11 +620,11 @@ public class ResultService {
         // 8. Set up pagination and sorting based on input data
         final var pageable = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
 
-        // 9. Query the database to retrieve paginated and filtered feedback
+        // 9. Query the database based on levenshtein attribute to retrieve paginated and filtered feedback
         final Page<FeedbackDetailDTO> feedbackDetailPage;
         List<FeedbackDetailDTO> processedDetails;
         int totalPages = 0;
-        if (levinStein.equals("false")) {
+        if (levenshtein.equals("false")) {
             feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
                     StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
                     maxOccurrence, filterErrorCategories, pageable);
@@ -641,8 +642,8 @@ public class ResultService {
             // Fetch all feedback details
             List<FeedbackDetailDTO> allFeedbackDetails = feedbackDetailPage.getContent();
 
-            // Apply Levenshtein-based grouping and aggregation
-            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingLevenshtein(allFeedbackDetails, 0.5);
+            // Apply Levenshtein-based grouping and aggregation with a similarity threshold of 90%
+            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingLevenshtein(allFeedbackDetails, 0.9);
 
             // Apply manual pagination
             int page = data.getPage();
@@ -688,7 +689,7 @@ public class ResultService {
 
             FeedbackDetailDTO base = feedbackDetails.get(i);
             List<String> aggregatedTexts = new ArrayList<>();
-            aggregatedTexts.add(base.detailText().getFirst()); // Add the primary text
+            aggregatedTexts.add(base.detailText().getFirst());
             long totalCount = base.count();
 
             for (int j = i + 1; j < feedbackDetails.size(); j++) {
@@ -745,7 +746,7 @@ public class ResultService {
      * @param data       A {@link PageableSearchDTO} object containing pagination and sorting parameters.
      * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
-    public Page<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackText(long exerciseId, String detailText, String testCaseName, PageableSearchDTO<String> data) {
+    public Page<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackText(long exerciseId, List<String> detailText, String testCaseName, PageableSearchDTO<String> data) {
         PageRequest pageRequest = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.AFFECTED_STUDENTS);
         return studentParticipationRepository.findAffectedStudentsByFeedbackText(exerciseId, detailText, testCaseName, pageRequest);
     }

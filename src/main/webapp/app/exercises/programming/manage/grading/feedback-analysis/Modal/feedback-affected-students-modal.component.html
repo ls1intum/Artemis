@@ -8,6 +8,14 @@
     <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
 </div>
 <div class="modal-body">
+    @if (levenshtein()) {
+        <div class="alert alert-info mb-3">
+            <p>
+                <strong [jhiTranslate]="TRANSLATION_BASE + '.levinsteinInfoTitle'"></strong>
+                <span [jhiTranslate]="TRANSLATION_BASE + '.levinsteinInfoDescription'"></span>
+            </p>
+        </div>
+    }
     <table class="table table-striped mb-3">
         <colgroup>
             <col class="col" />

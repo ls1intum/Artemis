@@ -16,6 +16,7 @@ import { PageableResult, PageableSearch, SortingOrder } from 'app/shared/table/p
 export class AffectedStudentsModalComponent {
     exerciseId = input.required<number>();
     feedbackDetail = input.required<FeedbackDetail>();
+    levenshtein = input.required<boolean>();
     readonly participation = signal<PageableResult<FeedbackAffectedStudentDTO>>({ content: [], totalPages: 0, totalElements: 0 });
     readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.affectedStudentsModal';
 
@@ -45,12 +46,7 @@ export class AffectedStudentsModalComponent {
         };
 
         try {
-            const response = await this.feedbackService.getParticipationForFeedbackDetailText(
-                this.exerciseId(),
-                feedbackDetail.detailText[0],
-                feedbackDetail.testCaseName,
-                pageable,
-            );
+            const response = await this.feedbackService.getParticipationForFeedbackDetailText(this.exerciseId(), feedbackDetail.detailText, feedbackDetail.testCaseName, pageable);
             this.participation.set(response);
         } catch (error) {
             this.alertService.error(this.TRANSLATION_BASE + '.error');

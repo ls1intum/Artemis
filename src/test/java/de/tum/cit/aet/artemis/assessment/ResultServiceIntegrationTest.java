@@ -761,7 +761,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         FeedbackDetailDTO feedbackDetail = response.feedbackDetails().getResultsOnPage().getFirst();
         assertThat(feedbackDetail.count()).isEqualTo(1);
         assertThat(feedbackDetail.relativeCount()).isEqualTo(100.0);
-        assertThat(feedbackDetail.detailText()).isEqualTo("Some feedback");
+        assertThat(feedbackDetail.detailText()).isEqualTo(List.of("Some feedback"));
         assertThat(feedbackDetail.testCaseName()).isEqualTo("test1");
         assertThat(response.errorCategories()).containsExactlyInAnyOrder("Student Error", "Ares Error", "AST Error");
 
@@ -802,19 +802,20 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         List<FeedbackDetailDTO> feedbackDetails = response.feedbackDetails().getResultsOnPage();
         assertThat(feedbackDetails).hasSize(2);
 
-        FeedbackDetailDTO firstFeedbackDetail = feedbackDetails.stream().filter(feedbackDetail -> "Some feedback".equals(feedbackDetail.detailText())).findFirst().orElseThrow();
-
-        FeedbackDetailDTO secondFeedbackDetail = feedbackDetails.stream().filter(feedbackDetail -> "Some different feedback".equals(feedbackDetail.detailText())).findFirst()
+        FeedbackDetailDTO firstFeedbackDetail = feedbackDetails.stream().filter(feedbackDetail -> List.of("Some feedback").equals(feedbackDetail.detailText())).findFirst()
                 .orElseThrow();
+
+        FeedbackDetailDTO secondFeedbackDetail = feedbackDetails.stream().filter(feedbackDetail -> List.of("Some different feedback").equals(feedbackDetail.detailText()))
+                .findFirst().orElseThrow();
 
         assertThat(firstFeedbackDetail.count()).isEqualTo(2);
         assertThat(firstFeedbackDetail.relativeCount()).isEqualTo(100.0);
-        assertThat(firstFeedbackDetail.detailText()).isEqualTo("Some feedback");
+        assertThat(firstFeedbackDetail.detailText()).isEqualTo(List.of("Some feedback"));
         assertThat(firstFeedbackDetail.testCaseName()).isEqualTo("test1");
 
         assertThat(secondFeedbackDetail.count()).isEqualTo(1);
         assertThat(secondFeedbackDetail.relativeCount()).isEqualTo(50.0);
-        assertThat(secondFeedbackDetail.detailText()).isEqualTo("Some different feedback");
+        assertThat(secondFeedbackDetail.detailText()).isEqualTo(List.of("Some different feedback"));
         assertThat(secondFeedbackDetail.testCaseName()).isEqualTo("test1");
         assertThat(response.errorCategories()).containsExactlyInAnyOrder("Student Error", "Ares Error", "AST Error");
 

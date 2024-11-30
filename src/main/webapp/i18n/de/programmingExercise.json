@@ -358,6 +358,8 @@
                     "noData": "Es konnten keine Feedback Einträge für die Programmieraufgabe gefunden werden.",
                     "noDataFilter": "Für den spezifizierten Filter oder Suchbegriff konnten keine Feedback Einträge gefunden werden.",
                     "channelSuccess": "Kanal {{channelName}} erfolgreich erstellt.",
+                    "groupFeedback": "Feedback gruppieren",
+                    "groupFeedbackTooltip": "Feedback gruppieren ermöglicht es, ähnliche Feedback-Einträge mit demselben Testfall und derselben Aufgabenbezeichnung zu einem einzigen Eintrag zusammenzufassen. Dies ist nützlich, um die Anzahl der Einträge in der Tabelle zu reduzieren, insbesondere wenn zufällige Werte oder ähnliche Eingaben in den Testfällen verwendet und verglichen werden.",
                     "feedbackModal": {
                         "header": "Fehlerdetails",
                         "feedbackTitle": "Feedback zu Testfällen",
@@ -379,7 +381,9 @@
                         "login": "Login",
                         "repository": "Repository",
                         "totalItems": "Insgesamt {{count}} Element(e)",
-                        "error": "Beim Laden der betroffenen Studierenden ist ein Fehler aufgetreten."
+                        "error": "Beim Laden der betroffenen Studierenden ist ein Fehler aufgetreten.",
+                        "levinsteinInfoTitle": "Feedback gruppieren aktiviert",
+                        "levinsteinInfoDescription": "Die Anzahl der von dem gruppierten Feedback betroffenen Studierenden könnte höher sein, da nur die betroffenen Studierenden für bis zu fünf Feedbackdetails überprüft werden. Mehr Feedbackdetails einzubeziehen ist für die Analyse eines gemeinsamen gruppierten Feedbacks nicht notwendig und könnte zu Leistungseinbußen führen."
                     },
                     "feedbackDetailChannel": {
                         "title": "Erstelle einen Feedback-Diskussionskanal",
@@ -394,9 +398,8 @@
                         "announcementChannelNo": "Nein",
                         "createAndNavigateLabel": "Erstellen und Navigieren",
                         "createAndNavigateDescription": "Erstellt den Kanal und navigiert automatisch zum Kanal.",
-                        "createChannelLabel": "Kanal erstellen:",
+                        "createChannelLabel": "Kanal erstellen",
                         "createChannelDescription": "Erstellt den Kanal, ohne die Seite zu verlassen.",
-                        "createChannelButton": "Kanal erstellen",
                         "placeholder": "Dieses Feld bitte nicht leer lassen",
                         "descriptionLabel": "Kanalbeschreibung",
                         "requiredValidationErrorName": "Der Kanalname ist ein Pflichtfeld.",
@@ -404,6 +407,8 @@
                         "regexValidationErrorName": "Namen können nur Kleinbuchstaben, Zahlen und Striche enthalten. Nur Artemis kann Kanäle erstellen, die mit $ beginnen.",
                         "requiredValidationErrorDescription": "Die Kanalbeschreibung ist ein Pflichtfeld.",
                         "maxLengthValidationErrorDescription": "Kanalbeschreibung kann max {{ max }} Zeichen lang sein!",
+                        "levinsteinInfoTitle": "Feedback gruppieren aktiviert",
+                        "levinsteinInfoDescription": "Die Anzahl der zum Kanal hinzugefügten Studierenden stellt eine Obergrenze dar. Die tatsächliche Anzahl könnte geringer sein, da mehrere Studierende für einen einzelnen Testfall ähnliches Feedback erhalten könnten.",
                         "confirmationModal": {
                             "header": "Kanal Erstellen bestätigen",
                             "confirmationMessage": "Bist du sicher, dass du diesen Kanal erstellen möchten? Dies wird einen Kanal mit <strong>{{count}}</strong> Student(en) erstellen.",

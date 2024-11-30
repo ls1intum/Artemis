@@ -35,7 +35,7 @@ export interface FeedbackChannelRequestDTO {
 }
 @Injectable()
 export class FeedbackAnalysisService extends BaseApiHttpService {
-    search(pageable: SearchTermPageableSearch, levinStein: boolean, options: { exerciseId: number; filters: FilterData }): Promise<FeedbackAnalysisResponse> {
+    search(pageable: SearchTermPageableSearch, levenshtein: boolean, options: { exerciseId: number; filters: FilterData }): Promise<FeedbackAnalysisResponse> {
         const params = new HttpParams()
             .set('page', pageable.page.toString())
             .set('pageSize', pageable.pageSize.toString())
@@ -46,7 +46,7 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             .set('filterTestCases', options.filters.testCases.join(','))
             .set('filterOccurrence', options.filters.occurrence.join(','))
             .set('filterErrorCategories', options.filters.errorCategories.join(','))
-            .set('levinStein', levinStein.toString());
+            .set('levenshtein', levenshtein.toString());
 
         return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details`, { params });
     }
@@ -57,17 +57,22 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
 
     async getParticipationForFeedbackDetailText(
         exerciseId: number,
-        detailText: string,
+        detailText: string[],
         testCaseName: string,
         pageable: PageableSearch,
     ): Promise<PageableResult<FeedbackAffectedStudentDTO>> {
-        const params = new HttpParams()
+        let params = new HttpParams()
             .set('page', pageable.page.toString())
             .set('pageSize', pageable.pageSize.toString())
             .set('sortedColumn', pageable.sortedColumn)
             .set('sortingOrder', pageable.sortingOrder)
-            .set('detailText', detailText)
             .set('testCaseName', testCaseName);
+
+        const topDetailTexts = detailText.slice(0, 5);
+
+        topDetailTexts.forEach((text, index) => {
+            params = params.set(`detailText${index + 1}`, text);
+        });
 
         return this.get<PageableResult<FeedbackAffectedStudentDTO>>(`exercises/${exerciseId}/feedback-details-participation`, { params });
     }

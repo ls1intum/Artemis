@@ -15,7 +15,7 @@ describe('AffectedStudentsModalComponent', () => {
     const feedbackDetailMock: FeedbackDetail = {
         count: 5,
         relativeCount: 25.0,
-        detailText: 'Some feedback detail',
+        detailText: ['Some feedback detail'],
         testCaseName: 'testCase1',
         taskName: '1',
         errorCategory: 'StudentError',
@@ -26,6 +26,8 @@ describe('AffectedStudentsModalComponent', () => {
         { courseId: 1, participationId: 102, firstName: 'Jane', lastName: 'Smith', login: 'janesmith', repositoryURI: 'repo2' },
     ];
 
+    const levenshtein = false;
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), AffectedStudentsModalComponent],
@@ -35,7 +37,7 @@ describe('AffectedStudentsModalComponent', () => {
                 {
                     provide: FeedbackAnalysisService,
                     useValue: {
-                        getParticipationForFeedbackIds: jest.fn().mockReturnValue(of({ content: participationMock, totalPages: 1, totalElements: 2 })),
+                        getParticipationForFeedbackDetailText: jest.fn().mockReturnValue(of({ content: participationMock, totalPages: 1, totalElements: 2 })),
                     },
                 },
             ],
@@ -47,6 +49,7 @@ describe('AffectedStudentsModalComponent', () => {
 
         fixture.componentRef.setInput('exerciseId', 1);
         fixture.componentRef.setInput('feedbackDetail', feedbackDetailMock);
+        fixture.componentRef.setInput('levenshtein', levenshtein);
         fixture.detectChanges();
     });
 

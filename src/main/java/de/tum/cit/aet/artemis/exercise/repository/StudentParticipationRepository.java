@@ -1345,7 +1345,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
     @Query("""
-                SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO(
+                SELECT DISTINCT new de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO(
                                 p.exercise.course.id,
                                 p.id,
                                 p.student.firstName,
@@ -1366,12 +1366,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 )
                 INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
-                      AND f.detailText = :detailText
+                      AND f.detailText IN :detailText
                       AND f.testCase.testName = :testCaseName
                       AND p.testRun = FALSE
                 ORDER BY p.student.firstName ASC
             """)
-    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackText(@Param("exerciseId") long exerciseId, @Param("detailText") String detailText,
+    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackText(@Param("exerciseId") long exerciseId, @Param("detailText") List<String> detailText,
             @Param("testCaseName") String testCaseName, Pageable pageable);
 
     /**

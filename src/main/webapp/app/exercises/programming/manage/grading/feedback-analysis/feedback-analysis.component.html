@@ -20,17 +20,10 @@
             <h3 class="m-0 p-0" [jhiTranslate]="TRANSLATION_BASE + '.title'" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
             <div class="d-flex align-items-center">
                 <div class="form-switch d-flex align-items-center flex-md-shrink-0 me-2">
-                    <input
-                        class="form-check-input mt-0"
-                        type="checkbox"
-                        (click)="toggleLevinStein()"
-                        [checked]="levinStein()"
-                        aria-label="TRANSLATION_BASE + '.levinsteinToggle'"
-                        style="width: 2.5rem; height: 1.25rem"
-                    />
+                    <input class="form-check-input mt-0" type="checkbox" (click)="toggleLevenshtein()" [checked]="levenshtein()" style="width: 2.5rem; height: 1.25rem" />
                     <label class="ms-1 me-2 mb-0">
-                        <span>Group Feedback</span>
-                        <fa-icon size="sm" [icon]="faCircleInfo" ngbTooltip="Placeholder" class="text-info"></fa-icon>
+                        <span [jhiTranslate]="TRANSLATION_BASE + '.groupFeedback'"></span>
+                        <fa-icon size="sm" [icon]="faCircleInfo" [ngbTooltip]="TRANSLATION_BASE + '.groupFeedbackTooltip' | artemisTranslate" class="text-info"></fa-icon>
                     </label>
                 </div>
                 <button class="btn me-2" (click)="openFilterModal()" [ngClass]="{ 'btn-secondary': selectedFiltersCount() == 0, 'btn-success': selectedFiltersCount() != 0 }">

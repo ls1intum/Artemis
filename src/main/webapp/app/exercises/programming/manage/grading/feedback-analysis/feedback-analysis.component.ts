@@ -72,7 +72,7 @@ export class FeedbackAnalysisComponent {
     private isFeedbackDetailChannelModalOpen = false;
 
     private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
-    readonly levinStein = signal<boolean>(false);
+    readonly levenshtein = signal<boolean>(false);
 
     constructor() {
         effect(() => {
@@ -98,7 +98,7 @@ export class FeedbackAnalysisComponent {
         };
 
         try {
-            const response = await this.feedbackAnalysisService.search(state, this.levinStein(), {
+            const response = await this.feedbackAnalysisService.search(state, this.levenshtein(), {
                 exerciseId: this.exerciseId(),
                 filters: {
                     tasks: this.selectedFiltersCount() !== 0 ? savedTasks : [],
@@ -202,6 +202,7 @@ export class FeedbackAnalysisComponent {
         const modalRef = this.modalService.open(AffectedStudentsModalComponent, { centered: true, size: 'lg' });
         modalRef.componentInstance.exerciseId = this.exerciseId;
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
+        modalRef.componentInstance.levenshtein = signal(this.levenshtein());
     }
 
     async openFeedbackDetailChannelModal(feedbackDetail: FeedbackDetail): Promise<void> {
@@ -211,6 +212,7 @@ export class FeedbackAnalysisComponent {
         this.isFeedbackDetailChannelModalOpen = true;
         const modalRef = this.modalService.open(FeedbackDetailChannelModalComponent, { centered: true, size: 'lg' });
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
+        modalRef.componentInstance.levenshtein = signal(this.levenshtein());
         modalRef.componentInstance.formSubmitted.subscribe(async ({ channelDto, navigate }: { channelDto: ChannelDTO; navigate: boolean }) => {
             try {
                 const feedbackChannelRequest: FeedbackChannelRequestDTO = {
@@ -240,8 +242,8 @@ export class FeedbackAnalysisComponent {
         }
     }
 
-    toggleLevinStein(): void {
-        this.levinStein.update((current) => !current);
+    toggleLevenshtein(): void {
+        this.levenshtein.update((current) => !current);
         this.loadData();
     }
 }

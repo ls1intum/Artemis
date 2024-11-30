@@ -358,6 +358,8 @@
                     "noData": "No Feedback Entries could be found for the Programming Exercise.",
                     "noDataFilter": "No Feedback Entries could be found for the specified filter or search Term.",
                     "channelSuccess": "Channel {{channelName}} successfully created.",
+                    "groupFeedback": "Group Feedback",
+                    "groupFeedbackTooltip": "Group feedback enables the grouping of similar feedback entries that share the same test case and task name into a single entry. This is useful for reducing the number of entries in the table, especially when random values or similar inputs are used and compared in the test cases.",
                     "feedbackModal": {
                         "header": "Error Details",
                         "feedbackTitle": "Test Case Feedback",
@@ -379,7 +381,9 @@
                         "login": "Login",
                         "repository": "Repository",
                         "totalItems": "In total {{count}} item(s)",
-                        "error": "There was an error while loading the affected Students for this feedback."
+                        "error": "There was an error while loading the affected Students for this feedback.",
+                        "levinsteinInfoTitle": "Group feedback feature enabled",
+                        "levinsteinInfoDescription": "The amount of students affected by the grouped feedback might be higher because only affected students for up to 5 feedbackdetails is sent as more is not really necessary to analyse a common grouped feedback and would lead to performance overhead."
                     },
                     "feedbackDetailChannel": {
                         "title": "Create Feedback Discussion Channel",
@@ -394,9 +398,8 @@
                         "announcementChannelNo": "No",
                         "createAndNavigateLabel": "Create and Navigate",
                         "createAndNavigateDescription": "Creates the channel and automatically navigates to the channel.",
-                        "createChannelLabel": "Create Channel:",
+                        "createChannelLabel": "Create Channel",
                         "createChannelDescription": "Creates the channel without navigating away from this page.",
-                        "createChannelButton": "Create Channel",
                         "placeholder": "This field should not be empty",
                         "descriptionLabel": "Description",
                         "requiredValidationErrorName": "The channel name is required.",
@@ -404,6 +407,8 @@
                         "regexValidationErrorName": "Names can only contain lowercase letters, numbers, and dashes. Only Artemis can create channels that start with a $.",
                         "requiredValidationErrorDescription": "The channel description is required.",
                         "maxLengthValidationErrorDescription": "Channel description can be max {{ max }} characters long!",
+                        "levinsteinInfoTitle": "Group feedback feature enabled",
+                        "levinsteinInfoDescription": "The number of students added to the channel is an upper limit. The actual number of students added to a feedback channel might be lower, as multiple students could share similar feedback for a single test case.",
                         "confirmationModal": {
                             "header": "Confirm Channel Creation",
                             "confirmationMessage": "Are you sure you want to create this channel? This will create a channel with <strong>{{count}}</strong> student(s).",

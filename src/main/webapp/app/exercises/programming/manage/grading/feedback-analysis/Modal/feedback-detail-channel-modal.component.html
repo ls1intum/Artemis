@@ -58,6 +58,14 @@
                 <label for="regular" class="btn btn-outline-secondary" [jhiTranslate]="TRANSLATION_BASE + '.announcementChannelNo'"></label>
             </div>
         </div>
+        @if (levenshtein()) {
+            <div class="alert alert-info mb-3">
+                <p>
+                    <strong [jhiTranslate]="TRANSLATION_BASE + '.levinsteinInfoTitle'"></strong>
+                    <span [jhiTranslate]="TRANSLATION_BASE + '.levinsteinInfoDescription'"></span>
+                </p>
+            </div>
+        }
         <div class="form-group mt-3">
             <p class="text-info">
                 <strong [jhiTranslate]="TRANSLATION_BASE + '.studentNumber'" [translateValues]="{ count: feedbackDetail().count }"></strong>
@@ -81,7 +89,7 @@
                 [disabled]="!form.valid"
                 [jhiTranslate]="TRANSLATION_BASE + '.createAndNavigateLabel'"
             ></button>
-            <button (click)="submitForm(false)" type="button" class="btn btn-primary" [disabled]="!form.valid" [jhiTranslate]="TRANSLATION_BASE + '.createChannelButton'"></button>
+            <button (click)="submitForm(false)" type="button" class="btn btn-primary" [disabled]="!form.valid" [jhiTranslate]="TRANSLATION_BASE + '.createChannelLabel'"></button>
         </div>
     </form>
 </div>
