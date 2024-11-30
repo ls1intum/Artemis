@@ -156,23 +156,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "vcs_access_token_expiry_date")
     private ZonedDateTime vcsAccessTokenExpiryDate = null;
 
-    /**
-     * The actual full public ssh key of a user used to authenticate git clone and git push operations if available
-     */
-    @Nullable
-    @JsonIgnore
-    @Column(name = "ssh_public_key")
-    private final String sshPublicKey = null;
-
-    /**
-     * A hash of the public ssh key for fast comparison in the database (with an index)
-     */
-    @Nullable
-    @Size(max = 100)
-    @JsonIgnore
-    @Column(name = "ssh_public_key_hash")
-    private final String sshPublicKeyHash = null;
-
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "user_groups", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "user_groups")
@@ -559,15 +542,5 @@ public class User extends AbstractAuditingEntity implements Participant {
         if (irisAccepted == null) {
             throw new AccessForbiddenException("The user has not accepted the Iris privacy policy yet.");
         }
-    }
-
-    @Nullable
-    public String getSshPublicKey() {
-        return sshPublicKey;
-    }
-
-    @Nullable
-    public @Size(max = 100) String getSshPublicKeyHash() {
-        return sshPublicKeyHash;
     }
 }
