@@ -43,9 +43,9 @@ Students can use the "Previous" and "Next" buttons to navigate to the previous o
 
 |students-learning-path-participation|
 
-Students can access all scheduled competencies by clicking on the title of the learning object they are currently viewing. Expanding a competency in the list reveals its associated learning objects, each indicating whether it has been completed.
+Students can access all scheduled competencies and prerequisites by clicking on the title of the learning object they are currently viewing. Expanding a competency or prerequisite in the list reveals its associated learning objects, each indicating whether it has been completed.
 To navigate to a specific learning object, students can simply click on its title.
-For a broader view of how competencies are interconnected, students can open the competency graph. This graph starts with competencies that have no prerequisites and progresses downward to those that build upon earlier knowledge. To aid navigation, a mini-map is available in the top-right corner.
+For a broader view of how competencies and prerequisites are interconnected, students can open the course competency graph. This graph starts with competencies that have no prerequisites and progresses to those that build upon earlier knowledge. To aid navigation, a mini-map is available in the top-right corner.
 
 |students-learning-path-graph|
 
