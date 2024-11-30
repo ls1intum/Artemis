@@ -8,8 +8,15 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { WorkingTimeChangeComponent } from 'app/exam/shared/working-time-change/working-time-change.component';
 
 @NgModule({
-    imports: [ArtemisSharedCommonModule, ArtemisMarkdownModule],
-    declarations: [StudentExamWorkingTimeComponent, TestexamWorkingTimeComponent, WorkingTimeControlComponent, WorkingTimeChangeComponent, ExamLiveEventComponent],
+    imports: [
+        ArtemisSharedCommonModule,
+        ArtemisMarkdownModule,
+        StudentExamWorkingTimeComponent,
+        TestexamWorkingTimeComponent,
+        WorkingTimeControlComponent,
+        WorkingTimeChangeComponent,
+        ExamLiveEventComponent,
+    ],
     exports: [StudentExamWorkingTimeComponent, TestexamWorkingTimeComponent, WorkingTimeControlComponent, WorkingTimeChangeComponent, ExamLiveEventComponent],
 })
 export class ArtemisExamSharedModule {}
