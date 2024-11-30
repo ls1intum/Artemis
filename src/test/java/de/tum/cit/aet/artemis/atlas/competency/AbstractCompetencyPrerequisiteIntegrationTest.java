@@ -225,6 +225,20 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(newCompetency.getId())).findFirst().orElseThrow().getLectureUnitLinks()).isEmpty();
     }
 
+    abstract List<? extends CourseCompetency> getAllFilteredCall(long courseId, HttpStatus expectedStatus) throws Exception;
+
+    // Test
+    void shouldReturnCompetenciesForCourseFiltered(CourseCompetency newCompetency) throws Exception {
+        newCompetency.setTitle("Title");
+        newCompetency.setDescription("Description");
+        newCompetency.setCourse(course);
+        courseCompetencyRepository.save(newCompetency);
+
+        List<? extends CourseCompetency> competenciesOfCourse = getAllFilteredCall(course.getId(), HttpStatus.OK);
+
+        assertThat(competenciesOfCourse).noneMatch(c -> c.getId().equals(courseCompetency.getId()));
+    }
+
     // Test
     void testShouldReturnForbiddenForStudentNotInCourse() throws Exception {
         getAllCall(course.getId(), HttpStatus.FORBIDDEN);

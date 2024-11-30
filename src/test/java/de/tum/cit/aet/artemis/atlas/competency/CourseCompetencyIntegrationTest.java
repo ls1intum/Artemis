@@ -152,6 +152,17 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         super.shouldReturnCompetenciesForCourse(new Competency());
     }
 
+    @Override
+    List<? extends CourseCompetency> getAllFilteredCall(long courseId, HttpStatus expectedStatus) throws Exception {
+        return request.getList("/api/courses/" + courseId + "/course-competencies?filtered=true", expectedStatus, CourseCompetency.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnCompetenciesForStudentOfCourseFiltered() throws Exception {
+        super.shouldReturnCompetenciesForCourseFiltered(new Competency());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void testShouldReturnForbiddenForStudentNotInCourse() throws Exception {
