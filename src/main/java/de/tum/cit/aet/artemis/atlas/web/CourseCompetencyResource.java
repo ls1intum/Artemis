@@ -167,10 +167,10 @@ public class CourseCompetencyResource {
      */
     @GetMapping("courses/{courseId}/course-competencies")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<CourseCompetency>> getCourseCompetenciesWithProgress(@PathVariable long courseId) {
+    public ResponseEntity<List<CourseCompetency>> getCourseCompetenciesWithProgress(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean filter) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        final var competencies = courseCompetencyService.findCourseCompetenciesWithProgressForUserByCourseId(courseId, user.getId());
+        final var competencies = courseCompetencyService.findCourseCompetenciesWithProgressForUserByCourseId(courseId, user.getId(), filter);
         return ResponseEntity.ok(competencies);
     }
 

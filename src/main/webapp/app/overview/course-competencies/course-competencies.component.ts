@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Competency, CompetencyJol, CourseCompetencyType, getMastery } from 'app/entities/competency.model';
+import { Competency, CompetencyJol, CourseCompetencyType, compareSoftDueDate, getMastery } from 'app/entities/competency.model';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
@@ -92,7 +92,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         forkJoin([courseCompetencyObservable, competencyJolObservable]).subscribe({
             next: ([courseCompetencies, judgementOfLearningMap]) => {
                 const courseCompetenciesResponse = courseCompetencies.body ?? [];
-                this.competencies = courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.COMPETENCY);
+                this.competencies = courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.COMPETENCY).sort(compareSoftDueDate);
                 this.prerequisites = courseCompetenciesResponse.filter((competency) => competency.type === CourseCompetencyType.PREREQUISITE);
 
                 if (judgementOfLearningMap !== undefined) {

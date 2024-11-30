@@ -75,7 +75,7 @@ export class CourseCompetencyService {
     }
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.get<CourseCompetency[]>(`${this.resourceURL}/courses/${courseId}/course-competencies`, { observe: 'response' }).pipe(
+        return this.httpClient.get<CourseCompetency[]>(`${this.resourceURL}/courses/${courseId}/course-competencies?filter=true`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => this.convertArrayResponseDatesFromServer(res)),
             tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
         );
