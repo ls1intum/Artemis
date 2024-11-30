@@ -46,7 +46,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -186,7 +186,7 @@ public class ProgrammingExerciseService {
 
     private final ExerciseService exerciseService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
 
@@ -204,7 +204,7 @@ public class ProgrammingExerciseService {
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyProgressService competencyProgressService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyProgressApi competencyProgressApi,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
@@ -238,7 +238,7 @@ public class ProgrammingExerciseService {
         this.profileService = profileService;
         this.exerciseService = exerciseService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
         this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
     }
 
@@ -346,7 +346,7 @@ public class ProgrammingExerciseService {
         // Step 12c: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
         // Step 12d: Update student competency progress
-        competencyProgressService.updateProgressByLearningObjectAsync(savedProgrammingExercise);
+        competencyProgressApi.updateProgressByLearningObjectAsync(savedProgrammingExercise);
 
         // Step 13: Set Iris settings
         if (irisSettingsService.isPresent()) {
@@ -635,7 +635,7 @@ public class ProgrammingExerciseService {
 
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
-        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
+        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
 
         irisSettingsService
                 .ifPresent(settingsService -> settingsService.setEnabledForExerciseByCategories(savedProgrammingExercise, programmingExerciseBeforeUpdate.getCategories()));

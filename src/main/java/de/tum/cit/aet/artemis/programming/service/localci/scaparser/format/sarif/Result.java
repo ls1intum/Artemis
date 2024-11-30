@@ -89,7 +89,7 @@ public record Result(String ruleId, Integer ruleIndex, ReportingDescriptorRefere
 
         private final String value;
 
-        private final static Map<String, Kind> CONSTANTS = new HashMap<>();
+        private static final Map<String, Kind> CONSTANTS = new HashMap<>();
 
         static {
             for (Kind c : values()) {
@@ -140,7 +140,7 @@ public record Result(String ruleId, Integer ruleIndex, ReportingDescriptorRefere
 
         private final String value;
 
-        private final static Map<String, Level> CONSTANTS = new HashMap<>();
+        private static final Map<String, Level> CONSTANTS = new HashMap<>();
 
         static {
             for (Level c : values()) {
