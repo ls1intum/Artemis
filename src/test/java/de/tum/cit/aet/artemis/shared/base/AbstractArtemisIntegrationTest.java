@@ -29,6 +29,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.ConversationNotificationService;
@@ -59,6 +60,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
@@ -170,6 +172,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @SpyBean
     protected CompetencyProgressService competencyProgressService;
 
+    @SpyBean
+    protected CompetencyProgressApi competencyProgressApi;
+
     @Autowired
     protected RequestUtilService request;
 
@@ -187,6 +192,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @Autowired
     protected UserTestRepository userTestRepository;
+
+    @Autowired
+    protected UserSshPublicKeyRepository userSshPublicKeyRepository;
 
     @Autowired
     protected ExerciseTestRepository exerciseRepository;
@@ -223,7 +231,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected void resetSpyBeans() {
         Mockito.reset(gitService, groupNotificationService, conversationNotificationService, tutorialGroupNotificationService, singleUserNotificationService,
                 websocketMessagingService, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
-                uriService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService, competencyProgressService);
+                uriService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService, competencyProgressService,
+                competencyProgressApi);
     }
 
     @Override
