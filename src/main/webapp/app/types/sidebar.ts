@@ -10,7 +10,10 @@ export type TimeGroupCategory = 'past' | 'current' | 'dueSoon' | 'future' | 'noD
 export type ExamGroupCategory = 'real' | 'test';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
 export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
-export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string, { entityData: SidebarCardElement[] }>;
+export type AccordionGroups = Record<
+    TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string,
+    { entityData: SidebarCardElement[]; isHideCount?: boolean }
+>;
 export type ChannelGroupCategory =
     | 'favoriteChannels'
     | 'generalChannels'
@@ -19,6 +22,7 @@ export type ChannelGroupCategory =
     | 'groupChats'
     | 'directMessages'
     | 'examChannels'
+    | 'savedPosts'
     | 'hiddenChannels';
 export type CollapseState = {
     [key: string]: boolean;

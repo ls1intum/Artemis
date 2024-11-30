@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.FeedbackCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.LongFeedbackTextCleanupRepository;
-import de.tum.cit.aet.artemis.assessment.repository.cleanup.ParticipantScoreCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.PlagiarismComparisonCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.RatingCleanupRepository;
 import de.tum.cit.aet.artemis.assessment.repository.cleanup.ResultCleanupRepository;
@@ -53,13 +52,10 @@ public class DataCleanupService {
 
     private final TeamScoreCleanupRepository teamScoreCleanupRepository;
 
-    private final ParticipantScoreCleanupRepository participantScoreCleanupRepository;
-
     public DataCleanupService(CleanupJobExecutionRepository cleanupJobExecutionRepository, PlagiarismComparisonCleanupRepository plagiarismComparisonCleanupRepository,
             ResultCleanupRepository resultCleanupRepository, RatingCleanupRepository ratingCleanupRepository, FeedbackCleanupRepository feedbackCleanupRepository,
             TextBlockCleanupRepository textBlockCleanupRepository, LongFeedbackTextCleanupRepository longFeedbackTextCleanupRepository,
-            StudentScoreCleanupRepository studentScoreCleanupRepository, TeamScoreCleanupRepository teamScoreCleanupRepository,
-            ParticipantScoreCleanupRepository participantScoreCleanupRepository) {
+            StudentScoreCleanupRepository studentScoreCleanupRepository, TeamScoreCleanupRepository teamScoreCleanupRepository) {
         this.resultCleanupRepository = resultCleanupRepository;
         this.ratingCleanupRepository = ratingCleanupRepository;
         this.feedbackCleanupRepository = feedbackCleanupRepository;
@@ -69,7 +65,6 @@ public class DataCleanupService {
         this.teamScoreCleanupRepository = teamScoreCleanupRepository;
         this.cleanupJobExecutionRepository = cleanupJobExecutionRepository;
         this.plagiarismComparisonCleanupRepository = plagiarismComparisonCleanupRepository;
-        this.participantScoreCleanupRepository = participantScoreCleanupRepository;
     }
 
     // TODO: offer the possibility to delete old submission versions
