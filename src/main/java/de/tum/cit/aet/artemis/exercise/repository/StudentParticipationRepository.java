@@ -291,22 +291,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.results r
                 LEFT JOIN FETCH r.submission s
-                LEFT JOIN FETCH p.submissions
-                LEFT JOIN FETCH r.assessmentNote
-            WHERE p.exercise.id = :exerciseId
-                AND (
-                    r.id = (SELECT MAX(p_r.id) FROM p.results p_r WHERE p_r.rated = TRUE)
-                    OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                    OR r IS NULL
-                )
-            """)
-    Set<StudentParticipation> findByExerciseIdWithLatestAndManualRatedResultsAndAssessmentNote(@Param("exerciseId") long exerciseId);
-
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.results r
-                LEFT JOIN FETCH r.submission s
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = :testRun
                 AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
