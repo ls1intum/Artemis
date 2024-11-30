@@ -631,7 +631,7 @@ public class ResultService {
                     StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
                     maxOccurrence, filterErrorCategories, pageable);
 
-            // 10. Process and map feedback details, calculating relative count and assigning task names
+            // Process and map feedback details, calculating relative count and assigning task names
             processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount,
                     detail.detailText(), detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
             totalPages = feedbackDetailPage.getTotalPages();
@@ -662,10 +662,10 @@ public class ResultService {
             totalPages = (int) Math.ceil((double) processedDetailsPreSort.size() / pageSize);
         }
 
-        // 11. Predefined error categories available for filtering on the client side
+        // 10. Predefined error categories available for filtering on the client side
         final List<String> ERROR_CATEGORIES = List.of("Student Error", "Ares Error", "AST Error");
 
-        // 12. Return response containing processed feedback details, task names, active test case names, and error categories
+        // 11. Return response containing processed feedback details, task names, active test case names, and error categories
         return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, totalPages), feedbackDetailPage.getTotalElements(), taskNames, activeTestCaseNames,
                 ERROR_CATEGORIES, levenshteinMaxCount);
     }
