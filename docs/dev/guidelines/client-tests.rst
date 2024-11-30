@@ -93,7 +93,7 @@ Some guidelines:
             describe('ParticipationSubmissionComponent', () => {
                 ...
 
-                beforeEach(() => {
+                beforeEach(async () => {
                     await TestBed.configureTestingModule({
                         imports: [
                             ArtemisTestModule,
