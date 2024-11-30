@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service;
+package de.tum.cit.aet.artemis.programming.service.sshuserkeys;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 

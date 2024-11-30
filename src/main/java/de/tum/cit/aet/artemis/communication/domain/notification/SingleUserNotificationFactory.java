@@ -21,6 +21,8 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_R
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_LECTURE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_EXPIRES_SOON;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_HAS_EXPIRED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_TUTOR;
@@ -49,7 +51,12 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_PLAGIARISM_CASE_STUDENT_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PLAGIARISM_CASE_VERDICT_STUDENT_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_ADDED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_ADDED_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_EXPIRES_SOON_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_EXPIRES_SOON_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_HAS_EXPIRED_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_HAS_EXPIRED_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_ASSIGNED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TEXT;
@@ -68,6 +75,7 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createPlagiarismCaseTarget;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createTutorialGroupTarget;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
@@ -155,13 +163,29 @@ public class SingleUserNotificationFactory {
         return notification;
     }
 
-    public static SingleUserNotification createNotification(UserSshPublicKey key, User recipient) {
-        return new SingleUserNotification(recipient, SSH_KEY_ADDED_TITLE, null, false, new String[] {});
-    }
-
     @NotificationPlaceholderCreator(values = { DATA_EXPORT_CREATED, DATA_EXPORT_FAILED })
     public static String[] createPlaceholdersDataExport() {
         return new String[] {};
+    }
+
+    public static SingleUserNotification createNotification(UserSshPublicKey key, NotificationType notificationType, User recipient) {
+        switch (notificationType) {
+            case SSH_KEY_ADDED -> {
+                return new SingleUserNotification(recipient, SSH_KEY_ADDED_TITLE, SSH_KEY_ADDED_TEXT, true, new String[] {});
+            }
+            case SSH_KEY_EXPIRES_SOON -> {
+                return new SingleUserNotification(recipient, SSH_KEY_EXPIRES_SOON_TITLE, SSH_KEY_EXPIRES_SOON_TEXT, true, createPlaceholdersSshKeyNotification(key));
+            }
+            case SSH_KEY_HAS_EXPIRED -> {
+                return new SingleUserNotification(recipient, SSH_KEY_HAS_EXPIRED_TITLE, SSH_KEY_HAS_EXPIRED_TEXT, true, createPlaceholdersSshKeyNotification(key));
+            }
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        }
+    }
+
+    @NotificationPlaceholderCreator(values = { SSH_KEY_EXPIRES_SOON, SSH_KEY_HAS_EXPIRED })
+    public static String[] createPlaceholdersSshKeyNotification(UserSshPublicKey key) {
+        return new String[] { key.getLabel(), key.getExpiryDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")) };
     }
 
     /**

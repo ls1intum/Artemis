@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.web.localvc.ssh;
+package de.tum.cit.aet.artemis.programming.web.sshuserkeys;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;
-import de.tum.cit.aet.artemis.programming.service.UserSshPublicKeyService;
+import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
 
 @Profile(PROFILE_LOCALVC)
 @RestController

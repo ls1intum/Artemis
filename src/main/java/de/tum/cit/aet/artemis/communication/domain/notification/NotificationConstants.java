@@ -44,6 +44,8 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGR
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.QUIZ_EXERCISE_STARTED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_ADDED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_EXPIRES_SOON;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_HAS_EXPIRED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DELETED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT;
@@ -149,6 +151,10 @@ public class NotificationConstants {
     public static final String TUTORIAL_GROUP_UNASSIGNED_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupUnassigned";
 
     public static final String SSH_KEY_ADDED_TITLE = "artemisApp.singleUserNotification.title.sshKeyAdded";
+
+    public static final String SSH_KEY_EXPIRES_SOON_TITLE = "artemisApp.singleUserNotification.title.sshKeyExpiresSoon";
+
+    public static final String SSH_KEY_HAS_EXPIRED_TITLE = "artemisApp.singleUserNotification.title.sshKeyHasExpired";
 
     // Texts
     public static final String LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TEXT = "artemisApp.groupNotification.text.liveExamExerciseUpdate";
@@ -283,6 +289,12 @@ public class NotificationConstants {
 
     public static final String CONVERSATION_DELETE_CHANNEL_TEXT = "artemisApp.singleUserNotification.text.deleteChannel";
 
+    public static final String SSH_KEY_ADDED_TEXT = "artemisApp.singleUserNotification.text.sshKeyAdded";
+
+    public static final String SSH_KEY_EXPIRES_SOON_TEXT = "artemisApp.singleUserNotification.text.sshKeyExpiresSoon";
+
+    public static final String SSH_KEY_HAS_EXPIRED_TEXT = "artemisApp.singleUserNotification.text.sshKeyHasExpired";
+
     // bidirectional map
     private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()
             .put(EXERCISE_SUBMISSION_ASSESSED, EXERCISE_SUBMISSION_ASSESSED_TITLE).put(ATTACHMENT_CHANGE, ATTACHMENT_CHANGE_TITLE).put(EXERCISE_RELEASED, EXERCISE_RELEASED_TITLE)
@@ -309,7 +321,7 @@ public class NotificationConstants {
             .put(CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_REMOVE_USER_CHANNEL_TITLE).put(CONVERSATION_DELETE_CHANNEL, CONVERSATION_DELETE_CHANNEL_TITLE)
             .put(DATA_EXPORT_CREATED, DATA_EXPORT_CREATED_TITLE).put(DATA_EXPORT_FAILED, DATA_EXPORT_FAILED_TITLE)
             .put(PROGRAMMING_REPOSITORY_LOCKS, PROGRAMMING_REPOSITORY_LOCKS_TITLE).put(PROGRAMMING_BUILD_RUN_UPDATE, PROGRAMMING_BUILD_RUN_UPDATE_TITLE)
-            .put(SSH_KEY_ADDED, SSH_KEY_ADDED_TITLE).build();
+            .put(SSH_KEY_ADDED, SSH_KEY_ADDED_TITLE).put(SSH_KEY_EXPIRES_SOON, SSH_KEY_EXPIRES_SOON_TITLE).put(SSH_KEY_HAS_EXPIRED, SSH_KEY_HAS_EXPIRED_TITLE).build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title

@@ -11,7 +11,7 @@
     <th:block th:replace="mail/notification/fragments :: greetingsFullName" />
 
     <p>
-        <span th:text="#{email.notification.sshKeyExpiry.sshKeyExpiresSoonWarning}">One of your SSH keys will expire in a few days:</span>
+        <span th:text="#{email.notification.sshKeyExpiry.sshKeysHasExpiredWarning}">One of your SSH keys has expired.</span>
     </p>
     <p>
         <span th:utext="#{email.notification.sshKeyExpiry.sshKeyLabel}">SSH key label</span>
