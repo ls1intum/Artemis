@@ -198,7 +198,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             if (participant instanceof User user) {
                 var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
                 log.info("Build failed for user {}", user.getName());
-                CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of("build_failed")));
+                CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase())));
             }
             else {
                 throw new PyrisEventProcessingException("Build failure event is not supported for team participations");
@@ -236,7 +236,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
                 var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
                 if (participant instanceof User user) {
                     var session = getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, false);
-                    CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of("progress_stalled")));
+                    CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));
                 }
                 else {
                     throw new PyrisEventProcessingException("Progress stalled event is not supported for team participations");

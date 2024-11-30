@@ -739,7 +739,7 @@ public class IrisSettingsService {
         return switch (type) {
             case PROGRESS_STALLED -> {
                 if (settings.irisChatSettings().disabledProactiveEvents() != null) {
-                    yield !settings.irisChatSettings().disabledProactiveEvents().contains(IrisEventType.PROGRESS_STALLED.getName());
+                    yield !settings.irisChatSettings().disabledProactiveEvents().contains(IrisEventType.PROGRESS_STALLED.name().toLowerCase());
                 }
                 else {
                     yield true;
@@ -747,7 +747,7 @@ public class IrisSettingsService {
             }
             case BUILD_FAILED -> {
                 if (settings.irisChatSettings().disabledProactiveEvents() != null) {
-                    yield !settings.irisChatSettings().disabledProactiveEvents().contains(IrisEventType.BUILD_FAILED.getName());
+                    yield !settings.irisChatSettings().disabledProactiveEvents().contains(IrisEventType.BUILD_FAILED.name().toLowerCase());
                 }
                 else {
                     yield true;

@@ -421,10 +421,10 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         courseSettings.setIrisChatSettings(new IrisChatSubSettings());
         courseSettings.getIrisChatSettings().setEnabled(true);
         courseSettings.getIrisChatSettings().setSelectedVariant(null);
-        courseSettings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.getName())));
+        courseSettings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));
 
         request.putWithResponseBody("/api/courses/" + course.getId() + "/raw-iris-settings", courseSettings, IrisSettings.class, HttpStatus.OK);
-        var loadedCourseSettings = request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
+        request.get("/api/courses/" + course.getId() + "/raw-iris-settings", HttpStatus.OK, IrisSettings.class);
 
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
 
@@ -433,12 +433,12 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         exerciseSettings.setIrisChatSettings(new IrisChatSubSettings());
         exerciseSettings.getIrisChatSettings().setEnabled(true);
         exerciseSettings.getIrisChatSettings().setSelectedVariant(null);
-        exerciseSettings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.getName())));
+        exerciseSettings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.name().toLowerCase())));
 
         request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/raw-iris-settings", exerciseSettings, IrisSettings.class, HttpStatus.OK);
         var loadedExerciseSettings = request.get("/api/exercises/" + programmingExercise.getId() + "/iris-settings", HttpStatus.OK, IrisCombinedSettingsDTO.class);
         // Combined settings should include the union of the disabled course events and disabled exercise events
         assertThat(loadedExerciseSettings.irisChatSettings().disabledProactiveEvents()).isNotNull()
-                .isEqualTo(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.getName(), IrisEventType.BUILD_FAILED.getName())));
+                .isEqualTo(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase(), IrisEventType.BUILD_FAILED.name().toLowerCase())));
     }
 }

@@ -155,7 +155,6 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
         submission = submissionRepository.saveAndFlush(submission);
 
         Result result = ParticipationFactory.generateResult(true, score);
-        result.setParticipation(studentParticipation);
         result.setSubmission(submission);
         result.completionDate(ZonedDateTime.now());
         result.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -259,7 +258,7 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     void testShouldNotFireProgressStalledEventWithEventDisabled() {
         // Find settings for the current exercise
         var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
-        settings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.getName())));
+        settings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase())));
         irisSettingsRepository.save(settings);
 
         createSubmissionWithScore(studentParticipation, 40);
@@ -273,7 +272,7 @@ class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
     void testShouldNotFireBuildFailedEventWhenEventSettingDisabled() {
         // Find settings for the current exercise
         var settings = irisSettingsRepository.findExerciseSettings(exercise.getId()).orElseThrow();
-        settings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.getName())));
+        settings.getIrisChatSettings().setDisabledProactiveEvents(new TreeSet<>(Set.of(IrisEventType.BUILD_FAILED.name().toLowerCase())));
         irisSettingsRepository.save(settings);
 
         irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
