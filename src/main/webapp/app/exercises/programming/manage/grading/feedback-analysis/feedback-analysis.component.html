@@ -23,7 +23,7 @@
                     <input class="form-check-input mt-0" type="checkbox" (click)="toggleLevenshtein()" [checked]="levenshtein()" style="width: 2.5rem; height: 1.25rem" />
                     <label class="ms-1 me-2 mb-0">
                         <span [jhiTranslate]="TRANSLATION_BASE + '.groupFeedback'"></span>
-                        <fa-icon size="sm" [icon]="faCircleInfo" [ngbTooltip]="TRANSLATION_BASE + '.groupFeedbackTooltip' | artemisTranslate" class="text-info"></fa-icon>
+                        <fa-icon size="sm" [icon]="faCircleQuestion" [ngbTooltip]="TRANSLATION_BASE + '.groupFeedbackTooltip' | artemisTranslate" class="btn-warning"></fa-icon>
                     </label>
                 </div>
                 <button class="btn me-2" (click)="openFilterModal()" [ngClass]="{ 'btn-secondary': selectedFiltersCount() == 0, 'btn-success': selectedFiltersCount() != 0 }">
