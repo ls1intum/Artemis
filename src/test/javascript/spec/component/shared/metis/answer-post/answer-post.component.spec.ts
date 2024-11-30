@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
-import { MockComponent, MockModule, MockPipe, ngMocks } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { By } from '@angular/platform-browser';
 import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answer-post-header/answer-post-header.component';
@@ -18,6 +18,7 @@ import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-s
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -40,6 +41,7 @@ describe('AnswerPostComponent', () => {
                 MockComponent(PostingContentComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
                 MockComponent(AnswerPostReactionsBarComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 { provide: DOCUMENT, useValue: document },

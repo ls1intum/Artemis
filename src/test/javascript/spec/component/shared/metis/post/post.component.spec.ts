@@ -39,6 +39,7 @@ import { DOCUMENT } from '@angular/common';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { Post } from 'app/entities/metis/post.model';
 import { By } from '@angular/platform-browser';
+import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -78,6 +79,7 @@ describe('PostComponent', () => {
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
                 TranslatePipeMock,
+                MockDirective(TranslateDirective),
             ],
         })
             .compileComponents()
