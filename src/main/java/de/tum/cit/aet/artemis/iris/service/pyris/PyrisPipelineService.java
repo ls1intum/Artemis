@@ -197,10 +197,11 @@ public class PyrisPipelineService {
                 var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
                 return new PyrisCourseChatPipelineExecutionDTO<>(
                     PyrisExtendedCourseDTO.of(fullCourse),
-                    learningMetricsService.getStudentCourseMetrics(session.getUser().getId(), courseId),
+                    learningMetricsApi.getStudentCourseMetrics(session.getUser().getId(), courseId),
                     generateEventPayloadFromObjectType(eventDtoClass, eventObject), // get the event payload DTO
                     pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
-                    new PyrisUserDTO(session.getUser()), executionDto.settings(), // flatten the execution dto here
+                    new PyrisUserDTO(session.getUser()),
+                    executionDto.settings(), // flatten the execution dto here
                     executionDto.initialStages()
                 );
             },
