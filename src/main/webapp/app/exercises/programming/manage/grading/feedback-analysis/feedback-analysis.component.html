@@ -16,36 +16,36 @@
 </ng-template>
 <div class="m-3">
     <div class="row m-0 justify-content-between align-items-center">
-        <h3 class="m-0 col p-0" [jhiTranslate]="TRANSLATION_BASE + '.title'" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
-        <div class="col-md-auto d-flex align-items-center position-relative">
-            <div class="d-inline-flex align-items-center ms-2 me-3">
-                <fa-icon [icon]="faCircleInfo" ngbTooltip="Placeholder" class="text-info"></fa-icon>
-            </div>
-            <div class="form-switch d-flex align-items-center me-2">
+        <div class="justify-content-between d-flex align-items-center">
+            <h3 class="m-0 p-0" [jhiTranslate]="TRANSLATION_BASE + '.title'" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
+            <div class="d-flex align-items-center">
+                <div class="form-switch d-flex align-items-center flex-md-shrink-0 me-2">
+                    <input
+                        class="form-check-input mt-0"
+                        type="checkbox"
+                        (click)="toggleLevinStein()"
+                        [checked]="levinStein()"
+                        aria-label="TRANSLATION_BASE + '.levinsteinToggle'"
+                        style="width: 2.5rem; height: 1.25rem"
+                    />
+                    <label class="ms-1 me-2 mb-0">
+                        <span>Group Feedback</span>
+                        <fa-icon size="sm" [icon]="faCircleInfo" ngbTooltip="Placeholder" class="text-info"></fa-icon>
+                    </label>
+                </div>
+                <button class="btn me-2" (click)="openFilterModal()" [ngClass]="{ 'btn-secondary': selectedFiltersCount() == 0, 'btn-success': selectedFiltersCount() != 0 }">
+                    <fa-icon [icon]="faFilter"></fa-icon>
+                    <span [jhiTranslate]="TRANSLATION_BASE + '.filter'"></span> ({{ selectedFiltersCount() }})
+                </button>
                 <input
-                    class="form-check-input"
-                    type="checkbox"
-                    (click)="toggleLevinStein()"
-                    [checked]="levinStein()"
-                    aria-label="TRANSLATION_BASE + '.levinsteinToggle'"
-                    style="width: 3rem; height: 1.25rem"
+                    type="search"
+                    class="form-control"
+                    [placeholder]="TRANSLATION_BASE + '.search' | artemisTranslate"
+                    aria-label="Search feedback"
+                    [ngModel]="searchTerm()"
+                    (ngModelChange)="search($event)"
                 />
-                <label class="ms-2 mb-0 me-2">
-                    <span>Group Feedback</span>
-                </label>
             </div>
-            <button class="btn me-2" (click)="openFilterModal()" [ngClass]="{ 'btn-secondary': selectedFiltersCount() == 0, 'btn-success': selectedFiltersCount() != 0 }">
-                <fa-icon [icon]="faFilter"></fa-icon>
-                <span [jhiTranslate]="TRANSLATION_BASE + '.filter'"></span> ({{ selectedFiltersCount() }})
-            </button>
-            <input
-                type="search"
-                class="form-control"
-                [placeholder]="TRANSLATION_BASE + '.search' | artemisTranslate"
-                aria-label="Search feedback"
-                [ngModel]="searchTerm()"
-                (ngModelChange)="search($event)"
-            />
         </div>
     </div>
     <table class="table table-striped mb-3">
@@ -70,7 +70,7 @@
                     <tr>
                         <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
                         <td>
-                            {{ item.detailText.length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailText | slice: 0 : 100) + '...' : item.detailText }}
+                            {{ item.detailText[0].length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailText[0] | slice: 0 : 100) + '...' : item.detailText[0] }}
                         </td>
                         <td>{{ item.taskName }}</td>
                         <td>{{ item.testCaseName }}</td>

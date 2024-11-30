@@ -59,7 +59,7 @@ describe('AffectedStudentsModalComponent', () => {
     });
 
     it('should handle error when loadAffected fails', async () => {
-        jest.spyOn(feedbackService, 'getParticipationForFeedbackIds').mockReturnValueOnce(Promise.reject(new Error('Error loading data')));
+        jest.spyOn(feedbackService, 'getParticipationForFeedbackDetailText').mockReturnValueOnce(Promise.reject(new Error('Error loading data')));
         const alertServiceSpy = jest.spyOn(component.alertService, 'error');
         const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 

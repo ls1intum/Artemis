@@ -72,12 +72,7 @@ export class FeedbackAnalysisComponent {
     private isFeedbackDetailChannelModalOpen = false;
 
     private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
-    readonly levinStein = signal<boolean>(false); // Signal for toggle state
-
-    toggleLevinStein(): void {
-        this.levinStein.update((current) => !current); // Toggle the signal state
-        this.loadData(); // Optionally reload data based on the toggle state
-    }
+    readonly levinStein = signal<boolean>(false);
 
     constructor() {
         effect(() => {
@@ -243,5 +238,10 @@ export class FeedbackAnalysisComponent {
         } finally {
             this.isFeedbackDetailChannelModalOpen = false;
         }
+    }
+
+    toggleLevinStein(): void {
+        this.levinStein.update((current) => !current);
+        this.loadData();
     }
 }

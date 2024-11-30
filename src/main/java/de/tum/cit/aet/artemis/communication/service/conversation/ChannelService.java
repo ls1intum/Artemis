@@ -426,7 +426,7 @@ public class ChannelService {
      * @return the created {@link Channel} object with its properties.
      * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
      */
-    public Channel createFeedbackChannel(Course course, Long exerciseId, ChannelDTO channelDTO, String feedbackDetailText, String testCaseName, User requestingUser) {
+    public Channel createFeedbackChannel(Course course, Long exerciseId, ChannelDTO channelDTO, List<String> feedbackDetailText, String testCaseName, User requestingUser) {
         Channel channelToCreate = new Channel();
         channelToCreate.setName(channelDTO.getName());
         channelToCreate.setIsPublic(channelDTO.getIsPublic());

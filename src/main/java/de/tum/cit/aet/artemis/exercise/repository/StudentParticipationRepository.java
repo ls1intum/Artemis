@@ -1396,9 +1396,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 )
                 INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
-                  AND f.detailText = :detailText
+                  AND f.detailText IN :detailText
                   AND f.testCase.testName = :testCaseName
                   AND p.testRun = FALSE
             """)
-    List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailText") String detailText, @Param("testCaseName") String testCaseName);
+    List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailText") List<String> detailText,
+            @Param("testCaseName") String testCaseName);
 }

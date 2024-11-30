@@ -146,6 +146,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
+    private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation2;
+
     private StudentParticipation studentParticipation;
 
     private final int NUMBER_OF_STUDENTS = 3;
@@ -159,6 +161,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        programmingExerciseStudentParticipation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, TEST_PREFIX + "student1");
 
         Course secondCourse = modelingExerciseUtilService.addCourseWithOneModelingExercise();
@@ -179,6 +182,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 .collect(Collectors.toCollection(ArrayList::new));
         result.setFeedbacks(feedbacks);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+
+        Result result2 = ParticipationFactory.generateResult(true, 200D).participation(programmingExerciseStudentParticipation);
+        List<Feedback> feedbacks2 = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here"))
+                .collect(Collectors.toCollection(ArrayList::new));
+        result2.setFeedbacks(feedbacks2);
+        result2.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
@@ -734,17 +743,13 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllFeedbackDetailsForExercise() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, this.programmingExerciseStudentParticipation);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
         testCase.setId(1L);
-
         Feedback feedback = new Feedback();
         feedback.setPositive(false);
         feedback.setDetailText("Some feedback");
         feedback.setTestCase(testCase);
-
-        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
         participationUtilService.addFeedbackToResult(feedback, result);
 
         String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=detailText&sortingOrder=ASCENDING"
@@ -766,11 +771,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllFeedbackDetailsForExerciseWithMultipleFeedback() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        StudentParticipation participation1 = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
-        StudentParticipation participation2 = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student2");
-        Result result1 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation1);
-        Result result2 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation2);
+        Result result1 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, this.programmingExerciseStudentParticipation);
+        Result result2 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, this.programmingExerciseStudentParticipation2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
         testCase.setId(1L);
 
@@ -822,12 +824,9 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetMaxCountForExercise() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
+        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, this.programmingExerciseStudentParticipation);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
         testCase.setId(1L);
-
         Feedback feedback = new Feedback();
         feedback.setPositive(false);
         feedback.setDetailText("Some feedback");
@@ -842,11 +841,8 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetMaxCountForExerciseWithMultipleFeedback() throws Exception {
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        StudentParticipation participation1 = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
-        StudentParticipation participation2 = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student2");
-        Result result1 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation1);
-        Result result2 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation2);
+        Result result1 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, this.programmingExerciseStudentParticipation);
+        Result result2 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, this.programmingExerciseStudentParticipation2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
         testCase.setId(1L);
 

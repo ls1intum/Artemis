@@ -486,7 +486,7 @@ public class ChannelResource extends ConversationManagementResource {
         log.debug("REST request to create feedback channel for course {} and exercise {} with properties: {}", courseId, exerciseId, feedbackChannelRequest);
 
         ChannelDTO channelDTO = feedbackChannelRequest.channel();
-        String feedbackDetailText = feedbackChannelRequest.feedbackDetailText();
+        List<String> feedbackDetailText = feedbackChannelRequest.feedbackDetailText();
         String testCaseName = feedbackChannelRequest.testCaseName();
 
         User requestingUser = userRepository.getUserWithGroupsAndAuthorities();

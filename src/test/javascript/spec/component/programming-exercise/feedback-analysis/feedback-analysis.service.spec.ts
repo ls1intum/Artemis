@@ -58,10 +58,10 @@ describe('FeedbackAnalysisService', () => {
                 sortedColumn: 'detailText',
             };
             const filters = { tasks: [], testCases: [], occurrence: [], errorCategories: [] };
-            const responsePromise = service.search(pageable, { exerciseId: 1, filters });
+            const responsePromise = service.search(pageable, false, { exerciseId: 1, filters });
 
             const req = httpMock.expectOne(
-                'api/exercises/1/feedback-details?page=1&pageSize=10&searchTerm=&sortingOrder=ASCENDING&sortedColumn=detailText&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=',
+                'api/exercises/1/feedback-details?page=1&pageSize=10&searchTerm=&sortingOrder=ASCENDING&sortedColumn=detailText&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&levinStein=false',
             );
             expect(req.request.method).toBe('GET');
             req.flush(feedbackAnalysisResponseMock);
@@ -84,7 +84,7 @@ describe('FeedbackAnalysisService', () => {
         });
     });
 
-    describe('getParticipationForFeedbackIds', () => {
+    describe('getParticipationForFeedbackDetailText', () => {
         it('should retrieve paginated participation details for specified feedback IDs', async () => {
             const feedbackIds = '1, 2';
             const pageable = {
@@ -116,9 +116,11 @@ describe('FeedbackAnalysisService', () => {
                 totalItems: 2,
             };
 
-            const responsePromise = service.getParticipationForFeedbackIds(1, feedbackIds, 'Placeholder', pageable);
+            const responsePromise = service.getParticipationForFeedbackDetailText(1, feedbackIds, 'Placeholder', pageable);
 
-            const req = httpMock.expectOne('api/exercises/1/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING');
+            const req = httpMock.expectOne(
+                'api/exercises/1/feedback-details-participation?page=1&pageSize=10&sortedColumn=participationId&sortingOrder=ASCENDING&detailText=1,%202&testCaseName=Placeholder',
+            );
             expect(req.request.method).toBe('GET');
             req.flush(participationResponseMock);
 

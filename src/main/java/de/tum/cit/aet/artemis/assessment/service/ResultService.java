@@ -642,7 +642,7 @@ public class ResultService {
             List<FeedbackDetailDTO> allFeedbackDetails = feedbackDetailPage.getContent();
 
             // Apply Levenshtein-based grouping and aggregation
-            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingLevenshtein(allFeedbackDetails, 0.9);
+            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingLevenshtein(allFeedbackDetails, 0.5);
 
             // Apply manual pagination
             int page = data.getPage();
@@ -667,10 +667,12 @@ public class ResultService {
     }
 
     private Comparator<FeedbackDetailDTO> getComparatorForFeedbackDetails(FeedbackPageableDTO search) {
-        Map<String, Comparator<FeedbackDetailDTO>> comparators = Map.of("count", Comparator.comparingLong(FeedbackDetailDTO::count), "detailText",
-                Comparator.comparing(FeedbackDetailDTO::detailText, String.CASE_INSENSITIVE_ORDER), "testCaseName",
-                Comparator.comparing(FeedbackDetailDTO::testCaseName, String.CASE_INSENSITIVE_ORDER), "taskName", Comparator.comparing(FeedbackDetailDTO::taskName),
-                "relativeCount", Comparator.comparingDouble(FeedbackDetailDTO::relativeCount));
+        Map<String, Comparator<FeedbackDetailDTO>> comparators = Map.of("count", Comparator.comparingLong(FeedbackDetailDTO::count), "detailTexts",
+                Comparator.comparing(detail -> detail.detailText().isEmpty() ? "" : detail.detailText().getFirst(), // Sort by the first element of the list
+                        String.CASE_INSENSITIVE_ORDER),
+                "testCaseName", Comparator.comparing(FeedbackDetailDTO::testCaseName, String.CASE_INSENSITIVE_ORDER), "taskName",
+                Comparator.comparing(FeedbackDetailDTO::taskName, String.CASE_INSENSITIVE_ORDER), "relativeCount", Comparator.comparingDouble(FeedbackDetailDTO::relativeCount));
+
         Comparator<FeedbackDetailDTO> comparator = comparators.getOrDefault(search.getSortedColumn(), (a, b) -> 0);
         return search.getSortingOrder() == SortingOrder.ASCENDING ? comparator : comparator.reversed();
     }
@@ -686,7 +688,7 @@ public class ResultService {
 
             FeedbackDetailDTO base = feedbackDetails.get(i);
             List<String> aggregatedTexts = new ArrayList<>();
-            aggregatedTexts.add(base.detailText());
+            aggregatedTexts.add(base.detailText().getFirst()); // Add the primary text
             long totalCount = base.count();
 
             for (int j = i + 1; j < feedbackDetails.size(); j++) {
@@ -698,11 +700,11 @@ public class ResultService {
 
                 // Ensure feedbacks have the same testCaseName and taskName
                 if (base.testCaseName().equals(compare.testCaseName()) && base.taskName().equals(compare.taskName())) {
-                    double similarity = NameSimilarity.levenshteinSimilarity(base.detailText(), compare.detailText());
+                    double similarity = NameSimilarity.levenshteinSimilarity(base.detailText().getFirst(), compare.detailText().getFirst());
 
                     if (similarity > similarityThreshold) {
                         // Merge the feedbacks
-                        aggregatedTexts.add(compare.detailText());
+                        aggregatedTexts.add(compare.detailText().getFirst());
                         totalCount += compare.count();
                         processedIndices.add(j);
                     }
@@ -710,10 +712,7 @@ public class ResultService {
             }
 
             // Add aggregated feedback entry
-            aggregatedList.add(new FeedbackDetailDTO(totalCount, 0, // Relative count will be calculated later
-                    String.join(", ", aggregatedTexts), // Join all similar feedback texts
-                    base.testCaseName(), base.taskName(), base.errorCategory()));
-
+            aggregatedList.add(new FeedbackDetailDTO(totalCount, 0, aggregatedTexts, base.testCaseName(), base.taskName(), base.errorCategory()));
             processedIndices.add(i);
         }
 

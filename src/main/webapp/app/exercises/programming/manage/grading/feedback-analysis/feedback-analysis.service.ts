@@ -15,7 +15,7 @@ export interface FeedbackAnalysisResponse {
 export interface FeedbackDetail {
     count: number;
     relativeCount: number;
-    detailText: string;
+    detailText: string[];
     testCaseName: string;
     taskName: string;
     errorCategory: string;
@@ -30,7 +30,7 @@ export interface FeedbackAffectedStudentDTO {
 }
 export interface FeedbackChannelRequestDTO {
     channel: ChannelDTO;
-    feedbackDetailText: string;
+    feedbackDetailText: string[];
     testCaseName: string;
 }
 @Injectable()
@@ -55,7 +55,7 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
         return this.get<number>(`exercises/${exerciseId}/feedback-details-max-count`);
     }
 
-    async getParticipationForFeedbackIds(
+    async getParticipationForFeedbackDetailText(
         exerciseId: number,
         detailText: string,
         testCaseName: string,

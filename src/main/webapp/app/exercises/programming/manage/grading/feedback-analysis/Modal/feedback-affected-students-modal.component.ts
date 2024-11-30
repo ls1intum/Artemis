@@ -45,7 +45,12 @@ export class AffectedStudentsModalComponent {
         };
 
         try {
-            const response = await this.feedbackService.getParticipationForFeedbackIds(this.exerciseId(), feedbackDetail.detailText, feedbackDetail.testCaseName, pageable);
+            const response = await this.feedbackService.getParticipationForFeedbackDetailText(
+                this.exerciseId(),
+                feedbackDetail.detailText[0],
+                feedbackDetail.testCaseName,
+                pageable,
+            );
             this.participation.set(response);
         } catch (error) {
             this.alertService.error(this.TRANSLATION_BASE + '.error');

@@ -920,7 +920,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
 
-        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, "Sample feedback text", "Sample testName");
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
         String BASE_ENDPOINT = "api/courses/{courseId}/{exerciseId}/feedback-channel";
 
@@ -944,7 +944,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
 
-        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, "Sample feedback text", "Sample testName");
+        FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
         String BASE_ENDPOINT = "/api/courses/{courseId}/{exerciseId}/feedback-channel";
 
