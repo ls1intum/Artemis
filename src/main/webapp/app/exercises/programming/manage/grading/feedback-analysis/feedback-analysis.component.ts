@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { faCircleInfo, faFilter, faMessage, faSort, faSortDown, faSortUp, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo, faFilter, faMessage, faSort, faSortDown, faSortUp, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { facDetails } from '../../../../../../content/icons/icons';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
@@ -57,6 +57,8 @@ export class FeedbackAnalysisComponent {
     readonly faCircleInfo = faCircleInfo;
     readonly SortingOrder = SortingOrder;
     readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 200;
+    readonly faSpinner = faSpinner;
+    readonly isLoading = signal<boolean>(false);
 
     readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
     readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
@@ -97,6 +99,7 @@ export class FeedbackAnalysisComponent {
             filterErrorCategories: this.errorCategories(),
         };
 
+        this.isLoading.set(true);
         try {
             const response = await this.feedbackAnalysisService.search(state, this.levenshtein(), {
                 exerciseId: this.exerciseId(),
@@ -112,8 +115,11 @@ export class FeedbackAnalysisComponent {
             this.taskNames.set(response.taskNames);
             this.testCaseNames.set(response.testCaseNames);
             this.errorCategories.set(response.errorCategories);
+            this.maxCount.set(response.levenshteinMaxCount);
         } catch (error) {
             this.alertService.error(this.TRANSLATION_BASE + '.error');
+        } finally {
+            this.isLoading.set(false);
         }
     }
 
@@ -156,7 +162,11 @@ export class FeedbackAnalysisComponent {
         const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY);
         const savedErrorCategories = this.localStorage.retrieve(this.FILTER_ERROR_CATEGORIES_KEY);
         this.minCount.set(0);
-        this.maxCount.set(await this.feedbackAnalysisService.getMaxCount(this.exerciseId()));
+        if (this.levenshtein()) {
+            this.maxCount.set(this.maxCount());
+        } else {
+            this.maxCount.set(await this.feedbackAnalysisService.getMaxCount(this.exerciseId()));
+        }
 
         const modalRef = this.modalService.open(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
 

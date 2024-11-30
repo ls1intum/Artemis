@@ -575,9 +575,10 @@ public class ResultService {
      * - The result is paginated according to the provided page number and page size.
      * Additionally one can group by the Levenshtein distance of the feedback detail text.
      *
-     * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
-     * @param data       The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters
-     *                       (task names, test cases, occurrence range, error categories).
+     * @param exerciseId  The ID of the exercise for which feedback details should be retrieved.
+     * @param data        The {@link FeedbackPageableDTO} containing page number, page size, search term, sorting options, and filtering parameters
+     *                        (task names, test cases, occurrence range, error categories).
+     * @param levenshtein The flag to enable Levenshtein-based grouping and aggregation of feedback details.
      * @return A {@link FeedbackAnalysisResponseDTO} object containing:
      *         - A {@link SearchResultPageDTO} of paginated feedback details.
      *         - The total number of distinct results for the exercise.
@@ -624,6 +625,7 @@ public class ResultService {
         final Page<FeedbackDetailDTO> feedbackDetailPage;
         List<FeedbackDetailDTO> processedDetails;
         int totalPages = 0;
+        long levenshteinMaxCount = 0;
         if (levenshtein.equals("false")) {
             feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
                     StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
@@ -645,6 +647,7 @@ public class ResultService {
             // Apply Levenshtein-based grouping and aggregation with a similarity threshold of 90%
             List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingLevenshtein(allFeedbackDetails, 0.9);
 
+            levenshteinMaxCount = aggregatedFeedbackDetails.stream().mapToLong(FeedbackDetailDTO::count).max().orElse(0);
             // Apply manual pagination
             int page = data.getPage();
             int pageSize = data.getPageSize();
@@ -664,7 +667,7 @@ public class ResultService {
 
         // 12. Return response containing processed feedback details, task names, active test case names, and error categories
         return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, totalPages), feedbackDetailPage.getTotalElements(), taskNames, activeTestCaseNames,
-                ERROR_CATEGORIES);
+                ERROR_CATEGORIES, levenshteinMaxCount);
     }
 
     private Comparator<FeedbackDetailDTO> getComparatorForFeedbackDetails(FeedbackPageableDTO search) {
@@ -741,9 +744,10 @@ public class ResultService {
      * datasets.
      * <br>
      *
-     * @param exerciseId for which the affected student participation data is requested.
-     * @param detailText used to filter the participation to only those affected by specific feedback entries.
-     * @param data       A {@link PageableSearchDTO} object containing pagination and sorting parameters.
+     * @param exerciseId   for which the affected student participation data is requested.
+     * @param detailText   used to filter the participation to only those affected by specific feedback entries.
+     * @param data         A {@link PageableSearchDTO} object containing pagination and sorting parameters.
+     * @param testCaseName used to filter the participation to only those feedbacks for a specific testCaseName.
      * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
     public Page<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackText(long exerciseId, List<String> detailText, String testCaseName, PageableSearchDTO<String> data) {

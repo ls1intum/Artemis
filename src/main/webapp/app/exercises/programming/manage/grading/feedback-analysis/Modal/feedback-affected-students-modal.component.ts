@@ -5,6 +5,7 @@ import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } f
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { PageableResult, PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-affected-students-modal',
@@ -23,6 +24,8 @@ export class AffectedStudentsModalComponent {
     page = signal<number>(1);
     pageSize = signal<number>(10);
     readonly collectionsSize = computed(() => this.participation().totalPages * this.pageSize());
+    readonly faSpinner = faSpinner;
+    readonly isLoading = signal<boolean>(false);
 
     activeModal = inject(NgbActiveModal);
     feedbackService = inject(FeedbackAnalysisService);
@@ -45,11 +48,14 @@ export class AffectedStudentsModalComponent {
             sortingOrder: SortingOrder.ASCENDING,
         };
 
+        this.isLoading.set(true);
         try {
             const response = await this.feedbackService.getParticipationForFeedbackDetailText(this.exerciseId(), feedbackDetail.detailText, feedbackDetail.testCaseName, pageable);
             this.participation.set(response);
         } catch (error) {
             this.alertService.error(this.TRANSLATION_BASE + '.error');
+        } finally {
+            this.isLoading.set(false);
         }
     }
 

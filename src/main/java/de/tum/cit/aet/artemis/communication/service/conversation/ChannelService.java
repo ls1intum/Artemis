@@ -423,6 +423,7 @@ public class ChannelService {
      * @param channelDTO         containing the properties of the channel to be created, such as name, description, and visibility.
      * @param feedbackDetailText used to identify the students affected by the feedback.
      * @param requestingUser     initiating the channel creation request.
+     * @param testCaseName       to filter student submissions according to a specific feedback
      * @return the created {@link Channel} object with its properties.
      * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
      */

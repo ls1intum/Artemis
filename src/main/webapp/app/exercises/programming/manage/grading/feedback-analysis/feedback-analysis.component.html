@@ -51,34 +51,42 @@
                 <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'errorCategory', label: TRANSLATION_BASE + '.errorCategory', colSize: 'col-1' }"></ng-container>
             </tr>
         </thead>
-        <tbody class="table-group-divider">
-            @if (!content().resultsOnPage) {
-                <tr>
-                    <td colspan="6">
-                        <ng-container *ngTemplateOutlet="emptyTableTemplate"></ng-container>
-                    </td>
-                </tr>
-            } @else {
-                @for (item of content().resultsOnPage; track item) {
+        @if (isLoading()) {
+            <div class="row justify-content-center p-2">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only"></span>
+                </div>
+            </div>
+        } @else {
+            <tbody class="table-group-divider">
+                @if (!content().resultsOnPage) {
                     <tr>
-                        <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
-                        <td>
-                            {{ item.detailText[0].length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailText[0] | slice: 0 : 100) + '...' : item.detailText[0] }}
-                        </td>
-                        <td>{{ item.taskName }}</td>
-                        <td>{{ item.testCaseName }}</td>
-                        <td>{{ item.errorCategory }}</td>
-                        <td class="text-center">
-                            <fa-icon [icon]="facDetails" class="ms-2 clickable" (click)="openFeedbackModal(item)"></fa-icon>
-                            <fa-icon [icon]="faUsers" class="ms-2 clickable" (click)="openAffectedStudentsModal(item)"></fa-icon>
-                            @if (isCommunicationEnabled()) {
-                                <fa-icon [icon]="faMessage" class="ms-2 clickable" (click)="openFeedbackDetailChannelModal(item)"></fa-icon>
-                            }
+                        <td colspan="6">
+                            <ng-container *ngTemplateOutlet="emptyTableTemplate"></ng-container>
                         </td>
                     </tr>
+                } @else {
+                    @for (item of content().resultsOnPage; track item) {
+                        <tr>
+                            <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
+                            <td>
+                                {{ item.detailText[0].length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailText[0] | slice: 0 : 100) + '...' : item.detailText[0] }}
+                            </td>
+                            <td>{{ item.taskName }}</td>
+                            <td>{{ item.testCaseName }}</td>
+                            <td>{{ item.errorCategory }}</td>
+                            <td class="text-center">
+                                <fa-icon [icon]="facDetails" class="ms-2 clickable" (click)="openFeedbackModal(item)"></fa-icon>
+                                <fa-icon [icon]="faUsers" class="ms-2 clickable" (click)="openAffectedStudentsModal(item)"></fa-icon>
+                                @if (isCommunicationEnabled()) {
+                                    <fa-icon [icon]="faMessage" class="ms-2 clickable" (click)="openFeedbackDetailChannelModal(item)"></fa-icon>
+                                }
+                            </td>
+                        </tr>
+                    }
                 }
-            }
-        </tbody>
+            </tbody>
+        }
     </table>
     <div class="d-flex flex-column align-items-end mt-2">
         <ngb-pagination [collectionSize]="collectionsSize()" [pageSize]="pageSize()" [page]="page()" (pageChange)="setPage($event)" size="sm" [maxSize]="5"></ngb-pagination>

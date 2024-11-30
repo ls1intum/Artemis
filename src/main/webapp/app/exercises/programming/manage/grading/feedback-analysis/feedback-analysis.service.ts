@@ -11,6 +11,7 @@ export interface FeedbackAnalysisResponse {
     taskNames: string[];
     testCaseNames: string[];
     errorCategories: string[];
+    levenshteinMaxCount: number;
 }
 export interface FeedbackDetail {
     count: number;
