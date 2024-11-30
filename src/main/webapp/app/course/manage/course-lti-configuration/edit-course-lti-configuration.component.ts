@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { finalize } from 'rxjs';
@@ -19,6 +19,11 @@ import { combineLatest } from 'rxjs';
     templateUrl: './edit-course-lti-configuration.component.html',
 })
 export class EditCourseLtiConfigurationComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private router = inject(Router);
+    private ltiConfigurationService = inject(LtiConfigurationService);
+
     @ViewChild('scrollableContent') scrollableContent: ElementRef;
 
     course: Course;
@@ -36,13 +41,6 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     // Icons
     faBan = faBan;
     faSave = faSave;
-
-    constructor(
-        private route: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private router: Router,
-        private ltiConfigurationService: LtiConfigurationService,
-    ) {}
 
     /**
      * Gets the configuration for the course encoded in the route and prepares the form
