@@ -224,7 +224,7 @@ Some guidelines:
             let someComponentFixture: ComponentFixture<SomeComponent>;
             let someComponent: SomeComponent;
 
-            beforeEach(() => {
+            beforeEach(async () => {
                 await TestBed.configureTestingModule({
                     imports: [SomeComponent],
                     providers: [
