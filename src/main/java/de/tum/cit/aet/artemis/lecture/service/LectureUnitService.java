@@ -27,11 +27,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -65,24 +65,24 @@ public class LectureUnitService {
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
-    private final CourseCompetencyRepository courseCompetencyRepository;
+    private final CourseCompetencyApi courseCompetencyApi;
 
-    private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
+    private final CompetencyRelationApi competencyRelationApi;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            FileService fileService, SlideRepository slideRepository, Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressService competencyProgressService,
-            CourseCompetencyRepository courseCompetencyRepository, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
+            FileService fileService, SlideRepository slideRepository, Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressApi competencyProgressApi,
+            CourseCompetencyApi courseCompetencyApi, CompetencyRelationApi competencyRelationApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.fileService = fileService;
         this.slideRepository = slideRepository;
         this.pyrisWebhookService = pyrisWebhookService;
-        this.courseCompetencyRepository = courseCompetencyRepository;
-        this.competencyProgressService = competencyProgressService;
-        this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
+        this.courseCompetencyApi = courseCompetencyApi;
+        this.competencyProgressApi = competencyProgressApi;
+        this.competencyRelationApi = competencyRelationApi;
     }
 
     /**
@@ -183,7 +183,7 @@ public class LectureUnitService {
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competency progress objects
-            competencyProgressService.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty());
+            competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty());
         }
     }
 
@@ -196,7 +196,7 @@ public class LectureUnitService {
     public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<CompetencyLectureUnitLink> lectureUnitLinks) {
         lectureUnitLinks.forEach(link -> link.setCompetency(competency));
         competency.setLectureUnitLinks(lectureUnitLinks);
-        courseCompetencyRepository.save(competency);
+        courseCompetencyApi.save(competency);
     }
 
     /**
@@ -206,7 +206,7 @@ public class LectureUnitService {
      * @param competency       competency to remove
      */
     public void removeCompetency(Set<CompetencyLectureUnitLink> lectureUnitLinks, CourseCompetency competency) {
-        competencyLectureUnitLinkRepository.deleteAll(lectureUnitLinks);
+        competencyRelationApi.deleteAllLectureUnitLinks(lectureUnitLinks);
         competency.getLectureUnitLinks().removeAll(lectureUnitLinks);
     }
 
@@ -286,7 +286,7 @@ public class LectureUnitService {
         if (Hibernate.isInitialized(links) && links != null && !links.isEmpty()) {
             savedLectureUnit.setCompetencyLinks(links);
             reconnectCompetencyLectureUnitLinks(savedLectureUnit);
-            savedLectureUnit.setCompetencyLinks(new HashSet<>(competencyLectureUnitLinkRepository.saveAll(links)));
+            savedLectureUnit.setCompetencyLinks(new HashSet<>(competencyRelationApi.saveAllLectureUnitLinks(links)));
         }
 
         return savedLectureUnit;
