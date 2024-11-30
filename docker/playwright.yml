@@ -26,7 +26,11 @@ services:
             FAST_TEST_TIMEOUT_SECONDS: '${bamboo_fast_test_timeout_seconds}'
         command: >
           sh -c '
+          ssh-keygen -t rsa -b 2048 -f ~/.ssh/id_rsa -q -N "";
+          ssh-keyscan -H -p 7921 artemis-app >> ~/.ssh/known_hosts;
           cd /app/artemis/src/test/playwright &&
+          mkdir -p ssh-keys;
+          cp ~/.ssh/id_rsa.pub ./ssh-keys/id_rsa.pub;
           chmod 777 /root &&
           npm ci &&
           npm run playwright:setup &&

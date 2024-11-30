@@ -5,11 +5,12 @@ import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/
 import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
 import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
-import { ExerciseCommit, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
+import { BASE_API, ExerciseCommit, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
 import { test } from '../../../support/fixtures';
-import { Page, expect } from '@playwright/test';
+import { BrowserContext, Page, expect } from '@playwright/test';
 import { gitClient } from '../../../support/pageobjects/exercises/programming/GitClient';
 import * as fs from 'fs/promises';
+import path from 'path';
 import { SimpleGit } from 'simple-git';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { createFileWithContent } from '../../../support/utils';
@@ -108,6 +109,15 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
                 'Solution',
                 GitCloneMethod.httpsWithToken,
             );
+        });
+
+        test('Makes a submission using SSH git', async ({ page, programmingExerciseOverview }) => {
+            await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+            await makeGitExerciseSubmission(page, programmingExerciseOverview, course, exercise, studentOne, javaAllSuccessfulSubmission, 'Solution', GitCloneMethod.ssh);
+        });
+
+        test.afterEach('Delete SSH key', async ({ accountManagementAPIRequests }) => {
+            await accountManagementAPIRequests.deleteSshPublicKey();
         });
     });
 
@@ -260,6 +270,14 @@ async function makeGitExerciseSubmission(
     cloneMethod: GitCloneMethod = GitCloneMethod.https,
 ) {
     await programmingExerciseOverview.openCloneMenu(cloneMethod);
+    if (cloneMethod == GitCloneMethod.ssh) {
+        await expect(programmingExerciseOverview.getCloneUrlButton()).toBeDisabled();
+        const sshKeyNotFoundAlert = page.locator('.alert', { hasText: 'To use ssh, you need to add an ssh key to your account' });
+        await expect(sshKeyNotFoundAlert).toBeVisible();
+        await setupSSHCredentials(page.context());
+        await page.reload();
+        await programmingExerciseOverview.openCloneMenu(cloneMethod);
+    }
     let repoUrl = await programmingExerciseOverview.copyCloneUrl();
     if (process.env.CI === 'true' && cloneMethod == GitCloneMethod.https) {
         repoUrl = repoUrl.replace('localhost', 'artemis-app');
@@ -272,11 +290,25 @@ async function makeGitExerciseSubmission(
     const urlParts = repoUrl.split('/');
     const repoName = urlParts[urlParts.length - 1];
     const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);
+    console.log(`Cloned repository successfully. Pushing files...`);
     await pushGitSubmissionFiles(exerciseRepo, repoName, student, submission, commitMessage);
     await fs.rmdir(`./test-exercise-repos/${repoName}`, { recursive: true });
     await page.goto(`courses/${course.id}/exercises/${exercise.id!}`);
     const resultScore = await programmingExerciseOverview.getResultScore();
     await expect(resultScore.getByText(submission.expectedResult)).toBeVisible();
+}
+
+async function setupSSHCredentials(context: BrowserContext) {
+    const page = await context.newPage();
+    const projectRoot = process.cwd();
+    const sshKeyPath = path.join(projectRoot, 'ssh-keys', 'id_rsa.pub');
+    const sshKey = await fs.readFile(sshKeyPath, 'utf8');
+    await page.goto('user-settings/ssh');
+    await page.getByTestId('addNewSshKeyButton').click();
+    await page.getByTestId('sshKeyField').fill(sshKey!);
+    const responsePromise = page.waitForResponse(`${BASE_API}/account/ssh-public-key`);
+    await page.getByTestId('saveSshKeyButton').click();
+    await responsePromise;
 }
 
 /**

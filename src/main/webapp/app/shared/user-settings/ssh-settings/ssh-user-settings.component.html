@@ -22,6 +22,7 @@
                         [btnSize]="ButtonSize.MEDIUM"
                         [title]="'artemisApp.userSettings.sshSettingsPage.addNewSshKey'"
                         (onClick)="showSshKey = !showSshKey"
+                        data-testid="addNewSshKeyButton"
                     />
                 </div>
             </div>
@@ -107,7 +108,7 @@
 
                 <dd>
                     <p style="font-size: smaller" jhiTranslate="artemisApp.userSettings.sshSettingsPage.key"></p>
-                    <textarea style="resize: none" class="form-control" rows="10" [readonly]="isKeyReadonly" [(ngModel)]="sshKey"></textarea>
+                    <textarea style="resize: none" class="form-control" data-testid="sshKeyField" rows="10" [readonly]="isKeyReadonly" [(ngModel)]="sshKey"></textarea>
                 </dd>
 
                 <div class="d-flex flex-wrap mb-4">
@@ -127,6 +128,7 @@
                                 [icon]="faSave"
                                 [title]="'artemisApp.userSettings.sshSettingsPage.saveSshKey'"
                                 (onClick)="saveSshKey()"
+                                data-testid="saveSshKeyButton"
                             />
                         </div>
                         <div class="btn-group" role="group" aria-label="Actions">

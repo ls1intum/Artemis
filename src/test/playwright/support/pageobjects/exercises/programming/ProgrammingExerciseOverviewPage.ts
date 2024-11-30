@@ -46,7 +46,6 @@ export class ProgrammingExerciseOverviewPage {
         await this.page.locator('.popover-body').waitFor({ state: 'visible' });
         await this.page.locator('.https-or-ssh-button').click();
         await this.page.locator(gitCloneMethodSelector[cloneMethod]).click();
-        return await this.page.locator('.clone-url').innerText();
     }
 
     async getCloneUrl() {
@@ -55,7 +54,7 @@ export class ProgrammingExerciseOverviewPage {
 
     async copyCloneUrl() {
         await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-        await this.page.getByTestId('copyRepoUrlButton').click();
+        await this.getCloneUrlButton().click();
         return await this.page.evaluate(async () => {
             return await navigator.clipboard.readText();
         });
@@ -67,6 +66,10 @@ export class ProgrammingExerciseOverviewPage {
 
     getExerciseDetails() {
         return this.page.locator('#course-exercise-details');
+    }
+
+    getCloneUrlButton() {
+        return this.page.getByTestId('copyRepoUrlButton');
     }
 }
 

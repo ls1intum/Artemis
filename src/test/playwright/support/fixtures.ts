@@ -67,6 +67,7 @@ import { QuizExerciseOverviewPage } from './pageobjects/exercises/quiz/QuizExerc
 import { QuizExerciseParticipationPage } from './pageobjects/exercises/quiz/QuizExerciseParticipationPage';
 import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
+import { AccountManagementAPIRequests } from './requests/AccountManagementAPIRequests';
 
 /*
  * Define custom types for fixtures
@@ -141,6 +142,7 @@ export type ArtemisPageObjects = {
 };
 
 export type ArtemisRequests = {
+    accountManagementAPIRequests: AccountManagementAPIRequests;
     courseManagementAPIRequests: CourseManagementAPIRequests;
     userManagementAPIRequests: UserManagementAPIRequests;
     exerciseAPIRequests: ExerciseAPIRequests;
@@ -360,6 +362,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     exerciseTeams: async ({ page }, use) => {
         await use(new ExerciseTeamsPage(page));
+    },
+    accountManagementAPIRequests: async ({ page }, use) => {
+        await use(new AccountManagementAPIRequests(page));
     },
     courseManagementAPIRequests: async ({ page }, use) => {
         await use(new CourseManagementAPIRequests(page));
