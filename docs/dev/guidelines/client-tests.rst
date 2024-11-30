@@ -18,7 +18,7 @@ The most basic test looks similar to this:
         let someComponentFixture: ComponentFixture<SomeComponent>;
         let someComponent: SomeComponent;
 
-        beforeEach(() => {
+        beforeEach(async () => {
             await TestBed.configureTestingModule({
                 imports: [
                     SomeComponent,
