@@ -13,6 +13,7 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_R
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_LECTURE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_ADDED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_TUTOR;
@@ -33,6 +34,7 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_REPLY_FOR_EXAM_POST_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_ADDED_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.findCorrespondingNotificationTitleOrThrow;
 import static de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsCommunicationChannel.WEBAPP;
@@ -71,6 +73,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 @Profile(PROFILE_CORE)
@@ -145,6 +148,7 @@ public class SingleUserNotificationService {
                 createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType, ((NewReplyNotificationSubject) notificationSubject).user,
                         ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, typeSpecificInformation);
+            case SSH_KEY_ADDED -> createNotification((UserSshPublicKey) notificationSubject, typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
     }
@@ -254,6 +258,16 @@ public class SingleUserNotificationService {
      */
     public void notifyUserAboutDataExportFailure(DataExport dataExport) {
         notifyRecipientWithNotificationType(dataExport, DATA_EXPORT_FAILED, dataExport.getUser(), null);
+    }
+
+    /**
+     * Notify user about the addition of an SSH key in the settings
+     *
+     * @param recipient the user to whose account the SSH key was added
+     * @param key       the key which was added
+     */
+    public void notifyUserAboutNewlyAddedSshKey(User recipient, UserSshPublicKey key) {
+        notifyRecipientWithNotificationType(key, SSH_KEY_ADDED, recipient, null);
     }
 
     /**
@@ -526,7 +540,7 @@ public class SingleUserNotificationService {
     }
 
     private boolean shouldNotificationBeSaved(SingleUserNotification notification) {
-        if (Objects.equals(notification.getTitle(), CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE)) {
+        if (Objects.equals(notification.getTitle(), CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE) || Objects.equals(notification.getTitle(), SSH_KEY_ADDED_TITLE)) {
             return false;
         }
         else if (Objects.equals(notification.getTitle(), CONVERSATION_CREATE_GROUP_CHAT_TITLE) || Objects.equals(notification.getTitle(), CONVERSATION_DELETE_CHANNEL_TITLE)
