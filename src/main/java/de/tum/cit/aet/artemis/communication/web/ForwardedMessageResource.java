@@ -51,10 +51,10 @@ public class ForwardedMessageResource {
     /**
      * POST /forwarded-messages : Create a new forwarded message.
      *
-     * @param forwardedMessage the forwarded message to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new forwarded message,
-     *         or with status 400 (Bad Request) if the forwarded message has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @param forwardedMessage the forwarded message to create.
+     * @return the ResponseEntity with status 201 (Created) and with the body containing the new forwarded message,
+     *         or with status 400 (Bad Request) if the forwarded message already has an ID.
+     * @throws BadRequestAlertException if the forwarded message already has an ID.
      */
     @PostMapping("/forwarded-messages")
     public ResponseEntity<ForwardedMessageDTO> createForwardedMessage(@RequestBody ForwardedMessage forwardedMessage) throws URISyntaxException {
@@ -66,6 +66,15 @@ public class ForwardedMessageResource {
         return ResponseEntity.created(new URI("/api/forwarded-messages/" + savedMessage.getId())).body(dto);
     }
 
+    /**
+     * GET /forwarded-messages : Retrieve forwarded messages grouped by their destination IDs.
+     *
+     * @param ids  a set of destination IDs (either post or answer IDs) for which forwarded messages should be retrieved.
+     * @param type the type of destination ('post' or 'answer') to specify whether the IDs belong to posts or answers.
+     * @return the ResponseEntity with status 200 (OK) and a list of ForwardedMessagesGroupDTO objects,
+     *         where each object contains a destination ID and the associated forwarded messages.
+     * @throws BadRequestAlertException if the type parameter is invalid or unsupported.
+     */
     @GetMapping("/forwarded-messages")
     public ResponseEntity<List<ForwardedMessagesGroupDTO>> getForwardedMessages(@RequestParam Set<Long> ids, @RequestParam String type) {
 

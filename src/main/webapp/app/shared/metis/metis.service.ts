@@ -795,8 +795,10 @@ export class MetisService implements OnDestroy {
                 return forkJoin(createForwardedMessageObservables).pipe(
                     tap((createdForwardedMessages: ForwardedMessage[]) => {
                         if (targetConversation.id === this.currentConversation?.id) {
-                            this.cachedPosts = [createdPostBody, ...this.cachedPosts];
-                            this.posts$.next(this.cachedPosts);
+                            const existingPostIndex = this.cachedPosts.findIndex((post) => post.id === createdPostBody.id);
+                            if (existingPostIndex === -1) {
+                                this.cachedPosts = [createdPostBody, ...this.cachedPosts];
+                            }
 
                             createdForwardedMessages.forEach((fm) => {
                                 const postIndex = this.cachedPosts.findIndex((post) => post.id === fm.destinationPost?.id);
