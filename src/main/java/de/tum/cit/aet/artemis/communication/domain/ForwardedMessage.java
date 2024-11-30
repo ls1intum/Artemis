@@ -15,19 +15,20 @@ import org.hibernate.annotations.Check;
 
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+
 @Entity
 @Table(name = "forwarded_message")
 @Check(constraints = "((destination_post_id IS NOT NULL AND destination_answer_id IS NULL) OR (destination_post_id IS NULL AND destination_answer_id IS NOT NULL))")
-public class ForwardedMessage {
+public class ForwardedMessage extends DomainObject {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
-    @NotNull
     @Column(name = "source_id", nullable = false)
-    private Long sourceId;
+    private long sourceId;
 
     @NotNull
     @Enumerated

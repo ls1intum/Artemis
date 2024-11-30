@@ -717,21 +717,54 @@ export class MetisService implements OnDestroy {
         }
     }
 
-    getForwardedMessagesByPostIds(postIds: number[]) {
-        if (postIds) return this.forwardedMessageService.getForwardedMessages(postIds);
-        else return;
+    /**
+     * Retrieves forwarded messages for a given set of IDs and message type.
+     *
+     * @param ids - An array of numeric IDs for which forwarded messages should be retrieved.
+     * @param type - The type of messages to retrieve ('post' or 'answer').
+     * @returns An observable containing a list of objects where each object includes an ID and its corresponding messages, wrapped in an HttpResponse, or undefined if the IDs are invalid.
+     */
+    getForwardedMessagesByIds(ids: number[], type: 'post' | 'answer'): Observable<HttpResponse<{ id: number; messages: ForwardedMessage[] }[]>> | undefined {
+        if (ids && ids.length > 0) {
+            return this.forwardedMessageService.getForwardedMessages(ids, type);
+        } else {
+            return undefined;
+        }
     }
 
+    /**
+     * Retrieves the source posts for a given set of post IDs.
+     *
+     * @param postIds - An array of numeric post IDs to retrieve source posts for.
+     * @returns An observable containing the source posts or undefined if the IDs are invalid.
+     */
     getSourcePostsByIds(postIds: number[]) {
         if (postIds) return this.postService.getSourcePostsByIds(this.courseId, postIds);
         else return;
     }
 
+    /**
+     * Retrieves the source answer posts for a given set of answer post IDs.
+     *
+     * @param answerPostIds - An array of numeric answer post IDs to retrieve source answer posts for.
+     * @returns An observable containing the source answer posts or undefined if the IDs are invalid.
+     */
     getSourceAnswerPostsByIds(answerPostIds: number[]) {
         if (answerPostIds) return this.answerPostService.getSourceAnswerPostsByIds(this.courseId, answerPostIds);
         else return;
     }
 
+    /**
+     * Creates forwarded messages by associating original posts with a target conversation.
+     *
+     * @param originalPosts - An array of original posts to be forwarded.
+     * @param targetConversation - The target conversation where the posts will be forwarded.
+     * @param isAnswer - A boolean indicating if the forwarded posts are answers.
+     * @param newContent - Optional new content for the forwarded posts.
+     * @returns An observable containing an array of created ForwardedMessage objects.
+     *
+     * @throws Error if the course ID is not set.
+     */
     createForwardedMessages(originalPosts: Posting[], targetConversation: Conversation, isAnswer: boolean, newContent?: string): Observable<ForwardedMessage[]> {
         if (!this.courseId) {
             return throwError(() => new Error('Course ID is not set. Ensure that setCourse() is called before forwarding posts.'));

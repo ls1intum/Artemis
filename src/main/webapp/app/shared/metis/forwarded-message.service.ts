@@ -15,23 +15,41 @@ export class ForwardedMessageService {
     /**
      * Creates a new ForwardedMessage.
      * @param forwardedMessage The ForwardedMessage to create.
-     * @returns The created ForwardedMessage.
+     * @returns An observable containing the created ForwardedMessage wrapped in an HttpResponse.
      */
     createForwardedMessage(forwardedMessage: ForwardedMessage): Observable<EntityResponseType> {
         const copy = this.convertForwardedMessage(forwardedMessage);
         return this.http.post<ForwardedMessage>(`${this.resourceUrl}`, copy, { observe: 'response' }).pipe(map((res: HttpResponse<ForwardedMessage>) => this.convertResponse(res)));
     }
 
-    getForwardedMessages(postIds: number[]): Observable<HttpResponse<Map<number, ForwardedMessage[]>>> {
-        const params = new HttpParams().set('dest_post_ids', postIds.join(','));
+    /**
+     * Retrieves forwarded messages for a given set of IDs and message type.
+     *
+     * @param ids - An array of numeric IDs for which forwarded messages should be retrieved.
+     * @param type - The type of messages to retrieve ('post' or 'answer').
+     * @returns An observable containing a list of objects where each object includes an ID and its corresponding messages, wrapped in an HttpResponse.
+     */
+    getForwardedMessages(ids: number[], type: 'post' | 'answer'): Observable<HttpResponse<{ id: number; messages: ForwardedMessage[] }[]>> {
+        if (!ids || ids.length === 0) {
+            throw new Error('IDs cannot be empty');
+        }
+
+        const params = new HttpParams().set('ids', ids.join(',')).set('type', type);
+
         return this.http
-            .get<Map<number, ForwardedMessage[]>>(`api/forwarded-messages/posts`, {
+            .get<{ id: number; messages: ForwardedMessage[] }[]>('api/forwarded-messages', {
                 params,
                 observe: 'response',
             })
             .pipe();
     }
 
+    /**
+     * Converts the response to a client-compatible ForwardedMessage object.
+     *
+     * @param res - The HttpResponse object containing a ForwardedMessage from the backend.
+     * @returns A cloned HttpResponse with the body converted to a ForwardedMessage object.
+     */
     private convertResponse(res: HttpResponse<ForwardedMessage>): HttpResponse<ForwardedMessage> {
         const body: ForwardedMessage = this.convertItemFromServer(res.body!);
         return res.clone({ body });

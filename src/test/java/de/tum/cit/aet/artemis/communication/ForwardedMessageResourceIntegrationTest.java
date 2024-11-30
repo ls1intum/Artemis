@@ -4,9 +4,6 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import java.net.URI;
-import java.util.Set;
-
-import jakarta.transaction.Transactional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -101,57 +98,47 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     }
 
     /**
-     * Test retrieving forwarded messages by destination post IDs.
+     * Test retrieving forwarded messages for destination IDs of type 'post'.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnForwardedMessagesByDestinationPostIds() throws Exception {
-
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages/posts").param("dest_post_ids", String.valueOf(testPost.getId())))
-                .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$['" + testPost.getId() + "']", hasSize(1)))
-                .andExpect(jsonPath("$['" + testPost.getId() + "'][0].id").value(testForwardedMessage.getId()))
-                .andExpect(jsonPath("$['" + testPost.getId() + "'][0].sourceId").value(testForwardedMessage.getSourceId()))
-                .andExpect(jsonPath("$['" + testPost.getId() + "'][0].sourceType").value(testForwardedMessage.getSourceType().toString()))
-                .andExpect(jsonPath("$['" + testPost.getId() + "'][0].destinationPostId").value(testPost.getId()));
+    void shouldReturnForwardedMessagesForPosts() throws Exception {
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages").param("ids", String.valueOf(testPost.getId())).param("type", "post"))
+                .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(testPost.getId()))
+                .andExpect(jsonPath("$[0].messages", hasSize(1))).andExpect(jsonPath("$[0].messages[0].id").value(testForwardedMessage.getId()))
+                .andExpect(jsonPath("$[0].messages[0].sourceId").value(testForwardedMessage.getSourceId())).andExpect(jsonPath("$[0].messages[0].sourceType").value("POST"));
     }
 
     /**
-     * Test retrieving forwarded messages by destination post IDs with no results.
+     * Test retrieving forwarded messages for destination IDs of type 'answer'.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnEmptyWhenNoForwardedMessagesByDestinationPostIds() throws Exception {
+    void shouldReturnForwardedMessagesForAnswers() throws Exception {
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages").param("ids", String.valueOf(testAnswerPost.getId())).param("type", "answer"))
+                .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(testAnswerPost.getId()))
+                .andExpect(jsonPath("$[0].messages", hasSize(1))).andExpect(jsonPath("$[0].messages[0].id").value(forwardedMessageForAnswer.getId()))
+                .andExpect(jsonPath("$[0].messages[0].sourceId").value(forwardedMessageForAnswer.getSourceId())).andExpect(jsonPath("$[0].messages[0].sourceType").value("POST"));
+    }
 
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages/posts").param("dest_post_ids", "9999")).andExpect(MockMvcResultMatchers.status().isOk())
+    /**
+     * Test retrieving forwarded messages with no results.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnEmptyWhenNoForwardedMessagesExist() throws Exception {
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages").param("ids", "9999").param("type", "post")).andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
 
     /**
-     * Test retrieving forwarded messages by destination answer post IDs.
+     * Test invalid type handling.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnForwardedMessagesByDestinationAnswerPostIds() throws Exception {
-        Set<Long> destAnswerPostIds = Set.of(testAnswerPost.getId());
-
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages/answers").param("dest_answer_post_ids", String.valueOf(testAnswerPost.getId())))
-                .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$['" + testAnswerPost.getId() + "']", hasSize(1)))
-                .andExpect(jsonPath("$['" + testAnswerPost.getId() + "'][0].id").value(forwardedMessageForAnswer.getId()))
-                .andExpect(jsonPath("$['" + testAnswerPost.getId() + "'][0].sourceId").value(forwardedMessageForAnswer.getSourceId()))
-                .andExpect(jsonPath("$['" + testAnswerPost.getId() + "'][0].sourceType").value(forwardedMessageForAnswer.getSourceType().toString()))
-                .andExpect(jsonPath("$['" + testAnswerPost.getId() + "'][0].destinationAnswerPostId").value(testAnswerPost.getId()));
-    }
-
-    /**
-     * Test retrieving forwarded messages by destination answer post IDs with no results.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnEmptyWhenNoForwardedMessagesByDestinationAnswerPostIds() throws Exception {
-        Set<Long> nonExistentIds = Set.of(9999L);
-
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages/answers").param("dest_answer_post_ids", "9999"))
-                .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$.length()").value(0));
+    void shouldReturnBadRequestForInvalidType() throws Exception {
+        request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages").param("ids", String.valueOf(testPost.getId())).param("type", "invalidType"))
+                .andExpect(MockMvcResultMatchers.status().isBadRequest());
     }
 
     /**
@@ -171,31 +158,6 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
                 .andExpect(MockMvcResultMatchers.status().isCreated()).andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.destinationAnswerPostId").value(testAnswerPost.getId())).andExpect(jsonPath("$.sourceId").value(testPost.getId()))
                 .andExpect(jsonPath("$.sourceType").value("POST"));
-    }
-
-    /**
-     * Test retrieving forwarded messages with multiple destination post IDs.
-     */
-    @Test
-    @Transactional
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnForwardedMessagesForMultipleDestinationPostIds() throws Exception {
-        ForwardedMessage forwardedMessage2 = new ForwardedMessage();
-        forwardedMessage2.setDestinationPost(testPost);
-        forwardedMessage2.setSourceId(testPost.getId());
-        forwardedMessage2.setSourceType(PostingType.POST);
-        forwardedMessage2 = forwardedMessageRepository.save(forwardedMessage2);
-
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/forwarded-messages/posts").param("dest_post_ids", String.valueOf(testPost.getId())))
-                .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$['" + testPost.getId() + "']", hasSize(2)))
-                .andExpect(jsonPath("$['" + testPost.getId() + "'][0].id").value(testForwardedMessage.getId()))
-                .andExpect(jsonPath("$['" + testPost.getId() + "'][0].sourceId").value(testForwardedMessage.getSourceId()))
-                .andExpect(jsonPath("$['" + testPost.getId() + "'][0].sourceType").value(testForwardedMessage.getSourceType().toString()))
-                .andExpect(jsonPath("$['" + testPost.getId() + "'][0].destinationPostId").value(testPost.getId()))
-                .andExpect(jsonPath("$['" + testPost.getId() + "'][1].id").value(forwardedMessage2.getId()))
-                .andExpect(jsonPath("$['" + testPost.getId() + "'][1].sourceId").value(forwardedMessage2.getSourceId()))
-                .andExpect(jsonPath("$['" + testPost.getId() + "'][1].sourceType").value(forwardedMessage2.getSourceType().toString()))
-                .andExpect(jsonPath("$['" + testPost.getId() + "'][1].destinationPostId").value(testPost.getId()));
     }
 
     @Override

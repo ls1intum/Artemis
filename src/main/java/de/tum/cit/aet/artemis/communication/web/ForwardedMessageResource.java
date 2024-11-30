@@ -4,7 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,8 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.ForwardedMessage;
 import de.tum.cit.aet.artemis.communication.dto.ForwardedMessageDTO;
+import de.tum.cit.aet.artemis.communication.dto.ForwardedMessagesGroupDTO;
 import de.tum.cit.aet.artemis.communication.repository.ForwardedMessageRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 /**
  * REST controller for managing ForwardedMessages.
@@ -56,7 +58,6 @@ public class ForwardedMessageResource {
      */
     @PostMapping("/forwarded-messages")
     public ResponseEntity<ForwardedMessageDTO> createForwardedMessage(@RequestBody ForwardedMessage forwardedMessage) throws URISyntaxException {
-        log.debug("REST request to save ForwardedMessage : {}");
         if (forwardedMessage.getId() != null) {
             throw new BadRequestAlertException("A new forwarded message cannot already have an ID", ENTITY_NAME, "idExists");
         }
@@ -65,38 +66,31 @@ public class ForwardedMessageResource {
         return ResponseEntity.created(new URI("/api/forwarded-messages/" + savedMessage.getId())).body(dto);
     }
 
-    /**
-     * GET /forwarded-messages/posts : Retrieve forwarded messages grouped by their destination post IDs.
-     *
-     * @param dest_post_ids a set of destination post IDs for which the forwarded messages should be retrieved
-     * @return the ResponseEntity with status 200 (OK) and with body containing a map where the key is the destination post ID
-     *         and the value is a set of forwarded message DTOs grouped by the destination post IDs
-     */
-    @GetMapping("/forwarded-messages/posts")
-    public ResponseEntity<Map<Long, Set<ForwardedMessageDTO>>> getForwardedMessagesByDestPostIds(@RequestParam Set<Long> dest_post_ids) {
-        Set<ForwardedMessage> forwardedMessages = forwardedMessageRepository.findAllByDestinationPostIds(dest_post_ids);
+    @GetMapping("/forwarded-messages")
+    public ResponseEntity<List<ForwardedMessagesGroupDTO>> getForwardedMessages(@RequestParam Set<Long> ids, @RequestParam String type) {
 
-        Map<Long, Set<ForwardedMessageDTO>> groupedDtos = forwardedMessages.stream()
-                .collect(Collectors.groupingBy(fm -> fm.getDestinationPost().getId(), Collectors.mapping(ForwardedMessageDTO::new, Collectors.toSet())));
+        log.debug("GET getForwardedMessages invoked with ids {} and type {}", ids, type);
+        long start = System.nanoTime();
 
-        return ResponseEntity.ok(groupedDtos);
-    }
+        if (!"post".equalsIgnoreCase(type) && !"answer".equalsIgnoreCase(type)) {
+            throw new BadRequestAlertException("Invalid type provided. Must be 'post' or 'answer'.", "ForwardedMessage", "invalidType");
+        }
 
-    /**
-     * GET /forwarded-messages/answers : Retrieve forwarded messages grouped by their destination answer post IDs.
-     *
-     * @param dest_answer_post_ids a set of destination answer post IDs for which the forwarded messages should be retrieved
-     * @return the ResponseEntity with status 200 (OK) and with body containing a map where the key is the destination answer post ID
-     *         and the value is a set of forwarded message DTOs grouped by the destination answer post IDs
-     */
-    @GetMapping("/forwarded-messages/answers")
-    public ResponseEntity<Map<Long, Set<ForwardedMessageDTO>>> getForwardedMessagesByDestAnswerPostIds(@RequestParam Set<Long> dest_answer_post_ids) {
-        Set<ForwardedMessage> forwardedMessages = forwardedMessageRepository.findAllByDestinationAnswerPostIds(dest_answer_post_ids);
+        Set<ForwardedMessage> forwardedMessages;
+        if ("post".equalsIgnoreCase(type)) {
+            forwardedMessages = forwardedMessageRepository.findAllByDestinationPostIds(ids);
+        }
+        else {
+            forwardedMessages = forwardedMessageRepository.findAllByDestinationAnswerPostIds(ids);
+        }
 
-        Map<Long, Set<ForwardedMessageDTO>> groupedDtos = forwardedMessages.stream()
-                .collect(Collectors.groupingBy(fm -> fm.getDestinationAnswerPost().getId(), Collectors.mapping(ForwardedMessageDTO::new, Collectors.toSet())));
+        List<ForwardedMessagesGroupDTO> result = forwardedMessages.stream()
+                .collect(Collectors.groupingBy(fm -> "post".equalsIgnoreCase(type) ? fm.getDestinationPost().getId() : fm.getDestinationAnswerPost().getId(),
+                        Collectors.mapping(ForwardedMessageDTO::new, Collectors.toSet())))
+                .entrySet().stream().map(entry -> new ForwardedMessagesGroupDTO(entry.getKey(), entry.getValue())).toList();
 
-        return ResponseEntity.ok(groupedDtos);
+        log.info("getForwardedMessages took {}", TimeLogUtil.formatDurationFrom(start));
+        return ResponseEntity.ok(result);
     }
 
 }

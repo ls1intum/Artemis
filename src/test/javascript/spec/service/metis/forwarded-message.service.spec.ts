@@ -44,23 +44,47 @@ describe('ForwardedMessageService', () => {
     });
 
     describe('#getForwardedMessages', () => {
-        it('should call GET API to retrieve forwarded messages for given post IDs', () => {
-            const postIds = [2, 3];
-            const expectedResponse: Map<number, ForwardedMessage[]> = new Map();
-            expectedResponse.set(2, [sampleForwardedMessage]);
-            expectedResponse.set(3, []);
+        it('should call GET API to retrieve forwarded messages with type "post"', () => {
+            const ids = [2, 3];
+            const expectedResponse = [
+                { id: 2, messages: [sampleForwardedMessage] },
+                { id: 3, messages: [] },
+            ];
 
-            service.getForwardedMessages(postIds).subscribe((res) => {
-                const body = res.body;
-                expect(body).toEqual(expectedResponse);
+            service.getForwardedMessages(ids, 'post').subscribe((res) => {
+                expect(res.body).toEqual(expectedResponse);
             });
 
             const req = httpMock.expectOne((request) => {
-                return request.url === `api/forwarded-messages/posts` && request.params.get('dest_post_ids') === '2,3';
+                return request.url === `${apiUrl}` && request.params.get('ids') === '2,3' && request.params.get('type') === 'post';
             });
 
             expect(req.request.method).toBe('GET');
             req.flush(expectedResponse);
+        });
+
+        it('should call GET API to retrieve forwarded messages with type "answer"', () => {
+            const ids = [4, 5];
+            const expectedResponse = [
+                { id: 4, messages: [] },
+                { id: 5, messages: [sampleForwardedMessage] },
+            ];
+
+            service.getForwardedMessages(ids, 'answer').subscribe((res) => {
+                expect(res.body).toEqual(expectedResponse);
+            });
+
+            const req = httpMock.expectOne((request) => {
+                return request.url === `${apiUrl}` && request.params.get('ids') === '4,5' && request.params.get('type') === 'answer';
+            });
+
+            expect(req.request.method).toBe('GET');
+            req.flush(expectedResponse);
+        });
+
+        it('should not make a GET request if IDs are empty', () => {
+            const ids: number[] = [];
+            expect(() => service.getForwardedMessages(ids, 'post')).toThrow('IDs cannot be empty');
         });
     });
 });

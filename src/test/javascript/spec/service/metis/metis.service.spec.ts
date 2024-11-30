@@ -645,13 +645,27 @@ describe('Metis Service', () => {
         });
     });
 
-    it('should call ForwardedMessageService.getForwardedMessages with correct parameters', fakeAsync(() => {
+    it('should call ForwardedMessageService.getForwardedMessages with correct parameters when type is valid', fakeAsync(() => {
         const forwardedMessageServiceSpy = jest.spyOn(forwardedMessageService, 'getForwardedMessages');
         const postIds = [1, 2, 3];
 
-        metisService.getForwardedMessagesByPostIds(postIds);
+        metisService.getForwardedMessagesByIds(postIds, 'post');
+        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, 'post');
+        forwardedMessageServiceSpy.mockClear();
 
-        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds);
+        metisService.getForwardedMessagesByIds(postIds, 'answer');
+        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, 'answer');
+        tick();
+    }));
+
+    it('should not call ForwardedMessageService.getForwardedMessages if IDs array is empty or undefined', fakeAsync(() => {
+        const forwardedMessageServiceSpy = jest.spyOn(forwardedMessageService, 'getForwardedMessages');
+
+        metisService.getForwardedMessagesByIds([], 'post');
+        expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
+
+        metisService.getForwardedMessagesByIds(undefined as any, 'post');
+        expect(forwardedMessageServiceSpy).not.toHaveBeenCalled();
         tick();
     }));
 

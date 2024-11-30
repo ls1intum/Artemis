@@ -309,11 +309,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         const postIdsWithForwardedMessages = this.posts.filter((post) => post.hasForwardedMessages && post.id !== undefined).map((post) => post.id) as number[];
 
         if (postIdsWithForwardedMessages.length > 0) {
-            this.metisService.getForwardedMessagesByPostIds(postIdsWithForwardedMessages)?.subscribe((response) => {
-                const forwardedMessagesMap = response.body;
+            this.metisService.getForwardedMessagesByIds(postIdsWithForwardedMessages, 'post')?.subscribe((response) => {
+                const forwardedMessagesGroups = response.body;
 
-                if (forwardedMessagesMap) {
-                    const map = new Map<number, ForwardedMessage[]>(Object.entries(forwardedMessagesMap).map(([key, value]) => [Number(key), value as ForwardedMessage[]]));
+                if (forwardedMessagesGroups) {
+                    const map = new Map<number, ForwardedMessage[]>(forwardedMessagesGroups.map((group) => [group.id, group.messages]));
 
                     const sourcePostIds: number[] = [];
                     const sourceAnswerIds: number[] = [];

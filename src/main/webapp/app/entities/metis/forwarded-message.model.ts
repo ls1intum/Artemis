@@ -7,9 +7,9 @@ export class ForwardedMessage implements BaseEntity {
     public id?: number;
     public sourceId?: number;
     public sourceType?: PostingType;
-    public destinationPost: Post | undefined;
-    public destinationAnswerPost: AnswerPost | undefined;
-    public content: string | undefined;
+    public destinationPost?: Post;
+    public destinationAnswerPost?: AnswerPost;
+    public content?: string;
 
     private validateDestinations(): boolean {
         const isDestinationPostValid = this.destinationPost !== undefined && this.destinationPost !== null;
