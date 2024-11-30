@@ -180,16 +180,14 @@ public class BuildAgentDockerService {
         @Override
         public void onNext(PullResponseItem item) {
             String msg = "~~~~~~~~~~~~~~~~~~~~ Pull image progress: " + item.getStatus() + " ~~~~~~~~~~~~~~~~~~~~";
-            log.info(msg);
-            buildLogsMap.appendBuildLogEntry(buildJobId, msg);
+            log.debug(msg);
             super.onNext(item);
         }
 
         @Override
         public void onComplete() {
             String msg = "~~~~~~~~~~~~~~~~~~~~ Pull image complete ~~~~~~~~~~~~~~~~~~~~";
-            log.info(msg);
-            buildLogsMap.appendBuildLogEntry(buildJobId, msg);
+            log.debug(msg);
             super.onComplete();
         }
     }

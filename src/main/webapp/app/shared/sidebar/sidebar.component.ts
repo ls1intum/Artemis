@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, effect, input, output } from '@angular/core';
-import { faFilter, faFilterCircleXmark, faHashtag, faPlusCircle, faSearch, faUser, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
@@ -22,7 +22,7 @@ import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercis
     styleUrls: ['./sidebar.component.scss'],
 })
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
-    @Output() onSelectConversation = new EventEmitter<number>();
+    @Output() onSelectConversation = new EventEmitter<number | string>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
     onDirectChatPressed = output<void>();
     onGroupChatPressed = output<void>();
@@ -57,7 +57,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     readonly faFilter = faFilter;
     readonly faFilterCurrentlyApplied = faFilterCircleXmark;
     readonly faUser = faUser;
-    readonly faUsers = faUsers;
+    readonly faPeopleGroup = faPeopleGroup;
     readonly faPlusCircle = faPlusCircle;
     readonly faSearch = faSearch;
     readonly faHashtag = faHashtag;
@@ -117,7 +117,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
             if (itemId) {
                 this.storeLastSelectedItem(itemId);
                 if (this.sidebarData.sidebarType == 'conversation') {
-                    this.onSelectConversation.emit(+itemId);
+                    this.onSelectConversation.emit(itemId);
                     this.onUpdateSidebar.emit();
                 }
             }

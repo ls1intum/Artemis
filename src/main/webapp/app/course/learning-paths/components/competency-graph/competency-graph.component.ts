@@ -1,14 +1,14 @@
-import { Component, computed, effect, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
 import { NgxGraphModule, NgxGraphZoomOptions } from '@swimlane/ngx-graph';
 import { Subject } from 'rxjs';
 import { CompetencyGraphDTO } from 'app/entities/competency/learning-path.model';
 import { CompetencyNodeComponent, SizeUpdate } from 'app/course/learning-paths/components/competency-node/competency-node.component';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-competency-graph',
     standalone: true,
-    imports: [CompetencyNodeComponent, NgxGraphModule, ArtemisSharedModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [CompetencyNodeComponent, NgxGraphModule],
     templateUrl: './competency-graph.component.html',
     styleUrl: './competency-graph.component.scss',
 })

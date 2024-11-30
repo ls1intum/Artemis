@@ -8,7 +8,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -24,10 +27,13 @@ public class ParticipationVcsAccessTokenService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    private final TeamRepository teamRepository;
+
     public ParticipationVcsAccessTokenService(ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, TeamRepository teamRepository) {
         this.participationVcsAccessTokenRepository = participationVCSAccessTokenRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -46,18 +52,25 @@ public class ParticipationVcsAccessTokenService {
     }
 
     /**
-     * Retrieves the participationVCSAccessToken for a User,Participation pair if it exists
+     * Retrieves the participationVCSAccessToken for a User,Participation pair if it exists and if the user owns the participation
      *
-     * @param userId          the user's id which is owner of the token
+     * @param user            the user which is owner of the token
      * @param participationId the participation's id which the token belongs to
      * @return an Optional participationVCSAccessToken,
      */
-    public ParticipationVCSAccessToken findByUserIdAndParticipationIdOrElseThrow(long userId, long participationId) {
-        return participationVcsAccessTokenRepository.findByUserIdAndParticipationIdOrElseThrow(userId, participationId);
+    public ParticipationVCSAccessToken findByUserAndParticipationIdOrElseThrow(User user, long participationId) {
+        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        loadTeamStudentsForTeamExercise(participation);
+        if (participation.isOwnedBy(user)) {
+            return participationVcsAccessTokenRepository.findByUserIdAndParticipationIdOrElseThrow(user.getId(), participationId);
+        }
+        else {
+            throw new AccessForbiddenException("Participation not owned by user");
+        }
     }
 
     /**
-     * Checks if the participationVCSAccessToken for a User,Participation pair exists, and creates a new one if not
+     * Checks if the participationVCSAccessToken for a User,Participation pair exists, and creates a new one if not; if the user owns the participation
      *
      * @param user            the user's id which is owner of the token
      * @param participationId the participation's id which the token belongs to
@@ -66,7 +79,26 @@ public class ParticipationVcsAccessTokenService {
     public ParticipationVCSAccessToken createVcsAccessTokenForUserAndParticipationIdOrElseThrow(User user, long participationId) {
         participationVcsAccessTokenRepository.findByUserIdAndParticipationIdAndThrowIfExists(user.getId(), participationId);
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        return createParticipationVCSAccessToken(user, participation);
+        loadTeamStudentsForTeamExercise(participation);
+        if (participation.isOwnedBy(user)) {
+            return createParticipationVCSAccessToken(user, participation);
+        }
+        else {
+            throw new AccessForbiddenException("Participation not owned by user");
+        }
+    }
+
+    /**
+     * Loads the team students of a participation's team, if it has a team
+     *
+     * @param participation the participation which team's students are not loaded yet
+     */
+    private void loadTeamStudentsForTeamExercise(StudentParticipation participation) {
+        if (participation.getTeam().isPresent()) {
+            Team team = participation.getTeam().get();
+            Team teamWithStudents = teamRepository.findWithStudentsByIdElseThrow(team.getId());
+            participation.getTeam().get().setStudents(teamWithStudents.getStudents());
+        }
     }
 
     /**

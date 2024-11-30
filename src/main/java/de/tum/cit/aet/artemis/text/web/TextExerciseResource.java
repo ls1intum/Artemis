@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -154,7 +154,7 @@ public class TextExerciseResource {
 
     private final Optional<AthenaModuleService> athenaModuleService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     private final Optional<IrisSettingsService> irisSettingsService;
 
@@ -165,8 +165,8 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
-            ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService,
-            CompetencyProgressService competencyProgressService, Optional<IrisSettingsService> irisSettingsService) {
+            ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService, CompetencyProgressApi competencyProgressApi,
+            Optional<IrisSettingsService> irisSettingsService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -191,7 +191,7 @@ public class TextExerciseResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.athenaModuleService = athenaModuleService;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
         this.irisSettingsService = irisSettingsService;
     }
 
@@ -232,7 +232,7 @@ public class TextExerciseResource {
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(textExercise);
-        competencyProgressService.updateProgressByLearningObjectAsync(result);
+        competencyProgressApi.updateProgressByLearningObjectAsync(result);
 
         irisSettingsService.ifPresent(iss -> iss.setEnabledForExerciseByCategories(result, new HashSet<>()));
 
@@ -294,7 +294,7 @@ public class TextExerciseResource {
         exerciseService.checkExampleSubmissions(updatedTextExercise);
         exerciseService.notifyAboutExerciseChanges(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
 
-        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise));
+        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise));
 
         irisSettingsService.ifPresent(iss -> iss.setEnabledForExerciseByCategories(textExercise, textExerciseBeforeUpdate.getCategories()));
 

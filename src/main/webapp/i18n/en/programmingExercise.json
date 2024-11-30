@@ -351,10 +351,13 @@
                     "task": "Task",
                     "testcase": "Test Case",
                     "errorCategory": "Error Category",
-                    "totalItems": "In total {{count}} items",
+                    "totalItems": "In total {{count}} item(s)",
                     "error": "An error occurred while loading the feedback.",
                     "search": "Search ...",
                     "filter": "Filters",
+                    "noData": "No Feedback Entries could be found for the Programming Exercise.",
+                    "noDataFilter": "No Feedback Entries could be found for the specified filter or search Term.",
+                    "channelSuccess": "Channel {{channelName}} successfully created.",
                     "feedbackModal": {
                         "header": "Error Details",
                         "feedbackTitle": "Test Case Feedback",
@@ -364,10 +367,49 @@
                         "modalTitle": "Filter Options",
                         "task": "Tasks",
                         "testcase": "Test Cases",
+                        "errorCategory": "Error Categories",
                         "occurrence": "Occurrence",
                         "clear": "Clear Filter",
                         "cancel": "Cancel",
                         "apply": "Apply Filter"
+                    },
+                    "affectedStudentsModal": {
+                        "header": "Affected Students",
+                        "name": "Name",
+                        "login": "Login",
+                        "repository": "Repository",
+                        "totalItems": "In total {{count}} item(s)",
+                        "error": "There was an error while loading the affected Students for this feedback."
+                    },
+                    "feedbackDetailChannel": {
+                        "title": "Create Feedback Discussion Channel",
+                        "studentNumber": "Number of students which will be added to the channel: {{count}}",
+                        "description": "This channel is intended to facilitate discussions around specific feedback for the provided exercise feedback. It will allow all affected students and instructors to collaborate and address the feedback effectively.",
+                        "label": "Channel Name",
+                        "channelVisibility": "Channel Visibility",
+                        "visibilityPublic": "Public",
+                        "visibilityPrivate": "Private",
+                        "announcementChannel": "Announcement Channel",
+                        "announcementChannelYes": "Yes",
+                        "announcementChannelNo": "No",
+                        "createAndNavigateLabel": "Create and Navigate",
+                        "createAndNavigateDescription": "Creates the channel and automatically navigates to the channel.",
+                        "createChannelLabel": "Create Channel:",
+                        "createChannelDescription": "Creates the channel without navigating away from this page.",
+                        "createChannelButton": "Create Channel",
+                        "placeholder": "This field should not be empty",
+                        "descriptionLabel": "Description",
+                        "requiredValidationErrorName": "The channel name is required.",
+                        "maxLengthValidationErrorName": "Channel name can be max {{ max }} characters long!",
+                        "regexValidationErrorName": "Names can only contain lowercase letters, numbers, and dashes. Only Artemis can create channels that start with a $.",
+                        "requiredValidationErrorDescription": "The channel description is required.",
+                        "maxLengthValidationErrorDescription": "Channel description can be max {{ max }} characters long!",
+                        "confirmationModal": {
+                            "header": "Confirm Channel Creation",
+                            "confirmationMessage": "Are you sure you want to create this channel? This will create a channel with <strong>{{count}}</strong> student(s).",
+                            "cancel": "Cancel",
+                            "confirm": "Create"
+                        }
                     }
                 },
                 "help": {
@@ -601,10 +643,10 @@
                     },
                     "submission_penalty": {
                         "title": "Submission Penalty",
-                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. Try to stay within the submission limit to avoid penalties!"
+                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. The penalty for this exercise is -{{points}} points."
                     }
                 },
-                "submissionLimitTitle": "Submission limit",
+                "submissionLimitTitle": "Submissions",
                 "submissionLimitDescription": "The number of submissions a participant can make before the system enforces the selected policy.",
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
                 "goToGradingToEditInformation": "Go to the grading page to edit submission policy.",
