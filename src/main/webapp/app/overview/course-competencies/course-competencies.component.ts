@@ -86,7 +86,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     loadData() {
         this.isLoading = true;
 
-        const courseCompetencyObservable = this.courseCompetencyService.getAllForCourse(this.courseId);
+        const courseCompetencyObservable = this.courseCompetencyService.getAllForCourse(this.courseId, true);
         const competencyJolObservable = this.judgementOfLearningEnabled ? this.courseCompetencyService.getJoLAllForCourse(this.courseId) : of(undefined);
 
         forkJoin([courseCompetencyObservable, competencyJolObservable]).subscribe({

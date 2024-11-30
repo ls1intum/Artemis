@@ -74,11 +74,13 @@ export class CourseCompetencyService {
             .set('semester', pageable.semester);
     }
 
-    getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.get<CourseCompetency[]>(`${this.resourceURL}/courses/${courseId}/course-competencies?filter=true`, { observe: 'response' }).pipe(
-            map((res: EntityArrayResponseType) => this.convertArrayResponseDatesFromServer(res)),
-            tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
-        );
+    getAllForCourse(courseId: number, filtered = false): Observable<EntityArrayResponseType> {
+        return this.httpClient
+            .get<CourseCompetency[]>(`${this.resourceURL}/courses/${courseId}/course-competencies${filtered ? '?filter=true' : ''}`, { observe: 'response' })
+            .pipe(
+                map((res: EntityArrayResponseType) => this.convertArrayResponseDatesFromServer(res)),
+                tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+            );
     }
 
     getProgress(competencyId: number, courseId: number, refresh = false) {
