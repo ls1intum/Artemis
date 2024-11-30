@@ -108,14 +108,16 @@
                         [ngbTooltip]="'artemisApp.quizExercise.edit.testRunSubmissionsExist' | artemisTranslate"
                     />
                 }
-                <a
-                    [class.disabled]="hasExamStarted()"
-                    [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
-                    class="btn btn-warning btn-sm me-1"
-                >
-                    <fa-icon [icon]="faWrench" />
-                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
-                </a>
+                <span [ngbTooltip]="hasExamStarted() ? ('artemisApp.quizExercise.edit.examStartedNoEdit' | artemisTranslate) : undefined">
+                    <a
+                        [class.disabled]="hasExamStarted()"
+                        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'edit']"
+                        class="btn btn-warning btn-sm me-1"
+                    >
+                        <fa-icon [icon]="faWrench" />
+                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                    </a>
+                </span>
             </div>
         }
     }
