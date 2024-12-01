@@ -366,11 +366,30 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
         processingJobs.clear();
 
-        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
+        request.put("/api/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
         await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
 
-        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
+        request.put("/api/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
         await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testPauseAllBuildAgents() throws Exception {
+        // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
+        processingJobs.clear();
+
+        request.put("/api/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
+        await().until(() -> {
+            var agents = buildAgentInformation.values();
+            return agents.stream().allMatch(agent -> agent.status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
+        });
+
+        request.put("/api/admin/agents/resume-all", null, HttpStatus.NO_CONTENT);
+        await().until(() -> {
+            var agents = buildAgentInformation.values();
+            return agents.stream().allMatch(agent -> agent.status() == BuildAgentInformation.BuildAgentStatus.IDLE);
+        });
     }
 
     @Test

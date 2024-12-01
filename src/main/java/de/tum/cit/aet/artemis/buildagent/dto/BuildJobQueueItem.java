@@ -51,4 +51,9 @@ public record BuildJobQueueItem(String id, String name, BuildAgentDTO buildAgent
         this(queueItem.id(), queueItem.name(), queueItem.buildAgent(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
                 queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult);
     }
+
+    public BuildJobQueueItem(BuildJobQueueItem queueItem, BuildAgentDTO buildAgent, int newRetryCount) {
+        this(queueItem.id(), queueItem.name(), buildAgent, queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), newRetryCount, queueItem.priority(), null,
+                queueItem.repositoryInfo(), new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null), queueItem.buildConfig(), null);
+    }
 }

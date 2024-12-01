@@ -266,16 +266,26 @@ public class SharedQueueProcessingService {
             processBuild(buildJob);
         }
         catch (RejectedExecutionException e) {
-            log.error("Couldn't add build job to threadpool: {}\n Concurrent Build Jobs Count: {} Active tasks in pool: {}, Concurrent Build Jobs Size: {}", buildJob,
+            // TODO: we should log this centrally and not on the local node
+            log.error("Couldn't add build job to thread pool: {}\n Concurrent Build Jobs Count: {} Active tasks in pool: {}, Concurrent Build Jobs Size: {}", buildJob,
                     localProcessingJobs.get(), localCIBuildExecutorService.getActiveCount(), localCIBuildExecutorService.getMaximumPoolSize(), e);
 
             // Add the build job back to the queue
             if (buildJob != null) {
                 processingJobs.remove(buildJob.id());
 
-                buildJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO("", "", ""), null);
-                log.info("Adding build job back to the queue: {}", buildJob);
-                queue.add(buildJob);
+                // At most try out the build job 5 times when they get rejected
+                if (buildJob.retryCount() >= 5) {
+                    // TODO: we should log this centrally and not on the local node
+                    log.error("Build job was rejected 5 times. Not adding build job back to the queue: {}", buildJob);
+                }
+                else {
+                    // NOTE: we increase the retry count here, because the build job was not processed successfully
+                    // TODO: we should try to run this job on a different build agent to avoid getting the same error again
+                    buildJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO("", "", ""), buildJob.retryCount() + 1);
+                    log.info("Adding build job {} back to the queue with retry count {}", buildJob, buildJob.retryCount());
+                    queue.add(buildJob);
+                }
                 localProcessingJobs.decrementAndGet();
             }
 
@@ -555,7 +565,8 @@ public class SharedQueueProcessingService {
     private boolean nodeIsAvailable() {
         log.debug("Currently processing jobs on this node: {}, active threads in Pool: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
                 localCIBuildExecutorService.getActiveCount(), localCIBuildExecutorService.getMaximumPoolSize());
-        return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
+        return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize()
+                && localCIBuildExecutorService.getActiveCount() < localCIBuildExecutorService.getMaximumPoolSize() && localCIBuildExecutorService.getQueue().isEmpty();
     }
 
     public class QueuedBuildJobItemListener implements ItemListener<BuildJobQueueItem> {
