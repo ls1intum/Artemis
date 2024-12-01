@@ -1,12 +1,13 @@
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
+import { isAIResultAndFailed, isAIResultAndIsBeingProcessed, isAIResultAndProcessed, isAIResultAndTimedOut } from 'app/exercises/shared/result/result.utils';
 
 export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | undefined => {
     if (template && projectKey && buildPlanId) {
@@ -59,7 +60,10 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
     if (!programmingExercise) {
         return false;
     }
-    if (latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+    if (isAIResultAndProcessed(latestResult)) {
+        return true;
+    }
+    if (isAIResultAndIsBeingProcessed(latestResult) || isAIResultAndTimedOut(latestResult) || isAIResultAndFailed(latestResult)) {
         return false;
     }
     if (latestResult.participation?.type === ParticipationType.PROGRAMMING && isPracticeMode(latestResult.participation)) {

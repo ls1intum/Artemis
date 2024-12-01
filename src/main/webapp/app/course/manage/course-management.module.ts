@@ -27,7 +27,7 @@ import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-score
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
@@ -62,7 +62,6 @@ import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 import { ArtemisExerciseCreateButtonsModule } from 'app/exercises/shared/manage/exercise-create-buttons.module';
-import { ArtemisLearningPathManagementModule } from 'app/course/learning-paths/learning-path-management/learning-path-management.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
@@ -119,7 +118,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         ExerciseCategoriesModule,
         NgbNavModule,
         ArtemisExerciseCreateButtonsModule,
-        ArtemisLearningPathManagementModule,
         IrisModule,
         DetailModule,
         SubmissionResultStatusModule,

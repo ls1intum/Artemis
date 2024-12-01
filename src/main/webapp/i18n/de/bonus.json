@@ -3,7 +3,7 @@
         "bonus": {
             "bonusStrategy": {
                 "title": "Wähle eine Bonusstrategie",
-                "helpText": "Noten: Berechnet zunächst die Prüfungsnote anhand des Notenschlüssel. Dann wird der Bonus auf diese Note angewandt, um die Endnote zu erhalten.<br>Punkte: Wendet zunächst den Bonus auf die Punkte des Studierenden an. Danach wird die Endnote berechnet, indem die resultierenden Punkte mit dem Notenschlüssel für die Prüfung umgerechnet werden.",
+                "helpText": "Noten: Berechnet zunächst die Prüfungsnote anhand des Notenschlüssels. Dann wird der Bonus auf diese Note angewandt, um die Endnote zu erhalten.<br>Punkte: Wendet zunächst den Bonus auf die Punkte des Studierenden an. Danach wird die Endnote berechnet, indem die resultierenden Punkte mit dem Notenschlüssel für die Prüfung umgerechnet werden.",
                 "grades": "Noten",
                 "points": "Punkte"
             },
@@ -19,9 +19,9 @@
             },
             "bonusSource": {
                 "title": "Wähle die Quelle für den Bonus",
-                "helpText": "Prüfungen und Kurse mit einem \"Bonus\"-Notenschlüssel sind unten aufgeführt. Die Note der Studierenden für den gewählten Kurs/Prüfung bestimmt die Höhe des Bonuses.",
+                "helpText": "Prüfungen und Kurse mit einem \"Bonus\"-Notenschlüssel sind unten aufgeführt. Die Note der Studierenden für den gewählten Kurs/Prüfung bestimmt die Höhe des Bonus.",
                 "maxPoints": "Max Punkte",
-                "maxPointsCourseHelpText": "Die im Notenschlüssel des Kurses angegebene maximale Punktzahl. Dieser Wert wird nur für die Berechnung von Beispielen verwendet und nicht für die Bonusberechnung. Stattdessen wird der Bonus mit Hilfe der im Kurs erreichbaren Punkte berechnet."
+                "maxPointsCourseHelpText": "Die im Notenschlüssel des Kurses angegebene maximale Punktzahl. Dieser Wert wird nur für die Berechnung von Beispielen verwendet und nicht für die Bonusberechnung. Stattdessen wird der Bonus mithilfe der im Kurs erreichbaren Punkte berechnet."
             },
             "examples": {
                 "title": "Beispiele",

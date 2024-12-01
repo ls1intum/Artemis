@@ -6,7 +6,7 @@ import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/c
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -24,28 +24,27 @@ import { examWorkingTime, normalWorkingTime } from 'app/exam/participate/exam.ut
     templateUrl: './exam-update.component.html',
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy {
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly documentationType: DocumentationType = 'Exams';
+
     exam: Exam;
     course: Course;
     isSaving: boolean;
     isImport = false;
     isImportInSameCourse = false;
-    hideChannelNameInput = false;
 
+    hideChannelNameInput = false;
     private originalStartDate?: dayjs.Dayjs;
+
     private originalEndDate?: dayjs.Dayjs;
 
     private componentActive = true;
-
     // Link to the component enabling the selection of exercise groups and exercises for import
     @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
+
     @ViewChild('workingTimeConfirmationContent') public workingTimeConfirmationContent: TemplateRef<any>;
-
-    readonly documentationType: DocumentationType = 'Exams';
-
-    // Icons
-    faSave = faSave;
-    faBan = faBan;
-    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private route: ActivatedRoute,
@@ -471,6 +470,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)
         );
     }
+
     /**
      * Default exam start text, which can be edited by instructors in the text editor
      */

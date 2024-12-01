@@ -14,7 +14,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { AlertService } from 'app/core/util/alert.service';
 
 describe('Example Submission Component', () => {

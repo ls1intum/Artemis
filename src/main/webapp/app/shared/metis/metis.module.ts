@@ -12,7 +12,6 @@ import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answe
 import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { AnswerPostFooterComponent } from 'app/shared/metis/posting-footer/answer-post-footer/answer-post-footer.component';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -42,6 +41,7 @@ import { LinkPreviewModule } from 'app/shared/link-preview/link-preview.module';
 import { LinkPreviewComponent } from 'app/shared/link-preview/components/link-preview/link-preview.component';
 import { LinkPreviewContainerComponent } from 'app/shared/link-preview/components/link-preview-container/link-preview-container.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @NgModule({
     imports: [
@@ -63,6 +63,8 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
         MatFormFieldModule,
         MatDialogModule,
         LinkPreviewModule,
+        ProfilePictureComponent,
+        HtmlForPostingMarkdownPipe,
     ],
     declarations: [
         PostingThreadComponent,
@@ -72,7 +74,6 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
         PostTagSelectorComponent,
         PostFooterComponent,
         AnswerPostCreateEditModalComponent,
-        AnswerPostFooterComponent,
         PostingButtonComponent,
         PostingMarkdownEditorComponent,
         PostComponent,
@@ -86,7 +87,6 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
         AnswerPostReactionsBarComponent,
         MessageInlineInputComponent,
         MessageReplyInlineInputComponent,
-        HtmlForPostingMarkdownPipe,
         ReactingUsersOnPostingPipe,
         EmojiComponent,
         EmojiPickerComponent,
@@ -99,7 +99,6 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
         PostTagSelectorComponent,
         AnswerPostCreateEditModalComponent,
         PostFooterComponent,
-        AnswerPostFooterComponent,
         PostingButtonComponent,
         PostingMarkdownEditorComponent,
         PostComponent,

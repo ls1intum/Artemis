@@ -29,33 +29,39 @@ describe('PostingContentPartComponent', () => {
     let contentBeforeReference: string;
     let contentAfterReference: string;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MatDialogModule, MatMenuModule],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                ArtemisTestModule,
+                MatDialogModule,
+                MatMenuModule,
+                HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
+            ],
             declarations: [
                 PostingContentPartComponent,
-                HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
                 // FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
             ],
-            providers: [{ provide: FileService, useClass: MockFileService }, { provide: Router, useClass: MockRouter }, MockProvider(AccountService)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(PostingContentPartComponent);
-                component = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                router = TestBed.inject(Router);
-                fileService = TestBed.inject(FileService);
-
-                navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
-                openAttachmentSpy = jest.spyOn(fileService, 'downloadFile');
-                enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
-
-                contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
-                contentAfterReference = 'in my content,\n\n does it *actually* work?';
-            });
+            providers: [
+                { provide: FileService, useClass: MockFileService },
+                {
+                    provide: Router,
+                    useClass: MockRouter,
+                },
+                MockProvider(AccountService),
+            ],
+        }).compileComponents();
+        fixture = TestBed.createComponent(PostingContentPartComponent);
+        component = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        router = TestBed.inject(Router);
+        fileService = TestBed.inject(FileService);
+        navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
+        openAttachmentSpy = jest.spyOn(fileService, 'downloadFile');
+        enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
+        contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
+        contentAfterReference = 'in my content,\n\n does it *actually* work?';
     });
 
     describe('For posting without reference', () => {
@@ -94,7 +100,7 @@ describe('PostingContentPartComponent', () => {
             expect(markdownRenderedTexts).toHaveLength(2);
             // check that the paragraph right before the reference and the paragraph right after have the class `inline-paragraph`
             expect(markdownRenderedTexts![0].innerHTML).toInclude('<p><strong>Be aware</strong></p>');
-            expect(markdownRenderedTexts![0].innerHTML).toInclude('<p class="inline-paragraph">I want to reference the following Post </p>'); // last paragraph before reference
+            expect(markdownRenderedTexts![0].innerHTML).toInclude('<p class="inline-paragraph">I want to reference the following Post</p>'); // last paragraph before reference
             expect(markdownRenderedTexts![1].innerHTML).toInclude('<p class="inline-paragraph">in my content,</p>'); // first paragraph after reference
             expect(markdownRenderedTexts![1].innerHTML).toInclude('<p>does it <em>actually</em> work?</p>');
 

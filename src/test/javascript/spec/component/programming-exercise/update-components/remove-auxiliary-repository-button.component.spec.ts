@@ -4,9 +4,9 @@ import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programm
 import { ArtemisTestModule } from '../../../test.module';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockComponent } from 'ng-mocks';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 
 describe('RemoveAuxiliaryRepositoryButton', () => {
     let comp: RemoveAuxiliaryRepositoryButtonComponent;

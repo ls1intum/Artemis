@@ -13,7 +13,7 @@ import { Conversation, ConversationType } from 'app/entities/metis/conversation/
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { Channel, ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
@@ -39,6 +39,10 @@ export const metisUpVoteReactionUser1 = { id: 1, user: metisUser1, emojiId: VOTE
 export const metisReactionUser2 = { id: 2, user: metisUser2, emojiId: 'smile', creationDate: undefined } as Reaction;
 export const metisReactionToCreate = { emojiId: 'cheerio', creationDate: undefined } as Reaction;
 
+export const metisFaq1 = { id: 1, questionTitle: 'title', questionAnswer: 'answer' };
+export const metisFaq2 = { id: 2, questionTitle: 'title', questionAnswer: 'answer' };
+export const metisFaq3 = { id: 3, questionTitle: 'title', questionAnswer: 'answer' };
+
 export const metisCourse = {
     id: 1,
     title: 'Metis Course',
@@ -46,6 +50,7 @@ export const metisCourse = {
     lectures: [metisLecture, metisLecture2, metisLecture3],
     courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     groups: ['metisTutors', 'metisStudents', 'metisInstructors'],
+    faqs: [metisFaq1, metisFaq2, metisFaq3],
 } as Course;
 
 export const metisResolvingAnswerPostUser1 = {
@@ -162,6 +167,7 @@ export const metisPostExerciseUser1 = {
     title: 'title',
     content: 'metisPostExerciseUser1',
     creationDate: undefined,
+    isSaved: false,
 } as Post;
 
 export const metisPostExerciseUser2 = {

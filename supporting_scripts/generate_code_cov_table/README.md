@@ -7,7 +7,7 @@ The generated report is copied to the clipboard and pasted into a pull request o
 
 ### Prerequisites
 
-- Python 3.6 or higher
+- Python 3.12 or higher
 - pip
 - git
 
@@ -46,7 +46,7 @@ TOKEN=ab12cd
 
 Alternatively, you can use the command line argument `--token` to pass the credentials.
 ### Token
-The token you must provide is a GitHub token with "Public Repository Access" checked.
+The token you must provide is a [GitHub token](https://github.com/settings/tokens) with "Public Repository Access" checked.
 
 **Recommended for security, but not for convenience:**  
 Don't store the `TOKEN` in the `.env` file, but let the script prompt you for it.
@@ -100,3 +100,17 @@ Alternatively, the Python modules `qtpy` or `PyQT5` have to be present.
 If no option to insert text into the clipboard is found, the script falls back to printing to stdout.
 
 **You will have to manually adjust the confirmation column for each file!**
+
+
+### Dependency management
+
+Find outdated dependencies using the following command:
+```
+pip list --outdated
+```
+
+Find unused dependencies using the following command:
+```
+pip install deptry
+deptry .
+```

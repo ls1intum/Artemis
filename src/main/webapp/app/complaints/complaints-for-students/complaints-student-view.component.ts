@@ -6,7 +6,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Submission } from 'app/entities/submission.model';
 import { filter } from 'rxjs/operators';

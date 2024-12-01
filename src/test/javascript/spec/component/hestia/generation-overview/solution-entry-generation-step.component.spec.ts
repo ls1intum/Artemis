@@ -2,7 +2,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { SolutionEntryGenerationStepComponent } from 'app/exercises/programming/hestia/generation-overview/steps/solution-entry-generation-step/solution-entry-generation-step.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
@@ -11,7 +11,7 @@ import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programmin
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { EventEmitter } from '@angular/core';
-import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType } from 'app/entities/programming/programming-exercise-test-case.model';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 

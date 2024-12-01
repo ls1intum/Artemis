@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
@@ -10,8 +10,9 @@ import { PostingContentComponent } from 'app/shared/metis/posting-content/postin
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PageType } from 'app/shared/metis/metis.util';
+import { DisplayPriority, PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
+import { OverlayModule } from '@angular/cdk/overlay';
 import {
     metisChannel,
     metisCourse,
@@ -23,17 +24,20 @@ import {
     unsortedAnswerArray,
 } from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
-import { RouterTestingModule } from '@angular/router/testing';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { Router, RouterState } from '@angular/router';
+import { Router, RouterState, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { DOCUMENT } from '@angular/common';
+import { Posting, PostingType } from 'app/entities/metis/posting.model';
+import { Post } from 'app/entities/metis/post.model';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -44,13 +48,20 @@ describe('PostComponent', () => {
     let metisServiceGetQueryParamsSpy: jest.SpyInstance;
     let metisServiceGetPageTypeStub: jest.SpyInstance;
     let router: MockRouter;
+    let mainContainer: HTMLElement;
 
     beforeEach(() => {
+        mainContainer = document.createElement('div');
+        mainContainer.classList.add('posting-infinite-scroll-container');
+        document.body.appendChild(mainContainer);
+
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule, MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip), OverlayModule, MockModule(BrowserAnimationsModule)],
             providers: [
+                provideRouter([]),
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: Router, useClass: MockRouter },
+                { provide: DOCUMENT, useValue: document },
                 MockProvider(MetisConversationService),
                 MockProvider(OneToOneChatService),
             ],
@@ -103,11 +114,6 @@ describe('PostComponent', () => {
         component.posting.answers = undefined;
         component.sortAnswerPosts();
         expect(component.sortedAnswerPosts).toEqual([]);
-    });
-
-    it('should contain a post header', () => {
-        const header = getElement(debugElement, 'jhi-post-header');
-        expect(header).not.toBeNull();
     });
 
     it('should set router link and query params', () => {
@@ -166,6 +172,15 @@ describe('PostComponent', () => {
         expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
     });
 
+    it('should close create answer post modal', () => {
+        component.posting = metisPostExerciseUser1;
+        component.ngOnInit();
+        fixture.detectChanges();
+        const postFooterOpenCreateAnswerPostModal = jest.spyOn(component.postFooterComponent, 'closeCreateAnswerPostModal');
+        component.closeCreateAnswerPostModal();
+        expect(postFooterOpenCreateAnswerPostModal).toHaveBeenCalledOnce();
+    });
+
     it('should create or navigate to oneToOneChat when not on messaging page', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
         const oneToOneChatService = TestBed.inject(OneToOneChatService);
@@ -213,5 +228,156 @@ describe('PostComponent', () => {
         component.onChannelReferenceClicked(metisChannel.id!);
 
         expect(setActiveConversationSpy).toHaveBeenCalledWith(metisChannel.id!);
+    });
+
+    it('should set isDeleted to true', () => {
+        component.onDeleteEvent(true);
+        expect(component.isDeleted).toBeTrue();
+    });
+
+    it('should clear existing timers and intervals', () => {
+        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+        const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+
+        component.deleteTimer = setTimeout(() => {}, 1000);
+        component.deleteInterval = setInterval(() => {}, 1000);
+        component.onDeleteEvent(true);
+
+        expect(clearIntervalSpy).toHaveBeenCalledOnce();
+        expect(clearTimeoutSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should clear existing timers and intervals on destroy', () => {
+        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+        const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+
+        component.deleteTimer = setTimeout(() => {}, 1000);
+        component.deleteInterval = setInterval(() => {}, 1000);
+        component.ngOnDestroy();
+
+        expect(clearIntervalSpy).toHaveBeenCalledOnce();
+        expect(clearTimeoutSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should set deleteTimer and deleteInterval when isDelete is true', () => {
+        component.onDeleteEvent(true);
+
+        expect(component.deleteTimer).toBeDefined();
+        expect(component.deleteInterval).toBeDefined();
+        expect(component.deleteTimerInSeconds).toBe(component.timeToDeleteInSeconds);
+    });
+
+    it('should not set timers when isDelete is false', () => {
+        component.onDeleteEvent(false);
+
+        expect(component.deleteTimer).toBeUndefined();
+        expect(component.deleteInterval).toBeUndefined();
+    });
+
+    it('should return true if the post is pinned', () => {
+        component.posting = { ...post, displayPriority: DisplayPriority.PINNED };
+        expect(component.isPinned()).toBeTrue();
+    });
+
+    it('should return false if the post is not pinned', () => {
+        component.posting = { ...post, displayPriority: DisplayPriority.NONE };
+        expect(component.isPinned()).toBeFalse();
+    });
+
+    it('should close previous dropdown when another is opened', () => {
+        const previousComponent = {
+            showDropdown: true,
+            enableBodyScroll: jest.fn(),
+            changeDetector: { detectChanges: jest.fn() },
+        } as any as PostComponent;
+
+        PostComponent.activeDropdownPost = previousComponent;
+
+        const event = new MouseEvent('contextmenu', { clientX: 100, clientY: 200 });
+        component.onRightClick(event);
+
+        expect(previousComponent.showDropdown).toBeFalse();
+        expect(previousComponent.enableBodyScroll).toHaveBeenCalled();
+        expect(previousComponent.changeDetector.detectChanges).toHaveBeenCalled();
+        expect(PostComponent.activeDropdownPost).toBe(component);
+        expect(component.showDropdown).toBeTrue();
+    });
+
+    it('should disable body scroll', () => {
+        const setStyleSpy = jest.spyOn(component.renderer, 'setStyle');
+        (component as any).disableBodyScroll();
+        expect(setStyleSpy).toHaveBeenCalledWith(expect.objectContaining({ className: 'posting-infinite-scroll-container' }), 'overflow', 'hidden');
+    });
+
+    it('should enable body scroll', () => {
+        const setStyleSpy = jest.spyOn(component.renderer, 'setStyle');
+        (component as any).enableBodyScroll();
+        expect(setStyleSpy).toHaveBeenCalledWith(expect.objectContaining({ className: 'posting-infinite-scroll-container' }), 'overflow-y', 'auto');
+    });
+
+    it('should handle click outside and hide dropdown', () => {
+        component.showDropdown = true;
+        const enableBodyScrollSpy = jest.spyOn(component, 'enableBodyScroll' as any);
+        component.onClickOutside();
+        expect(component.showDropdown).toBeFalse();
+        expect(enableBodyScrollSpy).toHaveBeenCalled();
+    });
+
+    it('should handle onRightClick correctly based on cursor style', () => {
+        const testCases = [
+            {
+                cursor: 'pointer',
+                preventDefaultCalled: false,
+                showDropdown: false,
+                dropdownPosition: { x: 0, y: 0 },
+            },
+            {
+                cursor: 'default',
+                preventDefaultCalled: true,
+                showDropdown: true,
+                dropdownPosition: { x: 100, y: 200 },
+            },
+        ];
+
+        testCases.forEach(({ cursor, preventDefaultCalled, showDropdown, dropdownPosition }) => {
+            const event = new MouseEvent('contextmenu', { clientX: 100, clientY: 200 });
+
+            const targetElement = document.createElement('div');
+            Object.defineProperty(event, 'target', { value: targetElement });
+
+            jest.spyOn(window, 'getComputedStyle').mockReturnValue({
+                cursor,
+            } as CSSStyleDeclaration);
+
+            const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+
+            component.onRightClick(event);
+
+            expect(preventDefaultSpy).toHaveBeenCalledTimes(preventDefaultCalled ? 1 : 0);
+            expect(component.showDropdown).toBe(showDropdown);
+            expect(component.dropdownPosition).toEqual(dropdownPosition);
+
+            jest.restoreAllMocks();
+        });
+    });
+
+    it('should cast the post to Post on change', () => {
+        const mockPost: Posting = {
+            id: 1,
+            author: {
+                id: 1,
+                name: 'Test Author',
+                internal: false,
+            },
+            content: 'Test Content',
+            postingType: PostingType.POST,
+        };
+        // @ts-ignore method is private
+        const spy = jest.spyOn(component, 'assignPostingToPost');
+        component.posting = mockPost;
+        fixture.detectChanges();
+
+        expect(component.posting).toBeInstanceOf(Post);
+        expect(spy).toHaveBeenCalled();
     });
 });

@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 export class MockCourseExerciseService {
     startExercise = () => of({} as StudentParticipation);
@@ -10,4 +10,6 @@ export class MockCourseExerciseService {
     resumeProgrammingExercise = () => of({} as StudentParticipation);
 
     findAllProgrammingExercisesForCourse = () => of([{ id: 456 } as ProgrammingExercise]);
+
+    requestFeedback = () => of({});
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
@@ -12,7 +12,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { EntityResponseType } from 'app/complaints/complaint.service';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
@@ -30,25 +30,21 @@ export interface IAccountService {
     isAuthenticated: () => boolean;
     getAuthenticationState: () => Observable<User | undefined>;
     getImageUrl: () => string | undefined;
-    addSshPublicKey: (sshPublicKey: string) => Observable<void>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class AccountService implements IAccountService {
+    private translateService = inject(TranslateService);
+    private sessionStorage = inject(SessionStorageService);
+    private http = inject(HttpClient);
+    private websocketService = inject(JhiWebsocketService);
+    private featureToggleService = inject(FeatureToggleService);
+
+    // cached value of the user to avoid unnecessary requests to the server
     private userIdentityValue?: User;
     private authenticated = false;
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
     private prefilledUsernameValue?: string;
-    private versionControlAccessTokenRequired: boolean;
-
-    constructor(
-        private translateService: TranslateService,
-        private sessionStorage: SessionStorageService,
-        private http: HttpClient,
-        private websocketService: JhiWebsocketService,
-        private featureToggleService: FeatureToggleService,
-        private profileService: ProfileService,
-    ) {}
 
     get userIdentity() {
         return this.userIdentityValue;
@@ -137,19 +133,10 @@ export class AccountService implements IAccountService {
             this.userIdentity = undefined;
         }
 
-        if (this.versionControlAccessTokenRequired === undefined) {
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                this.versionControlAccessTokenRequired = profileInfo.useVersionControlAccessToken ?? false;
-            });
-        }
-
         // check and see if we have retrieved the userIdentity data from the server.
         // if we have, reuse it by immediately resolving
         if (this.userIdentity) {
-            // in case a token is required but not present in the user, we cannot simply return the cached object
-            if (!this.versionControlAccessTokenRequired || this.userIdentity.vcsAccessToken !== undefined) {
-                return Promise.resolve(this.userIdentity);
-            }
+            return Promise.resolve(this.userIdentity);
         }
 
         // retrieve the userIdentity data from the server, update the identity object, and then resolve.
@@ -237,6 +224,10 @@ export class AccountService implements IAccountService {
         return this.hasAnyAuthorityDirect([Authority.ADMIN]);
     }
 
+    isAtLeastTutor(): boolean {
+        return this.hasAnyAuthorityDirect([Authority.ADMIN, Authority.EDITOR, Authority.INSTRUCTOR, Authority.TA]);
+    }
+
     isAuthenticated(): boolean {
         return this.authenticated;
     }
@@ -298,6 +289,12 @@ export class AccountService implements IAccountService {
         return this.isAuthenticated() && this.userIdentity ? this.userIdentity.imageUrl : undefined;
     }
 
+    setImageUrl(url: string | undefined) {
+        if (this.userIdentity != null) {
+            this.userIdentity!.imageUrl = url;
+        }
+    }
+
     /**
      * Sets a new language key for the current user
      *
@@ -328,25 +325,20 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sends the added SSH key to the server
-     *
-     * @param sshPublicKey
+     * Sends a request to the server to delete the user's current vcsAccessToken
      */
-    addSshPublicKey(sshPublicKey: string): Observable<void> {
-        if (this.userIdentity) {
-            this.userIdentity.sshPublicKey = sshPublicKey;
-        }
-        return this.http.put<void>('api/users/sshpublickey', sshPublicKey);
+    deleteUserVcsAccessToken(): Observable<void> {
+        return this.http.delete<void>('api/account/user-vcs-access-token');
     }
 
     /**
-     * Sends a request to the server to delete the user's current SSH key
+     * Sends a request to the server to create a new vcsAccessToken for the user
+     *
+     * @param expiryDate The expiry date which should get set for the vcsAccessToken
      */
-    deleteSshPublicKey(): Observable<void> {
-        if (this.userIdentity) {
-            this.userIdentity.sshPublicKey = undefined;
-        }
-        return this.http.delete<void>('api/users/sshpublickey');
+    addNewVcsAccessToken(expiryDate: string): Observable<EntityResponseType> {
+        const params = new HttpParams().set('expiryDate', expiryDate);
+        return this.http.put<User>('api/account/user-vcs-access-token', null, { observe: 'response', params });
     }
 
     /**
@@ -357,7 +349,7 @@ export class AccountService implements IAccountService {
      */
     getVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
-        return this.http.get<string>('api/users/vcsToken', { observe: 'response', params, responseType: 'text' as 'json' });
+        return this.http.get<string>('api/account/participation-vcs-access-token', { observe: 'response', params, responseType: 'text' as 'json' });
     }
 
     /**
@@ -368,6 +360,6 @@ export class AccountService implements IAccountService {
      */
     createVcsAccessToken(participationId: number): Observable<HttpResponse<string>> {
         const params = new HttpParams().set('participationId', participationId);
-        return this.http.put<string>('api/users/vcsToken', null, { observe: 'response', params, responseType: 'text' as 'json' });
+        return this.http.put<string>('api/account/participation-vcs-access-token', null, { observe: 'response', params, responseType: 'text' as 'json' });
     }
 }

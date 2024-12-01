@@ -1,8 +1,8 @@
 import { HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
-import { ExamChecklist } from 'app/entities/exam-checklist.model';
-import { Exam } from 'app/entities/exam.model';
+import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { MockProvider } from 'ng-mocks';
 import { of, take } from 'rxjs';
 import { ArtemisTestModule } from '../test.module';

@@ -1,9 +1,0 @@
-{
-    "submissionExerciseType": "modeling",
-    "id": null,
-    "submitted": false,
-    "participation": null,
-    "empty": true,
-    "explanationText": "",
-    "model": "{\"version\":\"2.0.0\",\"type\":\"ClassDiagram\",\"size\":{\"width\":1000,\"height\":500},\"interactive\":{\"elements\":[],\"relationships\":[]},\"elements\":[{\"id\":\"ccf5edad-98d5-401d-9885-e332607dfa6a\",\"name\":\"Package\",\"type\":\"Package\",\"owner\":null,\"bounds\":{\"x\":240,\"y\":230,\"width\":200,\"height\":100}},{\"id\":\"59787b15-e81c-4710-99bf-e11104c22dbf\",\"name\":\"Class\",\"type\":\"Class\",\"owner\":null,\"bounds\":{\"x\":0,\"y\":0,\"width\":200,\"height\":102},\"attributes\":[\"c3469dd2-a822-45b2-823d-13bc5c8370da\"],\"methods\":[\"b6457544-7cbe-47f5-b704-523ce6e967f9\"]},{\"id\":\"c3469dd2-a822-45b2-823d-13bc5c8370da\",\"name\":\"+ attribute: Type\",\"type\":\"ClassAttribute\",\"owner\":\"59787b15-e81c-4710-99bf-e11104c22dbf\",\"bounds\":{\"x\":0.5,\"y\":40.5,\"width\":199,\"height\":30}},{\"id\":\"b6457544-7cbe-47f5-b704-523ce6e967f9\",\"name\":\"+ method()\",\"type\":\"ClassMethod\",\"owner\":\"59787b15-e81c-4710-99bf-e11104c22dbf\",\"bounds\":{\"x\":0.5,\"y\":71.5,\"width\":199,\"height\":30}},{\"id\":\"8786cede-a45c-4593-ac6a-b7ac235f1fae\",\"name\":\"Abstract\",\"type\":\"AbstractClass\",\"owner\":null,\"bounds\":{\"x\":0,\"y\":120,\"width\":200,\"height\":112},\"attributes\":[\"0aaf6115-8d34-4509-a179-26d7b7d22596\"],\"methods\":[\"9f285794-4e97-42d1-adcc-e5467977b76c\"]},{\"id\":\"0aaf6115-8d34-4509-a179-26d7b7d22596\",\"name\":\"+ attribute: Type\",\"type\":\"ClassAttribute\",\"owner\":\"8786cede-a45c-4593-ac6a-b7ac235f1fae\",\"bounds\":{\"x\":0.5,\"y\":170.5,\"width\":199,\"height\":30}},{\"id\":\"9f285794-4e97-42d1-adcc-e5467977b76c\",\"name\":\"+ method()\",\"type\":\"ClassMethod\",\"owner\":\"8786cede-a45c-4593-ac6a-b7ac235f1fae\",\"bounds\":{\"x\":0.5,\"y\":201.5,\"width\":199,\"height\":30}}],\"relationships\":[],\"assessments\":[]}"
-}

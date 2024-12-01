@@ -7,7 +7,7 @@ import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 import { promises as fs } from 'fs';
 
-test.describe('Quiz Exercise Management', () => {
+test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
@@ -30,6 +30,21 @@ test.describe('Quiz Exercise Management', () => {
             const quiz: QuizExercise = await quizResponse.json();
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await expect(page.getByText(title)).toBeVisible();
+        });
+
+        test('Creates a Quiz with Multiple Choice (Visual)', async ({ page, quizExerciseCreation }) => {
+            const title = 'Multiple Choice Quiz Visual';
+            const answerOptions = [0, 1, 2, 3, 4, 5].map((answerOptionNumber) => {
+                return `Answer Option ${answerOptionNumber}`;
+            });
+            await quizExerciseCreation.createAndEditMultipleChoiceQuestionInVisualMode(title, answerOptions);
+            const quizResponse = await quizExerciseCreation.saveQuiz();
+            const quiz: QuizExercise = await quizResponse.json();
+            await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
+            await expect(page.getByText(title)).toBeVisible();
+            for (const answerOption of answerOptions) {
+                await expect(page.getByText(answerOption)).toBeVisible();
+            }
         });
 
         test('Creates a Quiz with Short Answer', async ({ page, quizExerciseCreation }) => {

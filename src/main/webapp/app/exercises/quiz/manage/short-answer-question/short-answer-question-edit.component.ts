@@ -26,16 +26,17 @@ import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'a
 import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
 import { MAX_QUIZ_QUESTION_POINTS, MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/monaco-bold.action';
-import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/monaco-italic.action';
-import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/monaco-underline.action';
-import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-code.action';
-import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
-import { MonacoUnorderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-unordered-list.action';
-import { MonacoOrderedListAction } from 'app/shared/monaco-editor/model/actions/monaco-ordered-list.action';
-import { MonacoInsertShortAnswerSpotAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-spot.action';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
-import { MonacoInsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-option.action';
+import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
+import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
+import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
+import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
+import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
+import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
+import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
+import { InsertShortAnswerSpotAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-spot.action';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { InsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-option.action';
 import { SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 
 @Component({
@@ -52,9 +53,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     @ViewChild('question', { static: false })
     questionElement: ElementRef;
 
-    markdownActions: MonacoEditorAction[];
-    insertShortAnswerOptionAction = new MonacoInsertShortAnswerOptionAction();
-    insertShortAnswerSpotAction = new MonacoInsertShortAnswerSpotAction(this.insertShortAnswerOptionAction);
+    markdownActions: TextEditorAction[];
+    insertShortAnswerOptionAction = new InsertShortAnswerOptionAction();
+    insertShortAnswerSpotAction = new InsertShortAnswerSpotAction(this.insertShortAnswerOptionAction);
 
     shortAnswerQuestion: ShortAnswerQuestion;
 
@@ -119,13 +120,14 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     ngOnInit(): void {
         this.markdownActions = [
-            new MonacoBoldAction(),
-            new MonacoItalicAction(),
-            new MonacoUnderlineAction(),
-            new MonacoCodeAction(),
-            new MonacoUrlAction(),
-            new MonacoUnorderedListAction(),
-            new MonacoOrderedListAction(),
+            new BoldAction(),
+            new ItalicAction(),
+            new UnderlineAction(),
+            new StrikethroughAction(),
+            new CodeAction(),
+            new UrlAction(),
+            new BulletedListAction(),
+            new OrderedListAction(),
             this.insertShortAnswerSpotAction,
             this.insertShortAnswerOptionAction,
         ];
@@ -454,7 +456,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             this.shortAnswerQuestion.solutions = [];
         }
         const solution = new ShortAnswerSolution();
-        solution.text = MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT_SHORT;
+        solution.text = InsertShortAnswerOptionAction.DEFAULT_TEXT_SHORT;
         this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionText: solution.text });
         this.questionUpdated.emit();
     }

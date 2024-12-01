@@ -1,9 +1,9 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Result } from 'app/entities/result.model';
-import { TextBlock } from 'app/entities/text-block.model';
+import { TextBlock } from 'app/entities/text/text-block.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { convertToHtmlLinebreaks, escapeString } from 'app/utils/text.utils';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',

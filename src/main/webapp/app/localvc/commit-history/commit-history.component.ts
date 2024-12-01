@@ -3,11 +3,11 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { tap } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -24,6 +24,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     participationId: number;
     exerciseId: number;
     repositoryType: string;
+    repositoryId?: number;
     paramSub: Subscription;
     commits: CommitInfo[];
     commitsInfoSubscription: Subscription;
@@ -53,6 +54,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             this.participationId = Number(params['participationId']);
             this.exerciseId = Number(params['exerciseId']);
             this.repositoryType = params['repositoryType'];
+            this.repositoryId = Number(params['repositoryId']);
             if (this.repositoryType) {
                 this.loadDifferentParticipation();
             } else {
@@ -88,6 +90,8 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
                     } else if (this.repositoryType === 'TESTS') {
                         this.isTestRepository = true;
                         this.participation = this.exercise.templateParticipation!;
+                    } else if (this.repositoryType === 'AUXILIARY') {
+                        this.participation = this.exercise.templateParticipation!;
                     }
                 }),
             )
@@ -121,26 +125,59 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Retrieves the commit history for the participation and filters out the commits that have no submission.
+     * Retrieves the commit history and handles it depending on repository type
      * The last commit is always the template commit and is added to the list of commits.
      * @private
      */
     private handleCommits() {
-        if (this.repositoryType) {
-            this.commitsInfoSubscription = this.programmingExerciseParticipationService
-                .retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType)
-                .subscribe((commits) => {
-                    this.commits = this.sortCommitsByTimestampDesc(commits);
-                    if (!this.isTestRepository) {
-                        this.setCommitResults();
-                    }
-                });
+        if (!this.repositoryType) {
+            this.handleParticipationCommits();
+        } else if (this.repositoryType === 'AUXILIARY') {
+            this.handleAuxiliaryRepositoryCommits();
         } else {
-            this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participation.id!).subscribe((commits) => {
-                this.commits = this.sortCommitsByTimestampDesc(commits);
-                this.setCommitResults();
-            });
+            this.handleTemplateSolutionTestRepositoryCommits();
         }
+    }
+
+    /**
+     * Retrieves the commit history and filters out the commits that have no submission.
+     * The last commit is always the template commit and is added to the list of commits.
+     * @private
+     */
+    private handleParticipationCommits() {
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participation.id!).subscribe((commits) => {
+            this.commits = this.sortCommitsByTimestampDesc(commits);
+            this.setCommitResults();
+        });
+    }
+
+    /**
+     * Retrieves the commit history for an auxiliary repository
+     * The last commit is always the template commit and is added to the list of commits.
+     * @private
+     */
+    private handleAuxiliaryRepositoryCommits() {
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService
+            .retrieveCommitHistoryForAuxiliaryRepository(this.exerciseId, this.repositoryId!)
+            .subscribe((commits) => {
+                this.commits = this.sortCommitsByTimestampDesc(commits);
+            });
+    }
+
+    /**
+     * Retrieves the commit history for template/solution/test repositories.
+     * The last commit is always the template commit and is added to the list of commits.
+     * @private
+     */
+    private handleTemplateSolutionTestRepositoryCommits() {
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService
+            .retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType)
+            .subscribe((commits) => {
+                this.commits = this.sortCommitsByTimestampDesc(commits);
+                if (!this.isTestRepository) {
+                    this.setCommitResults();
+                }
+            });
     }
 
     /**

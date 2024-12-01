@@ -1,0 +1,11 @@
+{
+    "name": "artemis-exercise",
+    "private": true,
+    "scripts": {
+        "start": "node ./src/client.js"
+    },
+    "exports": {
+        "./*.js": "./src/*.js"
+    },
+    "type": "module"
+}

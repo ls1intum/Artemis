@@ -8,37 +8,37 @@ actions:
       pip3 --version
 
       echo "--------------------Contents of tests repository--------------------"
-      ls -la tests
+      ls -la ${testWorkingDirectory}
       echo "---------------------------------------------"
       echo "--------------------Contents of assignment repository--------------------"
-      ls -la assignment
+      ls -la ${studentParentWorkingDirectoryName}
       echo "---------------------------------------------"
 
       #Fallback in case Docker does not work as intended
-      REQ_FILE=tests/requirements.txt
+      REQ_FILE=${testWorkingDirectory}/requirements.txt
       if [ -f "$REQ_FILE" ]; then
-          pip3 install --user -r tests/requirements.txt || true
+          pip3 install --user -r ${testWorkingDirectory}/requirements.txt || true
       else
           echo "$REQ_FILE does not exist"
       fi
     runAlways: false
   - name: prepare_makefile
     script: |-
-      rm -f assignment/{GNUmakefile, Makefile, makefile}
-      cp -f tests/Makefile assignment/Makefile || exit 2
+      rm -f ${studentParentWorkingDirectoryName}/{GNUmakefile, Makefile, makefile}
+      cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
     runAlways: false
   - name: run_and_compile
     script: |-
-      python3 compileTest.py ../assignment/
+      python3 compileTest.py ../${studentParentWorkingDirectoryName}/
       rm compileTest.py
-      cp result.xml ../assignment/result.xml
-    workdir: tests
+      cp result.xml ../${studentParentWorkingDirectoryName}/result.xml
+    workdir: ${testWorkingDirectory}
     runAlways: false
   - name: junit
     script: '#empty script action, just for the results'
     runAlways: true
     results:
       - name: assignment_junit_results
-        path: assignment/result.xml
+        path: ${studentParentWorkingDirectoryName}/result.xml
         type: junit
         before: true

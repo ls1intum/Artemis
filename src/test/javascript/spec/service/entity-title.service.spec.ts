@@ -1,3 +1,4 @@
+import { Exercise } from 'app/entities/exercise.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
@@ -114,5 +115,35 @@ describe('EntityTitleService', () => {
         // @ts-ignore we want to test invalid params
         service.setTitle(type, ids, title);
         expect(captureSpy).toHaveBeenCalledOnce();
+    });
+
+    it('sets the exercise group title for students during an exam', () => {
+        const exercise = { id: 1, exerciseGroup: { title: 'Group Title' }, isAtLeastTutor: false } as Exercise;
+        service.setExerciseTitle(exercise);
+
+        let result: string | undefined = undefined;
+        service.getTitle(EntityType.EXERCISE, [1]).subscribe((title) => (result = title));
+
+        expect(result).toBe('Group Title');
+    });
+
+    it('sets the exercise title for tutors and more privileged users', () => {
+        const exercise = { id: 1, exerciseGroup: { title: 'Group Title' }, isAtLeastTutor: true, title: 'Exercise Title' } as Exercise;
+        service.setExerciseTitle(exercise);
+
+        let result: string | undefined = undefined;
+        service.getTitle(EntityType.EXERCISE, [1]).subscribe((title) => (result = title));
+
+        expect(result).toBe('Exercise Title');
+    });
+
+    it('sets the exercise title for course exercises', () => {
+        const exercise = { id: 1, isAtLeastTutor: false, title: 'Exercise Title' } as Exercise;
+        service.setExerciseTitle(exercise);
+
+        let result: string | undefined = undefined;
+        service.getTitle(EntityType.EXERCISE, [1]).subscribe((title) => (result = title));
+
+        expect(result).toBe('Exercise Title');
     });
 });

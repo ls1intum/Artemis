@@ -12,20 +12,24 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
-import { MonacoChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-channel-reference.action';
-import { MonacoUserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-user-mention.action';
-import { MonacoExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-exercise-reference.action';
+import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/channel-reference.action';
+import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
+import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisTutor, metisUser1, metisUser2 } from '../../../helpers/sample/metis-sample-data';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
 import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { MonacoLectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-lecture-attachment-reference.action';
+import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { ReferenceType } from 'app/shared/metis/metis.util';
+import { Attachment } from 'app/entities/attachment.model';
+import dayjs from 'dayjs/esm';
+import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
+import { Faq } from 'app/entities/faq.model';
 
 describe('MonacoEditorCommunicationActionIntegration', () => {
     let comp: MonacoEditorComponent;
@@ -37,12 +41,14 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
     let provider: monaco.languages.CompletionItemProvider;
 
     // Actions
-    let channelReferenceAction: MonacoChannelReferenceAction;
-    let userMentionAction: MonacoUserMentionAction;
-    let exerciseReferenceAction: MonacoExerciseReferenceAction;
+    let channelReferenceAction: ChannelReferenceAction;
+    let userMentionAction: UserMentionAction;
+    let exerciseReferenceAction: ExerciseReferenceAction;
+    let faqReferenceAction: FaqReferenceAction;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
+            imports: [MonacoEditorComponent],
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -51,7 +57,6 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 MockProvider(CourseManagementService),
                 MockProvider(ChannelService),
             ],
-            declarations: [MonacoEditorComponent],
         })
             .compileComponents()
             .then(() => {
@@ -60,14 +65,14 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 });
                 fixture = TestBed.createComponent(MonacoEditorComponent);
                 comp = fixture.componentInstance;
-                // debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
                 courseManagementService = TestBed.inject(CourseManagementService);
                 lectureService = TestBed.inject(LectureService);
                 channelService = TestBed.inject(ChannelService);
-                channelReferenceAction = new MonacoChannelReferenceAction(metisService, channelService);
-                userMentionAction = new MonacoUserMentionAction(courseManagementService, metisService);
-                exerciseReferenceAction = new MonacoExerciseReferenceAction(metisService);
+                channelReferenceAction = new ChannelReferenceAction(metisService, channelService);
+                userMentionAction = new UserMentionAction(courseManagementService, metisService);
+                exerciseReferenceAction = new ExerciseReferenceAction(metisService);
+                faqReferenceAction = new FaqReferenceAction(metisService);
             });
     });
 
@@ -75,7 +80,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         jest.restoreAllMocks();
     });
 
-    const registerActionWithCompletionProvider = (action: MonacoEditorAction, triggerCharacter?: string) => {
+    const registerActionWithCompletionProvider = (action: TextEditorAction, triggerCharacter?: string) => {
         const registerCompletionProviderStub = jest.spyOn(monaco.languages, 'registerCompletionItemProvider').mockImplementation();
         comp.registerAction(action);
         expect(registerCompletionProviderStub).toHaveBeenCalledOnce();
@@ -88,14 +93,16 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
     };
 
     describe.each([
-        { actionId: MonacoChannelReferenceAction.ID, defaultInsertText: '#', triggerCharacter: '#' },
-        { actionId: MonacoUserMentionAction.ID, defaultInsertText: '@', triggerCharacter: '@' },
-        { actionId: MonacoExerciseReferenceAction.ID, defaultInsertText: '/exercise', triggerCharacter: '/' },
+        { actionId: ChannelReferenceAction.ID, defaultInsertText: '#', triggerCharacter: '#' },
+        { actionId: UserMentionAction.ID, defaultInsertText: '@', triggerCharacter: '@' },
+        { actionId: ExerciseReferenceAction.ID, defaultInsertText: '/exercise', triggerCharacter: '/' },
+        { actionId: FaqReferenceAction.ID, defaultInsertText: '/faq', triggerCharacter: '/' },
     ])('Suggestions and default behavior for $actionId', ({ actionId, defaultInsertText, triggerCharacter }) => {
-        let action: MonacoChannelReferenceAction | MonacoUserMentionAction | MonacoExerciseReferenceAction;
+        let action: ChannelReferenceAction | UserMentionAction | ExerciseReferenceAction | FaqReferenceAction;
         let channels: ChannelIdAndNameDTO[];
         let users: User[];
         let exercises: Exercise[];
+        let faqs: Faq[];
 
         beforeEach(() => {
             fixture.detectChanges();
@@ -105,16 +112,20 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             users = [metisUser1, metisUser2, metisTutor];
             jest.spyOn(courseManagementService, 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: users, status: 200 })));
             exercises = metisService.getCourse().exercises!;
+            faqs = metisService.getCourse().faqs!;
 
             switch (actionId) {
-                case MonacoChannelReferenceAction.ID:
+                case ChannelReferenceAction.ID:
                     action = channelReferenceAction;
                     break;
-                case MonacoUserMentionAction.ID:
+                case UserMentionAction.ID:
                     action = userMentionAction;
                     break;
-                case MonacoExerciseReferenceAction.ID:
+                case ExerciseReferenceAction.ID:
                     action = exerciseReferenceAction;
+                    break;
+                case FaqReferenceAction.ID:
+                    action = faqReferenceAction;
                     break;
             }
         });
@@ -172,6 +183,15 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             });
         };
 
+        const checkFaqSuggestions = (suggestions: monaco.languages.CompletionItem[], faqs: Faq[]) => {
+            expect(suggestions).toHaveLength(faqs.length);
+            suggestions.forEach((suggestion, index) => {
+                expect(suggestion.label).toBe(`/faq ${faqs[index].questionTitle}`);
+                expect(suggestion.insertText).toBe(`[faq]${faqs[index].questionTitle}(${metisService.getLinkForFaq()}?faqId=${faqs[index].id})[/faq]`);
+                expect(suggestion.detail).toBe('faq');
+            });
+        };
+
         it.each(['', 'ex'])('should suggest the correct values if the user is typing a reference (suffix "%s")', async (referenceSuffix: string) => {
             const reference = triggerCharacter + referenceSuffix;
             comp.setText(reference);
@@ -179,23 +199,26 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             registerActionWithCompletionProvider(action, triggerCharacter);
             const providerResult = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, column), {} as any, {} as any);
             expect(providerResult).toBeDefined();
-            expect(providerResult!.incomplete).toBe(actionId === MonacoUserMentionAction.ID ? true : undefined);
+            expect(providerResult!.incomplete).toBe(actionId === UserMentionAction.ID);
             const suggestions = providerResult!.suggestions;
             switch (actionId) {
-                case MonacoChannelReferenceAction.ID:
+                case ChannelReferenceAction.ID:
                     checkChannelSuggestions(suggestions, channels);
                     break;
-                case MonacoUserMentionAction.ID:
+                case UserMentionAction.ID:
                     checkUserSuggestions(suggestions, users);
                     break;
-                case MonacoExerciseReferenceAction.ID:
+                case ExerciseReferenceAction.ID:
                     checkExerciseSuggestions(suggestions, exercises);
+                    break;
+                case FaqReferenceAction.ID:
+                    checkFaqSuggestions(suggestions, faqs);
                     break;
             }
         });
     });
 
-    describe('MonacoChannelReferenceAction', () => {
+    describe('ChannelReferenceAction', () => {
         it('should use cached channels if available', async () => {
             const channels: ChannelIdAndNameDTO[] = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
             channelReferenceAction.cachedChannels = channels;
@@ -224,23 +247,40 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         });
     });
 
-    describe('MonacoExerciseReferenceAction (edge cases)', () => {
+    describe('ExerciseReferenceAction (edge cases)', () => {
         it('should initialize with empty values if exercises are not available', () => {
             jest.spyOn(metisService, 'getCourse').mockReturnValue({ exercises: undefined } as any);
             fixture.detectChanges();
             comp.registerAction(exerciseReferenceAction);
             expect(exerciseReferenceAction.getValues()).toEqual([]);
         });
+
+        it('should insert / for faq references', () => {
+            fixture.detectChanges();
+            comp.registerAction(faqReferenceAction);
+            faqReferenceAction.executeInCurrentEditor();
+            expect(comp.getText()).toBe('/faq');
+        });
     });
 
-    describe('MonacoLectureAttachmentReferenceAction', () => {
+    describe('FaqReferenceAction', () => {
+        it('should initialize with empty values if faqs are not available', () => {
+            jest.spyOn(metisService, 'getCourse').mockReturnValue({ faqs: undefined } as any);
+
+            fixture.detectChanges();
+            comp.registerAction(faqReferenceAction);
+            expect(faqReferenceAction.getValues()).toEqual([]);
+        });
+    });
+
+    describe('LectureAttachmentReferenceAction', () => {
         let lectures: Lecture[];
-        let lectureAttachmentReferenceAction: MonacoLectureAttachmentReferenceAction;
+        let lectureAttachmentReferenceAction: LectureAttachmentReferenceAction;
 
         beforeEach(() => {
             lectures = metisService.getCourse().lectures!;
             jest.spyOn(lectureService, 'findAllByCourseIdWithSlides').mockReturnValue(of(new HttpResponse({ body: lectures, status: 200 })));
-            lectureAttachmentReferenceAction = new MonacoLectureAttachmentReferenceAction(metisService, lectureService);
+            lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(metisService, lectureService);
         });
 
         afterEach(() => {
@@ -275,6 +315,64 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
             lectureAttachmentReferenceAction.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture });
             expect(comp.getText()).toBe(`[lecture]${lecture.title}(${metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
+        });
+
+        it('should reference an attachment without brackets', () => {
+            fixture.detectChanges();
+
+            const attachmentNameWithBrackets = 'Test (File) With [Brackets] And (More) [Bracket(s)]';
+            const attachmentNameWithoutBrackets = 'Test File With Brackets And More Brackets';
+
+            const newAttachment = {
+                id: 53,
+                name: attachmentNameWithBrackets,
+                link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+                version: 1,
+                uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
+                attachmentType: 'FILE',
+            } as Attachment;
+
+            comp.registerAction(lectureAttachmentReferenceAction);
+            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
+            const shortLink = newAttachment.link?.split('attachments/')[1];
+            lectureAttachmentReferenceAction.executeInCurrentEditor({ reference: ReferenceType.ATTACHMENT, lecture: lecture, attachment: newAttachment });
+            expect(comp.getText()).toBe(`[attachment]${attachmentNameWithoutBrackets}(${shortLink})[/attachment]`);
+        });
+
+        it('should reference a lecture without brackets', () => {
+            fixture.detectChanges();
+
+            const lectureNameWithBrackets = 'Test (Lecture) With [Brackets] And (More) [Bracket(s)]';
+            const lectureNameWithoutBrackets = 'Test Lecture With Brackets And More Brackets';
+
+            comp.registerAction(lectureAttachmentReferenceAction);
+            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
+            const previousTitle = lecture.title;
+            lecture.title = lectureNameWithBrackets;
+            lectureAttachmentReferenceAction.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture });
+            lecture.title = previousTitle;
+            expect(comp.getText()).toBe(`[lecture]${lectureNameWithoutBrackets}(${metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
+        });
+
+        it('should reference an attachment unit without brackets', () => {
+            fixture.detectChanges();
+
+            const attachmentUnitNameWithBrackets = 'Test (AttachmentUnit) With [Brackets] And (More) [Bracket(s)]';
+            const attachmentUnitNameWithoutBrackets = 'Test AttachmentUnit With Brackets And More Brackets';
+
+            comp.registerAction(lectureAttachmentReferenceAction);
+            const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
+            const attachmentUnit = lecture.attachmentUnits![0];
+            const previousName = attachmentUnit.name;
+            attachmentUnit.name = attachmentUnitNameWithBrackets;
+            const attachmentUnitFileName = 'Metis-Attachment.pdf';
+            lectureAttachmentReferenceAction.executeInCurrentEditor({
+                reference: ReferenceType.ATTACHMENT_UNITS,
+                lecture,
+                attachmentUnit,
+            });
+            attachmentUnit.name = previousName;
+            expect(comp.getText()).toBe(`[lecture-unit]${attachmentUnitNameWithoutBrackets}(${attachmentUnitFileName})[/lecture-unit]`);
         });
 
         it('should reference an attachment', () => {

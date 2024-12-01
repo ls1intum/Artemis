@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { BuildPlan } from 'app/entities/build-plan.model';
+import { BuildPlan } from 'app/entities/programming/build-plan.model';
 
 export class MockBuildPlanService {
     getBuildPlan = (exerciseId: number) => of({});

@@ -1,27 +1,29 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
-import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
+import { MockService } from 'ng-mocks';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
-import { MockFeatureToggleService } from '../helpers/mocks/service/mock-feature-toggle.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Team } from 'app/entities/team.model';
-import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
+import { SessionStorageService } from 'ngx-webstorage';
+import { provideHttpClient } from '@angular/common/http';
+import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 
 describe('AccountService', () => {
     let accountService: AccountService;
     let httpService: MockHttpService;
     let getStub: jest.SpyInstance;
-    let postStub: jest.SpyInstance;
-    let translateService: TranslateService;
+    let httpMock: HttpTestingController;
 
     const getUserUrl = 'api/public/account';
     const updateLanguageUrl = 'api/public/account/change-language';
@@ -41,54 +43,74 @@ describe('AccountService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: JhiWebsocketService, useValue: MockService(JhiWebsocketService) },
+                { provide: FeatureToggleService, useValue: MockService(FeatureToggleService) },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         });
+        accountService = TestBed.inject(AccountService);
         httpService = new MockHttpService();
-        translateService = TestBed.inject(TranslateService);
-        accountService = new AccountService(
-            translateService,
-            // @ts-ignore
-            new MockSyncStorage(),
-            httpService,
-            new MockWebsocketService(),
-            new MockFeatureToggleService(),
-            new MockProfileService(),
-        );
+        httpMock = TestBed.inject(HttpTestingController);
         getStub = jest.spyOn(httpService, 'get');
-        postStub = jest.spyOn(httpService, 'post');
     });
 
     afterEach(() => {
+        httpMock.verify();
         jest.restoreAllMocks();
     });
 
-    it('should fetch the user on identity if the userIdentity is not defined yet', async () => {
-        getStub.mockReturnValue(of({ body: user }));
+    it('should fetch the user on identity if the userIdentity is not defined yet', fakeAsync(() => {
+        let userReceived: User;
+        accountService.identity().then((returnedUser: User) => {
+            userReceived = returnedUser;
+        });
 
-        const userReceived = await accountService.identity(false);
+        const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
+        req.flush(user);
 
-        expect(getStub).toHaveBeenCalledOnce();
-        expect(getStub).toHaveBeenCalledWith(getUserUrl, { observe: 'response' });
+        // Use tick() to simulate the passage of time and allow promise resolution
+        tick();
+
+        // @ts-ignore
         expect(userReceived).toEqual(user);
         expect(accountService.userIdentity).toEqual(user);
         expect(accountService.isAuthenticated()).toBeTrue();
+    }));
+
+    it('should handle user SSH public key correctly', () => {
+        const sshKey = new UserSshPublicKey();
+        sshKey.id = 123;
+        sshKey.label = 'test-label';
+
+        expect(sshKey.id).toBe(123);
+        expect(sshKey.label).toBe('test-label');
     });
 
-    it('should fetch the user on identity if the userIdentity is defined yet (force=true)', async () => {
+    it('should fetch the user on identity if the userIdentity is defined yet (force=true)', fakeAsync(() => {
+        let userReceived: User;
         accountService.userIdentity = user;
         expect(accountService.userIdentity).toEqual(user);
         expect(accountService.isAuthenticated()).toBeTrue();
-        getStub.mockReturnValue(of({ body: user2 }));
 
-        const userReceived = await accountService.identity(true);
+        accountService.identity(true).then((returnedUser: User) => {
+            userReceived = returnedUser;
+        });
 
-        expect(getStub).toHaveBeenCalledOnce();
-        expect(getStub).toHaveBeenCalledWith(getUserUrl, { observe: 'response' });
+        const req = httpMock.expectOne({ method: 'GET', url: getUserUrl });
+        req.flush(user2);
+
+        // Use tick() to simulate the passage of time and allow promise resolution
+        tick();
+
+        // @ts-ignore
         expect(userReceived).toEqual(user2);
         expect(accountService.userIdentity).toEqual(user2);
         expect(accountService.isAuthenticated()).toBeTrue();
-    });
+    }));
 
     it('should NOT fetch the user on identity if the userIdentity is defined (force=false)', async () => {
         accountService.userIdentity = user;
@@ -504,15 +526,12 @@ describe('AccountService', () => {
         });
     });
 
-    describe('test updateLanguage', () => {
-        it('should call update language url with language key', () => {
-            postStub.mockReturnValue(of({ body: {} }));
+    it('should call update language url with language key', () => {
+        accountService.updateLanguage('EN').subscribe(() => {});
 
-            accountService.updateLanguage('EN');
-
-            expect(postStub).toHaveBeenCalledOnce();
-            expect(postStub).toHaveBeenCalledWith(updateLanguageUrl, 'EN');
-        });
+        const req = httpMock.expectOne({ method: 'POST', url: updateLanguageUrl });
+        req.flush({});
+        expect(req.request.body).toBe('EN');
     });
 
     describe('test prefilled username', () => {
@@ -538,17 +557,7 @@ describe('AccountService', () => {
             fetchStub = jest.spyOn(accountService, 'fetch');
         });
 
-        it('should retrieve user if vcs token is missing', () => {
-            accountService['versionControlAccessTokenRequired'] = true;
-            user.vcsAccessToken = undefined;
-            accountService.userIdentity = user;
-
-            accountService.identity();
-            expect(fetchStub).toHaveBeenCalledOnce();
-        });
-
         it('should not retrieve user if vcs token is missing but not required', () => {
-            accountService['versionControlAccessTokenRequired'] = false;
             user.vcsAccessToken = undefined;
             accountService.userIdentity = user;
 
@@ -557,12 +566,57 @@ describe('AccountService', () => {
         });
 
         it('should not retrieve user if vcs token is present', () => {
-            accountService['versionControlAccessTokenRequired'] = true;
             user.vcsAccessToken = 'iAmAToken';
             accountService.userIdentity = user;
 
             accountService.identity();
             expect(fetchStub).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('test vcs token related logic', () => {
+        afterEach(() => {
+            httpMock.verify();
+        });
+
+        it('should delete user VCS access token', () => {
+            accountService.deleteUserVcsAccessToken().subscribe(() => {});
+
+            const req = httpMock.expectOne({ method: 'DELETE', url: 'api/account/user-vcs-access-token' });
+            req.flush(null);
+        });
+
+        it('should add a new VCS access token', () => {
+            const expiryDate = '2024-10-10';
+
+            accountService.addNewVcsAccessToken(expiryDate).subscribe((response) => {
+                expect(response.status).toBe(200);
+            });
+
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/user-vcs-access-token?expiryDate=${expiryDate}` });
+            req.flush({ status: 200 });
+        });
+
+        it('should get VCS access token for a participation', () => {
+            const participationId = 1;
+            const token = 'vcs-token';
+
+            accountService.getVcsAccessToken(participationId).subscribe((response) => {
+                expect(response.body).toEqual(token);
+            });
+
+            const req = httpMock.expectOne({ method: 'GET', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
+            req.flush({ body: token });
+        });
+
+        it('should create VCS access token for a participation', () => {
+            const participationId = 1;
+            const token = 'vcs-token';
+
+            accountService.createVcsAccessToken(participationId).subscribe(() => {});
+
+            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/participation-vcs-access-token?participationId=${participationId}` });
+            req.flush({ body: token });
         });
     });
 });

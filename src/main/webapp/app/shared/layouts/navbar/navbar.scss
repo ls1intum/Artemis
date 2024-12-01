@@ -47,9 +47,8 @@ a:not(.btn):hover {
 
     .profile-image {
         margin: -10px 0px;
-        height: 40px;
-        width: 40px;
-        border-radius: 50%;
+        height: 30px;
+        width: 30px;
     }
 
     .dropdown-item.active,
@@ -202,7 +201,8 @@ a:not(.btn):hover {
         background-color: var(--navbar-breadcrumb-background);
         margin-left: 1rem;
         margin-bottom: 0;
-        padding: 5px 16px 5px 16px;
+        padding: 0.25rem 1rem;
+        font-size: smaller;
 
         .breadcrumb-link {
             font-weight: 300;

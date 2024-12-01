@@ -14,7 +14,7 @@ import { MockHttpService } from '../../../helpers/mocks/service/mock-http.servic
 import { HttpClient } from '@angular/common/http';
 import { Submission } from 'app/entities/submission.model';
 import { Observable, Subject, of } from 'rxjs';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { SubmissionSyncPayload } from 'app/entities/submission-sync-payload.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';

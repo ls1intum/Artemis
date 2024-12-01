@@ -7,9 +7,10 @@
                 "editLabel": "Edit Programming Exercise",
                 "importLabel": "Import Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
-                "switchToGuidedModeLabel": "Switch to guided mode",
-                "switchToTraditionalModeLabel": "Switch to normal mode",
-                "nextStepLabel": "Next"
+                "switchToSimpleMode": "Switch to simple mode",
+                "simpleModeTooltip": "The simple mode reduces the view to configuration options that are needed for a basic programming exercise. Changes made in the advanced mode will be saved.",
+                "switchToAdvancedMode": "Switch to advanced mode",
+                "advancedModeTooltip": "The advanced mode offers extended configuration options."
             },
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",
@@ -58,7 +59,7 @@
                 "uploadForImport": "Upload Programming Exercise for Import",
                 "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 20 MB.",
                 "fileTypeNotSupportedError": "The file type is not supported. Please select a file with the extension .zip.",
-                "noExerciseDetailsJsonAtRootLevel": "The zip file does not contain a .json file at the root level with the exercise details.",
+                "noExerciseDetailsJsonAtRootLevel": "The zip file does not contain a JSON file at the root level with the exercise details.",
                 "notSupportedProgrammingLanguage": "The programming language {{ programmingLanguage }} is not yet supported for the import from file.",
                 "GccNotSupportedForC": "The project type is not yet supported for the import from file."
             },
@@ -128,16 +129,44 @@
             "dockerImage": "Docker Image",
             "script": "Build script",
             "customizeDockerImage": "You can customize the Docker image. Make sure to provide it in amd64 and arm64 and include all build dependencies to guarantee a short build duration.",
+            "checkoutPath": {
+                "title": "Checkout Path",
+                "customize": "You can customize the checkout path where the repositories are cloned inside the Docker container. Make sure to provide a valid absolute UNIX path. The default path is /var/tmp.",
+                "alert": "Checkout paths must only contain words, '_', '-', and '/' characters, but must not start nor end with a '/' character. The paths must be different for each repository.",
+                "edit": "Edit repositories checkout path",
+                "assignment": "Assignment Repository Checkout Path. This can't be edited after creation.",
+                "solution": "Solution Repository Checkout Path. This can't be edited after creation.",
+                "tests": "Tests Repository Checkout Path. This can't be edited after creation.",
+                "invalid": "Invalid checkout paths",
+                "warning": "Modifying checkout paths may result in build failures. Some programming languages rely on Docker images that assume specific directory structures for the code.",
+                "warningBuildScript": "Make sure to adjust the build script and repositories accordingly."
+            },
+            "timeout": {
+                "title": "Maximum build duration in seconds",
+                "customize": "Set to 0 to use default value. Make sure to provide a valid integer value. The unit is seconds. Note that this value may be overridden by the maximum limit set by the administrators (default is 240s).",
+                "alert": "The timeout must be a valid integer value."
+            },
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
-                "alert": "At least one option (Offline IDE or Online Editor) must be selected"
+                "description": "An online text editor featuring a file explorer, coding window, and code highlighting features but without the ability to compile or run code.",
+                "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
+                "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Allow Offline IDE",
-                "alert": "At least one option (Offline IDE or Online Editor) must be selected"
+                "description": "Enables students to download the exercise via Git and to work on it locally using their preferred IDE.",
+                "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
+                "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "offlineIde": "IDE",
+            "allowOnlineIde": {
+                "title": "Allow Online IDE",
+                "description": "An online coding environment based on Visual Studio Code featuring code highlighting and formatting features. Pre-configured to your exercise's language and with the ability to compile or run code online.",
+                "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected.",
+                "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
+            },
+            "onlineIde": "Online IDE",
             "showTestNamesToStudents": "Show Test Names to Students",
             "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
             "participationMode": "Participation Mode",
@@ -172,6 +201,11 @@
             "projectType": "Project Type",
             "testRepositoryProjectType": "Test Repository Project Type",
             "packageName": "Package Name",
+            "theiaImage": {
+                "title": "Configuration for Online IDE",
+                "noImageAvailable": "The Online IDE is not yet available for this programming language.",
+                "alert": "A valid configuration for the Online IDE must be selected."
+            },
             "appName": "App Name",
             "templateResult": "Template Result",
             "solutionResult": "Solution Result",
@@ -262,6 +296,7 @@
                     "settingNegative": "Test case {{testCase}} must not have settings set to negative values."
                 },
                 "categories": {
+                    "titleHeader": "Code Analysis",
                     "title": "Code Analysis Categories",
                     "notGraded": "Not graded.",
                     "noFeedback": "No visible feedback.",
@@ -307,6 +342,75 @@
                     "resultingPoints": "Resulting Points",
                     "testType": "Type",
                     "passedPercent": "Passed %"
+                },
+                "feedbackAnalysis": {
+                    "titleHeader": "Feedback Analysis",
+                    "title": "Feedback Analysis for {{exerciseTitle}}",
+                    "occurrence": "Occurrence",
+                    "feedback": "Feedback",
+                    "task": "Task",
+                    "testcase": "Test Case",
+                    "errorCategory": "Error Category",
+                    "totalItems": "In total {{count}} item(s)",
+                    "error": "An error occurred while loading the feedback.",
+                    "search": "Search ...",
+                    "filter": "Filters",
+                    "noData": "No Feedback Entries could be found for the Programming Exercise.",
+                    "noDataFilter": "No Feedback Entries could be found for the specified filter or search Term.",
+                    "channelSuccess": "Channel {{channelName}} successfully created.",
+                    "feedbackModal": {
+                        "header": "Error Details",
+                        "feedbackTitle": "Test Case Feedback",
+                        "ok": "Ok"
+                    },
+                    "filterModal": {
+                        "modalTitle": "Filter Options",
+                        "task": "Tasks",
+                        "testcase": "Test Cases",
+                        "errorCategory": "Error Categories",
+                        "occurrence": "Occurrence",
+                        "clear": "Clear Filter",
+                        "cancel": "Cancel",
+                        "apply": "Apply Filter"
+                    },
+                    "affectedStudentsModal": {
+                        "header": "Affected Students",
+                        "name": "Name",
+                        "login": "Login",
+                        "repository": "Repository",
+                        "totalItems": "In total {{count}} item(s)",
+                        "error": "There was an error while loading the affected Students for this feedback."
+                    },
+                    "feedbackDetailChannel": {
+                        "title": "Create Feedback Discussion Channel",
+                        "studentNumber": "Number of students which will be added to the channel: {{count}}",
+                        "description": "This channel is intended to facilitate discussions around specific feedback for the provided exercise feedback. It will allow all affected students and instructors to collaborate and address the feedback effectively.",
+                        "label": "Channel Name",
+                        "channelVisibility": "Channel Visibility",
+                        "visibilityPublic": "Public",
+                        "visibilityPrivate": "Private",
+                        "announcementChannel": "Announcement Channel",
+                        "announcementChannelYes": "Yes",
+                        "announcementChannelNo": "No",
+                        "createAndNavigateLabel": "Create and Navigate",
+                        "createAndNavigateDescription": "Creates the channel and automatically navigates to the channel.",
+                        "createChannelLabel": "Create Channel:",
+                        "createChannelDescription": "Creates the channel without navigating away from this page.",
+                        "createChannelButton": "Create Channel",
+                        "placeholder": "This field should not be empty",
+                        "descriptionLabel": "Description",
+                        "requiredValidationErrorName": "The channel name is required.",
+                        "maxLengthValidationErrorName": "Channel name can be max {{ max }} characters long!",
+                        "regexValidationErrorName": "Names can only contain lowercase letters, numbers, and dashes. Only Artemis can create channels that start with a $.",
+                        "requiredValidationErrorDescription": "The channel description is required.",
+                        "maxLengthValidationErrorDescription": "Channel description can be max {{ max }} characters long!",
+                        "confirmationModal": {
+                            "header": "Confirm Channel Creation",
+                            "confirmationMessage": "Are you sure you want to create this channel? This will create a channel with <strong>{{count}}</strong> student(s).",
+                            "cancel": "Cancel",
+                            "confirm": "Create"
+                        }
+                    }
                 },
                 "help": {
                     "name": "Task names are written in bold whereas Test names are normal. Task or test name depending on whether the row is a task or test.",
@@ -423,6 +527,8 @@
                 "allowFeedbackRequestsTooltip": "Students can request feedback before the due date. The requests will be processed by Athena, or, if Athena cannot be reached, students can send manual feedback requests.",
                 "manualFeedbackRequests": "Manual feedback requests",
                 "manualFeedbackRequestsTooltip": "Students can request manual feedback before the due date to receive feedback.",
+                "feedbackRequestsEnabled": "Feedback requests are enabled.",
+                "feedbackRequestsDisabled": "Feedback requests are disabled.",
                 "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
                 "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
                 "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
@@ -433,7 +539,7 @@
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
-                "tooltip": "You are outside of the participation timeframe or you reached your submission limit, your repository is locked. You may still read the code but you may not make any changes to it."
+                "tooltip": "You are outside the participation timeframe, or you reached your submission limit, your repository is locked. You may still read the code, but you may not make any changes to it."
             },
             "checkoutDirectories": "Checkout directories",
             "preview": {
@@ -472,7 +578,7 @@
             "auxiliaryRepository": {
                 "error": "There is a problem with the auxiliary repository.",
                 "addAuxiliaryRepository": "Add Auxiliary Repository",
-                "usageDescription": "You can use auxiliary repositories to provide additional code that students cannot see or modify. The additional code is inserted at the specified Checkout Directory during the build of the submission.",
+                "usageDescription": "You can use auxiliary repositories to provide additional code that students cannot see or modify. The additional code is inserted into the specified checkout directory before the submission is built. The inserted code overwrites everything which lies at the location specified by the checkout directory. If you only need to overwrite student files partially, you need to adapt the build script.",
                 "repositoryName": "Repository Name",
                 "checkoutDirectory": "Checkout Directory",
                 "description": "Description",
@@ -487,7 +593,8 @@
                 },
                 "invalidDirectoryName": {
                     "pattern": "Checkout directory paths must only contain words, '_', '-', and '/' characters, but must not start nor end with a '/' character."
-                }
+                },
+                "invalidConfigurationPreventsSwitchingEditMode": "Adjust the auxiliary repository configuration to a valid configuration to switch to the simple mode."
             },
             "submissionPolicy": {
                 "title": "Submission Policy",
@@ -536,10 +643,10 @@
                     },
                     "submission_penalty": {
                         "title": "Submission Penalty",
-                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. Try to stay within the submission limit to avoid penalties!"
+                        "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. The penalty for this exercise is -{{points}} points."
                     }
                 },
-                "submissionLimitTitle": "Submission limit",
+                "submissionLimitTitle": "Submissions",
                 "submissionLimitDescription": "The number of submissions a participant can make before the system enforces the selected policy.",
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
                 "goToGradingToEditInformation": "Go to the grading page to edit submission policy.",
@@ -633,10 +740,24 @@
                 "template": "Template",
                 "history": "Commit History",
                 "result": "Result"
+            },
+            "otherLanguageHints": {
+                "title": "To use another language, complete the following tasks. See the <a href=\"{{documentationLink}}\">documentation</a> for details.",
+                "setImage": "Specify a custom Docker image with the required dependencies (potentially create a custom one and upload it to the <a href=\"{{ghcrLink}}\">GitHub Container Registry</a> or <a href=\"{{dockerhubLink}}\">Docker Hub</a>).",
+                "buildScript": {
+                    "title": "Customize the build script to:",
+                    "dependencies": "Optional: Install exercise specific dependencies.",
+                    "runTests": "Run all tests. They should generate JUnit XML files.",
+                    "moveResults": "Move the XML files into the <code>{{resultsDirectory}}</code> directory."
+                },
+                "pushExercise": "Push the exercise code to its repository. It will be checked out at <code>{{checkoutDirectory}}</code>.",
+                "pushSolution": "Push the solution code to its repository. It will not be checked out.",
+                "pushTest": "Push the test code to its repository. It will be checked out in <code>{{checkoutDirectory}}</code>."
             }
         },
         "error": {
-            "noparticipations": "No existing user was specified or no submission exists."
+            "noparticipations": "No existing user was specified or no submission exists.",
+            "shortNameGenerationFailed": "The short name could not be generated, please switch to the advanced mode and set the short name manually."
         }
     }
 }

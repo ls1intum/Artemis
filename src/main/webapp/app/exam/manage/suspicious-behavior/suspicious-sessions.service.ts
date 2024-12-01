@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/entities/exam-session.model';
+import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/entities/exam/exam-session.model';
 import { Observable } from 'rxjs';
 
 @Injectable({

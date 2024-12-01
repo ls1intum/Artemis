@@ -72,6 +72,12 @@
                     <span class="tab-link-text" jhiTranslate="entity.action.scores"></span>
                 </a>
             }
+            @if (course.isAtLeastTutor && course.faqEnabled) {
+                <a class="tab-link" [routerLink]="['/course-management', course.id, 'faqs']" routerLinkActive="active">
+                    <fa-icon [icon]="faQuestion" />
+                    <span class="tab-link-text" jhiTranslate="entity.action.faq"></span>
+                </a>
+            }
             @if (course.isAtLeastInstructor && localCIActive) {
                 <a class="tab-link" [routerLink]="['/course-management', course.id, 'build-queue']" routerLinkActive="active">
                     <fa-icon [icon]="faList" />
@@ -101,6 +107,8 @@
                         [buttonSize]="ButtonSize.MEDIUM"
                         jhiDeleteButton
                         [entityTitle]="course.title || ''"
+                        entitySummaryTitle="artemisApp.course.delete.summary.title"
+                        [fetchEntitySummary]="fetchCourseDeletionSummary()"
                         deleteQuestion="artemisApp.course.delete.question"
                         deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
                         (delete)="deleteCourse(course.id!)"

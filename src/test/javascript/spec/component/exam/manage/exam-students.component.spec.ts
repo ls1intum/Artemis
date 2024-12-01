@@ -1,13 +1,12 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { StudentsUploadImagesButtonComponent } from 'app/exam/manage/students/upload-images/students-upload-images-button.component';
@@ -20,8 +19,8 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { ArtemisTestModule } from '../../../test.module';
 import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
-import { ExamUser } from 'app/entities/exam-user.model';
+import { ExamUserDTO } from 'app/entities/exam/exam-user-dto.model';
+import { ExamUser } from 'app/entities/exam/exam-user.model';
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
@@ -61,7 +60,7 @@ describe('ExamStudentsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, RouterTestingModule],
+            imports: [ArtemisTestModule, NgxDatatableModule],
             declarations: [
                 ExamStudentsComponent,
                 MockComponent(UsersImportButtonComponent),
@@ -71,10 +70,7 @@ describe('ExamStudentsComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ActivatedRoute, useValue: route },
-            ],
+            providers: [provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }, { provide: ActivatedRoute, useValue: route }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamStudentsComponent);

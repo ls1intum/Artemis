@@ -1,19 +1,20 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
-import { HttpClientTestingModule, HttpTestingController, TestRequest } from '@angular/common/http/testing';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { BuildJob, BuildJobStatistics, SpanType } from 'app/entities/build-job.model';
+import { BuildJob, BuildJobStatistics, SpanType } from 'app/entities/programming/build-job.model';
 import dayjs from 'dayjs/esm';
-import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/repository-info.model';
+import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
-import { BuildConfig } from 'app/entities/build-config.model';
+import { BuildConfig } from 'app/entities/programming/build-config.model';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('BuildQueueService', () => {
     let service: BuildQueueService;
@@ -42,8 +43,10 @@ describe('BuildQueueService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

@@ -3,8 +3,8 @@ import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -17,6 +17,7 @@ import { ArtemisTestModule } from '../../../../test.module';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
 
 describe('TextExamSubmissionComponent', () => {
     let fixture: ComponentFixture<TextExamSubmissionComponent>;
@@ -39,6 +40,7 @@ describe('TextExamSubmissionComponent', () => {
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
                 MockComponent(ResizeableContainerComponent),
+                MockComponent(ExerciseSaveButtonComponent),
                 MockDirective(TranslateDirective),
             ],
             providers: [MockProvider(TextEditorService), MockProvider(ArtemisMarkdownService)],
@@ -139,5 +141,16 @@ describe('TextExamSubmissionComponent', () => {
         component.setSubmissionVersion(submissionVersion);
         expect(component.answer).toBe('submission version');
         expect(component.submissionVersion).toBe(submissionVersion);
+    });
+
+    it('should call triggerSave if save exercise button is clicked', () => {
+        component.exercise = exercise;
+        textSubmission.text = 'Hello World';
+        component.studentSubmission = textSubmission;
+        fixture.detectChanges();
+        const saveExerciseSpy = jest.spyOn(component, 'notifyTriggerSave');
+        const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
+        saveButton.triggerEventHandler('save', null);
+        expect(saveExerciseSpy).toHaveBeenCalledOnce();
     });
 });

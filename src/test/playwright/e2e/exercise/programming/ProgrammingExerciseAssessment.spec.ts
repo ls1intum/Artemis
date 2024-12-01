@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 import { ProgrammingExerciseAssessmentType } from '../../../support/constants';
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
@@ -17,7 +17,7 @@ const tutorCodeFeedback = 'The input parameter should be mentioned in javadoc!';
 const tutorCodeFeedbackPoints = -2;
 const complaint = "That feedback wasn't very useful!";
 
-test.describe('Programming exercise assessment', () => {
+test.describe('Programming exercise assessment', { tag: '@sequential' }, () => {
     let course: Course;
     let exercise: ProgrammingExercise;
     let dueDate: dayjs.Dayjs;

@@ -1,5 +1,5 @@
 import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
 import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
@@ -20,7 +20,7 @@ import { Team } from 'app/entities/team.model';
 import { ProgrammingExerciseOverviewPage } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 import { Participation } from 'app/entities/participation/participation.model';
 
-test.describe('Programming exercise participation', () => {
+test.describe('Programming exercise participation', { tag: '@sequential' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {

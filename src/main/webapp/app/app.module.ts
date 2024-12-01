@@ -17,12 +17,11 @@ import { ErrorComponent } from 'app/shared/layouts/error/error.component';
 import { ArtemisCoreModule } from 'app/core/core.module';
 import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
-import { ArtemisHomeModule } from 'app/home/home.module';
 import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning/orion-outdated.component';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { UserSettingsModule } from 'app/shared/user-settings/user-settings.module';
-import { ThemeModule } from 'app/core/theme/theme.module';
+import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { artemisIconPack } from 'src/main/webapp/content/icons/icons';
@@ -37,14 +36,13 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
         ServiceWorkerModule.register('ngsw-worker.js', { enabled: true }),
         ArtemisSharedModule,
         ArtemisCoreModule,
-        ArtemisHomeModule,
         ArtemisAppRoutingModule,
         GuidedTourModule,
         ArtemisSystemNotificationModule,
         ArtemisComplaintsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         UserSettingsModule,
-        ThemeModule,
+        ThemeSwitchComponent,
         ArtemisSharedComponentModule,
         ScrollingModule,
     ],

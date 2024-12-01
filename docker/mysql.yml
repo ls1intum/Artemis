@@ -5,7 +5,7 @@
 services:
     mysql:
         container_name: artemis-mysql
-        image: docker.io/library/mysql:8.4.0
+        image: docker.io/library/mysql:9.0.1
         pull_policy: if_not_present
         volumes:
             - artemis-mysql-data:/var/lib/mysql

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -32,11 +33,9 @@ import com.github.javaparser.ast.expr.SingleMemberAnnotationExpr;
 
 public class EndpointParser {
 
-    static final String ENDPOINT_PARSING_RESULT_PATH = "endpoints.json";
+    private static final Logger log = LoggerFactory.getLogger(EndpointParser.class);
 
-    static final String REST_CALL_PARSING_RESULT_PATH = "restCalls.json";
-
-    private static final Logger logger = LoggerFactory.getLogger(EndpointParser.class);
+    private static final Config CONFIG = readConfig();
 
     public static void main(String[] args) {
         final Path absoluteDirectoryPath = Path.of("../../src/main/java").toAbsolutePath().normalize();
@@ -45,13 +44,25 @@ public class EndpointParser {
 
         String[] filesToParse = {};
         try (Stream<Path> paths = Files.walk(absoluteDirectoryPath)) {
-            filesToParse = paths.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".java")).map(Path::toString).toArray(String[]::new);
+            filesToParse = paths.filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".java") && !CONFIG.excludedEndpointFiles().contains(path)).map(Path::toString)
+                    .toArray(String[]::new);
         }
         catch (IOException e) {
-            logger.error("Error reading files from directory: {}", absoluteDirectoryPath, e);
+            log.error("Error reading files from directory: {}", absoluteDirectoryPath, e);
         }
 
         parseServerEndpoints(filesToParse);
+    }
+
+    static Config readConfig() {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        try {
+            return mapper.readValue(new File("analysisOfEndpointConnections.config.yml"), Config.class);
+        }
+        catch (IOException e) {
+            log.error("Failed to read config file: {}", e.getMessage(), e);
+            return null;
+        }
     }
 
     /**
@@ -190,9 +201,9 @@ public class EndpointParser {
      */
     private static void printFilesFailedToParse(List<String> filesFailedToParse) {
         if (!filesFailedToParse.isEmpty()) {
-            logger.warn("Files failed to parse:", filesFailedToParse);
+            log.warn("Files failed to parse:", filesFailedToParse);
             for (String file : filesFailedToParse) {
-                logger.warn(file);
+                log.warn(file);
             }
         }
     }
@@ -208,10 +219,10 @@ public class EndpointParser {
      */
     private static void writeEndpointsToFile(List<EndpointClassInformation> endpointClasses) {
         try {
-            new ObjectMapper().writeValue(new File(ENDPOINT_PARSING_RESULT_PATH), endpointClasses);
+            new ObjectMapper().writeValue(new File(CONFIG.endpointParsingResultPath()), endpointClasses);
         }
         catch (IOException e) {
-            logger.error("Failed to write endpoint information to file", e);
+            log.error("Failed to write endpoint information to file", e);
         }
     }
 }

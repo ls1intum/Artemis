@@ -4,8 +4,8 @@
         "subtitle": "Interactive Learning with Individual Feedback",
         "login": {
             "traditional": {
-                "pleaseSignInAccount": "Please sign in with your {{account}} account.",
-                "pleaseSignIn": "Please sign in with your account."
+                "pleaseSignInAccount": "Sign in with your {{account}} account",
+                "pleaseSignIn": "Sign in with your account"
             },
             "saml2": {
                 "pleaseSignInProvider": "Please sign in with {{provider}}.",
@@ -13,12 +13,13 @@
             }
         },
         "logged": {
-            "message": "You are logged in as user \"{{username}}\"."
+            "message": "You are logged in as \"{{username}}\"."
         },
         "errors": {
-            "failedToLogin": "<span class='bold'>Failed to sign in!</span> Please check your username and password and try again.",
-            "usernameIncorrect": "<p class='text-primary small'>Invalid username</p>",
-            "tumWarning": "<p class='text-primary small'>If you are a TUM student, your username<br />should have the format <b>ab12xyz</b>.<br />Do <b>not</b> include '<b>@mytum.de</b>' or '<b>@tum.de</b>'.</p>",
+            "failedToLogin": "<span class='bold'>Failed to sign in!</span> Please check your login and password and try again.",
+            "usernameIncorrect": "<p class='text-primary small'>Invalid login</p>",
+            "passwordIncorrect": "The password must be between 8 and 50 characters long.",
+            "tumWarning": "If you are at TUM, use e.g. <b>go42tum</b> or <b>example@tum.de</b>",
             "loginWarning": "Seems like you are having issues signing in :-(<br />Please go to <a href='{{ url }}'>{{ name }}</a> and try to sign in there.<br />After that, try again here.",
             "sessionExpired": "You have been logged out, because your session has expired. Please log in again to return to the previous page."
         }

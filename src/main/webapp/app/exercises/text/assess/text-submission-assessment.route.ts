@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { of } from 'rxjs';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { TextSubmissionAssessmentComponent } from './text-submission-assessment.component';
@@ -12,7 +12,7 @@ import { catchError, map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class NewStudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
-    constructor(private textSubmissionService: TextSubmissionService) {}
+    private textSubmissionService = inject(TextSubmissionService);
 
     /**
      * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentService.
@@ -33,7 +33,7 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
 
 @Injectable({ providedIn: 'root' })
 export class StudentParticipationResolver implements Resolve<StudentParticipation | undefined> {
-    constructor(private textAssessmentService: TextAssessmentService) {}
+    private textAssessmentService = inject(TextAssessmentService);
 
     /**
      * Resolves the needed StudentParticipations for the TextSubmissionAssessmentComponent using the TextAssessmentService.

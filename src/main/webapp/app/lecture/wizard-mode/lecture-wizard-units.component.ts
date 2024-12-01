@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, computed, signal } from '@angular/core';
 import { Lecture } from 'app/entities/lecture.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
@@ -33,11 +33,11 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
     @ViewChild(LectureUnitManagementComponent, { static: false }) unitManagementComponent: LectureUnitManagementComponent;
 
     isEditingLectureUnit: boolean;
-    isTextUnitFormOpen: boolean;
-    isExerciseUnitFormOpen: boolean;
-    isVideoUnitFormOpen: boolean;
-    isOnlineUnitFormOpen: boolean;
-    isAttachmentUnitFormOpen: boolean;
+    isTextUnitFormOpen = signal<boolean>(false);
+    isExerciseUnitFormOpen = signal<boolean>(false);
+    isVideoUnitFormOpen = signal<boolean>(false);
+    isOnlineUnitFormOpen = signal<boolean>(false);
+    isAttachmentUnitFormOpen = signal<boolean>(false);
 
     currentlyProcessedTextUnit: TextUnit;
     currentlyProcessedVideoUnit: VideoUnit;
@@ -71,33 +71,33 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
 
         switch (type) {
             case LectureUnitType.TEXT:
-                this.isTextUnitFormOpen = true;
+                this.isTextUnitFormOpen.set(true);
                 break;
             case LectureUnitType.EXERCISE:
-                this.isExerciseUnitFormOpen = true;
+                this.isExerciseUnitFormOpen.set(true);
                 break;
             case LectureUnitType.VIDEO:
-                this.isVideoUnitFormOpen = true;
+                this.isVideoUnitFormOpen.set(true);
                 break;
             case LectureUnitType.ONLINE:
-                this.isOnlineUnitFormOpen = true;
+                this.isOnlineUnitFormOpen.set(true);
                 break;
             case LectureUnitType.ATTACHMENT:
-                this.isAttachmentUnitFormOpen = true;
+                this.isAttachmentUnitFormOpen.set(true);
                 break;
         }
     }
 
-    isAnyUnitFormOpen(): boolean {
-        return this.isTextUnitFormOpen || this.isVideoUnitFormOpen || this.isOnlineUnitFormOpen || this.isAttachmentUnitFormOpen || this.isExerciseUnitFormOpen;
-    }
+    isAnyUnitFormOpen = computed(() => {
+        return this.isTextUnitFormOpen() || this.isVideoUnitFormOpen() || this.isOnlineUnitFormOpen() || this.isAttachmentUnitFormOpen() || this.isExerciseUnitFormOpen();
+    });
 
     onCloseLectureUnitForms() {
-        this.isTextUnitFormOpen = false;
-        this.isVideoUnitFormOpen = false;
-        this.isOnlineUnitFormOpen = false;
-        this.isAttachmentUnitFormOpen = false;
-        this.isExerciseUnitFormOpen = false;
+        this.isTextUnitFormOpen.set(false);
+        this.isVideoUnitFormOpen.set(false);
+        this.isOnlineUnitFormOpen.set(false);
+        this.isAttachmentUnitFormOpen.set(false);
+        this.isExerciseUnitFormOpen.set(false);
     }
 
     createEditTextUnit(formData: TextUnitFormData) {
@@ -105,12 +105,13 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
             return;
         }
 
-        const { name, releaseDate, content } = formData;
+        const { name, releaseDate, content, competencyLinks } = formData;
 
         this.currentlyProcessedTextUnit = this.isEditingLectureUnit ? this.currentlyProcessedTextUnit : new TextUnit();
         this.currentlyProcessedTextUnit.name = name;
         this.currentlyProcessedTextUnit.releaseDate = releaseDate;
         this.currentlyProcessedTextUnit.content = content;
+        this.currentlyProcessedTextUnit.competencyLinks = competencyLinks;
 
         (this.isEditingLectureUnit
             ? this.textUnitService.update(this.currentlyProcessedTextUnit, this.lecture.id!)
@@ -129,13 +130,14 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
             return;
         }
 
-        const { name, description, releaseDate, source } = formData;
+        const { name, description, releaseDate, source, competencyLinks } = formData;
 
         this.currentlyProcessedVideoUnit = this.isEditingLectureUnit ? this.currentlyProcessedVideoUnit : new VideoUnit();
         this.currentlyProcessedVideoUnit.name = name || undefined;
         this.currentlyProcessedVideoUnit.releaseDate = releaseDate || undefined;
         this.currentlyProcessedVideoUnit.description = description || undefined;
         this.currentlyProcessedVideoUnit.source = source || undefined;
+        this.currentlyProcessedVideoUnit.competencyLinks = competencyLinks;
 
         (this.isEditingLectureUnit
             ? this.videoUnitService.update(this.currentlyProcessedVideoUnit, this.lecture.id!)
@@ -154,13 +156,14 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
             return;
         }
 
-        const { name, description, releaseDate, source } = formData;
+        const { name, description, releaseDate, source, competencyLinks } = formData;
 
         this.currentlyProcessedOnlineUnit = this.isEditingLectureUnit ? this.currentlyProcessedOnlineUnit : new OnlineUnit();
         this.currentlyProcessedOnlineUnit.name = name || undefined;
         this.currentlyProcessedOnlineUnit.releaseDate = releaseDate || undefined;
         this.currentlyProcessedOnlineUnit.description = description || undefined;
         this.currentlyProcessedOnlineUnit.source = source || undefined;
+        this.currentlyProcessedOnlineUnit.competencyLinks = competencyLinks || undefined;
 
         (this.isEditingLectureUnit
             ? this.onlineUnitService.update(this.currentlyProcessedOnlineUnit, this.lecture.id!)
@@ -179,7 +182,7 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
             return;
         }
 
-        const { description, name, releaseDate, updateNotificationText } = attachmentUnitFormData.formProperties;
+        const { description, name, releaseDate, updateNotificationText, competencyLinks } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         this.currentlyProcessedAttachmentUnit = this.isEditingLectureUnit ? this.currentlyProcessedAttachmentUnit : new AttachmentUnit();
@@ -210,6 +213,7 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
         if (description) {
             this.currentlyProcessedAttachmentUnit.description = description;
         }
+        this.currentlyProcessedAttachmentUnit.competencyLinks = competencyLinks;
 
         const formData = new FormData();
         formData.append('file', file, fileName);
@@ -254,11 +258,11 @@ export class LectureUpdateWizardUnitsComponent implements OnInit {
         this.currentlyProcessedOnlineUnit = lectureUnit as OnlineUnit;
         this.currentlyProcessedAttachmentUnit = lectureUnit as AttachmentUnit;
 
-        this.isTextUnitFormOpen = lectureUnit.type === LectureUnitType.TEXT;
-        this.isVideoUnitFormOpen = lectureUnit.type === LectureUnitType.VIDEO;
-        this.isExerciseUnitFormOpen = lectureUnit.type === LectureUnitType.EXERCISE;
-        this.isOnlineUnitFormOpen = lectureUnit.type === LectureUnitType.ONLINE;
-        this.isAttachmentUnitFormOpen = lectureUnit.type === LectureUnitType.ATTACHMENT;
+        this.isTextUnitFormOpen.set(lectureUnit.type === LectureUnitType.TEXT);
+        this.isVideoUnitFormOpen.set(lectureUnit.type === LectureUnitType.VIDEO);
+        this.isExerciseUnitFormOpen.set(lectureUnit.type === LectureUnitType.EXERCISE);
+        this.isOnlineUnitFormOpen.set(lectureUnit.type === LectureUnitType.ONLINE);
+        this.isAttachmentUnitFormOpen.set(lectureUnit.type === LectureUnitType.ATTACHMENT);
 
         switch (lectureUnit.type) {
             case LectureUnitType.TEXT:

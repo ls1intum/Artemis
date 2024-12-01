@@ -1,12 +1,12 @@
 import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 import javaScaSubmission from '../../../fixtures/exercise/programming/java/static_code_analysis/submission.json';
 import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 
-test.describe('Static code analysis tests', () => {
+test.describe('Static code analysis tests', { tag: '@sequential' }, () => {
     let course: Course;
     let exercise: ProgrammingExercise;
 

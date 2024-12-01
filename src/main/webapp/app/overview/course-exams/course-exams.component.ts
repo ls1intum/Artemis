@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -20,6 +20,11 @@ const DEFAULT_UNIT_GROUPS: AccordionGroups = {
 };
 
 const DEFAULT_COLLAPSE_STATE: CollapseState = {
+    real: false,
+    test: false,
+};
+
+const DEFAULT_SHOW_ALWAYS: CollapseState = {
     real: false,
     test: false,
 };
@@ -57,6 +62,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     isExamStarted = false;
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
+    protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     constructor(
         private route: ActivatedRoute,

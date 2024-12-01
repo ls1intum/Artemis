@@ -1,5 +1,7 @@
 package de.tum.cit.endpointanalysis;
 
+import static de.tum.cit.endpointanalysis.EndpointParser.readConfig;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,9 +17,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class RestCallAnalyzer {
 
-    private static final String REST_CALL_ANALYSIS_RESULT_PATH = "restCallAnalysisResult.json";
+    private static final Config CONFIG = readConfig();
 
-    private static final Logger logger = LoggerFactory.getLogger(RestCallAnalyzer.class);
+    private static final Logger log = LoggerFactory.getLogger(RestCallAnalyzer.class);
 
     public static void main(String[] args) {
         analyzeRestCalls();
@@ -36,11 +38,12 @@ public class RestCallAnalyzer {
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(EndpointParser.ENDPOINT_PARSING_RESULT_PATH),
-                    new TypeReference<List<EndpointClassInformation>>() {
-                    });
-            List<RestCallFileInformation> restCalls = mapper.readValue(new File(EndpointParser.REST_CALL_PARSING_RESULT_PATH), new TypeReference<List<RestCallFileInformation>>() {
+            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(CONFIG.endpointParsingResultPath()), new TypeReference<List<EndpointClassInformation>>() {
             });
+            List<RestCallFileInformation> restCalls = mapper.readValue(new File(CONFIG.restCallParsingResultPath()), new TypeReference<List<RestCallFileInformation>>() {
+            });
+
+            excludeExcludedRestCalls(restCalls);
 
             List<RestCallWithMatchingEndpoint> restCallsWithMatchingEndpoint = new ArrayList<>();
             List<RestCallInformation> restCallsWithoutMatchingEndpoint = new ArrayList<>();
@@ -58,26 +61,29 @@ public class RestCallAnalyzer {
             for (RestCallFileInformation restCallFile : restCalls) {
                 for (RestCallInformation restCall : restCallFile.restCalls()) {
                     String restCallURI = restCall.buildComparableRestCallUri();
-                    List<EndpointInformation> matchingEndpoints = endpointMap.getOrDefault(restCallURI, new ArrayList<>());
+                    List<EndpointInformation> endpointsWithMatchingUri = endpointMap.getOrDefault(restCallURI, new ArrayList<>());
 
-                    checkForWildcardMatches(restCall, matchingEndpoints, restCallURI, endpointMap);
+                    checkForWildcardMatches(restCall, endpointsWithMatchingUri, restCallURI, endpointMap);
 
-                    if (matchingEndpoints.isEmpty()) {
+                    List<EndpointInformation> endpointsWithMatchingHttpMethod = endpointsWithMatchingUri.stream()
+                            .filter(endpoint -> endpoint.getHttpMethod().toLowerCase().equals(restCall.method().toLowerCase())).toList();
+
+                    if (endpointsWithMatchingHttpMethod.isEmpty()) {
                         restCallsWithoutMatchingEndpoint.add(restCall);
                     }
                     else {
-                        for (EndpointInformation endpoint : matchingEndpoints) {
-                            restCallsWithMatchingEndpoint.add(new RestCallWithMatchingEndpoint(endpoint, restCall, restCall.fileName()));
+                        for (EndpointInformation endpoint : endpointsWithMatchingHttpMethod) {
+                            restCallsWithMatchingEndpoint.add(new RestCallWithMatchingEndpoint(endpoint, restCall, restCall.filePath()));
                         }
                     }
                 }
             }
 
             RestCallAnalysis restCallAnalysis = new RestCallAnalysis(restCallsWithMatchingEndpoint, restCallsWithoutMatchingEndpoint);
-            mapper.writeValue(new File(REST_CALL_ANALYSIS_RESULT_PATH), restCallAnalysis);
+            mapper.writeValue(new File(CONFIG.restCallAnalysisResultPath()), restCallAnalysis);
         }
         catch (IOException e) {
-            logger.error("Failed to analyze REST calls", e);
+            log.error("Failed to analyze REST calls", e);
         }
     }
 
@@ -107,6 +113,25 @@ public class RestCallAnalyzer {
     }
 
     /**
+     * Excludes REST calls that are specified in the configuration from the provided RestCallFileInformation list.
+     *
+     * This method performs two main tasks:
+     * 1. Removes entire files that are excluded from the analysis based on the file paths specified in the configuration.
+     * 2. Removes individual REST calls that are excluded from the analysis based on the REST call URIs specified in the configuration.
+     *
+     * @param restCalls The list of RestCallFileInformation objects to be filtered.
+     */
+    private static void excludeExcludedRestCalls(List<RestCallFileInformation> restCalls) {
+        CONFIG.excludedRestCallFiles().forEach(excludedFile -> {
+            restCalls.removeIf(restCallFile -> restCallFile.filePath().equals(excludedFile));
+        });
+
+        for (RestCallFileInformation restCallFile : restCalls) {
+            restCallFile.restCalls().removeIf(restCall -> CONFIG.excludedRestCalls().contains(restCall.buildCompleteRestCallURI()));
+        }
+    }
+
+    /**
      * Prints the endpoint analysis result.
      *
      * This method reads the endpoint analysis result from a JSON file and prints
@@ -120,25 +145,30 @@ public class RestCallAnalyzer {
         RestCallAnalysis restCallsAndMatchingEndpoints = null;
 
         try {
-            restCallsAndMatchingEndpoints = mapper.readValue(new File(REST_CALL_ANALYSIS_RESULT_PATH), new TypeReference<RestCallAnalysis>() {
+            restCallsAndMatchingEndpoints = mapper.readValue(new File(CONFIG.restCallAnalysisResultPath()), new TypeReference<RestCallAnalysis>() {
             });
         }
         catch (IOException e) {
-            logger.error("Failed to deserialize rest call analysis results", e);
+            log.error("Failed to deserialize rest call analysis results", e);
+            return;
         }
 
         restCallsAndMatchingEndpoints.restCallsWithoutMatchingEndpoints().stream().forEach(endpoint -> {
-            logger.info("=============================================");
-            logger.info("REST call URI: {}", endpoint.buildCompleteRestCallURI());
-            logger.info("HTTP method: {}", endpoint.method());
-            logger.info("File path: {}", endpoint.fileName());
-            logger.info("Line: {}", endpoint.line());
-            logger.info("=============================================");
-            logger.info("No matching endpoint found for REST call: {}", endpoint.buildCompleteRestCallURI());
-            logger.info("---------------------------------------------");
-            logger.info("");
+            log.info("=============================================");
+            log.info("REST call URI: {}", endpoint.buildCompleteRestCallURI());
+            log.info("HTTP method: {}", endpoint.method());
+            log.info("File path: {}", endpoint.filePath());
+            log.info("Line: {}", endpoint.line());
+            log.info("=============================================");
+            log.info("No matching endpoint found for REST call: {}", endpoint.buildCompleteRestCallURI());
+            log.info("---------------------------------------------");
+            log.info("");
         });
 
-        logger.info("Number of REST calls without matching endpoints: {}", restCallsAndMatchingEndpoints.restCallsWithoutMatchingEndpoints().size());
+        log.info("Number of REST calls without matching endpoints: {}", restCallsAndMatchingEndpoints.restCallsWithoutMatchingEndpoints().size());
+
+        if (!restCallsAndMatchingEndpoints.restCallsWithoutMatchingEndpoints().isEmpty()) {
+            System.exit(1);
+        }
     }
 }

@@ -1,5 +1,5 @@
 import { test } from '../../support/fixtures';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { Commands } from '../../support/commands';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
 import { Course } from 'app/entities/course.model';
@@ -82,7 +82,7 @@ test.describe('Exam Results', () => {
                     }
                     exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, testCase.exerciseType, additionalData);
                     await examAPIRequests.registerStudentForExam(exam, studentOne);
-                    const studentExams = await examAPIRequests.generateMissingIndividualExams(exam);
+                    const studentExams = await examAPIRequests.getAllStudentExams(exam);
                     studentExam = studentExams[0];
                     await examAPIRequests.prepareExerciseStartForExam(exam);
                 });
@@ -126,44 +126,48 @@ test.describe('Exam Results', () => {
                     },
                 );
 
-                test(`Check exam ${exerciseTypeString} exercise results`, async ({ page, login, examParticipation, examResultsPage }) => {
-                    await login(studentOne);
-                    await waitForExamEnd(examEndDate, page);
-                    await page.goto(`/courses/${course.id}/exams/${exam.id}`);
-                    await examParticipation.checkResultScore(testCase.resultScore, exercise.id!);
+                test(
+                    `Check exam ${exerciseTypeString} exercise results`,
+                    { tag: testCase.exerciseType === ExerciseType.PROGRAMMING ? '@sequential' : '@slow' },
+                    async ({ page, login, examParticipation, examResultsPage }) => {
+                        await login(studentOne);
+                        await waitForExamEnd(examEndDate, page);
+                        await page.goto(`/courses/${course.id}/exams/${exam.id}`);
+                        await examParticipation.checkResultScore(testCase.resultScore, exercise.id!);
 
-                    switch (testCase.exerciseType) {
-                        case ExerciseType.TEXT:
-                            await examResultsPage.checkTextExerciseContent(exercise.id!, exercise.additionalData!.textFixture!);
-                            await examResultsPage.checkAdditionalFeedback(exercise.id!, 7, 'Good job');
-                            break;
-                        case ExerciseType.PROGRAMMING:
-                            await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Wrong', 7);
-                            await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Correct', 6);
-                            const taskStatuses: ProgrammingExerciseTaskStatus[] = [
-                                ProgrammingExerciseTaskStatus.SUCCESS,
-                                ProgrammingExerciseTaskStatus.SUCCESS,
-                                ProgrammingExerciseTaskStatus.SUCCESS,
-                                ProgrammingExerciseTaskStatus.FAILURE,
-                                ProgrammingExerciseTaskStatus.FAILURE,
-                                ProgrammingExerciseTaskStatus.FAILURE,
-                                ProgrammingExerciseTaskStatus.FAILURE,
-                            ];
-                            await examResultsPage.checkProgrammingExerciseTasks(exercise.id!, taskStatuses);
-                            break;
-                        case ExerciseType.QUIZ:
-                            await examResultsPage.checkQuizExerciseScore(exercise.id!, 5, 10);
-                            const studentAnswers = [true, false, true, false];
-                            const correctAnswers = [true, true, false, false];
-                            await examResultsPage.checkQuizExerciseAnswers(exercise.id!, studentAnswers, correctAnswers);
-                            break;
-                        case ExerciseType.MODELING:
-                            await examResultsPage.checkAdditionalFeedback(exercise.id!, 5, 'Good');
-                            await examResultsPage.checkModellingExerciseAssessment(exercise.id!, 'class Class', 'Wrong', -1);
-                            await examResultsPage.checkModellingExerciseAssessment(exercise.id!, 'abstract class Abstract', 'Neutral', 0);
-                            break;
-                    }
-                });
+                        switch (testCase.exerciseType) {
+                            case ExerciseType.TEXT:
+                                await examResultsPage.checkTextExerciseContent(exercise.id!, exercise.additionalData!.textFixture!);
+                                await examResultsPage.checkAdditionalFeedback(exercise.id!, 7, 'Good job');
+                                break;
+                            case ExerciseType.PROGRAMMING:
+                                await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Wrong', 7);
+                                await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Correct', 6);
+                                const taskStatuses: ProgrammingExerciseTaskStatus[] = [
+                                    ProgrammingExerciseTaskStatus.SUCCESS,
+                                    ProgrammingExerciseTaskStatus.SUCCESS,
+                                    ProgrammingExerciseTaskStatus.SUCCESS,
+                                    ProgrammingExerciseTaskStatus.FAILURE,
+                                    ProgrammingExerciseTaskStatus.FAILURE,
+                                    ProgrammingExerciseTaskStatus.FAILURE,
+                                    ProgrammingExerciseTaskStatus.FAILURE,
+                                ];
+                                await examResultsPage.checkProgrammingExerciseTasks(exercise.id!, taskStatuses);
+                                break;
+                            case ExerciseType.QUIZ:
+                                await examResultsPage.checkQuizExerciseScore(exercise.id!, 5, 10);
+                                const studentAnswers = [true, false, true, false];
+                                const correctAnswers = [true, true, false, false];
+                                await examResultsPage.checkQuizExerciseAnswers(exercise.id!, studentAnswers, correctAnswers);
+                                break;
+                            case ExerciseType.MODELING:
+                                await examResultsPage.checkAdditionalFeedback(exercise.id!, 5, 'Good');
+                                await examResultsPage.checkModellingExerciseAssessment(exercise.id!, 'class Class', 'Wrong', -1);
+                                await examResultsPage.checkModellingExerciseAssessment(exercise.id!, 'abstract class Abstract', 'Neutral', 0);
+                                break;
+                        }
+                    },
+                );
 
                 if (testCase.exerciseType === ExerciseType.TEXT) {
                     test('Check exam result overview', async ({ page, login, examAPIRequests, examResultsPage }) => {

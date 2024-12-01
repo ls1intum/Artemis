@@ -1,12 +1,12 @@
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit, output } from '@angular/core';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { Subject } from 'rxjs';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
@@ -26,6 +26,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     @Input()
     exercise: Exercise;
 
+    saveCurrentExercise = output<void>();
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
 
@@ -35,7 +37,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     private textEditorInput = new Subject<string>();
 
     // Icons
-    farListAlt = faListAlt;
+    protected readonly faListAlt = faListAlt;
 
     constructor(
         private textService: TextEditorService,
@@ -120,5 +122,12 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
         this.submissionVersion = submissionVersion;
         this.updateViewFromSubmissionVersion();
+    }
+
+    /**
+     * Trigger save action in exam participation component
+     */
+    notifyTriggerSave() {
+        this.saveCurrentExercise.emit();
     }
 }

@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, ReplaySubject, of } from 'rxjs';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { MetisService } from 'app/shared/metis/metis.service';

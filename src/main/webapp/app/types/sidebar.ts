@@ -10,7 +10,10 @@ export type TimeGroupCategory = 'past' | 'current' | 'dueSoon' | 'future' | 'noD
 export type ExamGroupCategory = 'real' | 'test';
 export type TutorialGroupCategory = 'all' | 'registered' | 'further';
 export type SidebarTypes = 'exercise' | 'exam' | 'inExam' | 'conversation' | 'default';
-export type AccordionGroups = Record<TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string, { entityData: SidebarCardElement[] }>;
+export type AccordionGroups = Record<
+    TimeGroupCategory | TutorialGroupCategory | ExamGroupCategory | ChannelGroupCategory | string,
+    { entityData: SidebarCardElement[]; isHideCount?: boolean }
+>;
 export type ChannelGroupCategory =
     | 'favoriteChannels'
     | 'generalChannels'
@@ -19,12 +22,16 @@ export type ChannelGroupCategory =
     | 'groupChats'
     | 'directMessages'
     | 'examChannels'
+    | 'savedPosts'
     | 'hiddenChannels';
 export type CollapseState = {
     [key: string]: boolean;
 } & (Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<ExamGroupCategory, boolean> | Record<TutorialGroupCategory, boolean>);
 export type ChannelAccordionShowAdd = Record<ChannelGroupCategory, boolean>;
 export type ChannelTypeIcons = Record<ChannelGroupCategory, IconProp>;
+export type SidebarItemShowAlways = {
+    [key: string]: boolean;
+} & (Record<TimeGroupCategory, boolean> | Record<ChannelGroupCategory, boolean> | Record<ExamGroupCategory, boolean> | Record<TutorialGroupCategory, boolean>);
 
 export interface SidebarData {
     groupByCategory: boolean;
@@ -32,8 +39,8 @@ export interface SidebarData {
     groupedData?: AccordionGroups;
     ungroupedData?: SidebarCardElement[];
     storageId?: string;
-    showAccordionAddOption?: boolean;
     showAccordionLeadingIcon?: boolean;
+    messagingEnabled?: boolean;
 }
 
 export interface SidebarCardElement {

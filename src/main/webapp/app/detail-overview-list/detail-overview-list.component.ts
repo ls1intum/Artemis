@@ -1,15 +1,11 @@
-import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ButtonSize } from 'app/shared/components/button.component';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { Detail } from 'app/detail-overview-list/detail.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -24,6 +20,8 @@ export interface DetailOverviewSection {
 export enum DetailType {
     Link = 'detail-link',
     Text = 'detail-text',
+    DefaultProfilePicture = 'detail-default-profile-picture',
+    Image = 'detail-image',
     Date = 'detail-date',
     Boolean = 'detail-boolean',
     Markdown = 'detail-markdown',
@@ -52,33 +50,24 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
     protected readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
-    readonly CHAT = IrisSubSettingsType.CHAT;
+    protected readonly CHAT = IrisSubSettingsType.CHAT;
 
-    @Input()
-    sections: DetailOverviewSection[];
+    private readonly modelingExerciseService = inject(ModelingExerciseService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
+
+    sections = input.required<DetailOverviewSection[]>();
 
     // headline list for navigation bar
     headlines: { id: string; translationKey: string }[];
     // headline record to avoid function call in html
     headlinesRecord: Record<string, string>;
 
-    // icons
-    readonly faCodeCompare = faCodeCompare;
-
-    WARNING = ButtonType.WARNING;
-
     profileSubscription: Subscription;
     isLocalVC = false;
 
-    constructor(
-        private modalService: NgbModal,
-        private modelingExerciseService: ModelingExerciseService,
-        private alertService: AlertService,
-        private profileService: ProfileService,
-    ) {}
-
     ngOnInit() {
-        this.headlines = this.sections.map((section) => {
+        this.headlines = this.sections().map((section) => {
             return {
                 id: section.headline.replaceAll('.', '-'),
                 translationKey: section.headline,
@@ -90,15 +79,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
         this.headlinesRecord = this.headlines.reduce((previousValue, currentValue) => {
             return { ...previousValue, [currentValue.translationKey]: currentValue.id };
         }, {});
-    }
-
-    showGitDiff(gitDiff?: ProgrammingExerciseGitDiffReport) {
-        if (!gitDiff) {
-            return;
-        }
-
-        const modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: 'diff-view-modal' });
-        modalRef.componentInstance.report = gitDiff;
     }
 
     downloadApollonDiagramAsPDf(umlModel?: UMLModel, title?: string) {
@@ -114,6 +94,4 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.profileSubscription?.unsubscribe();
     }
-
-    protected readonly TooltipPlacement = TooltipPlacement;
 }

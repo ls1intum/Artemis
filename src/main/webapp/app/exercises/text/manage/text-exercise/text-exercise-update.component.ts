@@ -1,7 +1,7 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -29,7 +29,7 @@ import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.com
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -37,6 +37,18 @@ import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/mona
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private textExerciseService = inject(TextExerciseService);
+    private modalService = inject(NgbModal);
+    private popupService = inject(ExerciseUpdateWarningService);
+    private exerciseService = inject(ExerciseService);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    private courseService = inject(CourseManagementService);
+    private eventManager = inject(EventManager);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private athenaService = inject(AthenaService);
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'Text';
 
@@ -66,8 +78,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     existingCategories: ExerciseCategory[];
     notificationText?: string;
 
-    domainActionsProblemStatement = [new MonacoFormulaAction()];
-    domainActionsExampleSolution = [new MonacoFormulaAction()];
+    domainActionsProblemStatement = [new FormulaAction()];
+    domainActionsExampleSolution = [new FormulaAction()];
 
     formSectionStatus: FormSectionStatus[];
 
@@ -77,20 +89,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     bonusPointsSubscription?: Subscription;
     plagiarismSubscription?: Subscription;
     teamSubscription?: Subscription;
-
-    constructor(
-        private alertService: AlertService,
-        private textExerciseService: TextExerciseService,
-        private modalService: NgbModal,
-        private popupService: ExerciseUpdateWarningService,
-        private exerciseService: ExerciseService,
-        private exerciseGroupService: ExerciseGroupService,
-        private courseService: CourseManagementService,
-        private eventManager: EventManager,
-        private activatedRoute: ActivatedRoute,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private athenaService: AthenaService,
-    ) {}
 
     get editType(): EditType {
         if (this.isImport) {

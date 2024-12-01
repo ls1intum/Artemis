@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
@@ -11,14 +11,15 @@ import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCat
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faBoxArchive, faBullhorn, faHashtag, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { SavedPostStatusMap } from 'app/entities/metis/posting.model';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -222,6 +223,33 @@ export class CourseOverviewService {
         const channelGroups = messagingEnabled ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } } : DEFAULT_CHANNEL_GROUPS;
         const groupedConversationGroups = cloneDeep(channelGroups) as AccordionGroups;
 
+        groupedConversationGroups.savedPosts = {
+            isHideCount: true,
+            entityData: [
+                {
+                    title: this.translate.instant('artemisApp.courseOverview.sidebar.progress'),
+                    id: SavedPostStatusMap.PROGRESS.toString(),
+                    type: ConversationType.CHANNEL,
+                    icon: faBookmark,
+                    size: 'S',
+                },
+                {
+                    title: this.translate.instant('artemisApp.courseOverview.sidebar.completed'),
+                    id: SavedPostStatusMap.COMPLETED.toString(),
+                    type: ConversationType.CHANNEL,
+                    icon: faSquareCheck,
+                    size: 'S',
+                },
+                {
+                    title: this.translate.instant('artemisApp.courseOverview.sidebar.archived'),
+                    id: SavedPostStatusMap.ARCHIVED.toString(),
+                    type: ConversationType.CHANNEL,
+                    icon: faBoxArchive,
+                    size: 'S',
+                },
+            ],
+        };
+
         for (const conversation of conversations) {
             const conversationGroup = this.getConversationGroup(conversation);
             const conversationCardItem = this.mapConversationToSidebarCardElement(conversation);
@@ -234,7 +262,7 @@ export class CourseOverviewService {
     mapLecturesToSidebarCardElements(lectures: Lecture[]) {
         return lectures.map((lecture) => this.mapLectureToSidebarCardElement(lecture));
     }
-    mapTutorialGroupsToSidebarCardElements(tutorialGroups: Lecture[]) {
+    mapTutorialGroupsToSidebarCardElements(tutorialGroups: TutorialGroup[]) {
         return tutorialGroups.map((tutorialGroup) => this.mapTutorialGroupToSidebarCardElement(tutorialGroup));
     }
 

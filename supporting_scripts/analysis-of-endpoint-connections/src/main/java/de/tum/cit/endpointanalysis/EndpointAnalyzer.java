@@ -1,5 +1,7 @@
 package de.tum.cit.endpointanalysis;
 
+import static de.tum.cit.endpointanalysis.EndpointParser.readConfig;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,9 +17,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class EndpointAnalyzer {
 
-    private static String EndpointAnalysisResultPath = "endpointAnalysisResult.json";
+    private static final Config CONFIG = readConfig();
 
-    private static final Logger logger = LoggerFactory.getLogger(EndpointAnalyzer.class);
+    private static final Logger log = LoggerFactory.getLogger(EndpointAnalyzer.class);
 
     public static void main(String[] args) {
         analyzeEndpoints();
@@ -36,12 +38,12 @@ public class EndpointAnalyzer {
         ObjectMapper mapper = new ObjectMapper();
 
         try {
-            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(EndpointParser.ENDPOINT_PARSING_RESULT_PATH),
-                    new TypeReference<List<EndpointClassInformation>>() {
-                    });
-            List<RestCallFileInformation> restCallFiles = mapper.readValue(new File(EndpointParser.REST_CALL_PARSING_RESULT_PATH),
-                    new TypeReference<List<RestCallFileInformation>>() {
-                    });
+            List<EndpointClassInformation> endpointClasses = mapper.readValue(new File(CONFIG.endpointParsingResultPath()), new TypeReference<List<EndpointClassInformation>>() {
+            });
+            List<RestCallFileInformation> restCallFiles = mapper.readValue(new File(CONFIG.restCallParsingResultPath()), new TypeReference<List<RestCallFileInformation>>() {
+            });
+
+            excludeExcludedEndpoints(endpointClasses);
 
             List<UsedEndpoints> endpointsAndMatchingRestCalls = new ArrayList<>();
             List<EndpointInformation> unusedEndpoints = new ArrayList<>();
@@ -60,10 +62,13 @@ public class EndpointAnalyzer {
                 for (EndpointInformation endpoint : endpointClass.endpoints()) {
 
                     String endpointURI = endpoint.buildComparableEndpointUri();
-                    List<RestCallInformation> matchingRestCalls = restCallMap.getOrDefault(endpointURI, new ArrayList<>());
+                    List<RestCallInformation> restCallsWithMatchingURI = restCallMap.getOrDefault(endpointURI, new ArrayList<>());
 
                     // Check for wildcard endpoints if no exact match is found
-                    checkForWildcardEndpoints(endpoint, matchingRestCalls, endpointURI, restCallMap);
+                    checkForWildcardEndpoints(endpoint, restCallsWithMatchingURI, endpointURI, restCallMap);
+
+                    List<RestCallInformation> matchingRestCalls = restCallsWithMatchingURI.stream()
+                            .filter(restCall -> restCall.method().toLowerCase().equals(endpoint.getHttpMethod().toLowerCase())).toList();
 
                     if (matchingRestCalls.isEmpty()) {
                         unusedEndpoints.add(endpoint);
@@ -75,10 +80,10 @@ public class EndpointAnalyzer {
             }
 
             EndpointAnalysis endpointAnalysis = new EndpointAnalysis(endpointsAndMatchingRestCalls, unusedEndpoints);
-            mapper.writeValue(new File(EndpointAnalysisResultPath), endpointAnalysis);
+            mapper.writeValue(new File(CONFIG.endpointAnalysisResultPath()), endpointAnalysis);
         }
         catch (IOException e) {
-            logger.error("Failed to analyze endpoints", e);
+            log.error("Failed to analyze endpoints", e);
         }
     }
 
@@ -108,6 +113,25 @@ public class EndpointAnalyzer {
     }
 
     /**
+     * Excludes endpoints that are specified in the configuration from the provided EndpointClassInformation list.
+     *
+     * This method performs two main tasks:
+     * 1. Removes entire files that are excluded from the analysis based on the file paths specified in the configuration.
+     * 2. Removes individual endpoints that are excluded from the analysis based on the endpoint URIs specified in the configuration.
+     *
+     * @param endpoints The list of {@link de.tum.cit.endpointanalysis.EndpointClassInformation} objects to be filtered.
+     */
+    private static void excludeExcludedEndpoints(List<EndpointClassInformation> endpoints) {
+        CONFIG.excludedEndpointFiles().forEach(excludedEndpointFile -> {
+            endpoints.removeIf(endpointFile -> CONFIG.excludedEndpointFiles().contains(endpointFile.filePath()));
+        });
+
+        for (EndpointClassInformation endpointFile : endpoints) {
+            endpointFile.endpoints().removeIf(endpoint -> CONFIG.excludedEndpoints().contains(endpoint.buildCompleteEndpointURI()));
+        }
+    }
+
+    /**
      * Prints the endpoint analysis result.
      *
      * This method reads the endpoint analysis result from a JSON file and prints
@@ -119,26 +143,30 @@ public class EndpointAnalyzer {
         ObjectMapper mapper = new ObjectMapper();
         EndpointAnalysis endpointsAndMatchingRestCalls = null;
         try {
-            endpointsAndMatchingRestCalls = mapper.readValue(new File(EndpointAnalysisResultPath), new TypeReference<EndpointAnalysis>() {
+            endpointsAndMatchingRestCalls = mapper.readValue(new File(CONFIG.endpointAnalysisResultPath()), new TypeReference<EndpointAnalysis>() {
             });
         }
         catch (IOException e) {
-            logger.error("Failed to deserialize endpoint analysis result", e);
+            log.error("Failed to deserialize endpoint analysis result", e);
             return;
         }
 
         endpointsAndMatchingRestCalls.unusedEndpoints().stream().forEach(endpoint -> {
-            logger.info("=============================================");
-            logger.info("Endpoint URI: {}", endpoint.buildCompleteEndpointURI());
-            logger.info("HTTP method: {}", endpoint.httpMethodAnnotation());
-            logger.info("File path: {}", endpoint.className());
-            logger.info("Line: {}", endpoint.line());
-            logger.info("=============================================");
-            logger.info("No matching REST call found for endpoint: {}", endpoint.buildCompleteEndpointURI());
-            logger.info("---------------------------------------------");
-            logger.info("");
+            log.info("=============================================");
+            log.info("Endpoint URI: {}", endpoint.buildCompleteEndpointURI());
+            log.info("HTTP method: {}", endpoint.httpMethodAnnotation());
+            log.info("File path: {}", endpoint.className());
+            log.info("Line: {}", endpoint.line());
+            log.info("=============================================");
+            log.info("No matching REST call found for endpoint: {}", endpoint.buildCompleteEndpointURI());
+            log.info("---------------------------------------------");
+            log.info("");
         });
 
-        logger.info("Number of endpoints without matching REST calls: {}", endpointsAndMatchingRestCalls.unusedEndpoints().size());
+        log.info("Number of endpoints without matching REST calls: {}", endpointsAndMatchingRestCalls.unusedEndpoints().size());
+
+        if (!endpointsAndMatchingRestCalls.unusedEndpoints().isEmpty()) {
+            System.exit(1);
+        }
     }
 }

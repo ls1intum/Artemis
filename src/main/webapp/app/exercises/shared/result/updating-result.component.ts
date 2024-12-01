@@ -6,14 +6,14 @@ import { RepositoryService } from 'app/exercises/shared/result/repository.servic
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Submission, SubmissionType } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { getLatestResultOfStudentParticipation, hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
-import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
+import { MissingResultInformation, isAIResultAndIsBeingProcessed, isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
 
 /**
@@ -34,6 +34,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     @Input() showBadge = false;
     @Input() showIcon = true;
     @Input() isInSidebarCard = false;
+    @Input() showCompletion = true;
     @Output() showResult = new EventEmitter<void>();
     /**
      * @property personalParticipation Whether the participation belongs to the user (by being a student) or not (by being an instructor)
@@ -59,7 +60,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      */
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
-            this.result = getLatestResultOfStudentParticipation(this.participation, this.showUngradedResults);
+            this.result = getLatestResultOfStudentParticipation(this.participation, this.showUngradedResults, true);
             this.missingResultInfo = MissingResultInformation.NONE;
 
             this.subscribeForNewResults();
@@ -101,10 +102,17 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 // Ignore initial null result of subscription
                 filter((result) => !!result),
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
-                filter((result: Result) => this.showUngradedResults || result.rated === true),
+                // If the result is a preliminary feedback(being generated), show it
+                filter((result: Result) => this.showUngradedResults || result.rated === true || isAthenaAIResult(result)),
                 map((result) => ({ ...result, completionDate: convertDateFromServer(result.completionDate), participation: this.participation })),
                 tap((result) => {
-                    this.result = result;
+                    if ((isAthenaAIResult(result) && isAIResultAndIsBeingProcessed(result)) || result.rated) {
+                        this.result = result;
+                    } else if (result.rated === false && this.showUngradedResults) {
+                        this.result = result;
+                    } else {
+                        this.result = getLatestResultOfStudentParticipation(this.participation, this.showUngradedResults, false);
+                    }
                     this.onParticipationChange.emit();
                     if (result) {
                         this.showResult.emit();

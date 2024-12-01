@@ -1,4 +1,4 @@
-import { Injectable, isDevMode } from '@angular/core';
+import { Injectable, inject, isDevMode } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
@@ -10,13 +10,11 @@ import { AlertService } from 'app/core/util/alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {
-    constructor(
-        private router: Router,
-        private accountService: AccountService,
-        private alertService: AlertService,
-        private stateStorageService: StateStorageService,
-        private orionVersionValidator: OrionVersionValidator,
-    ) {}
+    private router = inject(Router);
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+    private stateStorageService = inject(StateStorageService);
+    private orionVersionValidator = inject(OrionVersionValidator);
 
     /**
      * Check if the client can activate a route.

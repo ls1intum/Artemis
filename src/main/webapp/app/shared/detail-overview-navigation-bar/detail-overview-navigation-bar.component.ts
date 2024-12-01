@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, HostListener, Input } from '@angular/core';
+import { updateHeaderHeight } from 'app/shared/util/navbar.util';
 
 @Component({
     selector: 'jhi-detail-overview-navigation-bar',
@@ -10,15 +11,12 @@ export class DetailOverviewNavigationBarComponent implements AfterViewInit {
     sectionHeadlines: { id: string; translationKey: string }[];
 
     @HostListener('window:resize')
-    onResize() {
-        setTimeout(() => {
-            const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement).offsetHeight;
-            document.documentElement.style.setProperty('--header-height', `${headerHeight - 2}px`);
-        });
+    onResizeAddDistanceFromStatusBarToNavbar() {
+        updateHeaderHeight();
     }
 
     ngAfterViewInit() {
-        this.onResize();
+        this.onResizeAddDistanceFromStatusBarToNavbar();
     }
 
     scrollToView(id: string) {

@@ -31,7 +31,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
@@ -210,6 +210,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.participation = participation;
         comp.isInitial = false;
         triggerChanges(comp, { property: 'exercise', currentValue: { ...comp.exercise, problemStatement: newProblemStatement }, firstChange: false });
+        fixture.detectChanges();
         expect(comp.markdownExtensions).toHaveLength(2);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(loadInitialResult).not.toHaveBeenCalled();
@@ -426,7 +427,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        fixture.detectChanges();
         tick();
 
         // first test should be green (successful), second red (failed)
@@ -447,7 +447,13 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
     it('should update the markdown on a theme change', () => {
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
-        themeService.applyThemeExplicitly(Theme.DARK);
+
+        comp.isInitial = false;
+        themeService.applyThemePreference(Theme.DARK);
+
+        fixture.detectChanges();
+
+        // toObservable triggers a effect in the background on initial detectChanges
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
     });
 

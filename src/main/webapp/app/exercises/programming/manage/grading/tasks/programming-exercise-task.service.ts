@@ -4,11 +4,11 @@ import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programmi
 import { Observable, catchError, of, tap } from 'rxjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService, ProgrammingExerciseTestCaseUpdate } from '../../services/programming-exercise-grading.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { map, mergeMap } from 'rxjs/operators';

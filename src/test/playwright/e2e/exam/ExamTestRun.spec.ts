@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 
 import javaBuildErrorSubmission from '../../fixtures/exercise/programming/java/build_error/submission.json';
 import { Exercise, ExerciseType } from '../../support/constants';
@@ -15,7 +15,7 @@ import { expect } from '@playwright/test';
 const textFixture = 'loremIpsum-short.txt';
 const examTitle = 'exam' + generateUUID();
 
-test.describe('Exam test run', () => {
+test.describe('Exam test run', { tag: '@fast' }, () => {
     let course: Course;
     let exam: Exam;
     let exerciseArray: Array<Exercise> = [];

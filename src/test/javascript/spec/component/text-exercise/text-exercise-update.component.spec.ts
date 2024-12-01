@@ -5,7 +5,7 @@ import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -13,7 +13,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { Subject, of, throwError } from 'rxjs';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';

@@ -6,14 +6,14 @@ import { ArtemisTestModule } from '../../test.module';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import JSZip from 'jszip';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
 

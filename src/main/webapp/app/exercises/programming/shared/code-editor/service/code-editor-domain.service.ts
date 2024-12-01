@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { DomainChange, DomainParticipationChange, DomainTestRepositoryChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import {
+    DomainAuxiliaryRepositoryChange,
+    DomainChange,
+    DomainParticipationChange,
+    DomainTestRepositoryChange,
+} from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 /**
  * This service provides subscribing services with the most recently selected domain (participation vs repository).
@@ -9,7 +14,7 @@ import { DomainChange, DomainParticipationChange, DomainTestRepositoryChange } f
 @Injectable({ providedIn: 'root' })
 export class DomainService {
     protected domain: DomainChange;
-    private subject = new BehaviorSubject<DomainParticipationChange | DomainTestRepositoryChange | undefined>(undefined);
+    private subject = new BehaviorSubject<DomainParticipationChange | DomainTestRepositoryChange | DomainAuxiliaryRepositoryChange | undefined>(undefined);
 
     constructor() {}
 

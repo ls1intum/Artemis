@@ -38,6 +38,7 @@
                     @if (exercise.isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam && exam?.numberOfCorrectionRoundsInExam! > 1 && isExamMode && !isTestRun) {
                         <div class="d-inline-block">
                             <jhi-second-correction-enable-button
+                                data-testid="toggle-second-correction"
                                 (ngModelChange)="toggleSecondCorrection()"
                                 [secondCorrectionEnabled]="secondCorrectionEnabled"
                                 [togglingSecondCorrectionButton]="togglingSecondCorrectionButton"
@@ -399,7 +400,10 @@
                                                         [(ascending)]="reverseOrders[0]"
                                                         (sortChange)="sortSubmissionRows(correctionRound)"
                                                     >
-                                                        <th>#</th>
+                                                        <th jhiSortBy="id">
+                                                            <a class="th-link">Id</a>
+                                                            <fa-icon [icon]="faSort" />
+                                                        </th>
                                                         <th jhiSortBy="submissionDate">
                                                             <a class="th-link" jhiTranslate="artemisApp.exerciseAssessmentDashboard.submissionDate"></a>
                                                             <fa-icon [icon]="faSort" />
@@ -457,7 +461,7 @@
                                                     }
                                                     @for (submission of assessedSubmissionsByRound.get(correctionRound); track submission; let i = $index) {
                                                         <tr>
-                                                            <td>{{ i + 1 }}</td>
+                                                            <td>{{ submission.id }}</td>
                                                             <td>{{ submission.submissionDate | artemisDate }}</td>
                                                             <td>
                                                                 <jhi-result

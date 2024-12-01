@@ -12,7 +12,7 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { MetisService } from 'app/shared/metis/metis.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import dayjs from 'dayjs/esm';
 import { NotificationService } from 'app/shared/notification/notification.service';

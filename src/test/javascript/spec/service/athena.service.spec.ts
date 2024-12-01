@@ -1,4 +1,4 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { AthenaService } from 'app/assessment/athena.service';
 import { ArtemisTestModule } from '../test.module';
@@ -8,10 +8,11 @@ import { of } from 'rxjs';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('AthenaService', () => {
     let athenaService: AthenaService;
@@ -51,8 +52,8 @@ describe('AthenaService', () => {
     } as Exercise;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
-            providers: [{ provide: ProfileService, useClass: MockProfileService }],
+            imports: [ArtemisTestModule],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ProfileService, useClass: MockProfileService }],
         })
             .compileComponents()
             .then(() => {

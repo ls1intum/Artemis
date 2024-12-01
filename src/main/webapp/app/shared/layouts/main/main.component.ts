@@ -5,13 +5,15 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { DOCUMENT } from '@angular/common';
-import { AnalyticsService } from 'app/core/posthog/analytics.service';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { LtiService } from 'app/shared/service/lti.service';
 
 @Component({
     selector: 'jhi-main',
     templateUrl: './main.component.html',
+    styleUrls: ['./main.component.scss'],
 })
 export class JhiMainComponent implements OnInit, OnDestroy {
     /**
@@ -22,11 +24,15 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     public showSkeleton = true;
     profileSubscription: Subscription;
     examStartedSubscription: Subscription;
+    courseOverviewSubscription: Subscription;
     testRunSubscription: Subscription;
+    ltiSubscription: Subscription;
     isProduction: boolean = true;
     isTestServer: boolean = false;
     isExamStarted: boolean = false;
     isTestRunExam: boolean = false;
+    isCourseOverview: boolean = false;
+    isShownViaLti: boolean = false;
 
     constructor(
         private jhiLanguageHelper: JhiLanguageHelper,
@@ -34,27 +40,20 @@ export class JhiMainComponent implements OnInit, OnDestroy {
         private profileService: ProfileService,
         private examParticipationService: ExamParticipationService,
         private sentryErrorHandler: SentryErrorHandler,
-        private analyticsService: AnalyticsService,
         private themeService: ThemeService,
         @Inject(DOCUMENT)
         private document: Document,
         private renderer: Renderer2,
+        private courseService: CourseManagementService,
+        private ltiService: LtiService,
     ) {
         this.setupErrorHandling().then(undefined);
-        this.setupAnalytics().then(undefined);
     }
 
     private async setupErrorHandling() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             // sentry is only activated if it was specified in the application.yml file
             this.sentryErrorHandler.initSentry(profileInfo);
-        });
-    }
-
-    private async setupAnalytics() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            // postHog is only activated if it was specified in the application.yml file
-            this.analyticsService.initAnalytics(profileInfo);
         });
     }
 
@@ -111,6 +110,14 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             this.isTestRunExam = isStarted;
         });
 
+        this.courseOverviewSubscription = this.courseService.isCourseOverview$.subscribe((isPresent) => {
+            this.isCourseOverview = isPresent;
+        });
+
+        this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
+            this.isShownViaLti = isShownViaLti;
+        });
+
         this.themeService.initialize();
     }
 
@@ -128,5 +135,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
         this.profileSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.testRunSubscription?.unsubscribe();
+        this.courseOverviewSubscription?.unsubscribe();
+        this.ltiSubscription?.unsubscribe();
     }
 }

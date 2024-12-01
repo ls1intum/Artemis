@@ -6,12 +6,12 @@ import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exer
 import { Component, Input, OnInit } from '@angular/core';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercises/shared/result/result.utils';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
-import { TestCaseResult } from 'app/entities/test-case-result.model';
+import { TestCaseResult } from 'app/entities/programming/test-case-result.model';
 
 @Component({
     selector: 'jhi-exercise-scores-export-button',

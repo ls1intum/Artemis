@@ -1,29 +1,31 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LANGUAGES } from 'app/core/language/language.constants';
 import { User } from 'app/core/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-settings',
     templateUrl: './settings.component.html',
+    standalone: true,
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, ArtemisSharedCommonModule, ArtemisSharedModule],
 })
 export class SettingsComponent implements OnInit {
+    private accountService = inject(AccountService);
+    private fb = inject(FormBuilder);
+    private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
+
     success = false;
     account: User;
     languages = LANGUAGES;
     settingsForm: FormGroup;
     isRegistrationEnabled = false;
-
-    constructor(
-        private accountService: AccountService,
-        private fb: FormBuilder,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-    ) {}
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

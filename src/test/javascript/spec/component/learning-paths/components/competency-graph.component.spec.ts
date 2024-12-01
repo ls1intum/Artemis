@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/entities/competency/learning-path.model';
+import { SizeUpdate } from 'app/course/learning-paths/components/competency-node/competency-node.component';
 
 describe('CompetencyGraphComponent', () => {
     let component: CompetencyGraphComponent;
@@ -61,5 +62,21 @@ describe('CompetencyGraphComponent', () => {
 
         expect(component.nodes()).toEqual(competencyGraph.nodes);
         expect(component.edges()).toEqual(edgesWithUniqueIds);
+    });
+
+    it('should handle empty nodes array gracefully', () => {
+        component['internalCompetencyGraph'].set({ nodes: [], edges: [] });
+        const sizeUpdate: SizeUpdate = { id: '1', dimension: { width: 100, height: 100 } };
+        component.setNodeDimension(sizeUpdate);
+
+        expect(component.nodes()).toHaveLength(0);
+    });
+
+    it('should not update dimension if node id does not exist', () => {
+        const sizeUpdate: SizeUpdate = { id: '3', dimension: { width: 100, height: 100 } };
+        const originalNodes = [...component.nodes()];
+        component.setNodeDimension(sizeUpdate);
+
+        expect(component.nodes()).toEqual(originalNodes);
     });
 });

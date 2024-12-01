@@ -5,12 +5,12 @@ import { filter, map, tap } from 'rxjs/operators';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { BuildLogEntryArray } from 'app/entities/build-log.model';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { BuildLogEntryArray } from 'app/entities/programming/build-log.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { Feedback } from 'app/entities/feedback.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 
 /**
  * Notifies the IDE about a result, that is currently building and forwards incoming test results.

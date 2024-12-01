@@ -4,7 +4,7 @@ import { get } from 'lodash-es';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { faBook, faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
 
 @Component({

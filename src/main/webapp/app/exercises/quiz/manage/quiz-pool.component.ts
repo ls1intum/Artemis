@@ -15,7 +15,7 @@ import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-qu
 import { onError } from 'app/shared/util/global.utils';
 import { computeQuizQuestionInvalidReason, isQuizQuestionValid } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
 
 @Component({

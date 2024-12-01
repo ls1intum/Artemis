@@ -11,15 +11,16 @@ import {
     ViewChild,
     ViewContainerRef,
     createComponent,
+    inject,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/theme.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { ShowdownExtension } from 'showdown';
+import type { PluginSimple } from 'markdown-it';
 import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, merge, of } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
@@ -39,6 +40,7 @@ import diff from 'html-diff-ts';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
+import { toObservable } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -46,6 +48,8 @@ import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises
     styleUrls: ['./programming-exercise-instruction.scss'],
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
+    private themeService = inject(ThemeService);
+
     @Input() public exercise: ProgrammingExercise;
     @Input() public participation: Participation;
     @Input() generateHtmlEvents: Observable<void>;
@@ -80,12 +84,16 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public renderedMarkdown: SafeHtml;
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
-    markdownExtensions: ShowdownExtension[];
+    markdownExtensions: PluginSimple[];
     private injectableContentFoundSubscription: Subscription;
     private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;
-    private themeChangeSubscription: Subscription;
     private testCases?: ProgrammingExerciseTestCase[];
+    private themeChangeSubscription = toObservable(this.themeService.currentTheme).subscribe(() => {
+        if (!this.isInitial) {
+            this.updateMarkdown();
+        }
+    });
 
     // Icons
     faSpinner = faSpinner;
@@ -98,16 +106,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseGradingService: ProgrammingExerciseGradingService,
-        themeService: ThemeService,
         private sanitizer: DomSanitizer,
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
         private appRef: ApplicationRef,
         private injector: EnvironmentInjector,
     ) {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
-        this.themeChangeSubscription = themeService.getCurrentThemeObservable().subscribe(() => {
-            this.updateMarkdown();
-        });
     }
 
     /**
@@ -348,14 +352,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 // Insert anchor divs into the text so that injectable elements can be inserted into them.
                 // Without class="d-flex" the injected components height would be 0.
                 // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
-                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-task-${id.toString()} d-flex">&#8203;</div>`),
+                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise.id}-task-${id.toString()} d-flex">&#8203;</div>`),
             problemStatementHtml,
         );
     }
 
     private injectTasksIntoDocument = () => {
         this.tasks.forEach(({ id, taskName, testIds }) => {
-            const taskHtmlContainers = document.getElementsByClassName(`pe-task-${id}`);
+            const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise.id}-task-${id}`);
 
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const taskHtmlContainer = taskHtmlContainers[i];

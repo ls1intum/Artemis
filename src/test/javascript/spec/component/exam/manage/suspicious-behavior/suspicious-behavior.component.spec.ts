@@ -14,7 +14,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam-session.model';
+import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { FormsModule } from '@angular/forms';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';

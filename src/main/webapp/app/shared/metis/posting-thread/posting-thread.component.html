@@ -3,6 +3,7 @@
         [readOnlyMode]="readOnlyMode"
         [lastReadDate]="lastReadDate"
         [posting]="post"
+        [isConsecutive]="isConsecutive || false"
         [showAnswers]="showAnswers"
         [isCommunicationPage]="isCommunicationPage"
         [showChannelReference]="showChannelReference"
@@ -11,5 +12,5 @@
     />
 </div>
 @if (!isCommunicationPage) {
-    <div class="post-separation-line"></div>
+    <div class="post-separation-line mb-2"></div>
 }

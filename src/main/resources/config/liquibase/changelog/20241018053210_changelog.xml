@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.29.xsd"
+        objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
+    <changeSet id="20241018053210" author="alex.joham">
+        <createTable tableName="llm_token_usage_trace">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_llm_token_usage_trace"/>
+            </column>
+            <column name="service" type="VARCHAR(255)"/>
+            <column name="course_id" type="BIGINT"/>
+            <column name="exercise_id" type="BIGINT"/>
+            <column name="user_id" type="BIGINT"/>
+            <column name="time" type="DATETIME"/>
+            <column name="iris_message_id" type="BIGINT"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="llm_token_usage_trace"
+                                 constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_COURSE" referencedColumnNames="id"
+                                 referencedTableName="course" onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="llm_token_usage_trace"
+                                 constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_EXERCISE" referencedColumnNames="id"
+                                 referencedTableName="exercise" onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="llm_token_usage_trace"
+                                 constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_USER" referencedColumnNames="id"
+                                 referencedTableName="jhi_user" onDelete="SET NULL"/>
+        <addForeignKeyConstraint baseColumnNames="iris_message_id" baseTableName="llm_token_usage_trace"
+                                 constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_IRIS_MESSAGE" referencedColumnNames="id"
+                                 referencedTableName="iris_message" onDelete="SET NULL"/>
+        <createTable tableName="llm_token_usage_request">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_llm_token_usage_request"/>
+            </column>
+            <column name="model" type="VARCHAR(255)"/>
+            <column name="service_pipeline_id" type="VARCHAR(255)"/>
+            <column name="num_input_tokens" type="INT"/>
+            <column name="cost_per_million_input_tokens" type="FLOAT"/>
+            <column name="num_output_tokens" type="INT"/>
+            <column name="cost_per_million_output_tokens" type="FLOAT"/>
+            <column name="trace_id" type="BIGINT"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="trace_id" baseTableName="llm_token_usage_request"
+                                 constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_TRACE" referencedColumnNames="id"
+                                 referencedTableName="llm_token_usage_trace"/>
+    </changeSet>
+
+</databaseChangeLog>

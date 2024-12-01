@@ -36,7 +36,7 @@
                 },
                 "step3": {
                     "name": "Solution Code Snippets",
-                    "description": "This steps allows to edit the individual Solution Code Snippets from which code hints are generated.",
+                    "description": "This steps allows editing the individual Solution Code Snippets from which code hints are generated.",
                     "notGenerated": "No Solution Code Snippets have been generated yet.",
                     "createManualFragmentButton": {
                         "label": "Create manual fragment",
@@ -63,7 +63,7 @@
                 },
                 "step4": {
                     "name": "Code Hints",
-                    "description": "This step allows to generate the code hints.",
+                    "description": "This step allows generating the code hints.",
                     "title": "Title",
                     "task": "Task",
                     "notGenerated": "No code hints have been generated yet.",

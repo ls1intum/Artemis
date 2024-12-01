@@ -9,8 +9,8 @@ services:
             service: artemis-app
         env_file:
             - ./artemis/config/postgres.env
-            - ./artemis/config/cypress.env
-            - ./artemis/config/cypress-postgres.env
+            - ./artemis/config/playwright.env
+            - ./artemis/config/playwright-postgres.env
             - ./artemis/config/migration-check.env
         depends_on:
             postgresql:

@@ -2,7 +2,7 @@ import { Component, EventEmitter, HostListener, Input, Output } from '@angular/c
 import { Result } from 'app/entities/result.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
-import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { ActivatedRoute } from '@angular/router';
 import { ComplaintType } from 'app/entities/complaint.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -47,9 +47,8 @@ export class AssessmentHeaderComponent {
     @Input() isProgrammingExercise = false; // remove once diff view activated for programming exercises
 
     @Output() save = new EventEmitter<void>();
-    // eslint-disable-next-line @angular-eslint/no-output-native
-    @Output() submit = new EventEmitter<void>();
-    @Output() cancel = new EventEmitter<void>();
+    @Output() onSubmit = new EventEmitter<void>();
+    @Output() onCancel = new EventEmitter<void>();
     @Output() nextSubmission = new EventEmitter<void>();
     @Output() highlightDifferencesChange = new EventEmitter<boolean>();
     @Output() useAsExampleSubmission = new EventEmitter<void>();
@@ -142,9 +141,9 @@ export class AssessmentHeaderComponent {
     submitOnControlAndEnter(event: KeyboardEvent) {
         event.preventDefault();
         if (!this.overrideDisabled) {
-            this.submit.emit();
+            this.onSubmit.emit();
         } else if (!this.submitDisabled) {
-            this.submit.emit();
+            this.onSubmit.emit();
             this.sendSubmitAssessmentEventToAnalytics();
         }
     }

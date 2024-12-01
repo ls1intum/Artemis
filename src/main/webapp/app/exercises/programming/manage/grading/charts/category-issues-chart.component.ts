@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { IssuesMap } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
+import { IssuesMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/programming/static-code-analysis-category.model';
 
 export class IssueColumn {
     w: string;

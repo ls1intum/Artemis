@@ -23,6 +23,7 @@ import {
     faBell,
     faBook,
     faBookOpen,
+    faBroom,
     faChevronRight,
     faCog,
     faEye,
@@ -119,6 +120,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faGears = faGears;
     faPuzzlePiece = faPuzzlePiece;
     faChevronRight = faChevronRight;
+    faBroom = faBroom;
 
     private standardizedCompetencySubscription: Subscription;
     private authStateSubscription: Subscription;
@@ -364,6 +366,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         standardized_competencies: 'artemisApp.standardizedCompetency.manage.title',
         prerequisites: 'artemisApp.prerequisite.title',
         import_standardized: 'artemisApp.standardizedCompetency.courseImport.title',
+        cleanup_service: 'cleanupService.title',
     };
 
     studentPathBreadcrumbTranslations: { [key: string]: string } = {
@@ -384,6 +387,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         live: 'artemisApp.submission.detail.title',
         courses: 'artemisApp.course.home.title',
         enroll: 'artemisApp.studentDashboard.enroll.title',
+        archive: 'artemisApp.course.archive.title',
     };
 
     /**
@@ -531,6 +535,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'example-submissions':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
                 this.addTranslationAsCrumb(currentPath, 'example-submission-editor');
+                break;
+            case 'attachments':
+                this.addBreadcrumb(currentPath, segment, false);
                 break;
             // No breadcrumbs for those segments
             case 'competency-management':

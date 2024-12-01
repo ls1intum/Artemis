@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { FeedbackType } from 'app/entities/feedback.model';
-import { TextBlockType } from 'app/entities/text-block.model';
+import { TextBlockType } from 'app/entities/text/text-block.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Location } from '@angular/common';
 
@@ -13,6 +13,11 @@ import { Location } from '@angular/common';
  */
 @Injectable({ providedIn: 'root' })
 export class TextAssessmentAnalytics {
+    protected assessmentsService = inject(TextAssessmentService);
+    protected accountService = inject(AccountService);
+    private location = inject(Location);
+    private profileService = inject(ProfileService);
+
     private userId: number;
     private courseId: number;
     private textExerciseId: number;
@@ -23,12 +28,7 @@ export class TextAssessmentAnalytics {
     private route: ActivatedRoute;
     public analyticsEnabled = false;
 
-    constructor(
-        protected assessmentsService: TextAssessmentService,
-        protected accountService: AccountService,
-        private profileService: ProfileService,
-        public location: Location,
-    ) {
+    constructor() {
         // retrieve the analytics enabled status from the profile info and set to current property
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.analyticsEnabled = profileInfo.textAssessmentAnalyticsEnabled || false;

@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -17,15 +17,13 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
     `,
 })
 export class AddAuxiliaryRepositoryButtonComponent {
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly faPlus = faPlus;
 
     @Input() programmingExercise: ProgrammingExercise;
 
     @Output() onRefresh: EventEmitter<any> = new EventEmitter<any>();
-
-    // Icons
-    faPlus = faPlus;
 
     /**
      * Adds a new auxiliary repository, which is displayed as a new row, to the respective programming exercise and activates the angular change detection.

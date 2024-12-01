@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -20,11 +20,9 @@ export interface IAuthServerProvider {
 
 @Injectable({ providedIn: 'root' })
 export class AuthServerProvider implements IAuthServerProvider {
-    constructor(
-        private http: HttpClient,
-        private localStorage: LocalStorageService,
-        private sessionStorage: SessionStorageService,
-    ) {}
+    private http = inject(HttpClient);
+    private localStorage = inject(LocalStorageService);
+    private sessionStorage = inject(SessionStorageService);
 
     login(credentials: Credentials): Observable<object> {
         return this.http.post('api/public/authenticate', credentials);

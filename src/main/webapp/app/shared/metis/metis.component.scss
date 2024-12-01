@@ -1,3 +1,9 @@
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
+$delete-delay-duration: 6s;
+
 .post-result-information {
     font-size: small;
     font-style: italic;
@@ -21,20 +27,16 @@
     color: var(--metis-green);
 }
 
-.badge {
-    color: var(--white);
+.post-header-author-date {
+    line-height: 1.1;
 }
 
-.badge-student {
-    background-color: var(--cyan);
+.post-content-padding {
+    padding-left: 3.42rem;
 }
 
-.badge-tutor {
-    background-color: var(--orange);
-}
-
-.badge-instructor {
-    background-color: var(--graph-red);
+.post-authority-icon-student {
+    display: none;
 }
 
 .reference {
@@ -76,5 +78,54 @@
 }
 
 .card {
-    border-radius: 1em;
+    border-radius: 0.25em;
+}
+
+@include media-breakpoint-down(sm) {
+    .post-header-author-date {
+        flex-direction: column;
+        gap: 0 !important;
+    }
+
+    .post-content-padding {
+        margin-left: 0;
+    }
+
+    .post-header-date-separator {
+        display: none;
+    }
+
+    .post-header-date span {
+        color: $secondary;
+        font-size: 0.75rem !important;
+    }
+}
+
+.post-delete-button-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 0;
+    background-color: rgba($primary, 0.3);
+    animation: increaseWidth $delete-delay-duration forwards linear;
+
+    @media (prefers-reduced-motion) {
+        animation: none;
+    }
+}
+
+.post-delete-button-label {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes increaseWidth {
+    from {
+        width: 0;
+    }
+
+    to {
+        width: 100%;
+    }
 }

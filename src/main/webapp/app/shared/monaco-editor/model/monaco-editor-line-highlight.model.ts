@@ -1,4 +1,5 @@
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
+import { makeEditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import * as monaco from 'monaco-editor';
 
 /**
@@ -19,9 +20,9 @@ export class MonacoEditorLineHighlight extends MonacoCodeEditorElement {
      * @param className The class name to use for highlighting the line. If left out, no class will be applied.
      * @param marginClassName The class name to use for highlighting the margin. If left out, no class will be applied.
      */
-    constructor(editor: monaco.editor.ICodeEditor, id: string, startLine: number, endLine: number, className?: string, marginClassName?: string) {
+    constructor(editor: monaco.editor.IStandaloneCodeEditor, id: string, startLine: number, endLine: number, className?: string, marginClassName?: string) {
         super(editor, id);
-        this.range = new monaco.Range(startLine, 0, endLine, 0);
+        this.range = makeEditorRange(startLine, 0, endLine, 0);
         this.className = className;
         this.marginClassName = marginClassName;
         this.decorationsCollection = editor.createDecorationsCollection([]);

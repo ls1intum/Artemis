@@ -1,15 +1,14 @@
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ArtemisTestModule } from '../../../test.module';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MonacoGradingInstructionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-instruction.action';
-import { MonacoGradingCreditsAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-credits.action';
-import { MonacoGradingScaleAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-scale.action';
-import { MonacoGradingDescriptionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-description.action';
-import { MonacoGradingFeedbackAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-feedback.action';
-import { MonacoGradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-usage-count.action';
-import { MonacoGradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-criterion.action';
+import { GradingInstructionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-instruction.action';
+import { GradingCreditsAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-credits.action';
+import { GradingScaleAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-scale.action';
+import { GradingDescriptionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-description.action';
+import { GradingFeedbackAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-feedback.action';
+import { GradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-usage-count.action';
+import { GradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
 
 describe('MonacoEditorActionGradingInstructionsIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -17,8 +16,7 @@ describe('MonacoEditorActionGradingInstructionsIntegration', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorModule],
-            declarations: [MonacoEditorComponent],
+            imports: [ArtemisTestModule, MonacoEditorComponent],
             providers: [],
         })
             .compileComponents()
@@ -37,13 +35,13 @@ describe('MonacoEditorActionGradingInstructionsIntegration', () => {
     });
 
     const setupActions = () => {
-        const creditsAction = new MonacoGradingCreditsAction();
-        const scaleAction = new MonacoGradingScaleAction();
-        const descriptionAction = new MonacoGradingDescriptionAction();
-        const feedbackAction = new MonacoGradingFeedbackAction();
-        const usageCountAction = new MonacoGradingUsageCountAction();
-        const instructionAction = new MonacoGradingInstructionAction(creditsAction, scaleAction, descriptionAction, feedbackAction, usageCountAction);
-        const criterionAction = new MonacoGradingCriterionAction(instructionAction);
+        const creditsAction = new GradingCreditsAction();
+        const scaleAction = new GradingScaleAction();
+        const descriptionAction = new GradingDescriptionAction();
+        const feedbackAction = new GradingFeedbackAction();
+        const usageCountAction = new GradingUsageCountAction();
+        const instructionAction = new GradingInstructionAction(creditsAction, scaleAction, descriptionAction, feedbackAction, usageCountAction);
+        const criterionAction = new GradingCriterionAction(instructionAction);
         [creditsAction, scaleAction, descriptionAction, feedbackAction, usageCountAction, instructionAction, criterionAction].forEach((action) => comp.registerAction(action));
         return { creditsAction, scaleAction, descriptionAction, feedbackAction, usageCountAction, instructionAction, criterionAction };
     };

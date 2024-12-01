@@ -4,7 +4,7 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { Subscription, throwError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { CommitInfo } from 'app/entities/programming-submission.model';
+import { CommitInfo } from 'app/entities/programming/programming-submission.model';
 import dayjs from 'dayjs/esm';
 import { catchError, map, tap } from 'rxjs/operators';
 

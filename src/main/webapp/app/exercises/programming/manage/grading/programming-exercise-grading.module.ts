@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programming/shared/actions/programming-exercise-actions.module';
@@ -19,6 +19,7 @@ import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-po
 import { ProgrammingExerciseGradingTasksTableComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-grading-tasks-table.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { ProgrammingExerciseTaskComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task/programming-exercise-task.component';
+import { FeedbackAnalysisComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.component';
 
 @NgModule({
     imports: [
@@ -33,6 +34,7 @@ import { ProgrammingExerciseTaskComponent } from 'app/exercises/programming/mana
         ArtemisProgrammingExerciseActionsModule,
         SubmissionPolicyUpdateModule,
         BarChartModule,
+        FeedbackAnalysisComponent,
     ],
     declarations: [
         ProgrammingExerciseConfigureGradingComponent,

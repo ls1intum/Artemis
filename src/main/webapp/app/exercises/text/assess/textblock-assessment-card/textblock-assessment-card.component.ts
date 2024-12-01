@@ -1,10 +1,10 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { Component, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
+import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { FeedbackType } from 'app/entities/feedback.model';
-import { TextBlockType } from 'app/entities/text-block.model';
+import { TextBlockType } from 'app/entities/text/text-block.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
@@ -17,6 +17,10 @@ type OptionalTextBlockRef = TextBlockRef | undefined;
     styleUrls: ['./textblock-assessment-card.component.scss'],
 })
 export class TextblockAssessmentCardComponent {
+    protected route = inject(ActivatedRoute);
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+
     @Input() textBlockRef: TextBlockRef;
     @Input() selected = false;
     @Input() readOnly: boolean;
@@ -29,12 +33,8 @@ export class TextblockAssessmentCardComponent {
     @Output() didDelete = new EventEmitter<TextBlockRef>();
     @ViewChild(TextblockFeedbackEditorComponent) feedbackEditor: TextblockFeedbackEditorComponent;
 
-    constructor(
-        public structuredGradingCriterionService: StructuredGradingCriterionService,
-        public textAssessmentAnalytics: TextAssessmentAnalytics,
-        protected route: ActivatedRoute,
-    ) {
-        textAssessmentAnalytics.setComponentRoute(route);
+    constructor() {
+        this.textAssessmentAnalytics.setComponentRoute(this.route);
     }
 
     /**

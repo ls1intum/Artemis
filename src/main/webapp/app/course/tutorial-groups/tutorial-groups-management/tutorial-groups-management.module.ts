@@ -3,7 +3,7 @@ import { tutorialGroupManagementRoutes } from 'app/course/tutorial-groups/tutori
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisTutorialGroupsSharedModule } from '../shared/tutorial-groups-shared.module';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';

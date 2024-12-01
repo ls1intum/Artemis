@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
 import { User } from 'app/core/user/user.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamStartInformationComponent } from 'app/exam/participate/exam-start-information/exam-start-information.component';
 import { InformationBoxComponent } from 'app/shared/information-box/information-box.component';
@@ -15,6 +14,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { provideRouter } from '@angular/router';
 
 let fixture: ComponentFixture<ExamStartInformationComponent>;
 let component: ExamStartInformationComponent;
@@ -40,7 +40,7 @@ describe('ExamStartInformationComponent', () => {
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisExamSharedModule],
+            imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisExamSharedModule],
             declarations: [
                 ExamStartInformationComponent,
                 MockComponent(StudentExamWorkingTimeComponent),
@@ -50,6 +50,7 @@ describe('ExamStartInformationComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisDurationFromSecondsPipe),
             ],
+            providers: [provideRouter([])],
         })
             .compileComponents()
             .then(() => {

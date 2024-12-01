@@ -4,7 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { Observable } from 'rxjs';
 
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class FileService {
@@ -115,5 +115,21 @@ export class FileService {
             name = uuid() + '.' + extension;
         } while (mapOfFiles && mapOfFiles.has(name));
         return name;
+    }
+
+    /**
+     * Removes the prefix from the file name, and replaces underscore with spaces
+     * @param link
+     */
+    replaceAttachmentPrefixAndUnderscores(link: string): string {
+        return link.replace(/AttachmentUnit_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}_/, '').replace(/_/g, ' ');
+    }
+
+    /**
+     * Removes the prefix from the file name, and replaces underscore with spaces
+     * @param link
+     */
+    replaceLectureAttachmentPrefixAndUnderscores(link: string): string {
+        return link.replace(/LectureAttachment_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}_/, '').replace(/_/g, ' ');
     }
 }

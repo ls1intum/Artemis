@@ -1,13 +1,21 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, Optional, SimpleChanges } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
+import {
+    MissingResultInformation,
+    ResultTemplateStatus,
+    evaluateTemplateStatus,
+    getResultIconClass,
+    getTextColorClass,
+    isAthenaAIResult,
+} from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Router } from '@angular/router';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { Participation, ParticipationType, getExercise } from 'app/entities/participation/participation.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
@@ -43,6 +51,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
+    protected readonly AssessmentType = AssessmentType;
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
@@ -52,6 +61,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     @Input() showBadge = false;
     @Input() showIcon = true;
     @Input() isInSidebarCard = false;
+    @Input() showCompletion = true;
     @Input() missingResultInfo = MissingResultInformation.NONE;
     @Input() exercise?: Exercise;
 
@@ -81,6 +91,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         @Optional() private exerciseCacheService: ExerciseCacheService,
         private resultService: ResultService,
         private csvDownloadService: CsvDownloadService,
+        private router: Router,
     ) {}
 
     /**
@@ -182,14 +193,13 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      */
     evaluate() {
         this.templateStatus = evaluateTemplateStatus(this.exercise, this.participation, this.result, this.isBuilding, this.missingResultInfo);
-
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
             this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
         } else if (
             this.result &&
-            ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) || Result.isAthenaAIResult(this.result))
+            ((this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) || isAthenaAIResult(this.result))
         ) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
@@ -229,7 +239,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                 return 'artemisApp.result.resultString.automaticAIFeedbackTimedOutTooltip';
             } else if (this.templateStatus === ResultTemplateStatus.IS_GENERATING_FEEDBACK) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip';
-            } else if (this.templateStatus === ResultTemplateStatus.HAS_RESULT && Result.isAthenaAIResult(this.result)) {
+            } else if (this.templateStatus === ResultTemplateStatus.HAS_RESULT && isAthenaAIResult(this.result)) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip';
             }
         }
@@ -252,6 +262,17 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      */
     showDetails(result: Result) {
         const exerciseService = this.exerciseCacheService ?? this.exerciseService;
+        if (this.exercise?.type === ExerciseType.TEXT) {
+            const courseId = getCourseFromExercise(this.exercise)?.id;
+            let submissionId = result.submission?.id;
+            // In case of undefined result submission try the latest submission as this can happen before reloading the component
+            if (!submissionId) {
+                submissionId = result.participation?.submissions?.last()?.id;
+            }
+            this.router.navigate(['/courses', courseId, 'exercises', 'text-exercises', this.exercise?.id, 'participate', result.participation?.id, 'submission', submissionId]);
+            return undefined;
+        }
+
         const feedbackComponentParameters = prepareFeedbackComponentParameters(this.exercise, result, this.participation, this.templateStatus, this.latestDueDate, exerciseService);
 
         if (this.exercise?.type === ExerciseType.QUIZ) {

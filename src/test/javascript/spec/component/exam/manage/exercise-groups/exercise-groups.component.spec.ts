@@ -1,14 +1,13 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { Course } from 'app/entities/course.model';
-import { ExamInformationDTO } from 'app/entities/exam-information.model';
-import { Exam } from 'app/entities/exam.model';
+import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -59,7 +58,7 @@ describe('Exercise Groups Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 ExerciseGroupsComponent,
                 MockComponent(ExamExerciseRowButtonsComponent),
@@ -74,6 +73,7 @@ describe('Exercise Groups Component', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
+                provideRouter([]),
                 MockProvider(AlertService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },

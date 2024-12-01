@@ -3,14 +3,14 @@ import { admin, instructor, studentOne } from '../../support/users';
 import { generateUUID, newBrowserPage } from '../../support/utils';
 import { test } from '../../support/fixtures';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Commands } from '../../support/commands';
 import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../support/requests/ExerciseAPIRequests';
 
-test.describe('Exam management', () => {
+test.describe('Exam management', { tag: '@fast' }, () => {
     test.describe('Exercise group', () => {
         let course: Course;
         let exam: Exam;
@@ -80,6 +80,7 @@ test.describe('Exam management', () => {
                 const uid = generateUUID();
                 const programmingExerciseTitle = 'Programming ' + uid;
                 const programmingExerciseShortName = 'programming' + uid;
+                await programmingExerciseCreation.changeEditMode();
                 await programmingExerciseCreation.setTitle(programmingExerciseTitle);
                 await programmingExerciseCreation.setShortName(programmingExerciseShortName);
                 await programmingExerciseCreation.setPackageName('de.test');

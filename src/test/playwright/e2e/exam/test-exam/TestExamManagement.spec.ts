@@ -1,5 +1,5 @@
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 import { admin, instructor, studentOne } from '../../../support/users';
@@ -11,7 +11,7 @@ import { expect } from '@playwright/test';
 const uid = generateUUID();
 const examTitle = 'test-exam' + uid;
 
-test.describe('Test Exam management', () => {
+test.describe('Test Exam management', { tag: '@fast' }, () => {
     let course: Course;
     let exam: Exam;
 
@@ -90,6 +90,7 @@ test.describe('Test Exam management', () => {
             await examManagement.openExerciseGroups(exam.id!);
             await examExerciseGroups.clickAddProgrammingExercise(exerciseGroup.id!);
             const programmingExerciseTitle = 'programming' + uid;
+            await programmingExerciseCreation.changeEditMode();
             await programmingExerciseCreation.setTitle(programmingExerciseTitle);
             await programmingExerciseCreation.setShortName(programmingExerciseTitle);
             await programmingExerciseCreation.setPackageName('de.test');

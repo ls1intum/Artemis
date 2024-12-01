@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { MODELING_EDITOR_CANVAS } from 'src/test/cypress/support/constants';
+import { MODELING_EDITOR_CANVAS } from '../../../support/constants';
 
 import { Course } from 'app/entities/course.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -9,7 +9,7 @@ import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
 
-test.describe('Modeling Exercise Management', () => {
+test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {

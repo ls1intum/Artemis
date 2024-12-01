@@ -1,13 +1,13 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewChild } from '@angular/core';
-import { TextBlock } from 'app/entities/text-block.model';
+import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewChild, inject } from '@angular/core';
+import { TextBlock } from 'app/entities/text/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
-import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
-import { faAngleRight, faEdit, faExclamation, faExclamationTriangle, faLightbulb, faQuestionCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faAngleRight, faEdit, faExclamationTriangle, faQuestionCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 
 @Component({
@@ -16,13 +16,17 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
     styleUrls: ['./textblock-feedback-editor.component.scss'],
 })
 export class TextblockFeedbackEditorComponent implements AfterViewInit {
+    protected route = inject(ActivatedRoute);
+    protected modalService = inject(NgbModal);
+    structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+
     readonly FeedbackType = FeedbackType;
 
     @Input() textBlock: TextBlock = new TextBlock();
     @Input() feedback: Feedback = new Feedback();
     @Output() feedbackChange = new EventEmitter<Feedback>();
-    // eslint-disable-next-line @angular-eslint/no-output-native
-    @Output() close = new EventEmitter<void>();
+    @Output() onClose = new EventEmitter<void>();
     @Output() onFocus = new EventEmitter<void>();
     @ViewChild('detailText') textareaRef: ElementRef;
     @ViewChild(ConfirmIconComponent) confirmIconComponent: ConfirmIconComponent;
@@ -52,19 +56,12 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     faEdit = faEdit;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
-    faLightbulb = faLightbulb;
-    faExclamation = faExclamation;
     faTimes = faTimes;
     faTrash = faTrash;
     faAngleRight = faAngleRight;
 
-    constructor(
-        public structuredGradingCriterionService: StructuredGradingCriterionService,
-        protected modalService: NgbModal,
-        protected route: ActivatedRoute,
-        public textAssessmentAnalytics: TextAssessmentAnalytics,
-    ) {
-        textAssessmentAnalytics.setComponentRoute(route);
+    constructor() {
+        this.textAssessmentAnalytics.setComponentRoute(this.route);
     }
 
     /**
@@ -98,7 +95,7 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      * Dismiss changes in feedback editor
      */
     dismiss(): void {
-        this.close.emit();
+        this.onClose.emit();
         this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.DELETE_FEEDBACK, this.feedback.type, this.textBlock.type);
     }
 

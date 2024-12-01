@@ -4,7 +4,7 @@ import { Page } from 'playwright-core';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 
 import fileUploadExerciseTemplate from '../../fixtures/exercise/file-upload/template.json';
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';
@@ -34,16 +34,16 @@ import {
 } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Team } from 'app/entities/team.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
-import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 
 type PatchProgrammingExerciseTestVisibilityDto = {
     id: number;
@@ -223,6 +223,35 @@ export class ExerciseAPIRequests {
             ...textExerciseTemplate,
             title,
             channelName: 'exercise-' + titleLowercase(title),
+        };
+        const textExercise = Object.assign({}, template, body);
+        const response = await this.page.request.post(TEXT_EXERCISE_BASE, { data: textExercise });
+        return response.json();
+    }
+
+    /**
+     * Adds a text exercise to an exercise group in an exam or to a course.
+     *
+     * @param body - An object containing either the course or exercise group the exercise will be added to.
+     * @param title - The title for the text exercise (optional, default: auto-generated).
+     * @param releaseDate
+     * @param dueDate
+     * @param assessmentDueDate
+     */
+    async createTextExerciseWithDates(
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
+        releaseDate: dayjs.Dayjs,
+        dueDate: dayjs.Dayjs,
+        assessmentDueDate: dayjs.Dayjs,
+        title = 'Text ' + generateUUID(),
+    ): Promise<TextExercise> {
+        const template = {
+            ...textExerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+            releaseDate: releaseDate,
+            dueDate: dueDate,
+            assessmentDueDate: assessmentDueDate,
         };
         const textExercise = Object.assign({}, template, body);
         const response = await this.page.request.post(TEXT_EXERCISE_BASE, { data: textExercise });

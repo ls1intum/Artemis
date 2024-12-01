@@ -3,18 +3,18 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { RouterTestingModule } from '@angular/router/testing';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { RouterModule } from '@angular/router';
 
 describe('UnitCreationCardComponent', () => {
     let unitCreationCardComponentFixture: ComponentFixture<UnitCreationCardComponent>;
     let unitCreationCardComponent: UnitCreationCardComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule],
+            imports: [RouterModule.forRoot([])],
             declarations: [
                 UnitCreationCardComponent,
                 MockPipe(ArtemisTranslatePipe),

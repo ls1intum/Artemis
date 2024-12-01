@@ -6,11 +6,11 @@ import { MockFileUploadExerciseService } from '../helpers/mocks/service/mock-fil
 import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { of } from 'rxjs';
@@ -22,6 +22,7 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { MockRouterLinkDirective } from '../helpers/mocks/directive/mock-router-link.directive';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 describe('Exercise detail common actions Component', () => {
     let comp: NonProgrammingExerciseDetailCommonActionsComponent;
@@ -44,8 +45,10 @@ describe('Exercise detail common actions Component', () => {
                 { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                 MockProvider(ModelingExerciseService),
                 { provide: Router, useClass: MockRouter },
+                MockProvider(ProfileService),
             ],
         }).compileComponents();
+        jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of());
         fixture = TestBed.createComponent(NonProgrammingExerciseDetailCommonActionsComponent);
         comp = fixture.componentInstance;
     });

@@ -1,5 +1,5 @@
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 export class SolutionProgrammingExerciseParticipation extends Participation {
     public programmingExercise?: ProgrammingExercise;

@@ -4,7 +4,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { CommitsInfoComponent } from 'app/exercises/programming/shared/commits-info/commits-info.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { of } from 'rxjs';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -83,7 +83,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         const modalServiceSpy = jest.spyOn(modal, 'open');
         component.exercise = { id: 1 } as ProgrammingExercise;
         component.showGitDiff();
-        expect(modalServiceSpy).toHaveBeenCalledExactlyOnceWith(GitDiffReportModalComponent, { size: 'xl' });
+        expect(modalServiceSpy).toHaveBeenCalledExactlyOnceWith(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
     });
 
     it('should use reports from cache if available', fakeAsync(() => {

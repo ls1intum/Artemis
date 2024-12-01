@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -6,11 +6,11 @@ import { Result } from 'app/entities/result.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { TextBlock } from 'app/entities/text-block.model';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { TextBlock } from 'app/entities/text/text-block.model';
+import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionRound, getSubmissionResultById, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
+import { TextAssessmentEvent } from 'app/entities/text/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
 
@@ -22,12 +22,10 @@ type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[]; asses
     providedIn: 'root',
 })
 export class TextAssessmentService {
-    private readonly RESOURCE_URL = 'api';
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
 
-    constructor(
-        private http: HttpClient,
-        private accountService: AccountService,
-    ) {}
+    private readonly RESOURCE_URL = 'api';
 
     /**
      * Saves the passed feedback items of the assessment.
@@ -152,7 +150,7 @@ export class TextAssessmentService {
                     if (participation.exercise) {
                         this.accountService.setAccessRightsForExercise(participation.exercise);
                     }
-                    const submission = participation.submissions![0];
+                    const submission = participation.submissions!.last()!;
                     let result;
                     if (resultId) {
                         result = getSubmissionResultById(submission, resultId);

@@ -12,10 +12,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
@@ -42,6 +42,11 @@ export type ExerciseDetailsType = {
     activatedExerciseHints?: ExerciseHint[];
 };
 
+export type CourseExistingExerciseDetailsType = {
+    exerciseTitles?: Set<string>;
+    shortNames?: Set<string>;
+};
+
 export interface ExerciseServicable<T extends Exercise> {
     create(exercise: T): Observable<HttpResponse<T>>;
 
@@ -56,6 +61,7 @@ export interface ExerciseServicable<T extends Exercise> {
 export class ExerciseService {
     public resourceUrl = 'api/exercises';
     public adminResourceUrl = 'api/admin/exercises';
+    public courseResourceUrl = 'api/courses';
 
     constructor(
         private http: HttpClient,
@@ -244,6 +250,22 @@ export class ExerciseService {
                     return exerciseA.dueDate.isBefore(exerciseB.dueDate) ? -1 : 1;
                 }
             });
+    }
+
+    getExistingExerciseDetailsInCourse(courseId: number, exerciseType: ExerciseType): Observable<CourseExistingExerciseDetailsType> {
+        return this.http
+            .get<CourseExistingExerciseDetailsType>(`${this.courseResourceUrl}/${courseId}/existing-exercise-details?exerciseType=${exerciseType}`, {
+                observe: 'response',
+            })
+            .pipe(
+                map((response) => {
+                    const details = response.body!;
+                    return {
+                        exerciseTitles: new Set(details.exerciseTitles ?? []),
+                        shortNames: new Set(details.shortNames ?? []),
+                    } as CourseExistingExerciseDetailsType;
+                }),
+            );
     }
 
     isActiveQuiz(exercise: QuizExercise) {
@@ -488,12 +510,8 @@ export class ExerciseService {
     }
 
     public sendExerciseTitleToTitleService(exercise?: Exercise) {
-        // we only want to show the exercise group name as exercise name to the student for exam exercises.
-        // for tutors and more privileged users, we want to show the exercise title
-        if (exercise?.exerciseGroup && !exercise?.isAtLeastTutor) {
-            this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise?.id], exercise?.exerciseGroup.title);
-        } else {
-            this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise?.id], exercise?.title);
+        if (exercise) {
+            this.entityTitleService.setExerciseTitle(exercise);
         }
         if (exercise?.course) {
             this.entityTitleService.setTitle(EntityType.COURSE, [exercise.course.id], exercise.course.title);

@@ -1,5 +1,8 @@
 # ===================================================================
 # Build Agent specific properties: this file will only be loaded during startup if the profile buildagent is active
+# NOTE: to keep the build agent as lightweight as possible, we disable all unnecessary features here, in particular Hibernate and DataSource
+# This means that the build agent will not be able to access the database, and will not be able to run any tests that require a database connection
+# For a single node environment, you must define the profile "buildagent" before the profile "core" when starting the Artemis service
 #
 # This configuration overrides the application.yml file.
 # ===================================================================
@@ -15,7 +18,6 @@ artemis:
         specify-concurrent-builds: false
         concurrent-build-size: 1
         asynchronous: true
-        timeout-seconds: 240
         build-container-prefix: local-ci-
         proxies:
             use-system-proxy: false
@@ -30,6 +32,14 @@ artemis:
         container-cleanup:
             expiry-minutes: 5
             cleanup-schedule-minutes: 60
+        pause-grace-period-seconds: 60
+        build-timeout-seconds:
+            min: 10
+            default: 120
+            max: 240
+        build-logs:
+            max-lines-per-job: 10000
+            max-chars-per-line: 1024
     git:
         name: Artemis
         email: artemis@xcit.tum.de

@@ -28,7 +28,7 @@ import {
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { CodeEditorStudentContainerComponent } from 'app/exercises/programming/participate/code-editor-student-container.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -58,6 +58,7 @@ import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { mockCodeEditorMonacoViewChildren } from '../../helpers/mocks/mock-instance.helper';
 
 describe('CodeEditorStudentIntegration', () => {
     let container: CodeEditorStudentContainerComponent;
@@ -78,6 +79,9 @@ describe('CodeEditorStudentIntegration', () => {
     let routeSubject: Subject<Params>;
 
     const result: Result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
+
+    // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
+    mockCodeEditorMonacoViewChildren();
 
     beforeEach(() => {
         return TestBed.configureTestingModule({

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextExamSummaryComponent } from 'app/exam/participate/summary/exercises/text-exam-summary/text-exam-summary.component';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.component';
 import { MockComponent } from 'ng-mocks';

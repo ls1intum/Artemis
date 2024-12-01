@@ -15,16 +15,14 @@ import { CloseCircleComponent } from 'app/shared/close-circle/close-circle.compo
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 
 @NgModule({
-    imports: [ArtemisSharedLibsModule],
+    imports: [ArtemisSharedLibsModule, TranslateDirective, ArtemisTranslatePipe],
     declarations: [
         ArtemisDatePipe,
         ArtemisDateRangePipe,
         FindLanguageFromKeyPipe,
         AlertOverlayComponent,
-        TranslateDirective,
         SortByDirective,
         SortDirective,
-        ArtemisTranslatePipe,
         ArtemisTimeAgoPipe,
         ArtemisDurationFromSecondsPipe,
         DurationPipe,

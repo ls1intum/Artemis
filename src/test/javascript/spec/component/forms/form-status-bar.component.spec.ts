@@ -20,26 +20,22 @@ describe('FormStatusBarComponent', () => {
     });
 
     beforeEach(() => {
-        comp.formStatusSections = [
+        fixture.componentRef.setInput('formStatusSections', [
             { title: 'some-translation-key', valid: true },
             { title: 'another-translation-key', valid: false },
-        ];
+        ]);
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should initializes', () => {
-        expect(comp).toBeDefined();
-    });
-
     it('should scroll to correct headline', () => {
         const mockDOMElement = { scrollIntoView: jest.fn(), style: {} };
         const getElementSpy = jest.spyOn(document, 'getElementById').mockReturnValue(mockDOMElement as any as HTMLElement);
         const scrollToSpy = jest.spyOn(mockDOMElement, 'scrollIntoView');
-        comp.scrollToHeadline(comp.formStatusSections[0].title);
-        expect(getElementSpy).toHaveBeenCalledWith(comp.formStatusSections[0].title);
+        comp.scrollToHeadline(comp.formStatusSections()[0].title);
+        expect(getElementSpy).toHaveBeenCalledWith(comp.formStatusSections()[0].title);
         expect(scrollToSpy).toHaveBeenCalledOnce();
     });
 });

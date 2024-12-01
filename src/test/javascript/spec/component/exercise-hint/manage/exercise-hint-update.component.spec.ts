@@ -13,8 +13,8 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -162,7 +162,7 @@ describe('ExerciseHint Management Update Component', () => {
 
             // Mock getCombinedProgrammingExerciseSettings
             const irisSettingsService = TestBed.inject(IrisSettingsService);
-            const getCombinedProgrammingExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedProgrammingExerciseSettings').mockReturnValue(of(fakeSettings));
+            const getCombinedProgrammingExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(of(fakeSettings));
 
             // Run ngOnInit
             comp.ngOnInit();

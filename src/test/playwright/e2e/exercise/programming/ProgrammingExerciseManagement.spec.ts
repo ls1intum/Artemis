@@ -1,5 +1,5 @@
 import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
@@ -7,7 +7,7 @@ import { generateUUID } from '../../../support/utils';
 import { expect } from '@playwright/test';
 import { Exercise, ExerciseMode } from '../../../support/constants';
 
-test.describe('Programming Exercise Management', () => {
+test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
@@ -23,6 +23,7 @@ test.describe('Programming Exercise Management', () => {
             await courseManagementExercises.createProgrammingExercise();
             await page.waitForURL('**/programming-exercises/new**');
             const exerciseTitle = 'Programming exercise ' + generateUUID();
+            await programmingExerciseCreation.changeEditMode();
             await programmingExerciseCreation.setTitle(exerciseTitle);
             await programmingExerciseCreation.setShortName('programming' + generateUUID());
             await programmingExerciseCreation.setPackageName('de.test');
@@ -32,6 +33,37 @@ test.describe('Programming Exercise Management', () => {
             const exercise: Exercise = await response.json();
             await expect(courseManagementExercises.getExerciseTitle(exerciseTitle)).toBeVisible();
             await page.waitForURL(`**/programming-exercises/${exercise.id}**`);
+        });
+
+        test('FormStatusBar scrolls to the correct section with headline visible after scroll', async ({
+            login,
+            page,
+            navigationBar,
+            courseManagement,
+            courseManagementExercises,
+            programmingExerciseCreation,
+        }) => {
+            await login(admin, '/');
+            await navigationBar.openCourseManagement();
+            await courseManagement.openExercisesOfCourse(course.id!);
+            await courseManagementExercises.createProgrammingExercise();
+            await page.waitForURL('**/programming-exercises/new**');
+            await programmingExerciseCreation.changeEditMode();
+
+            const firstSectionHeadline = 'General';
+            const firstSectionStatusBarId = 0;
+            const fourthSectionHeadline = 'Problem';
+            const fourthSectionStatusBarId = 3;
+
+            // scroll down
+            await programmingExerciseCreation.clickFormStatusBarSection(fourthSectionStatusBarId);
+            await programmingExerciseCreation.checkIsHeadlineVisibleToUser(firstSectionHeadline, false);
+            await programmingExerciseCreation.checkIsHeadlineVisibleToUser(fourthSectionHeadline, true);
+
+            // scroll up
+            await programmingExerciseCreation.clickFormStatusBarSection(firstSectionStatusBarId);
+            await programmingExerciseCreation.checkIsHeadlineVisibleToUser(firstSectionHeadline, true);
+            await programmingExerciseCreation.checkIsHeadlineVisibleToUser(fourthSectionHeadline, false);
         });
     });
 
@@ -76,7 +108,7 @@ test.describe('Programming Exercise Management', () => {
         });
 
         test('Create an exercise team', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, exerciseTeams, programmingExerciseOverview }) => {
-            await login(instructor, '/');
+            await login(instructor);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseTeams(exercise.id!);

@@ -1,5 +1,5 @@
-import { HttpResponse } from '@angular/common/http';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
@@ -9,7 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/entities/complaint-response-dto.model';
 
 describe('ComplaintResponseService', () => {
@@ -23,8 +23,8 @@ describe('ComplaintResponseService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [MockProvider(AccountService)],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(AccountService)],
         })
             .compileComponents()
             .then(() => {

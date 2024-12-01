@@ -15,6 +15,9 @@
             "copied": "Copied",
             "new": "New"
         },
+        "importTable": {
+            "searchPlaceholder": "Search"
+        },
         "menu": {
             "home": "Home",
             "overview": "Course Overview",
@@ -113,7 +116,8 @@
                 "iris": "Iris Settings",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
                 "lti": "LTI Configuration",
-                "standardizedCompetencies": "Standardized Competencies"
+                "standardizedCompetencies": "Standardized Competencies",
+                "cleanupService": "Cleanup Service"
             },
             "language": "Language",
             "settings": "Settings",
@@ -123,12 +127,13 @@
             "continueTutorial": "Continue tutorial"
         },
         "form": {
-            "username": "Username",
+            "username": "Login or email",
             "firstname": "First name",
-            "firstname.placeholder": "Your first name",
+            "firstname.placeholder": "First name",
             "lastname": "Last name",
-            "lastname.placeholder": "Your last name",
-            "username.placeholder": "Your Username",
+            "lastname.placeholder": "Last name",
+            "username.placeholder": "Login or email",
+            "username.tumPlaceholder": "e.g. go42tum / example@tum.de",
             "currentpassword": "Current password",
             "currentpassword.placeholder": "Current password",
             "newpassword": "New password",
@@ -226,6 +231,9 @@
             "purge": "Purge",
             "archive": "Archive",
             "submit": "Submit",
+            "continueSubmission": "Continue",
+            "viewTimeline": "View Timeline",
+            "hideTimeline": "Hide Timeline",
             "submitTooltip": "You can submit multiple times until the exercise due date. Your last submission will count towards your score.",
             "submitNoDueDateTooltip": "You can submit multiple times. Your last submission will count towards your score.",
             "submitDueDateMissedTooltip": "The due date has passed. Your submissions will not be graded!",
@@ -267,7 +275,8 @@
             "goBack": "Go back",
             "search": "Search",
             "select": "Select",
-            "sendToIris": "Send To Iris"
+            "sendToIris": "Send To Iris",
+            "faq": "FAQ"
         },
         "detail": {
             "field": "Field",
@@ -346,7 +355,9 @@
         "exercises": "Exercises",
         "statistics": "Course statistics",
         "exams": "Exams",
-        "communication": "Communication"
+        "communication": "Communication",
+        "archive": "Course archive",
+        "faq": "FAQ"
     },
     "connectionStatus": {
         "connected": "Connected",

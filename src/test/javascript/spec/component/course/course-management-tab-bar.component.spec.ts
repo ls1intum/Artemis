@@ -2,13 +2,13 @@ import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { ArtemisTestModule } from '../../test.module';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
@@ -50,8 +50,10 @@ describe('Course Management Tab Bar Component', () => {
                 MockDirective(FeatureToggleLinkDirective),
                 MockDirective(FeatureToggleHideDirective),
             ],
-            imports: [HttpClientTestingModule, RouterModule, ArtemisTestModule],
+            imports: [RouterModule, ArtemisTestModule],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 {
                     provide: ActivatedRoute,
                     useValue: {

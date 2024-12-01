@@ -1,5 +1,5 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
-import { faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
@@ -17,6 +17,9 @@ import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.mo
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
 import { catchError } from 'rxjs/operators';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import { getAsOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -27,6 +30,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     @Output() collapseSearch = new EventEmitter<void>();
+    @Output() onUpdateSidebar = new EventEmitter<void>();
 
     INFO = ConversationDetailTabs.INFO;
     MEMBERS = ConversationDetailTabs.MEMBERS;
@@ -37,10 +41,15 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     activeConversationAsChannel?: ChannelDTO;
     channelSubTypeReferenceTranslationKey?: string;
     channelSubTypeReferenceRouterLink?: string;
+    otherUser?: ConversationUserDTO;
 
     faUserPlus = faUserPlus;
     faUserGroup = faUserGroup;
     faSearch = faSearch;
+    faChevronLeft = faChevronLeft;
+    readonly faPeopleGroup = faPeopleGroup;
+
+    private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
 
     constructor(
         private modalService: NgbModal,
@@ -51,6 +60,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     ) {}
 
     getAsGroupChat = getAsGroupChatDTO;
+    getAsOneToOneChat = getAsOneToOneChatDTO;
 
     canAddUsers = canAddUsersToConversation;
 
@@ -59,9 +69,20 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         this.subscribeToActiveConversation();
     }
 
+    getOtherUser() {
+        const conversation = getAsOneToOneChatDTO(this.activeConversation);
+        if (conversation) {
+            this.otherUser = conversation.members?.find((user) => !user.isRequestingUser);
+        }
+    }
+
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+    }
+
+    openSidebar() {
+        this.courseSidebarService.openSidebar();
     }
 
     private subscribeToActiveConversation() {
@@ -70,6 +91,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
             this.activeConversationAsChannel = getAsChannelDTO(conversation);
             this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.activeConversationAsChannel?.subType);
             this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.activeConversationAsChannel);
+            this.getOtherUser();
         });
     }
 
@@ -107,6 +129,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
                 this.metisConversationService.forceRefresh().subscribe({
                     complete: () => {},
                 });
+                this.onUpdateSidebar.emit();
             });
     }
 

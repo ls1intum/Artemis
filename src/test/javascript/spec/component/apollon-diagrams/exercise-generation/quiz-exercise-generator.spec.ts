@@ -1,5 +1,5 @@
-import { HttpResponse } from '@angular/common/http';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { Selection, UMLModel, UMLModelElement, findElement } from '@ls1intum/apollon';
@@ -40,9 +40,11 @@ describe('QuizExercise Generator', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             declarations: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 MockProvider(TranslateService),
                 {
                     provide: SessionStorageService,

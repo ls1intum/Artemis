@@ -3,16 +3,17 @@ import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { Competency } from 'app/entities/competency.model';
 import { Organization } from 'app/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { LearningPath } from 'app/entities/competency/learning-path.model';
 import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Faq } from 'app/entities/faq.model';
 
 export enum CourseInformationSharingConfiguration {
     COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
@@ -26,6 +27,10 @@ export enum CourseInformationSharingConfiguration {
 export function isCommunicationEnabled(course: Course | undefined) {
     const config = course?.courseInformationSharingConfiguration;
     return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config === CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+}
+
+export function isFaqEnabled(course: Course | undefined) {
+    return course?.faqEnabled;
 }
 
 /**
@@ -62,6 +67,7 @@ export class Course implements BaseEntity {
     public color?: string;
     public courseIcon?: string;
     public onlineCourse?: boolean;
+    public faqEnabled?: boolean;
     public enrollmentEnabled?: boolean;
     public enrollmentConfirmationMessage?: string;
     public unenrollmentEnabled?: boolean;
@@ -97,6 +103,7 @@ export class Course implements BaseEntity {
 
     public exercises?: Exercise[];
     public lectures?: Lecture[];
+    public faqs?: Faq[];
     public competencies?: Competency[];
     public prerequisites?: Prerequisite[];
     public learningPathsEnabled?: boolean;

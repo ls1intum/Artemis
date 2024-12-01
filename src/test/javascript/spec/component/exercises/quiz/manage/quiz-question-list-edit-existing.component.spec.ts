@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -9,8 +9,8 @@ import { CommonModule } from '@angular/common';
 import { QuizQuestionListEditExistingComponent, State } from 'app/exercises/quiz/manage/quiz-question-list-edit-existing.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
-import { Exam } from 'app/entities/exam.model';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { Exam } from 'app/entities/exam/exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { FormsModule } from '@angular/forms';
@@ -106,9 +106,9 @@ describe('QuizQuestionListEditExistingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CommonModule, ArtemisTestModule, HttpClientTestingModule, FormsModule],
+            imports: [CommonModule, ArtemisTestModule, FormsModule],
             declarations: [QuizQuestionListEditExistingComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(NgbModal), MockProvider(ChangeDetectorRef)],
+            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(NgbModal), MockProvider(ChangeDetectorRef)],
         })
             .compileComponents()
             .then(() => {

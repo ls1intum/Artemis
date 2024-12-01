@@ -4,7 +4,7 @@ import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { Component, Input } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { By } from '@angular/platform-browser';
 
 @Component({ selector: 'jhi-course-exercise-row', template: '' })

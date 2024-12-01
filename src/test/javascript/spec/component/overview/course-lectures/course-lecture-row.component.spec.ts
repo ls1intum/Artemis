@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -12,7 +11,7 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Location } from '@angular/common';
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -29,11 +28,11 @@ describe('CourseLectureRow', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                RouterTestingModule.withRoutes([
+                MockDirective(NgbTooltip),
+                RouterModule.forRoot([
                     { path: 'courses/:courseId/lectures', component: DummyComponent },
                     { path: 'courses/:courseId/lectures/:lectureId', component: DummyComponent },
                 ]),
-                MockDirective(NgbTooltip),
             ],
             declarations: [
                 DummyComponent,

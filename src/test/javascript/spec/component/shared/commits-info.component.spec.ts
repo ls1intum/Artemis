@@ -7,7 +7,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import { CommitInfo } from 'app/entities/programming-submission.model';
+import { CommitInfo } from 'app/entities/programming/programming-submission.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';

@@ -1,12 +1,19 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Thread, ThreadState } from '../../metrics.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FormsModule } from '@angular/forms';
+import { NgClass } from '@angular/common';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-thread-modal',
     templateUrl: './metrics-modal-threads.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    imports: [TranslateDirective, FaIconComponent, FormsModule, NgClass, ArtemisSharedCommonModule],
 })
 export class MetricsModalThreadsComponent implements OnInit {
     ThreadState = ThreadState;
@@ -15,6 +22,8 @@ export class MetricsModalThreadsComponent implements OnInit {
     get selectedThreadState(): ThreadState | undefined {
         return this.threadStateFilter;
     }
+    private activeModal = inject(NgbActiveModal);
+
     set selectedThreadState(newValue: ThreadState | undefined) {
         this.threadStateFilter = newValue;
         this.refreshFilteredThreads();
@@ -22,8 +31,8 @@ export class MetricsModalThreadsComponent implements OnInit {
 
     threadFilter?: string;
 
-    threads?: Thread[];
-    filteredThreads: Thread[];
+    threads: Thread[] = [];
+    filteredThreads: Thread[] = [];
 
     threadDumpAll = 0;
     threadDumpBlocked = 0;
@@ -34,10 +43,8 @@ export class MetricsModalThreadsComponent implements OnInit {
     // Icons
     faCheck = faCheck;
 
-    constructor(private activeModal: NgbActiveModal) {}
-
     ngOnInit(): void {
-        this.threads?.forEach((thread) => {
+        this.threads.forEach((thread) => {
             switch (thread.threadState) {
                 case ThreadState.Runnable:
                     this.threadDumpRunnable += 1;
@@ -57,7 +64,7 @@ export class MetricsModalThreadsComponent implements OnInit {
         });
 
         this.threadDumpAll = this.threadDumpRunnable + this.threadDumpWaiting + this.threadDumpTimedWaiting + this.threadDumpBlocked;
-        this.filteredThreads = this.threads ?? [];
+        this.filteredThreads = this.threads;
     }
 
     getBgClass(threadState: ThreadState): string {

@@ -18,11 +18,11 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { Competency, CompetencyProgress } from 'app/entities/competency.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { Competency, CompetencyExerciseLink, CompetencyLectureUnitLink, CompetencyProgress } from 'app/entities/competency.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { By } from '@angular/platform-browser';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -51,7 +51,7 @@ describe('CourseCompetenciesDetails', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
             declarations: [
                 CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -70,6 +70,8 @@ describe('CourseCompetenciesDetails', () => {
                 MockPipe(HtmlForMarkdownPipe),
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 MockProvider(LectureUnitService),
                 MockProvider(AlertService),
                 MockProvider(FeatureToggleService),
@@ -107,8 +109,8 @@ describe('CourseCompetenciesDetails', () => {
     it('should load competency to display progress and all lecture units', () => {
         const competency = {
             id: 1,
-            lectureUnits: [new TextUnit()],
-            exercises: [{ id: 5 } as TextExercise],
+            lectureUnitLinks: [new CompetencyLectureUnitLink(this, new TextUnit(), 1)],
+            exerciseLinks: [new CompetencyExerciseLink(this, { id: 5 } as TextExercise, 1)],
         } as Competency;
         const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
 
@@ -118,7 +120,7 @@ describe('CourseCompetenciesDetails', () => {
         const exerciseUnit = fixture.debugElement.query(By.directive(ExerciseUnitComponent));
 
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.competency.lectureUnits).toHaveLength(2);
+        expect(component.competency.lectureUnitLinks).toHaveLength(2);
         expect(textUnit).not.toBeNull();
         expect(exerciseUnit).not.toBeNull();
     });
@@ -126,7 +128,7 @@ describe('CourseCompetenciesDetails', () => {
     it('should load competency to display progress and the exercise unit', () => {
         const competency = {
             id: 1,
-            exercises: [{ id: 5 } as ModelingExercise],
+            exerciseLinks: [new CompetencyExerciseLink(this, { id: 5 } as ModelingExercise, 1)],
         } as Competency;
 
         const findByIdSpy = jest.spyOn(courseCompetencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
@@ -136,7 +138,7 @@ describe('CourseCompetenciesDetails', () => {
         const exerciseUnit = fixture.debugElement.query(By.directive(ExerciseUnitComponent));
 
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.competency.lectureUnits).toHaveLength(1);
+        expect(component.competency.lectureUnitLinks).toHaveLength(1);
         expect(exerciseUnit).not.toBeNull();
     });
 

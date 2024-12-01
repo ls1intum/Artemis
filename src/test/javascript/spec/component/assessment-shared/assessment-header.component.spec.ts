@@ -6,15 +6,14 @@ import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/asse
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
-import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateDirective, TranslateService } from '@ngx-translate/core';
-import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { TranslateService } from '@ngx-translate/core';
+import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
@@ -25,6 +24,7 @@ import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
 import { AssessmentNote } from 'app/entities/assessment-note.model';
+import { RouterModule } from '@angular/router';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -49,8 +49,8 @@ describe('AssessmentHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, NgbTooltipMocksModule, NgbAlertsMocksModule],
-            declarations: [AssessmentHeaderComponent, AssessmentWarningComponent, AlertOverlayComponent, TranslateDirective, ArtemisTranslatePipe, MockTranslateValuesDirective],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule, NgbAlertsMocksModule, RouterModule.forRoot([]), MockPipe(ArtemisTranslatePipe)],
+            declarations: [AssessmentHeaderComponent, AssessmentWarningComponent, AlertOverlayComponent, MockTranslateValuesDirective],
             providers: [
                 {
                     provide: AlertService,
@@ -159,14 +159,14 @@ describe('AssessmentHeaderComponent', () => {
         saveButtonSpan.nativeElement.click();
         expect(component.save.emit).toHaveBeenCalledOnce();
 
-        jest.spyOn(component.submit, 'emit');
+        jest.spyOn(component.onSubmit, 'emit');
         submitButtonSpan.nativeElement.click();
-        expect(component.submit.emit).toHaveBeenCalledOnce();
+        expect(component.onSubmit.emit).toHaveBeenCalledOnce();
 
         const cancelButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=cancel]'));
-        jest.spyOn(component.cancel, 'emit');
+        jest.spyOn(component.onCancel, 'emit');
         cancelButtonSpan.nativeElement.click();
-        expect(component.cancel.emit).toHaveBeenCalledOnce();
+        expect(component.onCancel.emit).toHaveBeenCalledOnce();
     });
 
     it('should show override button when result is present', () => {
@@ -189,9 +189,9 @@ describe('AssessmentHeaderComponent', () => {
         overrideAssessmentButtonSpan = fixture.debugElement.query(By.css('[jhiTranslate$=overrideAssessment]'));
         expect(overrideAssessmentButtonSpan).toBeTruthy();
 
-        jest.spyOn(component.submit, 'emit');
+        jest.spyOn(component.onSubmit, 'emit');
         overrideAssessmentButtonSpan.nativeElement.click();
-        expect(component.submit.emit).toHaveBeenCalledOnce();
+        expect(component.onSubmit.emit).toHaveBeenCalledOnce();
     });
 
     it('should show next submission if assessor or instructor, result is present and no complaint', () => {
@@ -345,7 +345,7 @@ describe('AssessmentHeaderComponent', () => {
 
         const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
         const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
-        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
         document.dispatchEvent(eventMock);
 
         expect(spyOnControlAndEnter).toHaveBeenCalledOnce();
@@ -362,7 +362,7 @@ describe('AssessmentHeaderComponent', () => {
 
         const eventMock = new KeyboardEvent('keydown', { ctrlKey: true, key: 'Enter' });
         const spyOnControlAndEnter = jest.spyOn(component, 'submitOnControlAndEnter');
-        const submitSpy = jest.spyOn(component.submit, 'emit');
+        const submitSpy = jest.spyOn(component.onSubmit, 'emit');
         document.dispatchEvent(eventMock);
 
         expect(spyOnControlAndEnter).toHaveBeenCalledOnce();

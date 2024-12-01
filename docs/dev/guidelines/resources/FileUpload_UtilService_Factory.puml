@@ -10,12 +10,12 @@ skinparam class {
     ArrowColor black
 }
 !pragma useIntermediatePackages false
-package "src.main.java.de.tum.in.www1.artemis.repository" {
+package "src.main.java.de.tum.cit.aet.artemis.repository" {
   interface FileUploadExerciseRepository {
   save(FileUploadExerciseRepository): FileUploadExerciseRepository
   }
 }
-package "src.test.java.de.tum.in.www1.artemis.exercise" {
+package "src.test.java.de.tum.cit.aet.artemis.exercise" {
   class ExerciseTestFactory {
   + {static} populateExercise(Exercise, [...]): Exercise
   + {static} populateExerciseForExam(Exercise, [...]): Exercise

@@ -7,7 +7,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { faDoorClosed } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({

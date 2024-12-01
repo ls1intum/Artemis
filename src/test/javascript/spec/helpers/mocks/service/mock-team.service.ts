@@ -8,7 +8,7 @@ import { StudentWithTeam } from 'app/entities/team.model';
 import { Course } from 'app/entities/course.model';
 import { TeamSearchUser } from 'app/entities/team-search-user.model';
 import { User } from 'app/core/user/user.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import dayjs from 'dayjs/esm';

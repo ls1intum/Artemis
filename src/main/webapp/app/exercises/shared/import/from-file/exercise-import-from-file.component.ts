@@ -1,10 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/core/util/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExercise, ProgrammingExerciseBuildConfig, copyBuildConfigFromExerciseJson } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/entities/programming/programming-exercise.model';
 import JSZip from 'jszip';
 
 @Component({
@@ -49,10 +50,17 @@ export class ExerciseImportFromFileComponent implements OnInit {
         switch (this.exerciseType) {
             case ExerciseType.PROGRAMMING:
                 this.exercise = JSON.parse(exerciseDetails as string) as ProgrammingExercise;
+                const progEx = this.exercise as ProgrammingExercise;
                 // This is needed to make sure that old exported programming exercises can be imported
-                if (!(this.exercise as ProgrammingExercise).buildConfig) {
-                    (this.exercise as ProgrammingExercise).buildConfig = copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
+                if (!progEx.buildConfig) {
+                    progEx.buildConfig = copyBuildConfigFromExerciseJson(exerciseJson as ProgrammingExerciseBuildConfig);
                 }
+                if (progEx.auxiliaryRepositories) {
+                    progEx.auxiliaryRepositories!.forEach((repo, index) => {
+                        progEx.auxiliaryRepositories![index].id = undefined;
+                    });
+                }
+                this.exercise = progEx;
                 break;
             default:
                 this.alertService.error('artemisApp.exercise.importFromFile.notSupportedExerciseType', {

@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
@@ -23,6 +23,14 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     noDate: true,
 };
 
+const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
+    future: false,
+    current: false,
+    dueSoon: false,
+    past: false,
+    noDate: false,
+};
+
 @Component({
     selector: 'jhi-course-lectures',
     templateUrl: './course-lectures.component.html',
@@ -34,13 +42,14 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     course?: Course;
     courseId: number;
 
-    lectureSelected: boolean = true;
+    lectureSelected = true;
     sidebarData: SidebarData;
     accordionLectureGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sortedLectures: Lecture[] = [];
     sidebarLectures: SidebarCardElement[] = [];
-    isCollapsed: boolean = false;
+    isCollapsed = false;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
+    protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -75,7 +84,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         } else if (!lectureId && upcomingLecture) {
             this.router.navigate([upcomingLecture.id], { relativeTo: this.route, replaceUrl: true });
         } else {
-            this.lectureSelected = lectureId ? true : false;
+            this.lectureSelected = !!lectureId;
         }
     }
 

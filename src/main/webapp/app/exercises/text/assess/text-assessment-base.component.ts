@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
@@ -17,6 +17,11 @@ import { getCourseFromExercise } from 'app/entities/exercise.model';
     template: '',
 })
 export abstract class TextAssessmentBaseComponent implements OnInit {
+    protected alertService = inject(AlertService);
+    protected accountService = inject(AccountService);
+    protected assessmentsService = inject(TextAssessmentService);
+    protected structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+
     /*
      * Base Component for TextSubmissionAssessmentComponent and ExampleTextSubmissionComponent since they share a lot of same functions.
      */
@@ -28,13 +33,6 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     submission?: TextSubmission;
 
     readonly getCourseFromExercise = getCourseFromExercise;
-
-    protected constructor(
-        protected alertService: AlertService,
-        protected accountService: AccountService,
-        protected assessmentsService: TextAssessmentService,
-        protected structuredGradingCriterionService: StructuredGradingCriterionService,
-    ) {}
 
     async ngOnInit() {
         // Used to check if the assessor is the current user

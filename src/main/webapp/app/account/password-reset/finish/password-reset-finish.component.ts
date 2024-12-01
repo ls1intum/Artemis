@@ -1,15 +1,24 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { PasswordStrengthBarComponent } from 'app/account/password/password-strength-bar.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { PasswordResetFinishService } from './password-reset-finish.service';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-password-reset-finish',
     templateUrl: './password-reset-finish.component.html',
+    standalone: true,
+    imports: [TranslateDirective, RouterLink, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisSharedCommonModule, ArtemisSharedModule],
 })
 export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
+    private passwordResetFinishService = inject(PasswordResetFinishService);
+    private route = inject(ActivatedRoute);
+    private fb = inject(FormBuilder);
+
     @ViewChild('newPassword', { static: false })
     newPassword?: ElementRef;
 
@@ -23,12 +32,6 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     key = '';
 
     passwordForm: FormGroup;
-
-    constructor(
-        private passwordResetFinishService: PasswordResetFinishService,
-        private route: ActivatedRoute,
-        private fb: FormBuilder,
-    ) {}
 
     ngOnInit() {
         this.route.queryParams.subscribe((params) => {

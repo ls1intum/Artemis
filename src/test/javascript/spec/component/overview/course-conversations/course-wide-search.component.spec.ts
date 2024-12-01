@@ -14,11 +14,12 @@ import { BehaviorSubject } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisLectureChannelDTO } from '../../../helpers/sample/metis-sample-data';
 import { getElement } from '../../../helpers/utils/general.utils';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Directive({
     // eslint-disable-next-line @angular-eslint/directive-selector
@@ -68,6 +69,7 @@ describe('CourseWideSearchComponent', () => {
                 MockComponent(PostingThreadComponent),
                 MockComponent(MessageInlineInputComponent),
                 MockComponent(PostCreateEditModalComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [MockProvider(MetisConversationService), MockProvider(MetisService), MockProvider(NgbModal)],
         }).compileComponents();

@@ -10,7 +10,7 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
@@ -26,6 +26,7 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
+import { isManualResult as isManualResultFunction } from 'app/exercises/shared/result/result.utils';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -148,7 +149,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         let hasTutorFeedback = false;
         if (this.latestResult) {
             // latest result is the first element of results, see loadParticipationWithLatestResult
-            isManualResult = Result.isManualResult(this.latestResult);
+            isManualResult = isManualResultFunction(this.latestResult);
             if (isManualResult) {
                 hasTutorFeedback = this.latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
             }

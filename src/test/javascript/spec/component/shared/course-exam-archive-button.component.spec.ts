@@ -19,7 +19,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExamArchiveButtonComponent, CourseExamArchiveState } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap/modal/modal-ref';

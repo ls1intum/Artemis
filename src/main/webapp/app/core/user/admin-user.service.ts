@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { createRequestOption } from 'app/shared/util/request.util';
@@ -54,6 +54,14 @@ export class AdminUserService {
     }
 
     /**
+     * Submit a query for all logins of not enrolled users (no admins)
+     * @return Observable<HttpResponse<string[]>> with the sorted list of all logins of not enrolled users
+     */
+    queryNotEnrolledUsers(): Observable<HttpResponse<string[]>> {
+        return this.http.get<string[]>(`${this.resourceUrl}/not-enrolled`, { observe: 'response' });
+    }
+
+    /**
      * Find a user on the server.
      * @param login The login of the user to find.
      * @return Observable<HttpResponse<User>> with the found user as body.
@@ -86,11 +94,7 @@ export class AdminUserService {
      * @return Observable<HttpResponse<void>>
      */
     deleteUsers(logins: string[]): Observable<HttpResponse<void>> {
-        let params = new HttpParams();
-        for (const login of logins) {
-            params = params.append('login', login);
-        }
-        return this.http.delete<void>(`${this.resourceUrl}`, { params, observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}`, { body: logins, observe: 'response' });
     }
 
     /**

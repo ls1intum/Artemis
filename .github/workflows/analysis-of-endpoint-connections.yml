@@ -2,7 +2,13 @@ name: Analysis of Endpoint Connections
 
 on:
   workflow_dispatch:
-  push:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    paths:
+      - 'src/main/java/**'
+      - 'src/main/webapp/**'
 
 # Keep in sync with build.yml and test.yml and codeql-analysis.yml
 env:
@@ -20,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 21
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: '${{ env.java }}'
@@ -59,7 +65,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 21
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -73,12 +79,16 @@ jobs:
           path: supporting_scripts/analysis-of-endpoint-connections/
 
       - name: Analyze endpoints
-        run:
+        run: |
           ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runEndpointAnalysis
+        continue-on-error: true
+        id: endpointAnalysis
 
       - name: Analyze rest calls
-        run:
+        run: |
           ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runRestCallAnalysis
+        continue-on-error: true
+        id: restCallAnalysis
 
       - name: Upload analysis results
         uses: actions/upload-artifact@v4
@@ -87,3 +97,21 @@ jobs:
           path: |
             supporting_scripts/analysis-of-endpoint-connections/endpointAnalysisResult.json
             supporting_scripts/analysis-of-endpoint-connections/restCallAnalysisResult.json
+
+      - name: Check if any step failed
+        run: |
+          if [ "${{ steps.endpointAnalysis.outcome }}" != "success" ] &&
+             [ "${{ steps.restCallAnalysis.outcome }}" != "success" ]; then
+            echo "Endpoints and REST calls could not be matched."
+            exit 1
+          fi
+          if [ "${{ steps.endpointAnalysis.outcome }}" == "success" ] &&
+             [ "${{ steps.restCallAnalysis.outcome }}" != "success" ]; then
+            echo "REST calls could not be matched."
+            exit 1
+          fi
+          if [ "${{ steps.endpointAnalysis.outcome }}" != "success" ] &&
+             [ "${{ steps.restCallAnalysis.outcome }}" == "success" ]; then
+            echo "Endpoints could not be matched."
+            exit 1
+          fi

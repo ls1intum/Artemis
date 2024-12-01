@@ -14,7 +14,7 @@ export class User extends Account {
     public visibleRegistrationNumber?: string;
     public password?: string;
     public vcsAccessToken?: string;
-    public sshPublicKey?: string;
+    public vcsAccessTokenExpiryDate?: string;
     public irisAccepted?: dayjs.Dayjs;
 
     constructor(
@@ -35,7 +35,7 @@ export class User extends Account {
         password?: string,
         imageUrl?: string,
         vcsAccessToken?: string,
-        sshPublicKey?: string,
+        vcsAccessTokenExpiryDate?: string,
         irisAccepted?: dayjs.Dayjs,
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
@@ -48,7 +48,7 @@ export class User extends Account {
         this.lastNotificationRead = lastNotificationRead;
         this.password = password;
         this.vcsAccessToken = vcsAccessToken;
-        this.sshPublicKey = sshPublicKey;
+        this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
         this.irisAccepted = irisAccepted;
     }
 }
@@ -63,6 +63,7 @@ export class UserPublicInfoDTO {
     public firstName?: string;
     public lastName?: string;
     public email?: string;
+    public imageUrl?: string;
     public isInstructor?: boolean;
     public isEditor?: boolean;
     public isTeachingAssistant?: boolean;

@@ -2,7 +2,6 @@
 plugins:
   - artifactId: matrix-auth
   - artifactId: docker-workflow
-  - artifactId: gitlab-plugin
   - artifactId: pipeline-maven
   - artifactId: timestamper
   - artifactId: configuration-as-code

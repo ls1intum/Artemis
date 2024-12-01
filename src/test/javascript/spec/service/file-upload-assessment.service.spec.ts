@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
@@ -7,7 +7,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ArtemisTestModule } from '../test.module';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
 describe('Modeling Assessment Service', () => {
     let httpMock: HttpTestingController;
@@ -18,7 +18,8 @@ describe('Modeling Assessment Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
+            imports: [ArtemisTestModule],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(FileUploadAssessmentService);
         httpMock = TestBed.inject(HttpTestingController);

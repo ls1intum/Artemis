@@ -8,12 +8,12 @@ import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { of } from 'rxjs';
-import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { CommitsInfoComponent } from 'app/exercises/programming/shared/commits-info/commits-info.component';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 
 describe('CommitHistoryComponent', () => {
@@ -261,6 +261,27 @@ describe('CommitHistoryComponent', () => {
         // Expectations
         expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
 
+        expect(component.commits).toEqual(mockTestCommits); // Updated to reflect the correct order
+        expect(component.commits[0].result).toBeUndefined();
+        expect(component.commits[1].result).toBeUndefined();
+
+        // Trigger ngOnDestroy
+        component.ngOnDestroy();
+
+        // Expect subscription to be unsubscribed
+        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
+    });
+
+    it('should load auxiliary repository commits', () => {
+        setupComponent();
+        activatedRoute.setParameters({ repositoryType: 'AUXILIARY', repositoryId: 5 });
+        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForAuxiliaryRepository').mockReturnValue(of(mockTestCommits));
+
+        // Trigger ngOnInit
+        component.ngOnInit();
+
+        // Expectations
         expect(component.commits).toEqual(mockTestCommits); // Updated to reflect the correct order
         expect(component.commits[0].result).toBeUndefined();
         expect(component.commits[1].result).toBeUndefined();

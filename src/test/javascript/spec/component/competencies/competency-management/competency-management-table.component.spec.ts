@@ -52,8 +52,9 @@ describe('CompetencyManagementTableComponent', () => {
     });
 
     it('should handle import all data', () => {
+        fixture.componentRef.setInput('allCompetencies', []);
+        fixture.detectChanges();
         component.courseCompetencies = [];
-        component.relations = [];
 
         const responseBody: CompetencyWithTailRelationDTO[] = [
             { competency: { id: 1 }, tailRelations: [] },
@@ -62,7 +63,6 @@ describe('CompetencyManagementTableComponent', () => {
 
         component.updateDataAfterImportAll(responseBody);
         expect(component.courseCompetencies).toHaveLength(2);
-        expect(component.relations).toHaveLength(1);
     });
 
     it('should handle delete competency', () => {
@@ -72,7 +72,6 @@ describe('CompetencyManagementTableComponent', () => {
         const competency2 = { id: 2, type: CourseCompetencyType.COMPETENCY };
         component.service = competencyService;
         component.courseCompetencies = [competency1, competency2];
-        component.relations = [{ id: 1, headCompetency: competency1, tailCompetency: competency2, type: CompetencyRelationType.ASSUMES }];
 
         component.deleteCompetency(1);
         expect(deleteSpy).toHaveBeenCalledOnce();

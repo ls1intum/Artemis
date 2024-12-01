@@ -1,8 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
@@ -12,6 +12,9 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
     templateUrl: './text-exercise-row-buttons.component.html',
 })
 export class TextExerciseRowButtonsComponent {
+    private eventManager = inject(EventManager);
+    private textExerciseService = inject(TextExerciseService);
+
     @Input() courseId: number;
     @Input() exercise: TextExercise;
     private dialogErrorSource = new Subject<string>();
@@ -24,11 +27,6 @@ export class TextExerciseRowButtonsComponent {
     faUsers = faUsers;
     faTable = faTable;
     farListAlt = faListAlt;
-
-    constructor(
-        private textExerciseService: TextExerciseService,
-        private eventManager: EventManager,
-    ) {}
 
     deleteExercise() {
         this.textExerciseService.delete(this.exercise.id!).subscribe({

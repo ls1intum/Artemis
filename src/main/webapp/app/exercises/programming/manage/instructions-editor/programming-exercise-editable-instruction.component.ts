@@ -2,11 +2,11 @@ import { AfterViewInit, Component, EventEmitter, HostListener, Input, OnChanges,
 import { AlertService } from 'app/core/util/alert.service';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { hasExerciseChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
@@ -14,10 +14,10 @@ import { Result } from 'app/entities/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faGripLines, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
-import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
-import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
-import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
+import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
+import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
+import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
+import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -31,9 +31,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     exerciseTestCases: string[] = [];
 
-    taskRegex = MonacoTaskAction.GLOBAL_TASK_REGEX;
-    testCaseAction = new MonacoTestCaseAction();
-    domainActions: MonacoEditorDomainAction[] = [new MonacoFormulaAction(), new MonacoTaskAction(), this.testCaseAction];
+    taskRegex = TaskAction.GLOBAL_TASK_REGEX;
+    testCaseAction = new TestCaseAction();
+    domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
 
     savingInstructions = false;
     unsavedChangesValue = false;

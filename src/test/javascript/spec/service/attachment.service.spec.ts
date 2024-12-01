@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpResponse } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -21,8 +21,10 @@ describe('Attachment Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
+            imports: [ArtemisTestModule],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -143,6 +145,25 @@ describe('Attachment Service', () => {
         it('should convert attachment date from server', async () => {
             const results = service.convertAttachmentDatesFromServer(elemDefault);
             expect(results).toEqual(elemDefault);
+        });
+    });
+
+    describe('getAttachmentFile', () => {
+        it('should retrieve a file as Blob for a given course and attachment ID', () => {
+            const courseId = 1;
+            const attachmentId = 100;
+            const expectedBlob = new Blob(['dummy content'], { type: 'application/pdf' });
+
+            service.getAttachmentFile(courseId, attachmentId).subscribe((resp) => {
+                expect(resp).toEqual(expectedBlob);
+            });
+
+            const req = httpMock.expectOne({
+                url: `api/files/courses/${courseId}/attachments/${attachmentId}`,
+                method: 'GET',
+            });
+            expect(req.request.responseType).toBe('blob');
+            req.flush(expectedBlob);
         });
     });
 });

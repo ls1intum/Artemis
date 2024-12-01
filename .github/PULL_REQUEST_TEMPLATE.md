@@ -94,6 +94,7 @@ Prerequisites:
 <!-- All PRs that might affect the exam mode (e.g. change a client component that is also used in the exam mode) need an additional verification that the exam mode still works. -->
 
 #### Performance Review
+<!-- See [Large Course Setup](https://github.com/ls1intum/Artemis/tree/develop/supporting_scripts/course-scripts/quick-course-setup) for the automation script that handles large course setup. -->
 - [ ] I (as a reviewer) confirm that the client changes (in particular related to REST calls and UI responsiveness) are implemented with a very good performance even for very large courses with more than 2000 students.
 - [ ] I (as a reviewer) confirm that the server changes (in particular related to database calls) are implemented with a very good performance even for very large courses with more than 2000 students.
 #### Code Review
@@ -110,10 +111,10 @@ Prerequisites:
 - [ ] Test 2
 
 ### Test Coverage
-<!-- Please add the test coverages for all changed files here. You can see this when executing the tests locally (see build.gradle and package.json) or when looking into the corresponding Bamboo build plan. -->
-<!-- The line coverage must be above 90% for changes files and you must use extensive and useful assertions for server tests and expect statements for client tests. -->
-<!-- Note: Use the table below and confirm in the last column that you have implemented extensive assertions for server tests and expect statements for client tests. -->
-<!--       You can use `supporting_script/generate_code_cov_table/generate_code_cov_table.py` to automatically generate one from the corresponding Bamboo build plan artefacts. -->
+<!-- Please add the test coverages for all changed files modified in this PR here. You can use `supporting_script/generate_code_cov_table/generate_code_cov_table.py` to automatically generate the coverage table from the corresponding artefacts of your branch (follow the ReadMe for setup details). -->
+<!-- Alternatively you can execute the tests locally (see build.gradle and package.json) or look into the corresponding artefacts. -->
+<!-- The line coverage must be above 90% for changes files, and you must use extensive and useful assertions for server tests and expect statements for client tests. -->
+<!-- Note: Confirm in the last column that you have implemented extensive assertions for server tests and expect statements for client tests. -->
 <!--       Remove rows with only trivial changes from the table. -->
 <!--
 | Class/File | Line Coverage | Confirmation (assert/expect) |

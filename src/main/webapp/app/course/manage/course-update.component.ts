@@ -1,5 +1,5 @@
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -21,7 +21,7 @@ import { OrganizationSelectorComponent } from 'app/shared/organization-selector/
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -31,6 +31,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { getSemesters } from 'app/utils/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -57,9 +58,9 @@ export class CourseUpdateComponent implements OnInit {
     isSaving: boolean;
     courseImageUploadFile?: File;
     croppedImage?: string;
-    complaintsEnabled = true; // default value
-    requestMoreFeedbackEnabled = true; // default value
-    customizeGroupNames = false; // default value
+    complaintsEnabled = true;
+    requestMoreFeedbackEnabled = true;
+    customizeGroupNames = false;
     courseOrganizations: Organization[];
     isAdmin = false;
     // Icons
@@ -71,11 +72,14 @@ export class CourseUpdateComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faPen = faPen;
 
+    faqEnabled = true;
     communicationEnabled = true;
     messagingEnabled = true;
     ltiEnabled = false;
     isAthenaEnabled = false;
     tutorialGroupsFeatureActivated = false;
+
+    private courseStorageServivce = inject(CourseStorageService);
 
     readonly semesters = getSemesters();
 
@@ -115,7 +119,7 @@ export class CourseUpdateComponent implements OnInit {
                     this.courseOrganizations = organizations;
                 });
                 this.originalTimeZone = this.course.timeZone;
-
+                this.faqEnabled = course.faqEnabled;
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
                 this.complaintsEnabled =
                     (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) &&
@@ -192,6 +196,7 @@ export class CourseUpdateComponent implements OnInit {
                 studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
+                faqEnabled: new FormControl(this.faqEnabled),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
                 maxPoints: new FormControl(this.course.maxPoints, {
                     validators: [Validators.min(1)],
@@ -284,7 +289,6 @@ export class CourseUpdateComponent implements OnInit {
         if (this.courseForm.controls['organizations'] !== undefined) {
             this.courseForm.controls['organizations'].setValue(this.courseOrganizations);
         }
-
         let file = undefined;
         if (this.courseImageUploadFile && this.croppedImage) {
             const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
@@ -343,6 +347,7 @@ export class CourseUpdateComponent implements OnInit {
                 name: 'courseModification',
                 content: 'Changed a course',
             });
+            this.courseStorageServivce.updateCourse(updatedCourse!);
         }
 
         this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
@@ -506,6 +511,10 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.controls['instructorGroupName'].setValue(instructorGroupName);
     }
 
+    changeFaqEnabled() {
+        this.faqEnabled = !this.faqEnabled;
+        this.courseForm.controls['faqEnabled'].setValue(this.faqEnabled);
+    }
     /**
      * Enable or disable test course
      */
@@ -639,7 +648,7 @@ export class CourseUpdateComponent implements OnInit {
 
     openCropper(): void {
         const modalRef = this.modalService.open(ImageCropperModalComponent, { size: 'm' });
-        modalRef.componentInstance.courseImageUploadFile = this.courseImageUploadFile;
+        modalRef.componentInstance.uploadFile = this.courseImageUploadFile;
         modalRef.componentInstance.croppedImage = this.croppedImage;
         modalRef.result.then((result) => {
             if (result) {
