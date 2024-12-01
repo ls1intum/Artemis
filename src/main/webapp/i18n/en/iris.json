@@ -43,7 +43,7 @@
                     "proactivitySettings": {
                         "title": "Proactivity Settings",
                         "tooltip": "Enable options below to allow Iris to proactively reach out to students when specific conditions are met.",
-                        "parentDisabled": "Iris won't send proactive messages for this option because either option itself or Iris are disabled in the current or parent settings."
+                        "parentDisabled": "Iris won't send proactive messages for this option because either the option itself or Iris are disabled in the current or parent settings."
                     },
                     "enabled-disabled": "Enabled/Disabled",
                     "enabledForCategories": "Automatically enable for categories",

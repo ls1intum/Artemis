@@ -43,7 +43,7 @@
                     "proactivitySettings": {
                         "title": "Proaktivitätseinstellungen",
                         "tooltip": "Aktiviere die untenstehenden Optionen, damit Iris proaktiv Studierende kontaktiert, wenn bestimmte Bedingungen erfüllt sind.",
-                        "parentDisabled": "Iris sendet keine proaktiven Nachrichten für diese Option, da entweder die Option selbst oder Iris in den aktuellen oder übergeordneten Einstellungen deaktiviert sind."
+                        "parentDisabled": "Iris sendet keine proaktiven Nachrichten für diese Option, da entweder die Option selbst, oder Iris in den aktuellen oder übergeordneten Einstellungen deaktiviert ist."
                     },
                     "enabled-disabled": "Aktiviert/Deaktiviert",
                     "enabledForCategories": "Automatisch aktivieren für Kategorien",
