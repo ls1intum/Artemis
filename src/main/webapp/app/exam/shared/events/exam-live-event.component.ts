@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { faCheck, faEye, faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import {
     ExamAttendanceCheckEvent,
@@ -9,11 +9,12 @@ import {
     WorkingTimeUpdateEvent,
 } from 'app/exam/participate/exam-participation-live-events.service';
 import { NgClass } from '@angular/common';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { WorkingTimeChangeComponent } from '../working-time-change/working-time-change.component';
-import { ArtemisSharedCommonModule } from '../../../shared/shared-common.module';
-import { ArtemisMarkdownModule } from '../../../shared/markdown.module';
+
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { WorkingTimeChangeComponent } from 'app/exam/shared/working-time-change/working-time-change.component';
 
 @Component({
     selector: 'jhi-exam-live-event',
@@ -27,11 +28,9 @@ export class ExamLiveEventComponent {
 
     showAcknowledge = input<boolean>(false);
 
-    @Output()
-    onAcknowledge = new EventEmitter<ExamLiveEvent>();
+    onAcknowledge = output<ExamLiveEvent>();
 
-    @Output()
-    onNavigate = new EventEmitter<ExamLiveEvent>();
+    onNavigate = output<ExamLiveEvent>();
 
     protected readonly ExamLiveEventType = ExamLiveEventType;
 
