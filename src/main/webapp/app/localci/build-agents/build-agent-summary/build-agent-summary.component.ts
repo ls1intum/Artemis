@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/entities/programming/build-agent-information.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
@@ -9,13 +9,26 @@ import { Router } from '@angular/router';
 import { BuildAgent } from 'app/entities/programming/build-agent.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 
 @Component({
     selector: 'jhi-build-agents',
+    standalone: true,
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
+    private readonly websocketService = inject(JhiWebsocketService);
+    private readonly buildAgentsService = inject(BuildAgentsService);
+    private readonly buildQueueService = inject(BuildQueueService);
+    private readonly router = inject(Router);
+    private readonly modalService = inject(NgbModal);
+    private readonly alertService = inject(AlertService);
+
     buildAgents: BuildAgentInformation[] = [];
     buildCapacity = 0;
     currentBuilds = 0;
@@ -28,15 +41,6 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     protected readonly faTimes = faTimes;
     protected readonly faPause = faPause;
     protected readonly faPlay = faPlay;
-
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private buildAgentsService: BuildAgentsService,
-        private buildQueueService: BuildQueueService,
-        private router: Router,
-        private modalService: NgbModal,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.routerLink = this.router.url;
