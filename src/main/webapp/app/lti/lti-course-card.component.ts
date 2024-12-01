@@ -15,7 +15,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 })
 export class LtiCourseCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    course = input<Course>();
+    readonly course = input.required<Course>();
     CachingStrategy = CachingStrategy;
     courseColor: string;
 
