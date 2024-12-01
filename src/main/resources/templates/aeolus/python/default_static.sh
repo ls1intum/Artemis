@@ -3,7 +3,7 @@ set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
 static_code_analysis () {
   echo '⚙️ executing static_code_analysis'
-  ruff check --output-format=sarif --output-file=ruff.sarif --exit-zero --select=ALL "${studentParentWorkingDirectoryName}"
+  ruff check --config=ruff-student.toml --output-format=sarif --output-file=ruff.sarif --exit-zero "${studentParentWorkingDirectoryName}"
 }
 
 build_and_test_the_code () {

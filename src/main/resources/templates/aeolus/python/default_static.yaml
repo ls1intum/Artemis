@@ -1,7 +1,7 @@
 api: v0.0.1
 actions:
   - name: static_code_analysis
-    script: ruff check --output-format=sarif --output-file=ruff.sarif --exit-zero --select=ALL "${studentParentWorkingDirectoryName}"
+    script: ruff check --config=ruff-student.toml --output-format=sarif --output-file=ruff.sarif --exit-zero "${studentParentWorkingDirectoryName}"
     results:
       - name: ruff
         path: ruff.sarif
