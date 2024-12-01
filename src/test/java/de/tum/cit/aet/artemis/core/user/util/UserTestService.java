@@ -18,9 +18,7 @@ import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MockMvc;
@@ -55,6 +53,7 @@ import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestReposito
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
@@ -141,7 +140,6 @@ public class UserTestService {
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
         this.mockDelegate = mockDelegate;
-
         List<User> users = userUtilService.addUsers(testPrefix, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
         student = userTestRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
@@ -876,25 +874,6 @@ public class UserTestService {
     }
 
     // Test
-    public void addAndDeleteSshPublicKey() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-
-        // adding invalid key should fail
-        String invalidSshKey = "invalid key";
-        request.putWithResponseBody("/api/account/ssh-public-key", invalidSshKey, String.class, HttpStatus.BAD_REQUEST, true);
-
-        // adding valid key should work correctly
-        String validSshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i email@abc.de";
-        request.putWithResponseBody("/api/account/ssh-public-key", validSshKey, String.class, HttpStatus.OK, true);
-        assertThat(userTestRepository.getUser().getSshPublicKey()).isEqualTo(validSshKey);
-
-        // deleting the key shoul work correctly
-        request.delete("/api/account/ssh-public-key", HttpStatus.OK);
-        assertThat(userTestRepository.getUser().getSshPublicKey()).isEqualTo(null);
-    }
-
-    // Test
     public void getAndCreateParticipationVcsAccessToken() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -1164,6 +1143,14 @@ public class UserTestService {
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).contains(user2).doesNotContain(user1);
         }
+    }
+
+    public static UserSshPublicKey createNewValidSSHKey(User user, String keyString) {
+        UserSshPublicKey userSshPublicKey = new UserSshPublicKey();
+        userSshPublicKey.setPublicKey(keyString);
+        userSshPublicKey.setLabel("Key 1");
+        userSshPublicKey.setUserId(user.getId());
+        return userSshPublicKey;
     }
 
     // Test
