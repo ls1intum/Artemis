@@ -97,7 +97,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
     const adaptExpectedData = (averagePoints: number, newColor: string, expectedColorDomain: string[], expectedData: NgxChartsSingleSeriesDataEntry[]) => {
         const updatedAverageScores = {
-            ...component.averageScores(), // Include existing fields if necessary
+            ...component.averageScores(),
             averagePoints: averagePoints,
             averagePercentage: averagePoints * 10,
         };
