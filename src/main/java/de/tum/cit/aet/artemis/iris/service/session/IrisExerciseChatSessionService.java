@@ -76,10 +76,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final SubmissionRepository submissionRepository;
 
-    private final double SUCCESS_THRESHOLD = 100.0; // TODO: Retrieve configuration from Iris settings
-
-    private final int INTERVAL_SIZE = 3; // TODO: Retrieve configuration from Iris settings
-
     public IrisExerciseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
             IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
@@ -221,16 +217,18 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
         irisSettingsService.isActivatedForElseThrow(IrisEventType.PROGRESS_STALLED, exercise);
 
-        var recentSubmissions = submissionRepository.findAllWithResultsAndAssessorByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
+        var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
+
+        double successThreshold = 100.0; // TODO: Retrieve configuration from Iris settings
 
         // Check if the user has already successfully submitted before
         var successfulSubmission = recentSubmissions.stream()
-                .anyMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() == SUCCESS_THRESHOLD);
+                .anyMatch(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() == successThreshold);
         if (!successfulSubmission && recentSubmissions.size() >= 3) {
             var listOfScores = recentSubmissions.stream().map(Submission::getLatestResult).filter(Objects::nonNull).map(Result::getScore).toList();
 
             // Check if the student needs intervention based on their recent score trajectory
-            var needsIntervention = needsIntervention(listOfScores, INTERVAL_SIZE);
+            var needsIntervention = needsIntervention(listOfScores);
             if (needsIntervention) {
                 log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
                 var participant = ((ProgrammingExerciseStudentParticipation) participation).getParticipant();
@@ -280,11 +278,11 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     /**
      * Checks if the student needs intervention based on their recent score trajectory.
      *
-     * @param scores       The list of all scores for the student.
-     * @param intervalSize The number of recent submissions to consider.
+     * @param scores The list of all scores for the student.
      * @return true if intervention is needed, false otherwise.
      */
-    private boolean needsIntervention(List<Double> scores, int intervalSize) {
+    private boolean needsIntervention(List<Double> scores) {
+        int intervalSize = 3; // TODO: Retrieve configuration from Iris settings
         if (scores.size() < intervalSize) {
             return false; // Not enough data to make a decision
         }

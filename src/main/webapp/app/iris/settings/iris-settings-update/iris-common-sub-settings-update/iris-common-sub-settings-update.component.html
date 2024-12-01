@@ -61,11 +61,7 @@
                         (ngModelChange)="onEventToggleChange(event)"
                     />
                     <label class="form-check-label" for="{{ event }}" [jhiTranslate]="eventTranslationKeys[event]"></label>
-                    @if (
-                        this.parentSubSettings &&
-                        !subSettings?.disabledProactiveEvents?.includes(event) &&
-                        (this.parentSubSettings.disabledProactiveEvents?.includes(event) || !this.parentSubSettings.enabled)
-                    ) {
+                    @if (eventInParentDisabledStatusMap.get(event)) {
                         <fa-icon
                             class="text-warning"
                             [icon]="faCircleExclamation"

@@ -205,7 +205,8 @@ public class PyrisPipelineService {
                     executionDto.initialStages()
                 );
             },
-            stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
+            stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
+        );
         // @formatter:on
     }
 
@@ -307,9 +308,9 @@ public class PyrisPipelineService {
      *
      * @param dtoClass the class of the DTO
      * @param object   the object to generate the DTO from
+     * @param <T>      the type of the object
+     * @param <U>      the type of the DTO
      * @return Method the 'of' method
-     * @param <T> the type of the object
-     * @param <U> the type of the DTO
      */
     private static <T, U> Method getOfMethod(Class<U> dtoClass, T object) {
         Method ofMethod = null;
@@ -318,11 +319,9 @@ public class PyrisPipelineService {
         // Traverse up the class hierarchy
         while (currentClass != null && ofMethod == null) {
             for (Method method : dtoClass.getMethods()) {
-                if (method.getName().equals("of") && method.getParameterCount() == 1) {
-                    if (method.getParameters()[0].getType().isAssignableFrom(currentClass)) {
-                        ofMethod = method;
-                        break;
-                    }
+                if (method.getName().equals("of") && method.getParameterCount() == 1 && method.getParameters()[0].getType().isAssignableFrom(currentClass)) {
+                    ofMethod = method;
+                    break;
                 }
             }
             currentClass = currentClass.getSuperclass();

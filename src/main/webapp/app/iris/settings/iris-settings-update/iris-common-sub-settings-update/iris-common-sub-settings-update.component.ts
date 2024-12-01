@@ -36,6 +36,8 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     inheritAllowedVariants: boolean;
 
+    eventInParentDisabledStatusMap = new Map<IrisEventType, boolean | undefined>();
+
     availableVariants: IrisVariant[] = [];
 
     allowedVariants: IrisVariant[] = [];
@@ -89,6 +91,9 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         }
         if (changes.subSettings) {
             this.enabled = this.subSettings?.enabled ?? false;
+        }
+        if (changes.parentSubSettings || changes.subSettings) {
+            this.updateEventDisabledStatus();
         }
     }
 
@@ -205,5 +210,20 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     get isSettingsSwitchDisabled() {
         return this.inheritDisabled || (!this.isAdmin && this.settingsType !== this.EXERCISE);
+    }
+
+    /**
+     * Updates the event disabled status map based on the parent settings
+     * @private
+     */
+    private updateEventDisabledStatus(): void {
+        this.exerciseChatEvents.forEach((event) => {
+            const isDisabled =
+                !this.subSettings?.enabled ||
+                (this.parentSubSettings &&
+                    !this.subSettings?.disabledProactiveEvents?.includes(event) &&
+                    (this.parentSubSettings.disabledProactiveEvents?.includes(event) || !this.parentSubSettings.enabled));
+            this.eventInParentDisabledStatusMap.set(event, isDisabled);
+        });
     }
 }

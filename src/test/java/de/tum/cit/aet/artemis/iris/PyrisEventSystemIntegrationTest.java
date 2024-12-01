@@ -55,9 +55,9 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
-class PyrisEventSystemTest extends AbstractIrisIntegrationTest {
+class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
-    private static final String TEST_PREFIX = "pyriseventsystemtest";
+    private static final String TEST_PREFIX = "pyriseventsystemintegration";
 
     @Autowired
     protected PyrisStatusUpdateService pyrisStatusUpdateService;
