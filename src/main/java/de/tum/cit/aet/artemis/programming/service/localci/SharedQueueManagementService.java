@@ -352,11 +352,11 @@ public class SharedQueueManagementService {
             return ZonedDateTime.now();
         }
 
-        List<BuildJobQueueItem> jobsQueuedBefore = queue.stream().sorted(new LocalCIPriorityQueueComparator()).takeWhile(job -> !job.id().equals(buildJobId)).toList();
+        List<BuildJobQueueItem> jobsQueuedBefore = getQueuedJobs().stream().sorted(new LocalCIPriorityQueueComparator()).takeWhile(job -> !job.id().equals(buildJobId)).toList();
 
         ZonedDateTime now = ZonedDateTime.now();
 
-        List<Long> agentsAvailabilities = new ArrayList<>(processingJobs.values().stream().map(job -> buildJobRemainingDuration(job, now)).sorted().toList());
+        List<Long> agentsAvailabilities = new ArrayList<>(getQueuedJobs().stream().map(job -> buildJobRemainingDuration(job, now)).sorted().toList());
 
         if (agentsAvailabilities.size() < this.buildAgentsCapacity) {
             int agentsToAdd = this.buildAgentsCapacity - agentsAvailabilities.size();
@@ -377,7 +377,7 @@ public class SharedQueueManagementService {
     }
 
     private String getIdOfQueuedJobFromParticipation(long participationId) {
-        var participationBuildJobIds = queue.stream().filter(job -> job.participationId() == participationId).map(BuildJobQueueItem::id).toList();
+        var participationBuildJobIds = getQueuedJobs().stream().filter(job -> job.participationId() == participationId).map(BuildJobQueueItem::id).toList();
         if (participationBuildJobIds.isEmpty()) {
             return null;
         }
@@ -431,8 +431,8 @@ public class SharedQueueManagementService {
     }
 
     private void getBuildAgentsCapacity() {
-        buildAgentsCapacity = buildAgentInformation.values().stream().mapToInt(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).sum();
-        runningBuildJobCount = buildAgentInformation.values().stream().mapToInt(BuildAgentInformation::numberOfCurrentBuildJobs).sum();
+        buildAgentsCapacity = getBuildAgentInformation().stream().mapToInt(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).sum();
+        runningBuildJobCount = getBuildAgentInformation().stream().mapToInt(BuildAgentInformation::numberOfCurrentBuildJobs).sum();
     }
 
     /**
@@ -443,8 +443,8 @@ public class SharedQueueManagementService {
      * @return the build start date and estimated completion date of the submission if it is currently being processed, null otherwise
      */
     public BuildTimingInfo isSubmissionProcessing(long participationId, String commitHash) {
-        var buildJob = processingJobs.values().stream()
-                .filter(job -> job.participationId() == participationId && Objects.equals(commitHash, job.buildConfig().assignmentCommitHash())).findFirst();
+        var buildJob = getProcessingJobs().stream().filter(job -> job.participationId() == participationId && Objects.equals(commitHash, job.buildConfig().assignmentCommitHash()))
+                .findFirst();
         if (buildJob.isPresent()) {
             return new BuildTimingInfo(buildJob.get().jobTimingInfo().buildStartDate(), buildJob.get().jobTimingInfo().estimatedCompletionDate());
         }
