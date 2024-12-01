@@ -15,11 +15,12 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 })
 export class LtiCourseCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    readonly course = input.required<Course>();
+    course = input<Course>();
     CachingStrategy = CachingStrategy;
     courseColor: string;
 
     ngOnChanges() {
-        this.courseColor = this.course().color || this.ARTEMIS_DEFAULT_COLOR;
+        const courseValue = this.course();
+        this.courseColor = courseValue?.color || this.ARTEMIS_DEFAULT_COLOR;
     }
 }
