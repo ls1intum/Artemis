@@ -1,0 +1,2 @@
+pytest
+mysql-connector-python
