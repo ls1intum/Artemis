@@ -382,8 +382,8 @@
                         "repository": "Repository",
                         "totalItems": "In total {{count}} item(s)",
                         "error": "There was an error while loading the affected Students for this feedback.",
-                        "levinsteinInfoTitle": "Group feedback feature enabled",
-                        "levinsteinInfoDescription": "The amount of students affected by the grouped feedback might be higher because only affected students for up to 5 feedbackdetails is sent as more is not really necessary to analyse a common grouped feedback and would lead to performance overhead."
+                        "levenshteinInfoTitle": "Group feedback feature enabled",
+                        "levenshteinInfoDescription": "The amount of students affected by the grouped feedback might be higher because only affected students for up to 5 feedbackdetails is sent as more is not really necessary to analyse a common grouped feedback and would lead to performance overhead."
                     },
                     "feedbackDetailChannel": {
                         "title": "Create Feedback Discussion Channel",
@@ -407,8 +407,8 @@
                         "regexValidationErrorName": "Names can only contain lowercase letters, numbers, and dashes. Only Artemis can create channels that start with a $.",
                         "requiredValidationErrorDescription": "The channel description is required.",
                         "maxLengthValidationErrorDescription": "Channel description can be max {{ max }} characters long!",
-                        "levinsteinInfoTitle": "Group feedback feature enabled",
-                        "levinsteinInfoDescription": "The number of students added to the channel is an upper limit. The actual number of students added to a feedback channel might be lower, as multiple students could share similar feedback for a single test case.",
+                        "levenshteinInfoTitle": "Group feedback feature enabled",
+                        "levenshteinInfoDescription": "The number of students added to the channel is an upper limit. The actual number of students added to a feedback channel might be lower, as multiple students could share similar feedback for a single test case.",
                         "confirmationModal": {
                             "header": "Confirm Channel Creation",
                             "confirmationMessage": "Are you sure you want to create this channel? This will create a channel with <strong>{{count}}</strong> student(s).",
