@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren, input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -145,7 +145,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     private updateFileUploadExerciseView() {
         const fileUploadComponent = this.activePageComponent as FileUploadExamSubmissionComponent;
         if (fileUploadComponent) {
-            fileUploadComponent.studentSubmission = this.currentSubmission as FileUploadSubmission;
+            fileUploadComponent.studentSubmission = input<FileUploadSubmission>(this.currentSubmission as FileUploadSubmission);
             fileUploadComponent.updateViewFromSubmission();
         }
     }
