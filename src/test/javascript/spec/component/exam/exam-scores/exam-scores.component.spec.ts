@@ -1,5 +1,6 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
@@ -14,15 +15,14 @@ import {
     ExerciseResult,
     StudentResult,
 } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ExamScoresComponent, MedianType } from 'app/exam/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { cloneDeep } from 'lodash-es';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { EMPTY, of } from 'rxjs';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
@@ -35,7 +35,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
@@ -55,9 +54,9 @@ import {
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
-import { ExportButtonComponent } from 'app/shared/export/export-button.component';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { BonusStrategy } from 'app/entities/bonus.model';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -276,30 +275,28 @@ describe('ExamScoresComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [MockModule(BrowserAnimationsModule)],
             declarations: [
                 ExamScoresComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
-                MockComponent(HelpIconComponent),
-                MockComponent(ExportButtonComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
-                MockDirective(DeleteButtonDirective),
                 MockComponent(ExamScoresAverageScoresGraphComponent),
                 MockRouterLinkDirective,
-                MockComponent(ParticipantScoresDistributionComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: { params: of({ courseId: 1, examId: 1 }) } },
                 { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 MockProvider(AccountService),
                 MockProvider(ArtemisNavigationUtilService),
-                MockProvider(TranslateService),
                 MockProvider(ExamManagementService),
                 MockProvider(SortService),
                 MockProvider(AlertService),
-                MockProvider(ParticipantScoresService),
                 MockProvider(GradingSystemService, {
                     findGradingScaleForExam: () => {
                         return of(
@@ -328,18 +325,16 @@ describe('ExamScoresComponent', () => {
                     },
                 }),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExamScoresComponent);
-                comp = fixture.componentInstance;
-                examService = fixture.debugElement.injector.get(ExamManagementService);
-                gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
-                const participationScoreService = fixture.debugElement.injector.get(ParticipantScoresService);
-                findExamScoresSpy = jest
-                    .spyOn(participationScoreService, 'findExamScores')
-                    .mockReturnValue(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExamScoresComponent);
+        comp = fixture.componentInstance;
+        examService = fixture.debugElement.injector.get(ExamManagementService);
+        gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
+        const participationScoreService = fixture.debugElement.injector.get(ParticipantScoresService);
+        findExamScoresSpy = jest
+            .spyOn(participationScoreService, 'findExamScores')
+            .mockReturnValue(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));
     });
 
     afterEach(() => {
