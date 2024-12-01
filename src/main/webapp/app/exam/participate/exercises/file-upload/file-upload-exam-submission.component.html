@@ -18,7 +18,7 @@
         <span class="exercise-title" left-header>{{ examTimeline() ? exercise().title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
         <div left-body class="px-2 pb-2 w-100">
             <div class="row">
-                @if (isActive && !result && exercise() && studentSubmission() && !readonly) {
+                @if (isActive && !result && exercise() && studentSubmission() && !readonly()) {
                     <div class="col-12 col-md-10">
                         <div class="form-group">
                             <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
