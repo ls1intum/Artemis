@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/entities/programming/build-agent-information.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
@@ -18,7 +18,6 @@ import { NgxDatatableModule } from '@siemens/ngx-datatable';
     standalone: true,
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisSharedModule, NgxDatatableModule, ArtemisDataTableModule],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {

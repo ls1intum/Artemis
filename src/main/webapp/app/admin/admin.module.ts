@@ -76,6 +76,7 @@ const ENTITY_STATES = [...adminState];
         DeleteUsersButtonComponent,
         ProfilePictureComponent,
         BuildAgentSummaryComponent,
+        BuildAgentDetailsComponent,
     ],
     declarations: [
         AuditsComponent,
@@ -98,7 +99,6 @@ const ENTITY_STATES = [...adminState];
         OrganizationManagementUpdateComponent,
         LtiConfigurationComponent,
         EditLtiConfigurationComponent,
-        BuildAgentDetailsComponent,
         StandardizedCompetencyEditComponent,
         KnowledgeAreaEditComponent,
         StandardizedCompetencyManagementComponent,
