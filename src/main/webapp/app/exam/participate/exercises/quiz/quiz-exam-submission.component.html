@@ -71,7 +71,7 @@
                             [fnOnSelection]="onSelectionChanged.bind(this)"
                             [quizQuestions]="quizConfiguration().quizQuestions"
                             [questionIndex]="i + 1"
-                            [clickDisabled]="readonly"
+                            [clickDisabled]="readonly()"
                         />
                     }
                     <!-- TODO: Map vs Array consistency -->
@@ -83,7 +83,7 @@
                             (mappingsChange)="dragAndDropMappings.set(question.id!, $event)"
                             [onMappingUpdate]="onSelectionChanged.bind(this)"
                             [questionIndex]="i + 1"
-                            [clickDisabled]="readonly"
+                            [clickDisabled]="readonly()"
                         />
                     }
                     <!-- TODO: Map vs Array consistency -->
@@ -95,7 +95,7 @@
                             (submittedTextsChange)="shortAnswerSubmittedTexts.set(question.id!, $event)"
                             [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
                             [questionIndex]="i + 1"
-                            [clickDisabled]="readonly"
+                            [clickDisabled]="readonly()"
                         />
                     }
                 </div>

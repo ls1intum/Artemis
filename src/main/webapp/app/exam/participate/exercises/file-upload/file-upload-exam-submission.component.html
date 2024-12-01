@@ -13,9 +13,9 @@
         }
     </h3>
     <hr />
-    <jhi-resizeable-container [examTimeline]="examTimeline">
+    <jhi-resizeable-container [examTimeline]="examTimeline()">
         <!--region Left Panel-->
-        <span class="exercise-title" left-header>{{ examTimeline ? exercise().title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
+        <span class="exercise-title" left-header>{{ examTimeline() ? exercise().title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
         <div left-body class="px-2 pb-2 w-100">
             <div class="row">
                 @if (isActive && !result && exercise() && studentSubmission() && !readonly) {
@@ -58,7 +58,7 @@
                     }
                 </div>
             }
-            @if (!submittedFileName && examTimeline) {
+            @if (!submittedFileName && examTimeline()) {
                 <div>
                     <h6 jhiTranslate="artemisApp.timeline.fileUploadNotSubmitted"></h6>
                 </div>
