@@ -82,7 +82,7 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
 
     // TODO MICHAL KAWKA
     setDisabledState(disabled: boolean) {
-        this.disabled = disabled;
+        this.disabled.set(disabled);
     }
 
     private markAsTouched() {
