@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Subject, Subscription, concatMap, filter, tap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -15,6 +15,7 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DateTimePickerType } from 'app/shared/date-time-picker/date-time-picker.component';
 
 @Component({
     selector: 'jhi-account-information',
@@ -29,52 +30,51 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     readonly router = inject(Router);
     readonly alertService = inject(AlertService);
 
-    readonly documentationType: DocumentationType = 'SshSetup';
-    readonly invalidKeyFormat = 'invalidKeyFormat';
-    readonly keyAlreadyExists = 'keyAlreadyExists';
-    readonly keyLabelTooLong = 'keyLabelTooLong';
+    protected readonly documentationType: DocumentationType = 'SshSetup';
+    protected readonly invalidKeyFormat = 'invalidKeyFormat';
+    protected readonly keyAlreadyExists = 'keyAlreadyExists';
+    protected readonly keyLabelTooLong = 'keyLabelTooLong';
 
     protected readonly faEdit = faEdit;
     protected readonly faSave = faSave;
     protected readonly ButtonType = ButtonType;
+
     protected readonly ButtonSize = ButtonSize;
 
     subscription: Subscription;
-
     // state change variables
-    isCreateMode = false; // true when creating new key, false when viewing existing key
-    isLoading = true;
+    protected isCreateMode = signal<boolean>(false); // true when creating new key, false when viewing existing key
 
-    copyInstructions = '';
-    selectedOption: string = 'doNotUseExpiration';
+    protected isLoading = signal<boolean>(true);
+    protected copyInstructions = signal<string>('');
 
     // Key details from input fields
-    displayedKeyLabel = '';
-    displayedSshKey = '';
-    displayedKeyHash = '';
-    displayedExpiryDate?: dayjs.Dayjs;
-    isExpiryDateValid = false;
-    displayCreationDate: dayjs.Dayjs;
-    displayedLastUsedDate?: dayjs.Dayjs;
-    currentDate: dayjs.Dayjs;
+    protected displayedKeyLabel = signal<string>('');
+    protected displayedSshKey = signal<string>('');
+    protected displayedKeyHash = signal<string>('');
+    protected displayedExpiryDate = signal<dayjs.Dayjs | undefined>(undefined);
+    protected isExpiryDateValid = signal<boolean>(false);
+    protected displayCreationDate = signal<dayjs.Dayjs>(dayjs());
+    protected displayedLastUsedDate = signal<dayjs.Dayjs | undefined>(undefined);
+    protected currentDate = signal<dayjs.Dayjs>(dayjs());
+    protected selectedOption = signal<string>('doNotUseExpiration');
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     ngOnInit() {
         this.setMessageBasedOnOS(getOS());
-        this.currentDate = dayjs();
 
         this.subscription = this.route.params
             .pipe(
                 filter((params) => {
                     const keyId = Number(params['keyId']);
                     if (keyId) {
-                        this.isCreateMode = false;
+                        this.isCreateMode.set(false);
                         return true;
                     } else {
-                        this.isLoading = false;
-                        this.isCreateMode = true;
+                        this.isLoading.set(false);
+                        this.isCreateMode.set(true);
                         return false;
                     }
                 }),
@@ -82,13 +82,13 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
                     return this.sshUserSettingsService.getSshPublicKey(Number(params['keyId']));
                 }),
                 tap((publicKey: UserSshPublicKey) => {
-                    this.displayedSshKey = publicKey.publicKey;
-                    this.displayedKeyLabel = publicKey.label;
-                    this.displayedKeyHash = publicKey.keyHash;
-                    this.displayCreationDate = publicKey.creationDate;
-                    this.displayedExpiryDate = publicKey.expiryDate;
-                    this.displayedLastUsedDate = publicKey.lastUsedDate;
-                    this.isLoading = false;
+                    this.displayedSshKey.set(publicKey.publicKey);
+                    this.displayedKeyLabel.set(publicKey.label);
+                    this.displayedKeyHash.set(publicKey.keyHash);
+                    this.displayCreationDate.set(publicKey.creationDate);
+                    this.displayedExpiryDate.set(publicKey.expiryDate);
+                    this.displayedLastUsedDate.set(publicKey.lastUsedDate);
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe();
@@ -100,9 +100,9 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
 
     saveSshKey() {
         const newUserSshKey = {
-            label: this.displayedKeyLabel,
-            publicKey: this.displayedSshKey,
-            expiryDate: this.displayedExpiryDate,
+            label: this.displayedKeyLabel(),
+            publicKey: this.displayedSshKey(),
+            expiryDate: this.displayedExpiryDate(),
         } as UserSshPublicKey;
         this.sshUserSettingsService.addNewSshPublicKey(newUserSshKey).subscribe({
             next: () => {
@@ -125,25 +125,27 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     }
 
     validateExpiryDate() {
-        this.isExpiryDateValid = !!this.displayedExpiryDate?.isValid();
+        this.isExpiryDateValid.set(!!this.displayedExpiryDate()?.isValid());
     }
 
     private setMessageBasedOnOS(os: string): void {
         switch (os) {
             case 'Windows':
-                this.copyInstructions = 'cat ~/.ssh/id_ed25519.pub | clip';
+                this.copyInstructions.set('cat ~/.ssh/id_ed25519.pub | clip');
                 break;
             case 'MacOS':
-                this.copyInstructions = 'pbcopy < ~/.ssh/id_ed25519.pub';
+                this.copyInstructions.set('pbcopy < ~/.ssh/id_ed25519.pub');
                 break;
             case 'Linux':
-                this.copyInstructions = 'xclip -selection clipboard < ~/.ssh/id_ed25519.pub';
+                this.copyInstructions.set('xclip -selection clipboard < ~/.ssh/id_ed25519.pub');
                 break;
             case 'Android':
-                this.copyInstructions = 'termux-clipboard-set < ~/.ssh/id_ed25519.pub';
+                this.copyInstructions.set('termux-clipboard-set < ~/.ssh/id_ed25519.pub');
                 break;
             default:
-                this.copyInstructions = 'Ctrl + C';
+                this.copyInstructions.set('Ctrl + C');
         }
     }
+
+    protected readonly DateTimePickerType = DateTimePickerType;
 }

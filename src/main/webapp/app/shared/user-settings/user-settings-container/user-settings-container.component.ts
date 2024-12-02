@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
@@ -23,22 +23,23 @@ export class UserSettingsContainerComponent implements OnInit {
     private readonly accountService = inject(AccountService);
 
     // Icons
-    faUser = faUser;
+    protected readonly faUser = faUser;
 
-    currentUser?: User;
-    localVCEnabled = false;
-    isAtLeastTutor = false;
+    protected readonly currentUser = signal<User | undefined>(undefined);
+
+    protected readonly localVCEnabled = signal<boolean>(false);
+    protected readonly isAtLeastTutor = signal<boolean>(false);
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+            this.localVCEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LOCALVC));
         });
         this.accountService
             .getAuthenticationState()
             .pipe(
                 tap((user: User) => {
-                    this.currentUser = user;
-                    this.isAtLeastTutor = this.accountService.isAtLeastTutor();
+                    this.currentUser.set(user);
+                    this.isAtLeastTutor.set(this.accountService.isAtLeastTutor());
                 }),
             )
             .subscribe();
