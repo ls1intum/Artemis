@@ -279,7 +279,7 @@ async function makeGitExerciseSubmission(
         await programmingExerciseOverview.openCloneMenu(cloneMethod);
     }
     let repoUrl = await programmingExerciseOverview.copyCloneUrl();
-    if (process.env.CI === 'true' && cloneMethod == GitCloneMethod.https) {
+    if (process.env.CI === 'true' && (cloneMethod == GitCloneMethod.https || cloneMethod == GitCloneMethod.httpsWithToken)) {
         repoUrl = repoUrl.replace('localhost', 'artemis-app');
     }
     if (cloneMethod == GitCloneMethod.https) {
