@@ -154,7 +154,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
     @Override
     List<? extends CourseCompetency> getAllFilteredCall(long courseId, HttpStatus expectedStatus) throws Exception {
-        return request.getList("/api/courses/" + courseId + "/course-competencies?filtered=true", expectedStatus, CourseCompetency.class);
+        return request.getList("/api/courses/" + courseId + "/course-competencies?filter=true", expectedStatus, CourseCompetency.class);
     }
 
     @Test

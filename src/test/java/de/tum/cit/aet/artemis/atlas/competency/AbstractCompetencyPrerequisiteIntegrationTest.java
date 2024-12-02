@@ -236,7 +236,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
         List<? extends CourseCompetency> competenciesOfCourse = getAllFilteredCall(course.getId(), HttpStatus.OK);
 
-        assertThat(competenciesOfCourse).noneMatch(c -> c.getId().equals(courseCompetency.getId()));
+        assertThat(competenciesOfCourse).noneMatch(c -> c.getId().equals(newCompetency.getId()));
     }
 
     // Test
