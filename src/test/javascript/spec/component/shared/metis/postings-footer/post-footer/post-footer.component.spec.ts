@@ -146,8 +146,8 @@ describe('PostFooterComponent', () => {
 
     it('should be initialized correctly for users that are not at least tutors in course', () => {
         runInInjectionContext(injector, () => {
+            post.answers = unsortedAnswerArray;
             component.posting = input<Posting>(post);
-            component.posting.answers = unsortedAnswerArray;
             metisServiceUserAuthorityStub.mockReturnValue(false);
             component.ngOnInit();
             expect(component.isAtLeastTutorInCourse).toBeFalse();
