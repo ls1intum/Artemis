@@ -1,18 +1,4 @@
-import {
-    AfterContentChecked,
-    ChangeDetectorRef,
-    Component,
-    OnChanges,
-    OnDestroy,
-    OnInit,
-    SimpleChanges,
-    ViewChild,
-    ViewContainerRef,
-    inject,
-    input,
-    output,
-    viewChild,
-} from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, ViewContainerRef, inject, input, output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -49,9 +35,9 @@ export class PostFooterComponent implements OnInit, OnDestroy, AfterContentCheck
     userReferenceClicked = output<string>();
     channelReferenceClicked = output<number>();
 
+    @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef!: ViewContainerRef;
-    answerPostCreateEditModal = viewChild<AnswerPostCreateEditModalComponent>(AnswerPostCreateEditModalComponent);
-    createAnswerPostModalComponent = viewChild<AnswerPostCreateEditModalComponent>('createAnswerPostModal');
+    @ViewChild('createAnswerPostModal') createAnswerPostModalComponent!: AnswerPostCreateEditModalComponent;
 
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse = false;
@@ -76,7 +62,7 @@ export class PostFooterComponent implements OnInit, OnDestroy, AfterContentCheck
     }
 
     ngOnDestroy(): void {
-        this.answerPostCreateEditModal()?.createEditAnswerPostContainerRef?.clear();
+        this.answerPostCreateEditModal?.createEditAnswerPostContainerRef?.clear();
     }
 
     /**
@@ -170,14 +156,14 @@ export class PostFooterComponent implements OnInit, OnDestroy, AfterContentCheck
      * Open create answer modal
      */
     openCreateAnswerPostModal() {
-        this.createAnswerPostModalComponent()?.open();
+        this.createAnswerPostModalComponent?.open();
     }
 
     /**
      * Close create answer modal
      */
     closeCreateAnswerPostModal() {
-        this.createAnswerPostModalComponent()?.close();
+        this.createAnswerPostModalComponent?.close();
     }
 
     protected postsTrackByFn(index: number, post: Post): number {

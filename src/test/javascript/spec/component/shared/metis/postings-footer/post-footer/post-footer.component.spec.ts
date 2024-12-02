@@ -19,7 +19,6 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { User } from 'app/core/user/user.model';
 import { Injector, input, runInInjectionContext } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
-import { By } from '@angular/platform-browser';
 
 interface PostGroup {
     author: User | undefined;
@@ -96,19 +95,14 @@ describe('PostFooterComponent', () => {
     });
 
     it('should clear answerPostCreateEditModal container on destroy', () => {
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            const mockAnswerPostCreateEditModalDE = fixture.debugElement.query(By.directive(AnswerPostCreateEditModalComponent));
-            const mockAnswerPostCreateEditModal = mockAnswerPostCreateEditModalDE.componentInstance as AnswerPostCreateEditModalComponent;
+        const mockContainerRef = { clear: jest.fn() } as any;
+        component.answerPostCreateEditModal = {
+            createEditAnswerPostContainerRef: mockContainerRef,
+        } as AnswerPostCreateEditModalComponent;
 
-            const mockContainerRef = { clear: jest.fn() } as any;
-            mockAnswerPostCreateEditModal.createEditAnswerPostContainerRef = mockContainerRef;
-
-            const clearSpy = jest.spyOn(mockContainerRef, 'clear');
-
-            component.ngOnDestroy();
-
-            expect(clearSpy).toHaveBeenCalled();
-        });
+        const clearSpy = jest.spyOn(mockContainerRef, 'clear');
+        component.ngOnDestroy();
+        expect(clearSpy).toHaveBeenCalled();
     });
 
     it('should return the ID of the post in trackPostByFn', () => {
@@ -166,7 +160,7 @@ describe('PostFooterComponent', () => {
             component.posting = input<Posting>(metisPostExerciseUser1);
             component.ngOnInit();
             fixture.detectChanges();
-            const createAnswerPostModalOpen = jest.spyOn(component.createAnswerPostModalComponent()!, 'open');
+            const createAnswerPostModalOpen = jest.spyOn(component.createAnswerPostModalComponent, 'open');
             component.openCreateAnswerPostModal();
             expect(createAnswerPostModalOpen).toHaveBeenCalledOnce();
         });
@@ -177,7 +171,7 @@ describe('PostFooterComponent', () => {
             component.posting = input<Posting>(metisPostExerciseUser1);
             component.ngOnInit();
             fixture.detectChanges();
-            const createAnswerPostModalClose = jest.spyOn(component.createAnswerPostModalComponent()!, 'close');
+            const createAnswerPostModalClose = jest.spyOn(component.createAnswerPostModalComponent, 'close');
             component.closeCreateAnswerPostModal();
             expect(createAnswerPostModalClose).toHaveBeenCalledOnce();
         });
