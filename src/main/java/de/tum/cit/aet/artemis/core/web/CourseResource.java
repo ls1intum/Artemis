@@ -66,7 +66,7 @@ import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
-import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
+import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
 import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -183,7 +183,7 @@ public class CourseResource {
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
-    private final LearningPathService learningPathService;
+    private final LearningPathApi learningPathApi;
 
     private final ExamRepository examRepository;
 
@@ -196,7 +196,7 @@ public class CourseResource {
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
-            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
+            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathApi learningPathApi,
             ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService,
             TeamRepository teamRepository, CourseLearnerProfileService courseLearnerProfileService) {
         this.courseService = courseService;
@@ -216,7 +216,7 @@ public class CourseResource {
         this.gradingScaleService = gradingScaleService;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.gradingScaleRepository = gradingScaleRepository;
-        this.learningPathService = learningPathService;
+        this.learningPathApi = learningPathApi;
         this.conductAgreementService = conductAgreementService;
         this.athenaModuleService = athenaModuleService;
         this.examRepository = examRepository;
@@ -341,7 +341,7 @@ public class CourseResource {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(result.getId());
             Set<User> students = userRepository.getStudentsWithLearnerProfile(courseWithCompetencies);
             courseLearnerProfileService.createCourseLearnerProfiles(courseWithCompetencies, students);
-            learningPathService.generateLearningPaths(courseWithCompetencies, students);
+            learningPathApi.generateLearningPaths(courseWithCompetencies);
         }
 
         // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null
@@ -595,7 +595,7 @@ public class CourseResource {
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(courseId, user);
+        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(courseId, user);
         log.debug("courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser done");
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             // user might be allowed to enroll in the course

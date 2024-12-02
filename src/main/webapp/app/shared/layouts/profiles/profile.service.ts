@@ -50,7 +50,6 @@ export class ProfileService {
                         profileInfo.ribbonEnv = profileInfo.ribbonEnv ?? '';
 
                         profileInfo.sentry = data.sentry;
-                        profileInfo.postHog = data.postHog;
                         profileInfo.features = data.features;
                         profileInfo.buildPlanURLTemplate = data.buildPlanURLTemplate;
                         profileInfo.commitHashURLTemplate = data.commitHashURLTemplate;
