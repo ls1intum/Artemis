@@ -256,6 +256,9 @@ public class LocalCIResultProcessingService {
     public BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         try {
             BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
+            buildJobRepository.findByBuildJobId(queueItem.id()).ifPresent(existingBuildJob -> {
+                buildJob.setId(existingBuildJob.getId());
+            });
             return buildJobRepository.save(buildJob);
         }
         catch (Exception e) {

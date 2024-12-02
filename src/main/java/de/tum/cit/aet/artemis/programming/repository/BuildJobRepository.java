@@ -14,9 +14,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
@@ -104,4 +106,17 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             WHERE e.id IN :exerciseIds
             """)
     long countBuildJobsByExerciseIds(@Param("exerciseIds") List<Long> exerciseIds);
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE BuildJob b SET b.buildStatus = :newStatus WHERE b.buildJobId = :buildJobId")
+    void updateBuildJobStatus(@Param("buildJobId") String buildJobId, @Param("newStatus") BuildStatus newStatus);
+
+    /**
+     * Find all build jobs with the given build status.
+     *
+     * @param statuses the list of build statuses
+     * @return the list of build jobs
+     */
+    List<BuildJob> findAllByBuildStatusIn(List<BuildStatus> statuses);
 }

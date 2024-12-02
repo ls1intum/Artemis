@@ -34,7 +34,10 @@
                     "cancelled": "Cancelled",
                     "failed": "Failed",
                     "error": "Error",
-                    "successful": "Successful"
+                    "successful": "Successful",
+                    "building": "Building",
+                    "queued": "Queued",
+                    "missing": "Missing"
                 },
                 "buildAgentAddress": "Build Agent Address",
                 "buildStartDate": {

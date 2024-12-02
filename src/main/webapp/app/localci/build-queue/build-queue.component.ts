@@ -89,6 +89,9 @@ enum BuildJobStatusFilter {
     FAILED = 'failed',
     ERROR = 'error',
     CANCELLED = 'cancelled',
+    MISSING = 'missing',
+    BUILDING = 'building',
+    QUEUED = 'queued',
 }
 
 export enum FinishedBuildJobFilterStorageKey {

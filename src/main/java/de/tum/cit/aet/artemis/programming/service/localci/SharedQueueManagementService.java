@@ -128,6 +128,14 @@ public class SharedQueueManagementService {
         return new ArrayList<>(processingJobs.values());
     }
 
+    /**
+     * @return a list of processing job ids
+     */
+    public List<String> getProcessingJobIds() {
+        // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return new ArrayList<>(processingJobs.keySet());
+    }
+
     public int getProcessingJobsSize() {
         return processingJobs.size();
     }
