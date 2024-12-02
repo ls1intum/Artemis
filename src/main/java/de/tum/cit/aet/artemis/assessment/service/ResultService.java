@@ -686,9 +686,7 @@ public class ResultService {
         for (FeedbackDetailDTO base : feedbackDetails) {
             boolean isMerged = false;
 
-            for (int i = 0; i < processedDetails.size(); i++) {
-                FeedbackDetailDTO processed = processedDetails.get(i);
-
+            for (FeedbackDetailDTO processed : processedDetails) {
                 // Ensure feedbacks have the same testCaseName and taskName
                 if (base.testCaseName().equals(processed.testCaseName()) && base.taskName().equals(processed.taskName())) {
                     double similarity = NameSimilarity.levenshteinSimilarity(base.detailText().getFirst(), processed.detailText().getFirst());
@@ -701,10 +699,10 @@ public class ResultService {
                         long mergedCount = processed.count() + base.count();
 
                         // Replace the processed entry with the updated one
+                        processedDetails.remove(processed);
                         FeedbackDetailDTO updatedProcessed = new FeedbackDetailDTO(mergedCount, 0, mergedTexts, processed.testCaseName(), processed.taskName(),
                                 processed.errorCategory());
-
-                        processedDetails.set(i, updatedProcessed);
+                        processedDetails.add(updatedProcessed); // Add the updated entry
                         isMerged = true;
                         break; // No need to check further
                     }
