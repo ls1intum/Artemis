@@ -56,6 +56,7 @@ public class IrisExerciseSettings extends IrisSettings {
 
     @Override
     public void setIrisLectureChatSettings(IrisLectureChatSubSettings irisLectureChatSettings) {
+        // Empty because exercises don't have lecture chat settings
     }
 
     @Override

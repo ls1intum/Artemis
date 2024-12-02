@@ -7,5 +7,4 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisLectureDTO(long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate, List<PyrisLectureUnitDTO> units) {
-
 }
