@@ -15,6 +15,7 @@ import {
     inject,
     input,
 } from '@angular/core';
+import monaco from 'monaco-editor';
 import { ViewContainerRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -122,6 +123,43 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
     ngAfterViewInit(): void {
         this.markdownEditor.enableTextFieldMode();
+
+        const editor = this.markdownEditor.monacoEditor;
+        if (editor) {
+            if (editor) {
+                editor.onDidChangeModelContent((event: { changes: string | any[] }) => {
+                    const position = editor.getPosition();
+                    if (!position) {
+                        return;
+                    }
+
+                    const model = editor.getModel();
+                    if (!model) {
+                        return;
+                    }
+
+                    const lineContent = model.getLineContent(position.lineNumber).trimStart();
+                    const hasPrefix = lineContent.startsWith('- ') || /^\s*1\. /.test(lineContent);
+                    if (hasPrefix && event.changes.length === 1 && (event.changes[0].text.startsWith('- ') || event.changes[0].text.startsWith('1. '))) {
+                        return;
+                    }
+
+                    if (hasPrefix) {
+                        this.handleKeyDown(model, position.lineNumber);
+                    }
+                });
+            }
+        }
+    }
+
+    private handleKeyDown(model: monaco.editor.ITextModel, lineNumber: number): void {
+        const lineContent = model.getLineContent(lineNumber).trimStart();
+
+        if (lineContent.startsWith('- ')) {
+            this.markdownEditor.handleActionClick(new MouseEvent('click'), this.defaultActions.find((action) => action instanceof BulletedListAction)!);
+        } else if (/^\d+\. /.test(lineContent)) {
+            this.markdownEditor.handleActionClick(new MouseEvent('click'), this.defaultActions.find((action) => action instanceof OrderedListAction)!);
+        }
     }
 
     /**
