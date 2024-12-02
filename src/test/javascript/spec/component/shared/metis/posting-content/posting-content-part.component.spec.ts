@@ -3,7 +3,6 @@ import { DebugElement } from '@angular/core';
 import { Router } from '@angular/router';
 import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart, ReferenceType } from 'app/shared/metis/metis.util';
-import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 import { getElement, getElements } from '../../../../helpers/utils/general.utils';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { FileService } from 'app/shared/http/file.service';
@@ -32,13 +31,7 @@ describe('PostingContentPartComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MatDialogModule, MatMenuModule],
-            declarations: [
-                PostingContentPartComponent,
-                HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
-                // FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
-                MockRouterLinkDirective,
-                MockQueryParamsDirective,
-            ],
+            declarations: [MockRouterLinkDirective, MockQueryParamsDirective],
             providers: [{ provide: FileService, useClass: MockFileService }, { provide: Router, useClass: MockRouter }, MockProvider(AccountService)],
         })
             .compileComponents()

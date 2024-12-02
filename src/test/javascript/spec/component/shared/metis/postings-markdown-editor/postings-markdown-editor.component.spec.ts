@@ -37,6 +37,10 @@ import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordere
 import { ListAction } from 'app/shared/monaco-editor/model/actions/list.action';
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -124,6 +128,8 @@ describe('PostingsMarkdownEditor', () => {
                 MockProvider(ChannelService),
                 { provide: Overlay, useValue: mockOverlay },
                 { provide: OverlayPositionBuilder, useValue: overlayPositionBuilderMock },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
             declarations: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent)],
         })
@@ -134,6 +140,7 @@ describe('PostingsMarkdownEditor', () => {
                 debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
                 lectureService = TestBed.inject(LectureService);
+                TestBed.inject(Overlay);
                 fixture.autoDetectChanges();
                 mockMarkdownEditorComponent = fixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
                 component.ngOnInit();
@@ -274,7 +281,6 @@ describe('PostingsMarkdownEditor', () => {
     it('should attach EmojiPickerComponent to overlay when EmojiAction.run is called', () => {
         const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
-
         emojiAction.run(mockEditor);
 
         expect(mockOverlayRef.attach).toHaveBeenCalledWith(expect.any(ComponentPortal));
@@ -310,6 +316,7 @@ describe('PostingsMarkdownEditor', () => {
     it('should detach overlay and close EmojiPickerComponent on backdrop click', () => {
         const emojiAction = component.defaultActions.find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
+        fixture.detectChanges();
 
         emojiAction.run(mockEditor);
         backdropClickSubject.next();

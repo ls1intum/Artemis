@@ -9,9 +9,11 @@ import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { throwError } from 'rxjs';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClient } from '@angular/common/http';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 
 describe('MessageInlineInputComponent', () => {
     let component: MessageInlineInputComponent;
@@ -30,6 +32,8 @@ describe('MessageInlineInputComponent', () => {
                 FormBuilder,
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
             .compileComponents()
