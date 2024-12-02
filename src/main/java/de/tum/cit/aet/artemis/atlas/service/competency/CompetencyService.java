@@ -2,9 +2,7 @@ package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -53,8 +51,7 @@ public class CompetencyService extends CourseCompetencyService {
             LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository,
             CompetencyExerciseLinkRepository competencyExerciseLinkRepository) {
         super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, lectureUnitService,
-                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService,
-                competencyLectureUnitLinkRepository, courseRepository);
+                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService, courseRepository);
         this.competencyRepository = competencyRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
     }
@@ -68,17 +65,7 @@ public class CompetencyService extends CourseCompetencyService {
      * @return The set of imported competencies, each also containing the relations it is the tail competency for.
      */
     public Set<CompetencyWithTailRelationDTO> importCompetencies(Course course, Collection<? extends CourseCompetency> competencies, CompetencyImportOptionsDTO importOptions) {
-        var idToImportedCompetency = new HashMap<Long, CompetencyWithTailRelationDTO>();
-
-        for (var competency : competencies) {
-            Competency importedCompetency = new Competency(competency);
-            importedCompetency.setCourse(course);
-
-            importedCompetency = competencyRepository.save(importedCompetency);
-            idToImportedCompetency.put(competency.getId(), new CompetencyWithTailRelationDTO(importedCompetency, new ArrayList<>()));
-        }
-
-        return importCourseCompetencies(course, competencies, idToImportedCompetency, importOptions);
+        return importCourseCompetencies(course, competencies, importOptions, Competency::new);
     }
 
     /**

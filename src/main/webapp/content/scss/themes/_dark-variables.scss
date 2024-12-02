@@ -133,7 +133,7 @@ $footer-height-prod: 2rem;
 // Sidebar
 $sidebar-width: 255px;
 $sidebar-footer-height-dev: 104px;
-$sidebar-footer-height-prod: 96px;
+$sidebar-footer-height-prod: 88px;
 $spacing-modules: 1rem;
 
 //Module and Navigationbar
@@ -665,7 +665,7 @@ $iris-rate-background: var(--neutral-dark-l-15);
 $cropper-overlay-color: transparent;
 
 // Settings
-$ssh-key-table-hover-background: $gray-900;
+$ssh-key-settings-table-hover-background: $gray-900;
 $ssh-key-settings-dropdown-buttons: $gray-800;
 $ssh-key-settings-dropdown-buttons-hover: $gray-700;
 $ssh-key-settings-text-color: $white;

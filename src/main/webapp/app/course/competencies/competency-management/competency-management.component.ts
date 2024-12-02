@@ -170,7 +170,10 @@ export class CompetencyManagementComponent {
                         type: courseCompetency.type,
                     },
             );
-        this.courseCompetencies.update((courseCompetencies) => courseCompetencies.concat(importedCourseCompetencies));
+        const newCourseCompetencies = importedCourseCompetencies.filter(
+            (competency) => !this.courseCompetencies().some((existingCompetency) => existingCompetency.id === competency.id),
+        );
+        this.courseCompetencies.update((courseCompetencies) => courseCompetencies.concat(newCourseCompetencies));
     }
 
     onRemoveCompetency(competencyId: number) {
