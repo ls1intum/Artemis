@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -682,42 +681,45 @@ public class ResultService {
     }
 
     private List<FeedbackDetailDTO> aggregateUsingLevenshtein(List<FeedbackDetailDTO> feedbackDetails, double similarityThreshold) {
-        List<FeedbackDetailDTO> aggregatedList = new ArrayList<>();
-        Set<FeedbackDetailDTO> processedDetails = new HashSet<>();
+        List<FeedbackDetailDTO> processedDetails = new ArrayList<>();
 
         for (FeedbackDetailDTO base : feedbackDetails) {
-            if (processedDetails.contains(base)) {
-                continue; // Skip already aggregated feedback
-            }
+            boolean isMerged = false;
 
-            List<String> aggregatedTexts = new ArrayList<>();
-            aggregatedTexts.add(base.detailText().getFirst());
-            long totalCount = base.count();
-
-            for (FeedbackDetailDTO compare : feedbackDetails) {
-                if (processedDetails.contains(compare) || base.equals(compare)) {
-                    continue; // Skip already processed or the same feedback
-                }
+            for (int i = 0; i < processedDetails.size(); i++) {
+                FeedbackDetailDTO processed = processedDetails.get(i);
 
                 // Ensure feedbacks have the same testCaseName and taskName
-                if (base.testCaseName().equals(compare.testCaseName()) && base.taskName().equals(compare.taskName())) {
-                    double similarity = NameSimilarity.levenshteinSimilarity(base.detailText().getFirst(), compare.detailText().getFirst());
+                if (base.testCaseName().equals(processed.testCaseName()) && base.taskName().equals(processed.taskName())) {
+                    double similarity = NameSimilarity.levenshteinSimilarity(base.detailText().getFirst(), processed.detailText().getFirst());
 
                     if (similarity > similarityThreshold) {
-                        // Merge the feedbacks
-                        aggregatedTexts.add(compare.detailText().getFirst());
-                        totalCount += compare.count();
-                        processedDetails.add(compare);
+                        // Merge the current base feedback into the processed feedback
+                        List<String> mergedTexts = new ArrayList<>(processed.detailText());
+                        mergedTexts.add(base.detailText().getFirst());
+
+                        long mergedCount = processed.count() + base.count();
+
+                        // Replace the processed entry with the updated one
+                        FeedbackDetailDTO updatedProcessed = new FeedbackDetailDTO(mergedCount, 0, mergedTexts, processed.testCaseName(), processed.taskName(),
+                                processed.errorCategory());
+
+                        processedDetails.set(i, updatedProcessed);
+                        isMerged = true;
+                        break; // No need to check further
                     }
                 }
             }
 
-            // Add aggregated feedback entry
-            aggregatedList.add(new FeedbackDetailDTO(totalCount, 0, aggregatedTexts, base.testCaseName(), base.taskName(), base.errorCategory()));
-            processedDetails.add(base);
+            if (!isMerged) {
+                // If not merged, add it as a new entry in processedDetails
+                FeedbackDetailDTO newEntry = new FeedbackDetailDTO(base.count(), 0, List.of(base.detailText().getFirst()), base.testCaseName(), base.taskName(),
+                        base.errorCategory());
+                processedDetails.add(newEntry);
+            }
         }
 
-        return aggregatedList;
+        return processedDetails;
     }
 
     /**
