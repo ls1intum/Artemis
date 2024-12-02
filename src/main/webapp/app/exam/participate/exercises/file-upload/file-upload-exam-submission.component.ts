@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, inject, input, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, input, model, viewChild } from '@angular/core';
 import { Location, UpperCasePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
@@ -48,7 +48,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     fileInput = viewChild<ElementRef>('fileInput');
 
-    studentSubmission = input.required<FileUploadSubmission>();
+    studentSubmission = model.required<FileUploadSubmission>();
     exercise = input.required<FileUploadExercise>();
     problemStatementHtml: string;
 
