@@ -8,7 +8,6 @@ import { tap } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-
 /**
  * UserSettingsContainerComponent serves as the common ground for different settings
  */
@@ -34,7 +33,6 @@ export class UserSettingsContainerComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
-
         this.accountService
             .getAuthenticationState()
             .pipe(

@@ -9,11 +9,20 @@ import { ScienceSetting } from 'app/shared/user-settings/science-settings/scienc
 import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Subscription } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterModule } from '@angular/router';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
 
 @Component({
     selector: 'jhi-science-settings',
+    standalone: true,
     templateUrl: 'science-settings.component.html',
     styleUrls: ['../user-settings.scss'],
+    imports: [TranslateDirective, RouterModule, FontAwesomeModule, ArtemisSharedModule, ArtemisSharedComponentModule, FormDateTimePickerModule, DocumentationLinkComponent],
 })
 export class ScienceSettingsComponent extends UserSettingsDirective implements OnInit, OnDestroy {
     // Icons

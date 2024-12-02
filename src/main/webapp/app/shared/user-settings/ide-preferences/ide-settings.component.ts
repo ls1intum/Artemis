@@ -3,12 +3,21 @@ import { ProgrammingLanguage } from 'app/entities/programming/programming-exerci
 import { Ide, ideEquals } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
+import { RouterModule } from '@angular/router';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
 
 @Component({
     selector: 'jhi-ide-preferences',
     templateUrl: './ide-settings.component.html',
+    standalone: true,
     styleUrls: ['./ide-settings.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, RouterModule, FontAwesomeModule, ArtemisSharedModule, ArtemisSharedComponentModule, FormDateTimePickerModule, DocumentationLinkComponent],
 })
 export class IdeSettingsComponent implements OnInit {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;

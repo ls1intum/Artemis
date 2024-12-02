@@ -7,6 +7,13 @@ import { UserSettingsStructure } from 'app/shared/user-settings/user-settings.mo
 import { AlertService } from 'app/core/util/alert.service';
 import { faInfoCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NotificationSettingsService, reloadNotificationSideBarMessage } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterModule } from '@angular/router';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
 
 export enum NotificationSettingsCommunicationChannel {
     WEBAPP,
@@ -16,7 +23,9 @@ export enum NotificationSettingsCommunicationChannel {
 @Component({
     selector: 'jhi-notification-settings',
     templateUrl: 'notification-settings.component.html',
+    standalone: true,
     styleUrls: ['../user-settings.scss'],
+    imports: [TranslateDirective, RouterModule, FontAwesomeModule, ArtemisSharedModule, ArtemisSharedComponentModule, FormDateTimePickerModule, DocumentationLinkComponent],
 })
 export class NotificationSettingsComponent extends UserSettingsDirective implements OnInit {
     // Icons

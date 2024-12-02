@@ -7,11 +7,19 @@ import { AlertService } from 'app/core/util/alert.service';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterModule } from '@angular/router';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings.component.html',
+    standalone: true,
     styleUrls: ['../user-settings.scss', './ssh-user-settings.component.scss'],
+    imports: [TranslateDirective, RouterModule, FontAwesomeModule, ArtemisSharedModule, FormDateTimePickerModule, DocumentationLinkComponent],
 })
 export class SshUserSettingsComponent implements OnInit, OnDestroy {
     private sshUserSettingsService = inject(SshUserSettingsService);

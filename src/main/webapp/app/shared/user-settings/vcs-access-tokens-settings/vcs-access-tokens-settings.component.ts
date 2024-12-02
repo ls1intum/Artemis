@@ -6,11 +6,30 @@ import dayjs from 'dayjs/esm';
 import { faBan, faCopy, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterModule } from '@angular/router';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
+import { ClipboardModule } from '@angular/cdk/clipboard';
 
 @Component({
     selector: 'jhi-account-information',
+    standalone: true,
     templateUrl: './vcs-access-tokens-settings.component.html',
     styleUrls: ['../user-settings.scss'],
+    imports: [
+        TranslateDirective,
+        RouterModule,
+        FontAwesomeModule,
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        ClipboardModule,
+        FormDateTimePickerModule,
+        DocumentationLinkComponent,
+    ],
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     currentUser?: User;
