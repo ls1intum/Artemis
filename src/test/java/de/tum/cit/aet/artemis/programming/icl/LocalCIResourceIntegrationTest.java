@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
@@ -37,7 +38,6 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
 class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
@@ -332,7 +332,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     void testGetBuildLogsForResult() throws Exception {
         try {
             buildJobRepository.save(finishedJobForLogs);
-            BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Dummy log");
+            BuildLogDTO buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), "Dummy log");
             buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "6", programmingExercise);
             var response = request.get("/api/build-log/6", HttpStatus.OK, String.class);
             assertThat(response).contains("Dummy log");
@@ -364,10 +364,29 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
         processingJobs.clear();
 
-        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
+        request.put("/api/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
         await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
 
-        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
+        request.put("/api/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
         await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testPauseAllBuildAgents() throws Exception {
+        // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
+        processingJobs.clear();
+
+        request.put("/api/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
+        await().until(() -> {
+            var agents = buildAgentInformation.values();
+            return agents.stream().allMatch(agent -> agent.status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
+        });
+
+        request.put("/api/admin/agents/resume-all", null, HttpStatus.NO_CONTENT);
+        await().until(() -> {
+            var agents = buildAgentInformation.values();
+            return agents.stream().allMatch(agent -> agent.status() == BuildAgentInformation.BuildAgentStatus.IDLE);
+        });
     }
 }

@@ -166,9 +166,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -178,9 +175,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -190,9 +184,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [LocalVCGuard],
     },
@@ -202,9 +193,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [LocalVCGuard],
     },
@@ -214,9 +202,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [LocalVCGuard],
     },
@@ -226,9 +211,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [LocalVCGuard],
     },
@@ -238,9 +220,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [LocalVCGuard],
     },
@@ -250,9 +229,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -262,9 +238,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -274,9 +247,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
@@ -286,9 +256,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.repository.title',
-            flushRepositoryCacheAfter: 900000, // 15 min
-            participationCache: {},
-            repositoryCache: {},
         },
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },

@@ -232,7 +232,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachment);
         assertThat(updatedAttachmentUnit.getAttachment().getName()).isEqualTo("LoremIpsum");
         assertThat(updatedAttachmentUnit.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
-        verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(updatedAttachmentUnit));
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(updatedAttachmentUnit));
     }
 
     @Test
@@ -279,7 +279,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(attachmentUnit2.getAttachment()).isEqualTo(attachment);
         assertThat(attachment.getAttachmentUnit()).isEqualTo(attachmentUnit2);
         assertThat(attachmentUnit1.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
-        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(attachmentUnit), eq(Optional.of(attachmentUnit)));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(attachmentUnit), eq(Optional.of(attachmentUnit)));
     }
 
     @Test
@@ -357,6 +357,6 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(0);
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, AttachmentUnit.class);
-        verify(competencyProgressService, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(persistedAttachmentUnit), eq(Optional.empty()));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(persistedAttachmentUnit), eq(Optional.empty()));
     }
 }

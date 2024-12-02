@@ -10,10 +10,13 @@ import { onError } from 'app/shared/util/global.utils';
 import { Subject, Subscription } from 'rxjs';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { faEye, faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCheckCircle, faEye, faFileExport, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { PROFILE_IRIS } from 'app/app.constants';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 
 @Component({
     selector: 'jhi-lecture-unit-management',
@@ -43,7 +46,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     readonly ActionType = ActionType;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
+    private profileInfoSubscription: Subscription;
+    irisEnabled = false;
+    lectureIngestionEnabled = false;
     routerEditLinksBase: { [key: string]: string } = {
         [LectureUnitType.ATTACHMENT]: 'attachment-units',
         [LectureUnitType.VIDEO]: 'video-units',
@@ -52,9 +57,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     };
 
     // Icons
-    faTrash = faTrash;
-    faPencilAlt = faPencilAlt;
-    faEye = faEye;
+    readonly faTrash = faTrash;
+    readonly faPencilAlt = faPencilAlt;
+    readonly faEye = faEye;
+    readonly faFileExport = faFileExport;
+    readonly faRepeat = faRepeat;
+    readonly faCheckCircle = faCheckCircle;
+    readonly faSpinner = faSpinner;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -62,6 +71,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         private lectureService: LectureService,
         private alertService: AlertService,
         public lectureUnitService: LectureUnitService,
+        private profileService: ProfileService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     ngOnDestroy(): void {
@@ -69,6 +80,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.updateOrderSubjectSubscription.unsubscribe();
         this.dialogErrorSource.unsubscribe();
         this.navigationEndSubscription.unsubscribe();
+        this.profileInfoSubscription?.unsubscribe();
     }
 
     ngOnInit(): void {
@@ -111,6 +123,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                         this.lectureUnits.forEach((lectureUnit) => {
                             this.viewButtonAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
                         });
+                        this.initializeProfileInfo();
+                        if (this.lectureIngestionEnabled) {
+                            this.updateIngestionStates();
+                        }
                     } else {
                         this.lectureUnits = [];
                     }
@@ -130,6 +146,17 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             .subscribe({
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
+    }
+
+    initializeProfileInfo() {
+        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
+            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
+            if (this.irisEnabled && this.lecture.course && this.lecture.course.id) {
+                this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((settings) => {
+                    this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
+                });
+            }
+        });
     }
 
     drop(event: CdkDragDrop<LectureUnit[]>) {
@@ -237,6 +264,68 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return (<AttachmentUnit>lectureUnit)?.attachment?.version || undefined;
             default:
                 return undefined;
+        }
+    }
+
+    /**
+     * Fetches the ingestion state for each lecture unit asynchronously and updates the lecture unit object.
+     */
+    updateIngestionStates() {
+        this.lectureUnitService.getIngestionState(this.lecture.course!.id!, this.lecture.id!).subscribe({
+            next: (res: HttpResponse<Record<number, IngestionState>>) => {
+                if (res.body) {
+                    const ingestionStatesMap = res.body;
+                    this.lectureUnits.forEach((lectureUnit) => {
+                        if (lectureUnit.id) {
+                            const ingestionState = ingestionStatesMap[lectureUnit.id];
+                            if (ingestionState !== undefined) {
+                                (<AttachmentUnit>lectureUnit).pyrisIngestionState = ingestionState;
+                            }
+                        }
+                    });
+                }
+            },
+            error: (err: HttpErrorResponse) => {
+                console.error(`Error fetching ingestion states for lecture ${this.lecture.id}`, err);
+                this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
+            },
+        });
+    }
+
+    onIngestButtonClicked(lectureUnitId: number) {
+        const unitIndex: number = this.lectureUnits.findIndex((unit) => unit.id === lectureUnitId);
+        if (unitIndex > -1) {
+            const unit: AttachmentUnit = this.lectureUnits[unitIndex];
+            unit.pyrisIngestionState = IngestionState.IN_PROGRESS;
+            this.lectureUnits[unitIndex] = unit;
+        }
+        this.lectureUnitService.ingestLectureUnitInPyris(lectureUnitId, this.lecture.id!).subscribe({
+            next: () => this.alertService.success('artemisApp.iris.ingestionAlert.lectureUnitSuccess'),
+            error: (error) => {
+                if (error.status === 400) {
+                    this.alertService.error('artemisApp.iris.ingestionAlert.lectureUnitError');
+                } else if (error.status === 503) {
+                    this.alertService.error('artemisApp.iris.ingestionAlert.pyrisUnavailable');
+                } else {
+                    this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
+                }
+                console.error('Failed to send lecture unit ingestion request', error);
+            },
+        });
+    }
+
+    getIcon(attachmentUnit: AttachmentUnit): IconDefinition {
+        switch (attachmentUnit.pyrisIngestionState) {
+            case IngestionState.NOT_STARTED:
+                return this.faFileExport;
+            case IngestionState.IN_PROGRESS:
+                return this.faSpinner;
+            case IngestionState.DONE:
+                return this.faCheckCircle;
+            case IngestionState.ERROR:
+                return this.faRepeat;
+            default:
+                return this.faFileExport;
         }
     }
 }

@@ -132,6 +132,8 @@ public class ConversationMessageResource {
             if (post.getConversation() != null) {
                 post.getConversation().hideDetails();
             }
+
+            conversationMessagingService.preparePostForBroadcast(post);
         });
         final var headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
         logDuration(coursePosts.getContent(), principal, timeNanoStart);

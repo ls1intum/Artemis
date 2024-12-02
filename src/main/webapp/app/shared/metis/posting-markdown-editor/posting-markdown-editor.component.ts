@@ -21,7 +21,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { isCommunicationEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled, isFaqEnabled } from 'app/entities/course.model';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
@@ -34,6 +34,7 @@ import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/c
 import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
@@ -96,6 +97,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             ? [new UserMentionAction(this.courseManagementService, this.metisService), new ChannelReferenceAction(this.metisService, this.channelService)]
             : [];
 
+        const faqAction = isFaqEnabled(this.metisService.getCourse()) ? [new FaqReferenceAction(this.metisService)] : [];
+
         this.defaultActions = [
             new BoldAction(),
             new ItalicAction(),
@@ -111,6 +114,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new AttachmentAction(),
             ...messagingOnlyActions,
             new ExerciseReferenceAction(this.metisService),
+            ...faqAction,
         ];
 
         this.lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(this.metisService, this.lectureService);

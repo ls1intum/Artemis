@@ -4,8 +4,7 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @NgModule({
-    imports: [ArtemisMarkdownEditorModule],
-    declarations: [HtmlForMarkdownPipe],
+    imports: [ArtemisMarkdownEditorModule, HtmlForMarkdownPipe],
     providers: [ArtemisMarkdownService],
     exports: [HtmlForMarkdownPipe],
 })

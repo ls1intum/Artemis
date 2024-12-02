@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20241101121000" author="rangger">
+        <createTable tableName="saved_post">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="post_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="post_type" type="tinyint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="tinyint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="datetime">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="saved_post"
+                                 baseColumnNames="user_id"
+                                 constraintName="FK_SAVED_POST_USER"
+                                 referencedTableName="jhi_user"
+                                 referencedColumnNames="id"/>
+
+        <createIndex indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE" tableName="saved_post">
+            <column name="user_id"/>
+            <column name="post_id"/>
+            <column name="post_type"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

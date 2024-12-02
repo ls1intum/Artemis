@@ -19,6 +19,7 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
     // Icons
     readonly farSmile = faSmile;
     readonly faCheck = faCheck;
+
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;

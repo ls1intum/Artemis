@@ -8,6 +8,7 @@ import { ScienceSettingsComponent } from 'app/shared/user-settings/science-setti
 import { SshUserSettingsComponent } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.component';
 import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 import { IdeSettingsComponent } from 'app/shared/user-settings/ide-preferences/ide-settings.component';
+import { SshUserSettingsKeyDetailsComponent } from 'app/shared/user-settings/ssh-settings/details/ssh-user-settings-key-details.component';
 
 export const userSettingsState: Routes = [
     {
@@ -48,6 +49,20 @@ export const userSettingsState: Routes = [
             {
                 path: 'ssh',
                 component: SshUserSettingsComponent,
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
+                },
+            },
+            {
+                path: 'ssh/add',
+                component: SshUserSettingsKeyDetailsComponent,
+                data: {
+                    pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
+                },
+            },
+            {
+                path: 'ssh/view/:keyId',
+                component: SshUserSettingsKeyDetailsComponent,
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.SSH_SETTINGS',
                 },

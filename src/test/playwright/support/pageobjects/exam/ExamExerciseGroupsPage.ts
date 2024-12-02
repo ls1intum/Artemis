@@ -60,6 +60,10 @@ export class ExamExerciseGroupsPage {
         await this.page.locator(`#group-${groupID} .add-programming-exercise`).click();
     }
 
+    async clickEditExercise(groupID: number, exerciseID: number) {
+        await this.page.locator(`#group-${groupID} #exercise-${exerciseID}`).locator('.btn', { hasText: 'Edit' }).click();
+    }
+
     async visitPageViaUrl(courseId: number, examId: number) {
         await this.page.goto(`course-management/${courseId}/exams/${examId}/exercise-groups`);
     }

@@ -32,9 +32,9 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 
 /**
  * This service is responsible for adding build jobs to the Integrated Code Lifecycle executor service.
@@ -171,7 +171,7 @@ public class BuildJobManagementService {
                     finishCancelledBuildJob(buildJobItem.repositoryInfo().assignmentRepositoryUri(), buildJobItem.id(), containerName);
                     String msg = "Build job with id " + buildJobItem.id() + " was cancelled.";
                     String stackTrace = stackTraceToString(e);
-                    buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
+                    buildLogsMap.appendBuildLogEntry(buildJobItem.id(), new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
                     throw new CompletionException(msg, e);
                 }
                 else {
@@ -232,7 +232,7 @@ public class BuildJobManagementService {
     private void finishBuildJobExceptionally(String buildJobId, String containerName, Exception exception) {
         String msg = "Error while executing build job " + buildJobId + ": " + exception.getMessage();
         String stackTrace = stackTraceToString(exception);
-        buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogEntry(ZonedDateTime.now(), msg + "\n" + stackTrace));
+        buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
         log.error(msg);
 
         log.info("Getting ID of running container {}", containerName);

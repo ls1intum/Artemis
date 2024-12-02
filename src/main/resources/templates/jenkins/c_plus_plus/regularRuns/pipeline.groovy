@@ -69,7 +69,6 @@ void postBuildTasks() {
         sed -i 's/[^[:print:]\t]/�/g' test-reports/tests-results.xml
         sed -i 's/<skipped/<error/g' test-reports/tests-results.xml
         sed -i 's/<\\/skipped>/<\\/error>/g' test-reports/tests-results.xml
-        sed -i 's/<testsuites[^>]*>/<testsuite>/g ; s/<\\/testsuites>/<\\/testsuite>/g' test-reports/tests-results.xml
     fi
     rm -rf results
     mv test-reports results

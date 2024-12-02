@@ -49,9 +49,9 @@ class SpotbugsParser implements ParserStrategy {
     private final XmlMapper xmlMapper = new XmlMapper();
 
     @Override
-    public StaticCodeAnalysisReportDTO parse(String xmlContent) {
+    public StaticCodeAnalysisReportDTO parse(String reportContent) {
         try {
-            BugCollection bugCollection = xmlMapper.readValue(xmlContent, BugCollection.class);
+            BugCollection bugCollection = xmlMapper.readValue(reportContent, BugCollection.class);
             return createReportFromBugCollection(bugCollection);
         }
         catch (IOException e) {

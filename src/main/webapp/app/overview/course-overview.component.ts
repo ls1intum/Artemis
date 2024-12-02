@@ -715,9 +715,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                     this.course = res.body;
                 }
 
-                if (refresh) {
-                    this.setUpConversationService();
-                }
+                this.setUpConversationService();
 
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             }),

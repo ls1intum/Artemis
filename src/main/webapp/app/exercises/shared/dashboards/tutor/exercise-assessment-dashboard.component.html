@@ -38,6 +38,7 @@
                     @if (exercise.isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam && exam?.numberOfCorrectionRoundsInExam! > 1 && isExamMode && !isTestRun) {
                         <div class="d-inline-block">
                             <jhi-second-correction-enable-button
+                                data-testid="toggle-second-correction"
                                 (ngModelChange)="toggleSecondCorrection()"
                                 [secondCorrectionEnabled]="secondCorrectionEnabled"
                                 [togglingSecondCorrectionButton]="togglingSecondCorrectionButton"

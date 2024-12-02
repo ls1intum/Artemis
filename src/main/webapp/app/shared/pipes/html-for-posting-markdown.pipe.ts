@@ -1,12 +1,13 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Pipe({
     name: 'htmlForPostingMarkdown',
+    standalone: true,
 })
 export class HtmlForPostingMarkdownPipe implements PipeTransform {
-    constructor(private markdownService: ArtemisMarkdownService) {}
+    private readonly markdownService = inject(ArtemisMarkdownService);
 
     /**
      * Converts markdown used in posting content into html, sanitizes it and then declares it as safe to bypass further security.

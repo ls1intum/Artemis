@@ -60,7 +60,14 @@
 <div class="chat-body" [class.not-accepted]="!userAccepted" #chatBody>
     @if (messages?.length) {
         <div class="messages" #messagesElement (scroll)="checkChatScroll()">
-            @if (suggestions?.length) {
+            @if (
+                suggestions?.length &&
+                userAccepted &&
+                !this.isLoading &&
+                this.active &&
+                (!this.rateLimitInfo?.rateLimit || this.rateLimitInfo?.currentMessageCount !== this.rateLimitInfo?.rateLimit) &&
+                !this.hasActiveStage
+            ) {
                 <div @suggestionAnimation class="suggestions-container">
                     @for (suggestion of suggestions; track suggestion) {
                         <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [innerHTML]="suggestion"></button>

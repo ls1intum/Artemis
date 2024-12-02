@@ -728,16 +728,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
-            SET user.sshPublicKeyHash = :sshPublicKeyHash,
-                user.sshPublicKey = :sshPublicKey
-            WHERE user.id = :userId
-            """)
-    void updateUserSshPublicKeyHash(@Param("userId") long userId, @Param("sshPublicKeyHash") String sshPublicKeyHash, @Param("sshPublicKey") String sshPublicKey);
-
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
             SET user.vcsAccessToken = :vcsAccessToken,
                 user.vcsAccessTokenExpiryDate = :vcsAccessTokenExpiryDate
             WHERE user.id = :userId
@@ -1119,8 +1109,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     default boolean isCurrentUser(String login) {
         return SecurityUtils.getCurrentUserLogin().map(currentLogin -> currentLogin.equals(login)).orElse(false);
     }
-
-    Optional<User> findBySshPublicKeyHash(String keyString);
 
     /**
      * Finds all users which a non-null VCS access token that expires before some given date.

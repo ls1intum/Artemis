@@ -14,7 +14,6 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
 describe('AccountInformationComponent', () => {
     let fixture: ComponentFixture<AccountInformationComponent>;
     let comp: AccountInformationComponent;
-    const mockKey = 'mock-key';
 
     let accountServiceMock: { getAuthenticationState: jest.Mock; addSshPublicKey: jest.Mock };
     let profileServiceMock: { getProfileInfo: jest.Mock };
@@ -47,7 +46,7 @@ describe('AccountInformationComponent', () => {
 
     beforeEach(() => {
         profileServiceMock.getProfileInfo.mockReturnValue(of({ activeProfiles: [PROFILE_LOCALVC] }));
-        accountServiceMock.getAuthenticationState.mockReturnValue(of({ id: 99, sshPublicKey: mockKey } as User));
+        accountServiceMock.getAuthenticationState.mockReturnValue(of({ id: 99 } as User));
     });
 
     it('should initialize with localVC profile', async () => {

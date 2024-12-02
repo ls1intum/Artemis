@@ -1,11 +1,35 @@
 textarea {
-    width: 600px;
+    max-width: 600px;
+    width: 100%;
     height: 150px;
+    resize: none;
     font-size: small;
     font-family:
         Bitstream Vera Sans Mono,
         Courier New,
         monospace;
+    border-color: var(--border-color) !important;
+}
+
+.bold-text {
+    font-weight: bold;
+}
+
+.large-text {
+    font-size: large;
+}
+
+.small-text {
+    font-size: small;
+}
+
+.text-and-date {
+    display: flex;
+    gap: 5px;
+}
+
+.small-text-area {
+    height: 30px;
 }
 
 table {
@@ -25,6 +49,15 @@ td {
 
 .btn {
     border-radius: 0;
+}
+
+.rounded-btn {
+    border-radius: 2px;
+    border-top-width: 0;
+}
+
+.bottom-border {
+    border-bottom-width: 2px;
 }
 
 .container {
@@ -54,81 +87,30 @@ td {
     transform: translateY(-50%);
 }
 
+.abbreviate-hash {
+    font-size: x-small;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 tbody tr:hover {
-    background-color: var(--ssh-key-table-hover-background);
+    background-color: var(--ssh-key-settings-table-hover-background);
 }
 
-/* dd container */
-.dropdown {
-    display: inline-block;
-    position: relative;
-    outline: none;
-    margin: 0;
+a:link:hover {
+    text-decoration: none !important;
 }
 
-/* button */
-.dropbtn {
-    padding: 0;
-    color: grey;
-    cursor: pointer;
-    transition: 0.35s ease-out;
-}
-
-/* dd content */
-.dropdown .dropdown-content {
+.dropdown-content {
+    overflow-y: auto;
     position: absolute;
-    top: 50%;
-    min-width: 120%;
-    box-shadow: 0 8px 16px var(--ssh-key-settings-shadow);
-    z-index: 100000; // makes sure the drop down menu is always shown at the highest view plane
-    visibility: hidden;
-    opacity: 1;
-    transition: 0.35s ease-out;
-    width: 80px;
-}
-
-/* show dd content */
-.dropdown:focus .dropdown-content {
-    outline: none;
-    transform: translateY(20px);
-    visibility: visible;
-    opacity: 1;
-    background-color: var(--light);
-}
-
-/* mask to close menu by clicking on the button */
-.dropdown .db2 {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    opacity: 0;
-    cursor: pointer;
-    z-index: 10;
-    display: none;
-}
-
-.dropdown:focus .db2 {
-    display: inline-block;
-}
-
-.dropdown .db2:focus .dropdown-content {
-    outline: none;
-    visibility: hidden;
-    margin-right: 15px;
-    opacity: 0;
-}
-
-.dropdown-button {
-    margin: auto;
-    color: var(--ssh-key-settings-text-color);
     background-color: var(--dropdown-bg);
-    border-color: var(--dropdown-bg);
-    width: 80px;
+    border: 1px solid var(--border-color);
+    z-index: 3000;
+    border-radius: 4px;
 }
 
-.dropdown-button:hover {
-    background-color: var(--ssh-key-settings-dropdown-buttons-hover);
-    border-color: var(--ssh-key-settings-dropdown-buttons-hover);
+.dropdown-toggle::after {
+    display: none;
 }

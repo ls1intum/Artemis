@@ -45,9 +45,9 @@ class PMDParser implements ParserStrategy {
     private final XmlMapper xmlMapper = new XmlMapper();
 
     @Override
-    public StaticCodeAnalysisReportDTO parse(String xmlContent) {
+    public StaticCodeAnalysisReportDTO parse(String reportContent) {
         try {
-            PMDReport pmdReport = xmlMapper.readValue(xmlContent, PMDReport.class);
+            PMDReport pmdReport = xmlMapper.readValue(reportContent, PMDReport.class);
             return createReportFromPMDReport(pmdReport);
         }
         catch (IOException e) {

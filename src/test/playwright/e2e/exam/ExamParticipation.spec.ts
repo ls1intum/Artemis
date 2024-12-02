@@ -11,7 +11,9 @@ import { ExamStartEndPage } from '../../support/pageobjects/exam/ExamStartEndPag
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ModalDialogBox } from '../../support/pageobjects/exam/ModalDialogBox';
-import { ExamParticipationActions } from '../../support/pageobjects/exam/ExamParticipationActions';
+import { ExamParticipationActions, TextDifferenceType } from '../../support/pageobjects/exam/ExamParticipationActions';
+import { ExamNavigationBar } from '../../support/pageobjects/exam/ExamNavigationBar';
+import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -261,11 +263,12 @@ test.describe('Exam participation', () => {
     test.describe('Exam announcements', { tag: '@slow' }, () => {
         let exam: Exam;
         const students = [studentOne, studentTwo];
+        let exercise: Exercise;
 
         test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
             await login(admin);
             exam = await createExam(course, examAPIRequests);
-            const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
+            exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
             exerciseArray.push(exercise);
             for (const student of students) {
                 await examAPIRequests.registerStudentForExam(exam, student);
@@ -347,6 +350,61 @@ test.describe('Exam participation', () => {
                 await examParticipationActions.checkExamTimeLeft('29');
             }
         });
+
+        test(
+            'Instructor changes problem statement and all participants are informed',
+            { tag: '@fast' },
+            async ({ browser, login, navigationBar, courseManagement, examManagement, examExerciseGroups, editExam, textExerciseCreation }) => {
+                await login(instructor);
+                await navigationBar.openCourseManagement();
+                await courseManagement.openExamsOfCourse(course.id!);
+                await examManagement.openExam(exam.id!);
+
+                const studentPages = [];
+
+                for (const student of students) {
+                    const studentContext = await browser.newContext();
+                    const studentPage = await studentContext.newPage();
+                    studentPages.push(studentPage);
+
+                    await Commands.login(studentPage, student);
+                    await studentPage.goto(`/courses/${course.id!}/exams/${exam.id!}`);
+                    const examStartEnd = new ExamStartEndPage(studentPage);
+                    await examStartEnd.startExam(false);
+                    const examNavigation = new ExamNavigationBar(studentPage);
+                    await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
+                }
+
+                await editExam.openExerciseGroups();
+                await examExerciseGroups.clickEditExercise(exercise.exerciseGroup!.id!, exercise.id!);
+
+                const problemStatementText = textExerciseTemplate.problemStatement;
+                const startOfChangesIndex = problemStatementText.lastIndexOf(' ') + 1;
+                const removedText = problemStatementText.slice(startOfChangesIndex);
+                const unchangedText = problemStatementText.slice(0, startOfChangesIndex);
+                const addedText = 'Changed';
+                await textExerciseCreation.clearProblemStatement();
+                await textExerciseCreation.typeProblemStatement(unchangedText + addedText);
+                await textExerciseCreation.create();
+
+                for (const studentPage of studentPages) {
+                    const modalDialog = new ModalDialogBox(studentPage);
+                    const exerciseUpdateMessage = `The problem statement of the exercise '${exercise.exerciseGroup!.title!}' was updated. Please open the exercise to see the changes.`;
+                    await modalDialog.checkDialogType('Problem Statement Update');
+                    await modalDialog.checkDialogMessage(exerciseUpdateMessage);
+                    await modalDialog.checkDialogAuthor(instructor.username);
+                    await modalDialog.pressModalButton('Navigate to exercise');
+                    const examParticipationActions = new ExamParticipationActions(studentPage);
+                    await examParticipationActions.checkExerciseProblemStatementDifference([
+                        { text: unchangedText, differenceType: TextDifferenceType.NONE },
+                        { text: removedText, differenceType: TextDifferenceType.DELETE },
+                        { text: addedText, differenceType: TextDifferenceType.ADD },
+                    ]);
+                    await studentPage.locator('#highlightDiffButton').click();
+                    await examParticipationActions.checkExerciseProblemStatementDifference([{ text: unchangedText + addedText, differenceType: TextDifferenceType.NONE }]);
+                }
+            },
+        );
     });
 
     test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {

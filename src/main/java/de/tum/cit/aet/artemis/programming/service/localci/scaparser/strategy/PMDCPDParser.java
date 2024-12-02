@@ -43,9 +43,9 @@ class PMDCPDParser implements ParserStrategy {
     private final XmlMapper xmlMapper = new XmlMapper();
 
     @Override
-    public StaticCodeAnalysisReportDTO parse(String xmlContent) {
+    public StaticCodeAnalysisReportDTO parse(String reportContent) {
         try {
-            PmdCpc duplication = xmlMapper.readValue(xmlContent, PmdCpc.class);
+            PmdCpc duplication = xmlMapper.readValue(reportContent, PmdCpc.class);
             return createReportFromDuplication(duplication);
         }
         catch (IOException e) {

@@ -46,7 +46,7 @@ TOKEN=ab12cd
 
 Alternatively, you can use the command line argument `--token` to pass the credentials.
 ### Token
-The token you must provide is a GitHub token with "Public Repository Access" checked.
+The token you must provide is a [GitHub token](https://github.com/settings/tokens) with "Public Repository Access" checked.
 
 **Recommended for security, but not for convenience:**  
 Don't store the `TOKEN` in the `.env` file, but let the script prompt you for it.

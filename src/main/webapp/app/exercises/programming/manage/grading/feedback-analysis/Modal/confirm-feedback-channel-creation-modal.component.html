@@ -1,0 +1,11 @@
+<div class="modal-header">
+    <h4 class="modal-title" [jhiTranslate]="TRANSLATION_BASE + '.header'"></h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="dismiss()"></button>
+</div>
+<div class="modal-body">
+    <p [jhiTranslate]="TRANSLATION_BASE + '.confirmationMessage'" [translateValues]="{ count: affectedStudentsCount }"></p>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="dismiss()" [jhiTranslate]="TRANSLATION_BASE + '.cancel'"></button>
+    <button type="button" class="btn btn-primary" (click)="confirm()" [jhiTranslate]="TRANSLATION_BASE + '.confirm'"></button>
+</div>

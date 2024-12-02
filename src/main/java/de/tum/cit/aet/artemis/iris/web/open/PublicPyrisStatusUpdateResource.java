@@ -171,7 +171,6 @@ public class PublicPyrisStatusUpdateResource {
         }
 
         pyrisStatusUpdateService.handleStatusUpdate(ingestionWebhookJob, statusUpdateDTO);
-
         return ResponseEntity.ok().build();
     }
 }

@@ -101,7 +101,7 @@ describe('LectureDetailComponent', () => {
     });
     it('should call the service to ingest lectures when ingestLecturesInPyris is called', () => {
         component.lecture = mockLecture;
-        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<boolean>({ status: 200, body: true })));
+        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
         component.ingestLectureInPyris();
         expect(ingestSpy).toHaveBeenCalledWith(mockLecture.course?.id, mockLecture.id);
         expect(ingestSpy).toHaveBeenCalledOnce();

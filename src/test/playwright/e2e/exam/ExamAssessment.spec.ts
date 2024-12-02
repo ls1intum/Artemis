@@ -55,9 +55,6 @@ test.beforeAll('Create course', async ({ browser }) => {
 
 test.describe('Exam assessment', () => {
     test.describe.configure({ mode: 'serial' });
-    let programmingAssessmentSuccessful = false;
-    let modelingAssessmentSuccessful = false;
-    let textAssessmentSuccessful = false;
 
     test.describe.serial('Programming exercise assessment', { tag: '@sequential' }, () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
@@ -76,13 +73,10 @@ test.describe('Exam assessment', () => {
             await examAssessment.submit();
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('66.2%');
-            programmingAssessmentSuccessful = true;
         });
 
         test('Complaints about programming exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
-            if (programmingAssessmentSuccessful) {
-                await handleComplaint(course, exam, false, ExerciseType.PROGRAMMING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
-            }
+            await handleComplaint(course, exam, false, ExerciseType.PROGRAMMING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
         });
     });
 
@@ -117,21 +111,18 @@ test.describe('Exam assessment', () => {
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
 
             await examParticipation.checkResultScore('40%');
-            modelingAssessmentSuccessful = true;
         });
 
         test('Complaints about modeling exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
-            if (modelingAssessmentSuccessful) {
-                await handleComplaint(course, exam, true, ExerciseType.MODELING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
-            }
+            await handleComplaint(course, exam, true, ExerciseType.MODELING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
         });
     });
 
     test.describe.serial('Text exercise assessment', { tag: '@slow' }, () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(40, 'seconds');
+            examEnd = dayjs().add(20, 'seconds');
             const page = await newBrowserPage(browser);
-            await prepareExam(course, examEnd, ExerciseType.TEXT, page);
+            await prepareExam(course, examEnd, ExerciseType.TEXT, page, 2);
         });
 
         test('Assess a text exercise submission', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
@@ -144,13 +135,20 @@ test.describe('Exam assessment', () => {
             expect(response.status()).toBe(200);
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('70%');
-            textAssessmentSuccessful = true;
+        });
+
+        test('Instructor makes a second round of assessment', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
+            await login(instructor);
+            await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment, true, true);
+            await examAssessment.fillFeedback(9, 'Great job');
+            const response = await examAssessment.submitTextAssessment();
+            expect(response.status()).toBe(200);
+            await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
+            await examParticipation.checkResultScore('90%');
         });
 
         test('Complaints about text exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
-            if (textAssessmentSuccessful) {
-                await handleComplaint(course, exam, false, ExerciseType.TEXT, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
-            }
+            await handleComplaint(course, exam, true, ExerciseType.TEXT, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment, false);
         });
     });
 
@@ -296,7 +294,7 @@ test.afterAll('Delete course', async ({ browser }) => {
     await courseManagementAPIRequests.deleteCourse(course, admin);
 });
 
-export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseType, page: Page): Promise<Exam> {
+export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType: ExerciseType, page: Page, numberOfCorrectionRounds: number = 1): Promise<Exam> {
     const examAPIRequests = new ExamAPIRequests(page);
     const exerciseAPIRequests = new ExerciseAPIRequests(page);
     const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
@@ -326,7 +324,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
         course,
         startDate: dayjs(),
         endDate: end,
-        numberOfCorrectionRoundsInExam: 1,
+        numberOfCorrectionRoundsInExam: numberOfCorrectionRounds,
         examStudentReviewStart: resultDate,
         examStudentReviewEnd: resultDate.add(1, 'minute'),
         publishResultsDate: resultDate,
@@ -379,10 +377,17 @@ async function startAssessing(
     examManagement: ExamManagementPage,
     courseAssessment: CourseAssessmentDashboardPage,
     exerciseAssessment: ExerciseAssessmentDashboardPage,
+    toggleSecondRound: boolean = false,
+    isFirstTimeAssessing: boolean = true,
 ) {
     await examManagement.openAssessmentDashboard(courseID, examID, timeout);
     await courseAssessment.clickExerciseDashboardButton();
-    await exerciseAssessment.clickHaveReadInstructionsButton();
+    if (toggleSecondRound) {
+        await exerciseAssessment.toggleSecondCorrectionRound();
+    }
+    if (isFirstTimeAssessing) {
+        await exerciseAssessment.clickHaveReadInstructionsButton();
+    }
     await exerciseAssessment.clickStartNewAssessment();
     exerciseAssessment.getLockedMessage();
 }
@@ -398,6 +403,7 @@ async function handleComplaint(
     examAssessment: ExamAssessmentPage,
     courseAssessment: CourseAssessmentDashboardPage,
     exerciseAssessment: ExerciseAssessmentDashboardPage,
+    isFirstTimeAssessing: boolean = true,
 ) {
     const complaintText = 'Lorem ipsum dolor sit amet';
     const complaintResponseText = ' consetetur sadipscing elitr';
@@ -411,8 +417,9 @@ async function handleComplaint(
     await Commands.login(page, instructor, `/course-management/${course.id}/exams`);
     await examManagement.openAssessmentDashboard(course.id!, exam.id!);
     await courseAssessment.clickExerciseDashboardButton();
-    await exerciseAssessment.clickHaveReadInstructionsButton();
-
+    if (isFirstTimeAssessing) {
+        await exerciseAssessment.clickHaveReadInstructionsButton();
+    }
     await exerciseAssessment.clickEvaluateComplaint();
     await exerciseAssessment.checkComplaintText(complaintText);
     page.on('dialog', (dialog) => dialog.accept());
@@ -421,7 +428,7 @@ async function handleComplaint(
     } else {
         await examAssessment.acceptComplaint(complaintResponseText, true, exerciseType);
     }
-    if (exerciseType == ExerciseType.MODELING) {
+    if (exerciseType == ExerciseType.MODELING || reject) {
         await examAssessment.checkComplaintMessage('Response to complaint has been submitted');
     } else {
         await examAssessment.checkComplaintMessage('The assessment was updated successfully.');

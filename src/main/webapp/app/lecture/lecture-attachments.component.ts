@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, ViewChild, effect, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
@@ -10,6 +10,16 @@ import { AttachmentService } from 'app/lecture/attachment.service';
 import { faEye, faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { LectureService } from 'app/lecture/lecture.service';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+
+export interface LectureAttachmentFormData {
+    attachmentName?: string;
+    attachmentFileName?: string;
+    releaseDate?: dayjs.Dayjs;
+    notificationText?: string;
+}
 
 @Component({
     selector: 'jhi-lecture-attachments',
@@ -32,16 +42,19 @@ export class LectureAttachmentsComponent implements OnDestroy {
     private readonly attachmentService = inject(AttachmentService);
     private readonly lectureService = inject(LectureService);
     private readonly fileService = inject(FileService);
+    private readonly formBuilder = inject(FormBuilder);
 
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
+    datePickerComponent = viewChild(FormDateTimePickerComponent);
+
     lectureId = input<number>();
     showHeader = input<boolean>(true);
 
     lecture = signal<Lecture>(new Lecture());
     attachments: Attachment[] = [];
-    attachmentToBeCreated?: Attachment;
+    attachmentToBeUpdatedOrCreated = signal<Attachment | undefined>(undefined);
     attachmentBackup?: Attachment;
-    attachmentFile?: File;
+    attachmentFile = signal<File | undefined>(undefined);
     isDownloadingAttachmentLink?: string;
     notificationText?: string;
     erroredFile?: File;
@@ -52,6 +65,20 @@ export class LectureAttachmentsComponent implements OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     private routeDataSubscription?: Subscription;
+
+    form: FormGroup = this.formBuilder.group({
+        attachmentName: [undefined as string | undefined, [Validators.required]],
+        attachmentFileName: [undefined as string | undefined],
+        releaseDate: [undefined as dayjs.Dayjs | undefined],
+        notificationText: [undefined as string | undefined],
+    });
+
+    isFileSelectionValid = computed(() => {
+        return this.attachmentFile() || this.attachmentToBeUpdatedOrCreated()?.link;
+    });
+
+    private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
+    isFormValid = computed(() => this.statusChanges() === 'VALID' && this.isFileSelectionValid() && this.datePickerComponent()?.isValid());
 
     constructor() {
         effect(
@@ -92,43 +119,40 @@ export class LectureAttachmentsComponent implements OnDestroy {
         return attachmentLink.endsWith('.pdf') ?? false;
     }
 
-    get isSubmitPossible(): boolean {
-        return !!(this.attachmentToBeCreated?.name && (this.attachmentFile || this.attachmentToBeCreated?.link));
-    }
-
     addAttachment(): void {
         const newAttachment = new Attachment();
         newAttachment.lecture = this.lecture();
         newAttachment.attachmentType = AttachmentType.FILE;
         newAttachment.version = 0;
         newAttachment.uploadDate = dayjs();
-        this.attachmentToBeCreated = newAttachment;
+        this.attachmentToBeUpdatedOrCreated.set(newAttachment);
     }
 
     /**
      * If there is an attachment to save, it will be created or updated depending on its current state. The file will be automatically provided with the request.
      */
     saveAttachment(): void {
-        if (!this.attachmentToBeCreated) {
+        if (!this.attachmentToBeUpdatedOrCreated()) {
             return;
         }
-        this.attachmentToBeCreated.version!++;
-        this.attachmentToBeCreated.uploadDate = dayjs();
+        this.attachmentToBeUpdatedOrCreated()!.version!++;
+        this.attachmentToBeUpdatedOrCreated()!.uploadDate = dayjs();
+        this.attachmentToBeUpdatedOrCreated()!.name = this.form.value.attachmentName ?? undefined;
+        this.attachmentToBeUpdatedOrCreated()!.releaseDate = this.form.value.releaseDate ?? undefined;
+        this.notificationText = this.form.value.notificationText ?? undefined;
 
-        if (!this.attachmentFile && !this.attachmentToBeCreated.id) {
+        if (!this.attachmentFile() && !this.attachmentToBeUpdatedOrCreated()!.id) {
             return;
         }
 
-        if (this.attachmentToBeCreated.id) {
+        if (this.attachmentToBeUpdatedOrCreated()!.id) {
             const requestOptions = {} as any;
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
-            this.attachmentService.update(this.attachmentToBeCreated.id, this.attachmentToBeCreated, this.attachmentFile, requestOptions).subscribe({
+            this.attachmentService.update(this.attachmentToBeUpdatedOrCreated()!.id!, this.attachmentToBeUpdatedOrCreated()!, this.attachmentFile(), requestOptions).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
-                    this.attachmentFile = undefined;
-                    this.attachmentToBeCreated = undefined;
-                    this.attachmentBackup = undefined;
+                    this.resetAttachmentFormVariables();
                     this.notificationText = undefined;
                     this.attachments = this.attachments.map((el) => {
                         return el.id === attachmentRes.body!.id ? attachmentRes.body! : el;
@@ -137,32 +161,61 @@ export class LectureAttachmentsComponent implements OnDestroy {
                 error: (error: HttpErrorResponse) => this.handleFailedUpload(error),
             });
         } else {
-            this.attachmentService.create(this.attachmentToBeCreated!, this.attachmentFile!).subscribe({
+            this.attachmentService.create(this.attachmentToBeUpdatedOrCreated()!, this.attachmentFile()!).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
                     this.attachments.push(attachmentRes.body!);
                     this.lectureService.findWithDetails(this.lecture().id!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
                         this.lecture.set(lectureResponse.body!);
                     });
-                    this.attachmentFile = undefined;
-                    this.attachmentToBeCreated = undefined;
-                    this.attachmentBackup = undefined;
                     this.loadAttachments();
+                    this.resetAttachmentFormVariables();
                 },
                 error: (error: HttpErrorResponse) => this.handleFailedUpload(error),
             });
         }
     }
 
+    private clearFormValues(): void {
+        this.form.reset({
+            attachmentName: undefined,
+            attachmentFileName: undefined,
+            releaseDate: undefined,
+            notificationText: undefined,
+        });
+    }
+
+    private resetAttachmentFormVariables() {
+        this.attachmentFile.set(undefined);
+        this.attachmentToBeUpdatedOrCreated.set(undefined);
+        this.attachmentBackup = undefined;
+        this.clearFormValues();
+    }
+
     private handleFailedUpload(error: HttpErrorResponse): void {
         this.errorMessage = error.message;
-        this.erroredFile = this.attachmentFile;
+        this.erroredFile = this.attachmentFile();
         this.fileInput.nativeElement.value = '';
-        this.attachmentFile = undefined;
+        this.attachmentFile.set(undefined);
         this.resetAttachment();
     }
 
+    private setFormValues(formValues: LectureAttachmentFormData): void {
+        this.form.patchValue(formValues);
+    }
+
     editAttachment(attachment: Attachment): void {
-        this.attachmentToBeCreated = attachment;
+        if (this.fileInput) {
+            this.fileInput.nativeElement.value = '';
+        }
+
+        // attachmentFileName can only be set to an empty string due to security reasons in current angular version (18)
+        this.setFormValues({
+            attachmentName: attachment?.name,
+            releaseDate: dayjs(attachment?.releaseDate),
+            notificationText: this.notificationText,
+        });
+
+        this.attachmentToBeUpdatedOrCreated.set(attachment);
         this.attachmentBackup = Object.assign({}, attachment, {});
     }
 
@@ -180,8 +233,9 @@ export class LectureAttachmentsComponent implements OnDestroy {
         if (this.attachmentBackup) {
             this.resetAttachment();
         }
-        this.attachmentToBeCreated = undefined;
+        this.attachmentToBeUpdatedOrCreated.set(undefined);
         this.erroredFile = undefined;
+        this.resetAttachmentFormVariables();
     }
 
     resetAttachment(): void {
@@ -217,12 +271,20 @@ export class LectureAttachmentsComponent implements OnDestroy {
         if (!input.files?.length) {
             return;
         }
-        const attachmentFile = input.files[0];
-        this.attachmentFile = attachmentFile;
-        this.attachmentToBeCreated!.link = attachmentFile.name;
-        // automatically set the name in case it is not yet specified
-        if (this.attachmentToBeCreated!.name == undefined || this.attachmentToBeCreated!.name == '') {
-            this.attachmentToBeCreated!.name = this.attachmentFile.name.replace(/\.[^/.]+$/, '');
+        const file = input.files[0];
+        this.attachmentFile.set(file);
+        this.attachmentToBeUpdatedOrCreated()!.link = file.name;
+
+        this.attachmentToBeUpdatedOrCreated()!.name = this.form.value.attachmentName ?? undefined;
+        if (!this.attachmentToBeUpdatedOrCreated()!.name) {
+            const derivedFileName = this.determineAttachmentNameBasedOnFileName(file.name);
+            this.attachmentToBeUpdatedOrCreated()!.name = derivedFileName;
+            this.form.patchValue({ attachmentName: derivedFileName });
         }
+    }
+
+    private determineAttachmentNameBasedOnFileName(fileName: string): string {
+        const FILE_EXTENSION_REGEX = /\.[^/.]+$/;
+        return fileName.replace(FILE_EXTENSION_REGEX, '');
     }
 }
