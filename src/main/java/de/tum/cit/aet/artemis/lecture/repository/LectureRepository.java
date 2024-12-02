@@ -31,6 +31,13 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
+            WHERE lecture.course.id = :courseId
+            """)
+    Set<Lecture> findAllByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
                 LEFT JOIN FETCH lecture.attachments
             WHERE lecture.course.id = :courseId
             """)
@@ -84,6 +91,14 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithLectureUnitsAndCompetencies(@Param("lectureId") Long lectureId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.lectureUnits
+            WHERE lecture.id = :lectureId
+            """)
+    Optional<Lecture> findByIdWithLectureUnits(@Param("lectureId") Long lectureId);
 
     @Query("""
             SELECT lecture
@@ -164,6 +179,11 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             """)
     @Cacheable(cacheNames = "lectureTitle", key = "#lectureId", unless = "#result == null")
     String getLectureTitle(@Param("lectureId") Long lectureId);
+
+    @NotNull
+    default Lecture findByIdWithLectureUnitsElseThrow(Long lectureId) {
+        return getValueElseThrow(findByIdWithLectureUnits(lectureId), lectureId);
+    }
 
     @NotNull
     default Lecture findByIdWithLectureUnitsAndCompetenciesElseThrow(Long lectureId) {

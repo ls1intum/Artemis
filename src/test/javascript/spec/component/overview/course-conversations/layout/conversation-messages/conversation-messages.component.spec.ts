@@ -162,12 +162,12 @@ examples.forEach((activeConversation) => {
             const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage').mockImplementation(() => {});
             const existingScrollPosition = 1;
 
-            component.goToLastSelectedElement(existingScrollPosition);
+            component.goToLastSelectedElement(existingScrollPosition, false);
             tick();
             expect(fetchNextPageSpy).not.toHaveBeenCalled();
 
             const nonExistingScrollPosition = 999;
-            component.goToLastSelectedElement(nonExistingScrollPosition);
+            component.goToLastSelectedElement(nonExistingScrollPosition, false);
             tick();
 
             expect(fetchNextPageSpy).toHaveBeenCalled();

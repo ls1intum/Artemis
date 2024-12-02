@@ -1,5 +1,5 @@
 <div>
-    <h1><span jhiTranslate="artemisApp.lecture.wizardMode.steps.unitsStepTitle"></span></h1>
+    <h2><span jhiTranslate="artemisApp.lecture.wizardMode.steps.unitsStepTitle"></span></h2>
     <p><span jhiTranslate="artemisApp.lecture.wizardMode.steps.unitsStepMessage"></span></p>
     <jhi-lecture-unit-management
         [lectureId]="this.lecture.id"
@@ -12,16 +12,14 @@
         <div class="form-group w-100 d-flex justify-content-start">
             <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)" />
         </div>
-    }
-    @if (isAnyUnitFormOpen()) {
+    } @else {
         <div class="form-group">
             @if (!isEditingLectureUnit) {
                 <h4><span jhiTranslate="artemisApp.lecture.wizardMode.newLectureUnit"></span></h4>
-            }
-            @if (isEditingLectureUnit) {
+            } @else {
                 <h4><span jhiTranslate="artemisApp.lecture.wizardMode.editLectureUnit"></span></h4>
             }
-            @if (isTextUnitFormOpen) {
+            @if (isTextUnitFormOpen()) {
                 <jhi-text-unit-form
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
@@ -30,7 +28,7 @@
                     [formData]="textUnitFormData"
                 />
             }
-            @if (isVideoUnitFormOpen) {
+            @if (isVideoUnitFormOpen()) {
                 <jhi-video-unit-form
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
@@ -39,7 +37,7 @@
                     [formData]="videoUnitFormData"
                 />
             }
-            @if (isOnlineUnitFormOpen) {
+            @if (isOnlineUnitFormOpen()) {
                 <jhi-online-unit-form
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
@@ -48,7 +46,7 @@
                     [formData]="onlineUnitFormData"
                 />
             }
-            @if (isAttachmentUnitFormOpen) {
+            @if (isAttachmentUnitFormOpen()) {
                 <jhi-attachment-unit-form
                     [isEditMode]="isEditingLectureUnit"
                     [hasCancelButton]="true"
@@ -57,7 +55,7 @@
                     [formData]="attachmentUnitFormData"
                 />
             }
-            @if (isExerciseUnitFormOpen) {
+            @if (isExerciseUnitFormOpen()) {
                 <jhi-create-exercise-unit
                     [shouldNavigateOnSubmit]="false"
                     (onExerciseUnitCreated)="onExerciseUnitCreated()"

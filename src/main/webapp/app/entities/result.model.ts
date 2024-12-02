@@ -30,6 +30,9 @@ export class Result implements BaseEntity {
     public submission?: Submission;
     public assessor?: User;
     public feedbacks?: Feedback[];
+    /**
+     * @deprecated This property will be removed in Artemis 8.0. Use `submission.participation` instead.
+     */
     public participation?: Participation;
 
     // helper attributes

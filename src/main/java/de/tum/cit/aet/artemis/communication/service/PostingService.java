@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Posting;
+import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -53,6 +55,8 @@ public abstract class PostingService {
 
     protected final LectureRepository lectureRepository;
 
+    protected final SavedPostRepository savedPostRepository;
+
     protected final ConversationParticipantRepository conversationParticipantRepository;
 
     protected final AuthorizationCheckService authorizationCheckService;
@@ -65,7 +69,7 @@ public abstract class PostingService {
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
-            ConversationParticipantRepository conversationParticipantRepository) {
+            ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -73,6 +77,28 @@ public abstract class PostingService {
         this.authorizationCheckService = authorizationCheckService;
         this.websocketMessagingService = websocketMessagingService;
         this.conversationParticipantRepository = conversationParticipantRepository;
+        this.savedPostRepository = savedPostRepository;
+    }
+
+    /**
+     * Helper method to prepare the post included in the websocket message and initiate the broadcasting
+     *
+     * @param post post that should be broadcast
+     */
+    public void preparePostForBroadcast(Post post) {
+        try {
+            var user = userRepository.getUser();
+            var savedPostIds = savedPostRepository.findSavedPostIdsByUserIdAndPostType(user.getId(), PostingType.POST);
+            post.setIsSaved(savedPostIds.contains(post.getId()));
+            var savedAnswerIds = savedPostRepository.findSavedPostIdsByUserIdAndPostType(user.getId(), PostingType.ANSWER);
+            post.getAnswers().forEach(answer -> answer.setIsSaved(savedAnswerIds.contains(answer.getId())));
+        }
+        catch (Exception e) {
+            post.setIsSaved(false);
+            post.getAnswers().forEach(answer -> {
+                answer.setIsSaved(false);
+            });
+        }
     }
 
     /**
@@ -89,6 +115,7 @@ public abstract class PostingService {
         // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
+        preparePostForBroadcast(updatedPost);
         broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE, notification), course.getId(), null, null);
     }
 
