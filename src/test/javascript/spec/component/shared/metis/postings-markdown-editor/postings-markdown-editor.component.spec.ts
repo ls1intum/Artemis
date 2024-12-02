@@ -566,4 +566,15 @@ describe('PostingsMarkdownEditor', () => {
 
         expect(handleActionClickSpy).toHaveBeenCalledWith(expect.any(MouseEvent), bulletedListAction);
     });
+
+    it('should handle invalid line content gracefully', () => {
+        const mockModel = {
+            getLineContent: jest.fn().mockReturnValue(''),
+        } as unknown as monaco.editor.ITextModel;
+        const mockPosition = { lineNumber: 1 } as monaco.Position;
+        const handleActionClickSpy = jest.spyOn(component.markdownEditor, 'handleActionClick');
+
+        (component as any).handleKeyDown(mockModel, mockPosition.lineNumber);
+        expect(handleActionClickSpy).not.toHaveBeenCalled();
+    });
 });

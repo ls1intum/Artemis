@@ -126,7 +126,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
         const editor = this.markdownEditor.monacoEditor;
         if (editor) {
-            editor.onDidChangeModelContent((event: { changes: string | any[] }) => {
+            editor.onDidChangeModelContent((event: monaco.editor.IModelContentChangedEvent) => {
                 const position = editor.getPosition();
                 if (!position) {
                     return;

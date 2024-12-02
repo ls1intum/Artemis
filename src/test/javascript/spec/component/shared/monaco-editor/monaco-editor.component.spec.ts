@@ -313,4 +313,18 @@ describe('MonacoEditorComponent', () => {
         const lineContent = comp.getLineContent(2);
         expect(lineContent).toBe('static void main() {');
     });
+
+    it('should handle invalid line numbers in getLineContent', () => {
+        fixture.detectChanges();
+        comp.setText(multiLineText);
+
+        // Invalid line numbers
+        expect(() => comp.getLineContent(0)).toThrow();
+        expect(() => comp.getLineContent(-1)).toThrow();
+        expect(() => comp.getLineContent(999)).toThrow();
+
+        // Empty line
+        comp.setText('line1\n\nline3');
+        expect(comp.getLineContent(2)).toBe('');
+    });
 });
