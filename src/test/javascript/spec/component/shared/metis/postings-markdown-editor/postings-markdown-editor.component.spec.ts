@@ -142,8 +142,6 @@ describe('PostingsMarkdownEditor', () => {
                 findLectureWithDetailsSpy.mockReturnValue(returnValue);
                 fixture.autoDetectChanges();
                 mockMarkdownEditorComponent = fixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
-                mockMarkdownEditorComponent.monacoEditor.getPosition = jest.fn();
-                mockMarkdownEditorComponent.monacoEditor.getModel = jest.fn();
                 component.ngOnInit();
                 component.content = metisPostExerciseUser1.content;
 
