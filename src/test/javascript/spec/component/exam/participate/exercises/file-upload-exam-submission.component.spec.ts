@@ -76,7 +76,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         it('should show static text in header', () => {
             fixture.componentRef.setInput('examTimeline', false);
             fixture.detectChanges();
-            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === 'artemisApp.exam.yourSolution');
+            const el = fixture.debugElement.query(By.css('.exercise-title'));
             expect(el).not.toBeNull();
         });
 

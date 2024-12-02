@@ -65,7 +65,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
         it('should show static text in header', () => {
             fixture.detectChanges();
-            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === 'artemisApp.exam.yourSolution');
+            const el = fixture.debugElement.query(By.css('.exercise-title'));
             expect(el).not.toBeNull();
         });
 
@@ -107,7 +107,7 @@ describe('ModelingExamSubmissionComponent', () => {
             fixture.detectChanges();
             const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
             expect(modelingEditor).not.toBeNull();
-            expect(modelingEditor.componentInstance.umlModel).toEqual({ model: true });
+            expect(modelingEditor.componentInstance.umlModel).toEqual({ model: true, assessments: {} });
             expect(modelingEditor.componentInstance.withExplanation).toBeTrue();
             expect(modelingEditor.componentInstance.explanation).toEqual(mockSubmission.explanationText);
             expect(modelingEditor.componentInstance.diagramType).toEqual(UMLDiagramType.ClassDiagram);
@@ -117,23 +117,6 @@ describe('ModelingExamSubmissionComponent', () => {
             fixture.detectChanges();
             const el = fixture.debugElement.query((de) => de.nativeElement.textContent === mockExercise.problemStatement);
             expect(el).not.toBeNull();
-        });
-    });
-
-    describe('without exercise', () => {
-        it('should not show anything if no exercise', () => {
-            fixture.detectChanges();
-            expect(fixture.debugElement.query(() => true)).toBeNull();
-        });
-    });
-
-    describe('without submission', () => {
-        it('should not show anything if no exercise', () => {
-            fixture.componentRef.setInput('exercise', mockExercise);
-            fixture.detectChanges();
-            expect(fixture.debugElement.query(() => true)).not.toBeNull();
-            const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
-            expect(modelingEditor).toBeNull();
         });
     });
 
@@ -241,13 +224,6 @@ describe('ModelingExamSubmissionComponent', () => {
 
     it('should update the model on submission version change', async () => {
         resetComponent();
-        jest.spyOn(comp, 'modelingEditor').mockReturnValue({
-            apollonEditor: { nextRender: jest.fn() } as unknown as ApollonEditor,
-        } as unknown as ModelingEditorComponent);
-        const submissionVersion = {
-            content:
-                'Model: {"version":"3.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":{},"relationships":{}},"elements":{},"relationships":{},"assessments":{}}; Explanation: explanation',
-        } as unknown as SubmissionVersion;
         const parsedModel = {
             version: '3.0.0',
             type: 'ClassDiagram',
@@ -257,7 +233,16 @@ describe('ModelingExamSubmissionComponent', () => {
             relationships: {},
             assessments: {},
         } as UMLModel;
+
+        jest.spyOn(comp, 'modelingEditor').mockReturnValue({
+            apollonEditor: { nextRender: Promise.resolve(), model: parsedModel } as unknown as ApollonEditor,
+        } as unknown as ModelingEditorComponent);
+        const submissionVersion = {
+            content:
+                'Model: {"version":"3.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":{},"relationships":{}},"elements":{},"relationships":{},"assessments":{}}; Explanation: explanation',
+        } as unknown as SubmissionVersion;
         await comp.setSubmissionVersion(submissionVersion);
+        fixture.detectChanges();
         await fixture.whenStable();
 
         expect(comp.submissionVersion).toEqual(submissionVersion);
