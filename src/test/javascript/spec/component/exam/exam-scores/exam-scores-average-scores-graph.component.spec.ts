@@ -96,13 +96,9 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
     });
 
     const adaptExpectedData = (averagePoints: number, newColor: string, expectedColorDomain: string[], expectedData: NgxChartsSingleSeriesDataEntry[]) => {
-        const updatedAverageScores = {
-            ...component.averageScores(),
-            averagePoints: averagePoints,
-            averagePercentage: averagePoints * 10,
-        };
+        component.averageScores().averagePoints = averagePoints;
+        component.averageScores().averagePercentage = averagePoints * 10;
 
-        fixture.componentRef.setInput('averageScores', updatedAverageScores);
         expectedColorDomain[0] = newColor;
         expectedData[0].value = averagePoints * 10;
         component.ngxColor.domain = [];
