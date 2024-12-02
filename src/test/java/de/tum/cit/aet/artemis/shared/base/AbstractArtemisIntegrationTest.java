@@ -172,7 +172,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @MockitoSpyBean
     protected CompetencyProgressService competencyProgressService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
 
     @Autowired
