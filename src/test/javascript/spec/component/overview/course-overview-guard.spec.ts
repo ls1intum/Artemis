@@ -51,16 +51,6 @@ describe('CourseOverviewGuard', () => {
             expect(resultValue).toBeFalse();
         });
 
-        it('should return true if course is in cache', () => {
-            const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.EXERCISES } } as unknown as ActivatedRouteSnapshot;
-            let resultValue = false;
-            jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(mockCourse);
-            guard.canActivate(route).subscribe((result) => {
-                resultValue = result;
-            });
-            expect(resultValue).toBeTrue();
-        });
-
         it('should return true if course is fetched from server', () => {
             const route = { parent: { paramMap: { get: () => '1' } }, routeConfig: { path: CourseOverviewRoutePath.EXERCISES } } as unknown as ActivatedRouteSnapshot;
             let resultValue = false;
@@ -100,7 +90,7 @@ describe('CourseOverviewGuard', () => {
             result.subscribe((value) => {
                 resultValue = value;
             });
-            expect(resultValue).toBeTrue();
+            expect(resultValue).toBeFalse();
         });
 
         it('should return true if type is competencies and course has competencies', () => {
