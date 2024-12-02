@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { By } from '@angular/platform-browser';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -23,8 +23,8 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
-import { UrlAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/url.action';
-import { AttachmentAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/attachment.action';
+import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
+import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
@@ -34,8 +34,9 @@ import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/
 import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
-import { ListAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/list.action';
-import { StrikethroughAction } from '../../../../../../../main/webapp/app/shared/monaco-editor/model/actions/strikethrough.action';
+import { ListAction } from 'app/shared/monaco-editor/model/actions/list.action';
+import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -115,6 +116,7 @@ describe('PostingsMarkdownEditor', () => {
         mockOverlayRef.attach.mockReturnValue(mockComponentRef);
 
         return TestBed.configureTestingModule({
+            imports: [MockModule(ArtemisMarkdownEditorModule)],
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
                 MockProvider(LectureService),

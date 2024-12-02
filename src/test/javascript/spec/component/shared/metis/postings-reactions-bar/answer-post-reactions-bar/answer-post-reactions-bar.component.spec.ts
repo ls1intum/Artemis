@@ -27,10 +27,12 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../../helpers/mocks/service/mock-notification.service';
 import { provideHttpClient } from '@angular/common/http';
-import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { getElement } from '../../../../../helpers/utils/general.utils';
 import { DebugElement } from '@angular/core';
 import { UserRole } from 'app/shared/metis/metis.util';
+import { ReactiveFormsModule } from '@angular/forms';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisConfirmIconModule } from 'app/shared/confirm-icon/confirm-icon.module';
 
 describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
@@ -47,15 +49,16 @@ describe('AnswerPostReactionsBarComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule), MockModule(NgbTooltipModule)],
-            declarations: [
-                AnswerPostReactionsBarComponent,
-                TranslatePipeMock,
-                MockPipe(ReactingUsersOnPostingPipe),
-                MockComponent(FaIconComponent),
-                MockComponent(EmojiComponent),
-                MockComponent(ConfirmIconComponent),
+            imports: [
+                MockModule(OverlayModule),
+                MockModule(EmojiModule),
+                MockModule(PickerModule),
+                MockModule(NgbTooltipModule),
+                MockModule(ReactiveFormsModule),
+                MockModule(ArtemisSharedCommonModule),
+                MockModule(ArtemisConfirmIconModule),
             ],
+            declarations: [AnswerPostReactionsBarComponent, TranslatePipeMock, MockPipe(ReactingUsersOnPostingPipe), MockComponent(FaIconComponent), MockComponent(EmojiComponent)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

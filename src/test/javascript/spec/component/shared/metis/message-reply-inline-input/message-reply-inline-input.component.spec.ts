@@ -11,6 +11,7 @@ import { throwError } from 'rxjs';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { provideHttpClient } from '@angular/common/http';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 describe('MessageReplyInlineInputComponent', () => {
     let component: MessageReplyInlineInputComponent;
@@ -21,7 +22,7 @@ describe('MessageReplyInlineInputComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(ArtemisSharedCommonModule)],
             declarations: [MessageReplyInlineInputComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 provideHttpClient(),

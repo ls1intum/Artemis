@@ -18,6 +18,7 @@ import { metisCourse, metisExercise, metisPostLectureUser1, metisPostTechSupport
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { provideHttpClient } from '@angular/common/http';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;
@@ -31,7 +32,7 @@ describe('PostCreateEditModalComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(ArtemisSharedComponentModule)],
             declarations: [
                 PostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),
