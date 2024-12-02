@@ -5,7 +5,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
-import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header/post-header.component';
+import { PostingHeaderComponent } from '../../../../../../../main/webapp/app/shared/metis/posting-header/post-header/posting-header.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -69,7 +69,7 @@ describe('PostComponent', () => {
                 PostComponent,
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockPipe(HtmlForMarkdownPipe),
-                MockComponent(PostHeaderComponent),
+                MockComponent(PostingHeaderComponent),
                 MockComponent(PostingContentComponent),
                 MockComponent(PostFooterComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),

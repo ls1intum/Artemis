@@ -1,18 +1,4 @@
-import {
-    AfterContentChecked,
-    ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    Input,
-    OnChanges,
-    OnDestroy,
-    OnInit,
-    Output,
-    SimpleChanges,
-    ViewChild,
-    ViewContainerRef,
-} from '@angular/core';
-import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
+import { AfterContentChecked, ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, ViewContainerRef, inject, input, output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -20,6 +6,7 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-cre
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
+import { Posting } from 'app/entities/metis/posting.model';
 
 interface PostGroup {
     author: User | undefined;
@@ -31,19 +18,22 @@ interface PostGroup {
     templateUrl: './post-footer.component.html',
     styleUrls: ['./post-footer.component.scss'],
 })
-export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
-    @Input() lastReadDate?: dayjs.Dayjs;
-    @Input() readOnlyMode = false;
-    @Input() previewMode = false;
-    @Input() modalRef?: NgbModalRef;
-    @Input() hasChannelModerationRights = false;
-    @Input() showAnswers = false;
-    @Input() isCommunicationPage = false;
-    @Input() sortedAnswerPosts: AnswerPost[] = [];
+export class PostFooterComponent implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
+    lastReadDate = input<dayjs.Dayjs | undefined>();
+    readOnlyMode = input<boolean>(false);
+    previewMode = input<boolean>(false);
+    modalRef = input<NgbModalRef | undefined>();
+    hasChannelModerationRights = input<boolean>(false);
+    showAnswers = input<boolean>(false);
+    isCommunicationPage = input<boolean>(false);
+    sortedAnswerPosts = input<AnswerPost[]>([]);
+    isThreadSidebar = input<boolean>(false);
+    posting = input<Posting>();
 
-    @Output() openThread = new EventEmitter<void>();
-    @Output() userReferenceClicked = new EventEmitter<string>();
-    @Output() channelReferenceClicked = new EventEmitter<number>();
+    // Output Signals
+    openThread = output<void>();
+    userReferenceClicked = output<string>();
+    channelReferenceClicked = output<number>();
 
     @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef!: ViewContainerRef;
@@ -54,12 +44,8 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     courseId!: number;
     groupedAnswerPosts: PostGroup[] = [];
 
-    constructor(
-        private metisService: MetisService,
-        protected changeDetector: ChangeDetectorRef,
-    ) {
-        super();
-    }
+    protected metisService: MetisService = inject(MetisService);
+    protected changeDetector: ChangeDetectorRef = inject(ChangeDetectorRef);
 
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;
@@ -94,18 +80,18 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     createEmptyAnswerPost(): AnswerPost {
         const answerPost = new AnswerPost();
         answerPost.content = '';
-        answerPost.post = this.posting;
+        answerPost.post = this.posting();
         answerPost.resolvesPost = this.isAtLeastTutorInCourse;
         return answerPost;
     }
 
     groupAnswerPosts(): void {
-        if (!this.sortedAnswerPosts || this.sortedAnswerPosts.length === 0) {
+        if (!this.sortedAnswerPosts() || this.sortedAnswerPosts().length === 0) {
             this.groupedAnswerPosts = [];
             return;
         }
 
-        this.sortedAnswerPosts = this.sortedAnswerPosts
+        const sortedAnswerPosts = this.sortedAnswerPosts()
             .slice()
             .reverse()
             .map((post) => {
@@ -113,7 +99,7 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
                 return post;
             });
 
-        const sortedPosts = this.sortedAnswerPosts.sort((a, b) => {
+        const sortedPosts = sortedAnswerPosts.sort((a, b) => {
             const aDate = (a as any).creationDateDayjs;
             const bDate = (b as any).creationDateDayjs;
             return aDate?.valueOf() - bDate?.valueOf();

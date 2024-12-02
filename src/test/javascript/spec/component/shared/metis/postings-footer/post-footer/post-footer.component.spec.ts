@@ -17,6 +17,8 @@ import { MockMetisService } from '../../../../../helpers/mocks/service/mock-meti
 import { metisPostExerciseUser1, post, unsortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { User } from 'app/core/user/user.model';
+import { Injector, input, runInInjectionContext } from '@angular/core';
+import { Posting } from 'app/entities/metis/posting.model';
 
 interface PostGroup {
     author: User | undefined;
@@ -28,6 +30,7 @@ describe('PostFooterComponent', () => {
     let fixture: ComponentFixture<PostFooterComponent>;
     let metisService: MetisService;
     let metisServiceUserAuthorityStub: jest.SpyInstance;
+    let injector: Injector;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -53,6 +56,7 @@ describe('PostFooterComponent', () => {
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
                 metisServiceUserAuthorityStub = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
+                injector = fixture.debugElement.injector;
             });
     });
 
@@ -61,27 +65,33 @@ describe('PostFooterComponent', () => {
     });
 
     it('should be initialized correctly for users that are at least tutors in course', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
-        metisServiceUserAuthorityStub.mockReturnValue(true);
-        component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).toBeTrue();
-        expect(component.createdAnswerPost.resolvesPost).toBeTrue();
+        runInInjectionContext(injector, () => {
+            post.answers = unsortedAnswerArray;
+            component.posting = input<Posting>(post);
+            metisServiceUserAuthorityStub.mockReturnValue(true);
+            component.ngOnInit();
+            expect(component.isAtLeastTutorInCourse).toBeTrue();
+            expect(component.createdAnswerPost.resolvesPost).toBeTrue();
+        });
     });
 
     it('should group answer posts correctly', () => {
-        component.sortedAnswerPosts = unsortedAnswerArray;
-        component.groupAnswerPosts();
-        expect(component.groupedAnswerPosts.length).toBeGreaterThan(0); // Ensure groups are created
-        expect(component.groupedAnswerPosts[0].posts.length).toBeGreaterThan(0); // Ensure posts exist in groups
+        runInInjectionContext(injector, () => {
+            component.sortedAnswerPosts = input<AnswerPost[]>(unsortedAnswerArray);
+            component.groupAnswerPosts();
+            expect(component.groupedAnswerPosts.length).toBeGreaterThan(0); // Ensure groups are created
+            expect(component.groupedAnswerPosts[0].posts.length).toBeGreaterThan(0); // Ensure posts exist in groups
+        });
     });
 
     it('should group answer posts and detect changes on changes to sortedAnswerPosts input', () => {
-        const changeDetectorSpy = jest.spyOn(component['changeDetector'], 'detectChanges');
-        component.sortedAnswerPosts = unsortedAnswerArray;
-        component.ngOnChanges({ sortedAnswerPosts: { currentValue: unsortedAnswerArray, previousValue: [], firstChange: true, isFirstChange: () => true } });
-        expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
-        expect(changeDetectorSpy).toHaveBeenCalled();
+        runInInjectionContext(injector, () => {
+            component.sortedAnswerPosts = input<AnswerPost[]>(unsortedAnswerArray);
+            const changeDetectorSpy = jest.spyOn(component['changeDetector'], 'detectChanges');
+            component.ngOnChanges({ sortedAnswerPosts: { currentValue: unsortedAnswerArray, previousValue: [], firstChange: true, isFirstChange: () => true } });
+            expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
+            expect(changeDetectorSpy).toHaveBeenCalled();
+        });
     });
 
     it('should clear answerPostCreateEditModal container on destroy', () => {
@@ -135,29 +145,35 @@ describe('PostFooterComponent', () => {
     });
 
     it('should be initialized correctly for users that are not at least tutors in course', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
-        metisServiceUserAuthorityStub.mockReturnValue(false);
-        component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).toBeFalse();
-        expect(component.createdAnswerPost.resolvesPost).toBeFalse();
+        runInInjectionContext(injector, () => {
+            component.posting = input<Posting>(post);
+            component.posting.answers = unsortedAnswerArray;
+            metisServiceUserAuthorityStub.mockReturnValue(false);
+            component.ngOnInit();
+            expect(component.isAtLeastTutorInCourse).toBeFalse();
+            expect(component.createdAnswerPost.resolvesPost).toBeFalse();
+        });
     });
 
     it('should open create answer post modal', () => {
-        component.posting = metisPostExerciseUser1;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const createAnswerPostModalOpen = jest.spyOn(component.createAnswerPostModalComponent, 'open');
-        component.openCreateAnswerPostModal();
-        expect(createAnswerPostModalOpen).toHaveBeenCalledOnce();
+        runInInjectionContext(injector, () => {
+            component.posting = input<Posting>(metisPostExerciseUser1);
+            component.ngOnInit();
+            fixture.detectChanges();
+            const createAnswerPostModalOpen = jest.spyOn(component.createAnswerPostModalComponent, 'open');
+            component.openCreateAnswerPostModal();
+            expect(createAnswerPostModalOpen).toHaveBeenCalledOnce();
+        });
     });
 
     it('should close create answer post modal', () => {
-        component.posting = metisPostExerciseUser1;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const createAnswerPostModalClose = jest.spyOn(component.createAnswerPostModalComponent, 'close');
-        component.closeCreateAnswerPostModal();
-        expect(createAnswerPostModalClose).toHaveBeenCalledOnce();
+        runInInjectionContext(injector, () => {
+            component.posting = input<Posting>(metisPostExerciseUser1);
+            component.ngOnInit();
+            fixture.detectChanges();
+            const createAnswerPostModalClose = jest.spyOn(component.createAnswerPostModalComponent, 'close');
+            component.closeCreateAnswerPostModal();
+            expect(createAnswerPostModalClose).toHaveBeenCalledOnce();
+        });
     });
 });

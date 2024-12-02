@@ -1,4 +1,4 @@
-@if (showAnswers) {
+@if (showAnswers()) {
     <div class="d-flex align-items-center mt-2">
         <div class="fs-x-small fw-900 me-2">
             {{
@@ -15,17 +15,17 @@
         @for (group of groupedAnswerPosts; track trackGroupByFn($index, group)) {
             @for (answerPost of group.posts; track trackPostByFn($index, answerPost)) {
                 <jhi-answer-post
-                    [lastReadDate]="lastReadDate"
-                    [isReadOnlyMode]="readOnlyMode"
+                    [lastReadDate]="lastReadDate()"
+                    [isReadOnlyMode]="readOnlyMode()"
                     [posting]="answerPost"
                     [isConsecutive]="answerPost.isConsecutive || false"
                     [isLastAnswer]="isLastPost(group, answerPost)"
-                    [isCommunicationPage]="isCommunicationPage"
-                    [isThreadSidebar]="isThreadSidebar"
+                    [isCommunicationPage]="isCommunicationPage()"
+                    [isThreadSidebar]="isThreadSidebar()"
                     (openPostingCreateEditModal)="createAnswerPostModal.open()"
                     (userReferenceClicked)="userReferenceClicked.emit($event)"
                     (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-                    [hasChannelModerationRights]="hasChannelModerationRights"
+                    [hasChannelModerationRights]="hasChannelModerationRights()"
                 />
             }
         }
@@ -38,6 +38,6 @@
         #createAnswerPostModal
         [posting]="createdAnswerPost"
         [createEditAnswerPostContainerRef]="containerRef"
-        (onCreate)="createdAnswerPost = createEmptyAnswerPost(); showAnswers = true"
+        (onCreate)="createdAnswerPost = createEmptyAnswerPost(); showAnswers()"
     />
 </div>
