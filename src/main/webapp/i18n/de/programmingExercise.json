@@ -382,7 +382,7 @@
                         "repository": "Repository",
                         "totalItems": "Insgesamt {{count}} Element(e)",
                         "error": "Beim Laden der betroffenen Studierenden ist ein Fehler aufgetreten.",
-                        "levenshteinInfoTitle": "Feedback gruppieren aktiviert",
+                        "levenshteinInfoTitle": "Feedback Gruppierung aktiviert",
                         "levenshteinInfoDescription": "Die Anzahl der von dem gruppierten Feedback betroffenen Studierenden könnte höher sein, da nur die betroffenen Studierenden für bis zu fünf Feedbackdetails überprüft werden. Mehr Feedbackdetails einzubeziehen ist für die Analyse eines gemeinsamen gruppierten Feedbacks nicht notwendig und könnte zu Leistungseinbußen führen."
                     },
                     "feedbackDetailChannel": {
@@ -407,7 +407,7 @@
                         "regexValidationErrorName": "Namen können nur Kleinbuchstaben, Zahlen und Striche enthalten. Nur Artemis kann Kanäle erstellen, die mit $ beginnen.",
                         "requiredValidationErrorDescription": "Die Kanalbeschreibung ist ein Pflichtfeld.",
                         "maxLengthValidationErrorDescription": "Kanalbeschreibung kann max {{ max }} Zeichen lang sein!",
-                        "levenshteinInfoTitle": "Feedback gruppieren aktiviert",
+                        "levenshteinInfoTitle": "Feedback Gruppierung aktiviert",
                         "levenshteinInfoDescription": "Die Anzahl der zum Kanal hinzugefügten Studierenden stellt eine Obergrenze dar. Die tatsächliche Anzahl könnte geringer sein, da mehrere Studierende für einen einzelnen Testfall ähnliches Feedback erhalten könnten.",
                         "confirmationModal": {
                             "header": "Kanal Erstellen bestätigen",

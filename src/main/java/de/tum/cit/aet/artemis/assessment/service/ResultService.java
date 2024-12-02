@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -626,7 +626,7 @@ public class ResultService {
         List<FeedbackDetailDTO> processedDetails;
         int totalPages = 0;
         long levenshteinMaxCount = 0;
-        if (levenshtein.equals("false")) {
+        if (!Boolean.parseBoolean(levenshtein)) {
             feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
                     StringUtils.isBlank(data.getSearchTerm()) ? "" : data.getSearchTerm().toLowerCase(), data.getFilterTestCases(), includeUnassignedTasks, minOccurrence,
                     maxOccurrence, filterErrorCategories, pageable);
@@ -645,7 +645,7 @@ public class ResultService {
             List<FeedbackDetailDTO> allFeedbackDetails = feedbackDetailPage.getContent();
 
             // Apply Levenshtein-based grouping and aggregation with a similarity threshold of 90%
-            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingLevenshtein(allFeedbackDetails, 0.9);
+            List<FeedbackDetailDTO> aggregatedFeedbackDetails = aggregateUsingLevenshtein(allFeedbackDetails, 0.5);
 
             levenshteinMaxCount = aggregatedFeedbackDetails.stream().mapToLong(FeedbackDetailDTO::count).max().orElse(0);
             // Apply manual pagination
@@ -682,43 +682,36 @@ public class ResultService {
     }
 
     private List<FeedbackDetailDTO> aggregateUsingLevenshtein(List<FeedbackDetailDTO> feedbackDetails, double similarityThreshold) {
+        // Group by testCaseName and taskName using nested maps
+        Map<String, Map<String, List<FeedbackDetailDTO>>> groupedByKeys = feedbackDetails.stream()
+                .collect(Collectors.groupingBy(FeedbackDetailDTO::testCaseName, Collectors.groupingBy(FeedbackDetailDTO::taskName)));
+
         List<FeedbackDetailDTO> aggregatedList = new ArrayList<>();
-        Set<Integer> processedIndices = new HashSet<>();
 
-        for (int i = 0; i < feedbackDetails.size(); i++) {
-            if (processedIndices.contains(i)) {
-                continue; // Skip already aggregated feedback
-            }
+        // Iterate through the grouped data
+        groupedByKeys.forEach((testCaseName, taskMap) -> {
+            taskMap.forEach((taskName, feedbackGroup) -> {
+                List<FeedbackDetailDTO> unprocessed = new ArrayList<>(feedbackGroup);
+                while (!unprocessed.isEmpty()) {
+                    FeedbackDetailDTO base = unprocessed.removeFirst();
+                    List<String> aggregatedTexts = new ArrayList<>(base.detailText());
+                    long totalCount = base.count();
 
-            FeedbackDetailDTO base = feedbackDetails.get(i);
-            List<String> aggregatedTexts = new ArrayList<>();
-            aggregatedTexts.add(base.detailText().getFirst());
-            long totalCount = base.count();
-
-            for (int j = i + 1; j < feedbackDetails.size(); j++) {
-                if (processedIndices.contains(j)) {
-                    continue;
-                }
-
-                FeedbackDetailDTO compare = feedbackDetails.get(j);
-
-                // Ensure feedbacks have the same testCaseName and taskName
-                if (base.testCaseName().equals(compare.testCaseName()) && base.taskName().equals(compare.taskName())) {
-                    double similarity = NameSimilarity.levenshteinSimilarity(base.detailText().getFirst(), compare.detailText().getFirst());
-
-                    if (similarity > similarityThreshold) {
-                        // Merge the feedbacks
-                        aggregatedTexts.add(compare.detailText().getFirst());
-                        totalCount += compare.count();
-                        processedIndices.add(j);
+                    Iterator<FeedbackDetailDTO> iterator = unprocessed.iterator();
+                    while (iterator.hasNext()) {
+                        FeedbackDetailDTO compare = iterator.next();
+                        double similarity = NameSimilarity.levenshteinSimilarity(base.detailText().get(0), compare.detailText().get(0));
+                        if (similarity > similarityThreshold) {
+                            aggregatedTexts.add(compare.detailText().get(0));
+                            totalCount += compare.count();
+                            iterator.remove(); // Remove processed entry
+                        }
                     }
-                }
-            }
 
-            // Add aggregated feedback entry
-            aggregatedList.add(new FeedbackDetailDTO(totalCount, 0, aggregatedTexts, base.testCaseName(), base.taskName(), base.errorCategory()));
-            processedIndices.add(i);
-        }
+                    aggregatedList.add(new FeedbackDetailDTO(totalCount, 0, aggregatedTexts, testCaseName, taskName, base.errorCategory()));
+                }
+            });
+        });
 
         return aggregatedList;
     }

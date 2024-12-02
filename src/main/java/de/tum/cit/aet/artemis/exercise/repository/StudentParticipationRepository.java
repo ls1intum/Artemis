@@ -1378,14 +1378,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                                 p.repositoryUri
                             )
                 FROM ProgrammingExerciseStudentParticipation p
-                INNER JOIN p.submissions s  ON s.id = (
-                    SELECT MAX(sub.id)
-                    FROM p.submissions sub
-                    WHERE sub.participation.id = p.id
-                )
-                INNER JOIN s.results r ON r.id = (
+                INNER JOIN p.results r ON r.id = (
                     SELECT MAX(pr.id)
-                    FROM s.results pr
+                    FROM p.results pr
                     WHERE pr.participation.id = p.id
                 )
                 INNER JOIN r.feedbacks f
@@ -1409,14 +1404,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
                 SELECT DISTINCT p.student.login
                 FROM ProgrammingExerciseStudentParticipation p
-                INNER JOIN p.submissions s  ON s.id = (
-                    SELECT MAX(sub.id)
-                    FROM p.submissions sub
-                    WHERE sub.participation.id = p.id
-                )
-                INNER JOIN s.results r ON r.id = (
+                INNER JOIN p.results r ON r.id = (
                     SELECT MAX(pr.id)
-                    FROM s.results pr
+                    FROM p.results pr
                     WHERE pr.participation.id = p.id
                 )
                 INNER JOIN r.feedbacks f
