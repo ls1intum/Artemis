@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, ViewChild, inject, input, output } from '@angular/core';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -23,7 +23,7 @@ export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
     readOnlyMode = input<boolean>(false);
     lastReadDate = input<dayjs.Dayjs>();
     previewMode = input<boolean>(false);
-    postCreateEditModal = viewChild<PostCreateEditModalComponent>(PostCreateEditModalComponent);
+    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     isAtLeastInstructorInCourse: boolean;
     posting = input<Posting>();
     isCommunicationPage = input<boolean>();
@@ -88,7 +88,7 @@ export class PostingHeaderComponent implements OnInit, OnDestroy, OnChanges {
      * on leaving the page, the modal should be closed
      */
     ngOnDestroy(): void {
-        this.postCreateEditModal()?.modalRef?.close();
+        this.postCreateEditModal?.modalRef?.close();
     }
 
     /**
