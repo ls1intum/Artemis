@@ -213,7 +213,7 @@ describe('LectureAttachmentsComponent', () => {
         const attachment = {
             lecture: comp.lecture,
             attachmentType: AttachmentType.FILE,
-            version: 0,
+            version: 1,
             uploadDate: dayjs(),
         } as Attachment;
         const file = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
@@ -222,7 +222,6 @@ describe('LectureAttachmentsComponent', () => {
         comp.attachmentFile.set(file);
         const attachmentServiceCreateStub = jest.spyOn(attachmentService, 'create').mockReturnValue(throwError(() => new Error(errorMessage)));
         comp.saveAttachment();
-        attachment.version = 1;
         expect(attachmentServiceCreateStub).toHaveBeenCalledExactlyOnceWith(attachment, file);
         expect(comp.attachmentToBeUpdatedOrCreated()).toEqual(attachment);
         expect(comp.attachmentFile()).toBeUndefined();
@@ -252,13 +251,14 @@ describe('LectureAttachmentsComponent', () => {
                 comp.attachmentFile.set(file);
             }
             comp.attachmentToBeUpdatedOrCreated.set(attachment);
-            comp.notificationText = notification;
             comp.attachmentBackup = backup;
             comp.attachments = [attachment];
 
             // Do change
-            attachment.name = 'New Name';
-            comp.form.value.attachmentName = 'New Name';
+            comp.form.patchValue({
+                attachmentName: 'New Name',
+                notificationText: notification,
+            });
 
             const attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(throwError(() => new Error(errorMessage)));
             comp.saveAttachment();

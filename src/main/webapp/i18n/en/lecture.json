@@ -29,6 +29,7 @@
             "endDate": "End Date",
             "visibleDate": "Visible from",
             "course": "Course",
+            "ingestionState": "Ingestion State",
             "detail": {
                 "title": "Lecture",
                 "sections": {

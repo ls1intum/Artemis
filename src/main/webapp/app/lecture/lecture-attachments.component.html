@@ -139,7 +139,7 @@
                             <div class="col-12 col-md-6">
                                 <div class="form-group">
                                     <label for="attachmentName" jhiTranslate="artemisApp.lecture.attachments.name"></label>
-                                    <input type="text" class="form-control" id="attachmentName" formControlName="attachmentName" />
+                                    <input type="text" class="form-control" id="attachmentName" name="attachmentName" formControlName="attachmentName" />
                                 </div>
                                 <div class="form-group">
                                     <label
@@ -164,9 +164,9 @@
                                                 [placeholder]="'artemisApp.lecture.attachments.chooseFile' | artemisTranslate"
                                                 (change)="setLectureAttachment($event)"
                                                 [class.ng-invalid]="!isFileSelectionValid()"
-                                                [class.file-input-margin]="!isFileSelectionValid()"
-                                                aria-describedby="fileHelp"
+                                                [class.invalid-file-input-margin]="!isFileSelectionValid()"
                                                 formControlName="attachmentFileName"
+                                                aria-describedby="fileHelp"
                                             />
                                         </div>
                                     </div>
