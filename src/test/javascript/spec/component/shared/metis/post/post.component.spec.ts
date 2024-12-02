@@ -38,6 +38,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DOCUMENT } from '@angular/common';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { Post } from 'app/entities/metis/post.model';
+import { By } from '@angular/platform-browser';
+import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -77,6 +79,7 @@ describe('PostComponent', () => {
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
                 TranslatePipeMock,
+                MockDirective(TranslateDirective),
             ],
         })
             .compileComponents()
@@ -359,6 +362,20 @@ describe('PostComponent', () => {
 
             jest.restoreAllMocks();
         });
+    });
+
+    it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
+        const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
+        component.readOnlyMode = false;
+        component.showDropdown = true;
+        component.posting = post;
+        fixture.detectChanges();
+
+        const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));
+        expect(forwardButton).not.toBeNull();
+
+        forwardButton.nativeElement.click();
+        expect(forwardMessageSpy).toHaveBeenCalled();
     });
 
     it('should cast the post to Post on change', () => {

@@ -1,4 +1,4 @@
-import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, inject, input, output } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -6,6 +6,14 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { PLACEHOLDER_USER_REACTED } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { Course } from 'app/entities/course.model';
+import { map } from 'rxjs/operators';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ForwardMessageDialogComponent } from 'app/overview/course-conversations/dialogs/forward-message-dialog/forward-message-dialog.component';
+import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
+import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 
 const PIN_EMOJI_ID = 'pushpin';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
@@ -53,6 +61,11 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     @Input() isThreadSidebar: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     @Output() reactionsUpdated = new EventEmitter<Reaction[]>();
+    channels: ChannelDTO[] = [];
+    chats: OneToOneChatDTO[] = [];
+    course = input<Course>();
+    public conversationService: ConversationService = inject(ConversationService);
+    public modalService: NgbModal = inject(NgbModal);
 
     showReactionSelector = false;
     currentUserIsAtLeastTutor: boolean;
@@ -119,6 +132,65 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
 
     deletePosting(): void {
         this.metisService.deletePost(this.posting);
+    }
+
+    openForwardMessageView(post: Posting, isAnswer: boolean): void {
+        if (!this.course()?.id) {
+            return;
+        }
+        this.channels = [];
+        this.chats = [];
+
+        this.conversationService
+            .getConversationsOfUser(this.course()!.id!)
+            .pipe(map((response) => response.body || []))
+            .subscribe({
+                next: (conversations) => {
+                    conversations.forEach((conversation) => {
+                        if (conversation.type === ConversationType.CHANNEL) {
+                            this.channels.push(conversation as ChannelDTO);
+                        } else if (conversation.type === ConversationType.ONE_TO_ONE) {
+                            this.chats.push(conversation as OneToOneChatDTO);
+                        }
+                    });
+
+                    const modalRef = this.modalService.open(ForwardMessageDialogComponent, {
+                        size: 'lg',
+                        backdrop: 'static',
+                    });
+
+                    modalRef.componentInstance.chats = this.chats;
+                    modalRef.componentInstance.channels = this.channels;
+                    modalRef.componentInstance.postToForward = post;
+
+                    modalRef.result.then(
+                        (selection: { channels: Conversation[]; chats: Conversation[]; messageContent: string }) => {
+                            if (selection) {
+                                const allSelections = [...selection.channels, ...selection.chats];
+                                allSelections.forEach((conversation) => {
+                                    if (conversation && conversation.id) {
+                                        this.forwardPost(post, conversation, selection.messageContent, isAnswer);
+                                    }
+                                });
+                            }
+                        },
+                        (reason) => {
+                            console.log('Modal dismissed:', reason);
+                        },
+                    );
+                },
+                error: (error) => {
+                    console.error('Error loading conversations:', error);
+                },
+            });
+    }
+
+    forwardPost(post: Posting, conversation: Conversation, content: string, isAnswer: boolean): void {
+        this.metisService.createForwardedMessages([post], conversation, isAnswer, content).subscribe({
+            error: (error) => {
+                console.error('Error forwarding post:', error);
+            },
+        });
     }
 
     /**

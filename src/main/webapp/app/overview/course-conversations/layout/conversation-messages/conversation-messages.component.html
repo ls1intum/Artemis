@@ -96,6 +96,9 @@
                                         [isCommunicationPage]="true"
                                         (openThread)="setPostForThread($event)"
                                         [isConsecutive]="post.isConsecutive || false"
+                                        [forwardedPosts]="post.forwardedPosts || []"
+                                        [forwardedAnswerPosts]="post.forwardedAnswerPosts || []"
+                                        (onNavigateToPost)="onTriggerNavigateToPost($event)"
                                     ></jhi-posting-thread>
                                 </div>
                             }

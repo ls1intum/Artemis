@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Create forwarded_messages table -->
+    <changeSet id="20241129212530" author="aykan">
+        <createTable tableName="forwarded_message">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="source_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_type" type="tinyint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="destination_post_id" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="destination_answer_id" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <!-- Add foreign key constraints -->
+        <addForeignKeyConstraint baseTableName="forwarded_message"
+                                 baseColumnNames="destination_post_id"
+                                 constraintName="FK_FORWARDED_MESSAGES_POST"
+                                 referencedTableName="post"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+
+        <addForeignKeyConstraint baseTableName="forwarded_message"
+                                 baseColumnNames="destination_answer_id"
+                                 constraintName="FK_FORWARDED_MESSAGES_ANSWER_POST"
+                                 referencedTableName="answer_post"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+
+        <!-- Add check constraint for destination columns -->
+        <sql>
+            ALTER TABLE forwarded_message
+                ADD CONSTRAINT CHECK_DESTINATION_POST_OR_ANSWER
+                    CHECK (
+                        (destination_post_id IS NOT NULL AND destination_answer_id IS NULL) OR
+                        (destination_post_id IS NULL AND destination_answer_id IS NOT NULL)
+                        );
+        </sql>
+
+        <addColumn tableName="post">
+            <column name="has_forwarded_messages" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="answer_post">
+            <column name="has_forwarded_messages" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

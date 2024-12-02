@@ -21,9 +21,10 @@ import dayjs from 'dayjs/esm';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { faBookmark, faPencilAlt, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark, faPencilAlt, faShare, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT } from '@angular/common';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-answer-post',
@@ -44,6 +45,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
     isAnswerPost = true;
+    course: Course;
 
     @Input()
     isReadOnlyMode = false;
@@ -55,6 +57,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
     isConsecutive = input<boolean>(false);
     readonly faPencilAlt = faPencilAlt;
+    readonly faShare = faShare;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     static activeDropdownPost: AnswerPostComponent | null = null;
@@ -68,6 +71,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         @Inject(DOCUMENT) private document: Document,
     ) {
         super();
+        this.course = this.metisService.getCourse();
     }
 
     ngOnInit() {

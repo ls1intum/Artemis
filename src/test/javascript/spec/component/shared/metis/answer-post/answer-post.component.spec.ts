@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/shared/metis/answer-post/answer-post.component';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
-import { MockComponent, MockModule, MockPipe, ngMocks } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { By } from '@angular/platform-browser';
 import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answer-post-header/answer-post-header.component';
 import { AnswerPostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/answer-post-reactions-bar/answer-post-reactions-bar.component';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
-import { metisResolvingAnswerPostUser1 } from '../../../../helpers/sample/metis-sample-data';
+import { metisResolvingAnswerPostUser1, post } from '../../../../helpers/sample/metis-sample-data';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { DOCUMENT } from '@angular/common';
@@ -15,8 +15,10 @@ import { Reaction } from '../../../../../../../main/webapp/app/entities/metis/re
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Posting, PostingType } from 'app/entities/metis/posting.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
 
 describe('AnswerPostComponent', () => {
     let component: AnswerPostComponent;
@@ -33,11 +35,13 @@ describe('AnswerPostComponent', () => {
             imports: [OverlayModule, MockModule(BrowserAnimationsModule)],
             declarations: [
                 AnswerPostComponent,
+                FaIconComponent,
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(AnswerPostHeaderComponent),
                 MockComponent(PostingContentComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
                 MockComponent(AnswerPostReactionsBarComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 { provide: DOCUMENT, useValue: document },
@@ -236,5 +240,18 @@ describe('AnswerPostComponent', () => {
 
         expect(component.posting).toBeInstanceOf(AnswerPost);
         expect(spy).toHaveBeenCalled();
+    });
+
+    it('should display forwardMessage button and invoke forwardMessage function when clicked', () => {
+        const forwardMessageSpy = jest.spyOn(component, 'forwardMessage');
+        component.showDropdown = true;
+        component.posting = post;
+        fixture.detectChanges();
+
+        const forwardButton = debugElement.query(By.css('button.dropdown-item.d-flex.forward'));
+        expect(forwardButton).not.toBeNull();
+
+        forwardButton.nativeElement.click();
+        expect(forwardMessageSpy).toHaveBeenCalled();
     });
 });
