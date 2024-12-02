@@ -41,11 +41,15 @@ public class ConversationNotificationService {
 
     private final SingleUserNotificationRepository singleUserNotificationRepository;
 
+    private final SingleUserNotificationService singleUserNotificationService;
+
     public ConversationNotificationService(ConversationNotificationRepository conversationNotificationRepository,
-            GeneralInstantNotificationService generalInstantNotificationService, SingleUserNotificationRepository singleUserNotificationRepository) {
+            GeneralInstantNotificationService generalInstantNotificationService, SingleUserNotificationRepository singleUserNotificationRepository,
+            SingleUserNotificationService singleUserNotificationService) {
         this.conversationNotificationRepository = conversationNotificationRepository;
         this.generalInstantNotificationService = generalInstantNotificationService;
         this.singleUserNotificationRepository = singleUserNotificationRepository;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -83,7 +87,7 @@ public class ConversationNotificationService {
         String[] placeholders = createPlaceholdersNewMessageChannelText(course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(),
                 conversationName, createdMessage.getAuthor().getName(), conversationType);
         ConversationNotification notification = createConversationMessageNotification(course.getId(), createdMessage, notificationType, notificationText, true, placeholders);
-        save(notification, mentionedUsers, placeholders);
+        save(notification, mentionedUsers, placeholders, createdMessage);
         return notification;
     }
 
@@ -93,11 +97,12 @@ public class ConversationNotificationService {
         return new String[] { courseTitle, messageContent, messageCreationDate, conversationName, authorName, conversationType };
     }
 
-    private void save(ConversationNotification notification, Set<User> mentionedUsers, String[] placeHolders) {
+    private void save(ConversationNotification notification, Set<User> mentionedUsers, String[] placeHolders, Post createdMessage) {
         conversationNotificationRepository.save(notification);
 
-        Set<SingleUserNotification> mentionedUserNotifications = mentionedUsers.stream().map(mentionedUser -> SingleUserNotificationFactory
-                .createNotification(notification.getMessage(), NotificationType.CONVERSATION_USER_MENTIONED, notification.getText(), placeHolders, mentionedUser))
+        Set<SingleUserNotification> mentionedUserNotifications = singleUserNotificationService
+                .filterAllowedRecipientsInMentionedUsers(mentionedUsers, createdMessage.getConversation()).map(mentionedUser -> SingleUserNotificationFactory
+                        .createNotification(notification.getMessage(), NotificationType.CONVERSATION_USER_MENTIONED, notification.getText(), placeHolders, mentionedUser))
                 .collect(Collectors.toSet());
         singleUserNotificationRepository.saveAll(mentionedUserNotifications);
     }

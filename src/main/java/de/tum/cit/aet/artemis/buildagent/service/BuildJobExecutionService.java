@@ -346,7 +346,7 @@ public class BuildJobExecutionService {
         try {
             buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,
                     buildJob.id());
-            buildResult.setBuildLogEntries(buildLogsMap.getBuildLogs(buildJob.id()));
+            buildResult.setBuildLogEntries(buildLogsMap.getAndTruncateBuildLogs(buildJob.id()));
         }
         catch (IOException | IllegalStateException e) {
             msg = "Error while parsing test results";
@@ -423,8 +423,8 @@ public class BuildJobExecutionService {
         int lastIndexOfSlash = name.lastIndexOf('/');
         String result = (lastIndexOfSlash != -1 && lastIndexOfSlash + 1 < name.length()) ? name.substring(lastIndexOfSlash + 1) : name;
 
-        // Java test result files are named "TEST-*.xml" or "TEST-*.json, Python test result files are named "*results.xml".
-        return !tarArchiveEntry.isDirectory() && (result.endsWith(".xml") || result.endsWith(".json")) && !result.equals("pom.xml");
+        // Java test result files are named "TEST-*.xml", Python test result files are named "*results.xml".
+        return !tarArchiveEntry.isDirectory() && (result.endsWith(".xml") && !result.equals("pom.xml") || result.endsWith(".json") || result.endsWith(".sarif"));
     }
 
     /**
@@ -450,12 +450,12 @@ public class BuildJobExecutionService {
      * Processes a static code analysis report file and adds the report to the corresponding list.
      *
      * @param fileName                  the file name of the static code analysis report file
-     * @param xmlString                 the content of the static code analysis report file
+     * @param reportContent             the content of the static code analysis report file
      * @param staticCodeAnalysisReports the list of static code analysis reports
      */
-    private void processStaticCodeAnalysisReportFile(String fileName, String xmlString, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, String buildJobId) {
+    private void processStaticCodeAnalysisReportFile(String fileName, String reportContent, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, String buildJobId) {
         try {
-            staticCodeAnalysisReports.add(ReportParser.getReport(xmlString, fileName));
+            staticCodeAnalysisReports.add(ReportParser.getReport(reportContent, fileName));
         }
         catch (UnsupportedToolException e) {
             String msg = "Failed to parse static code analysis report for " + fileName;
