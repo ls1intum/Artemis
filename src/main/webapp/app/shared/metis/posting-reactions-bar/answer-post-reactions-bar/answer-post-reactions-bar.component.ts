@@ -77,7 +77,7 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
         const canDeletePost = this.isAnswerOfAnnouncement ? this.metisService.metisUserIsAtLeastInstructorInCourse() : this.metisService.metisUserIsAtLeastTutorInCourse();
         const mayDeleteOtherUsersAnswer =
             (isCourseWideChannel && canDeletePost) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
-        this.mayDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayDeleteOtherUsersAnswer) && canDeletePost;
+        this.mayDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || (mayDeleteOtherUsersAnswer && canDeletePost));
         this.mayDeleteOutput.emit(this.mayDelete);
     }
 
