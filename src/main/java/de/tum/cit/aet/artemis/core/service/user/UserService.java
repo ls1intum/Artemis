@@ -38,7 +38,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
+import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -111,7 +111,7 @@ public class UserService {
 
     private final FileService fileService;
 
-    private final ScienceEventRepository scienceEventRepository;
+    private final ScienceEventApi scienceEventApi;
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
@@ -120,7 +120,7 @@ public class UserService {
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventRepository scienceEventRepository,
+            InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventApi scienceEventApi,
             ParticipationVcsAccessTokenService participationVCSAccessTokenService, SavedPostRepository savedPostRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
@@ -134,7 +134,7 @@ public class UserService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.fileService = fileService;
-        this.scienceEventRepository = scienceEventRepository;
+        this.scienceEventApi = scienceEventApi;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.savedPostRepository = savedPostRepository;
     }
@@ -508,7 +508,7 @@ public class UserService {
         clearUserCaches(user);
         userRepository.flush();
 
-        scienceEventRepository.renameIdentity(originalLogin, anonymizedLogin);
+        scienceEventApi.renameIdentity(originalLogin, anonymizedLogin);
 
         if (userImageString != null) {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(URI.create(userImageString)), 0);
