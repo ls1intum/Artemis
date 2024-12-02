@@ -48,9 +48,7 @@ describe('PostingHeaderComponent', () => {
                 MockComponent(ProfilePictureComponent),
             ],
         }).compileComponents();
-    });
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(PostingHeaderComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
