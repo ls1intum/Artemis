@@ -79,10 +79,10 @@ const routes: Routes = [
         ConversationSettingsComponent,
         OneToOneChatCreateDialogComponent,
         GroupChatCreateDialogComponent,
-        CourseWideSearchComponent,
         SavedPostsComponent,
         PostingSummaryComponent,
         CourseConversationsComponent,
+        CourseWideSearchComponent,
     ],
 })
 export class CourseConversationsModule {}

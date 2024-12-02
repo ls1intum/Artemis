@@ -1,7 +1,8 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewEncapsulation, inject, input, output, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewEncapsulation, inject, input, output, viewChild, viewChildren } from '@angular/core';
 import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
@@ -20,7 +21,8 @@ import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
     readonly courseWideSearchConfig = input<CourseWideSearchConfig>();
 
-    readonly messages = viewChild<QueryList<any>>('postingThread');
+    readonly messages = viewChildren<ElementRef>('postingThread');
+    readonly messages$ = toObservable(this.messages);
     readonly content = viewChild<ElementRef>('container');
 
     readonly openThread = output<Post>();
@@ -30,14 +32,14 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     // as set for the css class '.posting-infinite-scroll-container'
     messagesContainerHeight = 700;
 
-    faPlus = faPlus;
-    faFilter = faFilter;
-    faLongArrowAltUp = faLongArrowAltUp;
-    faLongArrowAltDown = faLongArrowAltDown;
-    faTimes = faTimes;
-    faEnvelope = faEnvelope;
-    faCircleNotch = faCircleNotch;
-    faChevronLeft = faChevronLeft;
+    readonly faPlus = faPlus;
+    readonly faFilter = faFilter;
+    readonly faLongArrowAltUp = faLongArrowAltUp;
+    readonly faLongArrowAltDown = faLongArrowAltDown;
+    readonly faTimes = faTimes;
+    readonly faEnvelope = faEnvelope;
+    readonly faCircleNotch = faCircleNotch;
+    readonly faChevronLeft = faChevronLeft;
 
     readonly SortDirection = SortDirection;
     sortingOrder = SortDirection.ASCENDING;
@@ -67,8 +69,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     ngAfterViewInit() {
-        if (!this.messages()) return;
-        this.messages()!.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
+        this.messages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
     }
 
     ngOnDestroy() {

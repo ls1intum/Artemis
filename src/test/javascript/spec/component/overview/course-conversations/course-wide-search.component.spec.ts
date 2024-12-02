@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { Directive, EventEmitter, Input, Output } from '@angular/core';
+import { Directive, input, output } from '@angular/core';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/overview/course-conversations/course-wide-search/course-wide-search.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
@@ -26,19 +26,19 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: '[infiniteScroll], [infinite-scroll], [data-infinite-scroll]',
 })
 class InfiniteScrollStubDirective {
-    @Output() scrolled = new EventEmitter<void>();
-    @Output() scrolledUp = new EventEmitter<void>();
+    scrolled = output<void>();
+    scrolledUp = output<void>();
 
-    @Input() infiniteScrollDistance = 2;
-    @Input() infiniteScrollUpDistance = 1.5;
-    @Input() infiniteScrollThrottle = 150;
-    @Input() infiniteScrollDisabled = false;
-    @Input() infiniteScrollContainer: any = null;
-    @Input() scrollWindow = true;
-    @Input() immediateCheck = false;
-    @Input() horizontal = false;
-    @Input() alwaysCallback = false;
-    @Input() fromRoot = false;
+    infiniteScrollDistance = input<number>(2);
+    infiniteScrollUpDistance = input<number>(1.5);
+    infiniteScrollThrottle = input<number>(150);
+    infiniteScrollDisabled = input<boolean>(false);
+    infiniteScrollContainer: any = input<any>(null);
+    scrollWindow = input<boolean>(true);
+    immediateCheck = input<boolean>(false);
+    horizontal = input<boolean>(false);
+    alwaysCallback = input<boolean>(false);
+    fromRoot = input<boolean>(false);
 }
 describe('CourseWideSearchComponent', () => {
     let component: CourseWideSearchComponent;
@@ -73,9 +73,7 @@ describe('CourseWideSearchComponent', () => {
             ],
             providers: [MockProvider(MetisConversationService), MockProvider(MetisService), MockProvider(NgbModal)],
         }).compileComponents();
-    }));
 
-    beforeEach(() => {
         examplePost = { id: 1, content: 'test' } as Post;
 
         metisService = TestBed.inject(MetisService);
@@ -94,9 +92,9 @@ describe('CourseWideSearchComponent', () => {
         fixture = TestBed.createComponent(CourseWideSearchComponent);
         component = fixture.componentInstance;
         component.course = course;
-        component.courseWideSearchConfig = courseWideSearchConfig;
+        fixture.componentRef.setInput('courseWideSearchConfig', courseWideSearchConfig);
         fixture.detectChanges();
-    });
+    }));
 
     afterEach(() => {
         jest.clearAllMocks();
@@ -111,7 +109,7 @@ describe('CourseWideSearchComponent', () => {
         component.ngOnInit();
         expect(component.course).toBe(course);
         expect(component.posts).toStrictEqual([examplePost]);
-        expect(component.courseWideSearchConfig).toBe(courseWideSearchConfig);
+        expect(component.courseWideSearchConfig()).toBe(courseWideSearchConfig);
     }));
 
     it('should initialize currentPostContextFilter correctly', fakeAsync(() => {
@@ -159,7 +157,7 @@ describe('CourseWideSearchComponent', () => {
 
     it('should fetch posts on next page fetch', fakeAsync(() => {
         const getFilteredPostSpy = jest.spyOn(metisService, 'getFilteredPosts');
-        component.courseWideSearchConfig = courseWideSearchConfig;
+        fixture.componentRef.setInput('courseWideSearchConfig', courseWideSearchConfig);
         component.totalNumberOfPosts = 10;
         component.fetchNextPage();
         expect(getFilteredPostSpy).toHaveBeenCalledOnce();
@@ -184,9 +182,9 @@ describe('CourseWideSearchComponent', () => {
         filterResolvedCheckbox.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(component.courseWideSearchConfig.filterToUnresolved).toBeTrue();
-        expect(component.courseWideSearchConfig.filterToOwn).toBeFalse();
-        expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeFalse();
+        expect(component.courseWideSearchConfig()!.filterToUnresolved).toBeTrue();
+        expect(component.courseWideSearchConfig()!.filterToOwn).toBeFalse();
+        expect(component.courseWideSearchConfig()!.filterToAnsweredOrReacted).toBeFalse();
     }));
 
     it('Should update filter setting when filterToOwn checkbox is checked', fakeAsync(() => {
@@ -200,9 +198,9 @@ describe('CourseWideSearchComponent', () => {
         filterOwnCheckbox.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(component.courseWideSearchConfig.filterToUnresolved).toBeFalse();
-        expect(component.courseWideSearchConfig.filterToOwn).toBeTrue();
-        expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeFalse();
+        expect(component.courseWideSearchConfig()!.filterToUnresolved).toBeFalse();
+        expect(component.courseWideSearchConfig()!.filterToOwn).toBeTrue();
+        expect(component.courseWideSearchConfig()!.filterToAnsweredOrReacted).toBeFalse();
     }));
 
     it('Should update filter setting when filterToAnsweredOrReacted checkbox is checked', fakeAsync(() => {
@@ -216,9 +214,9 @@ describe('CourseWideSearchComponent', () => {
         filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(component.courseWideSearchConfig.filterToUnresolved).toBeFalse();
-        expect(component.courseWideSearchConfig.filterToOwn).toBeFalse();
-        expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeTrue();
+        expect(component.courseWideSearchConfig()!.filterToUnresolved).toBeFalse();
+        expect(component.courseWideSearchConfig()!.filterToOwn).toBeFalse();
+        expect(component.courseWideSearchConfig()!.filterToAnsweredOrReacted).toBeTrue();
     }));
 
     it('Should update filter setting when all filter checkboxes are checked', fakeAsync(() => {
@@ -236,16 +234,16 @@ describe('CourseWideSearchComponent', () => {
         filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
-        expect(component.courseWideSearchConfig.filterToUnresolved).toBeTrue();
-        expect(component.courseWideSearchConfig.filterToOwn).toBeTrue();
-        expect(component.courseWideSearchConfig.filterToAnsweredOrReacted).toBeTrue();
+        expect(component.courseWideSearchConfig()!.filterToUnresolved).toBeTrue();
+        expect(component.courseWideSearchConfig()!.filterToOwn).toBeTrue();
+        expect(component.courseWideSearchConfig()!.filterToAnsweredOrReacted).toBeTrue();
     }));
 
     it('should initialize sorting direction correctly', fakeAsync(() => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
-        expect(component.courseWideSearchConfig.sortingOrder).toBe(SortDirection.ASCENDING);
+        expect(component.courseWideSearchConfig()!.sortingOrder).toBe(SortDirection.ASCENDING);
     }));
 
     it('should change sorting direction after clicking the order direction button', fakeAsync(() => {
@@ -254,6 +252,6 @@ describe('CourseWideSearchComponent', () => {
         fixture.detectChanges();
         const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
         selectedDirectionOption.dispatchEvent(new Event('click'));
-        expect(component.courseWideSearchConfig.sortingOrder).toBe(SortDirection.DESCENDING);
+        expect(component.courseWideSearchConfig()!.sortingOrder).toBe(SortDirection.DESCENDING);
     }));
 });
