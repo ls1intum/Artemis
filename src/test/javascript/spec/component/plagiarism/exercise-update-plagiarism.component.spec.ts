@@ -2,14 +2,47 @@ import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Subject } from 'rxjs';
+import { ComponentRef } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ArtemisTestModule } from '../../test.module';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { TranslateDirective } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FormsModule } from 'app/forms/forms.module';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('Exercise Update Plagiarism Component', () => {
+    let fixture: ComponentFixture<ExerciseUpdatePlagiarismComponent>;
     let comp: ExerciseUpdatePlagiarismComponent;
-
+    let compRef: ComponentRef<ExerciseUpdatePlagiarismComponent>;
     beforeEach(() => {
-        comp = new ExerciseUpdatePlagiarismComponent();
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, ExerciseUpdatePlagiarismComponent],
+        })
+            .overrideComponent(ExerciseUpdatePlagiarismComponent, {
+                remove: {
+                    imports: [TranslateDirective, FaIconComponent, NgbTooltip, FormsModule, ArtemisTranslatePipe],
+                },
+                add: {
+                    imports: [
+                        MockDirective(TranslateDirective),
+                        MockComponent(FaIconComponent),
+                        MockDirective(NgbTooltip),
+                        MockModule(FormsModule),
+                        MockPipe(ArtemisTranslatePipe),
+                    ],
+                },
+            })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ExerciseUpdatePlagiarismComponent);
 
-        comp.exercise = new ProgrammingExercise(undefined, undefined);
+                const exercise = new ProgrammingExercise(undefined, undefined);
+                fixture.componentRef.setInput('exercise', exercise);
+                compRef = fixture.componentRef;
+                comp = fixture.componentRef.instance;
+            });
     });
 
     it('should use provided plagiarism checks config', () => {
@@ -20,63 +53,78 @@ describe('Exercise Update Plagiarism Component', () => {
             minimumScore: 2,
             minimumSize: 3,
         };
-        comp.exercise.plagiarismDetectionConfig = plagiarismDetectionConfig;
+        const exercise = comp.exercise();
+        exercise.plagiarismDetectionConfig = plagiarismDetectionConfig;
+        compRef.setInput('exercise', exercise);
 
         comp.ngOnInit();
 
-        expect(comp.exercise.plagiarismDetectionConfig).toEqual(plagiarismDetectionConfig);
+        expect(comp.exercise().plagiarismDetectionConfig).toEqual(plagiarismDetectionConfig);
     });
 
     it('should use default if exercise does not have plagiarism checks config', () => {
-        comp.exercise.plagiarismDetectionConfig = undefined;
+        comp.exercise().plagiarismDetectionConfig = undefined;
 
         comp.ngOnInit();
 
-        expect(comp.exercise.plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
+        expect(comp.exercise().plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
     });
 
     it('should set minimumSizeTooltip on init', () => {
-        comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+        const exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+        compRef.setInput('exercise', exercise);
         comp.ngOnInit();
         expect(comp.minimumSizeTooltip).toBe('artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise');
     });
 
     it('should set default plagiarism detection config on init if not set', () => {
-        comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+        const exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+        compRef.setInput('exercise', exercise);
         comp.ngOnInit();
-        expect(comp.exercise.plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
+        expect(comp.exercise().plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);
     });
 
     it('should enable cpc', () => {
-        comp.exercise = {
-            plagiarismDetectionConfig: { continuousPlagiarismControlEnabled: false, continuousPlagiarismControlPostDueDateChecksEnabled: false },
+        const exercise = {
+            plagiarismDetectionConfig: {
+                continuousPlagiarismControlEnabled: false,
+                continuousPlagiarismControlPostDueDateChecksEnabled: false,
+            },
         } as Exercise;
+        compRef.setInput('exercise', exercise);
         comp.toggleCPCEnabled();
-        expect(comp.exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled).toBeTrue();
-        expect(comp.exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled).toBeTrue();
+        expect(comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled).toBeTrue();
+        expect(comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled).toBeTrue();
     });
 
     it('should disable cpc', () => {
-        comp.exercise = {
-            plagiarismDetectionConfig: { continuousPlagiarismControlEnabled: true, continuousPlagiarismControlPostDueDateChecksEnabled: true },
+        const exercise = {
+            plagiarismDetectionConfig: {
+                continuousPlagiarismControlEnabled: true,
+                continuousPlagiarismControlPostDueDateChecksEnabled: true,
+            },
         } as Exercise;
+        compRef.setInput('exercise', exercise);
         comp.toggleCPCEnabled();
-        expect(comp.exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled).toBeFalse();
-        expect(comp.exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled).toBeFalse();
+        expect(comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled).toBeFalse();
+        expect(comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled).toBeFalse();
     });
 
     it('should get correct minimumSizeTooltip for programming exercises', () => {
-        comp.exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+        const exercise = { type: ExerciseType.PROGRAMMING } as Exercise;
+        compRef.setInput('exercise', exercise);
         expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise');
     });
 
     it('should get correct minimumSizeTooltip for text exercises', () => {
-        comp.exercise = { type: ExerciseType.TEXT } as Exercise;
+        const exercise = { type: ExerciseType.TEXT } as Exercise;
+        compRef.setInput('exercise', exercise);
         expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipTextExercise');
     });
 
     it('should get correct minimumSizeTooltip for modeling exercises', () => {
-        comp.exercise = { type: ExerciseType.MODELING } as Exercise;
+        const exercise = { type: ExerciseType.MODELING } as Exercise;
+        compRef.setInput('exercise', exercise);
         expect(comp.getMinimumSizeTooltip()).toBe('artemisApp.plagiarism.minimumSizeTooltipModelingExercise');
     });
 
@@ -84,11 +132,14 @@ describe('Exercise Update Plagiarism Component', () => {
         const inputFieldNames = ['fieldCPCEnabled', 'fieldThreshhold', 'fieldResponsePeriod', 'fieldMinScore', 'fieldMinSize'];
         const calculateValidSpy = jest.spyOn(comp, 'calculateFormValid');
         const formValidChangesSpy = jest.spyOn(comp.formValidChanges, 'next');
-        comp.exercise = comp.exercise = {
-            plagiarismDetectionConfig: { continuousPlagiarismControlEnabled: false, continuousPlagiarismControlPostDueDateChecksEnabled: true },
+        const exercise = {
+            plagiarismDetectionConfig: {
+                continuousPlagiarismControlEnabled: false,
+                continuousPlagiarismControlPostDueDateChecksEnabled: true,
+            },
         } as Exercise;
+        compRef.setInput('exercise', exercise);
 
-        // initialize
         for (const fieldName of inputFieldNames) {
             (comp as any)[fieldName] = { valueChanges: new Subject(), valid: false };
         }
@@ -103,7 +154,7 @@ describe('Exercise Update Plagiarism Component', () => {
 
         // @ts-ignore
         comp.fieldCPCEnabled!.valid = true;
-        comp.exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled = true;
+        comp.exercise().plagiarismDetectionConfig!.continuousPlagiarismControlEnabled = true;
         (comp.fieldCPCEnabled!.valueChanges! as Subject<boolean>).next(true);
 
         expect(calculateValidSpy).toHaveBeenCalledTimes(2);
