@@ -21,6 +21,8 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
 import cloneDeep from 'lodash-es/cloneDeep';
 import dayjs from 'dayjs';
+import { CloseEditLectureDialogComponent } from 'app/lecture/close-edit-lecture-dialog.component.ts/close-edit-lecture-dialog.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -41,6 +43,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
+    private readonly modalService = inject(NgbModal);
 
     @ViewChild(ProgrammingExerciseDifficultyComponent) lecturePeriodComponent?: LectureUpdateWizardPeriodComponent;
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
@@ -168,11 +171,22 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        if (this.isChangeMadeToTitleOrPeriodSection) {
+        // this.modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static', animation });
+        this.subscriptions.unsubscribe();
+
+        if (this.isChangeMadeToTitleOrPeriodSection && this.isEditMode()) {
             // TODO add a proper modal and find out where the changes are
+            this.openCloseEditLectureWithUnsavedChangesDialog();
             alert('Unsaved changes in Title and/or period section, are you sure you want to leave without saving?');
         }
-        this.subscriptions.unsubscribe();
+    }
+
+    openCloseEditLectureWithUnsavedChangesDialog(): void {
+        this.modalService.open(CloseEditLectureDialogComponent, {
+            size: 'lg',
+            backdrop: 'static',
+            animation: true,
+        });
     }
 
     protected updateIsChangesMadeToTitleOrPeriodSection() {
