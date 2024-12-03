@@ -352,11 +352,13 @@ public class SharedQueueManagementService {
             return ZonedDateTime.now();
         }
 
+        // Get the jobs queued before the job for the participation
         List<BuildJobQueueItem> jobsQueuedBefore = getQueuedJobs().stream().sorted(new LocalCIPriorityQueueComparator()).takeWhile(job -> !job.id().equals(buildJobId)).toList();
 
         ZonedDateTime now = ZonedDateTime.now();
 
-        List<Long> agentsAvailabilities = new ArrayList<>(getQueuedJobs().stream().map(job -> getBuildJobRemainingDuration(job, now)).sorted().toList());
+        // Get the remaining duration of the build jobs currently being processed
+        List<Long> agentsAvailabilities = new ArrayList<>(getProcessingJobs().stream().map(job -> getBuildJobRemainingDuration(job, now)).sorted().toList());
 
         if (agentsAvailabilities.size() < this.buildAgentsCapacity) {
             int agentsToAdd = this.buildAgentsCapacity - agentsAvailabilities.size();
