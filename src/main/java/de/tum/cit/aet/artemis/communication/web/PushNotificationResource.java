@@ -123,13 +123,13 @@ public class PushNotificationResource {
     @DeleteMapping("unregister")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> unregister(@Valid @RequestBody PushNotificationUnregisterRequest body) {
-        final var id = new PushNotificationDeviceConfigurationId(userRepository.getUser(), body.token(), body.deviceType());
+        final var deviceId = new PushNotificationDeviceConfigurationId(userRepository.getUser(), body.token(), body.deviceType());
 
-        if (!pushNotificationDeviceConfigurationRepository.existsById(id)) {
+        if (!pushNotificationDeviceConfigurationRepository.existsById(deviceId)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        pushNotificationDeviceConfigurationRepository.deleteById(id);
+        pushNotificationDeviceConfigurationRepository.deleteById(deviceId);
 
         return ResponseEntity.ok().build();
     }
