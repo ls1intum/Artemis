@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -179,7 +181,7 @@ public class PyrisPipelineService {
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
         if (learningMetricsApi.isEmpty()) {
-            throw new RuntimeException("No learning metrics available. Is the ATLAS profile enabled?");
+            throw new ApiNotPresentException("learningMetricsApi", PROFILE_ATLAS);
         }
 
         executePipeline(
