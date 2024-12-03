@@ -148,6 +148,7 @@ test.describe('Course messages', { tag: '@fast' }, () => {
                 await courseMessages.editDescription('New Description');
                 await courseMessages.closeEditPanel();
                 await page.reload();
+                await page.locator('jhi-conversation-header').waitFor({ state: 'visible', timeout: 10000 });
                 await expect(courseMessages.getName()).toContainText(newName);
                 await expect(courseMessages.getTopic()).toContainText(topic);
             });

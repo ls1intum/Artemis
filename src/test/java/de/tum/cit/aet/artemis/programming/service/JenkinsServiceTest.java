@@ -47,7 +47,7 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsGitlabTest
      */
     @BeforeEach
     void initTestCase() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
         continuousIntegrationTestService.setup(TEST_PREFIX, this, continuousIntegrationService);
     }
