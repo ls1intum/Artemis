@@ -193,19 +193,19 @@ public class BuildJobQueueResource {
     }
 
     /**
-     * Returns the estimated queue duration for a build job.
+     * Returns the estimated start date of the build job for the given participation.
      *
      * @param participationId the id of the participation
      * @return the estimated queue duration
      */
     @GetMapping("queued-jobs/queue-duration-estimation")
     @EnforceAtLeastStudent
-    public ResponseEntity<ZonedDateTime> getBuildJobQueueDurationEstimation(@RequestParam long participationId) {
+    public ResponseEntity<ZonedDateTime> getBuildJobEstimatedStartDate(@RequestParam long participationId) {
         var start = System.nanoTime();
         if (participationId <= 0) {
             ResponseEntity.badRequest().build();
         }
-        ZonedDateTime estimatedJobQueueReleaseTime = localCIBuildJobQueueService.getBuildJobEstimatedQueueDuration(participationId);
+        ZonedDateTime estimatedJobQueueReleaseTime = localCIBuildJobQueueService.getBuildJobEstimatedStartDate(participationId);
         log.debug("Queue duration estimation took {} ms", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok(estimatedJobQueueReleaseTime);
     }

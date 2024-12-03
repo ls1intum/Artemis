@@ -422,7 +422,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentInformation.BuildAgentStatus.ACTIVE, null, null);
         buildAgentInformation.put(buildAgent.memberAddress(), agent1);
 
-        var queueDurationEstimation = sharedQueueManagementService.getBuildJobEstimatedQueueDuration(job4.participationId());
+        var queueDurationEstimation = sharedQueueManagementService.getBuildJobEstimatedStartDate(job4.participationId());
         assertThat(queueDurationEstimation).isCloseTo(now.plusSeconds(48), within(1, ChronoUnit.SECONDS));
     }
 }

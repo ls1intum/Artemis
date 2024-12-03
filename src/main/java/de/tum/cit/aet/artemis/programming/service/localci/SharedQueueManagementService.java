@@ -99,7 +99,7 @@ public class SharedQueueManagementService {
         this.pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
         this.resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
         this.buildAgentInformation.addEntryListener(new BuildAgentListener(), false);
-        this.getBuildAgentsCapacity();
+        this.updateBuildAgentCapacity();
     }
 
     /**
@@ -341,7 +341,7 @@ public class SharedQueueManagementService {
      * @param participationId the ID of the participation for which the queue release date is estimated
      * @return the estimated queue release date as a {@link ZonedDateTime}
      */
-    public ZonedDateTime getBuildJobEstimatedQueueDuration(long participationId) {
+    public ZonedDateTime getBuildJobEstimatedStartDate(long participationId) {
         if (queue.isEmpty() || this.buildAgentsCapacity > this.runningBuildJobCount + queue.size()) {
             return ZonedDateTime.now();
         }
@@ -356,7 +356,7 @@ public class SharedQueueManagementService {
 
         ZonedDateTime now = ZonedDateTime.now();
 
-        List<Long> agentsAvailabilities = new ArrayList<>(getQueuedJobs().stream().map(job -> buildJobRemainingDuration(job, now)).sorted().toList());
+        List<Long> agentsAvailabilities = new ArrayList<>(getQueuedJobs().stream().map(job -> getBuildJobRemainingDuration(job, now)).sorted().toList());
 
         if (agentsAvailabilities.size() < this.buildAgentsCapacity) {
             int agentsToAdd = this.buildAgentsCapacity - agentsAvailabilities.size();
@@ -396,7 +396,7 @@ public class SharedQueueManagementService {
         return agentRemainingTimeObj == null ? 0 : agentRemainingTimeObj;
     }
 
-    private long buildJobRemainingDuration(BuildJobQueueItem buildJob, ZonedDateTime now) {
+    private long getBuildJobRemainingDuration(BuildJobQueueItem buildJob, ZonedDateTime now) {
         ZonedDateTime estimatedCompletionDate = buildJob.jobTimingInfo().estimatedCompletionDate();
         if (estimatedCompletionDate == null) {
             return 0;
@@ -414,23 +414,23 @@ public class SharedQueueManagementService {
         @Override
         public void entryAdded(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent added: {}", event.getValue());
-            getBuildAgentsCapacity();
+            updateBuildAgentCapacity();
         }
 
         @Override
         public void entryRemoved(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent removed: {}", event.getOldValue());
-            getBuildAgentsCapacity();
+            updateBuildAgentCapacity();
         }
 
         @Override
         public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
             log.debug("Build agent updated: {}", event.getValue());
-            getBuildAgentsCapacity();
+            updateBuildAgentCapacity();
         }
     }
 
-    private void getBuildAgentsCapacity() {
+    private void updateBuildAgentCapacity() {
         buildAgentsCapacity = getBuildAgentInformation().stream().mapToInt(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).sum();
         runningBuildJobCount = getBuildAgentInformation().stream().mapToInt(BuildAgentInformation::numberOfCurrentBuildJobs).sum();
     }
