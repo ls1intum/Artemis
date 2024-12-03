@@ -33,7 +33,7 @@ public class MigrationEntry20240614_140000 extends MigrationEntry {
         List<Course> activeCourses = courseRepository.findAllActiveWithoutTestCourses(ZonedDateTime.now());
 
         log.info("Updating competency progress for {} active courses", activeCourses.size());
-        var api = competencyProgressApi.orElseThrow(() -> new ApiNotPresentException("competencyProgressApi", PROFILE_ATLAS));
+        var api = competencyProgressApi.orElseThrow(() -> new ApiNotPresentException(CompetencyProgressApi.class, PROFILE_ATLAS));
         api.updateProgressForCoursesAsync(activeCourses);
     }
 

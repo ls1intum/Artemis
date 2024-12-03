@@ -180,7 +180,7 @@ public class PyrisPipelineService {
         // @formatter:off
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
-        var api = learningMetricsApi.orElseThrow(() -> new ApiNotPresentException("learningMetricsApi", PROFILE_ATLAS));
+        var api = learningMetricsApi.orElseThrow(() -> new ApiNotPresentException(LearningMetricsApi.class, PROFILE_ATLAS));
 
         executePipeline(
                 "course-chat",

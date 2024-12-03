@@ -306,7 +306,7 @@ public class LectureResource {
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
         Lecture lecture = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
-        competencyApi.orElseThrow(() -> new ApiNotPresentException("competencyApi", PROFILE_ATLAS)).addCompetencyLinksToExerciseUnits(lecture);
+        competencyApi.orElseThrow(() -> new ApiNotPresentException(CompetencyApi.class, PROFILE_ATLAS)).addCompetencyLinksToExerciseUnits(lecture);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
@@ -336,7 +336,7 @@ public class LectureResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
 
-        competencyApi.orElseThrow(() -> new ApiNotPresentException("competencyApi", PROFILE_ATLAS)).addCompetencyLinksToExerciseUnits(lecture);
+        competencyApi.orElseThrow(() -> new ApiNotPresentException(CompetencyApi.class, PROFILE_ATLAS)).addCompetencyLinksToExerciseUnits(lecture);
         lectureService.filterActiveAttachmentUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
         return ResponseEntity.ok(lecture);
