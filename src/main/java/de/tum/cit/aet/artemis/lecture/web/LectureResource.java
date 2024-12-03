@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -304,7 +306,7 @@ public class LectureResource {
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
         Lecture lecture = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
-        competencyApi.orElseThrow().addCompetencyLinksToExerciseUnits(lecture);
+        competencyApi.orElseThrow(() -> new ApiNotPresentException("competencyApi", PROFILE_ATLAS)).addCompetencyLinksToExerciseUnits(lecture);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
@@ -334,7 +336,7 @@ public class LectureResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
 
-        competencyApi.orElseThrow().addCompetencyLinksToExerciseUnits(lecture);
+        competencyApi.orElseThrow(() -> new ApiNotPresentException("competencyApi", PROFILE_ATLAS)).addCompetencyLinksToExerciseUnits(lecture);
         lectureService.filterActiveAttachmentUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
         return ResponseEntity.ok(lecture);

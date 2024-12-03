@@ -180,9 +180,7 @@ public class PyrisPipelineService {
         // @formatter:off
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
-        if (learningMetricsApi.isEmpty()) {
-            throw new ApiNotPresentException("learningMetricsApi", PROFILE_ATLAS);
-        }
+        var api = learningMetricsApi.orElseThrow(() -> new ApiNotPresentException("learningMetricsApi", PROFILE_ATLAS));
 
         executePipeline(
                 "course-chat",
@@ -192,7 +190,7 @@ public class PyrisPipelineService {
                     var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
                     return new PyrisCourseChatPipelineExecutionDTO(
                             PyrisExtendedCourseDTO.of(fullCourse),
-                            learningMetricsApi.get().getStudentCourseMetrics(session.getUser().getId(), courseId),
+                            api.getStudentCourseMetrics(session.getUser().getId(), courseId),
                             competencyJol == null ? null : CompetencyJolDTO.of(competencyJol),
                             pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                             new PyrisUserDTO(session.getUser()),
