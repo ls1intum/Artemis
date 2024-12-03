@@ -125,10 +125,17 @@ public class CourseCompetencyService {
      *
      * @param courseId The id of the course for which to fetch the competencies
      * @param userId   The id of the user for which to fetch the progress
+     * @param filter   Whether to filter out competencies that are not linked to any learning objects
      * @return The found competency
      */
-    public List<CourseCompetency> findCourseCompetenciesWithProgressForUserByCourseId(Long courseId, Long userId) {
-        List<CourseCompetency> competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
+    public List<CourseCompetency> findCourseCompetenciesWithProgressForUserByCourseId(long courseId, long userId, boolean filter) {
+        List<CourseCompetency> competencies;
+        if (filter) {
+            competencies = courseCompetencyRepository.findByCourseIdAndLinkedToLearningObjectOrderById(courseId);
+        }
+        else {
+            competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
+        }
         return findProgressForCompetenciesAndUser(competencies, userId);
     }
 

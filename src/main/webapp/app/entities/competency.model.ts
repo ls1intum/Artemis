@@ -299,3 +299,24 @@ export function getMastery(competencyProgress: CompetencyProgress | undefined): 
     // clamp the value between 0 and 100
     return Math.min(100, Math.max(0, Math.round(getProgress(competencyProgress) * getConfidence(competencyProgress))));
 }
+
+/**
+ * Simple comparator for sorting competencies by their soft due date
+ * @param a The first competency
+ * @param b The second competency
+ */
+export function compareSoftDueDate(a: CourseCompetency, b: CourseCompetency): number {
+    if (a.softDueDate) {
+        if (b.softDueDate) {
+            if (a.softDueDate.isSame(b.softDueDate)) {
+                return 0;
+            }
+            return a.softDueDate.isBefore(b.softDueDate) ? -1 : 1;
+        }
+        return -1;
+    }
+    if (b.softDueDate) {
+        return 1;
+    }
+    return 0;
+}
