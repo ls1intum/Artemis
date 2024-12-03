@@ -410,10 +410,6 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
         @AfterEach
         void tearDown() {
-            assertThat(sentNotifications.getFirst()).isInstanceOf(SingleUserNotification.class);
-            assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
-            assertThat((sentNotifications.getFirst()).getText()).isEqualTo(SSH_KEY_ADDED_TEXT);
-
             userSshPublicKeyRepository.deleteAll();
         }
 
@@ -424,6 +420,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
             userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
 
             sentNotifications = notificationRepository.findAll();
+            checkFirstNotification();
         }
 
         @Test
@@ -433,6 +430,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
             userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
 
             sentNotifications = notificationRepository.findAll();
+            checkFirstNotification();
         }
 
         @Test
@@ -446,6 +444,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
             assertThat(sentNotifications).hasSize(2);
             assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
             assertThat((sentNotifications.get(1)).getText()).isEqualTo(SSH_KEY_EXPIRES_SOON_TEXT);
+            checkFirstNotification();
         }
 
         @Test
@@ -459,6 +458,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
             assertThat(sentNotifications).hasSize(2);
             assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
             assertThat((sentNotifications.get(1)).getText()).isEqualTo(SSH_KEY_HAS_EXPIRED_TEXT);
+            checkFirstNotification();
         }
 
         @Test
@@ -470,6 +470,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
             sentNotifications = notificationRepository.findAll();
             assertThat(sentNotifications).hasSize(1);
+            checkFirstNotification();
         }
 
         @Test
@@ -481,6 +482,13 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
             sentNotifications = notificationRepository.findAll();
             assertThat(sentNotifications).hasSize(1);
+            checkFirstNotification();
+        }
+
+        void checkFirstNotification() {
+            assertThat(sentNotifications.getFirst()).isInstanceOf(SingleUserNotification.class);
+            assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
+            assertThat((sentNotifications.getFirst()).getText()).isEqualTo(SSH_KEY_ADDED_TEXT);
         }
     }
 
