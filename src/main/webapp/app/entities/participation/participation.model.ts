@@ -39,6 +39,9 @@ export abstract class Participation implements BaseEntity {
     public initializationDate?: dayjs.Dayjs;
     public individualDueDate?: dayjs.Dayjs;
     public presentationScore?: number;
+    /**
+     * @deprecated This property will be removed in Artemis 8.0. Use `submissions.results` instead.
+     */
     public results?: Result[];
     public submissions?: Submission[];
     public exercise?: Exercise;
