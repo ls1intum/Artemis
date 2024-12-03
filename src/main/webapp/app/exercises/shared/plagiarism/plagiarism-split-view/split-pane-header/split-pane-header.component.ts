@@ -113,9 +113,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     ngOnDestroy(): void {
        this.fileSelectSubscription?.unsubscribe();
 
-        if (this.showFilesSubscription) {
-            this.showFilesSubscription.unsubscribe();
-        }
+      this.showFilesSubscription?.unsubscribe();
     }
 
     hasActiveFile(): boolean {
