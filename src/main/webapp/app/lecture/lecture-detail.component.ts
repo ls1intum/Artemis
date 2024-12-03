@@ -9,6 +9,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { Subscription } from 'rxjs';
+import { AlertService } from 'app/core/util/alert.service';
 @Component({
     selector: 'jhi-lecture-detail',
     templateUrl: './lecture-detail.component.html',
@@ -30,6 +31,7 @@ export class LectureDetailComponent implements OnInit, OnDestroy {
     constructor(
         private activatedRoute: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
+        private alertService: AlertService,
         protected lectureService: LectureService,
         private profileService: ProfileService,
         private irisSettingsService: IrisSettingsService,
@@ -93,7 +95,11 @@ export class LectureDetailComponent implements OnInit, OnDestroy {
      */
     ingestLectureInPyris() {
         this.lectureService.ingestLecturesInPyris(this.lecture.course!.id!, this.lecture.id).subscribe({
-            error: (error) => console.error(`Failed to send Ingestion request`, error),
+            next: () => this.alertService.success('artemisApp.iris.ingestionAlert.lectureSuccess'),
+            error: (error) => {
+                this.alertService.error('artemisApp.iris.ingestionAlert.lectureError');
+                console.error('Failed to send Ingestion request', error);
+            },
         });
     }
 }
