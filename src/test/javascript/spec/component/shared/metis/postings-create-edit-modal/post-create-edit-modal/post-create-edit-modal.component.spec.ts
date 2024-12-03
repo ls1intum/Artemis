@@ -54,7 +54,6 @@ describe('PostCreateEditModalComponent', () => {
                 fixture = TestBed.createComponent(PostCreateEditModalComponent);
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
-                modal = TestBed.inject(NgbModal);
                 metisServiceGetPageTypeMock = jest.spyOn(metisService, 'getPageType');
                 metisServiceIsAtLeastInstructorStub = jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
                 metisServiceIsAtLeastInstructorStub.mockReturnValue(false);

@@ -4,13 +4,13 @@ import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared
 import { TranslateService } from '@ngx-translate/core';
 import { metisTutor, metisUser1, metisUser2 } from '../helpers/sample/metis-sample-data';
 import { MockPipe } from 'ng-mocks';
+import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 
 describe('ReactingUsersOnPostingsPipe', () => {
     let reactingUsersPipe: ReactingUsersOnPostingPipe;
     let translateService: TranslateService;
     let updateReactingUsersStringSpy: jest.SpyInstance;
     let transformedStringWithReactingUsers: string;
-
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
