@@ -16,7 +16,7 @@ export interface FeedbackAnalysisResponse {
 export interface FeedbackDetail {
     count: number;
     relativeCount: number;
-    detailText: string[];
+    detailTexts: string[];
     testCaseName: string;
     taskName: string;
     errorCategory: string;
@@ -31,7 +31,7 @@ export interface FeedbackAffectedStudentDTO {
 }
 export interface FeedbackChannelRequestDTO {
     channel: ChannelDTO;
-    feedbackDetailText: string[];
+    feedbackDetailTexts: string[];
     testCaseName: string;
 }
 @Injectable()

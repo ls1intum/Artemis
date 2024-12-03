@@ -1385,19 +1385,19 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 )
                 INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
-                      AND f.detailText IN :detailText
+                      AND f.detailText IN :detailTexts
                       AND f.testCase.testName = :testCaseName
                       AND p.testRun = FALSE
                 ORDER BY p.student.firstName ASC
             """)
-    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackText(@Param("exerciseId") long exerciseId, @Param("detailText") List<String> detailText,
+    Page<FeedbackAffectedStudentDTO> findAffectedStudentsByFeedbackText(@Param("exerciseId") long exerciseId, @Param("detailTexts") List<String> detailTexts,
             @Param("testCaseName") String testCaseName, Pageable pageable);
 
     /**
      * Retrieves the logins of students affected by a specific feedback detail text in a given exercise.
      *
      * @param exerciseId   The ID of the exercise for which affected students are requested.
-     * @param detailText   The feedback detail text to filter by.
+     * @param detailTexts  The feedback detail text to filter by.
      * @param testCaseName The name of the test case for which the feedback is given.
      * @return A list of student logins affected by the given feedback detail text in the specified exercise.
      */
@@ -1411,10 +1411,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 )
                 INNER JOIN r.feedbacks f
                 WHERE p.exercise.id = :exerciseId
-                  AND f.detailText IN :detailText
+                  AND f.detailText IN :detailTexts
                   AND f.testCase.testName = :testCaseName
                   AND p.testRun = FALSE
             """)
-    List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailText") List<String> detailText,
+    List<String> findAffectedLoginsByFeedbackDetailText(@Param("exerciseId") long exerciseId, @Param("detailTexts") List<String> detailTexts,
             @Param("testCaseName") String testCaseName);
 }

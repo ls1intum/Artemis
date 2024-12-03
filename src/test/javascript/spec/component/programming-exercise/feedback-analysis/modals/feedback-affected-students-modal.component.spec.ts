@@ -15,7 +15,7 @@ describe('AffectedStudentsModalComponent', () => {
     const feedbackDetailMock: FeedbackDetail = {
         count: 5,
         relativeCount: 25.0,
-        detailText: ['Some feedback detail'],
+        detailTexts: ['Some feedback detail'],
         testCaseName: 'testCase1',
         taskName: '1',
         errorCategory: 'StudentError',

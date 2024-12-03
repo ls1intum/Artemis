@@ -24,11 +24,6 @@
         </div>
     } @else {
         <table class="table table-striped mb-3">
-            <colgroup>
-                <col class="col" />
-                <col class="col" />
-                <col class="col" />
-            </colgroup>
             <thead>
                 <tr>
                     <ng-container *ngTemplateOutlet="headerTemplate; context: { label: TRANSLATION_BASE + '.name', colSize: 'col-4' }"></ng-container>

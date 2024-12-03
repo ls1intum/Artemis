@@ -298,7 +298,7 @@ public class ResultResource {
      * Pagination, sorting, and filtering options allow flexible data retrieval:
      * <ul>
      * <li><b>Pagination:</b> Based on page number and page size, as specified in the request.</li>
-     * <li><b>Sorting:</b> By column (e.g., "count" or "detailText") and sorting order (ASCENDING or DESCENDING).
+     * <li><b>Sorting:</b> By column (e.g., "count" or "detailTexts") and sorting order (ASCENDING or DESCENDING).
      * If the specified column is not valid for sorting, the default sorting column is "count".</li>
      * <li><b>Filtering:</b>
      * <ul>
@@ -380,9 +380,9 @@ public class ResultResource {
             @RequestParam(value = "detailText5", required = false) String detailText5, @RequestParam("testCaseName") String testCaseName,
             @ModelAttribute PageableSearchDTO<String> data) {
 
-        List<String> detailText = Stream.of(detailText1, detailText2, detailText3, detailText4, detailText5).filter(Objects::nonNull).toList();
+        List<String> detailTexts = Stream.of(detailText1, detailText2, detailText3, detailText4, detailText5).filter(Objects::nonNull).toList();
 
-        Page<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackText(exerciseId, detailText, testCaseName, data);
+        Page<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackText(exerciseId, detailTexts, testCaseName, data);
         return ResponseEntity.ok(participation);
     }
 }

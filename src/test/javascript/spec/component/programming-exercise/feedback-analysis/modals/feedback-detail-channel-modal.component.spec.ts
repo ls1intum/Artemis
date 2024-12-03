@@ -22,7 +22,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
         modalService = TestBed.inject(NgbModal);
 
         fixture.componentRef.setInput('feedbackDetail', {
-            detailText: ['Sample feedback'],
+            detailTexts: ['Sample feedback'],
             count: 10,
             relativeCount: 50,
             testCaseName: 'testCase1',
@@ -35,7 +35,7 @@ describe('FeedbackDetailChannelModalComponent', () => {
     });
 
     it('should initialize form and inputs', () => {
-        expect(component.feedbackDetail().detailText).toStrictEqual(['Sample feedback']);
+        expect(component.feedbackDetail().detailTexts).toStrictEqual(['Sample feedback']);
         expect(component.form).toBeDefined();
         expect(component.form.valid).toBeFalse();
     });

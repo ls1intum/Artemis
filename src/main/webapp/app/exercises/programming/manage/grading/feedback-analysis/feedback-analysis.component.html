@@ -26,7 +26,7 @@
                         <fa-icon size="sm" [icon]="faCircleQuestion" [ngbTooltip]="TRANSLATION_BASE + '.groupFeedbackTooltip' | artemisTranslate" class="btn-warning"></fa-icon>
                     </label>
                 </div>
-                <button class="btn me-2" (click)="openFilterModal()" [ngClass]="{ 'btn-secondary': selectedFiltersCount() == 0, 'btn-success': selectedFiltersCount() != 0 }">
+                <button class="btn me-2" (click)="openFilterModal()" [ngClass]="selectedFiltersCount() ? 'btn-success' : 'btn-secondary'">
                     <fa-icon [icon]="faFilter"></fa-icon>
                     <span [jhiTranslate]="TRANSLATION_BASE + '.filter'"></span> ({{ selectedFiltersCount() }})
                 </button>
@@ -45,7 +45,7 @@
         <thead>
             <tr>
                 <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'count', label: TRANSLATION_BASE + '.occurrence', colSize: 'col-1' }"></ng-container>
-                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'detailText', label: TRANSLATION_BASE + '.feedback', colSize: 'col-6' }"></ng-container>
+                <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'detailTexts', label: TRANSLATION_BASE + '.feedback', colSize: 'col-6' }"></ng-container>
                 <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'taskName', label: TRANSLATION_BASE + '.task', colSize: 'col-1' }"></ng-container>
                 <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'testCaseName', label: TRANSLATION_BASE + '.testcase', colSize: 'col-2' }"></ng-container>
                 <ng-container *ngTemplateOutlet="headerTemplate; context: { column: 'errorCategory', label: TRANSLATION_BASE + '.errorCategory', colSize: 'col-1' }"></ng-container>
@@ -70,7 +70,7 @@
                         <tr>
                             <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
                             <td>
-                                {{ item.detailText[0].length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailText[0] | slice: 0 : 100) + '...' : item.detailText[0] }}
+                                {{ item.detailTexts[0].length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailTexts[0] | slice: 0 : 100) + '...' : item.detailTexts[0] }}
                             </td>
                             <td>{{ item.taskName }}</td>
                             <td>{{ item.testCaseName }}</td>

@@ -418,16 +418,16 @@ public class ChannelService {
     /**
      * Creates a feedback-specific channel for an exercise within a course.
      *
-     * @param course             in which the channel is being created.
-     * @param exerciseId         of the exercise associated with the feedback channel.
-     * @param channelDTO         containing the properties of the channel to be created, such as name, description, and visibility.
-     * @param feedbackDetailText used to identify the students affected by the feedback.
-     * @param requestingUser     initiating the channel creation request.
-     * @param testCaseName       to filter student submissions according to a specific feedback
+     * @param course              in which the channel is being created.
+     * @param exerciseId          of the exercise associated with the feedback channel.
+     * @param channelDTO          containing the properties of the channel to be created, such as name, description, and visibility.
+     * @param feedbackDetailTexts used to identify the students affected by the feedback.
+     * @param requestingUser      initiating the channel creation request.
+     * @param testCaseName        to filter student submissions according to a specific feedback
      * @return the created {@link Channel} object with its properties.
      * @throws BadRequestAlertException if the channel name starts with an invalid prefix (e.g., "$").
      */
-    public Channel createFeedbackChannel(Course course, Long exerciseId, ChannelDTO channelDTO, List<String> feedbackDetailText, String testCaseName, User requestingUser) {
+    public Channel createFeedbackChannel(Course course, Long exerciseId, ChannelDTO channelDTO, List<String> feedbackDetailTexts, String testCaseName, User requestingUser) {
         Channel channelToCreate = new Channel();
         channelToCreate.setName(channelDTO.getName());
         channelToCreate.setIsPublic(channelDTO.getIsPublic());
@@ -441,7 +441,7 @@ public class ChannelService {
 
         Channel createdChannel = createChannel(course, channelToCreate, Optional.of(requestingUser));
 
-        List<String> userLogins = studentParticipationRepository.findAffectedLoginsByFeedbackDetailText(exerciseId, feedbackDetailText, testCaseName);
+        List<String> userLogins = studentParticipationRepository.findAffectedLoginsByFeedbackDetailText(exerciseId, feedbackDetailTexts, testCaseName);
 
         if (userLogins != null && !userLogins.isEmpty()) {
             var registeredUsers = registerUsersToChannel(false, false, false, userLogins, course, createdChannel);

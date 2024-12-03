@@ -632,7 +632,7 @@ public class ResultService {
 
             // Process and map feedback details, calculating relative count and assigning task names
             processedDetails = feedbackDetailPage.getContent().stream().map(detail -> new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount,
-                    detail.detailText(), detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
+                    detail.detailTexts(), detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
             totalPages = feedbackDetailPage.getTotalPages();
         }
         else {
@@ -656,7 +656,7 @@ public class ResultService {
             int start = Math.max(0, (page - 1) * pageSize);
             int end = Math.min(start + pageSize, processedDetailsPreSort.size());
             processedDetails = processedDetailsPreSort.subList(start, end);
-            processedDetails = processedDetails.stream().map(detail -> new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailText(),
+            processedDetails = processedDetails.stream().map(detail -> new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailTexts(),
                     detail.testCaseName(), detail.taskName(), detail.errorCategory())).toList();
             totalPages = (int) Math.ceil((double) processedDetailsPreSort.size() / pageSize);
         }
@@ -671,7 +671,7 @@ public class ResultService {
 
     private Comparator<FeedbackDetailDTO> getComparatorForFeedbackDetails(FeedbackPageableDTO search) {
         Map<String, Comparator<FeedbackDetailDTO>> comparators = Map.of("count", Comparator.comparingLong(FeedbackDetailDTO::count), "detailTexts",
-                Comparator.comparing(detail -> detail.detailText().isEmpty() ? "" : detail.detailText().getFirst(), // Sort by the first element of the list
+                Comparator.comparing(detail -> detail.detailTexts().isEmpty() ? "" : detail.detailTexts().getFirst(), // Sort by the first element of the list
                         String.CASE_INSENSITIVE_ORDER),
                 "testCaseName", Comparator.comparing(FeedbackDetailDTO::testCaseName, String.CASE_INSENSITIVE_ORDER), "taskName",
                 Comparator.comparing(FeedbackDetailDTO::taskName, String.CASE_INSENSITIVE_ORDER), "relativeCount", Comparator.comparingDouble(FeedbackDetailDTO::relativeCount));
@@ -689,12 +689,12 @@ public class ResultService {
             for (FeedbackDetailDTO processed : processedDetails) {
                 // Ensure feedbacks have the same testCaseName and taskName
                 if (base.testCaseName().equals(processed.testCaseName()) && base.taskName().equals(processed.taskName())) {
-                    double similarity = NameSimilarity.levenshteinSimilarity(base.detailText().getFirst(), processed.detailText().getFirst());
+                    double similarity = NameSimilarity.levenshteinSimilarity(base.detailTexts().getFirst(), processed.detailTexts().getFirst());
 
                     if (similarity > similarityThreshold) {
                         // Merge the current base feedback into the processed feedback
-                        List<String> mergedTexts = new ArrayList<>(processed.detailText());
-                        mergedTexts.add(base.detailText().getFirst());
+                        List<String> mergedTexts = new ArrayList<>(processed.detailTexts());
+                        mergedTexts.add(base.detailTexts().getFirst());
 
                         long mergedCount = processed.count() + base.count();
 
@@ -711,7 +711,7 @@ public class ResultService {
 
             if (!isMerged) {
                 // If not merged, add it as a new entry in processedDetails
-                FeedbackDetailDTO newEntry = new FeedbackDetailDTO(base.count(), 0, List.of(base.detailText().getFirst()), base.testCaseName(), base.taskName(),
+                FeedbackDetailDTO newEntry = new FeedbackDetailDTO(base.count(), 0, List.of(base.detailTexts().getFirst()), base.testCaseName(), base.taskName(),
                         base.errorCategory());
                 processedDetails.add(newEntry);
             }
@@ -742,14 +742,14 @@ public class ResultService {
      * <br>
      *
      * @param exerciseId   for which the affected student participation data is requested.
-     * @param detailText   used to filter the participation to only those affected by specific feedback entries.
+     * @param detailTexts  used to filter the participation to only those affected by specific feedback entries.
      * @param data         A {@link PageableSearchDTO} object containing pagination and sorting parameters.
      * @param testCaseName used to filter the participation to only those feedbacks for a specific testCaseName.
      * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
-    public Page<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackText(long exerciseId, List<String> detailText, String testCaseName, PageableSearchDTO<String> data) {
+    public Page<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackText(long exerciseId, List<String> detailTexts, String testCaseName, PageableSearchDTO<String> data) {
         PageRequest pageRequest = PageUtil.createDefaultPageRequest(data, PageUtil.ColumnMapping.AFFECTED_STUDENTS);
-        return studentParticipationRepository.findAffectedStudentsByFeedbackText(exerciseId, detailText, testCaseName, pageRequest);
+        return studentParticipationRepository.findAffectedStudentsByFeedbackText(exerciseId, detailTexts, testCaseName, pageRequest);
     }
 
     /**

@@ -227,7 +227,7 @@ export class FeedbackAnalysisComponent {
             try {
                 const feedbackChannelRequest: FeedbackChannelRequestDTO = {
                     channel: channelDto,
-                    feedbackDetailText: feedbackDetail.detailText,
+                    feedbackDetailTexts: feedbackDetail.detailTexts,
                     testCaseName: feedbackDetail.testCaseName,
                 };
                 const createdChannel = await this.feedbackAnalysisService.createChannel(this.courseId(), this.exerciseId(), feedbackChannelRequest);

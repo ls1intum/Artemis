@@ -10,7 +10,7 @@ describe('FeedbackAnalysisService', () => {
 
     const feedbackDetailsMock: FeedbackDetail[] = [
         {
-            detailText: ['Feedback 1'],
+            detailTexts: ['Feedback 1'],
             testCaseName: 'test1',
             count: 5,
             relativeCount: 25.0,
@@ -18,7 +18,7 @@ describe('FeedbackAnalysisService', () => {
             errorCategory: 'StudentError',
         },
         {
-            detailText: ['Feedback 2'],
+            detailTexts: ['Feedback 2'],
             testCaseName: 'test2',
             count: 3,
             relativeCount: 15.0,
@@ -181,7 +181,7 @@ describe('FeedbackAnalysisService', () => {
 
             const feedbackChannelRequestMock = {
                 channel: channelDtoMock,
-                feedbackDetailText: ['Sample feedback detail text'],
+                feedbackDetailTexts: ['Sample feedback detail text'],
                 testCaseName: 'test1',
             };
 

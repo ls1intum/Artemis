@@ -27,7 +27,7 @@ describe('FeedbackAnalysisComponent', () => {
 
     const feedbackMock: FeedbackDetail[] = [
         {
-            detailText: ['Test feedback 1 detail'],
+            detailTexts: ['Test feedback 1 detail'],
             testCaseName: 'test1',
             count: 10,
             relativeCount: 50,
@@ -35,7 +35,7 @@ describe('FeedbackAnalysisComponent', () => {
             errorCategory: 'Student Error',
         },
         {
-            detailText: ['Test feedback 2 detail'],
+            detailTexts: ['Test feedback 2 detail'],
             testCaseName: 'test2',
             count: 5,
             relativeCount: 25,
