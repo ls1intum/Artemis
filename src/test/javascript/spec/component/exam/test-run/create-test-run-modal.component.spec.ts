@@ -26,7 +26,6 @@ describe('Create Test Run Modal Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [FormsModule, ReactiveFormsModule],
-            declarations: [CreateTestRunModalComponent],
             providers: [
                 NgbModal,
                 NgbActiveModal,
