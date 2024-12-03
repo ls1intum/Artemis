@@ -45,12 +45,12 @@ public class TextUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
     public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, AuthorizationCheckService authorizationCheckService,
-            CompetencyProgressApi competencyProgressApi, LectureUnitService lectureUnitService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -108,7 +108,7 @@ public class TextUnitResource {
 
         TextUnit result = lectureUnitService.saveWithCompetencyLinks(textUnitForm, textUnitRepository::save);
 
-        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(existingTextUnit, Optional.of(textUnitForm));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(existingTextUnit, Optional.of(textUnitForm)));
 
         return ResponseEntity.ok(result);
     }

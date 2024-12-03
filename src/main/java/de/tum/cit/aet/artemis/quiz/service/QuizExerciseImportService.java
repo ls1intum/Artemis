@@ -56,11 +56,11 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     private final ChannelService channelService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, FileService fileService, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
-            CompetencyProgressApi competencyProgressApi) {
+            Optional<CompetencyProgressApi> competencyProgressApi) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.quizExerciseService = quizExerciseService;
         this.fileService = fileService;
@@ -90,7 +90,8 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
         channelService.createExerciseChannel(newQuizExercise, Optional.ofNullable(importedExercise.getChannelName()));
 
-        competencyProgressApi.updateProgressByLearningObjectAsync(newQuizExercise);
+        QuizExercise finalNewQuizExercise = newQuizExercise;
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(finalNewQuizExercise));
         if (files != null) {
             newQuizExercise = quizExerciseService.save(quizExerciseService.uploadNewFilesToNewImportedQuiz(newQuizExercise, files));
         }

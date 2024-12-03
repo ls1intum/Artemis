@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
@@ -69,7 +70,7 @@ public class AttachmentUnitResource {
 
     private final LectureUnitProcessingService lectureUnitProcessingService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final SlideSplitterService slideSplitterService;
 
@@ -77,7 +78,7 @@ public class AttachmentUnitResource {
 
     public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, LectureUnitProcessingService lectureUnitProcessingService,
             AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService,
-            CompetencyProgressApi competencyProgressApi, SlideSplitterService slideSplitterService, FileService fileService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService, FileService fileService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -173,7 +174,7 @@ public class AttachmentUnitResource {
             slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
         }
         attachmentUnitService.prepareAttachmentUnitForClient(savedAttachmentUnit);
-        competencyProgressApi.updateProgressByLearningObjectAsync(savedAttachmentUnit);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(savedAttachmentUnit));
 
         return ResponseEntity.created(new URI("/api/attachment-units/" + savedAttachmentUnit.getId())).body(savedAttachmentUnit);
     }
@@ -228,7 +229,11 @@ public class AttachmentUnitResource {
             List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitSplitInformationDTO, fileBytes,
                     lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId));
             savedAttachmentUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
-            savedAttachmentUnits.forEach(competencyProgressApi::updateProgressByLearningObjectAsync);
+
+            if (competencyProgressApi.isPresent()) {
+                var api = competencyProgressApi.get();
+                savedAttachmentUnits.forEach(api::updateProgressByLearningObjectAsync);
+            }
             return ResponseEntity.ok().body(savedAttachmentUnits);
         }
         catch (IOException e) {

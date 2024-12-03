@@ -67,10 +67,10 @@ public class LectureResource {
 
     private static final String ENTITY_NAME = "lecture";
 
-    private final CompetencyApi competencyApi;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
+
+    private final Optional<CompetencyApi> competencyApi;
 
     private final LectureRepository lectureRepository;
 
@@ -92,7 +92,7 @@ public class LectureResource {
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, CompetencyApi competencyApi) {
+            ChannelRepository channelRepository, Optional<CompetencyApi> competencyApi) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -304,7 +304,7 @@ public class LectureResource {
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
         Lecture lecture = lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
-        competencyApi.addCompetencyLinksToExerciseUnits(lecture);
+        competencyApi.orElseThrow().addCompetencyLinksToExerciseUnits(lecture);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
@@ -334,7 +334,7 @@ public class LectureResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
 
-        competencyApi.addCompetencyLinksToExerciseUnits(lecture);
+        competencyApi.orElseThrow().addCompetencyLinksToExerciseUnits(lecture);
         lectureService.filterActiveAttachmentUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
         return ResponseEntity.ok(lecture);

@@ -95,8 +95,6 @@ public class ProgrammingExerciseExportImportResource {
 
     private static final String ENTITY_NAME = "programmingExercise";
 
-    private final CompetencyProgressApi competencyProgressApi;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -130,13 +128,15 @@ public class ProgrammingExerciseExportImportResource {
 
     private final Optional<AthenaModuleService> athenaModuleService;
 
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService, CourseRepository courseRepository,
             ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService,
-            Optional<AthenaModuleService> athenaModuleService, CompetencyProgressApi competencyProgressApi) {
+            Optional<AthenaModuleService> athenaModuleService, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -259,7 +259,7 @@ public class ProgrammingExerciseExportImportResource {
             importedProgrammingExercise.setExerciseHints(null);
             importedProgrammingExercise.setTasks(null);
 
-            competencyProgressApi.updateProgressByLearningObjectAsync(importedProgrammingExercise);
+            competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(importedProgrammingExercise));
 
             return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
                     .body(importedProgrammingExercise);

@@ -61,13 +61,13 @@ public class PyrisPipelineService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final LearningMetricsApi learningMetricsApi;
+    private final Optional<LearningMetricsApi> learningMetricsApi;
 
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
-            IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, LearningMetricsApi learningMetricsApi,
+            IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, Optional<LearningMetricsApi> learningMetricsApi,
             StudentParticipationRepository studentParticipationRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
@@ -178,6 +178,10 @@ public class PyrisPipelineService {
         // @formatter:off
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
+        if (learningMetricsApi.isEmpty()) {
+            throw new RuntimeException("No learning metrics available. Is the ATLAS profile enabled?");
+        }
+
         executePipeline(
                 "course-chat",
                 variant,
@@ -186,7 +190,7 @@ public class PyrisPipelineService {
                     var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
                     return new PyrisCourseChatPipelineExecutionDTO(
                             PyrisExtendedCourseDTO.of(fullCourse),
-                            learningMetricsApi.getStudentCourseMetrics(session.getUser().getId(), courseId),
+                            learningMetricsApi.get().getStudentCourseMetrics(session.getUser().getId(), courseId),
                             competencyJol == null ? null : CompetencyJolDTO.of(competencyJol),
                             pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                             new PyrisUserDTO(session.getUser()),

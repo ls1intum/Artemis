@@ -46,12 +46,12 @@ public class VideoUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
     public VideoUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, VideoUnitRepository videoUnitRepository,
-            CompetencyProgressApi competencyProgressApi, LectureUnitService lectureUnitService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService) {
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.videoUnitRepository = videoUnitRepository;
@@ -99,7 +99,7 @@ public class VideoUnitResource {
 
         VideoUnit result = lectureUnitService.saveWithCompetencyLinks(videoUnit, videoUnitRepository::save);
 
-        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(existingVideoUnit, Optional.of(videoUnit));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(existingVideoUnit, Optional.of(videoUnit)));
 
         return ResponseEntity.ok(result);
     }

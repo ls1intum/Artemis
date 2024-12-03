@@ -183,7 +183,7 @@ public class ProgrammingExerciseService {
 
     private final ExerciseService exerciseService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
@@ -199,7 +199,7 @@ public class ProgrammingExerciseService {
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyProgressApi competencyProgressApi) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -339,7 +339,8 @@ public class ProgrammingExerciseService {
         // Step 12c: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
         // Step 12d: Update student competency progress
-        competencyProgressApi.updateProgressByLearningObjectAsync(savedProgrammingExercise);
+        ProgrammingExercise finalSavedProgrammingExercise = savedProgrammingExercise;
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(finalSavedProgrammingExercise));
 
         // Step 13: Set Iris settings
         if (irisSettingsService.isPresent()) {
@@ -627,7 +628,7 @@ public class ProgrammingExerciseService {
 
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
-        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise)));
 
         irisSettingsService
                 .ifPresent(settingsService -> settingsService.setEnabledForExerciseByCategories(savedProgrammingExercise, programmingExerciseBeforeUpdate.getCategories()));

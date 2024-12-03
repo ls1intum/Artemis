@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config.migration.entries;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +18,9 @@ public class MigrationEntry20240614_140000 extends MigrationEntry {
 
     private final CourseRepository courseRepository;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    public MigrationEntry20240614_140000(CourseRepository courseRepository, CompetencyProgressApi competencyProgressApi) {
+    public MigrationEntry20240614_140000(CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.courseRepository = courseRepository;
         this.competencyProgressApi = competencyProgressApi;
     }
@@ -29,7 +30,10 @@ public class MigrationEntry20240614_140000 extends MigrationEntry {
         List<Course> activeCourses = courseRepository.findAllActiveWithoutTestCourses(ZonedDateTime.now());
 
         log.info("Updating competency progress for {} active courses", activeCourses.size());
-        competencyProgressApi.updateProgressForCoursesAsync(activeCourses);
+        if (competencyProgressApi.isEmpty()) {
+            throw new RuntimeException("No competency progress api available. Might the ATLAS profile not be enabled.");
+        }
+        competencyProgressApi.get().updateProgressForCoursesAsync(activeCourses);
     }
 
     @Override
