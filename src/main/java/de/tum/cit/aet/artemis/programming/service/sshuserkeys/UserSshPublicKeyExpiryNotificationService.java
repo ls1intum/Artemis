@@ -32,7 +32,7 @@ public class UserSshPublicKeyExpiryNotificationService {
     /**
      * Notifies the user one week in advance about the upcoming expiry of one of their SSH keys
      */
-    @Scheduled(cron = "0 0 7 * * *") // execute this every night at 7:00:00 am
+    @Scheduled(cron = "0 * * * * *") // execute this every morning at 7:00:00 am
     public void notifyUserOnUpcomingKeyExpiry() {
         ZonedDateTime fromDate = ZonedDateTime.now().plusDays(6);
         ZonedDateTime toDate = ZonedDateTime.now().plusDays(7);
@@ -45,7 +45,7 @@ public class UserSshPublicKeyExpiryNotificationService {
     /**
      * Notifies the user about the expiry of one of their SSH keys
      */
-    @Scheduled(cron = "0 0 7 * * *") // execute this every night at 7:00:00 am
+    @Scheduled(cron = "0 * * * * *") // execute this every morning at 7:00:00 am
     public void notifyUserOnKeyExpiry() {
         ZonedDateTime fromDate = ZonedDateTime.now().minusDays(1);
         ZonedDateTime toDate = ZonedDateTime.now();
