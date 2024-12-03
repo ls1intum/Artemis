@@ -2,34 +2,26 @@ api: v0.0.1
 actions:
   - name: build
     script: mvn -B clean compile
-  - name: checkers
+  - name: main_method_checker
+    script: |-
+      main_checker_output=$(pipeline-helper main-method -s target/classes)
+
+      line_count="$(echo "$main_checker_output" | wc -l)"
+      main_method="$(echo "$main_checker_output" | head -n1)"
+
+      if [ "${line_count}" -eq 2 ]; then
+        echo "${main_method}"
+      else
+        exit 1
+      fi
+  - name: other_checkers
     script: |-
       # all java files in the assignment folder should have maximal line length 80
       pipeline-helper line-length -l 80 -s ${studentParentWorkingDirectoryName}/ -e java
       # checks that the file exists and is not empty for non gui programs
       pipeline-helper file-exists ${studentParentWorkingDirectoryName}/Tests.txt
-      
-      main_checker_output=$(pipeline-helper main-method -s target/classes)
-      
-      line_count="$(echo "$main_checker_output" | wc -l)"
-      main_method="$(echo "$main_checker_output" | head -n1)"
-      
-      if [ "${line_count}" -eq 2 ]; then
-        export MAIN_CLASS="${main_method}"
-      else
-        exit 1
-      fi
-      
-      JAVA_FLAGS="-Djdk.console=java.base"
-      
-      sed -i "s#JAVA_FLAGS#${JAVA_FLAGS}#;s#CLASSPATH#../target/classes#" testsuite/config/default.exp
-      sed -i "s#MAIN_CLASS#${MAIN_CLASS}#" testsuite/config/default.exp
-      export testfiles_base_path="./testsuite/testfiles"
-      export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
-      sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" testsuite/${tool}.tests/*.exp
   - name: secret-tests
     script: |-
-      export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
       export step="secret"
       cd testsuite || exit
       rm ${tool}.log || true
@@ -40,18 +32,12 @@ actions:
       if [ -f "${secretExp}" ]; then
         rm "${secretExp}"
       fi
-      
-      export testfiles_base_path="./testsuite/testfiles"
-      
-      if [ -f "${testfiles_base_path}/secret" ]; then
-        rm "${testfiles_base_path}/secret"
+
+      if [ -d "${testfiles_base_path}/secret" ]; then
+        rm -rf "${testfiles_base_path}/secret"
       fi
   - name: public-tests
     script: |-
-      export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
-      sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" testsuite/${tool}.tests/*.exp
-      
-      export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
       export step="public"
       cd testsuite || exit
       rm ${tool}.log || true
@@ -60,10 +46,6 @@ actions:
       pipeline-helper -o customFeedbacks dejagnu -n "dejagnu[${step}]" -l testsuite/${tool}.log
   - name: advanced-tests
     script: |-
-      export testfiles_base_path="./testsuite/testfiles"
-      export tool=$(find testsuite -name "*.tests" -type d -printf "%f" | sed 's#.tests$##')
-      sed -i "s#TESTFILES_DIRECTORY#../${testfiles_base_path}#" testsuite/${tool}.tests/*.exp
-      
       export step="advanced"
       cd testsuite || exit
       rm ${tool}.log || true
