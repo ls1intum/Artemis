@@ -21,7 +21,9 @@
                 (onChanges)="isDirty = true"
             />
         </div>
+
         <hr class="hr" />
+
         <h3 jhiTranslate="artemisApp.iris.settings.subSettings.textExerciseChatSettings"></h3>
         <div>
             <jhi-iris-common-sub-settings-update
@@ -33,8 +35,22 @@
             />
         </div>
         @if (settingsType !== EXERCISE) {
+            <hr class="hr" />
+
+            <h3 jhiTranslate="artemisApp.iris.settings.subSettings.courseChatSettings"></h3>
             <div>
-                <hr class="hr" />
+                <jhi-iris-common-sub-settings-update
+                    [subSettings]="irisSettings?.irisCourseChatSettings"
+                    [parentSubSettings]="parentIrisSettings?.irisCourseChatSettings"
+                    [settingsType]="settingsType"
+                    [courseId]="courseId"
+                    (onChanges)="isDirty = true"
+                />
+            </div>
+
+            <hr class="hr" />
+
+            <div>
                 <h3 jhiTranslate="artemisApp.iris.settings.subSettings.lectureIngestionSettings.title"></h3>
                 <jhi-iris-common-sub-settings-update
                     [subSettings]="irisSettings?.irisLectureIngestionSettings!"
@@ -58,8 +74,9 @@
             </div>
         }
         @if (settingsType !== EXERCISE) {
+            <hr class="hr" />
+
             <div>
-                <hr class="hr" />
                 <h3 jhiTranslate="artemisApp.iris.settings.subSettings.competencyGenerationSettings"></h3>
                 <jhi-iris-common-sub-settings-update
                     [subSettings]="irisSettings?.irisCompetencyGenerationSettings!"
