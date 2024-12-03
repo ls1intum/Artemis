@@ -14,10 +14,15 @@ import { Subject } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-test-run-management',
     templateUrl: './test-run-management.component.html',
+    standalone: true,
+    imports: [ArtemisTranslatePipe, FaIconComponent, ArtemisSharedModule],
 })
 export class TestRunManagementComponent implements OnInit {
     private route = inject(ActivatedRoute);

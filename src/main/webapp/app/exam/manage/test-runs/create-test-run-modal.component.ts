@@ -4,14 +4,16 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 @Component({
     selector: 'jhi-create-test-run-modal',
     templateUrl: './create-test-run-modal.component.html',
     providers: [ArtemisDurationFromSecondsPipe],
     styles: ['.table tr.active td { background-color:#3e8acc; color: white; }'],
+    imports: [ReactiveFormsModule],
+    standalone: true,
 })
 export class CreateTestRunModalComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);
