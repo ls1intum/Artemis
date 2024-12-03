@@ -8,6 +8,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
     selector: '[jhi-suspicious-sessions]',
     templateUrl: './suspicious-sessions.component.html',
     styleUrls: ['./suspicious-sessions.component.scss'],
+    standalone: true,
 })
 export class SuspiciousSessionsComponent implements OnInit {
     suspiciousSessions = input.required<SuspiciousExamSessions>();

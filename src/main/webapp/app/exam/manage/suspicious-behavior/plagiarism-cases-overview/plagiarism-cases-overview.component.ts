@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 @Component({
     selector: 'jhi-plagiarism-cases-overview',
     templateUrl: './plagiarism-cases-overview.component.html',
+    standalone: true,
 })
 export class PlagiarismCasesOverviewComponent {
     private router = inject(Router);
