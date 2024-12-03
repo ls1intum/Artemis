@@ -69,7 +69,7 @@ jobs:
         # Run artemis server in a detached mode, and store the pid in variable steps.run-artemis.outputs.pid
       - name: Run Artemis Server
         id: run-artemis
-        run: ./main-repo/gradlew bootRun --args='--spring.profiles.active=dev,artemis,scheduling --artemis.user-management.use-external=false --artemis.user-management.internal-admin.username=artemis_admin --artemis.user-management.internal-admin.password=artemis_admin --artemis.user-management.registration.enabled=true --artemis.user-management.registration.allowed-email-pattern=.*' & echo "pid=$!" >> "$GITHUB_OUTPUT"
+        run: ./main-repo/gradlew bootRun --args='--spring.profiles.active=dev,artemis,scheduling,atlas --artemis.user-management.use-external=false --artemis.user-management.internal-admin.username=artemis_admin --artemis.user-management.internal-admin.password=artemis_admin --artemis.user-management.registration.enabled=true --artemis.user-management.registration.allowed-email-pattern=.*' & echo "pid=$!" >> "$GITHUB_OUTPUT"
 
         # For debug purposes or if anything goes wrong, and we have to manually kill the process on the VM
       - name: Print Pid

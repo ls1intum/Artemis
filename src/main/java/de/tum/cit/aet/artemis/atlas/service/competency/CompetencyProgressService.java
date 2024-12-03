@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toRelativeTime;
 
 import java.time.Instant;
@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository
 /**
  * Service for calculating the progress of a student in a competency.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class CompetencyProgressService {
 

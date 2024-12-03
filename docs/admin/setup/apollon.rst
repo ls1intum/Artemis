@@ -9,7 +9,7 @@ Enable the ``apollon`` Spring profile:
 
 ::
 
-   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,apollon
+   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,atlas,local,apollon
 
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^

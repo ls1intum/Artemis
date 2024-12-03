@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Artemis (Server &amp; Client)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <option name="ACTIVE_PROFILES" value="dev,bamboo,bitbucket,jira,artemis,scheduling,core,local" />
+    <option name="ACTIVE_PROFILES" value="dev,bamboo,bitbucket,jira,artemis,scheduling,core,atlas,local" />
     <module name="Artemis.main" />
     <option name="PROGRAM_PARAMETERS" value=" " />
     <option name="ALTERNATIVE_JRE_PATH" />

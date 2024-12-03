@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Repository
 public interface CompetencyProgressRepository extends ArtemisJpaRepository<CompetencyProgress, Long> {
 

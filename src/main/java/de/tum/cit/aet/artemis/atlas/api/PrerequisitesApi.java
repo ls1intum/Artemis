@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
 @Controller
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 public class PrerequisitesApi extends AbstractAtlasApi {
 
     private final PrerequisiteRepository prerequisiteRepository;
