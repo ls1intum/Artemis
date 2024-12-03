@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { Subject, Subscription, concatMap, filter, tap } from 'rxjs';
+import { Subscription, concatMap, filter, tap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -45,22 +45,19 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     // state change variables
     protected isCreateMode = signal<boolean>(false); // true when creating new key, false when viewing existing key
 
-    protected isLoading = signal<boolean>(true);
-    protected copyInstructions = signal<string>('');
+    isLoading = signal<boolean>(true);
+    copyInstructions = signal<string>('');
 
     // Key details from input fields
-    protected displayedKeyLabel = signal<string>('');
-    protected displayedSshKey = signal<string>('');
-    protected displayedKeyHash = signal<string>('');
-    protected displayedExpiryDate = signal<dayjs.Dayjs | undefined>(undefined);
-    protected isExpiryDateValid = signal<boolean>(false);
+    displayedKeyLabel = signal<string>('');
+    displayedSshKey = signal<string>('');
+    displayedKeyHash = signal<string>('');
+    displayedExpiryDate = signal<dayjs.Dayjs | undefined>(undefined);
+    isExpiryDateValid = signal<boolean>(false);
     protected displayCreationDate = signal<dayjs.Dayjs>(dayjs());
     protected displayedLastUsedDate = signal<dayjs.Dayjs | undefined>(undefined);
     protected currentDate = signal<dayjs.Dayjs>(dayjs());
     protected selectedOption = signal<string>('doNotUseExpiration');
-
-    private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
 
     ngOnInit() {
         this.setMessageBasedOnOS(getOS());

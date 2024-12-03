@@ -25,10 +25,10 @@ export class UserSettingsContainerComponent implements OnInit {
     // Icons
     protected readonly faUser = faUser;
 
-    protected readonly currentUser = signal<User | undefined>(undefined);
+    protected currentUser = signal<User | undefined>(undefined);
 
-    protected readonly localVCEnabled = signal<boolean>(false);
-    protected readonly isAtLeastTutor = signal<boolean>(false);
+    localVCEnabled = signal<boolean>(false);
+    isAtLeastTutor = signal<boolean>(false);
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

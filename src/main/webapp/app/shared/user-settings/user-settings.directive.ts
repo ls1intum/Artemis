@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Directive, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Directive, OnInit, inject } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Setting, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
@@ -11,6 +11,9 @@ import { AlertService } from 'app/core/util/alert.service';
  */
 @Directive()
 export abstract class UserSettingsDirective implements OnInit {
+    userSettingsService = inject(UserSettingsService);
+    alertService = inject(AlertService);
+    changeDetector = inject(ChangeDetectorRef);
     // HTML template related
     settingsChanged = false;
     currentUser: User;
@@ -22,12 +25,6 @@ export abstract class UserSettingsDirective implements OnInit {
     settings: Array<Setting>;
     page = 0;
     error?: string;
-
-    protected constructor(
-        protected userSettingsService: UserSettingsService,
-        protected alertService: AlertService,
-        protected changeDetector: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         this.alertService.closeAll();

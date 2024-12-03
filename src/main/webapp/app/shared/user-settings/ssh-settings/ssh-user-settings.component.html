@@ -1,10 +1,10 @@
 <!-- SSH Settings Title -->
 <h1 jhiTranslate="artemisApp.userSettings.sshSettingsPage.keysTablePageTitle"></h1>
 
-@if (!isLoading) {
+@if (!isLoading()) {
     <div class="list-group d-block">
         <!-- Initial state: There are no keys -->
-        @if (keyCount === 0) {
+        @if (keyCount() === 0) {
             <div class="list-group-item px-4 py-4">
                 <div class="mt-4"></div>
                 <h4 class="text-center mb-4 mt-8" jhiTranslate="artemisApp.userSettings.sshSettingsPage.noKeysHaveBeenAdded"></h4>
@@ -25,7 +25,7 @@
         }
 
         <!-- Initial state: There are keys -->
-        @if (keyCount > 0) {
+        @if (keyCount() > 0) {
             <div class="list-group-item">
                 <div class="d-flex flex-wrap mt-4">
                     <p>
@@ -43,7 +43,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (key of sshPublicKeys; track key; let i = $index) {
+                        @for (key of sshPublicKeys(); track key; let i = $index) {
                             <tr>
                                 <td class="container" style="max-width: 250px">
                                     <div style="font-size: large">
