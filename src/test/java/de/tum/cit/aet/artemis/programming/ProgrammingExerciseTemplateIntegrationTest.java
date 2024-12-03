@@ -190,7 +190,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         Course course = courseUtilService.addEmptyCourse();
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
 
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
@@ -204,7 +204,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
 
     @AfterEach
     void tearDown() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer, jenkinsJobPermissionsService);
         gitlabRequestMockProvider.enableMockingOfRequests();
         programmingExerciseTestService.tearDown();
         exerciseRepo.resetLocalRepo();

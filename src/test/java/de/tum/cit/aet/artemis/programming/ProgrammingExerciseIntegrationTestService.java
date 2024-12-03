@@ -140,11 +140,11 @@ public class ProgrammingExerciseIntegrationTestService {
     private String defaultBranch;
 
     @Autowired
-    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private FileService fileService;
 
     @Autowired
-    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private UriService uriService;
 
     @Autowired
@@ -169,7 +169,7 @@ public class ProgrammingExerciseIntegrationTestService {
     private RequestUtilService request;
 
     @Autowired
-    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private GitService gitService;
 
     @Autowired
@@ -238,10 +238,10 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private MockDelegate mockDelegate;
 
-    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private VersionControlService versionControlService;
 
-    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private ContinuousIntegrationService continuousIntegrationService;
 
     private File plagiarismChecksTestReposDir;
@@ -250,8 +250,8 @@ public class ProgrammingExerciseIntegrationTestService {
             throws Exception {
         this.userPrefix = userPrefix;
         this.mockDelegate = mockDelegate;
-        this.versionControlService = versionControlService; // this can be used like a SpyBean
-        this.continuousIntegrationService = continuousIntegrationService; // this can be used like a SpyBean
+        this.versionControlService = versionControlService; // this can be used like a MockitoSpyBean
+        this.continuousIntegrationService = continuousIntegrationService; // this can be used like a MockitoSpyBean
 
         userUtilService.addUsers(userPrefix, 3, 2, 2, 2);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
