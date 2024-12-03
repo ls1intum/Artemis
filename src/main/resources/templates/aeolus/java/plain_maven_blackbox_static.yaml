@@ -10,8 +10,9 @@ actions:
       main_method="$(echo "$main_checker_output" | head -n1)"
 
       if [ "${line_count}" -eq 2 ]; then
-        echo "${main_method}"
+        echo "main method found: ${main_method}"
       else
+        echo "no main method found. quitting the test run."
         exit 1
       fi
   - name: other_checkers

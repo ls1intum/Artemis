@@ -12,8 +12,9 @@ main_method_checker () {
   main_method="$(echo "$main_checker_output" | head -n1)"
 
   if [ "${line_count}" -eq 2 ]; then
-    echo "${main_method}"
+    echo "main method found: ${main_method}"
   else
+    echo "no main method found. quitting the test run."
     exit 1
   fi
 }
@@ -104,7 +105,7 @@ main () {
     bash -c "source ${_script_name} aeolus_sourcing; public_tests"
     bash -c "source ${_script_name} aeolus_sourcing; advanced_tests"
   else
-    echo "Skipping Dejagnu tests because the testsuite folder does not exist"
+    echo "skipping dejagnu tests because the testsuite folder does not exist."
   fi
 
   bash -c "source ${_script_name} aeolus_sourcing; static_code_analysis"
