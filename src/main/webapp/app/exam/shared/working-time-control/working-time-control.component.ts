@@ -1,4 +1,4 @@
-import { Component, Input, inject, input } from '@angular/core';
+import { Component, Input, inject, input, model } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { Exam } from 'app/entities/exam/exam.model';
@@ -26,7 +26,7 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
 
     // Control disabled state
-    disabled = input(false);
+    disabled = model(false);
     allowNegative = input(false);
 
     // Whether the percentage-based working time extension control should be shown
@@ -80,7 +80,6 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
         this.onTouched = onTouched;
     }
 
-    // TODO MICHAL KAWKA
     setDisabledState(disabled: boolean) {
         this.disabled.set(disabled);
     }
