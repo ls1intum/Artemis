@@ -9,7 +9,6 @@ import java.util.ArrayList;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -43,14 +42,12 @@ public class RestTemplateConfiguration {
 
     @Bean
     @Profile("gitlab | gitlabci")
-    @Autowired // ok
     public RestTemplate gitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor, createRestTemplate());
     }
 
     @Bean
     @Profile("jenkins")
-    @Autowired // ok
     public RestTemplate jenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createRestTemplate());
     }
@@ -89,14 +86,12 @@ public class RestTemplateConfiguration {
 
     @Bean
     @Profile("gitlab | gitlabci")
-    @Autowired // ok
     public RestTemplate shortTimeoutGitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
     @Profile("jenkins")
-    @Autowired // ok
     public RestTemplate shortTimeoutJenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
         return initializeRestTemplateWithInterceptors(jenkinsInterceptor, createShortTimeoutRestTemplate());
     }
