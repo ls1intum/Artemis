@@ -48,8 +48,8 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule],
-            declarations: [PlagiarismCaseInstructorDetailViewComponent],
+            imports: [ArtemisTestModule, TranslateTestingModule, PlagiarismCaseInstructorDetailViewComponent],
+            declarations: [],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },

@@ -13,7 +13,6 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import * as DownloadUtil from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { MockComponent } from 'ng-mocks';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 
@@ -87,14 +86,20 @@ describe('Plagiarism Cases Instructor View Component', () => {
         route = { snapshot: { paramMap: convertToParamMap({ courseId: 1 }) } } as any as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule],
-            declarations: [PlagiarismCasesInstructorViewComponent, MockComponent(DocumentationButtonComponent)],
+            imports: [ArtemisTestModule, TranslateTestingModule, PlagiarismCasesInstructorViewComponent],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
+
+        TestBed.overrideComponent(DocumentationButtonComponent, {
+            set: {
+                selector: 'jhi-documentation-button',
+                template: '',
+            },
+        });
 
         fixture = TestBed.createComponent(PlagiarismCasesInstructorViewComponent);
         component = fixture.componentInstance;

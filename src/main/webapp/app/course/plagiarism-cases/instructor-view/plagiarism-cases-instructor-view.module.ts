@@ -28,7 +28,6 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [RouterModule.forChild(routes), ArtemisPlagiarismCasesSharedModule],
-    declarations: [PlagiarismCasesInstructorViewComponent, PlagiarismCaseInstructorDetailViewComponent],
+    imports: [RouterModule.forChild(routes), ArtemisPlagiarismCasesSharedModule, PlagiarismCasesInstructorViewComponent, PlagiarismCaseInstructorDetailViewComponent],
 })
 export class ArtemisPlagiarismCasesInstructorViewModule {}
