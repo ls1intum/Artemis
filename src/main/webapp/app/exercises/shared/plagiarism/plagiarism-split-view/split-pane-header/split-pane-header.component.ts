@@ -111,13 +111,9 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.fileSelectSubscription) {
-            this.fileSelectSubscription.unsubscribe();
-        }
+       this.fileSelectSubscription?.unsubscribe();
 
-        if (this.showFilesSubscription) {
-            this.showFilesSubscription.unsubscribe();
-        }
+      this.showFilesSubscription?.unsubscribe();
     }
 
     hasActiveFile(): boolean {
@@ -153,7 +149,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     hasFiles(): boolean {
-        return (this.files && this.files.length > 0) ?? false;
+        return this.files?.length ? true :  false;
     }
 
     toggleShowFiles(): void {
