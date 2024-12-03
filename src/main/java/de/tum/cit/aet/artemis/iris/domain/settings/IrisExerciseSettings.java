@@ -71,12 +71,13 @@ public class IrisExerciseSettings extends IrisSettings {
 
     @Override
     public IrisCourseChatSubSettings getIrisCourseChatSettings() {
+        // Empty because exercises don't have course chat settings
         return null;
     }
 
     @Override
     public void setIrisCourseChatSettings(IrisCourseChatSubSettings irisCourseChatSettings) {
-
+        // Empty because exercises don't have course chat settings
     }
 
     @Override

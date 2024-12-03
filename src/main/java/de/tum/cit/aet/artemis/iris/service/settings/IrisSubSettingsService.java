@@ -145,7 +145,7 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisCourseChatSubSettings();
         }
-        if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
+        if (authCheckService.isAdmin()) {
             currentSettings.setEnabled(newSettings.isEnabled());
         }
         if (authCheckService.isAdmin()) {
