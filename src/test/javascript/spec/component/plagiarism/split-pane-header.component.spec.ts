@@ -106,7 +106,7 @@ describe('SplitPaneHeaderComponent', () => {
         comp1.showFiles = true;
         jest.spyOn(comp1.selectFile, 'emit');
 
-        comp1.handleFileSelect(files[idx], idx);
+        comp1.handleFileSelect(files[idx], idx, true);
 
         expect(comp1.activeFileIndex).toBe(idx);
         expect(comp1.showFiles).toBeFalse();
@@ -128,7 +128,7 @@ describe('SplitPaneHeaderComponent', () => {
         comp1.showFiles = false;
         comp1.files = files;
 
-        comp1.toggleShowFiles();
+        comp1.toggleShowFiles(false);
 
         expect(comp1.showFiles).toBeTrue();
     });
@@ -136,7 +136,7 @@ describe('SplitPaneHeaderComponent', () => {
     it('does not toggle "show files"', () => {
         comp1.showFiles = false;
 
-        comp1.toggleShowFiles();
+        comp1.toggleShowFiles(false);
 
         expect(comp1.showFiles).toBeFalse();
     });
@@ -166,17 +166,17 @@ describe('SplitPaneHeaderComponent', () => {
         fixture1.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
         fixture2.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
 
-        const handleFileSelectWithoutPropagationSpy = jest.spyOn(comp2, 'handleFileSelectWithoutPropagation');
+        const handleFileSelectWithoutPropagationSpy = jest.spyOn(comp2, 'handleFileSelect');
 
         fixture1.detectChanges();
         fixture2.detectChanges();
 
-        comp1.handleFileSelect(selectedFile.file, selectedFile.idx);
+        comp1.handleFileSelect(selectedFile.file, selectedFile.idx, true);
 
         fixture1.detectChanges();
         fixture2.detectChanges();
 
-        expect(handleFileSelectWithoutPropagationSpy).toHaveBeenCalledExactlyOnceWith(selectedFile.file, selectedFile.idx);
+        expect(handleFileSelectWithoutPropagationSpy).toHaveBeenCalledExactlyOnceWith(selectedFile.file, selectedFile.idx, false);
     });
 
     it('should not sync file selection when lockFilesEnabled false', () => {
@@ -187,14 +187,17 @@ describe('SplitPaneHeaderComponent', () => {
         fixture1.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
         fixture2.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
 
-        const handleFileSelectWithoutPropagationSpy = jest.spyOn(comp1, 'handleFileSelectWithoutPropagation');
+        const handleFileSelect = jest.spyOn(comp1, 'handleFileSelect');
+        const handleFileSelectWithoutPropagationSpy = jest.spyOn(comp2, 'handleFileSelect');
+
         fixture1.detectChanges();
         fixture2.detectChanges();
-        comp1.handleFileSelect(selectedFile.file, selectedFile.idx);
+        comp1.handleFileSelect(selectedFile.file, selectedFile.idx, true);
         fixture1.detectChanges();
         fixture2.detectChanges();
 
-        expect(handleFileSelectWithoutPropagationSpy).not.toHaveBeenCalled();
+        expect(handleFileSelectWithoutPropagationSpy).toHaveBeenCalledTimes(0);
+        expect(handleFileSelect).toHaveBeenCalledOnce();
     });
 
     it('should trigger dropdown hover subject on mouseenter on the first file element', () => {
@@ -229,14 +232,14 @@ describe('SplitPaneHeaderComponent', () => {
         comp1.dropdownHoverSubject()!.next({ file: mockFile, idx: mockIdx });
 
         expect(comp1['handleDropdownHover']).toHaveBeenCalledWith(mockFile, mockIdx);
-        expect(comp1.hoveredFileIdx).toBe(mockIdx);
+        expect(comp1.hoveredFileIndex).toBe(mockIdx);
     });
 
     it('should update showFiles when hasFiles returns true', () => {
         comp1.hasFiles = jest.fn().mockReturnValue(true);
         const initialShowFiles = comp1.showFiles;
 
-        comp1.toggleShowFilesWithoutPropagation(true);
+        comp1.toggleShowFiles(false);
 
         expect(comp1.showFiles).not.toBe(initialShowFiles);
     });
@@ -245,7 +248,7 @@ describe('SplitPaneHeaderComponent', () => {
         comp1.hasFiles = jest.fn().mockReturnValue(false);
         const initialShowFiles = comp1.showFiles;
 
-        comp1.toggleShowFilesWithoutPropagation(true);
+        comp1.toggleShowFiles(false);
 
         expect(comp1.showFiles).toBe(initialShowFiles);
     });
@@ -259,6 +262,6 @@ describe('SplitPaneHeaderComponent', () => {
 
         (comp1 as any).handleDropdownHover(mockFile, mockIdx);
 
-        expect(comp1.hoveredFileIdx).toBe(-1);
+        expect(comp1.hoveredFileIndex).toBe(-1);
     });
 });
