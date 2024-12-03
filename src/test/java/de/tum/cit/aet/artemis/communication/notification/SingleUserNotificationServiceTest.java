@@ -22,6 +22,9 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.MESSAGE_REPLY_IN_CONVERSATION_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_PLAGIARISM_CASE_STUDENT_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_ADDED_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_EXPIRES_SOON_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.SSH_KEY_HAS_EXPIRED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_ASSIGNED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_ASSIGNED_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE;
@@ -49,6 +52,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -58,7 +62,10 @@ import java.util.stream.Stream;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
+import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -101,6 +108,9 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
+import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;
+import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyExpiryNotificationService;
+import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
@@ -133,6 +143,12 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private UserSshPublicKeyExpiryNotificationService userSshPublicKeyExpiryNotificationService;
+
+    @Autowired
+    private UserSshPublicKeyService userSshPublicKeyService;
 
     @Captor
     private ArgumentCaptor<Notification> appleNotificationCaptor;
@@ -379,6 +395,95 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(studentWithParticipationAndSubmissionAndManualResult);
     }
 
+    // UserSshPublicKey related (expiry warning and newly created key)
+
+    @Nested
+    class UserSshPublicKeyExpiryNotificationServiceShould {
+
+        String RSA_KEY = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i";
+
+        long KEY_ID = 4L;
+
+        String KEY_LABEL = "key ";
+
+        List<Notification> sentNotifications;
+
+        @AfterEach
+        void tearDown() {
+            assertThat(sentNotifications.getFirst()).isInstanceOf(SingleUserNotification.class);
+            assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
+            assertThat((sentNotifications.getFirst()).getText()).isEqualTo(SSH_KEY_ADDED_TEXT);
+
+            userSshPublicKeyRepository.deleteAll();
+        }
+
+        @Test
+        void notifyUserAboutNewlyCreatedSshKeyWithExpirationDate() throws GeneralSecurityException, IOException {
+            UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, null);
+
+            userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
+
+            sentNotifications = notificationRepository.findAll();
+        }
+
+        @Test
+        void notifyUserAboutNewlyCreatedSshKeyWithNoDate() throws GeneralSecurityException, IOException {
+            UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, ZonedDateTime.now().plusDays(15));
+
+            userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
+
+            sentNotifications = notificationRepository.findAll();
+        }
+
+        @Test
+        void notifyUserAboutUpcomingSshKeyExpiry() throws GeneralSecurityException, IOException {
+            UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, ZonedDateTime.now().plusDays(6));
+            userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
+
+            userSshPublicKeyExpiryNotificationService.notifyUserOnUpcomingKeyExpiry();
+
+            sentNotifications = notificationRepository.findAll();
+            assertThat(sentNotifications).hasSize(2);
+            assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
+            assertThat((sentNotifications.get(1)).getText()).isEqualTo(SSH_KEY_EXPIRES_SOON_TEXT);
+        }
+
+        @Test
+        void notifyUserAboutExpiredSshKey() throws GeneralSecurityException, IOException {
+            UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, ZonedDateTime.now().minusDays(1));
+            userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
+
+            userSshPublicKeyExpiryNotificationService.notifyUserOnKeyExpiry();
+
+            sentNotifications = notificationRepository.findAll();
+            assertThat(sentNotifications).hasSize(2);
+            assertThat(((SingleUserNotification) sentNotifications.getFirst()).getRecipient()).isEqualTo(user);
+            assertThat((sentNotifications.get(1)).getText()).isEqualTo(SSH_KEY_HAS_EXPIRED_TEXT);
+        }
+
+        @Test
+        void notNotifyUserAboutUpcomingSshKeyExpiryWhenKeyDoesNotExpireSoon() throws GeneralSecurityException, IOException {
+            UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, ZonedDateTime.now().plusDays(100));
+            userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
+
+            userSshPublicKeyExpiryNotificationService.notifyUserOnUpcomingKeyExpiry();
+
+            sentNotifications = notificationRepository.findAll();
+            assertThat(sentNotifications).hasSize(1);
+        }
+
+        @Test
+        void notNotifyUserAboutExpiredSshKeyWhenKeyIsNotExpired() throws GeneralSecurityException, IOException {
+            UserSshPublicKeyDTO keyDTO = new UserSshPublicKeyDTO(KEY_ID, KEY_LABEL, RSA_KEY, null, null, null, ZonedDateTime.now().plusDays(100));
+            userSshPublicKeyService.createSshKeyForUser(user, AuthorizedKeyEntry.parseAuthorizedKeyEntry(keyDTO.publicKey()), keyDTO);
+
+            userSshPublicKeyExpiryNotificationService.notifyUserOnKeyExpiry();
+
+            sentNotifications = notificationRepository.findAll();
+            assertThat(sentNotifications).hasSize(1);
+        }
+    }
+
     // Plagiarism related
 
     /**
@@ -576,7 +681,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     /**
-     * Checks if an email was created and send
+     * Checks if an email was created and sent
      */
     private void verifyEmail() {
         verify(javaMailSender, timeout(1000)).send(any(MimeMessage.class));
