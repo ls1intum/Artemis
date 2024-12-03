@@ -5,7 +5,7 @@
                 type="checkbox"
                 class="form-check-input"
                 name="feedbackSuggestionsEnabledCheck"
-                [checked]="!!exercise.feedbackSuggestionModule"
+                [checked]="showDropdownList"
                 [disabled]="inputControlsDisabled()"
                 id="feedbackSuggestionsEnabledCheck"
                 (change)="toggleFeedbackSuggestions($event)"
@@ -14,27 +14,13 @@
                 [ngStyle]="getCheckboxLabelStyle()"
                 class="form-control-label"
                 for="feedbackSuggestionsEnabledCheck"
-                jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"
+                jhiTranslate="artemisApp.exercise.allowFeedbackSuggestions"
             ></label>
-            <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'" />
+            <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.allowFeedbackSuggestionsTooltip'" />
         </div>
-        @if (this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.MODELING) {
-            <div class="form-check">
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    name="allowFeedbackRequests"
-                    [checked]="!!exercise.allowFeedbackRequests"
-                    id="allowFeedbackRequests"
-                    (change)="toggleFeedbackRequests($event)"
-                />
-                <label class="form-control-label" for="allowFeedbackRequests" jhiTranslate="artemisApp.textExercise.allowPreliminaryAthenaFeedbackRequests"></label>
-                <jhi-help-icon placement="right auto" [text]="'artemisApp.textExercise.allowPreliminaryAthenaFeedbackRequestsTooltip'" />
-            </div>
-        }
         @if (!!this.exercise.feedbackSuggestionModule) {
             <div class="form-group">
-                <label for="athenaModuleSelect">Athena Module</label>
+                <label for="athenaModuleSelect">Athena Feedback Suggestions Module</label>
                 <select
                     id="athenaModuleSelect"
                     class="form-select"

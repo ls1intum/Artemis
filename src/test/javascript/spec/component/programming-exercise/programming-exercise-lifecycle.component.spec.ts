@@ -12,7 +12,7 @@ import { QueryList, SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
 import { Course } from 'app/entities/course.model';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercises/shared/feedback-suggestion/exercise-feedback-suggestion-options.component';
+import { ExerciseAthenaFeedbackModuleOptionsComponent } from 'app/exercises/shared/feedback-module-selector/exercise-athena-feedback-module-options.component';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
@@ -34,7 +34,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
                 ProgrammingExerciseLifecycleComponent,
                 MockComponent(ProgrammingExerciseTestScheduleDatePickerComponent),
                 MockComponent(HelpIconComponent),
-                MockComponent(ExerciseFeedbackSuggestionOptionsComponent),
+                MockComponent(ExerciseAthenaFeedbackModuleOptionsComponent),
                 MockDirective(NgModel),
                 TranslatePipeMock,
             ],
@@ -151,12 +151,12 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should change feedback request allowed after toggling', () => {
-        comp.exercise = { ...exercise, allowFeedbackRequests: false };
-        expect(comp.exercise.allowFeedbackRequests).toBeFalse();
+        comp.exercise = { ...exercise, allowFeedbackSuggestions: false };
+        expect(comp.exercise.allowFeedbackSuggestions).toBeFalse();
 
         comp.toggleFeedbackRequests();
 
-        expect(comp.exercise.allowFeedbackRequests).toBeTrue();
+        expect(comp.exercise.allowFeedbackSuggestions).toBeTrue();
     });
 
     it('should change assessment type from automatic to semi-automatic after toggling', () => {

@@ -1,0 +1,32 @@
+@if ((isAthenaEnabled$ | async) && modulesAvailable) {
+    <div class="form-group">
+        <div class="form-check">
+            <input
+                type="checkbox"
+                class="form-check-input"
+                name="allowFeedbackRequests"
+                [checked]="showDropdownList"
+                id="allowFeedbackRequests"
+                (change)="togglePreliminaryFeedback($event)"
+            />
+            <label [ngStyle]="getCheckboxLabelStyle()" for="allowFeedbackRequests" jhiTranslate="artemisApp.exercise.allowFeedbackRequests"></label>
+            <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.allowFeedbackRequestsTooltip'" />
+        </div>
+        @if (this.showDropdownList) {
+            <div class="form-group">
+                <label for="athenaModuleSelect">Athena Preliminary Feedback Module</label>
+                <select
+                    id="athenaModuleSelect"
+                    class="form-select"
+                    [value]="this.exercise.preliminaryFeedbackModule"
+                    [(ngModel)]="this.exercise.preliminaryFeedbackModule"
+                    [disabled]="inputControlsDisabled()"
+                >
+                    @for (athenaModule of availableAthenaModules; track athenaModule) {
+                        <option [value]="athenaModule">{{ athenaModule }}</option>
+                    }
+                </select>
+            </div>
+        }
+    </div>
+}

@@ -86,7 +86,7 @@
                             }}
                         </div>
                     </div>
-                    @if (exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode && !exercise.allowFeedbackRequests) {
+                    @if (exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode && !exercise.allowManualFeedbackRequests) {
                         <jhi-programming-exercise-test-schedule-date-picker
                             class="test-schedule-date"
                             [(ngModel)]="exercise.assessmentDueDate"
@@ -120,6 +120,8 @@
         !readOnly &&
         (!isEditFieldDisplayedRecord() ||
             isEditFieldDisplayedRecord()?.complaintOnAutomaticAssessment ||
+            isEditFieldDisplayedRecord()?.feedbackSuggestions ||
+            isEditFieldDisplayedRecord()?.preliminaryFeedbackRequests ||
             isEditFieldDisplayedRecord()?.manualFeedbackRequests ||
             isEditFieldDisplayedRecord()?.showTestNamesToStudents ||
             isEditFieldDisplayedRecord()?.includeTestsIntoExampleSolution)
@@ -163,36 +165,6 @@
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip'" />
             </div>
         }
-        @if ((isEditFieldDisplayedRecord()?.manualFeedbackRequests || !isEditFieldDisplayedRecord()) && !isExamMode) {
-            <div class="form-check">
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    name="allowFeedbackRequests"
-                    [checked]="exercise.allowFeedbackRequests"
-                    [disabled]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC"
-                    id="allowFeedbackRequests"
-                    (change)="toggleFeedbackRequests()"
-                />
-                @if (isAthenaEnabled$ | async) {
-                    <label
-                        [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
-                        class="form-control-label"
-                        for="allowFeedbackRequests"
-                        jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests"
-                    ></label>
-                    <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.allowFeedbackRequestsTooltip'" />
-                } @else {
-                    <label
-                        [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
-                        class="form-control-label"
-                        for="allowFeedbackRequests"
-                        jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"
-                    ></label>
-                    <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'" />
-                }
-            </div>
-        }
         @if (isEditFieldDisplayedRecord()?.showTestNamesToStudents || !isEditFieldDisplayedRecord()) {
             <div class="form-check">
                 <input
@@ -208,28 +180,27 @@
                 <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'" />
             </div>
         }
-        @if (isEditFieldDisplayedRecord()?.includeTestsIntoExampleSolution || !isEditFieldDisplayedRecord()) {
-            <div class="form-check">
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    name="releaseTestsWithExampleSolution"
-                    [checked]="exercise.releaseTestsWithExampleSolution"
-                    [disabled]="!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate"
-                    id="releaseTestsWithExampleSolution"
-                    (change)="toggleReleaseTests()"
-                />
-                <label
-                    [ngStyle]="!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate ? { color: 'grey' } : {}"
-                    class="form-control-label"
-                    for="releaseTestsWithExampleSolution"
-                    jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"
-                ></label>
-                <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'" />
-            </div>
-        }
-        @if (!isExamMode) {
+        @if ((isEditFieldDisplayedRecord()?.feedbackSuggestions || !isEditFieldDisplayedRecord()) && !isExamMode) {
             <jhi-exercise-feedback-suggestion-options [exercise]="exercise" [dueDate]="exercise.dueDate" [readOnly]="readOnly" />
+        }
+        <h6 jhiTranslate="artemisApp.assessment.feedback"></h6>
+        @if ((isEditFieldDisplayedRecord()?.preliminaryFeedbackRequests || isEditFieldDisplayedRecord()?.manualFeedbackRequests || !isEditFieldDisplayedRecord()) && !isExamMode) {
+            @if (isAthenaEnabled$ | async) {
+                <jhi-exercise-preliminary-feedback-options [exercise]="exercise" [dueDate]="exercise.dueDate" [readOnly]="readOnly" />
+            } @else {
+                <div class="form-check">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        name="allowFeedbackRequests"
+                        [checked]="exercise.allowManualFeedbackRequests"
+                        id="allowFeedbackRequests"
+                        (change)="toggleManualFeedbackRequests()"
+                    />
+                    <label class="form-control-label" for="allowFeedbackRequests" jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"></label>
+                    <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'" />
+                </div>
+            }
         }
     }
 </div>
