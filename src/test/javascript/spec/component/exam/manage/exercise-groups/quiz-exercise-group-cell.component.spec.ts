@@ -11,7 +11,7 @@ describe('Quiz Exercise Group Cell Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [QuizExerciseGroupCellComponent, TranslatePipeMock],
+            declarations: [TranslatePipeMock],
             providers: [],
         })
             .compileComponents()

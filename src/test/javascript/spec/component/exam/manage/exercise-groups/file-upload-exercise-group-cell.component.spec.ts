@@ -11,7 +11,7 @@ describe('File Upload Exercise Group Cell Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [FileUploadExerciseGroupCellComponent, TranslatePipeMock],
+            declarations: [TranslatePipeMock],
             providers: [],
         })
             .compileComponents()

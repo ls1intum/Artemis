@@ -51,7 +51,7 @@ describe('Programming Exercise Group Cell Component', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisSharedCommonModule],
-            declarations: [ProgrammingExerciseGroupCellComponent, TranslatePipeMock],
+            declarations: [TranslatePipeMock],
             providers: [
                 { provide: ProfileService, useValue: mockedProfileService },
                 { provide: AlertService, useClass: MockAlertService },

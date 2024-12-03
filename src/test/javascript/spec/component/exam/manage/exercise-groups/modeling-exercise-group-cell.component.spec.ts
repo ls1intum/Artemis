@@ -12,7 +12,7 @@ describe('Modeling Exercise Group Cell Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ModelingExerciseGroupCellComponent, TranslatePipeMock],
+            declarations: [TranslatePipeMock],
             providers: [],
         })
             .compileComponents()
