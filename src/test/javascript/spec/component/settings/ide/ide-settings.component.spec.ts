@@ -6,6 +6,7 @@ import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 
 describe('IdeSettingsComponent', () => {
     let component: IdeSettingsComponent;
@@ -20,8 +21,7 @@ describe('IdeSettingsComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [],
-            declarations: [IdeSettingsComponent],
+            imports: [TranslateTestingModule],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: IdeSettingsService, useValue: mockIdeSettingsService }],
             schemas: [CUSTOM_ELEMENTS_SCHEMA],
         }).compileComponents();
