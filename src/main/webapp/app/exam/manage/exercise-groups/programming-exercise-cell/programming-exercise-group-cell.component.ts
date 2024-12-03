@@ -9,11 +9,17 @@ import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-programming-exercise-group-cell',
     templateUrl: './programming-exercise-group-cell.component.html',
     styles: [':host{display: contents}'],
+    standalone: true,
+    imports: [FaIconComponent, RouterLink, TranslateDirective, ArtemisProgrammingExerciseStatusModule],
 })
 export class ProgrammingExerciseGroupCellComponent implements OnInit {
     private profileService = inject(ProfileService);

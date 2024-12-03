@@ -33,11 +33,30 @@ import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-impo
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
+import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
+import { ModelingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/modeling-exercise-cell/modeling-exercise-group-cell.component';
+import { FileUploadExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/file-upload-exercise-cell/file-upload-exercise-group-cell.component';
+import { ArtemisExamManagementModule } from 'app/exam/manage/exam-management.module';
 
 @Component({
     selector: 'jhi-exercise-groups',
     templateUrl: './exercise-groups.component.html',
     styleUrls: ['./exercise-groups.component.scss'],
+    standalone: true,
+    imports: [
+        ArtemisTranslatePipe,
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        ProgrammingExerciseGroupCellComponent,
+        QuizExerciseGroupCellComponent,
+        ModelingExerciseGroupCellComponent,
+        FileUploadExerciseGroupCellComponent,
+        ArtemisExamManagementModule,
+    ],
 })
 export class ExerciseGroupsComponent implements OnInit {
     private route = inject(ActivatedRoute);
