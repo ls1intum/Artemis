@@ -146,7 +146,7 @@ public class TextUnitResource {
         Lecture updatedLecture = lectureRepository.save(lecture);
         TextUnit persistedTextUnit = (TextUnit) updatedLecture.getLectureUnits().getLast();
 
-        competencyProgressApi.updateProgressByLearningObjectAsync(persistedTextUnit);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedTextUnit));
 
         lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedTextUnit);
         return ResponseEntity.created(new URI("/api/text-units/" + persistedTextUnit.getId())).body(persistedTextUnit);

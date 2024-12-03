@@ -139,7 +139,7 @@ public class VideoUnitResource {
         Lecture updatedLecture = lectureRepository.save(lecture);
         VideoUnit persistedVideoUnit = (VideoUnit) updatedLecture.getLectureUnits().getLast();
 
-        competencyProgressApi.updateProgressByLearningObjectAsync(persistedVideoUnit);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedVideoUnit));
 
         lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedVideoUnit);
         return ResponseEntity.created(new URI("/api/video-units/" + persistedVideoUnit.getId())).body(persistedVideoUnit);

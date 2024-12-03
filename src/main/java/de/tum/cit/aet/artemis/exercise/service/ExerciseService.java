@@ -815,7 +815,7 @@ public class ExerciseService {
         if (Hibernate.isInitialized(links) && !links.isEmpty()) {
             savedExercise.setCompetencyLinks(links);
             reconnectCompetencyExerciseLinks(savedExercise);
-            savedExercise.setCompetencyLinks(new HashSet<>(competencyRelationApi.saveAllExerciseLinks(links)));
+            competencyRelationApi.ifPresent(api -> savedExercise.setCompetencyLinks(new HashSet<>(api.saveAllExerciseLinks(links))));
         }
 
         return savedExercise;
