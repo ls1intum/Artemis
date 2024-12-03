@@ -1,6 +1,5 @@
 import { Directive, OnChanges, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
@@ -8,7 +7,6 @@ import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit
 @Directive()
 export abstract class PostingCreateEditModalDirective<T extends Posting> extends PostingCreateEditDirective<T> implements OnInit, OnChanges {
     protected metisService = inject(MetisService);
-    protected modalService = inject(NgbModal);
     protected formBuilder = inject(FormBuilder);
 
     @ViewChild('postingEditor') postingEditor: TemplateRef<any>;

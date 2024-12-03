@@ -24,7 +24,6 @@ describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;
     let fixture: ComponentFixture<PostCreateEditModalComponent>;
     let metisService: MetisService;
-    let modal: NgbModal;
     let metisServiceGetPageTypeMock: jest.SpyInstance;
     let metisServiceIsAtLeastInstructorStub: jest.SpyInstance;
     let metisServiceCreateStub: jest.SpyInstance;
@@ -182,7 +181,7 @@ describe('PostCreateEditModalComponent', () => {
     it('should invoke the modalService', () => {
         const componentInstance = { title: String, content: String };
         const result = new Promise((resolve) => resolve(true));
-        const modalServiceOpenMock = jest.spyOn(modal, 'open').mockReturnValue(<NgbModalRef>{
+        const modalServiceOpenMock = jest.spyOn(component.modalService, 'open').mockReturnValue(<NgbModalRef>{
             componentInstance,
             result,
         });

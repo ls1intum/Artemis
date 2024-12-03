@@ -62,7 +62,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
     protected metisService = inject(MetisService);
-    protected modalService = inject(NgbModal);
+    modalService = inject(NgbModal);
     protected formBuilder = inject(FormBuilder);
     private router = inject(Router);
 

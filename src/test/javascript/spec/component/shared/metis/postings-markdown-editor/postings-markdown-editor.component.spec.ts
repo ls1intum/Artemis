@@ -26,7 +26,7 @@ import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
-import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
+import { Overlay, OverlayPositionBuilder, OverlayRef } from '@angular/cdk/overlay';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
@@ -126,21 +126,23 @@ describe('PostingsMarkdownEditor', () => {
                 MockProvider(LectureService),
                 MockProvider(CourseManagementService),
                 MockProvider(ChannelService),
-                { provide: Overlay, useValue: mockOverlay },
                 { provide: OverlayPositionBuilder, useValue: overlayPositionBuilderMock },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
             declarations: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent)],
         })
+            .overrideProvider(Overlay, { useValue: mockOverlay })
+            .overrideProvider(OverlayRef, { useValue: mockOverlayRef })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(PostingMarkdownEditorComponent);
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
+
                 metisService = TestBed.inject(MetisService);
                 lectureService = TestBed.inject(LectureService);
-                TestBed.inject(Overlay);
+
                 fixture.autoDetectChanges();
                 mockMarkdownEditorComponent = fixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
                 component.ngOnInit();
