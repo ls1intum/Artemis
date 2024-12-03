@@ -16,16 +16,17 @@
                     <div class="row">
                         <div class="col-3">
                             <h5 class="mb-0">
-                                <a
-                                    id="plagiarism-detection-link-{{ exercise.id }}"
-                                    [routerLink]="['/course-management', courseId, getExerciseUrlSegment(exercise.type), exercise.id, 'plagiarism']"
-                                    [attr.aria-label]="'View plagiarism detection'"
-                                >
-                                    @if (exercise.type) {
-                                        <fa-icon [icon]="getIcon(exercise.type)" />
-                                    }
-                                    {{ exercise.title }}</a
-                                >
+                                @if (exercise.type) {
+                                    <fa-icon [icon]="getIcon(exercise.type)" />
+                                }
+                                {{ exercise.title }}
+                                <small
+                                    ><a
+                                        id="plagiarism-detection-link-{{ exercise.id }}"
+                                        [routerLink]="['/course-management', courseId, getExerciseUrlSegment(exercise.type), exercise.id, 'plagiarism']"
+                                        jhiTranslate="artemisApp.plagiarism.plagiarismCases.viewComparisons"
+                                    ></a
+                                ></small>
                             </h5>
                         </div>
                         <div class="col-3">

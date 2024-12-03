@@ -114,7 +114,8 @@
                 "noCourseCases": "No plagiarism cases in this course",
                 "noExamCases": "No plagiarism cases in this exam",
                 "notifyStudent": "Notify student",
-                "studentNotified": "Student has been notified."
+                "studentNotified": "Student has been notified.",
+                "viewComparisons": "View comparisons"
             },
             "cases": {
                 "pageTitle": "Plagiarism Cases",
