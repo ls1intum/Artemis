@@ -7,10 +7,17 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { PlagiarismResultsService } from 'app/course/plagiarism-cases/shared/plagiarism-results.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-suspicious-behavior',
     templateUrl: './suspicious-behavior.component.html',
+    standalone: true,
+    imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, ArtemisSharedComponentModule, PlagiarismCasesOverviewComponent],
 })
 export class SuspiciousBehaviorComponent implements OnInit {
     private suspiciousSessionsService = inject(SuspiciousSessionsService);

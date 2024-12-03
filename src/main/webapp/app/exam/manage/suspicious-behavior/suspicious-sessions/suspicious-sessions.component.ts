@@ -1,6 +1,7 @@
 import { Component, OnInit, input } from '@angular/core';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     // this is intended and an attribute selector because otherwise the rendered table breaks
@@ -9,6 +10,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
     templateUrl: './suspicious-sessions.component.html',
     styleUrls: ['./suspicious-sessions.component.scss'],
     standalone: true,
+    imports: [ArtemisSharedModule],
 })
 export class SuspiciousSessionsComponent implements OnInit {
     suspiciousSessions = input.required<SuspiciousExamSessions>();
