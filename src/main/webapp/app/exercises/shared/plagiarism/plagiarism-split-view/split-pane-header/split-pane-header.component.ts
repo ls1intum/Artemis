@@ -149,7 +149,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     hasFiles(): boolean {
-        return (this.files && this.files.length > 0) ?? false;
+        return this.files?.length ? true :  false;
     }
 
     toggleShowFiles(): void {
