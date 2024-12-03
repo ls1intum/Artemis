@@ -22,9 +22,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { HttpResponse } from '@angular/common/http';
@@ -34,17 +32,24 @@ import {
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { BuildConfig } from '../../../../../main/webapp/app/entities/programming/build-config.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
+import { SubmissionPolicyService } from '../../../../../main/webapp/app/exercises/programming/manage/services/submission-policy.service';
 
-describe('ProgrammingExercise Management Detail Component', () => {
+describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
     let statisticsService: StatisticsService;
     let exerciseService: ProgrammingExerciseService;
     let alertService: AlertService;
     let profileService: ProfileService;
+    let submissionPolicyService: SubmissionPolicyService;
     let programmingLanguageFeatureService: ProgrammingLanguageFeatureService;
     let statisticsServiceStub: jest.SpyInstance;
     let gitDiffReportStub: jest.SpyInstance;
+    let profileServiceStub: jest.SpyInstance;
+    let submissionPolicyServiceStub: jest.SpyInstance;
     let buildLogStatisticsStub: jest.SpyInstance;
     let findWithTemplateAndSolutionParticipationStub: jest.SpyInstance;
     let router: Router;
@@ -59,6 +64,9 @@ describe('ProgrammingExercise Management Detail Component', () => {
         solutionParticipation: {
             id: 2,
         } as SolutionProgrammingExerciseParticipation,
+        buildConfig: {
+            testwiseCoverageEnabled: true,
+        } as BuildConfig,
     } as ProgrammingExercise;
 
     const exerciseStatistics = {
@@ -128,6 +136,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
         alertService = fixture.debugElement.injector.get(AlertService);
         exerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
         profileService = fixture.debugElement.injector.get(ProfileService);
+        submissionPolicyService = fixture.debugElement.injector.get(SubmissionPolicyService);
+
         programmingLanguageFeatureService = fixture.debugElement.injector.get(ProgrammingLanguageFeatureService);
         router = fixture.debugElement.injector.get(Router);
         modalService = fixture.debugElement.injector.get(NgbModal);
@@ -136,6 +146,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
             .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
             .mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })));
         gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
+        profileServiceStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+        submissionPolicyServiceStub = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
         buildLogStatisticsStub = jest.spyOn(exerciseService, 'getBuildLogStatistics').mockReturnValue(of(buildLogStatistics));
 
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
@@ -147,6 +159,19 @@ describe('ProgrammingExercise Management Detail Component', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
+
+    it('should reload on participation change', fakeAsync(() => {
+        const loadDiffSpy = jest.spyOn(comp, 'loadGitDiffReport');
+        jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
+        jest.spyOn(exerciseService, 'getLatestFullTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
+        comp.onParticipationChange();
+        tick();
+        expect(loadDiffSpy).toHaveBeenCalledOnce();
+        expect(gitDiffReportStub).toHaveBeenCalledOnce();
+        expect(comp.programmingExercise.coveredLinesRatio).toBe(0.5);
+    }));
 
     describe('onInit for course exercise', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
@@ -163,6 +188,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
 
             // THEN
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
+            expect(profileServiceStub).toHaveBeenCalledTimes(2);
+            expect(submissionPolicyServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             await Promise.resolve();
@@ -284,18 +311,6 @@ describe('ProgrammingExercise Management Detail Component', () => {
         expect(profileInfoStub).toHaveBeenCalledOnce();
         expect(comp.isBuildPlanEditable).toBe(editable);
     });
-
-    it('should reload on participation change', fakeAsync(() => {
-        const loadDiffSpy = jest.spyOn(comp, 'loadGitDiffReport');
-        jest.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
-        jest.spyOn(exerciseService, 'getLatestFullTestwiseCoverageReport').mockReturnValue(of({ coveredLineRatio: 0.5 }));
-        comp.programmingExercise = mockProgrammingExercise;
-        comp.programmingExercise.buildConfig!.testwiseCoverageEnabled = true;
-        comp.onParticipationChange();
-        tick();
-        expect(loadDiffSpy).toHaveBeenCalledOnce();
-        expect(comp.programmingExercise.coveredLinesRatio).toBe(0.5);
-    }));
 
     it('should combine template commit', () => {
         const combineCommitsSpy = jest.spyOn(exerciseService, 'combineTemplateRepositoryCommits').mockReturnValue(of(new HttpResponse({ body: null })));
