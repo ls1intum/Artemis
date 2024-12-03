@@ -33,9 +33,9 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
 
     plagiarismComparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
-    private fileSelectedSubject = new Subject<TextPlagiarismFileElement>();
-    private showFilesSubject = new Subject<boolean>();
-    private dropdownHoverSubject = new Subject<TextPlagiarismFileElement>();
+    fileSelectedSubject = new Subject<TextPlagiarismFileElement>();
+    showFilesSubject = new Subject<boolean>();
+    dropdownHoverSubject = new Subject<TextPlagiarismFileElement>();
 
     public split: Split.Instance;
 
@@ -117,22 +117,6 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
         }
     }
 
-    /**
-     * get the subject/listener for file selection
-     * @returns observable for fileselection
-     */
-    getFileSelectedSubject() {
-        return this.fileSelectedSubject;
-    }
-
-    /**
-     * get the subject/listener for checking dropdown toggle status of split-pane-header in text-viewer component
-     * @returns subject for showFile change
-     */
-    getShowFilesSubject() {
-        return this.showFilesSubject;
-    }
-
     parseTextMatches(plagComparison: PlagiarismComparison<TextSubmissionElement>) {
         if (plagComparison.matches) {
             const matchesA = plagComparison.matches.map((match) => new SimpleMatch(match.startA, match.length)).sort((m1, m2) => m1.start - m2.start);
@@ -206,10 +190,6 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
                 this.split.setSizes([50, 50]);
             }
         }
-    }
-
-    getDropdownHoverSubject() {
-        return this.dropdownHoverSubject;
     }
 
     /**

@@ -31,10 +31,11 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
 
     private fileSelectSubscription: Subscription;
     private showFilesSubscription: Subscription;
+    private dropdownHoverSubscription: Subscription;
 
     // Icons
     faChevronDown = faChevronDown;
-    hoveredFileIdx: number;
+    hoveredFileIndex: number;
 
     ngOnInit(): void {
         this.subscribeToFileSelection();
@@ -47,19 +48,18 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
      * @private helper method
      */
     private subscribeToFileSelection(): void {
-        this.fileSelectSubscription = this.fileSelectedSubject()!.subscribe((val) => {
+        this.fileSelectSubscription = this.fileSelectedSubject()!.subscribe((textPlagiarismElement) => {
             if (this.isLockFilesEnabled()) {
-                this.handleLockedFileSelection(val.file, val.idx);
+                this.handleLockedFileSelection(textPlagiarismElement.file, textPlagiarismElement.idx);
             }
         });
     }
 
     private handleLockedFileSelection(file: FileWithHasMatch, idx: number): void {
-        let index;
-        if (this.files[idx]?.file === file.file) {
-            this.handleFileSelectWithoutPropagation(file, idx);
-        } else if ((index = this.getIndexOf(file)) >= 0) {
-            this.handleFileSelectWithoutPropagation(file, index);
+        const index = this.files[idx]?.file === file.file ? idx : this.getIndexOf(file);
+
+        if (index >= 0) {
+            this.handleFileSelect(file, index, false);
         } else {
             this.showFiles = false;
         }
@@ -72,7 +72,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     private subscribeToShowFiles(): void {
         this.showFilesSubscription = this.showFilesSubject()!.subscribe((showFiles) => {
             if (this.isLockFilesEnabled()! || (!this.isLockFilesEnabled()! && !showFiles)) {
-                this.toggleShowFilesWithoutPropagation(showFiles);
+                this.toggleShowFiles(false, showFiles);
             }
         });
     }
@@ -82,20 +82,17 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
      * @private helper method
      */
     private subscribeToDropdownHover(): void {
-        this.dropdownHoverSubject()!.subscribe((val) => {
+        this.dropdownHoverSubscription = this.dropdownHoverSubject()!.subscribe((textPlagiarismElement) => {
             if (this.isLockFilesEnabled()) {
-                this.handleDropdownHover(val.file, val.idx);
+                this.handleDropdownHover(textPlagiarismElement.file, textPlagiarismElement.idx);
             }
         });
     }
 
     private handleDropdownHover(file: FileWithHasMatch, idx: number): void {
-        let index;
-        if (this.files[idx]?.file === file.file) {
-            this.hoveredFileIdx = idx;
-        } else if ((index = this.getIndexOf(file)) >= 0) {
-            this.hoveredFileIdx = index;
-        } else this.hoveredFileIdx = -1;
+        const index = this.files[idx]?.file === file.file ? idx : this.getIndexOf(file);
+
+        this.hoveredFileIndex = index >= 0 ? index : -1;
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -111,9 +108,9 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-       this.fileSelectSubscription?.unsubscribe();
-
-      this.showFilesSubscription?.unsubscribe();
+        this.fileSelectSubscription?.unsubscribe();
+        this.showFilesSubscription?.unsubscribe();
+        this.dropdownHoverSubscription?.unsubscribe();
     }
 
     hasActiveFile(): boolean {
@@ -128,44 +125,34 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
      * handles selection of file from dropdown, propagates change to fileslectionsubject component for lock sync
      * @param file to be selected
      * @param idx index of the file from the dropdown
+     * @param propagateChanges propagate changes to listeners subscribed to fileSelectedSubject
      */
-    handleFileSelect(file: FileWithHasMatch, idx: number): void {
-        this.fileSelectedSubject()!.next({ idx: idx, file: file });
+    handleFileSelect(file: FileWithHasMatch, idx: number, propagateChanges: boolean): void {
+        if (propagateChanges) {
+            this.fileSelectedSubject()!.next({ idx: idx, file: file });
+            file.hasMatch = true;
+        }
         this.activeFileIndex = idx;
         this.showFiles = false;
         this.selectFile.emit(file.file);
-    }
-
-    /**
-     * handles selection of file from dropdown, do NOT propagates change to fileslectionsubject component for lock sync
-     * @param file to be selected
-     * @param idx index of the file from the dropdown
-     */
-    handleFileSelectWithoutPropagation(file: FileWithHasMatch, idx: number) {
-        this.activeFileIndex = idx;
-        this.showFiles = false;
-        this.selectFile.emit(file.file);
-        file.hasMatch = true;
     }
 
     hasFiles(): boolean {
-        return this.files?.length ? true :  false;
-    }
-
-    toggleShowFiles(): void {
-        if (this.hasFiles()) {
-            this.showFiles = !this.showFiles;
-            this.showFilesSubject()!.next(this.showFiles);
-        }
+        return !!this.files?.length;
     }
 
     /**
-     * handles toggle of the dropdown, do NOT propagate change to emit toggle to parent component component for lock sync
-     * @param showFiles dropdown toggle status
+     * Toggles the dropdown visibility and optionally propagates changes to the parent component.
+     * @param showFiles Optional toggle status; if undefined, the status will be toggled.
+     * @param propagateChanges Whether to propagate the change to the parent component.
      */
-    toggleShowFilesWithoutPropagation(showFiles: boolean): void {
+    toggleShowFiles(propagateChanges: boolean, showFiles?: boolean): void {
         if (this.hasFiles()) {
-            this.showFiles = showFiles;
+            this.showFiles = showFiles !== undefined ? showFiles : !this.showFiles;
+
+            if (propagateChanges) {
+                this.showFilesSubject()!.next(this.showFiles);
+            }
         }
     }
 

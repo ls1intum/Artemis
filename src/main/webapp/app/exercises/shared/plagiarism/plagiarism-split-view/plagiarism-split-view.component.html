@@ -6,14 +6,14 @@
             }
             @if (isProgrammingOrTextExercise) {
                 <jhi-text-submission-viewer
-                    [fileSelectedSubject]="getFileSelectedSubject()"
+                    [fileSelectedSubject]="this.fileSelectedSubject"
                     [exercise]="exercise"
                     [matches]="matchesA"
                     [plagiarismSubmission]="getTextSubmissionA()"
                     [isLockFilesEnabled]="isLockFilesEnabled"
                     [hideContent]="false"
-                    [dropdownHoverSubject]="getDropdownHoverSubject()"
-                    [showFilesSubject]="getShowFilesSubject()"
+                    [dropdownHoverSubject]="this.dropdownHoverSubject"
+                    [showFilesSubject]="this.showFilesSubject"
                 />
             }
         }
@@ -34,14 +34,14 @@
             }
             @if (isProgrammingOrTextExercise) {
                 <jhi-text-submission-viewer
-                    [fileSelectedSubject]="getFileSelectedSubject()"
+                    [fileSelectedSubject]="this.fileSelectedSubject"
                     [exercise]="exercise"
                     [matches]="matchesB"
                     [plagiarismSubmission]="getTextSubmissionB()"
                     [isLockFilesEnabled]="isLockFilesEnabled"
                     [hideContent]="forStudent && dayjs(exercise.dueDate).isAfter(dayjs())"
-                    [dropdownHoverSubject]="getDropdownHoverSubject()"
-                    [showFilesSubject]="getShowFilesSubject()"
+                    [dropdownHoverSubject]="this.dropdownHoverSubject"
+                    [showFilesSubject]="this.showFilesSubject"
                 />
             }
         }
