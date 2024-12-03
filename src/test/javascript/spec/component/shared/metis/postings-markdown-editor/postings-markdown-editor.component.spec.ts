@@ -40,13 +40,11 @@ import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulle
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 
 import { ListAction } from 'app/shared/monaco-editor/model/actions/list.action';
-import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -149,7 +147,6 @@ describe('PostingsMarkdownEditor', () => {
 
                 metisService = TestBed.inject(MetisService);
                 lectureService = TestBed.inject(LectureService);
-
 
                 findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
                 const returnValue = of(new HttpResponse({ body: [], status: 200 }));

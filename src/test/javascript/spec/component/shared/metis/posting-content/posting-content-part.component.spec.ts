@@ -12,7 +12,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { MockProvider } from 'ng-mocks';
+import { MockModule, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../../test.module';
 
 describe('PostingContentPartComponent', () => {
@@ -30,7 +30,7 @@ describe('PostingContentPartComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MatDialogModule, MatMenuModule],
+            imports: [ArtemisTestModule, MockModule(MatDialogModule), MockModule(MatMenuModule)],
             declarations: [MockRouterLinkDirective, MockQueryParamsDirective],
             providers: [{ provide: FileService, useClass: MockFileService }, { provide: Router, useClass: MockRouter }, MockProvider(AccountService)],
         })
@@ -49,7 +49,6 @@ describe('PostingContentPartComponent', () => {
                 contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
                 contentAfterReference = 'in my content,\n\n does it *actually* work?';
             });
-
     });
 
     describe('For posting without reference', () => {
