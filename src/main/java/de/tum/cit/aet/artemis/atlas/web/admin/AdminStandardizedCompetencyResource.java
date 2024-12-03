@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.web.admin;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 /**
  * Admin REST controller for managing {@link StandardizedCompetency} entities.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @FeatureToggle(Feature.StandardizedCompetencies)
 @EnforceAdmin
 @RestController

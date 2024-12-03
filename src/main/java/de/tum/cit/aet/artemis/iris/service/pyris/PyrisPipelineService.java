@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -61,13 +63,13 @@ public class PyrisPipelineService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final LearningMetricsApi learningMetricsApi;
+    private final Optional<LearningMetricsApi> learningMetricsApi;
 
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
-            IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, LearningMetricsApi learningMetricsApi,
+            IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, Optional<LearningMetricsApi> learningMetricsApi,
             StudentParticipationRepository studentParticipationRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
@@ -178,6 +180,8 @@ public class PyrisPipelineService {
         // @formatter:off
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
+        var api = learningMetricsApi.orElseThrow(() -> new ApiNotPresentException(LearningMetricsApi.class, PROFILE_ATLAS));
+
         executePipeline(
                 "course-chat",
                 variant,
@@ -186,7 +190,7 @@ public class PyrisPipelineService {
                     var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
                     return new PyrisCourseChatPipelineExecutionDTO(
                             PyrisExtendedCourseDTO.of(fullCourse),
-                            learningMetricsApi.getStudentCourseMetrics(session.getUser().getId(), courseId),
+                            api.getStudentCourseMetrics(session.getUser().getId(), courseId),
                             competencyJol == null ? null : CompetencyJolDTO.of(competencyJol),
                             pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                             new PyrisUserDTO(session.getUser()),

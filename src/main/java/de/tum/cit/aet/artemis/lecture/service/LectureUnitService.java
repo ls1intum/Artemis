@@ -65,15 +65,15 @@ public class LectureUnitService {
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final CourseCompetencyApi courseCompetencyApi;
+    private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
-    private final CompetencyRelationApi competencyRelationApi;
+    private final Optional<CompetencyRelationApi> competencyRelationApi;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            FileService fileService, SlideRepository slideRepository, Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressApi competencyProgressApi,
-            CourseCompetencyApi courseCompetencyApi, CompetencyRelationApi competencyRelationApi) {
+            FileService fileService, SlideRepository slideRepository, Optional<PyrisWebhookService> pyrisWebhookService, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
@@ -183,7 +183,7 @@ public class LectureUnitService {
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competency progress objects
-            competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty());
+            competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty()));
         }
     }
 
@@ -194,9 +194,12 @@ public class LectureUnitService {
      * @param lectureUnitLinks New set of lecture unit links to associate with the competency
      */
     public void linkLectureUnitsToCompetency(CourseCompetency competency, Set<CompetencyLectureUnitLink> lectureUnitLinks) {
+        if (courseCompetencyApi.isEmpty()) {
+            return;
+        }
         lectureUnitLinks.forEach(link -> link.setCompetency(competency));
         competency.setLectureUnitLinks(lectureUnitLinks);
-        courseCompetencyApi.save(competency);
+        courseCompetencyApi.get().save(competency);
     }
 
     /**
@@ -206,7 +209,7 @@ public class LectureUnitService {
      * @param competency       competency to remove
      */
     public void removeCompetency(Set<CompetencyLectureUnitLink> lectureUnitLinks, CourseCompetency competency) {
-        competencyRelationApi.deleteAllLectureUnitLinks(lectureUnitLinks);
+        competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinks(lectureUnitLinks));
         competency.getLectureUnitLinks().removeAll(lectureUnitLinks);
     }
 
@@ -286,7 +289,7 @@ public class LectureUnitService {
         if (Hibernate.isInitialized(links) && links != null && !links.isEmpty()) {
             savedLectureUnit.setCompetencyLinks(links);
             reconnectCompetencyLectureUnitLinks(savedLectureUnit);
-            savedLectureUnit.setCompetencyLinks(new HashSet<>(competencyRelationApi.saveAllLectureUnitLinks(links)));
+            competencyRelationApi.ifPresent(api -> savedLectureUnit.setCompetencyLinks(new HashSet<>(api.saveAllLectureUnitLinks(links))));
         }
 
         return savedLectureUnit;

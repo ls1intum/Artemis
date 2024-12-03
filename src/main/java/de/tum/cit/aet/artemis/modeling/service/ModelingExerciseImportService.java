@@ -42,13 +42,13 @@ public class ModelingExerciseImportService extends ExerciseImportService {
 
     private final ChannelService channelService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final ExerciseService exerciseService;
 
     public ModelingExerciseImportService(ModelingExerciseRepository modelingExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
-            CompetencyProgressApi competencyProgressApi, ExerciseService exerciseService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.channelService = channelService;
@@ -77,7 +77,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         channelService.createExerciseChannel(newModelingExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newModelingExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
 
-        competencyProgressApi.updateProgressByLearningObjectAsync(newModelingExercise);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newModelingExercise));
 
         return newModelingExercise;
     }

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 
 @Controller
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 public class CompetencyProgressApi extends AbstractAtlasApi {
 
     private final CompetencyProgressService competencyProgressService;

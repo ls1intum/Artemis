@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkReposito
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 
 @Controller
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 public class CompetencyRelationApi extends AbstractAtlasApi {
 
     private final CompetencyRelationRepository competencyRelationRepository;

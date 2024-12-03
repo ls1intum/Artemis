@@ -109,7 +109,7 @@ public class ParticipationService {
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
@@ -118,7 +118,7 @@ public class ParticipationService {
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
             Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ProfileService profileService,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, CompetencyProgressApi competencyProgressApi) {
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -929,7 +929,7 @@ public class ParticipationService {
         }
 
         if (recalculateCompetencyProgress) {
-            competencyProgressApi.updateProgressByLearningObjectAsync(exercise);
+            competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
         }
     }
 

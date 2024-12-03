@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -67,7 +67,7 @@ import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
 /**
  * Service for importing learning objects related to competencies.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATLAS)
 @Service
 public class LearningObjectImportService {
 

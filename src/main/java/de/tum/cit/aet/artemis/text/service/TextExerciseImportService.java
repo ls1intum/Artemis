@@ -57,14 +57,14 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final ChannelService channelService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final ExerciseService exerciseService;
 
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository,
-            TextSubmissionRepository textSubmissionRepository, ChannelService channelService, FeedbackService feedbackService, CompetencyProgressApi competencyProgressApi,
-            ExerciseService exerciseService) {
+            TextSubmissionRepository textSubmissionRepository, ChannelService channelService, FeedbackService feedbackService,
+            Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
@@ -100,7 +100,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
 
-        competencyProgressApi.updateProgressByLearningObjectAsync(newTextExercise);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newTextExercise));
 
         return newExercise;
     }
