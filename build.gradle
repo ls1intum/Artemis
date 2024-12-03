@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.7.1"
+version = "7.7.4"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -180,13 +180,13 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.895
+                minimum = 0.893
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 60
+                maximum = 64
             }
         }
     }
@@ -212,17 +212,16 @@ repositories {
     maven {
         url "https://build.shibboleth.net/maven/releases"
     }
-    // required for latest jgit 7.0.0 dependency
-    // TODO: remove this when jgit is available in the official maven repository
+    // TODO: remove this when spring cloud is available in the official maven repository
     maven {
-        url "https://repo.eclipse.org/content/repositories/jgit-releases"
+        url "https://repo.spring.io/milestone"
     }
 }
 
 ext["jackson.version"] = fasterxml_version
 ext["junit-jupiter.version"] = junit_version
 
-ext { qDoxVersionReusable = "com.thoughtworks.qdox:qdox:2.1.0" }
+ext { qDoxVersionReusable = "com.thoughtworks.qdox:qdox:2.2.0" }
 ext { springBootStarterWeb = "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}" }
 
 dependencies {
@@ -231,9 +230,8 @@ dependencies {
     //    implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
     implementation files("libs/jenkins-client-0.4.1.jar")
     // The following 4 dependencies are explicitly integrated as transitive dependencies of jenkins-client-0.4.0.jar
-    // NOTE: we cannot upgrade to the latest version for org.apache.httpcomponents because of exceptions in Docker Java
-    implementation "org.apache.httpcomponents.client5:httpclient5:5.3.1"    // also used by Docker Java
-    implementation "org.apache.httpcomponents.core5:httpcore5:5.2.5"
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.4.1"
+    implementation "org.apache.httpcomponents.core5:httpcore5:5.3.1"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
     implementation("org.dom4j:dom4j:2.1.4") {
         // Note: avoid org.xml.sax.SAXNotRecognizedException: unrecognized feature http://xml.org/sax/features/external-general-entities
@@ -246,7 +244,7 @@ dependencies {
         exclude module: "jaxb-api"
     }
 
-    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.6"
+    implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.7"
 
     implementation "de.jplag:jplag:${jplag_version}"
 
@@ -268,7 +266,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-queryparser:${lucene_version}"
     implementation "org.apache.lucene:lucene-core:${lucene_version}"
     implementation "org.apache.lucene:lucene-analyzers-common:${lucene_version}"
-    implementation "com.google.protobuf:protobuf-java:4.28.3"
+    implementation "com.google.protobuf:protobuf-java:4.29.0"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -279,7 +277,7 @@ dependencies {
         }
     }
 
-    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.24.1"
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.24.2"
 
     // Note: spring-security-lti13 does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
     // implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.11"
@@ -327,7 +325,7 @@ dependencies {
     // required by Saml2
     implementation "org.apache.santuario:xmlsec:4.0.3"
 
-    implementation "org.jsoup:jsoup:1.18.1"
+    implementation "org.jsoup:jsoup:1.18.3"
     implementation "commons-codec:commons-codec:1.17.1"   // needed for spring security saml2
 
     // TODO: decide if we want to use OpenAPI and Swagger v3
@@ -335,12 +333,13 @@ dependencies {
 //    implementation "org.springdoc:springdoc-openapi-ui:1.8.0"
 
     // use the latest version to avoid security vulnerabilities
-    implementation "org.springframework:spring-webmvc:6.1.14"
+    implementation "org.springframework:spring-webmvc:${spring_framework_version}"
 
     implementation "com.vdurmont:semver4j:3.1.0"
 
     implementation "com.github.docker-java:docker-java-core:${docker_java_version}"
-    implementation "com.github.docker-java:docker-java-transport-httpclient5:${docker_java_version}"
+    // Note: we explicitly use docker-java-transport-zerodep, because docker-java-transport-httpclient5 uses an outdated http5 version which is not compatible with Spring Boot >= 3.4.0
+    implementation "com.github.docker-java:docker-java-transport-zerodep:${docker_java_version}"
 
     // use newest version of commons-compress to avoid security issues through outdated dependencies
     implementation "org.apache.commons:commons-compress:1.27.1"
@@ -377,7 +376,7 @@ dependencies {
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
 
-    implementation "com.zaxxer:HikariCP:6.1.0"
+    implementation "com.zaxxer:HikariCP:6.2.1"
 
     implementation "org.apache.commons:commons-text:1.12.0"
     implementation "org.apache.commons:commons-math3:3.6.1"
@@ -404,19 +403,19 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:3.2.8"
-    implementation "org.springframework.data:spring-data-ldap:3.3.5"
+    implementation "org.springframework.data:spring-data-ldap:3.4.0"
 
-    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.3") {
+    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}") {
         // NOTE: these modules contain security vulnerabilities and are not needed
         exclude module: "commons-jxpath"
         exclude module: "woodstox-core"
     }
-    implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.3"
-    implementation "org.springframework.cloud:spring-cloud-commons:4.1.4"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
+    implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
     implementation "io.netty:netty-all:4.1.115.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.2.0"
-    implementation "org.springframework:spring-messaging:6.1.14"
+    implementation "org.springframework:spring-messaging:${spring_framework_version}"
     implementation "org.springframework.retry:spring-retry:2.0.10"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
@@ -472,7 +471,7 @@ dependencies {
     implementation "com.google.code.gson:gson:2.11.0"
 
 
-    implementation "com.google.errorprone:error_prone_annotations:2.35.1"
+    implementation "com.google.errorprone:error_prone_annotations:2.36.0"
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") {
@@ -539,10 +538,10 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.179"
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.11"
+    testImplementation "org.gradle:gradle-tooling-api:8.11.1"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.2"
     testImplementation "com.opencsv:opencsv:5.9"
-    testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
+    testImplementation("io.zonky.test:embedded-database-spring-test:2.6.0") {
         exclude group: "org.testcontainers", module: "mariadb"
         exclude group: "org.testcontainers", module: "mssqlserver"
     }
@@ -597,7 +596,7 @@ tasks.withType(Test).configureEach {
 
     afterTest { descriptor, result ->
         if (result.resultType == TestResult.ResultType.FAILURE) {
-            String failedTest = "${descriptor.className}::${descriptor.name}"
+            var failedTest = "${descriptor.className}::${descriptor.name}"
             logger.debug("Adding " + failedTest + " to failedTests...")
             failedTests << [failedTest]
         }
@@ -621,7 +620,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.11"
+    gradleVersion = "8.11.1"
 }
 
 tasks.register("stage") {

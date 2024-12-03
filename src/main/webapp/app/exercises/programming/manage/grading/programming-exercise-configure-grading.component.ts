@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { IssuesMap, ProgrammingExerciseGradingStatistics } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
@@ -92,6 +92,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     readonly RESET_TABLE = ProgrammingGradingChartsDirective.RESET_TABLE;
     readonly chartFilterType = ChartFilterType;
     readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly isCommunicationEnabled = isCommunicationEnabled;
 
     // We have to separate these test cases in order to separate the table and chart presentation if the table is filtered by the chart
     staticCodeAnalysisCategoriesForTable: StaticCodeAnalysisCategory[] = [];
