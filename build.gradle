@@ -216,6 +216,9 @@ repositories {
     maven {
         url "https://repo.spring.io/milestone"
     }
+    maven { // required for sharing platform connector
+        url 'https://sharing-codeability.uibk.ac.at/api/v4/projects/26/packages/maven'
+    }
 }
 
 ext["jackson.version"] = fasterxml_version
@@ -226,6 +229,7 @@ ext { springBootStarterWeb = "org.springframework.boot:spring-boot-starter-web:$
 
 dependencies {
 
+    implementation "org.codeability.sharing:SharingPluginPlatformAPI:0.5.1"
     // Note: jenkins-client is not well maintained and includes dependencies to libraries with critical security issues (e.g. CVE-2020-10683 for dom4j@1.6.1)
     //    implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
     implementation files("libs/jenkins-client-0.4.1.jar")

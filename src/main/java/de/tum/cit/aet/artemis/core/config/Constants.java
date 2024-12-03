@@ -377,6 +377,26 @@ public final class Constants {
     public static final int PUSH_NOTIFICATION_VERSION = 1;
 
     /**
+     * sharing configution resource path for sharing config request
+     */
+    public static final String SHARINGCONFIG_RESOURCE_PATH = "/sharing/config";
+
+    /**
+     * sharing configution resource path for sharing config import request
+     */
+    public static final String SHARINGIMPORT_RESOURCE_PATH = "/sharing/import";
+
+    /**
+     * sharing configution resource path for sharing config export request
+     */
+    public static final String SHARINGEXPORT_RESOURCE_PATH = "/sharing/export";
+
+    /**
+     * sharing configution resource path for rest request, iff sharing profile is enabled
+     */
+    public static final String SHARINGCONFIG_RESOURCE_IS_ENABLED = SHARINGCONFIG_RESOURCE_PATH + "/is-enabled";
+
+    /**
      * The directory in the docker container in which the build script is executed
      */
     public static final String LOCALCI_WORKING_DIRECTORY = "/var/tmp";
