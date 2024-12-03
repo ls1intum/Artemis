@@ -138,16 +138,16 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @MockitoSpyBean
     protected GroupNotificationScheduleService groupNotificationScheduleService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected IrisCourseChatSessionService irisCourseChatSessionService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected CompetencyJolService competencyJolService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected PyrisPipelineService pyrisPipelineService;
 
-    @SpyBean
+    @MockitoSpyBean
     protected IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     @Value("${artemis.version-control.url}")
