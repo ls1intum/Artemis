@@ -151,24 +151,29 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     }
 
     onRightClick(event: MouseEvent) {
-        event.preventDefault();
+        const targetElement = event.target as HTMLElement;
+        const isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
 
-        if (PostComponent.activeDropdownPost && PostComponent.activeDropdownPost !== this) {
-            PostComponent.activeDropdownPost.showDropdown = false;
-            PostComponent.activeDropdownPost.enableBodyScroll();
-            PostComponent.activeDropdownPost.changeDetector.detectChanges();
+        if (!isPointerCursor) {
+            event.preventDefault();
+
+            if (PostComponent.activeDropdownPost && PostComponent.activeDropdownPost !== this) {
+                PostComponent.activeDropdownPost.showDropdown = false;
+                PostComponent.activeDropdownPost.enableBodyScroll();
+                PostComponent.activeDropdownPost.changeDetector.detectChanges();
+            }
+
+            PostComponent.activeDropdownPost = this;
+
+            this.dropdownPosition = {
+                x: event.clientX,
+                y: event.clientY,
+            };
+
+            this.showDropdown = true;
+            this.adjustDropdownPosition();
+            this.disableBodyScroll();
         }
-
-        PostComponent.activeDropdownPost = this;
-
-        this.dropdownPosition = {
-            x: event.clientX,
-            y: event.clientY,
-        };
-
-        this.showDropdown = true;
-        this.adjustDropdownPosition();
-        this.disableBodyScroll();
     }
 
     adjustDropdownPosition() {
