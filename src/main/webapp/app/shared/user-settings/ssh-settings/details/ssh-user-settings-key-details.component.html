@@ -72,6 +72,7 @@
                             <jhi-date-time-picker
                                 labelName="{{ 'artemisApp.userSettings.sshSettingsPage.expiryDate' | artemisTranslate }}"
                                 [(ngModel)]="displayedExpiryDate"
+                                [pickerType]="DateTimePickerType.CALENDAR"
                                 [shouldDisplayTimeZoneWarning]="false"
                                 [min]="currentDate"
                                 [requiredField]="true"
@@ -102,7 +103,7 @@
                 }
                 @if (displayedExpiryDate) {
                     <div class="text-and-date large-text mt-2">
-                        <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.expiresOn"></div>
+                        <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.{{ hasExpired ? 'hasExpiredOn' : 'expiresOn' }}"></div>
                         <div>
                             {{ displayedExpiryDate | artemisDate: 'long-date' }}
                         </div>

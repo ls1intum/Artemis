@@ -9,6 +9,7 @@ import { getOS } from 'app/shared/util/os-detector.util';
 import { UserSshPublicKey } from 'app/entities/programming/user-ssh-public-key.model';
 import dayjs from 'dayjs/esm';
 import { SshUserSettingsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
+import { DateTimePickerType } from 'app/shared/date-time-picker/date-time-picker.component';
 
 @Component({
     selector: 'jhi-account-information',
@@ -44,6 +45,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
     displayedKeyLabel = '';
     displayedSshKey = '';
     displayedKeyHash = '';
+    hasExpired? = false;
     displayedExpiryDate?: dayjs.Dayjs;
     isExpiryDateValid = false;
     displayCreationDate: dayjs.Dayjs;
@@ -80,6 +82,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
                     this.displayCreationDate = publicKey.creationDate;
                     this.displayedExpiryDate = publicKey.expiryDate;
                     this.displayedLastUsedDate = publicKey.lastUsedDate;
+                    this.hasExpired = publicKey.expiryDate && dayjs().isAfter(dayjs(publicKey.expiryDate));
                     this.isLoading = false;
                 }),
             )
@@ -138,4 +141,6 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
                 this.copyInstructions = 'Ctrl + C';
         }
     }
+
+    protected readonly DateTimePickerType = DateTimePickerType;
 }

@@ -59,7 +59,12 @@ public class UserSshPublicKeyService {
         newUserSshPublicKey.setKeyHash(keyHash);
         setLabelForKey(newUserSshPublicKey, sshPublicKey.label());
         newUserSshPublicKey.setCreationDate(ZonedDateTime.now());
-        newUserSshPublicKey.setExpiryDate(sshPublicKey.expiryDate());
+
+        if (sshPublicKey.expiryDate() != null) {
+            var expiryDate = sshPublicKey.expiryDate().withHour(3).withMinute(0).withSecond(0).withNano(0).plusDays(1);
+            newUserSshPublicKey.setExpiryDate(expiryDate);
+        }
+
         userSshPublicKeyRepository.save(newUserSshPublicKey);
         singleUserNotificationService.notifyUserAboutNewlyAddedSshKey(user, newUserSshPublicKey);
     }
