@@ -5,7 +5,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTestModule } from '../../../../test.module';
 
 describe('SuspiciousSessionsComponent', () => {
@@ -39,7 +38,7 @@ describe('SuspiciousSessionsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [SuspiciousSessionsComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
+            declarations: [SuspiciousSessionsComponent, MockPipe(ArtemisTranslatePipe)],
         });
         fixture = TestBed.createComponent(SuspiciousSessionsComponent);
         component = fixture.componentInstance;
