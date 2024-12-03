@@ -174,7 +174,7 @@ public class LocalCIQueueWebsocketService {
     private static BuildConfig removeUnnecessaryInformationFromBuildConfig(BuildConfig buildConfig) {
         // We pass "" instead of null strings to avoid errors when serializing to JSON
         return new BuildConfig("", "", buildConfig.commitHashToBuild(), "", "", "", null, null, buildConfig.scaEnabled(), buildConfig.sequentialTestRunsEnabled(),
-                buildConfig.testwiseCoverageEnabled(), null, buildConfig.timeoutSeconds(), "", "", "");
+                buildConfig.testwiseCoverageEnabled(), null, buildConfig.timeoutSeconds(), "", "", "", null);
     }
 
     /**
