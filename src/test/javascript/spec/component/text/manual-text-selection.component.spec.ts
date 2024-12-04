@@ -58,7 +58,7 @@ describe('ManualTextSelectionComponent', () => {
             fixture.componentRef.setInput('words', textBlockRefs);
         });
 
-        expect(component.submissionWords).toEqual(['First', 'last', 'text.']);
+        expect(component.submissionWords()).toEqual(['First', 'last', 'text.']);
     });
 
     it('should calculate word indices correctly', () => {
