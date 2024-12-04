@@ -15,13 +15,13 @@
         "uuid": "11.0.3"
     },
     "scripts": {
-        "playwright:test": "npm-run-all --serial --continue-on-error playwright:test:fast playwright:test:slow merge-reports",
-        "playwright:test:fast": "cross-env PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-fast.xml playwright test e2e --project=fast-tests",
-        "playwright:test:slow": "cross-env PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-slow.xml playwright test e2e --project=slow-tests --workers 1",
+        "playwright:test": "npm-run-all --serial --continue-on-error playwright:test:parallel playwright:test:sequential merge-reports",
+        "playwright:test:parallel": "cross-env PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-parallel.xml playwright test e2e --project=fast-tests --project=slow-tests",
+        "playwright:test:sequential": "cross-env PLAYWRIGHT_JUNIT_OUTPUT_NAME=./test-reports/results-sequential.xml playwright test e2e --project=sequential-tests --workers 1",
         "playwright:open": "playwright test e2e --ui",
         "playwright:install": "npx playwright install --with-deps chromium",
         "playwright:setup-users": "/bin/sh init/initialize_users.sh",
-        "merge-reports": "junit-merge ./test-reports/results-fast.xml ./test-reports/results-slow.xml -o ./test-reports/results.xml",
+        "merge-reports": "junit-merge ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml -o ./test-reports/results.xml",
         "update": "ncu -i --format group"
     }
 }

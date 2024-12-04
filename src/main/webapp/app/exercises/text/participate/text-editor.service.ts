@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { francAll } from 'franc-min';
@@ -8,7 +8,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 
 @Injectable({ providedIn: 'root' })
 export class TextEditorService {
-    constructor(private http: HttpClient) {}
+    private http = inject(HttpClient);
 
     get(participationId: number): Observable<StudentParticipation> {
         return this.http
