@@ -7,15 +7,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.info.Info;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCInfoContributor;
 
 @ActiveProfiles({ PROFILE_ARTEMIS, PROFILE_LOCALVC, PROFILE_BUILDAGENT })
 class LocalVCInfoContributorTest {
 
-    @SpyBean
+    @MockitoSpyBean
     private LocalVCInfoContributor localVCInfoContributor;
 
     @Test
