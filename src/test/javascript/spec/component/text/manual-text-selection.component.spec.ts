@@ -54,8 +54,8 @@ describe('ManualTextSelectionComponent', () => {
 
     it('should set words correctly', () => {
         runInInjectionContext(TestBed, () => {
-            fixture.componentRef.setInput('submission', submission);
-            fixture.componentRef.setInput('words', textBlockRefs);
+            fixture.componentRef = input<TextSubmission>(submission);
+            fixture.componentRef = input<TextBlockRefGroup>(new TextBlockRefGroup(textBlockRefs));
         });
 
         expect(component.submissionWords).toEqual(['First', 'last', 'text.']);
