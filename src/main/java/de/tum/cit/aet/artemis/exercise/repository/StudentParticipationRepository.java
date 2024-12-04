@@ -1363,7 +1363,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * <br>
      *
      * @param exerciseId   for which the affected student participation data is requested.
-     * @param detailText   used to filter the participation to only those affected by specific feedback entries.
+     * @param detailTexts  used to filter the participation to only those affected by specific feedback entries.
      * @param pageable     A {@link Pageable} object to control pagination and sorting of the results, specifying page number, page size, and sort order.
      * @param testCaseName The name of the test case for which the feedback is given.
      * @return A {@link Page} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
