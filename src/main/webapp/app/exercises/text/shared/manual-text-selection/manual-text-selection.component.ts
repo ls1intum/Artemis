@@ -40,6 +40,10 @@ export class ManualTextSelectionComponent {
     public selectedWords = new Array<wordSelection>();
     public ready = false;
 
+    constructor() {
+        this.textAssessmentAnalytics.setComponentRoute(this.route);
+    }
+
     calculateIndex(index: number): void {
         let result = this.textBlockRefGroup().startIndex!;
         for (let i = 0; i < index; i++) {
