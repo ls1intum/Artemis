@@ -14,21 +14,17 @@ import { Exercise } from 'app/entities/exercise.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { TestRunManagementComponent } from 'app/exam/manage/test-runs/test-run-management.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { SortDirective } from 'app/shared/sort/sort.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('Test Run Management Component', () => {
     let component: TestRunManagementComponent;
@@ -50,16 +46,6 @@ describe('Test Run Management Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [RouterModule.forRoot([]), FontAwesomeTestingModule, TranslateModule.forRoot(), NgbTooltipMocksModule],
-
-            declarations: [
-                TestRunManagementComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDurationFromSecondsPipe),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(SortDirective),
-                MockDirective(DeleteButtonDirective),
-                MockDirective(TranslateDirective),
-            ],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -67,22 +53,22 @@ describe('Test Run Management Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 MockDirective(TranslateDirective),
+                MockProvider(ExamManagementService),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TestRunManagementComponent);
-                component = fixture.componentInstance;
-                examManagementService = TestBed.inject(ExamManagementService);
-                accountService = TestBed.inject(AccountService);
-                modalService = modalService = TestBed.inject(NgbModal);
-                jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
-                jest.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
-                userSpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
-                jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
-                jest.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of());
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TestRunManagementComponent);
+        component = fixture.componentInstance;
+        examManagementService = TestBed.inject(ExamManagementService);
+        accountService = TestBed.inject(AccountService);
+        modalService = TestBed.inject(NgbModal);
+        jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
+        jest.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
+        userSpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+        jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
+        jest.spyOn(examManagementService, 'deleteTestRun').mockReturnValue(of());
     });
 
     afterEach(() => {
@@ -137,6 +123,11 @@ describe('Test Run Management Component', () => {
             expect(createTestRunButton).toBeTruthy();
             expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
             createTestRunButton.nativeElement.click();
+
+            fixture.detectChanges();
+
+            expect(modalService.open).toHaveBeenCalledOnce();
+            expect(examManagementService.createTestRun).toHaveBeenCalledOnce();
             expect(component.testRuns).toHaveLength(3);
         });
 
