@@ -758,6 +758,19 @@
                 "pushExercise": "Push the exercise code to its repository. It will be checked out at <code>{{checkoutDirectory}}</code>.",
                 "pushSolution": "Push the solution code to its repository. It will not be checked out.",
                 "pushTest": "Push the test code to its repository. It will be checked out in <code>{{checkoutDirectory}}</code>."
+            },
+            "dockerFlags": {
+                "disableNetworkAccess": {
+                    "title": "Disable internet access when executing the student submission",
+                    "description": "Activate this option to disable network access for containers. The network will be disabled when executing the student submission.",
+                    "warning": "If internet access is disabled, all dependencies must be included in the Docker image or cached within it. Otherwise, the build will fail."
+                },
+                "envVars": {
+                    "title": "Environment Variables",
+                    "description": "Add environment variables to the Docker container. Each key and value should not be longer than 1000 characters.",
+                    "addEnvVar": "Add Environment Variable",
+                    "removeEnvVar": "Remove"
+                }
             }
         },
         "error": {

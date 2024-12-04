@@ -18,10 +18,9 @@ The most basic test looks similar to this:
         let someComponentFixture: ComponentFixture<SomeComponent>;
         let someComponent: SomeComponent;
 
-        beforeEach(() => {
-            TestBed.configureTestingModule({
-                imports: [],
-                declarations: [
+        beforeEach(async () => {
+            await TestBed.configureTestingModule({
+                imports: [
                     SomeComponent,
                     MockPipe(SomePipeUsedInTemplate),
                     MockComponent(SomeComponentUsedInTemplate),
@@ -31,11 +30,10 @@ The most basic test looks similar to this:
                     MockProvider(SomeServiceUsedInComponent),
                 ],
             })
-                .compileComponents()
-                .then(() => {
-                    someComponentFixture = TestBed.createComponent(SomeComponent);
-                    someComponent = someComponentFixture.componentInstance;
-                });
+                .compileComponents();
+
+            someComponentFixture = TestBed.createComponent(SomeComponent);
+            someComponent = someComponentFixture.componentInstance;
         });
 
         afterEach(() => {
@@ -60,24 +58,25 @@ Some guidelines:
         describe('ParticipationSubmissionComponent', () => {
             ...
 
-            beforeEach(() => {
-                return TestBed.configureTestingModule({
-                    imports: [ArtemisTestModule, NgxDatatableModule, ArtemisResultModule, ArtemisSharedModule, TranslateModule.forRoot(), RouterTestingModule],
-                    declarations: [
+            beforeEach(async () => {
+                await TestBed.configureTestingModule({
+                    imports: [
+                        ArtemisTestModule,
+                        NgxDatatableModule,
+                        ArtemisResultModule,
+                        ArtemisSharedModule,
+                        TranslateModule.forRoot(),
                         ParticipationSubmissionComponent,
                         MockComponent(UpdatingResultComponent),
                         MockComponent(AssessmentDetailComponent),
                         MockComponent(ComplaintsForTutorComponent),
                     ],
                     providers: [
-                        ...
+                        provideRouter([]),
                     ],
                 })
                     .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
-                    .compileComponents()
-                    .then(() => {
-                        ...
-                    });
+                    .compileComponents();
             });
         });
 
@@ -94,10 +93,12 @@ Some guidelines:
             describe('ParticipationSubmissionComponent', () => {
                 ...
 
-                beforeEach(() => {
-                    return TestBed.configureTestingModule({
-                        imports: [ArtemisTestModule, RouterTestingModule, NgxDatatableModule],
-                        declarations: [
+                beforeEach(async () => {
+                    await TestBed.configureTestingModule({
+                        imports: [
+                            ArtemisTestModule,
+                            RouterTestingModule,
+                            NgxDatatableModule,
                             ParticipationSubmissionComponent,
                             MockComponent(UpdatingResultComponent),
                             MockComponent(AssessmentDetailComponent),
@@ -110,13 +111,10 @@ Some guidelines:
                             MockComponent(ResultComponent),
                         ],
                         providers: [
-                            ...
+                            provideRouter([]),
                         ],
                     })
-                        .compileComponents()
-                        .then(() => {
-                            ...
-                        });
+                        .compileComponents();
                 });
             });
 
@@ -158,11 +156,16 @@ Some guidelines:
 
         .. code:: ts
 
-            import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+            import { provideHttpClient } from '@angular/common/http';
+            import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
             describe('SomeComponent', () => {
                 beforeEach(() => {
                     TestBed.configureTestingModule({
-                        imports: [HttpClientTestingModule],
+                        imports: [...],
+                        providers: [
+                            provideHttpClient(),
+                            provideHttpClientTesting(),
+                        ],
                     });
 
                     ...
@@ -221,21 +224,18 @@ Some guidelines:
             let someComponentFixture: ComponentFixture<SomeComponent>;
             let someComponent: SomeComponent;
 
-            beforeEach(() => {
-                TestBed.configureTestingModule({
-                    imports: [],
-                    declarations: [
-                        SomeComponent,
-                    ],
+            beforeEach(async () => {
+                await TestBed.configureTestingModule({
+                    imports: [SomeComponent],
                     providers: [
+                        ...
                     ],
                 })
                     .overrideTemplate(SomeComponent, '') // DO NOT DO THIS
-                    .compileComponents()
-                    .then(() => {
-                        someComponentFixture = TestBed.createComponent(SomeComponent);
-                        someComponent = someComponentFixture.componentInstance;
-                    });
+                    .compileComponents();
+
+                someComponentFixture = TestBed.createComponent(SomeComponent);
+                someComponent = someComponentFixture.componentInstance;
             });
         });
 

@@ -279,13 +279,13 @@ describe('CourseLectureDetailsComponent', () => {
 
     it('should download file for attachment', fakeAsync(() => {
         const fileService = TestBed.inject(FileService);
-        const downloadFileSpy = jest.spyOn(fileService, 'downloadFile');
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileByAttachmentName');
         const attachment = getAttachmentUnit(lecture, 1, dayjs()).attachment!;
 
-        courseLecturesDetailsComponent.downloadAttachment(attachment.link);
+        courseLecturesDetailsComponent.downloadAttachment(attachment.link, attachment.name);
 
         expect(downloadFileSpy).toHaveBeenCalledOnce();
-        expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link);
+        expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link, attachment.name);
         expect(courseLecturesDetailsComponent.isDownloadingLink).toBeUndefined();
     }));
 
