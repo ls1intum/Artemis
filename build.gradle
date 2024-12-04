@@ -20,7 +20,7 @@ plugins {
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
-    id "org.owasp.dependencycheck" version "11.1.0"
+    id "org.owasp.dependencycheck" version "11.1.1"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
@@ -213,10 +213,6 @@ repositories {
     maven {
         url "https://build.shibboleth.net/maven/releases"
     }
-    // TODO: remove this when spring cloud is available in the official maven repository
-    maven {
-        url "https://repo.spring.io/milestone"
-    }
 }
 
 ext["jackson.version"] = fasterxml_version
@@ -295,7 +291,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2024.7"
+    implementation "net.sourceforge.plantuml:plantuml:1.2024.8"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -325,10 +321,6 @@ dependencies {
 
     implementation "org.jsoup:jsoup:1.18.3"
     implementation "commons-codec:commons-codec:1.17.1"   // needed for spring security saml2
-
-    // TODO: decide if we want to use OpenAPI and Swagger v3
-//    implementation 'io.swagger.core.v3:swagger-annotations:2.2.23'
-//    implementation "org.springdoc:springdoc-openapi-ui:1.8.0"
 
     // use the latest version to avoid security vulnerabilities
     implementation "org.springframework:spring-webmvc:${spring_framework_version}"
