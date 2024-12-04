@@ -18,6 +18,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MetisModule } from 'app/shared/metis/metis.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { PlagiarismCaseReviewComponent } from 'app/course/plagiarism-cases/shared/review/plagiarism-case-review.component';
+import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',
@@ -25,7 +27,16 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     styleUrls: ['./plagiarism-case-student-detail-view.component.scss'],
     providers: [MetisService],
     standalone: true,
-    imports: [TranslateDirective, FaIconComponent, RouterLink, MetisModule, ArtemisSharedComponentModule, ArtemisSharedCommonModule],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        MetisModule,
+        ArtemisSharedComponentModule,
+        ArtemisSharedCommonModule,
+        PlagiarismCaseReviewComponent,
+        PlagiarismCaseVerdictComponent,
+    ],
 })
 export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestroy {
     protected metisService = inject(MetisService);

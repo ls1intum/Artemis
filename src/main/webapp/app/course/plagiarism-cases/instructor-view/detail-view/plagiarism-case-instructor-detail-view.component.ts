@@ -36,6 +36,8 @@ import {
 import { MetisModule } from 'app/shared/metis/metis.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule } from '@angular/forms';
+import { PlagiarismCaseReviewComponent } from 'app/course/plagiarism-cases/shared/review/plagiarism-case-review.component';
+import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -62,6 +64,8 @@ import { FormsModule } from '@angular/forms';
         ArtemisSharedComponentModule,
         FormsModule,
         NgbNavOutlet,
+        PlagiarismCaseReviewComponent,
+        PlagiarismCaseVerdictComponent,
     ],
 })
 export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {

@@ -12,6 +12,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTutorParticipationGraphModule } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.module';
 import { ArtemisPlagiarismCasesSharedModule } from 'app/course/plagiarism-cases/shared/plagiarism-cases-shared.module';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { PlagiarismCaseVerdictComponent } from 'app/course/plagiarism-cases/shared/verdict/plagiarism-case-verdict.component';
 
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',
@@ -25,6 +26,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
         RouterLink,
         ArtemisPlagiarismCasesSharedModule,
         ArtemisSharedCommonModule,
+        PlagiarismCaseVerdictComponent,
     ],
 })
 export class PlagiarismCasesInstructorViewComponent implements OnInit {
