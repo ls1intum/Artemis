@@ -56,7 +56,6 @@ describe('ManualTextSelectionComponent', () => {
         runInInjectionContext(TestBed, () => {
             fixture.componentRef.setInput('submission', submission);
             fixture.componentRef.setInput('words', textBlockRefs);
-            fixture.detectChanges();
         });
 
         expect(component.submissionWords).toEqual(['First', 'last', 'text.']);
@@ -66,7 +65,6 @@ describe('ManualTextSelectionComponent', () => {
         runInInjectionContext(TestBed, () => {
             component.submission = input<TextSubmission>(submission);
             component.words = input<TextBlockRefGroup>(new TextBlockRefGroup(textBlockRefs));
-            fixture.detectChanges();
         });
         component.calculateIndex(1);
 
@@ -86,7 +84,6 @@ describe('ManualTextSelectionComponent', () => {
         component.ready = true;
         const sendAssessmentEventSpy = jest.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.selectWord('lastWord');
-        fixture.detectChanges();
         expect(sendAssessmentEventSpy).toHaveBeenCalledOnce();
         expect(sendAssessmentEventSpy).toHaveBeenCalledWith(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL);
     });
