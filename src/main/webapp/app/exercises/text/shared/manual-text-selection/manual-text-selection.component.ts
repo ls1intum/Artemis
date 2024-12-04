@@ -27,15 +27,15 @@ export class ManualTextSelectionComponent {
     textBlockRefGroup = input.required<TextBlockRefGroup>();
     submission = input.required<TextSubmission>();
     didSelectWord = output<wordSelection[]>();
-    words = input<TextBlockRefGroup>();
+    words = input.required<TextBlockRefGroup>();
 
     public submissionWords = computed(() => {
         const textBlockRefGroup = this.words();
-        if (!textBlockRefGroup) return [];
-        const text = textBlockRefGroup.getText(this.submission());
+        const submissionValue = this.submission();
+        if (!textBlockRefGroup || !submissionValue) return [];
+        const text = textBlockRefGroup.getText(submissionValue);
         return text.replace(LINEBREAK, '\n ').split(SPACE);
     });
-
     public currentWordIndex: number;
     public selectedWords = new Array<wordSelection>();
     public ready = false;

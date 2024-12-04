@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { input, runInInjectionContext } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ManualTextSelectionComponent } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
@@ -45,27 +44,23 @@ describe('ManualTextSelectionComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ManualTextSelectionComponent);
                 component = fixture.componentInstance;
-                runInInjectionContext(TestBed, () => {
-                    component.textBlockRefGroup = input<TextBlockRefGroup>(new TextBlockRefGroup(textBlockRefs));
-                });
+                fixture.componentRef.setInput('textBlockRefGroup', new TextBlockRefGroup(textBlockRefs));
                 fixture.detectChanges();
             });
     });
 
     it('should set words correctly', () => {
-        runInInjectionContext(TestBed, () => {
-            component.submission = input<TextSubmission>(submission);
-            component.words = input<TextBlockRefGroup>(new TextBlockRefGroup(textBlockRefs));
-        });
+        fixture.componentRef.setInput('submission', submission);
+        fixture.componentRef.setInput('words', new TextBlockRefGroup(textBlockRefs));
+        fixture.detectChanges();
 
         expect(component.submissionWords()).toEqual(['First', 'last', 'text.']);
     });
 
     it('should calculate word indices correctly', () => {
-        runInInjectionContext(TestBed, () => {
-            component.submission = input<TextSubmission>(submission);
-            component.words = input<TextBlockRefGroup>(new TextBlockRefGroup(textBlockRefs));
-        });
+        fixture.componentRef.setInput('submission', submission);
+        fixture.componentRef.setInput('words', new TextBlockRefGroup(textBlockRefs));
+        fixture.detectChanges();
         component.calculateIndex(1);
 
         expect(component.currentWordIndex).toBe(6);
