@@ -24,4 +24,4 @@ This will create 20 test users.
 ## 3. Setup Playwright and run Playwright in UI-mode
 
 Simply run: `startPlaywright.sh`. This will install the necessary dependencies for playwright and start it in UI mode.
-
+If you already have playwright installed, you can also start playwright directly from the `src/test/playwright` directory with `npm run playwright:open`.
