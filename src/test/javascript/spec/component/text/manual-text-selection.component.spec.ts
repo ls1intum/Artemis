@@ -58,7 +58,7 @@ describe('ManualTextSelectionComponent', () => {
             component.words = input<TextBlockRefGroup>(new TextBlockRefGroup(textBlockRefs));
         });
 
-        expect(component.submissionWords).toEqual(['First', 'last', 'text.']);
+        expect(component.submissionWords()).toEqual(['First', 'last', 'text.']);
     });
 
     it('should calculate word indices correctly', () => {
