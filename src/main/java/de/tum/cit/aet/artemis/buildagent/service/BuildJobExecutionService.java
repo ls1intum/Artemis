@@ -308,9 +308,17 @@ public class BuildJobExecutionService {
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
+        msg = "~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        log.debug(msg);
+
         buildJobContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(), LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
 
         // Get an input stream of the test result files.
+
+        msg = "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container ~~~~~~~~~~~~~~~~~~~~";
+        buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
+        log.info(msg);
 
         TarArchiveInputStream testResultsTarInputStream;
 
