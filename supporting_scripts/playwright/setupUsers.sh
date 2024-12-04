@@ -4,7 +4,7 @@
 
 set -e
 
-cd ../../../supporting_scripts
+cd ..
 
 if [ ! -d "venv" ]; then
     python -m venv venv
@@ -16,5 +16,3 @@ cd  course-scripts/quick-course-setup
 
 python3 -m pip install -r requirements.txt
 python3 create_users.py
-
-cd ../../../src/test/playwright

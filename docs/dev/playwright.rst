@@ -51,15 +51,15 @@ Playwright tests rely on the Playwright Node.js library, browser binaries, and s
 
      Playwright tests require users with different roles to simulate concurrent user interactions. If you already
      have generated test users, you can skip this step. Generate users with the help of the user creation scripts under
-     supportingScripts, or simply run:
+     `supportingScripts/playwright`:
 
     .. code-block:: bash
 
-        npm run playwright:setup-users
+        setupUsers.sh
 
-     You can configure user IDs and check their corresponding user roles in the ``src/test/playwright/support/users.ts`` file.
-     Usernames are defined automatically by appending the userId to the ``PLAYWRIGHT_USERNAME_TEMPLATE``.
-     At the moment it is discouraged to change the template string, as the user creation script does not support other names yet.
+    You can configure user IDs and check their corresponding user roles in the ``src/test/playwright/support/users.ts`` file.
+    Usernames are defined automatically by appending the userId to the ``PLAYWRIGHT_USERNAME_TEMPLATE``.
+    At the moment it is discouraged to change the template string, as the user creation script does not support other names yet.
 
 4. Setup Playwright package and its browser binaries:
 
