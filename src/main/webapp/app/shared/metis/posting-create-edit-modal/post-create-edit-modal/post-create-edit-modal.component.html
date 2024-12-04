@@ -31,38 +31,6 @@
                     </div>
                 </div>
             }
-            <!--
-             top K similar posts, only shown if there are similar posts (i.e. not during updating a post), announcements will not be compared
-            @if (similarPosts.length > 0) {
-                <div class="mb-3">
-                    <div ngbAccordion>
-                        <div ngbAccordionItem>
-                            <div ngbAccordionHeader>
-                                <button ngbAccordionButton class="d-flex align-items-center justify-content-between">
-                                    <p class="my-2 ps-1">
-                                        {{ 'artemisApp.metis.post.similarPosts' | artemisTranslate }}
-                                        <jhi-help-icon text="artemisApp.metis.post.similarPostsTooltip" />
-                                    </p>
-                                </button>
-                            </div>
-                            <div ngbAccordionCollapse>
-                                <div ngbAccordionBody>
-                                    @for (post of similarPosts; track post; let i = $index) {
-                                        <div class="row">
-                                            <jhi-post [posting]="post" [previewMode]="true" [modalRef]="modalRef" />
-                                            @if (i < similarPosts.length - 1) {
-                                                <div class="post-separation-line"></div>
-                                            }
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-            -->
-            <!-- content -->
             <div class="position-relative mb-1">
                 <div>
                     <label class="mb-1" jhiTranslate="artemisApp.metis.post.content"></label>
