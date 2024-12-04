@@ -44,9 +44,9 @@ export class ManualTextSelectionComponent {
         let result = this.textBlockRefGroup().startIndex!;
         for (let i = 0; i < index; i++) {
             const space = 1;
-            result += this.submissionWords![i].length + space;
+            result += this.submissionWords()![i].length + space;
 
-            const wordContainsLinebreak = this.submissionWords![i].search(/\n+/g) !== -1;
+            const wordContainsLinebreak = this.submissionWords()![i].search(/\n+/g) !== -1;
             if (wordContainsLinebreak) {
                 result--;
             }
