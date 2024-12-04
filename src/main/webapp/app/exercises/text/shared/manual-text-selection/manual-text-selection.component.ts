@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text/text-block.model';
@@ -25,28 +25,20 @@ export class ManualTextSelectionComponent {
     textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
     textBlockRefGroup = input.required<TextBlockRefGroup>();
-    submission = input<TextSubmission>();
+    submission = input.required<TextSubmission>();
     didSelectWord = output<wordSelection[]>();
     words = input<TextBlockRefGroup>();
-    public submissionWords: string[] | undefined;
+
+    public submissionWords = computed(() => {
+        const textBlockRefGroup = this.words();
+        if (!textBlockRefGroup) return [];
+        const text = textBlockRefGroup.getText(this.submission());
+        return text.replace(LINEBREAK, '\n ').split(SPACE);
+    });
 
     public currentWordIndex: number;
     public selectedWords = new Array<wordSelection>();
     public ready = false;
-
-    constructor() {
-        this.textAssessmentAnalytics.setComponentRoute(this.route);
-
-        effect(() => {
-            const textBlockRefGroup = this.words();
-            if (textBlockRefGroup) {
-                const submission = this.submission();
-                if (submission) {
-                    this.submissionWords = textBlockRefGroup.getText(submission).replace(LINEBREAK, '\n ').split(SPACE);
-                }
-            }
-        });
-    }
 
     calculateIndex(index: number): void {
         let result = this.textBlockRefGroup().startIndex!;

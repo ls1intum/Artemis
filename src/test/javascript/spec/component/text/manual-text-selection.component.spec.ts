@@ -54,8 +54,8 @@ describe('ManualTextSelectionComponent', () => {
 
     it('should set words correctly', () => {
         runInInjectionContext(TestBed, () => {
-            component.submission = input<TextSubmission>(submission);
-            component.words = input<TextBlockRefGroup>(new TextBlockRefGroup(textBlockRefs));
+            fixture.componentRef.setInput('submission', submission);
+            fixture.componentRef.setInput('words', textBlockRefs);
             fixture.detectChanges();
         });
 
