@@ -80,15 +80,21 @@ export class PostingContentPartComponent implements OnInit {
     processContent() {
         if (this.postingContentPart.contentBeforeReference) {
             this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart.contentBeforeReference);
+            this.processedContentBeforeReference = this.escapeUnorderedList(this.processedContentBeforeReference);
         }
 
         if (this.postingContentPart.contentAfterReference) {
             this.processedContentAfterReference = this.escapeNumberedList(this.postingContentPart.contentAfterReference);
+            this.processedContentAfterReference = this.escapeUnorderedList(this.processedContentAfterReference);
         }
     }
 
     escapeNumberedList(content: string): string {
-        return content.replace(/^(\s*\d+)\. /gm, '$1\\. ');
+        return content.replace(/^(\s*\d+)\. /gm, '$1\\.  ');
+    }
+
+    escapeUnorderedList(content: string): string {
+        return content.replace(/^(- )/gm, '\\$1');
     }
 
     /**
