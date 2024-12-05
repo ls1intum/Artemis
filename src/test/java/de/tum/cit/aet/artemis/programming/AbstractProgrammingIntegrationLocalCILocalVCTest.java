@@ -83,8 +83,6 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
     @Autowired
     protected StaticCodeAnalysisService staticCodeAnalysisService;
 
-    @Autowired
-    protected HestiaUtilTestService hestiaUtilTestService;
     // External Services
 
     // Util Services
@@ -106,4 +104,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTest extends A
 
     @Autowired
     protected ParticipationUtilService participationUtilService;
+
+    @Autowired
+    protected HestiaUtilTestService hestiaUtilTestService;
 }
