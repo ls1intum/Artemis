@@ -176,12 +176,14 @@ public class BuildJobManagementService {
                     throw new CompletionException(msg, e);
                 }
                 else {
+                    finishBuildJobExceptionally(buildJobItem.id(), containerName, e);
                     if (e instanceof TimeoutException) {
-                        String msg = "Build job with id " + buildJobItem.id() + " timed out after " + buildJobTimeoutSeconds + " seconds.";
+                        String msg = "Timed out after " + buildJobTimeoutSeconds + " seconds. "
+                                + "This may be due to an infinite loop or inefficient code. Please review your code for potential issues. "
+                                + "If the problem persists, contact your instructor for assistance. (Build job ID: " + buildJobItem.id() + ")";
                         buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
                         log.warn(msg);
                     }
-                    finishBuildJobExceptionally(buildJobItem.id(), containerName, e);
                     throw new CompletionException(e);
                 }
             }
