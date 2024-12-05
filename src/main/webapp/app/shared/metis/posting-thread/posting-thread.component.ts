@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, inject } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import dayjs from 'dayjs/esm';
-import { PostComponent } from '../post/post.component';
+import { PostComponent } from 'app/shared/metis/post/post.component';
 
 @Component({
     selector: 'jhi-posting-thread',

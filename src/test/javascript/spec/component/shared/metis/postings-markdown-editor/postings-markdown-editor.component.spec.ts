@@ -23,9 +23,7 @@ import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
 import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
-
 import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
-
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
 import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
@@ -39,7 +37,6 @@ import { TextEditorPosition } from 'app/shared/monaco-editor/model/actions/adapt
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 
-
 import { ListAction } from 'app/shared/monaco-editor/model/actions/list.action';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
@@ -47,7 +44,6 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import monaco from 'monaco-editor';
-
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -139,7 +135,6 @@ describe('PostingsMarkdownEditor', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
 
                 { provide: MarkdownEditorMonacoComponent, useValue: mockMarkdownEditorComponent },
-
             ],
             declarations: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent)],
         })
