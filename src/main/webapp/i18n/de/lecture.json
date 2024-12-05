@@ -89,6 +89,12 @@
                 "competencyTitle": "Titel",
                 "competencyConnectedUnits": "Verknüpfte Einheiten",
                 "competencyNoConnectedUnits": "Keine verknüpften Einheiten"
+            },
+            "dismissChangesModal": {
+                "title": "Ungespeicherte Änderungen der Vorlesung verwerfen",
+                "message": "Bist du sicher, dass die ungespeicherten Änderungen verworfen werden sollen?",
+                "sectionsThatContainUnsavedChanges": "Die folgenden Abschnitte enthalten ungespeicherte Änderungen:",
+                "sectionThatContainsUnsavedChanges": "Der folgenden Abschnitt enthält ungespeicherte Änderungen:"
             }
         },
         "attachment": {

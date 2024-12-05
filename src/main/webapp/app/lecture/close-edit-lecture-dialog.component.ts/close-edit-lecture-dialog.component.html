@@ -1,13 +1,25 @@
 <div class="modal-header">
-    <h4 class="modal-title">Dismiss unsaved lecture changes</h4>
+    <h4 class="modal-title" jhiTranslate="artemisApp.lecture.dismissChangesModal.title"></h4>
 </div>
 <div class="modal-body">
-    @if (hasUnsavedChangesInTitleSection) {
-        Has unsaved changes in title section
+    <span jhiTranslate="artemisApp.lecture.dismissChangesModal.message" class="fw-bold"></span><br />
+    @if (hasUnsavedChangesInTitleSection && hasUnsavedChangesInPeriodSection) {
+        <span jhiTranslate="artemisApp.lecture.dismissChangesModal.sectionsThatContainUnsavedChanges"></span>
+    } @else {
+        <span jhiTranslate="artemisApp.lecture.dismissChangesModal.sectionThatContainsUnsavedChanges"></span>
     }
-    @if (hasUnsavedChangesInPeriodSection) {
-        Has unsaved changes in period section
-    }
+    <ul>
+        @if (hasUnsavedChangesInTitleSection) {
+            <li>
+                <span jhiTranslate="artemisApp.lecture.wizardMode.steps.titleStepTitle"></span>
+            </li>
+        }
+        @if (hasUnsavedChangesInPeriodSection) {
+            <li>
+                <span jhiTranslate="artemisApp.lecture.wizardMode.steps.periodStepTitle"></span>
+            </li>
+        }
+    </ul>
 </div>
 <div class="modal-footer">
     <button type="button" (click)="closeWindow(false)" class="btn btn-default">
@@ -15,6 +27,6 @@
         &nbsp;<span jhiTranslate="entity.action.cancel"></span>
     </button>
     <button class="btn btn-primary" type="submit" (click)="closeWindow(true)">
-        <span jhiTranslate="entity.action.confirm"></span>
+        <span jhiTranslate="entity.action.discardChanges"></span>
     </button>
 </div>
