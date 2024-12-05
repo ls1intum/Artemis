@@ -99,6 +99,11 @@
             style="min-width: 100px"
             jhiTranslate="{{ wasCopied ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl' }}"
         ></button>
+        @if (theiaEnabled) {
+            <a class="btn btn-primary btn-sm me-2" (click)="startOnlineIDE()" target="_blank" rel="noopener noreferrer">
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
+            </a>
+        }
         <a
             class="btn btn-primary btn-sm"
             target="hidden-iframe"
