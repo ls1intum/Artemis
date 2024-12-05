@@ -2,9 +2,9 @@
     <div class="popover-content" (mouseenter)="openPopover()" id="theme-switch-popover-content">
         <div class="head">☾ <span jhiTranslate="artemisApp.theme.darkMode"></span> ☾</div>
         <div class="switch-box">
-            <div><fa-icon [icon]="faSync" /> {{ 'artemisApp.theme.sync' | artemisTranslate }}</div>
+            <div><fa-icon [icon]="faSync" /> <span jhiTranslate="artemisApp.theme.sync"></span></div>
             <div class="form-switch">
-                <input class="form-check-input" type="checkbox" (click)="toggleSynced()" [checked]="isSynced" />
+                <input class="form-check-input" type="checkbox" (click)="toggleSynced()" [checked]="isSyncedWithOS()" />
             </div>
         </div>
     </div>
@@ -17,10 +17,10 @@
         [triggers]="''"
         #popover="ngbPopover"
         [autoClose]="false"
-        [animation]="animate"
-        [placement]="popoverPlacement"
+        [animation]="true"
+        [placement]="popoverPlacement()"
     >
-        <div class="theme-toggle" [ngClass]="{ dark: isDark }" id="theme-toggle">
+        <div class="theme-toggle" [class.dark]="isDarkTheme()" id="theme-toggle">
             <svg class="sun-and-moon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">
                 <circle class="sun" cx="12" cy="12" r="6" mask="url(#moon-mask)" fill="currentColor" />
                 <g class="sun-beams" stroke="currentColor">

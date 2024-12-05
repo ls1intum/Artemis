@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,12 +23,14 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackPageableDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
@@ -36,13 +39,14 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -328,7 +332,7 @@ public class ResultResource {
      *         </ul>
      */
     @GetMapping("exercises/{exerciseId}/feedback-details")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @ModelAttribute FeedbackPageableDTO data) {
         FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, data);
         return ResponseEntity.ok(response);
@@ -343,9 +347,44 @@ public class ResultResource {
      * @return A {@link ResponseEntity} containing the maximum count of feedback occurrences (long).
      */
     @GetMapping("exercises/{exerciseId}/feedback-details-max-count")
-    @EnforceAtLeastInstructorInExercise
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<Long> getMaxCount(@PathVariable long exerciseId) {
         long maxCount = resultService.getMaxCountForExercise(exerciseId);
         return ResponseEntity.ok(maxCount);
+    }
+
+    /**
+     * GET /exercises/{exerciseId}/feedback-details-participation : Retrieves paginated details of students affected by specific feedback entries for a specified exercise.
+     * This endpoint returns details of students whose submissions were impacted by specified feedback entries, including student information
+     * and participation details.
+     * <br>
+     *
+     * @param exerciseId        for which the participation data is requested.
+     * @param feedbackIdsHeader to filter affected students by specific feedback entries.
+     * @param data              A {@link PageableSearchDTO} object containing pagination and sorting parameters.
+     * @return A {@link ResponseEntity} containing a {@link Page} of {@link FeedbackAffectedStudentDTO}, each representing a student affected by the feedback entries.
+     */
+    @GetMapping("exercises/{exerciseId}/feedback-details-participation")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<Page<FeedbackAffectedStudentDTO>> getAffectedStudentsWithFeedback(@PathVariable long exerciseId, @RequestHeader("feedbackIds") String feedbackIdsHeader,
+            @ModelAttribute PageableSearchDTO<String> data) {
+
+        Page<FeedbackAffectedStudentDTO> participation = resultService.getAffectedStudentsWithFeedbackId(exerciseId, feedbackIdsHeader, data);
+
+        return ResponseEntity.ok(participation);
+    }
+
+    /**
+     * GET /exercises/{exerciseId}/feedback-detail/affected-students : Retrieves the count of students affected by a specific feedback detail text.
+     *
+     * @param exerciseId The ID of the exercise for which affected students are counted.
+     * @param detailText The feedback detail text to filter by.
+     * @return A {@link ResponseEntity} containing the count of affected students.
+     */
+    @GetMapping("exercises/{exerciseId}/feedback-detail/affected-students")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<Long> countAffectedStudentsByFeedbackDetailText(@PathVariable long exerciseId, @RequestParam("detailText") String detailText) {
+        long affectedStudentCount = resultService.getAffectedStudentCountByFeedbackDetailText(exerciseId, detailText);
+        return ResponseEntity.ok(affectedStudentCount);
     }
 }

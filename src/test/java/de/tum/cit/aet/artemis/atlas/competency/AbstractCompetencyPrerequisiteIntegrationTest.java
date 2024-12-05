@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.competency;
 
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -16,6 +17,7 @@ import java.util.function.Function;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
@@ -27,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -220,6 +223,20 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
         assertThat(competenciesOfCourse).anyMatch(c -> c.getId().equals(courseCompetency.getId()));
         assertThat(competenciesOfCourse.stream().filter(l -> l.getId().equals(newCompetency.getId())).findFirst().orElseThrow().getLectureUnitLinks()).isEmpty();
+    }
+
+    abstract List<? extends CourseCompetency> getAllFilteredCall(long courseId, HttpStatus expectedStatus) throws Exception;
+
+    // Test
+    void shouldReturnCompetenciesForCourseFiltered(CourseCompetency newCompetency) throws Exception {
+        newCompetency.setTitle("Title");
+        newCompetency.setDescription("Description");
+        newCompetency.setCourse(course);
+        courseCompetencyRepository.save(newCompetency);
+
+        List<? extends CourseCompetency> competenciesOfCourse = getAllFilteredCall(course.getId(), HttpStatus.OK);
+
+        assertThat(competenciesOfCourse).noneMatch(c -> c.getId().equals(newCompetency.getId()));
     }
 
     // Test
@@ -505,10 +522,30 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
         importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course3.getId()), false, false, false, Optional.empty(), false);
         competencyDTOList = importAllCall(course.getId(), importOptions, HttpStatus.CREATED);
-        assertThat(competencyDTOList).hasSize(2);
+        assertThat(competencyDTOList).hasSize(1);
         // relations should be empty when not importing them
         assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
-        assertThat(competencyDTOList.get(1).tailRelations()).isNull();
+    }
+
+    // Test
+    void shouldImportAllCompetenciesWithSomeExisting(Function<CourseCompetency, CourseCompetency> copyCourseCompetency, int expectedCourseCompetencies) throws Exception {
+        competencyUtilService.createCompetencies(course, 2);
+        prerequisiteUtilService.createPrerequisites(course, 2);
+
+        CourseCompetency newCompetency = copyCourseCompetency.apply(courseCompetency);
+        newCompetency.setCourse(course2);
+        newCompetency = courseCompetencyRepository.save(newCompetency);
+
+        CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course.getId()), false, false, false, Optional.empty(), false);
+        importAllCall(course2.getId(), importOptions, HttpStatus.CREATED);
+
+        course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
+        assertThat(course2.getPrerequisites().size() + course2.getCompetencies().size()).isEqualTo(expectedCourseCompetencies);
+        switch (newCompetency) {
+            case Competency competency -> assertThat(course2.getCompetencies().stream().map(DomainObject::getId)).contains(competency.getId());
+            case Prerequisite prerequisite -> assertThat(course2.getPrerequisites().stream().map(DomainObject::getId)).contains(prerequisite.getId());
+            default -> fail("Unexpected CourseCompetency subclass");
+        }
     }
 
     // Test
@@ -633,10 +670,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
         importOptions = new CompetencyImportOptionsDTO(competencyIds, Optional.empty(), false, false, false, Optional.empty(), false);
         competencyDTOList = importBulkCall(course.getId(), importOptions, HttpStatus.CREATED);
-        assertThat(competencyDTOList).hasSize(2);
+        assertThat(competencyDTOList).hasSize(1);
         // relations should be empty when not importing them
         assertThat(competencyDTOList.getFirst().tailRelations()).isNull();
-        assertThat(competencyDTOList.get(1).tailRelations()).isNull();
     }
 
     // Test
