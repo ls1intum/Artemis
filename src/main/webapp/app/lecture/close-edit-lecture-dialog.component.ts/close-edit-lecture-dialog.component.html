@@ -1,7 +1,14 @@
 <div class="modal-header">
     <h4 class="modal-title">Dismiss unsaved lecture changes</h4>
 </div>
-<div class="modal-body"></div>
+<div class="modal-body">
+    @if (hasUnsavedChangesInTitleSection) {
+        Has unsaved changes in title section
+    }
+    @if (hasUnsavedChangesInPeriodSection) {
+        Has unsaved changes in period section
+    }
+</div>
 <div class="modal-footer">
     <button type="button" (click)="closeWindow(false)" class="btn btn-default">
         <fa-icon [icon]="faTimes" />

@@ -174,14 +174,24 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         this.subscriptions.unsubscribe();
     }
 
-    protected updateIsChangesMadeToTitleOrPeriodSection() {
-        this.isChangeMadeToTitleOrPeriodSection =
+    isChangeMadeToTitleSection() {
+        return (
             this.lecture().title !== this.lectureOnInit.title ||
             this.lecture().channelName !== this.lectureOnInit.channelName ||
-            this.lecture().description !== this.lectureOnInit.description ||
+            this.lecture().description !== this.lectureOnInit.description
+        );
+    }
+
+    isChangeMadeToPeriodSection() {
+        return (
             !dayjs(this.lecture().visibleDate).isSame(dayjs(this.lectureOnInit.visibleDate)) ||
             !dayjs(this.lecture().startDate).isSame(dayjs(this.lectureOnInit.startDate)) ||
-            !dayjs(this.lecture().endDate).isSame(dayjs(this.lectureOnInit.endDate));
+            !dayjs(this.lecture().endDate).isSame(dayjs(this.lectureOnInit.endDate))
+        );
+    }
+
+    protected updateIsChangesMadeToTitleOrPeriodSection() {
+        this.isChangeMadeToTitleOrPeriodSection = this.isChangeMadeToTitleSection() || this.isChangeMadeToPeriodSection();
     }
 
     /**

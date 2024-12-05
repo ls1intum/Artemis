@@ -18,6 +18,9 @@ export const hasLectureUnsavedChangesGuard: CanDeactivateFn<LectureUpdateCompone
             backdrop: 'static',
             animation: true,
         });
+        modalRef.componentInstance.hasUnsavedChangesInTitleSection = component.isChangeMadeToTitleSection();
+        modalRef.componentInstance.hasUnsavedChangesInPeriodSection = component.isChangeMadeToPeriodSection();
+
         return from(modalRef.result);
     }
 
