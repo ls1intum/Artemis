@@ -377,7 +377,7 @@ describe('LectureAttachmentsComponent', () => {
         fixture.detectChanges();
         comp.isDownloadingAttachmentLink = undefined;
         expect(comp.isDownloadingAttachmentLink).toBeUndefined();
-        comp.downloadAttachment('https://my/own/download/url');
+        comp.downloadAttachment('https://my/own/download/url', 'test');
         expect(comp.isDownloadingAttachmentLink).toBeUndefined();
     }));
 
