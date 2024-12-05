@@ -77,7 +77,14 @@
                     <button
                         type="submit"
                         id="save-entity"
-                        [disabled]="editForm.form.invalid || isSaving || processUnitMode || !isChangeMadeToTitleOrPeriodSection"
+                        [disabled]="
+                            editForm.form.invalid ||
+                            isSaving ||
+                            processUnitMode ||
+                            !isChangeMadeToTitleOrPeriodSection ||
+                            !unitSection()?.isUnitConfigurationValid() ||
+                            !attachmentsSection()?.isFormValid()
+                        "
                         class="btn btn-primary ms-2"
                     >
                         <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
