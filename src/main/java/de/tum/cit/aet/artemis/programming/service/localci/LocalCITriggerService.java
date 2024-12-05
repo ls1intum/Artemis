@@ -25,6 +25,7 @@ import com.hazelcast.map.IMap;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
@@ -47,6 +48,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildSta
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusResult;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
@@ -105,6 +107,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final ExerciseDateService exerciseDateService;
 
+    private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
+
     private static final int DEFAULT_BUILD_DURATION = 17;
 
     private static final double BUILD_DURATION_SAFETY_FACTOR = 1.2;
@@ -115,6 +119,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.aeolusTemplateService = aeolusTemplateService;
@@ -128,6 +133,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseDateService = exerciseDateService;
         this.buildScriptProviderService = buildScriptProviderService;
+        this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
     }
 
@@ -218,7 +224,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
                 programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
         queue.add(buildJobQueueItem);
-        log.info("Added build job {} to the queue", buildJobId);
+        log.info("Added build job {} for exercise {} and participation {} with priority {} to the queue", buildJobId, programmingExercise.getShortName(), participation.getId(),
+                priority);
 
         dockerImageCleanupInfo.put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
     }
@@ -325,6 +332,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
         }
 
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
+
         List<String> resultPaths = getTestResultPaths(windfile);
         resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
 
@@ -334,7 +343,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths, buildConfig.getTimeoutSeconds(),
-                buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath());
+                buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {
