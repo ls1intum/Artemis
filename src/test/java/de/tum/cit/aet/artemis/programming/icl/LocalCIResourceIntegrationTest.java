@@ -402,7 +402,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         JobTimingInfo jobTimingInfo4 = new JobTimingInfo(now.plusSeconds(2), null, null, null, 24);
         JobTimingInfo jobTimingInfo5 = new JobTimingInfo(now.plusSeconds(3), null, null, null, 24);
 
-        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
         var job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
