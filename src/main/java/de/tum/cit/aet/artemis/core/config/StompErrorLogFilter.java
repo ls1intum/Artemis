@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.filter.Filter;
+import org.slf4j.Marker;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.turbo.TurboFilter;
 import ch.qos.logback.core.spi.FilterReply;
 
 /**
@@ -17,29 +20,33 @@ import ch.qos.logback.core.spi.FilterReply;
  * The purpose of this filter is to reduce noise in the logs by eliminating
  * repetitive or irrelevant error messages caused by client disconnections.
  */
-public class StompErrorLogFilter extends Filter<ILoggingEvent> {
+public class StompErrorLogFilter extends TurboFilter {
 
     /**
-     * Decides whether a log message should be suppressed or passed through.
+     * Determines whether a log message should be allowed, denied, or processed normally.
      *
      * <p>
-     * This method checks if the log message originates from the
-     * StompBrokerRelayMessageHandler logger and contains the specific error message
-     * about the 60000ms connection TTL timeout. If both conditions are met,
-     * the log message is suppressed (denied). All other log messages are allowed.
+     * This method checks the logger name, log level, and message format to identify
+     * and suppress specific error messages. If the message matches the criteria
+     * (e.g., the logger is from {@code StompBrokerRelayMessageHandler} and the error
+     * contains details about a 60000ms connection TTL timeout), the log is denied.
+     * Otherwise, the log message is processed normally.
      *
-     * @param event the logging event containing the log message and metadata
-     * @return {@code FilterReply.DENY} if the message matches the specific error to suppress,
-     *         otherwise {@code FilterReply.NEUTRAL} to allow the message through.
+     * @param marker The marker associated with the log message (can be null).
+     * @param logger The logger that created the log message.
+     * @param level  The log level (e.g., ERROR, WARN, INFO).
+     * @param format The log message format string.
+     * @param params Parameters for the format string (if any).
+     * @param t      Throwable associated with the log event (if any).
+     * @return {@link FilterReply#DENY} if the message matches the suppression criteria,
+     *         otherwise {@link FilterReply#NEUTRAL} to process the message normally.
      */
     @Override
-    public FilterReply decide(ILoggingEvent event) {
-        String loggerName = event.getLoggerName();
-        String message = event.getFormattedMessage();
+    public FilterReply decide(Marker marker, Logger logger, Level level, String format, Object[] params, Throwable t) {
 
         // Check if the logger and message match the specific error to suppress
-        if ("org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler".equals(loggerName) && message.contains("Did not receive data from")
-                && message.contains("connection TTL. The connection will now be closed.")) {
+        if ("org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler".equals(logger.getName()) && Level.ERROR.equals(level) && format != null
+                && format.contains("Did not receive data from") && format.contains("connection TTL. The connection will now be closed.")) {
             return FilterReply.DENY; // Suppress this specific log message
         }
 

@@ -321,9 +321,11 @@ public class SingleUserNotificationFactory {
         }
 
         Conversation conversation = answerPost.getPost().getConversation();
+        var imageUrl = answerPost.getAuthor().getImageUrl() != null ? answerPost.getAuthor().getImageUrl() : "";
         var placeholders = createPlaceholdersNewReply(conversation.getCourse().getTitle(), answerPost.getPost().getContent(), answerPost.getPost().getCreationDate().toString(),
                 answerPost.getPost().getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString(), answerPost.getAuthor().getName(),
-                conversation.getHumanReadableNameForReceiver(answerPost.getAuthor()));
+                conversation.getHumanReadableNameForReceiver(answerPost.getAuthor()), imageUrl, answerPost.getAuthor().getId().toString(), answerPost.getId().toString(),
+                answerPost.getPost().getId().toString());
 
         String messageReplyTextType = MESSAGE_REPLY_IN_CONVERSATION_TEXT;
 
@@ -340,8 +342,9 @@ public class SingleUserNotificationFactory {
     @NotificationPlaceholderCreator(values = { NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXAM_POST,
             CONVERSATION_NEW_REPLY_MESSAGE, CONVERSATION_USER_MENTIONED })
     public static String[] createPlaceholdersNewReply(String courseTitle, String postContent, String postCreationData, String postAuthorName, String answerPostContent,
-            String answerPostCreationDate, String authorName, String conversationName) {
-        return new String[] { courseTitle, postContent, postCreationData, postAuthorName, answerPostContent, answerPostCreationDate, authorName, conversationName };
+            String answerPostCreationDate, String authorName, String conversationName, String imageUrl, String userId, String postingId, String parentPostId) {
+        return new String[] { courseTitle, postContent, postCreationData, postAuthorName, answerPostContent, answerPostCreationDate, authorName, conversationName, imageUrl, userId,
+                postingId, parentPostId };
     }
 
     /**
