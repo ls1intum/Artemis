@@ -18,9 +18,6 @@ import java.time.ZonedDateTime;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.Spy;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
@@ -33,29 +30,19 @@ class WeeklyEmailSummaryScheduleServiceTest {
 
     private static WeeklyEmailSummaryScheduleService weeklyEmailSummaryService;
 
-    @Autowired
-    private static TaskScheduler scheduler;
-
-    @Spy
     private static TaskScheduler schedulerSpy;
-
-    @Mock
-    private static ProfileService profileService;
-
-    @Mock
-    private static EmailSummaryService emailSummaryService;
 
     /**
      * Prepares the needed values and objects for testing
      */
     @BeforeAll
     static void setUp() {
-        profileService = mock(ProfileService.class);
+        ProfileService profileService = mock(ProfileService.class);
         when(profileService.isDevActive()).thenReturn(false);
 
-        emailSummaryService = mock(EmailSummaryService.class);
+        EmailSummaryService emailSummaryService = mock(EmailSummaryService.class);
 
-        scheduler = new ThreadPoolTaskScheduler();
+        TaskScheduler scheduler = new ThreadPoolTaskScheduler();
         schedulerSpy = spy(scheduler);
 
         weeklyEmailSummaryService = new WeeklyEmailSummaryScheduleService(profileService, schedulerSpy, emailSummaryService);
