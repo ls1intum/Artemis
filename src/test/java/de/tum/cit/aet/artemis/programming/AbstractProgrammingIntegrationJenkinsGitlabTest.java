@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabPersonalAccessTok
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsInternalUrlService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsPipelineScriptCreator;
-import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -137,9 +136,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsGitlabTest extends Ab
 
     @Autowired
     protected JenkinsInternalUrlService jenkinsInternalUrlService;
-
-    @Autowired
-    protected JenkinsJobPermissionsService jenkinsJobPermissionsService;
 
     @Autowired
     protected JenkinsJobService jenkinsJobService;
