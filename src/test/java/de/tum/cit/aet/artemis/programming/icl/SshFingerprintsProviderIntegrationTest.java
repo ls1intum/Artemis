@@ -41,7 +41,7 @@ public class SshFingerprintsProviderIntegrationTest extends AbstractSpringIntegr
         keyPairGenerator.initialize(2048);
         KeyPair testKeyPair = keyPairGenerator.generateKeyPair();
 
-        expectedFingerprint = HashUtils.getSha512Fingerprint(testKeyPair.getPublic());
+        expectedFingerprint = HashUtils.getSha256Fingerprint(testKeyPair.getPublic());
         doReturn(keyPairProvider).when(sshServer).getKeyPairProvider();
         doReturn(Collections.singleton(testKeyPair)).when(keyPairProvider).loadKeys(null);
     }
