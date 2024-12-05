@@ -6,6 +6,10 @@ import { LectureUpdateComponent } from 'app/lecture/lecture-update.component';
 import { Observable, from, of } from 'rxjs';
 
 export const hasLectureUnsavedChangesGuard: CanDeactivateFn<LectureUpdateComponent> = (component: LectureUpdateComponent): Observable<boolean> => {
+    if (!component.shouldDisplayDismissWarning) {
+        return of(true);
+    }
+
     if (component.isChangeMadeToTitleOrPeriodSection) {
         const modalService = inject(NgbModal);
 

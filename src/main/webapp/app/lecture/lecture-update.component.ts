@@ -80,6 +80,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     isNewlyCreatedExercise = false;
 
     isChangeMadeToTitleOrPeriodSection = false;
+    shouldDisplayDismissWarning = true;
 
     private subscriptions = new Subscription();
 
@@ -189,6 +190,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
      * Returns to the overview page if there is no previous state, and we created a new lecture
      */
     previousState() {
+        this.shouldDisplayDismissWarning = false;
         this.navigationUtilService.navigateBackWithOptional(['course-management', this.lecture().course!.id!.toString(), 'lectures'], this.lecture().id?.toString());
     }
 
