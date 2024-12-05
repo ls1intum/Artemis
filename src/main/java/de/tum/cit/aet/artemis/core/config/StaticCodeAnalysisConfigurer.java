@@ -73,7 +73,8 @@ public class StaticCodeAnalysisConfigurer {
         "Perflint",
         "refurb",
         "pydoclint",
-        "Ruff-specific rules"
+        "Ruff-specific rules",
+        "Unknown"
     );
     // @formatter:on
 

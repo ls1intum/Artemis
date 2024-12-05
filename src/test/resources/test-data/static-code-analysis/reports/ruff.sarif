@@ -90,6 +90,28 @@
             "text": "`BubbleSort` may be undefined, or defined from star imports"
           },
           "ruleId": "F405"
+        },
+        {
+          "level": "error",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file:///usr/local/src/exercise/policy.py"
+                },
+                "region": {
+                  "endColumn": 34,
+                  "endLine": 1,
+                  "startColumn": 1,
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Some unknown issue"
+          },
+          "ruleId": "X999"
         }
       ],
       "tool": {
@@ -152,6 +174,15 @@
               },
               "shortDescription": {
                 "text": "Magic value used in comparison, consider replacing `{value}` with a constant variable"
+              }
+            },
+            {
+              "fullDescription": {
+                "text": "This is an issue which does not declare a kind in its property bag"
+              },
+              "id": "X999",
+              "shortDescription": {
+                "text": "Some unknown issue"
               }
             }
           ],

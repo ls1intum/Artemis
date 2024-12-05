@@ -44,6 +44,17 @@
       "category": "Pyflakes",
       "message": "`BubbleSort` may be undefined, or defined from star imports",
       "priority": "error"
+    },
+    {
+      "filePath": "/usr/local/src/exercise/policy.py",
+      "startLine": 1,
+      "endLine": 1,
+      "startColumn": 1,
+      "endColumn": 34,
+      "rule": "X999",
+      "category": "Unknown",
+      "message": "Some unknown issue",
+      "priority": "error"
     }
   ]
 }
