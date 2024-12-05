@@ -9,9 +9,9 @@
         <div class="container">
             <div class="row d-flex">
                 <div class="col-2 header-col image-col">
-                    <ng-container *ngIf="course()?.courseIcon">
+                    @if (course()?.courseIcon) {
                         <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course()?.courseIcon || ''"></jhi-secured-image>
-                    </ng-container>
+                    }
                 </div>
                 <div class="col-7 header-col title-col px-3">
                     <h5 class="card-title text-center">

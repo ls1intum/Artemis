@@ -2,10 +2,13 @@ import { Component, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
+import { FormsModule } from 'app/forms/forms.module';
 
 @Component({
     selector: 'jhi-lti-initializer-modal',
     templateUrl: './lti-initializer-modal.component.html',
+    standalone: true,
+    imports: [NgbActiveModal, FormsModule],
 })
 export class LtiInitializerModalComponent {
     private activeModal = inject(NgbActiveModal);

@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -8,6 +9,8 @@ import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid
 import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
+    standalone: true,
+    imports: [CommonModule, RouterModule],
     selector: 'jhi-course-lti-configuration',
     templateUrl: './course-lti-configuration.component.html',
 })
