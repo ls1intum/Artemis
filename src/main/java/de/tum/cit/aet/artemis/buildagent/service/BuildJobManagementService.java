@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
@@ -175,6 +176,11 @@ public class BuildJobManagementService {
                     throw new CompletionException(msg, e);
                 }
                 else {
+                    if (e instanceof TimeoutException) {
+                        String msg = "Build job with id " + buildJobItem.id() + " timed out after " + buildJobTimeoutSeconds + " seconds.";
+                        buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
+                        log.warn(msg);
+                    }
                     finishBuildJobExceptionally(buildJobItem.id(), containerName, e);
                     throw new CompletionException(e);
                 }
