@@ -51,7 +51,7 @@ public class AnswerMessageResource {
         long start = System.nanoTime();
         AnswerPost createdAnswerMessage = answerMessageService.createAnswerMessage(courseId, answerMessage);
         // creation of answerMessage should not trigger alert
-        log.info("createAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("createAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/courses" + courseId + "/answer-messages/" + createdAnswerMessage.getId())).body(createdAnswerMessage);
     }
 
@@ -70,7 +70,7 @@ public class AnswerMessageResource {
         log.debug("PUT updateAnswerMessage invoked for course {} with message {}", courseId, answerMessage.getContent());
         long start = System.nanoTime();
         AnswerPost updatedAnswerMessage = answerMessageService.updateAnswerMessage(courseId, answerMessageId, answerMessage);
-        log.info("updateAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("updateAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedAnswerMessage, null, HttpStatus.OK);
     }
 
@@ -88,7 +88,7 @@ public class AnswerMessageResource {
         log.debug("PUT deleteAnswerMessage invoked for course {} on message {}", courseId, answerMessageId);
         long start = System.nanoTime();
         answerMessageService.deleteAnswerMessageById(courseId, answerMessageId);
-        log.info("deleteAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
+        log.debug("deleteAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
         // deletion of answerMessages should not trigger alert
         return ResponseEntity.ok().build();
     }

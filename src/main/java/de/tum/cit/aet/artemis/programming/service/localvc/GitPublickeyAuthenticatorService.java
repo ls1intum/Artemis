@@ -119,7 +119,7 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
 
             if (matchingAgent.isPresent()) {
                 var agent = matchingAgent.get().buildAgent();
-                log.info("Authenticating build agent {} on address {}", agent.displayName(), agent.memberAddress());
+                log.debug("Authenticating build agent {} on address {}", agent.displayName(), agent.memberAddress());
                 session.setAttribute(SshConstants.IS_BUILD_AGENT_KEY, true);
                 return true;
             }
