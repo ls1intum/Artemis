@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 /**
- * This class configures the JGit Servlet, which is used to receive Git push and fetch requests for local VC.
+ * Service responsible for providing SSH fingerprints of the SSH server running in Artemis.
  */
 @Profile(PROFILE_LOCALVC)
 @Service
