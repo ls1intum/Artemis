@@ -20,6 +20,5 @@ export class SshUserSettingsFingerprintsComponent implements OnInit {
 
     async ngOnInit() {
         this.sshFingerprints = await this.sshUserSettingsService.getSshFingerprints();
-        console.log(this.sshFingerprints);
     }
 }

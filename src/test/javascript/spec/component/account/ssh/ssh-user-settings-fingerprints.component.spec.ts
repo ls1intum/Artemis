@@ -3,7 +3,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SshUserSettingsFingerprintsComponent } from 'app/shared/user-settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.component';
-import { SshUserSettingsFingerprintsService } from 'app/shared/user-settings/ssh-settings/ssh-user-settings.service';
+import { SshUserSettingsFingerprintsService } from 'app/shared/user-settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
 
 describe('SshUserSettingsFingerprintsComponent', () => {
     let fixture: ComponentFixture<SshUserSettingsFingerprintsComponent>;
