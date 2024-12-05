@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.communication.domain.GroupNotificationType;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
+import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
@@ -70,9 +71,9 @@ class AppleFirebasePushNotificationServiceTest {
         String token = "test";
         byte[] payload = HexFormat.of().parseHex("e04fd020ea3a6910a2d808002b30309d");
         PushNotificationDeviceConfiguration applePushNotificationDeviceConfiguration = new PushNotificationDeviceConfiguration(token, PushNotificationDeviceType.APNS, new Date(),
-                payload, student);
+                payload, student, PushNotificationApiType.IOS_V2);
         PushNotificationDeviceConfiguration firebasePushNotificationDeviceConfiguration = new PushNotificationDeviceConfiguration(token, PushNotificationDeviceType.FIREBASE,
-                new Date(), payload, student);
+                new Date(), payload, student, PushNotificationApiType.DEFAULT);
 
         when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.APNS))).thenReturn(Collections.singletonList(applePushNotificationDeviceConfiguration));
         when(repositoryMock.findByUserIn(anySet(), eq(PushNotificationDeviceType.FIREBASE))).thenReturn(Collections.singletonList(firebasePushNotificationDeviceConfiguration));
