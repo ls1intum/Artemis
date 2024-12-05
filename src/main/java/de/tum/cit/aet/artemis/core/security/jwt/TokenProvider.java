@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 
 import javax.crypto.SecretKey;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -95,11 +97,27 @@ public class TokenProvider {
      * @return JWT Token
      */
     public String createToken(Authentication authentication, boolean rememberMe) {
+        return createToken(authentication, getTokenValidity(rememberMe), null);
+    }
+
+    /**
+     * Create JWT Token a fully populated <code>Authentication</code> object.
+     *
+     * @param authentication Authentication Object
+     * @param duration       the Token lifetime in milli seconds
+     * @param tool           tool this token is used for. If null, it's a general access token
+     * @return JWT Token
+     */
+    public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
-        long now = (new Date()).getTime();
-        Date validity = new Date(now + getTokenValidity(rememberMe));
-        return Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, Jwts.SIG.HS512).expiration(validity).compact();
+        var validity = System.currentTimeMillis() + duration;
+        var jwtBuilder = Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities);
+        if (tool != null) {
+            jwtBuilder.claim("tools", tool);
+        }
+
+        return jwtBuilder.signWith(key, Jwts.SIG.HS512).expiration(new Date(validity)).compact();
     }
 
     /**
